@@ -29,10 +29,12 @@ import { EarningsStats } from "@/components/dashboard/EarningsStats";
 import { ClientManagement } from "@/components/dashboard/ClientManagement";
 import { ProjectPortfolio } from "@/components/dashboard/ProjectPortfolio";
 import { ProfileCompletion } from "@/components/dashboard/ProfileCompletion";
+import { PublicProfileView } from "@/components/PublicProfileView";
 
 const AttorneyDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [showPublicProfile, setShowPublicProfile] = useState(false);
 
   if (!user || user.role !== 'lawyer') {
     return <Navigate to="/" replace />;
@@ -106,7 +108,10 @@ const AttorneyDashboard = () => {
                 </div>
               </div>
               <div className="flex space-x-3">
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowPublicProfile(true)}
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   View Public Profile
                 </Button>
@@ -216,6 +221,14 @@ const AttorneyDashboard = () => {
               </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Public Profile Modal */}
+          <PublicProfileView 
+            isOpen={showPublicProfile}
+            onClose={() => setShowPublicProfile(false)}
+            user={user}
+            stats={dashboardStats}
+          />
         </div>
       </div>
     </div>
