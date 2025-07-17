@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
 
-  // Mock data for lawyers - in a real app, this would come from your database
+  // Expanded mock data for lawyers
   const mockLawyers = [
     {
       id: 1,
@@ -55,6 +54,114 @@ const Index = () => {
       image: "/placeholder.svg",
       bio: "Compassionate immigration and family law attorney serving diverse communities.",
       verified: true
+    },
+    {
+      id: 4,
+      name: "David Thompson",
+      specialties: ["Real Estate Law", "Corporate Law"],
+      rating: 4.9,
+      reviews: 203,
+      location: "Chicago, IL",
+      hourlyRate: 400,
+      image: "/placeholder.svg",
+      bio: "Specializing in commercial real estate transactions and corporate acquisitions with 20+ years experience.",
+      verified: true
+    },
+    {
+      id: 5,
+      name: "Lisa Park",
+      specialties: ["Employment Law", "Intellectual Property"],
+      rating: 4.6,
+      reviews: 78,
+      location: "San Francisco, CA",
+      hourlyRate: 320,
+      image: "/placeholder.svg",
+      bio: "Tech-focused attorney helping startups and employees navigate workplace and IP matters.",
+      verified: true
+    },
+    {
+      id: 6,
+      name: "Robert Martinez",
+      specialties: ["Personal Injury", "Medical Malpractice"],
+      rating: 4.8,
+      reviews: 145,
+      location: "Houston, TX",
+      hourlyRate: 300,
+      image: "/placeholder.svg",
+      bio: "Aggressive advocate for injury victims with a proven track record of substantial settlements.",
+      verified: true
+    },
+    {
+      id: 7,
+      name: "Jennifer Liu",
+      specialties: ["Family Law", "Divorce"],
+      rating: 4.7,
+      reviews: 112,
+      location: "Seattle, WA",
+      hourlyRate: 250,
+      image: "/placeholder.svg",
+      bio: "Compassionate family law attorney helping clients through difficult transitions with dignity.",
+      verified: true
+    },
+    {
+      id: 8,
+      name: "Thomas Anderson",
+      specialties: ["Criminal Defense", "DUI Defense"],
+      rating: 4.9,
+      reviews: 167,
+      location: "Phoenix, AZ",
+      hourlyRate: 285,
+      image: "/placeholder.svg",
+      bio: "Former prosecutor turned defense attorney with insider knowledge of the criminal justice system.",
+      verified: true
+    },
+    {
+      id: 9,
+      name: "Amanda Foster",
+      specialties: ["Estate Planning", "Tax Law"],
+      rating: 4.8,
+      reviews: 94,
+      location: "Boston, MA",
+      hourlyRate: 375,
+      image: "/placeholder.svg",
+      bio: "Helping families protect their wealth and plan for the future with comprehensive estate strategies.",
+      verified: true
+    },
+    {
+      id: 10,
+      name: "Carlos Mendez",
+      specialties: ["Immigration Law", "Deportation Defense"],
+      rating: 4.6,
+      reviews: 134,
+      location: "Austin, TX",
+      hourlyRate: 200,
+      image: "/placeholder.svg",
+      bio: "Bilingual attorney dedicated to keeping families together and achieving the American dream.",
+      verified: true
+    },
+    {
+      id: 11,
+      name: "Dr. Rachel Green",
+      specialties: ["Medical Malpractice", "Personal Injury"],
+      rating: 4.9,
+      reviews: 89,
+      location: "Denver, CO",
+      hourlyRate: 425,
+      image: "/placeholder.svg",
+      bio: "Former medical professional turned attorney, uniquely qualified to handle complex medical cases.",
+      verified: true
+    },
+    {
+      id: 12,
+      name: "Kevin O'Brien",
+      specialties: ["Intellectual Property", "Patent Law"],
+      rating: 4.7,
+      reviews: 76,
+      location: "Portland, OR",
+      hourlyRate: 450,
+      image: "/placeholder.svg",
+      bio: "Engineering background with expertise in protecting innovations and intellectual property rights.",
+      verified: true
     }
   ];
 
@@ -66,7 +173,13 @@ const Index = () => {
     "Personal Injury",
     "Real Estate Law",
     "Employment Law",
-    "Intellectual Property"
+    "Intellectual Property",
+    "Estate Planning",
+    "Tax Law",
+    "Medical Malpractice",
+    "Patent Law",
+    "DUI Defense",
+    "Divorce"
   ];
 
   const filteredLawyers = mockLawyers.filter(lawyer => {
