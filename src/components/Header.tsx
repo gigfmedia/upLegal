@@ -51,7 +51,7 @@ export function Header({ onAuthClick }: HeaderProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleNavigation('/lawyer-dashboard')}
+                    onClick={() => handleNavigation('/attorney-dashboard')}
                     className="hidden sm:flex"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
@@ -85,7 +85,7 @@ export function Header({ onAuthClick }: HeaderProps) {
                       Profile
                     </DropdownMenuItem>
                     {user.role === 'lawyer' && (
-                      <DropdownMenuItem onClick={() => handleNavigation('/lawyer-dashboard')}>
+                      <DropdownMenuItem onClick={() => handleNavigation('/attorney-dashboard')}>
                         <Settings className="mr-2 h-4 w-4" />
                         Dashboard
                       </DropdownMenuItem>
