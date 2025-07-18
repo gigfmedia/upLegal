@@ -12,7 +12,6 @@ import {
   CheckCircle, 
   MessageSquare, 
   Calendar,
-  DollarSign,
   User,
   Trophy,
   Clock,
