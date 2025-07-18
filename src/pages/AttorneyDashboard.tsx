@@ -22,7 +22,8 @@ import {
   AlertCircle,
   BarChart3,
   Users,
-  Briefcase
+  Briefcase,
+  Linkedin
 } from "lucide-react";
 import { ProfileOverview } from "@/components/dashboard/ProfileOverview";
 import { EarningsStats } from "@/components/dashboard/EarningsStats";
@@ -30,6 +31,8 @@ import { ClientManagement } from "@/components/dashboard/ClientManagement";
 import { ProjectPortfolio } from "@/components/dashboard/ProjectPortfolio";
 import { ProfileCompletion } from "@/components/dashboard/ProfileCompletion";
 import { PublicProfileView } from "@/components/PublicProfileView";
+import { LinkedInIntegration } from "@/components/linkedin/LinkedInIntegration";
+import { LinkedInProfileSync } from "@/components/linkedin/LinkedInProfileSync";
 
 const AttorneyDashboard = () => {
   const { user } = useAuth();
@@ -172,12 +175,16 @@ const AttorneyDashboard = () => {
 
           {/* Main Dashboard Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="earnings">Earnings</TabsTrigger>
               <TabsTrigger value="clients">Clients</TabsTrigger>
               <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
               <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="linkedin">
+                <Linkedin className="h-4 w-4 mr-2" />
+                LinkedIn
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -219,6 +226,13 @@ const AttorneyDashboard = () => {
                   <p className="text-gray-600">Profile settings coming soon...</p>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="linkedin" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <LinkedInIntegration userId={user.id} />
+                <LinkedInProfileSync />
+              </div>
             </TabsContent>
           </Tabs>
 
