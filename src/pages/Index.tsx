@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { Header } from "@/components/Header";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [searchTerm, setSearchTerm] = useState("");
@@ -195,6 +197,13 @@ const Index = () => {
     setShowAuthModal(true);
   };
 
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (selectedSpecialty !== 'all') params.set('specialty', selectedSpecialty);
+    navigate(`/search?${params.toString()}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Header onAuthClick={handleAuthClick} />
@@ -221,6 +230,7 @@ const Index = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-12"
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
               <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
@@ -236,7 +246,7 @@ const Index = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={handleSearch}>
                 <Search className="mr-2 h-5 w-5" />
                 Search
               </Button>
