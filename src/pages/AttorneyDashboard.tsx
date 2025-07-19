@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +29,7 @@ import { EarningsStats } from "@/components/dashboard/EarningsStats";
 import { ClientManagement } from "@/components/dashboard/ClientManagement";
 import { ProjectPortfolio } from "@/components/dashboard/ProjectPortfolio";
 import { ProfileCompletion } from "@/components/dashboard/ProfileCompletion";
+import { ProfileSettings } from "@/components/dashboard/ProfileSettings";
 import { PublicProfileView } from "@/components/PublicProfileView";
 import { LinkedInIntegration } from "@/components/linkedin/LinkedInIntegration";
 import { LinkedInProfileSync } from "@/components/linkedin/LinkedInProfileSync";
@@ -215,17 +215,7 @@ const AttorneyDashboard = () => {
             </TabsContent>
 
             <TabsContent value="profile">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Profile Settings</CardTitle>
-                  <CardDescription>
-                    Manage your professional profile and preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Profile settings coming soon...</p>
-                </CardContent>
-              </Card>
+              <ProfileSettings />
             </TabsContent>
 
             <TabsContent value="linkedin" className="space-y-6">
