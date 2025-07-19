@@ -259,9 +259,9 @@ const SearchResults = () => {
     <div className="min-h-screen bg-gray-50">
       <Header onAuthClick={handleAuthClick} />
       
-      {/* Search Header */}
-      <div className="bg-white border-b sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      {/* Search Header - Fixed height */}
+      <div className="bg-white border-b sticky top-16 z-40 h-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col justify-center">
           <div className="flex items-center space-x-4 mb-4">
             <Link to="/" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="h-5 w-5 mr-2" />
@@ -314,161 +314,163 @@ const SearchResults = () => {
         </div>
       </div>
 
-      {/* Results Header & Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {filteredLawyers.length} lawyers found
+      {/* Results Content - Adjusted top padding for fixed header */}
+      <div className="pt-6 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {filteredLawyers.length} lawyers found
+                {(searchTerm || selectedSpecialty !== 'all' || location) && (
+                  <span className="text-gray-600 font-normal">
+                    {' '}for "{searchTerm || selectedSpecialty || location}"
+                  </span>
+                )}
+              </h1>
               {(searchTerm || selectedSpecialty !== 'all' || location) && (
-                <span className="text-gray-600 font-normal">
-                  {' '}for "{searchTerm || selectedSpecialty || location}"
-                </span>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {searchTerm && (
+                    <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchTerm('')}>
+                      Query: {searchTerm} ×
+                    </Badge>
+                  )}
+                  {selectedSpecialty !== 'all' && (
+                    <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedSpecialty('all')}>
+                      {selectedSpecialty} ×
+                    </Badge>
+                  )}
+                  {location && (
+                    <Badge variant="secondary" className="cursor-pointer" onClick={() => setLocation('')}>
+                      {location} ×
+                    </Badge>
+                  )}
+                </div>
               )}
-            </h1>
-            {(searchTerm || selectedSpecialty !== 'all' || location) && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {searchTerm && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSearchTerm('')}>
-                    Query: {searchTerm} ×
-                  </Badge>
-                )}
-                {selectedSpecialty !== 'all' && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setSelectedSpecialty('all')}>
-                    {selectedSpecialty} ×
-                  </Badge>
-                )}
-                {location && (
-                  <Badge variant="secondary" className="cursor-pointer" onClick={() => setLocation('')}>
-                    {location} ×
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rating">Highest Rated</SelectItem>
-                <SelectItem value="price_low">Price: Low to High</SelectItem>
-                <SelectItem value="price_high">Price: High to Low</SelectItem>
-                <SelectItem value="reviews">Most Reviews</SelectItem>
-              </SelectContent>
-            </Select>
+            </div>
             
-            <Button 
-              variant="outline" 
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
-          </div>
-        </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price Range
-                  </label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Input placeholder="Min" type="number" className="w-24" />
-                      <span>-</span>
-                      <Input placeholder="Max" type="number" className="w-24" />
-                      <span className="text-sm text-gray-500">/hour</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rating
-                  </label>
-                  <Select defaultValue="all">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Ratings</SelectItem>
-                      <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                      <SelectItem value="4.0">4.0+ Stars</SelectItem>
-                      <SelectItem value="3.5">3.5+ Stars</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Experience
-                  </label>
-                  <Select defaultValue="all">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Experience Levels</SelectItem>
-                      <SelectItem value="20">20+ Years</SelectItem>
-                      <SelectItem value="15">15+ Years</SelectItem>
-                      <SelectItem value="10">10+ Years</SelectItem>
-                      <SelectItem value="5">5+ Years</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Results Grid */}
-        {filteredLawyers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLawyers.map((lawyer) => (
-              <LawyerCard 
-                key={lawyer.id} 
-                lawyer={lawyer} 
-                onContact={() => {
-                  if (!user) {
-                    handleAuthClick('login');
-                  } else {
-                    console.log('Contact lawyer:', lawyer.name);
-                  }
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No lawyers found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search criteria or browse all lawyers.
-              </p>
+            <div className="flex items-center space-x-4">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
+                  <SelectItem value="price_low">Price: Low to High</SelectItem>
+                  <SelectItem value="price_high">Price: High to Low</SelectItem>
+                  <SelectItem value="reviews">Most Reviews</SelectItem>
+                </SelectContent>
+              </Select>
+              
               <Button 
                 variant="outline" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedSpecialty("all");
-                  setLocation("");
-                }}
+                onClick={() => setShowFilters(!showFilters)}
               >
-                Clear All Filters
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Filters
               </Button>
             </div>
           </div>
-        )}
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Filters</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price Range
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Input placeholder="Min" type="number" className="w-24" />
+                        <span>-</span>
+                        <Input placeholder="Max" type="number" className="w-24" />
+                        <span className="text-sm text-gray-500">/hour</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rating
+                    </label>
+                    <Select defaultValue="all">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Ratings</SelectItem>
+                        <SelectItem value="4.5">4.5+ Stars</SelectItem>
+                        <SelectItem value="4.0">4.0+ Stars</SelectItem>
+                        <SelectItem value="3.5">3.5+ Stars</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Experience
+                    </label>
+                    <Select defaultValue="all">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Experience Levels</SelectItem>
+                        <SelectItem value="20">20+ Years</SelectItem>
+                        <SelectItem value="15">15+ Years</SelectItem>
+                        <SelectItem value="10">10+ Years</SelectItem>
+                        <SelectItem value="5">5+ Years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Results Grid */}
+          {filteredLawyers.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLawyers.map((lawyer) => (
+                <LawyerCard 
+                  key={lawyer.id} 
+                  lawyer={lawyer} 
+                  onContact={() => {
+                    if (!user) {
+                      handleAuthClick('login');
+                    } else {
+                      console.log('Contact lawyer:', lawyer.name);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No lawyers found</h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting your search criteria or browse all lawyers.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setSelectedSpecialty("all");
+                    setLocation("");
+                  }}
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <AuthModal 
