@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Progress } from "@/components/ui/progress";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import SearchResults from "./pages/SearchResults";
 import LawyerDashboard from "./pages/LawyerDashboard";
@@ -15,8 +16,14 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const LoadingIndicator = () => {
-  const navigation = useNavigation();
-  const isLoading = navigation.state === "loading";
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   if (!isLoading) return null;
 
