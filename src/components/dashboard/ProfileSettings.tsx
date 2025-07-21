@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +16,22 @@ import {
 } from "lucide-react";
 import { useLinkedInProfile } from "@/hooks/useLinkedInProfile";
 import { useAuth } from "@/contexts/AuthContext";
+import { EditProfileModal } from "./EditProfileModal";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProfileSettings() {
   const { user } = useAuth();
   const { profile: linkedInProfile } = useLinkedInProfile(user?.id || '');
+  const { toast } = useToast();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!user) return null;
+
+  const handleSaveProfile = (profileData: any) => {
+    // Here you would normally update the user profile via API
+    console.log('Saving profile data:', profileData);
+    setIsEditModalOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -55,7 +66,11 @@ export function ProfileSettings() {
               </Badge>
             </div>
 
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsEditModalOpen(true)}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
@@ -214,7 +229,7 @@ export function ProfileSettings() {
             )}
 
             <div className="pt-4">
-              <Button>
+              <Button onClick={() => setIsEditModalOpen(true)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Profile Settings
               </Button>
@@ -222,6 +237,14 @@ export function ProfileSettings() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={user}
+        onSave={handleSaveProfile}
+      />
     </div>
   );
 }
