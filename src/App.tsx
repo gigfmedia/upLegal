@@ -3,8 +3,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { Progress } from "@/components/ui/progress";
 import Index from "./pages/Index";
 import SearchResults from "./pages/SearchResults";
 import LawyerDashboard from "./pages/LawyerDashboard";
@@ -13,6 +14,35 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const LoadingIndicator = () => {
+  const navigation = useNavigation();
+  const isLoading = navigation.state === "loading";
+
+  if (!isLoading) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50">
+      <Progress value={undefined} className="h-1 rounded-none" />
+    </div>
+  );
+};
+
+const AppContent = () => {
+  return (
+    <>
+      <LoadingIndicator />
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
+        <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -20,14 +50,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
-            <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
