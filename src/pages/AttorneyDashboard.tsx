@@ -31,6 +31,7 @@ import { ProjectPortfolio } from "@/components/dashboard/ProjectPortfolio";
 import { ProfileCompletion } from "@/components/dashboard/ProfileCompletion";
 import { ProfileSettings } from "@/components/dashboard/ProfileSettings";
 import { PublicProfileView } from "@/components/PublicProfileView";
+import { PublicProfileTab } from "@/components/dashboard/PublicProfileTab";
 import { LinkedInIntegration } from "@/components/linkedin/LinkedInIntegration";
 import { LinkedInProfileSync } from "@/components/linkedin/LinkedInProfileSync";
 
