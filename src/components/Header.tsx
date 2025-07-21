@@ -47,18 +47,6 @@ export function Header({ onAuthClick }: HeaderProps) {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
-                {user.role === 'lawyer' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNavigation('/attorney-dashboard')}
-                    className="hidden sm:flex"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Dashboard
-                  </Button>
-                )}
-                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
