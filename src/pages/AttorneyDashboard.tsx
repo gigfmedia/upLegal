@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { 
   User, 
   DollarSign, 
@@ -37,8 +37,8 @@ import { LinkedInProfileSync } from "@/components/linkedin/LinkedInProfileSync";
 
 const AttorneyDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
-  const [showPublicProfile, setShowPublicProfile] = useState(false);
 
   if (!user || user.role !== 'lawyer') {
     return <Navigate to="/" replace />;
@@ -114,7 +114,7 @@ const AttorneyDashboard = () => {
               <div className="flex space-x-3">
                 <Button 
                   variant="outline"
-                  onClick={() => setShowPublicProfile(true)}
+                  onClick={() => navigate('/profile', { state: { user, stats: dashboardStats } })}
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   View Public Profile
@@ -227,13 +227,6 @@ const AttorneyDashboard = () => {
             </TabsContent>
           </Tabs>
 
-          {/* Public Profile Modal */}
-          <PublicProfileView 
-            isOpen={showPublicProfile}
-            onClose={() => setShowPublicProfile(false)}
-            user={user}
-            stats={dashboardStats}
-          />
         </div>
       </div>
     </div>
