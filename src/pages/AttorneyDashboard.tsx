@@ -117,11 +117,11 @@ const AttorneyDashboard = () => {
                   onClick={() => navigate('/profile', { state: { user, stats: dashboardStats } })}
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  View Public Profile
+                  Ver Perfil Público
                 </Button>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <MessageSquare className="h-4 w-4 mr-2" />
-                  Messages
+                  Mensajes
                 </Button>
               </div>
             </div>
@@ -131,45 +131,45 @@ const AttorneyDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+                <CardTitle className="text-sm font-medium">Ganancias Totales</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">${dashboardStats.totalEarnings.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+$8,400 this month</p>
+                <p className="text-xs text-muted-foreground">+$8,400 este mes</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+                <CardTitle className="text-sm font-medium">Clientes Activos</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dashboardStats.activeClients}</div>
-                <p className="text-xs text-muted-foreground">+2 this week</p>
+                <p className="text-xs text-muted-foreground">+2 esta semana</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                <CardTitle className="text-sm font-medium">Tasa de Éxito</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dashboardStats.successRate}%</div>
-                <p className="text-xs text-muted-foreground">Above average</p>
+                <p className="text-xs text-muted-foreground">Sobre el promedio</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
+                <CardTitle className="text-sm font-medium">Vistas del Perfil</CardTitle>
                 <Eye className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{dashboardStats.profileViews}</div>
-                <p className="text-xs text-muted-foreground">+156 this week</p>
+                <p className="text-xs text-muted-foreground">+156 esta semana</p>
               </CardContent>
             </Card>
           </div>
@@ -177,11 +177,11 @@ const AttorneyDashboard = () => {
           {/* Main Dashboard Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="earnings">Earnings</TabsTrigger>
-              <TabsTrigger value="clients">Clients</TabsTrigger>
-              <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="overview">Resumen</TabsTrigger>
+              <TabsTrigger value="earnings">Ganancias</TabsTrigger>
+              <TabsTrigger value="clients">Clientes</TabsTrigger>
+              <TabsTrigger value="portfolio" data-tab="portfolio">Portafolio</TabsTrigger>
+              <TabsTrigger value="profile">Perfil</TabsTrigger>
               <TabsTrigger value="linkedin">
                 <Linkedin className="h-4 w-4 mr-2" />
                 LinkedIn
