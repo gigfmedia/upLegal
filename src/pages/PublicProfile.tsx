@@ -88,7 +88,7 @@ const PublicProfile = () => {
       <Header onAuthClick={handleAuthClick} />
       
       <div className="pt-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <div className="mb-6">
             <Button 
