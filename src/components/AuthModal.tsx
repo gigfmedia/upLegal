@@ -36,10 +36,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
     try {
       if (mode === 'signup') {
         if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
+          throw new Error('Las contraseñas no coinciden');
         }
         if (formData.password.length < 6) {
-          throw new Error('Password must be at least 6 characters');
+          throw new Error('La contraseña debe tener al menos 6 caracteres');
         }
         await signup(formData.email, formData.password, formData.name, formData.role);
       } else {
@@ -54,7 +54,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         role: 'client',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Ocurrió un error');
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +73,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             <Scale className="h-10 w-10 text-blue-600" />
           </div>
           <DialogTitle className="text-2xl">
-            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            {mode === 'login' ? 'Bienvenido de Vuelta' : 'Crear Cuenta'}
           </DialogTitle>
         </DialogHeader>
 
@@ -87,29 +87,29 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           {mode === 'signup' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">Nombre Completo</Label>
                 <Input
                   id="name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   required
-                  placeholder="Enter your full name"
+                  placeholder="Ingresa tu nombre completo"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Account Type</Label>
+                <Label htmlFor="role">Tipo de Cuenta</Label>
                 <Select 
                   value={formData.role} 
                   onValueChange={(value: 'client' | 'lawyer') => handleInputChange('role', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select account type" />
+                    <SelectValue placeholder="Selecciona tipo de cuenta" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
-                    <SelectItem value="client">Client - Looking for legal services</SelectItem>
-                    <SelectItem value="lawyer">Lawyer - Providing legal services</SelectItem>
+                    <SelectItem value="client">Cliente - Buscando servicios legales</SelectItem>
+                    <SelectItem value="lawyer">Abogado - Ofreciendo servicios legales</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -117,39 +117,39 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Correo Electrónico</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
               required
-              placeholder="Enter your email"
+              placeholder="Ingresa tu correo electrónico"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
               type="password"
               value={formData.password}
               onChange={(e) => handleInputChange('password', e.target.value)}
               required
-              placeholder="Enter your password"
+              placeholder="Ingresa tu contraseña"
             />
           </div>
 
           {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 required
-                placeholder="Confirm your password"
+                placeholder="Confirma tu contraseña"
               />
             </div>
           )}
@@ -160,31 +160,31 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             disabled={isLoading}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {mode === 'login' ? 'Sign In' : 'Create Account'}
+            {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
           </Button>
         </form>
 
         <div className="text-center text-sm text-gray-600">
           {mode === 'login' ? (
             <>
-              Don't have an account?{' '}
+              ¿No tenés cuenta?{' '}
               <button
                 type="button"
                 onClick={() => onModeChange('signup')}
                 className="text-blue-600 hover:underline font-medium"
               >
-                Sign up
+                Registrarse
               </button>
             </>
           ) : (
             <>
-              Already have an account?{' '}
+              ¿Ya tenés cuenta?{' '}
               <button
                 type="button"
                 onClick={() => onModeChange('login')}
                 className="text-blue-600 hover:underline font-medium"
               >
-                Sign in
+                Iniciar sesión
               </button>
             </>
           )}

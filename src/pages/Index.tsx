@@ -168,20 +168,20 @@ const Index = () => {
   ];
 
   const specialties = [
-    "Corporate Law",
-    "Criminal Defense", 
-    "Immigration Law",
-    "Family Law",
-    "Personal Injury",
-    "Real Estate Law",
-    "Employment Law",
-    "Intellectual Property",
-    "Estate Planning",
-    "Tax Law",
-    "Medical Malpractice",
-    "Patent Law",
-    "DUI Defense",
-    "Divorce"
+    "Derecho Corporativo",
+    "Defensa Penal", 
+    "Derecho Migratorio",
+    "Derecho de Familia",
+    "Accidentes y Lesiones",
+    "Derecho Inmobiliario",
+    "Derecho Laboral",
+    "Propiedad Intelectual",
+    "Planificación Patrimonial",
+    "Derecho Tributario",
+    "Negligencia Médica",
+    "Derecho de Patentes",
+    "Defensa DUI",
+    "Divorcio"
   ];
 
   const filteredLawyers = mockLawyers.filter(lawyer => {
@@ -212,12 +212,12 @@ const Index = () => {
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Find the Right
-            <span className="text-blue-600 block">Legal Expert</span>
+            Encuentra el
+            <span className="text-blue-600 block">Abogado Ideal</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Connect with experienced lawyers, get legal advice, and resolve your legal matters
-            with confidence. Professional legal services at your fingertips.
+            Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos 
+            legales con confianza. Servicios legales profesionales al alcance de tus manos.
           </p>
           
           {/* Search Section */}
@@ -226,7 +226,7 @@ const Index = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  placeholder="Search lawyers or legal specialties..."
+                  placeholder="Buscar abogados o especialidades legales..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-12"
@@ -235,10 +235,10 @@ const Index = () => {
               </div>
               <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
                 <SelectTrigger className="h-12">
-                  <SelectValue placeholder="All Specialties" />
+                  <SelectValue placeholder="Todas las Especialidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Specialties</SelectItem>
+                  <SelectItem value="all">Todas las Especialidades</SelectItem>
                   {specialties.map((specialty) => (
                     <SelectItem key={specialty} value={specialty}>
                       {specialty}
@@ -248,7 +248,7 @@ const Index = () => {
               </Select>
               <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={handleSearch}>
                 <Search className="mr-2 h-5 w-5" />
-                Search
+                Buscar
               </Button>
             </div>
           </div>
@@ -257,19 +257,19 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
-              <div className="text-gray-600">Verified Lawyers</div>
+              <div className="text-gray-600">Abogados Verificados</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">10k+</div>
-              <div className="text-gray-600">Cases Resolved</div>
+              <div className="text-gray-600">Casos Resueltos</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">4.8★</div>
-              <div className="text-gray-600">Average Rating</div>
+              <div className="text-gray-600">Calificación Promedio</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
-              <div className="text-gray-600">Support</div>
+              <div className="text-gray-600">Soporte</div>
             </div>
           </div>
         </div>
@@ -279,17 +279,17 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            Why Choose Our Platform?
+            ¿Por qué elegir nuestra plataforma?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center border-none shadow-lg">
               <CardHeader>
                 <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Verified Professionals</CardTitle>
+                <CardTitle>Profesionales Verificados</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  All lawyers are thoroughly vetted and verified with proper licensing and credentials.
+                  Todos los abogados están completamente verificados y cuentan con las licencias y credenciales apropiadas.
                 </p>
               </CardContent>
             </Card>
@@ -297,11 +297,11 @@ const Index = () => {
             <Card className="text-center border-none shadow-lg">
               <CardHeader>
                 <Scale className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Transparent Pricing</CardTitle>
+                <CardTitle>Precios Transparentes</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Clear, upfront pricing with no hidden fees. Know exactly what you'll pay before you start.
+                  Precios claros y directos sin tarifas ocultas. Sabés exactamente lo que vas a pagar antes de comenzar.
                 </p>
               </CardContent>
             </Card>
@@ -309,11 +309,11 @@ const Index = () => {
             <Card className="text-center border-none shadow-lg">
               <CardHeader>
                 <FileText className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Secure & Confidential</CardTitle>
+                <CardTitle>Seguro y Confidencial</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Your legal matters are protected with bank-level security and attorney-client privilege.
+                  Tus asuntos legales están protegidos con seguridad nivel bancario y secreto profesional abogado-cliente.
                 </p>
               </CardContent>
             </Card>
@@ -326,9 +326,9 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">
-              Featured Lawyers
+              Abogados Destacados
             </h2>
-            <Button variant="outline">View All</Button>
+            <Button variant="outline">Ver Todos</Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -350,7 +350,7 @@ const Index = () => {
 
           {filteredLawyers.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No lawyers found matching your criteria.</p>
+              <p className="text-gray-500 text-lg">No se encontraron abogados que coincidan con tus criterios.</p>
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -359,7 +359,7 @@ const Index = () => {
                 }}
                 className="mt-4"
               >
-                Clear Filters
+                Limpiar Filtros
               </Button>
             </div>
           )}
@@ -370,11 +370,11 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Are You a Legal Professional?
+            ¿Sos un Profesional del Derecho?
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Join our platform and connect with clients who need your expertise.
-            Build your practice and grow your legal career.
+            Unite a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
+            Hace crecer tu estudio y desarrollá tu carrera legal.
           </p>
           <Button 
             size="lg" 
@@ -382,7 +382,7 @@ const Index = () => {
             onClick={() => handleAuthClick('signup')}
             className="bg-white text-blue-600 hover:bg-gray-100"
           >
-            Join as a Lawyer
+            Unirse como Abogado
           </Button>
         </div>
       </section>

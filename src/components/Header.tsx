@@ -33,13 +33,13 @@ export function Header({ onAuthClick }: HeaderProps) {
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
-              Find Lawyers
+              Encontrar Abogados
             </a>
             <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
-              Legal Resources
+              Recursos Legales
             </a>
             <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
-              About
+              Acerca de
             </a>
           </nav>
 
@@ -64,23 +64,23 @@ export function Header({ onAuthClick }: HeaderProps) {
                         <p className="font-medium">{user.name}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                         <Badge variant="secondary" className="w-fit text-xs">
-                          {user.role === 'lawyer' ? 'Lawyer' : 'Client'}
+                          {user.role === 'lawyer' ? 'Abogado' : 'Cliente'}
                         </Badge>
                       </div>
                     </div>
                     <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      Perfil
                     </DropdownMenuItem>
                     {user.role === 'lawyer' && (
                       <DropdownMenuItem onClick={() => handleNavigation('/attorney-dashboard')}>
                         <Settings className="mr-2 h-4 w-4" />
-                        Dashboard
+                        Panel
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem onClick={logout}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Log out
+                      Cerrar Sesión
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -92,13 +92,13 @@ export function Header({ onAuthClick }: HeaderProps) {
                   onClick={() => onAuthClick('login')}
                   className="text-gray-600"
                 >
-                  Login
+                  Iniciar Sesión
                 </Button>
                 <Button 
                   onClick={() => onAuthClick('signup')}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  Sign Up
+                  Registrarse
                 </Button>
               </div>
             )}

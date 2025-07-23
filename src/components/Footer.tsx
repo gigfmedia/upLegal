@@ -33,7 +33,7 @@ const Footer = () => {
           <div className="flex items-center space-x-1 text-sm text-muted-foreground">
             <span>Hecho con</span>
             <Heart className="h-4 w-4 text-red-500 fill-current" />
-            <span>en España</span>
+            <span>en Chile</span>
           </div>
         </div>
       </div>

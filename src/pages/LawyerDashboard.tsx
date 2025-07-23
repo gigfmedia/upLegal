@@ -41,23 +41,23 @@ const LawyerDashboard = () => {
   }
 
   const specialtyOptions = [
-    'Corporate Law',
-    'Criminal Defense',
-    'Immigration Law',
-    'Family Law',
-    'Personal Injury',
-    'Real Estate Law',
-    'Employment Law',
-    'Intellectual Property',
-    'Tax Law',
-    'Bankruptcy Law',
+    'Derecho Corporativo',
+    'Defensa Penal',
+    'Derecho Migratorio',
+    'Derecho de Familia',
+    'Accidentes y Lesiones',
+    'Derecho Inmobiliario',
+    'Derecho Laboral',
+    'Propiedad Intelectual',
+    'Derecho Tributario',
+    'Derecho de Quiebras',
   ];
 
   const handleSave = async () => {
     try {
       await updateProfile(formData);
       setIsEditing(false);
-      setSuccess('Profile updated successfully!');
+      setSuccess('¡Perfil actualizado exitosamente!');
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -98,8 +98,8 @@ const LawyerDashboard = () => {
       <div className="pt-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Lawyer Dashboard</h1>
-            <p className="text-gray-600 mt-2">Manage your profile and track your practice</p>
+            <h1 className="text-3xl font-bold text-gray-900">Panel de Abogado</h1>
+            <p className="text-gray-600 mt-2">Administra tu perfil y hace seguimiento de tu práctica</p>
           </div>
 
           {success && (
@@ -113,45 +113,45 @@ const LawyerDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Clientes</CardTitle>
                 <User className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalClients}</div>
-                <p className="text-xs text-muted-foreground">+3 from last month</p>
+                <p className="text-xs text-muted-foreground">+3 del mes pasado</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Earnings</CardTitle>
+                <CardTitle className="text-sm font-medium">Ingresos Mensuales</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">${stats.monthlyEarnings.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
+                <p className="text-xs text-muted-foreground">+12% del mes pasado</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+                <CardTitle className="text-sm font-medium">Solicitudes Pendientes</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.pendingRequests}</div>
-                <p className="text-xs text-muted-foreground">2 urgent</p>
+                <p className="text-xs text-muted-foreground">2 urgentes</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed Cases</CardTitle>
+                <CardTitle className="text-sm font-medium">Casos Completados</CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.completedCases}</div>
-                <p className="text-xs text-muted-foreground">95% success rate</p>
+                <p className="text-xs text-muted-foreground">95% tasa de éxito</p>
               </CardContent>
             </Card>
           </div>
@@ -163,9 +163,9 @@ const LawyerDashboard = () => {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>Professional Profile</CardTitle>
+                      <CardTitle>Perfil Profesional</CardTitle>
                       <CardDescription>
-                        Update your profile information to attract more clients
+                        Actualiza tu información de perfil para atraer más clientes
                       </CardDescription>
                     </div>
                     <Button
@@ -182,38 +182,38 @@ const LawyerDashboard = () => {
                         setIsEditing(!isEditing);
                       }}
                     >
-                      {isEditing ? 'Cancel' : 'Edit Profile'}
+                      {isEditing ? 'Cancelar' : 'Editar Perfil'}
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
+                      <Label htmlFor="hourlyRate">Tarifa por Hora ($)</Label>
                       <Input
                         id="hourlyRate"
                         type="number"
                         value={formData.hourlyRate}
                         onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
                         disabled={!isEditing}
-                        placeholder="e.g., 300"
+                        placeholder="ej., 300"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">Ubicación</Label>
                       <Input
                         id="location"
                         value={formData.location}
                         onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                         disabled={!isEditing}
-                        placeholder="e.g., New York, NY"
+                        placeholder="ej., Santiago, Chile"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Legal Specialties</Label>
+                    <Label>Especialidades Legales</Label>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {formData.specialties.map((specialty) => (
                         <Badge key={specialty} variant="secondary" className="flex items-center gap-1">
@@ -233,7 +233,7 @@ const LawyerDashboard = () => {
                       <div className="flex gap-2">
                         <Select value={newSpecialty} onValueChange={setNewSpecialty}>
                           <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Add a specialty" />
+                            <SelectValue placeholder="Agregar una especialidad" />
                           </SelectTrigger>
                           <SelectContent className="bg-white">
                             {specialtyOptions.filter(s => !formData.specialties.includes(s)).map((specialty) => (
@@ -244,20 +244,20 @@ const LawyerDashboard = () => {
                           </SelectContent>
                         </Select>
                         <Button onClick={addSpecialty} disabled={!newSpecialty}>
-                          Add
+                          Agregar
                         </Button>
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="bio">Professional Bio</Label>
+                    <Label htmlFor="bio">Biografía Profesional</Label>
                     <Textarea
                       id="bio"
                       value={formData.bio}
                       onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                       disabled={!isEditing}
-                      placeholder="Describe your experience, expertise, and what makes you unique..."
+                      placeholder="Describe tu experiencia, expertise y lo que te hace único..."
                       className="min-h-[120px]"
                     />
                   </div>
@@ -265,7 +265,7 @@ const LawyerDashboard = () => {
                   {isEditing && (
                     <div className="flex gap-2">
                       <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                        Save Changes
+                        Guardar Cambios
                       </Button>
                     </div>
                   )}
@@ -277,32 +277,32 @@ const LawyerDashboard = () => {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                  <CardTitle>Acciones Rápidas</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Button className="w-full justify-start" variant="outline">
                     <Calendar className="mr-2 h-4 w-4" />
-                    Schedule Consultation
+                    Agendar Consulta
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <MessageSquare className="mr-2 h-4 w-4" />
-                    Message Clients
+                    Mensajes Clientes
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <FileText className="mr-2 h-4 w-4" />
-                    Create Case File
+                    Crear Expediente
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile Status</CardTitle>
+                  <CardTitle>Estado del Perfil</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Profile Completion</span>
+                      <span className="text-sm">Progreso del Perfil</span>
                       <span className="text-sm font-medium">
                         {user.profile?.specialties?.length && user.profile?.hourlyRate && user.profile?.location && user.profile?.bio ? '100%' : '75%'}
                       </span>
@@ -322,7 +322,7 @@ const LawyerDashboard = () => {
                         <Clock className="h-4 w-4 text-yellow-500" />
                       )}
                       <span className="text-gray-600">
-                        {user.profile?.verified ? 'Verified Profile' : 'Verification Pending'}
+                        {user.profile?.verified ? 'Perfil Verificado' : 'Verificación Pendiente'}
                       </span>
                     </div>
                   </div>

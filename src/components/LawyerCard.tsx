@@ -48,7 +48,7 @@ export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
             <div className="flex items-center space-x-1 mt-1">
               <Star className="h-4 w-4 text-yellow-400 fill-current" />
               <span className="font-medium text-gray-900">{lawyer.rating}</span>
-              <span className="text-gray-500">({lawyer.reviews} reviews)</span>
+              <span className="text-gray-500">({lawyer.reviews} reseñas)</span>
             </div>
             
             <div className="flex items-center space-x-1 mt-1 text-gray-600">
@@ -81,7 +81,7 @@ export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
               <span className="text-2xl font-bold text-gray-900">
                 ${lawyer.hourlyRate}
               </span>
-              <span className="text-gray-600">/hour</span>
+              <span className="text-gray-600">/hora</span>
             </div>
           </div>
 
@@ -92,7 +92,7 @@ export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              Contact
+              Contactar
             </Button>
             <Button 
               variant="outline" 
@@ -100,7 +100,7 @@ export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
               className="flex-1"
             >
               <Calendar className="h-4 w-4 mr-2" />
-              Book
+              Agendar
             </Button>
           </div>
         </div>
