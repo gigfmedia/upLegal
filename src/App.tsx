@@ -13,6 +13,7 @@ import LawyerDashboard from "./pages/LawyerDashboard";
 import AttorneyDashboard from "./pages/AttorneyDashboard";
 import PublicProfile from "./pages/PublicProfile";
 import NotFound from "./pages/NotFound";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -37,18 +38,21 @@ const LoadingIndicator = () => {
 
 const AppContent = () => {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <LoadingIndicator />
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
-        <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-        <Route path="/profile" element={<PublicProfile />} />
-        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/search" element={<SearchResults />} />
+          <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
+          <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
+          <Route path="/profile" element={<PublicProfile />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 };
 
