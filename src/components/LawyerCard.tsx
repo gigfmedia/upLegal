@@ -21,9 +21,10 @@ interface Lawyer {
 interface LawyerCardProps {
   lawyer: Lawyer;
   onContact: () => void;
+  onSchedule: () => void;
 }
 
-export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
+export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
       <CardHeader className="pb-4">
@@ -96,7 +97,7 @@ export function LawyerCard({ lawyer, onContact }: LawyerCardProps) {
             </Button>
             <Button 
               variant="outline" 
-              onClick={onContact}
+              onClick={onSchedule}
               className="flex-1"
             >
               <Calendar className="h-4 w-4 mr-2" />

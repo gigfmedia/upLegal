@@ -20,11 +20,16 @@ import { LawyerCard } from "@/components/LawyerCard";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
+import { ContactModal } from "@/components/ContactModal";
+import { ScheduleModal } from "@/components/ScheduleModal";
 
 const SearchResults = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedLawyer, setSelectedLawyer] = useState<any>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
   // Get search parameters from URL
@@ -443,7 +448,16 @@ const SearchResults = () => {
                     if (!user) {
                       handleAuthClick('login');
                     } else {
-                      console.log('Contact lawyer:', lawyer.name);
+                      setSelectedLawyer(lawyer);
+                      setShowContactModal(true);
+                    }
+                  }}
+                  onSchedule={() => {
+                    if (!user) {
+                      handleAuthClick('login');
+                    } else {
+                      setSelectedLawyer(lawyer);
+                      setShowScheduleModal(true);
                     }
                   }}
                 />
@@ -479,6 +493,22 @@ const SearchResults = () => {
         mode={authMode}
         onModeChange={setAuthMode}
       />
+
+      {selectedLawyer && (
+        <>
+          <ContactModal
+            isOpen={showContactModal}
+            onClose={() => setShowContactModal(false)}
+            lawyerName={selectedLawyer.name}
+          />
+          <ScheduleModal
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            lawyerName={selectedLawyer.name}
+            hourlyRate={selectedLawyer.hourlyRate}
+          />
+        </>
+      )}
     </div>
   );
 };
