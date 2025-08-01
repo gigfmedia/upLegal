@@ -40,10 +40,10 @@ export function ProfileSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            Basic Information
+            Información Básica
           </CardTitle>
           <CardDescription>
-            Your basic profile information
+            Tu información básica de perfil
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -62,7 +62,7 @@ export function ProfileSettings() {
               <h3 className="text-lg font-semibold">{user.name}</h3>
               <p className="text-gray-600">{user.email}</p>
               <Badge variant="secondary" className="mt-2">
-                {user.role === 'lawyer' ? 'Attorney' : 'Client'}
+                {user.role === 'lawyer' ? 'Abogado' : 'Cliente'}
               </Badge>
             </div>
 
@@ -72,7 +72,7 @@ export function ProfileSettings() {
               onClick={() => setIsEditModalOpen(true)}
             >
               <Edit className="h-4 w-4 mr-2" />
-              Edit
+              Editar
             </Button>
           </div>
         </CardContent>
@@ -84,22 +84,22 @@ export function ProfileSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Linkedin className="h-5 w-5 text-blue-600" />
-              LinkedIn Profile Data
+              Datos de Perfil de LinkedIn
               <CheckCircle className="h-4 w-4 text-green-500" />
             </CardTitle>
             <CardDescription>
-              Information synced from your LinkedIn profile
+              Información sincronizada desde tu perfil de LinkedIn
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Professional Information */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium mb-3">Professional Details</h4>
+                <h4 className="font-medium mb-3">Detalles Profesionales</h4>
                 <div className="space-y-3">
                   {linkedInProfile.headline && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Headline</label>
+                      <label className="text-sm font-medium text-gray-500">Título</label>
                       <p className="text-gray-900">{linkedInProfile.headline}</p>
                     </div>
                   )}
@@ -121,25 +121,25 @@ export function ProfileSettings() {
                   {linkedInProfile.connections_count && (
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-gray-500" />
-                      <span>{linkedInProfile.connections_count.toLocaleString()} connections</span>
+                      <span>{linkedInProfile.connections_count.toLocaleString()} conexiones</span>
                     </div>
                   )}
                 </div>
               </div>
 
               <div>
-                <h4 className="font-medium mb-3">Contact Information</h4>
+                <h4 className="font-medium mb-3">Información de Contacto</h4>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Name</label>
+                    <label className="text-sm font-medium text-gray-500">Nombre</label>
                     <p className="text-gray-900">
                       {linkedInProfile.first_name} {linkedInProfile.last_name}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Current Profile</label>
-                    <p className="text-gray-900">{user.profile?.location || 'Not set'}</p>
+                    <label className="text-sm font-medium text-gray-500">Perfil Actual</label>
+                    <p className="text-gray-900">{user.profile?.location || 'No establecido'}</p>
                   </div>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export function ProfileSettings() {
               <>
                 <Separator />
                 <div>
-                  <h4 className="font-medium mb-3">Professional Summary</h4>
+                  <h4 className="font-medium mb-3">Resumen Profesional</h4>
                   <p className="text-gray-700 leading-relaxed">
                     {linkedInProfile.summary}
                   </p>
@@ -162,10 +162,10 @@ export function ProfileSettings() {
             <Separator />
             <div className="flex justify-between items-center text-sm">
               <span className="text-gray-500">
-                Last synced: {new Date(linkedInProfile.updated_at).toLocaleDateString()}
+                Última sincronización: {new Date(linkedInProfile.updated_at).toLocaleDateString()}
               </span>
               <Badge variant="secondary">
-                LinkedIn Connected
+                LinkedIn Conectado
               </Badge>
             </div>
           </CardContent>
@@ -176,44 +176,44 @@ export function ProfileSettings() {
       {user.role === 'lawyer' && (
         <Card>
           <CardHeader>
-            <CardTitle>Attorney Profile Settings</CardTitle>
+            <CardTitle>Configuración del Perfil de Abogado</CardTitle>
             <CardDescription>
-              Manage your professional attorney profile
+              Gestiona tu perfil profesional de abogado
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Specialties</label>
+                <label className="text-sm font-medium text-gray-500">Especialidades</label>
                 <p className="text-gray-900">
-                  {user.profile?.specialties?.join(", ") || "Not specified"}
+                  {user.profile?.specialties?.join(", ") || "No especificado"}
                 </p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-500">Hourly Rate</label>
+                <label className="text-sm font-medium text-gray-500">Tarifa por Hora</label>
                 <p className="text-gray-900">
-                  ${user.profile?.hourlyRate || 0}/hour
+                  ${user.profile?.hourlyRate || 0}/hora
                 </p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-500">Location</label>
+                <label className="text-sm font-medium text-gray-500">Ubicación</label>
                 <p className="text-gray-900">
-                  {user.profile?.location || linkedInProfile?.location || "Not specified"}
+                  {user.profile?.location || linkedInProfile?.location || "No especificado"}
                 </p>
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-500">Verification Status</label>
+                <label className="text-sm font-medium text-gray-500">Estado de Verificación</label>
                 <div className="flex items-center gap-2">
                   {user.profile?.verified ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-green-600">Verified</span>
+                      <span className="text-green-600">Verificado</span>
                     </>
                   ) : (
-                    <Badge variant="outline">Pending Verification</Badge>
+                    <Badge variant="outline">Verificación Pendiente</Badge>
                   )}
                 </div>
               </div>
@@ -231,7 +231,7 @@ export function ProfileSettings() {
             <div className="pt-4">
               <Button onClick={() => setIsEditModalOpen(true)}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Profile Settings
+                Editar Configuración del Perfil
               </Button>
             </div>
           </CardContent>

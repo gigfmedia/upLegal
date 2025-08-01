@@ -25,36 +25,36 @@ export function ProfileOverview({ user, stats, recentActivity }: ProfileOverview
       {/* Performance Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle>Performance This Month</CardTitle>
-          <CardDescription>Your key metrics and performance indicators</CardDescription>
+          <CardTitle>Rendimiento de Este Mes</CardTitle>
+          <CardDescription>Tus métricas clave e indicadores de rendimiento</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Response Time</span>
+                <span className="text-sm text-gray-600">Tiempo de Respuesta</span>
                 <Badge variant="secondary">{stats.responseTime}</Badge>
               </div>
               <Progress value={85} className="h-2" />
-              <p className="text-xs text-gray-500">Faster than 85% of attorneys</p>
+              <p className="text-xs text-gray-500">Más rápido que el 85% de los abogados</p>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Client Satisfaction</span>
+                <span className="text-sm text-gray-600">Satisfacción del Cliente</span>
                 <Badge variant="default">98%</Badge>
               </div>
               <Progress value={98} className="h-2" />
-              <p className="text-xs text-gray-500">Excellent client feedback</p>
+              <p className="text-xs text-gray-500">Excelente feedback de clientes</p>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Project Success</span>
+                <span className="text-sm text-gray-600">Éxito de Proyectos</span>
                 <Badge variant="default">{stats.successRate}%</Badge>
               </div>
               <Progress value={stats.successRate} className="h-2" />
-              <p className="text-xs text-gray-500">Above platform average</p>
+              <p className="text-xs text-gray-500">Por encima del promedio de la plataforma</p>
             </div>
           </div>
         </CardContent>
@@ -65,10 +65,10 @@ export function ProfileOverview({ user, stats, recentActivity }: ProfileOverview
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest client interactions and transactions</CardDescription>
+              <CardTitle>Actividad Reciente</CardTitle>
+              <CardDescription>Tus últimas interacciones con clientes y transacciones</CardDescription>
             </div>
-            <Button variant="outline" size="sm">View All</Button>
+            <Button variant="outline" size="sm">Ver Todo</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -88,7 +88,7 @@ export function ProfileOverview({ user, stats, recentActivity }: ProfileOverview
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">{activity.description}</p>
-                  <p className="text-sm text-gray-500">Client: {activity.client}</p>
+                  <p className="text-sm text-gray-500">Cliente: {activity.client}</p>
                 </div>
                 <div className="flex-shrink-0 text-right">
                   {activity.amount && (
@@ -107,26 +107,26 @@ export function ProfileOverview({ user, stats, recentActivity }: ProfileOverview
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks and shortcuts</CardDescription>
+          <CardTitle>Acciones Rápidas</CardTitle>
+          <CardDescription>Tareas comunes y accesos directos</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
             <Button variant="outline" className="justify-start h-12">
               <MessageSquare className="mr-3 h-4 w-4" />
-              Check Messages
+              Revisar Mensajes
             </Button>
             <Button variant="outline" className="justify-start h-12">
               <Calendar className="mr-3 h-4 w-4" />
-              Schedule Meeting
+              Agendar Reunión
             </Button>
             <Button variant="outline" className="justify-start h-12">
               <FileText className="mr-3 h-4 w-4" />
-              Create Proposal
+              Crear Propuesta
             </Button>
             <Button variant="outline" className="justify-start h-12">
               <TrendingUp className="mr-3 h-4 w-4" />
-              View Analytics
+              Ver Analíticas
             </Button>
           </div>
         </CardContent>

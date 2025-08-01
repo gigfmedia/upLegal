@@ -105,7 +105,7 @@ export function ProjectPortfolio() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Proyectos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mockProjects.length}</div>
@@ -114,7 +114,7 @@ export function ProjectPortfolio() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Featured Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Proyectos Destacados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{featuredProjects.length}</div>
@@ -123,7 +123,7 @@ export function ProjectPortfolio() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
+            <CardTitle className="text-sm font-medium">Valor del Portafolio</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -134,7 +134,7 @@ export function ProjectPortfolio() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">Calificación Prom.</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center">
@@ -150,18 +150,18 @@ export function ProjectPortfolio() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Project Portfolio</CardTitle>
-              <CardDescription>Showcase your best work and manage your portfolio</CardDescription>
+              <CardTitle>Portafolio de Proyectos</CardTitle>
+              <CardDescription>Muestra tu mejor trabajo y gestiona tu portafolio</CardDescription>
             </div>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Add Project
+              Agregar Proyecto
             </Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search projects..."
+              placeholder="Buscar proyectos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -174,7 +174,7 @@ export function ProjectPortfolio() {
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <Star className="h-5 w-5 text-yellow-500 mr-2" />
-                Featured Projects
+                Proyectos Destacados
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {featuredProjects.map((project) => (
@@ -230,11 +230,11 @@ export function ProjectPortfolio() {
                         <div className="flex space-x-2 pt-2">
                           <Button size="sm" variant="outline">
                             <Eye className="h-4 w-4 mr-1" />
-                            View
+                            Ver
                           </Button>
                           <Button size="sm" variant="outline">
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            Editar
                           </Button>
                         </div>
                       </div>
@@ -250,7 +250,7 @@ export function ProjectPortfolio() {
             <div>
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <Briefcase className="h-5 w-5 mr-2" />
-                Other Projects
+                Otros Proyectos
               </h3>
               <div className="space-y-4">
                 {otherProjects.map((project) => (

@@ -57,40 +57,40 @@ export function EarningsStats({ stats }: EarningsStatsProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">Este Mes</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.monthlyEarnings.toLocaleString()}</div>
             <p className="text-xs text-green-600 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +12% from last month
+              +12% desde el mes pasado
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+            <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$1,200</div>
             <p className="text-xs text-yellow-600 mt-1">
-              1 payment pending
+              1 pago pendiente
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
+            <CardTitle className="text-sm font-medium">Saldo Disponible</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$7,200</div>
             <Button size="sm" className="mt-2">
-              Withdraw
+              Retirar
             </Button>
           </CardContent>
         </Card>
@@ -99,18 +99,18 @@ export function EarningsStats({ stats }: EarningsStatsProps) {
       {/* Monthly Goal Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Goal Progress</CardTitle>
-          <CardDescription>Track your progress towards monthly earnings target</CardDescription>
+          <CardTitle>Progreso de Meta Mensual</CardTitle>
+          <CardDescription>Seguí tu progreso hacia la meta de ganancias mensual</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Goal: $10,000</span>
+              <span className="text-sm font-medium">Meta: $10,000</span>
               <span className="text-sm text-gray-600">${stats.monthlyEarnings.toLocaleString()} / $10,000</span>
             </div>
             <Progress value={(stats.monthlyEarnings / 10000) * 100} className="h-3" />
             <p className="text-sm text-gray-600">
-              ${(10000 - stats.monthlyEarnings).toLocaleString()} remaining to reach your goal
+              ${(10000 - stats.monthlyEarnings).toLocaleString()} restantes para alcanzar tu meta
             </p>
           </div>
         </CardContent>
@@ -121,12 +121,12 @@ export function EarningsStats({ stats }: EarningsStatsProps) {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>Your latest payments and invoices</CardDescription>
+              <CardTitle>Transacciones Recientes</CardTitle>
+              <CardDescription>Tus últimos pagos y facturas</CardDescription>
             </div>
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
-              Export
+              Exportar
             </Button>
           </div>
         </CardHeader>
@@ -148,7 +148,7 @@ export function EarningsStats({ stats }: EarningsStatsProps) {
                     ${transaction.amount.toLocaleString()}
                   </p>
                   <Badge variant={transaction.status === 'completed' ? 'default' : 'secondary'}>
-                    {transaction.status}
+                    {transaction.status === 'completed' ? 'completado' : transaction.status === 'pending' ? 'pendiente' : transaction.status}
                   </Badge>
                 </div>
               </div>

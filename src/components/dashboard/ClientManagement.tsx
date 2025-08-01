@@ -98,7 +98,7 @@ export function ClientManagement() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{mockClients.length}</div>
@@ -107,7 +107,7 @@ export function ClientManagement() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Proyectos Activos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -118,7 +118,7 @@ export function ClientManagement() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Avg. Rating</CardTitle>
+            <CardTitle className="text-sm font-medium">Calificación Prom.</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center">
@@ -129,7 +129,7 @@ export function ClientManagement() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Client Retention</CardTitle>
+            <CardTitle className="text-sm font-medium">Retención de Clientes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">92%</div>
@@ -142,15 +142,15 @@ export function ClientManagement() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Client Management</CardTitle>
-              <CardDescription>Manage your client relationships and projects</CardDescription>
+              <CardTitle>Gestión de Clientes</CardTitle>
+              <CardDescription>Gestiona las relaciones con tus clientes y proyectos</CardDescription>
             </div>
-            <Button>Add New Client</Button>
+            <Button>Agregar Nuevo Cliente</Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search clients..."
+              placeholder="Buscar clientes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -171,12 +171,12 @@ export function ClientManagement() {
                       <h3 className="font-medium text-gray-900">{client.name}</h3>
                       <Badge variant={getStatusColor(client.status)}>
                         {getStatusIcon(client.status)}
-                        <span className="ml-1">{client.status}</span>
+                        <span className="ml-1">{client.status === 'active' ? 'activo' : client.status === 'completed' ? 'completado' : client.status === 'pending' ? 'pendiente' : client.status}</span>
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">{client.email}</p>
                     {client.currentProject && (
-                      <p className="text-sm text-blue-600">Current: {client.currentProject}</p>
+                      <p className="text-sm text-blue-600">Actual: {client.currentProject}</p>
                     )}
                   </div>
                 </div>
@@ -185,7 +185,7 @@ export function ClientManagement() {
                   <div className="flex items-center space-x-4">
                     <div className="text-sm">
                       <p className="font-medium">${client.totalSpent.toLocaleString()}</p>
-                      <p className="text-gray-600">{client.projectsCompleted} projects</p>
+                      <p className="text-gray-600">{client.projectsCompleted} proyectos</p>
                     </div>
                     <div className="flex items-center space-x-1">
                       {[...Array(5)].map((_, i) => (
@@ -209,7 +209,7 @@ export function ClientManagement() {
                       </Button>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Last contact: {client.lastContact}</p>
+                  <p className="text-xs text-gray-500 mt-1">Último contacto: {client.lastContact}</p>
                 </div>
               </div>
             ))}
