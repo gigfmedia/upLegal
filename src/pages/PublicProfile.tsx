@@ -57,28 +57,28 @@ const PublicProfile = () => {
     ],
     certifications: ["New York State Bar", "Federal Court Admission", "Arbitration Certified"],
     languages: ["English (Native)", "Spanish (Fluent)", "French (Conversational)"],
-    availability: "Available",
-    responseTime: "< 2 hours",
+    availability: "Disponible",
+    responseTime: "< 2 horas",
     completionRate: "98%"
   };
 
   const recentWork = [
     {
-      title: "Corporate Merger Advisory",
-      description: "Successfully advised on $50M acquisition deal between two tech companies.",
-      date: "Completed 2 weeks ago",
+      title: "Asesoría en Fusión Corporativa",
+      description: "Asesoré exitosamente en una adquisición de $50M entre dos empresas tecnológicas.",
+      date: "Completado hace 2 semanas",
       rating: 5
     },
     {
-      title: "Employment Law Consultation",
-      description: "Provided comprehensive employment law guidance for startup company.",
-      date: "Completed 1 month ago", 
+      title: "Consultoría en Derecho Laboral",
+      description: "Proporcioné orientación integral en derecho laboral para empresa startup.",
+      date: "Completado hace 1 mes", 
       rating: 5
     },
     {
-      title: "Contract Negotiation",
-      description: "Negotiated complex software licensing agreement.",
-      date: "Completed 2 months ago",
+      title: "Negociación de Contratos",
+      description: "Negocié un acuerdo complejo de licenciamiento de software.",
+      date: "Completado hace 2 meses",
       rating: 4
     }
   ];
@@ -97,14 +97,14 @@ const PublicProfile = () => {
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+              Volver al Dashboard
             </Button>
           </div>
 
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Public Profile</h1>
-            <p className="text-gray-600">This is how your profile appears to potential clients</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Perfil Público</h1>
+            <p className="text-gray-600">Así es como tu perfil aparece a potenciales clientes</p>
           </div>
 
           <div className="space-y-6">
@@ -123,7 +123,7 @@ const PublicProfile = () => {
                       {publicProfile.availability}
                     </Badge>
                     <Badge variant="secondary">
-                      Top Rated Attorney
+                      Abogado Mejor Calificado
                     </Badge>
                   </div>
 
@@ -137,7 +137,7 @@ const PublicProfile = () => {
                       <div className="flex items-center">
                         <Star className="h-5 w-5 text-yellow-500 mr-1" />
                         <span className="font-semibold">{user.profile?.rating || 4.9}</span>
-                        <span className="text-gray-600 ml-1">({user.profile?.reviews || 127} reviews)</span>
+                        <span className="text-gray-600 ml-1">({user.profile?.reviews || 127} reseñas)</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -156,15 +156,15 @@ const PublicProfile = () => {
                     <div className="flex items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
-                        <span>Responds in {publicProfile.responseTime}</span>
+                        <span>Responde en {publicProfile.responseTime}</span>
                       </div>
                       <div className="flex items-center">
                         <ThumbsUp className="h-4 w-4 mr-1" />
-                        <span>{publicProfile.completionRate} job success</span>
+                        <span>{publicProfile.completionRate} éxito en trabajos</span>
                       </div>
                       <div className="flex items-center">
                         <Eye className="h-4 w-4 mr-1" />
-                        <span>{stats.profileViews} profile views</span>
+                        <span>{stats.profileViews} visualizaciones del perfil</span>
                       </div>
                     </div>
                   </div>
@@ -176,11 +176,11 @@ const PublicProfile = () => {
                     <div className="space-y-2">
                       <Button className="w-full bg-blue-600 hover:bg-blue-700">
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        Contact Me
+                        Contáctame
                       </Button>
                       <Button variant="outline" className="w-full">
                         <Calendar className="h-4 w-4 mr-2" />
-                        Schedule Call
+                        Agendar Llamada
                       </Button>
                     </div>
                   </div>
@@ -191,7 +191,7 @@ const PublicProfile = () => {
             {/* About Section */}
             <Card>
               <CardHeader>
-                <CardTitle>About</CardTitle>
+                <CardTitle>Acerca de</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed mb-6">
@@ -200,7 +200,7 @@ const PublicProfile = () => {
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold mb-3">Education</h4>
+                    <h4 className="font-semibold mb-3">Educación</h4>
                     <ul className="space-y-2">
                       {publicProfile.education.map((edu, index) => (
                         <li key={index} className="text-gray-600">{edu}</li>
@@ -209,7 +209,7 @@ const PublicProfile = () => {
                   </div>
                   
                   <div>
-                    <h4 className="font-semibold mb-3">Certifications</h4>
+                    <h4 className="font-semibold mb-3">Certificaciones</h4>
                     <ul className="space-y-2">
                       {publicProfile.certifications.map((cert, index) => (
                         <li key={index} className="text-gray-600">{cert}</li>
@@ -223,7 +223,7 @@ const PublicProfile = () => {
             {/* Experience Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Experience</CardTitle>
+                <CardTitle>Experiencia</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -239,7 +239,7 @@ const PublicProfile = () => {
             {/* Recent Work & Reviews */}
             <Card>
               <CardHeader>
-                <CardTitle>Recent Work & Client Feedback</CardTitle>
+                <CardTitle>Trabajos Recientes y Comentarios de Clientes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -265,7 +265,7 @@ const PublicProfile = () => {
             {/* Languages */}
             <Card>
               <CardHeader>
-                <CardTitle>Languages</CardTitle>
+                <CardTitle>Idiomas</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-3">
