@@ -40,6 +40,10 @@ const AttorneyDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
+  const handleTabNavigation = (tabValue: string) => {
+    setActiveTab(tabValue);
+  };
+
   if (!user || user.role !== 'lawyer') {
     return <Navigate to="/" replace />;
   }
@@ -198,7 +202,7 @@ const AttorneyDashboard = () => {
                   />
                 </div>
                 <div>
-                  <ProfileCompletion user={user} />
+                  <ProfileCompletion user={user} onNavigateToTab={handleTabNavigation} />
                 </div>
               </div>
             </TabsContent>

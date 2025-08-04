@@ -17,9 +17,10 @@ import {
 
 interface ProfileCompletionProps {
   user: any;
+  onNavigateToTab?: (tabValue: string) => void;
 }
 
-export function ProfileCompletion({ user }: ProfileCompletionProps) {
+export function ProfileCompletion({ user, onNavigateToTab }: ProfileCompletionProps) {
   const { toast } = useToast();
   const completionItems = [
     {
@@ -69,89 +70,57 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
   const completedCount = completionItems.filter(item => item.completed).length;
   const completionPercentage = (completedCount / completionItems.length) * 100;
 
+  const handleNavigation = (tab: string, toastTitle: string, toastDescription: string) => {
+    if (onNavigateToTab) {
+      onNavigateToTab(tab);
+      toast({
+        title: toastTitle,
+        description: toastDescription,
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo navegar a la sección solicitada.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const nextSteps = [
     {
       id: 'add_photo',
       title: "Agregar Foto Profesional",
       description: "Sube una foto profesional para generar confianza con los clientes",
       priority: "high",
-      action: () => {
-        // Navigate to profile tab
-        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTrigger) {
-          profileTrigger.click();
-          toast({
-            title: "Foto de Perfil",
-            description: "Navega a la sección de configuración de perfil para subir tu foto profesional.",
-          });
-        }
-      }
+      action: () => handleNavigation("profile", "Foto de Perfil", "Navega a la sección de configuración de perfil para subir tu foto profesional.")
     },
     {
       id: 'create_portfolio',
       title: "Crear Portafolio",
       description: "Agrega 2-3 casos de estudio para mostrar tu experiencia",
       priority: "high",
-      action: () => {
-        // Navigate to portfolio tab
-        const portfolioTrigger = document.querySelector('[value="portfolio"]') as HTMLElement;
-        if (portfolioTrigger) {
-          portfolioTrigger.click();
-          toast({
-            title: "Portafolio",
-            description: "Agrega casos de estudio exitosos para atraer más clientes.",
-          });
-        }
-      }
+      action: () => handleNavigation("portfolio", "Portafolio", "Agrega casos de estudio exitosos para atraer más clientes.")
     },
     {
       id: 'get_verified',
       title: "Obtener Verificación",
       description: "Envía documentos para verificación profesional",
       priority: "medium",
-      action: () => {
-        // Navigate to profile tab
-        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTrigger) {
-          profileTrigger.click();
-          toast({
-            title: "Verificación Profesional",
-            description: "La verificación aumenta tu credibilidad y atrae más clientes.",
-          });
-        }
-      }
+      action: () => handleNavigation("profile", "Verificación Profesional", "La verificación aumenta tu credibilidad y atrae más clientes.")
     },
     {
       id: 'complete_bio',
       title: "Completar Biografía",
       description: "Escribe una biografía detallada de tu experiencia profesional",
       priority: user.profile?.bio && user.profile.bio.length > 50 ? "low" : "high",
-      action: () => {
-        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTrigger) {
-          profileTrigger.click();
-          toast({
-            title: "Biografía Profesional",
-            description: "Una biografía detallada ayuda a los clientes a conocerte mejor.",
-          });
-        }
-      }
+      action: () => handleNavigation("profile", "Biografía Profesional", "Una biografía detallada ayuda a los clientes a conocerte mejor.")
     },
     {
       id: 'set_rates',
       title: "Establecer Tarifas",
       description: "Define tus tarifas por hora para consultas legales",
       priority: user.profile?.hourlyRate && user.profile.hourlyRate > 0 ? "low" : "medium",
-      action: () => {
-        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTrigger) {
-          profileTrigger.click();
-          toast({
-            title: "Tarifas por Hora",
-            description: "Establece tarifas competitivas para atraer clientes.",
-          });
-        }
-      }
+      action: () => handleNavigation("profile", "Tarifas por Hora", "Establece tarifas competitivas para atraer clientes.")
     }
   ].filter(step => {
     // Only show steps that are actually needed
