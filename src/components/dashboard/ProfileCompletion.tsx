@@ -74,10 +74,16 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Sube una foto profesional para generar confianza con los clientes",
       priority: "high",
       action: () => {
-        // Navigate to profile settings photo section
-        const photoSection = document.getElementById('profile-photo-section');
-        if (photoSection) {
-          photoSection.scrollIntoView({ behavior: 'smooth' });
+        // Navigate to profile tab and focus on photo section
+        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTab) {
+          profileTab.click();
+          setTimeout(() => {
+            const photoSection = document.getElementById('profile-photo-section');
+            if (photoSection) {
+              photoSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
         }
       }
     },
@@ -88,9 +94,19 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       priority: "high",
       action: () => {
         // Navigate to portfolio tab
-        const portfolioTab = document.querySelector('[data-tab="portfolio"]') as HTMLElement;
+        const portfolioTab = document.querySelector('[value="portfolio"]') as HTMLElement;
         if (portfolioTab) {
           portfolioTab.click();
+          // Show a helpful toast
+          setTimeout(() => {
+            const event = new CustomEvent('show-toast', {
+              detail: {
+                title: "Portafolio",
+                description: "Agrega casos de estudio exitosos para atraer más clientes"
+              }
+            });
+            window.dispatchEvent(event);
+          }, 200);
         }
       }
     },
@@ -100,14 +116,69 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Envía documentos para verificación profesional",
       priority: "medium",
       action: () => {
-        // Navigate to verification section
-        const verificationSection = document.getElementById('verification-section');
-        if (verificationSection) {
-          verificationSection.scrollIntoView({ behavior: 'smooth' });
+        // Navigate to profile tab and show verification info
+        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTab) {
+          profileTab.click();
+          setTimeout(() => {
+            const event = new CustomEvent('show-toast', {
+              detail: {
+                title: "Verificación Profesional",
+                description: "La verificación aumenta tu credibilidad y atrae más clientes"
+              }
+            });
+            window.dispatchEvent(event);
+            
+            const verificationSection = document.getElementById('verification-section');
+            if (verificationSection) {
+              verificationSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 200);
+        }
+      }
+    },
+    {
+      id: 'complete_bio',
+      title: "Completar Biografía",
+      description: "Escribe una biografía detallada de tu experiencia profesional",
+      priority: user.profile?.bio && user.profile.bio.length > 50 ? "low" : "high",
+      action: () => {
+        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTab) {
+          profileTab.click();
+          setTimeout(() => {
+            const bioSection = document.getElementById('bio-section');
+            if (bioSection) {
+              bioSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+        }
+      }
+    },
+    {
+      id: 'set_rates',
+      title: "Establecer Tarifas",
+      description: "Define tus tarifas por hora para consultas legales",
+      priority: user.profile?.hourlyRate && user.profile.hourlyRate > 0 ? "low" : "medium",
+      action: () => {
+        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTab) {
+          profileTab.click();
+          setTimeout(() => {
+            const ratesSection = document.getElementById('rates-section');
+            if (ratesSection) {
+              ratesSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
         }
       }
     }
-  ];
+  ].filter(step => {
+    // Only show steps that are actually needed
+    if (step.id === 'complete_bio' && user.profile?.bio && user.profile.bio.length > 50) return false;
+    if (step.id === 'set_rates' && user.profile?.hourlyRate && user.profile.hourlyRate > 0) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
