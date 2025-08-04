@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import { 
   CheckCircle, 
   AlertCircle, 
@@ -19,6 +20,7 @@ interface ProfileCompletionProps {
 }
 
 export function ProfileCompletion({ user }: ProfileCompletionProps) {
+  const { toast } = useToast();
   const completionItems = [
     {
       id: 'basic_info',
@@ -74,16 +76,14 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Sube una foto profesional para generar confianza con los clientes",
       priority: "high",
       action: () => {
-        // Navigate to profile tab and focus on photo section
-        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTab) {
-          profileTab.click();
-          setTimeout(() => {
-            const photoSection = document.getElementById('profile-photo-section');
-            if (photoSection) {
-              photoSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 100);
+        // Navigate to profile tab
+        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTrigger) {
+          profileTrigger.click();
+          toast({
+            title: "Foto de Perfil",
+            description: "Navega a la sección de configuración de perfil para subir tu foto profesional.",
+          });
         }
       }
     },
@@ -94,19 +94,13 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       priority: "high",
       action: () => {
         // Navigate to portfolio tab
-        const portfolioTab = document.querySelector('[value="portfolio"]') as HTMLElement;
-        if (portfolioTab) {
-          portfolioTab.click();
-          // Show a helpful toast
-          setTimeout(() => {
-            const event = new CustomEvent('show-toast', {
-              detail: {
-                title: "Portafolio",
-                description: "Agrega casos de estudio exitosos para atraer más clientes"
-              }
-            });
-            window.dispatchEvent(event);
-          }, 200);
+        const portfolioTrigger = document.querySelector('[value="portfolio"]') as HTMLElement;
+        if (portfolioTrigger) {
+          portfolioTrigger.click();
+          toast({
+            title: "Portafolio",
+            description: "Agrega casos de estudio exitosos para atraer más clientes.",
+          });
         }
       }
     },
@@ -116,24 +110,14 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Envía documentos para verificación profesional",
       priority: "medium",
       action: () => {
-        // Navigate to profile tab and show verification info
-        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTab) {
-          profileTab.click();
-          setTimeout(() => {
-            const event = new CustomEvent('show-toast', {
-              detail: {
-                title: "Verificación Profesional",
-                description: "La verificación aumenta tu credibilidad y atrae más clientes"
-              }
-            });
-            window.dispatchEvent(event);
-            
-            const verificationSection = document.getElementById('verification-section');
-            if (verificationSection) {
-              verificationSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 200);
+        // Navigate to profile tab
+        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTrigger) {
+          profileTrigger.click();
+          toast({
+            title: "Verificación Profesional",
+            description: "La verificación aumenta tu credibilidad y atrae más clientes.",
+          });
         }
       }
     },
@@ -143,15 +127,13 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Escribe una biografía detallada de tu experiencia profesional",
       priority: user.profile?.bio && user.profile.bio.length > 50 ? "low" : "high",
       action: () => {
-        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTab) {
-          profileTab.click();
-          setTimeout(() => {
-            const bioSection = document.getElementById('bio-section');
-            if (bioSection) {
-              bioSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 100);
+        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTrigger) {
+          profileTrigger.click();
+          toast({
+            title: "Biografía Profesional",
+            description: "Una biografía detallada ayuda a los clientes a conocerte mejor.",
+          });
         }
       }
     },
@@ -161,15 +143,13 @@ export function ProfileCompletion({ user }: ProfileCompletionProps) {
       description: "Define tus tarifas por hora para consultas legales",
       priority: user.profile?.hourlyRate && user.profile.hourlyRate > 0 ? "low" : "medium",
       action: () => {
-        const profileTab = document.querySelector('[value="profile"]') as HTMLElement;
-        if (profileTab) {
-          profileTab.click();
-          setTimeout(() => {
-            const ratesSection = document.getElementById('rates-section');
-            if (ratesSection) {
-              ratesSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }, 100);
+        const profileTrigger = document.querySelector('[value="profile"]') as HTMLElement;
+        if (profileTrigger) {
+          profileTrigger.click();
+          toast({
+            title: "Tarifas por Hora",
+            description: "Establece tarifas competitivas para atraer clientes.",
+          });
         }
       }
     }
