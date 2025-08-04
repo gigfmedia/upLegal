@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Header } from "@/components/Header";
+import { ContactModal } from "@/components/ContactModal";
+import { ScheduleModal } from "@/components/ScheduleModal";
 import { 
   Star, 
   MapPin, 
@@ -22,6 +24,8 @@ import {
 const PublicProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   
   // Get user data passed from the dashboard or use default data
   const { user, stats } = location.state || {
@@ -174,13 +178,20 @@ const PublicProfile = () => {
                       ${publicProfile.hourlyRate}/hr
                     </div>
                     <div className="space-y-2">
-                      <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                      <Button 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        onClick={() => setIsContactModalOpen(true)}
+                      >
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        Contáctame
+                        Contactar
                       </Button>
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setIsScheduleModalOpen(true)}
+                      >
                         <Calendar className="h-4 w-4 mr-2" />
-                        Agendar Llamada
+                        Agendar
                       </Button>
                     </div>
                   </div>
@@ -280,6 +291,19 @@ const PublicProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
+        lawyerName={user.name}
+      />
+      <ScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        lawyerName={user.name}
+        hourlyRate={publicProfile.hourlyRate}
+      />
     </div>
   );
 };
