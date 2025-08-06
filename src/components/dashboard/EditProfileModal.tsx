@@ -140,18 +140,10 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   const onBasicSubmit = (data: BasicInfoData) => {
     onSave({ type: "basic", data: { ...data, avatarUrl } });
-    toast({
-      title: "Perfil Actualizado",
-      description: "Tu información básica se ha guardado exitosamente.",
-    });
   };
 
   const onAttorneySubmit = (data: AttorneyProfileData) => {
     onSave({ type: "attorney", data: { ...data, specialties: selectedSpecialties, languages: selectedLanguages } });
-    toast({
-      title: "Perfil de Abogado Actualizado", 
-      description: "Tu perfil profesional se ha guardado exitosamente.",
-    });
   };
 
   return (

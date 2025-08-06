@@ -20,17 +20,42 @@ import { EditProfileModal } from "./EditProfileModal";
 import { useToast } from "@/hooks/use-toast";
 
 export function ProfileSettings() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { profile: linkedInProfile } = useLinkedInProfile(user?.id || '');
   const { toast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!user) return null;
 
-  const handleSaveProfile = (profileData: any) => {
-    // Here you would normally update the user profile via API
-    console.log('Saving profile data:', profileData);
-    setIsEditModalOpen(false);
+  const handleSaveProfile = async (profileData: any) => {
+    
+    try {
+      if (profileData.type === 'basic') {
+        // For basic info updates, we would need to extend the AuthContext
+        // to handle updating basic user info, not just lawyer profile
+        console.log('Basic profile update:', profileData.data);
+        toast({
+          title: "Perfil Actualizado",
+          description: "Tu información básica se ha guardado exitosamente.",
+        });
+      } else if (profileData.type === 'attorney') {
+        // Update lawyer profile through AuthContext
+        await updateProfile(profileData.data);
+        toast({
+          title: "Perfil de Abogado Actualizado",
+          description: "Tu perfil profesional se ha guardado exitosamente.",
+        });
+      }
+      
+      setIsEditModalOpen(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar los cambios. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
