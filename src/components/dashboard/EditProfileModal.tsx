@@ -27,19 +27,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { User, Briefcase, X, Plus } from "lucide-react";
+import { FileUpload } from "@/components/ui/file-upload";
 
 const basicInfoSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email"),
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  email: z.string().email("Por favor ingresa un email válido"),
   phone: z.string().optional(),
   location: z.string().optional(),
   bio: z.string().optional(),
+  avatarUrl: z.string().optional(),
 });
 
 const attorneyProfileSchema = z.object({
-  specialties: z.array(z.string()).min(1, "Please select at least one specialty"),
-  hourlyRate: z.number().min(0, "Hourly rate must be positive"),
-  experience: z.number().min(0, "Experience must be positive"),
+  specialties: z.array(z.string()).min(1, "Por favor selecciona al menos una especialidad"),
+  hourlyRate: z.number().min(0, "La tarifa por hora debe ser positiva"),
+  experience: z.number().min(0, "La experiencia debe ser positiva"),
   education: z.string().optional(),
   barNumber: z.string().optional(),
   languages: z.array(z.string()).optional(),
@@ -57,31 +59,31 @@ interface EditProfileModalProps {
 }
 
 const legalSpecialties = [
-  "Corporate Law",
-  "Family Law", 
-  "Criminal Law",
-  "Real Estate Law",
-  "Employment Law",
-  "Personal Injury",
-  "Immigration Law",
-  "Bankruptcy Law",
-  "Tax Law",
-  "Intellectual Property",
-  "Estate Planning",
-  "Contract Law"
+  "Derecho Corporativo",
+  "Derecho de Familia", 
+  "Derecho Penal",
+  "Derecho Inmobiliario",
+  "Derecho Laboral",
+  "Lesiones Personales",
+  "Derecho de Inmigración",
+  "Derecho de Quiebras",
+  "Derecho Tributario",
+  "Propiedad Intelectual",
+  "Planificación Patrimonial",
+  "Derecho Contractual"
 ];
 
 const languages = [
-  "English",
-  "Spanish", 
-  "French",
-  "German",
-  "Chinese",
-  "Japanese",
-  "Portuguese",
-  "Russian",
-  "Arabic",
-  "Italian"
+  "Inglés",
+  "Español", 
+  "Francés",
+  "Alemán",
+  "Chino",
+  "Japonés",
+  "Portugués",
+  "Ruso",
+  "Árabe",
+  "Italiano"
 ];
 
 export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileModalProps) {
@@ -93,6 +95,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(
     user?.profile?.languages || []
   );
+  const [avatarUrl, setAvatarUrl] = useState<string>(user?.profile?.avatarUrl || '');
 
   const basicForm = useForm<BasicInfoData>({
     resolver: zodResolver(basicInfoSchema),
@@ -102,6 +105,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       phone: user?.profile?.phone || "",
       location: user?.profile?.location || "",
       bio: user?.profile?.bio || "",
+      avatarUrl: user?.profile?.avatarUrl || "",
     },
   });
 
@@ -135,18 +139,18 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   };
 
   const onBasicSubmit = (data: BasicInfoData) => {
-    onSave({ type: "basic", data });
+    onSave({ type: "basic", data: { ...data, avatarUrl } });
     toast({
-      title: "Profile Updated",
-      description: "Your basic information has been saved successfully.",
+      title: "Perfil Actualizado",
+      description: "Tu información básica se ha guardado exitosamente.",
     });
   };
 
   const onAttorneySubmit = (data: AttorneyProfileData) => {
     onSave({ type: "attorney", data: { ...data, specialties: selectedSpecialties, languages: selectedLanguages } });
     toast({
-      title: "Attorney Profile Updated", 
-      description: "Your professional profile has been saved successfully.",
+      title: "Perfil de Abogado Actualizado", 
+      description: "Tu perfil profesional se ha guardado exitosamente.",
     });
   };
 
@@ -154,9 +158,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
-            Update your profile information and professional settings
+            Actualiza tu información de perfil y configuración profesional
           </DialogDescription>
         </DialogHeader>
 
@@ -164,12 +168,12 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="basic" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              Basic Info
+              Información Básica
             </TabsTrigger>
             {user?.role === 'lawyer' && (
               <TabsTrigger value="attorney" className="flex items-center gap-2">
                 <Briefcase className="h-4 w-4" />
-                Attorney Profile
+                Perfil de Abogado
               </TabsTrigger>
             )}
           </TabsList>
@@ -178,21 +182,14 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
             <Form {...basicForm}>
               <form onSubmit={basicForm.handleSubmit(onBasicSubmit)} className="space-y-6">
                 {/* Profile Picture Section */}
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/placeholder.svg" alt={user?.name} />
-                    <AvatarFallback className="bg-blue-600 text-white text-xl">
-                      {user?.name?.charAt(0)?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Button type="button" variant="outline" size="sm">
-                      Change Photo
-                    </Button>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      JPG, GIF or PNG. 2MB max.
-                    </p>
-                  </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Foto de Perfil</label>
+                  <FileUpload
+                    onUpload={setAvatarUrl}
+                    bucket="avatars"
+                    userId={user?.id}
+                    currentImageUrl={avatarUrl}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -201,9 +198,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel>Nombre Completo</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your full name" {...field} />
+                          <Input placeholder="Ingresa tu nombre completo" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -217,7 +214,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your email" {...field} />
+                          <Input placeholder="Ingresa tu email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -229,9 +226,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
+                        <FormLabel>Número de Teléfono</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your phone number" {...field} />
+                          <Input placeholder="Ingresa tu número de teléfono" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -243,9 +240,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="location"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Location</FormLabel>
+                        <FormLabel>Ubicación</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your location" {...field} />
+                          <Input placeholder="Ingresa tu ubicación" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -257,25 +254,25 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   control={basicForm.control}
                   name="bio"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bio</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Tell us about yourself..."
-                          className="min-h-[100px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  <FormItem>
+                    <FormLabel>Biografía</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Cuéntanos sobre ti..."
+                        className="min-h-[100px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                   )}
                 />
 
                 <div className="flex justify-end gap-3">
                   <Button type="button" variant="outline" onClick={onClose}>
-                    Cancel
+                    Cancelar
                   </Button>
-                  <Button type="submit">Save Changes</Button>
+                  <Button type="submit">Guardar Cambios</Button>
                 </div>
               </form>
             </Form>
@@ -291,11 +288,11 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="hourlyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Hourly Rate ($)</FormLabel>
+                          <FormLabel>Tarifa por Hora ($)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Enter hourly rate"
+                              placeholder="Ingresa tu tarifa por hora"
                               {...field}
                               onChange={(e) => field.onChange(Number(e.target.value))}
                             />
@@ -310,11 +307,11 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="experience"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Years of Experience</FormLabel>
+                          <FormLabel>Años de Experiencia</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="Enter years of experience"
+                              placeholder="Ingresa tus años de experiencia"
                               {...field}
                               onChange={(e) => field.onChange(Number(e.target.value))}
                             />
@@ -329,9 +326,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="education"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Education</FormLabel>
+                          <FormLabel>Educación</FormLabel>
                           <FormControl>
-                            <Input placeholder="Law school and degree" {...field} />
+                            <Input placeholder="Universidad y título" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -343,9 +340,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="barNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Bar Number</FormLabel>
+                          <FormLabel>Número de Colegiatura</FormLabel>
                           <FormControl>
-                            <Input placeholder="Enter bar number" {...field} />
+                            <Input placeholder="Ingresa tu número de colegiatura" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -355,7 +352,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
                   {/* Specialties */}
                   <div>
-                    <FormLabel>Legal Specialties</FormLabel>
+                    <FormLabel>Especialidades Legales</FormLabel>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                       {legalSpecialties.map((specialty) => (
                         <Badge
@@ -369,13 +366,13 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       ))}
                     </div>
                     {selectedSpecialties.length === 0 && (
-                      <p className="text-sm text-red-500 mt-1">Please select at least one specialty</p>
+                      <p className="text-sm text-red-500 mt-1">Por favor selecciona al menos una especialidad</p>
                     )}
                   </div>
 
                   {/* Languages */}
                   <div>
-                    <FormLabel>Languages</FormLabel>
+                    <FormLabel>Idiomas</FormLabel>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                       {languages.map((language) => (
                         <Badge
@@ -397,9 +394,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
-                          <FormLabel className="text-base">Available for hire</FormLabel>
+                          <FormLabel className="text-base">Disponible para contratación</FormLabel>
                           <div className="text-sm text-muted-foreground">
-                            Allow clients to contact you for new projects
+                            Permite que los clientes te contacten para nuevos proyectos
                           </div>
                         </div>
                         <FormControl>
@@ -414,9 +411,9 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
                   <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" onClick={onClose}>
-                      Cancel
+                      Cancelar
                     </Button>
-                    <Button type="submit">Save Changes</Button>
+                    <Button type="submit">Guardar Cambios</Button>
                   </div>
                 </form>
               </Form>
