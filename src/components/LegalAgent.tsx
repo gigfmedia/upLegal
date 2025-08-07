@@ -109,6 +109,9 @@ export default function LegalAgent() {
 
   // Inicialización del chat
   useEffect(() => {
+    // Limpiar localStorage para mostrar los cambios (temporal)
+    localStorage.removeItem('legalAgentMessages');
+    
     const savedMessages = localStorage.getItem('legalAgentMessages');
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
