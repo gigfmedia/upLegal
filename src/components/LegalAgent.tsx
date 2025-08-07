@@ -21,6 +21,7 @@ interface Message {
   fileName?: string;
   timestamp: string;
   matches?: Abogado[];
+  showBadges?: boolean;
 }
 
 interface Abogado {
@@ -112,12 +113,21 @@ export default function LegalAgent() {
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
     } else {
-      setMessages([{
-        id: generateId(),
-        sender: 'agent',
-        text: 'Hola 👋, ¿qué tipo de abogado necesitas?',
-        timestamp: formatTime(new Date()),
-      }]);
+      setMessages([
+        {
+          id: generateId(),
+          sender: 'agent',
+          text: 'Hola 👋, ¿qué tipo de abogado necesitas?',
+          timestamp: formatTime(new Date()),
+        },
+        {
+          id: generateId(),
+          sender: 'agent',
+          text: 'Puedes seleccionar una especialidad:',
+          timestamp: formatTime(new Date()),
+          showBadges: true,
+        }
+      ]);
     }
 
     const savedOpen = localStorage.getItem('legalAgentOpen');
@@ -314,23 +324,6 @@ Mensaje del usuario:
               </button>
             </div>
 
-            {/* Badges de especialidades - SIEMPRE VISIBLES */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {especialidadesValidas.map((esp) => (
-                <button
-                  key={esp}
-                  onClick={() => handleBadgeClick(esp)}
-                  className={`text-xs px-3 py-1 rounded-full transition ${
-                    selectedEspecialidad === esp
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
-                  }`}
-                >
-                  {esp}
-                </button>
-              ))}
-            </div>
-
             {/* Mensajes */}
             <div className="h-[50vh] overflow-y-auto flex flex-col gap-2 p-2 rounded bg-background">
               {messages.map((msg) => (
@@ -355,6 +348,25 @@ Mensaje del usuario:
                       </div>
                     </div>
                   </div>
+
+                  {/* Badges de especialidades cuando el mensaje lo requiere */}
+                  {msg.showBadges && (
+                    <div className="flex flex-wrap gap-2 mt-2 max-w-[80%]">
+                      {especialidadesValidas.map((esp) => (
+                        <button
+                          key={esp}
+                          onClick={() => handleBadgeClick(esp)}
+                          className={`text-xs px-3 py-1 rounded-full transition ${
+                            selectedEspecialidad === esp
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
+                          }`}
+                        >
+                          {esp}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {msg.matches && msg.matches.length > 0 && (
                     <Card className="mt-2 bg-card border max-w-[80%] shadow-sm self-start animate-in fade-in">
