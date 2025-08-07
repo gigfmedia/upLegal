@@ -120,13 +120,7 @@ export default function LegalAgent() {
         {
           id: generateId(),
           sender: 'agent',
-          text: 'Hola 👋, ¿qué tipo de abogado necesitas?',
-          timestamp: formatTime(new Date()),
-        },
-        {
-          id: generateId(),
-          sender: 'agent',
-          text: 'Puedes seleccionar una especialidad:',
+          text: 'Hola 👋, ¿qué tipo de abogado necesitas?, puedes seleccionar una especialidad:',
           timestamp: formatTime(new Date()),
           showBadges: true,
         }
