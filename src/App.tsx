@@ -14,6 +14,7 @@ import AttorneyDashboard from "./pages/AttorneyDashboard";
 import PublicProfile from "./pages/PublicProfile";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
+import LegalAgent from "./components/LegalAgent";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const AppContent = () => {
         </Routes>
       </main>
       <Footer />
+      <LegalAgent />
     </div>
   );
 };
