@@ -190,7 +190,7 @@ export function LinkedInProfileSync() {
                 <div>
                   <span className="text-gray-500">Current:</span>
                   <p className="text-gray-900 mt-1">
-                    {field.currentValue || <em className="text-gray-400">Not set</em>}
+                    {field.currentValue || <span className="text-gray-400">Not set</span>}
                   </p>
                 </div>
                 <div>
