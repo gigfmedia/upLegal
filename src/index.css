@@ -103,7 +103,12 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 
-  em, i {
-    font-style: normal;
+  /* Remove all italic styles globally */
+  *, *::before, *::after {
+    font-style: normal !important;
+  }
+  
+  em, i, cite, dfn, address {
+    font-style: normal !important;
   }
 }
