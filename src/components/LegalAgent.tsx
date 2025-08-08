@@ -13,6 +13,8 @@ import {
   XIcon,
 } from 'lucide-react';
 import { askMistral } from '../utils/askLLM';
+import { ContactModal } from './ContactModal';
+import { ScheduleModal } from './ScheduleModal';
 
 interface Message {
   id: string;
@@ -44,6 +46,9 @@ export default function LegalAgent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedEspecialidad, setSelectedEspecialidad] = useState<string | null>(null);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [selectedLawyer, setSelectedLawyer] = useState<Abogado | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -298,6 +303,16 @@ Mensaje del usuario:
     }
   };
 
+  const handleContact = (abogado: Abogado) => {
+    setSelectedLawyer(abogado);
+    setContactModalOpen(true);
+  };
+
+  const handleSchedule = (abogado: Abogado) => {
+    setSelectedLawyer(abogado);
+    setScheduleModalOpen(true);
+  };
+
   return (
     <>
       {/* Chat Container */}
@@ -394,11 +409,21 @@ Mensaje del usuario:
                                 ${abogado.tarifa.toLocaleString()}/hora
                               </span>
                               <div className="flex gap-1">
-                                <Button size="sm" variant="outline" className="text-xs h-6 px-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="text-xs h-6 px-2"
+                                  onClick={() => handleContact(abogado)}
+                                >
                                   <MessageCircleIcon className="w-3 h-3 mr-1" />
                                   Contactar
                                 </Button>
-                                <Button size="sm" variant="default" className="text-xs h-6 px-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="default" 
+                                  className="text-xs h-6 px-2"
+                                  onClick={() => handleSchedule(abogado)}
+                                >
                                   <CalendarIcon className="w-3 h-3 mr-1" />
                                   Agendar
                                 </Button>
@@ -466,6 +491,23 @@ Mensaje del usuario:
         >
           <MessageCircleIcon className="w-6 h-6" />
         </button>
+      )}
+
+      {/* Modales */}
+      {selectedLawyer && (
+        <>
+          <ContactModal
+            isOpen={contactModalOpen}
+            onClose={() => setContactModalOpen(false)}
+            lawyerName={selectedLawyer.nombre}
+          />
+          <ScheduleModal
+            isOpen={scheduleModalOpen}
+            onClose={() => setScheduleModalOpen(false)}
+            lawyerName={selectedLawyer.nombre}
+            hourlyRate={selectedLawyer.tarifa}
+          />
+        </>
       )}
     </>
   );
