@@ -190,6 +190,38 @@ export default function LegalAgent() {
   // Procesamiento de mensajes
   const processInput = useCallback(
     async (text: string) => {
+      // Si hay una especialidad seleccionada, usar esa en lugar de detectar
+      if (selectedEspecialidad) {
+        const ciudadDetectada = reconocerCiudad(text);
+        
+        // Filtrar abogados con la especialidad seleccionada
+        const matches = mockAbogados.filter((a) => {
+          const ciudadMatch = ciudadDetectada ? normalize(a.ciudad).includes(normalize(ciudadDetectada)) : true;
+          const especialidadMatch = normalize(a.especialidad).includes(normalize(selectedEspecialidad));
+          return ciudadMatch && especialidadMatch;
+        });
+
+        const respuesta = matches.length > 0 
+          ? `Encontré ${matches.length} abogado(s) especialista(s) en ${selectedEspecialidad}${ciudadDetectada ? ` en ${ciudadDetectada}` : ''}:`
+          : `No encontré abogados especialistas en ${selectedEspecialidad}${ciudadDetectada ? ` en ${ciudadDetectada}` : ''}. ¿Te gustaría buscar en otra ciudad?`;
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: generateId(),
+            sender: 'agent',
+            text: respuesta,
+            timestamp: formatTime(new Date()),
+            matches: matches.length > 0 ? matches : undefined,
+          },
+        ]);
+
+        // Limpiar la especialidad seleccionada después de la búsqueda
+        setSelectedEspecialidad(null);
+        return;
+      }
+
+      // Lógica original para detección por IA
       const prompt = `
 Eres un asistente legal chileno. El usuario necesita ayuda legal.
 
@@ -256,7 +288,7 @@ Mensaje del usuario:
         }]);
       }
     },
-    []
+    [selectedEspecialidad]
   );
 
   const handleSend = () => {
