@@ -223,7 +223,7 @@ export function ProjectPortfolio() {
                           ))}
                         </div>
                         
-                        <blockquote className="text-sm italic text-gray-600 border-l-2 border-gray-200 pl-3">
+                        <blockquote className="text-sm text-gray-600 border-l-2 border-gray-200 pl-3">
                           "{project.testimonial}"
                         </blockquote>
                         
