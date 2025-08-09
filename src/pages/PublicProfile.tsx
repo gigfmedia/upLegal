@@ -303,6 +303,7 @@ const PublicProfile = () => {
         onClose={() => setIsScheduleModalOpen(false)}
         lawyerName={user.name}
         hourlyRate={publicProfile.hourlyRate}
+        lawyerId={user.id || ""}
       />
     </div>
   );

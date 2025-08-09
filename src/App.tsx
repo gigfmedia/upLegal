@@ -12,6 +12,8 @@ import SearchResults from "./pages/SearchResults";
 import LawyerDashboard from "./pages/LawyerDashboard";
 import AttorneyDashboard from "./pages/AttorneyDashboard";
 import PublicProfile from "./pages/PublicProfile";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCanceled from "./pages/PaymentCanceled";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 import LegalAgent from "./components/LegalAgent";
@@ -48,6 +50,8 @@ const AppContent = () => {
           <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
           <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
           <Route path="/profile" element={<PublicProfile />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-canceled" element={<PaymentCanceled />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

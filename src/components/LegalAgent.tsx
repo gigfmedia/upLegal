@@ -27,6 +27,7 @@ interface Message {
 }
 
 interface Abogado {
+  id: string;
   nombre: string;
   especialidad: string;
   ciudad: string;
@@ -67,6 +68,7 @@ export default function LegalAgent() {
   // Base de datos de abogados
   const mockAbogados: Abogado[] = [
     {
+      id: "1",
       nombre: "María González",
       especialidad: "penal",
       ciudad: "Santiago",
@@ -78,6 +80,7 @@ export default function LegalAgent() {
       tags: ["delitos", "defensa", "tribunal"]
     },
     {
+      id: "2",
       nombre: "Carlos Rodríguez",
       especialidad: "civil",
       ciudad: "Valparaíso",
@@ -89,6 +92,7 @@ export default function LegalAgent() {
       tags: ["contratos", "demandas", "mediación"]
     },
     {
+      id: "3",
       nombre: "Ana Martínez",
       especialidad: "laboral",
       ciudad: "Concepción",
@@ -100,6 +104,7 @@ export default function LegalAgent() {
       tags: ["despidos", "sindicatos", "negociación"]
     },
     {
+      id: "4",
       nombre: "Luis Fernández",
       especialidad: "familiar",
       ciudad: "Santiago",
@@ -538,6 +543,7 @@ Mensaje del usuario:
             onClose={() => setScheduleModalOpen(false)}
             lawyerName={selectedLawyer.nombre}
             hourlyRate={selectedLawyer.tarifa}
+            lawyerId={selectedLawyer.id}
           />
         </>
       )}

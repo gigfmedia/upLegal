@@ -7,15 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   lawyerName: string;
   hourlyRate: number;
+  lawyerId: string;
 }
 
-export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate }: ScheduleModalProps) {
+export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerId }: ScheduleModalProps) {
+  const { user } = useAuth();
+  const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,29 +45,67 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate }: Sched
     { value: "other", label: "Otro" }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const cost = (parseInt(formData.duration) / 60) * hourlyRate;
-    
-    toast({
-      title: "Cita agendada",
-      description: `Tu cita con ${lawyerName} ha sido solicitada para el ${formData.date} a las ${formData.time}. Costo estimado: $${cost.toLocaleString()}`,
-    });
-    
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      date: "",
-      time: "",
-      duration: "60",
-      consultationType: "",
-      description: ""
-    });
-    
-    onClose();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "Debes iniciar sesión para solicitar una cita",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Calculate total amount in cents
+      const totalAmount = estimatedCost * 100; // Convert to cents
+      
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          lawyerId: lawyerId,
+          amount: totalAmount,
+          serviceDescription: `${formData.consultationType} - ${formData.description}`,
+        }
+      });
+
+      if (error) throw error;
+
+      // Open Stripe checkout in a new tab
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Redirigiendo a Stripe",
+          description: "Se ha abierto una nueva pestaña para completar el pago",
+        });
+        
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          date: "",
+          time: "",
+          duration: "60",
+          consultationType: "",
+          description: ""
+        });
+        
+        onClose();
+      }
+    } catch (error: any) {
+      console.error('Error creating payment:', error);
+      toast({
+        title: "Error",
+        description: "Error al procesar el pago. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -224,8 +267,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate }: Sched
             <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit">
-              Solicitar cita
+            <Button
+              type="submit"
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Procesando..." : `Pagar $${estimatedCost.toLocaleString()}`}
             </Button>
           </div>
         </form>

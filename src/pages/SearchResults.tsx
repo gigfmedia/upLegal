@@ -506,6 +506,7 @@ const SearchResults = () => {
             onClose={() => setShowScheduleModal(false)}
             lawyerName={selectedLawyer.name}
             hourlyRate={selectedLawyer.hourlyRate}
+            lawyerId={selectedLawyer.id || ""}
           />
         </>
       )}
