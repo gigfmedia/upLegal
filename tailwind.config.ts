@@ -19,7 +19,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				sans: ['Apercu Pro', 'system-ui', 'sans-serif'],
+				sans: ['system-ui', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
