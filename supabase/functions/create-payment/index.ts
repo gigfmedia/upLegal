@@ -68,7 +68,7 @@ serve(async (req) => {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "clp",
             product_data: { 
               name: `Legal Service - ${serviceDescription}`,
               description: `Legal service provided by lawyer ID: ${lawyerId}`
@@ -105,7 +105,7 @@ serve(async (req) => {
         total_amount: amount,
         lawyer_amount: lawyerAmount,
         platform_fee: platformFee,
-        currency: "usd",
+        currency: "clp",
         status: "pending",
         service_description: serviceDescription,
       });
