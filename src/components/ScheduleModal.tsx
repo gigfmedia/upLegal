@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -50,24 +50,23 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     
     if (!user) {
       toast({
-        title: "Error",
-        description: "Debes iniciar sesión para solicitar una cita",
-        variant: "destructive",
+        title: "Continuar como invitado",
+        description: "Procesaremos el pago sin iniciar sesión.",
       });
-      return;
     }
 
     setIsProcessing(true);
 
     try {
-      // Calculate total amount in cents
-      const totalAmount = estimatedCost * 100; // Convert to cents
+      // CLP es moneda sin decimales; enviar el monto total sin convertir a centavos
+      const totalAmount = Math.round(estimatedCost);
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
           lawyerId: lawyerId,
           amount: totalAmount,
           serviceDescription: `${formData.consultationType} - ${formData.description}`,
+          email: formData.email,
         }
       });
 
@@ -133,6 +132,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             <Calendar className="h-5 w-5" />
             <span>Agendar cita con {lawyerName}</span>
           </DialogTitle>
+          <DialogDescription>
+            Completa los datos para agendar y pagar en línea. Usa tarjeta de prueba si estás en modo test.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">

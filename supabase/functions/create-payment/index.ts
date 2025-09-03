@@ -9,8 +9,9 @@ const corsHeaders = {
 
 interface PaymentRequest {
   lawyerId: string;
-  amount: number; // Amount in cents
+  amount: number; // Amount in currency's smallest unit (CLP has no decimals)
   serviceDescription: string;
+  email?: string;
 }
 
 serve(async (req) => {
@@ -26,20 +27,23 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
 
-    // Get authenticated user
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    
-    if (!user) {
-      throw new Error("User not authenticated");
+    // Parse request body
+    const { lawyerId, amount, serviceDescription, email }: PaymentRequest = await req.json();
+
+    // Try to get authenticated user (optional)
+    let userId: string | null = null;
+    let customerEmail = email || "guest@example.com";
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      const { data: userData } = await supabaseClient.auth.getUser(token);
+      if (userData?.user) {
+        userId = userData.user.id;
+        customerEmail = userData.user.email || customerEmail;
+      }
     }
 
-    // Parse request body
-    const { lawyerId, amount, serviceDescription }: PaymentRequest = await req.json();
-
-    console.log("Creating payment for:", { userId: user.id, lawyerId, amount, serviceDescription });
+    console.log("Creating payment for:", { userId, lawyerId, amount, serviceDescription, customerEmail });
 
     // Calculate platform fee (15%) and lawyer amount (85%)
     const platformFee = Math.round(amount * 0.15);
@@ -52,7 +56,7 @@ serve(async (req) => {
 
     // Check if customer exists
     const customers = await stripe.customers.list({ 
-      email: user.email!, 
+      email: customerEmail, 
       limit: 1 
     });
     
@@ -64,7 +68,7 @@ serve(async (req) => {
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email!,
+      customer_email: customerId ? undefined : customerEmail,
       line_items: [
         {
           price_data: {
@@ -82,7 +86,7 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/payment-canceled`,
       metadata: {
-        client_user_id: user.id,
+        client_user_id: userId ?? "guest",
         lawyer_user_id: lawyerId,
         platform_fee: platformFee.toString(),
         lawyer_amount: lawyerAmount.toString(),
@@ -99,7 +103,7 @@ serve(async (req) => {
     const { error: insertError } = await supabaseService
       .from("payments")
       .insert({
-        client_user_id: user.id,
+        client_user_id: userId,
         lawyer_user_id: lawyerId,
         stripe_session_id: session.id,
         total_amount: amount,
