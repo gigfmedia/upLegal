@@ -43,7 +43,18 @@ serve(async (req) => {
       }
     }
 
-    console.log("Creating payment for:", { userId, lawyerId, amount, serviceDescription, customerEmail });
+    // Convert lawyerId to UUID format if it's a number, otherwise keep as is
+    let lawyerUuid: string | null = null;
+    if (lawyerId) {
+      // If it's a number, we'll skip storing it as UUID for now
+      // In a real app, you'd have actual lawyer UUIDs
+      if (typeof lawyerId === 'string' && lawyerId.match(/^[0-9a-f-]{36}$/i)) {
+        lawyerUuid = lawyerId;
+      }
+      // For demo purposes, we'll store as null and keep the lawyerId in metadata
+    }
+
+    console.log("Creating payment for:", { userId, lawyerId, lawyerUuid, amount, serviceDescription, customerEmail });
 
     // Enforce minimum amount in CLP to satisfy Stripe's 50¢ USD equivalent
     const MIN_AMOUNT_CLP = 1000;
@@ -104,11 +115,23 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    console.log("Inserting payment record:", {
+      client_user_id: userId,
+      lawyer_user_id: lawyerUuid,
+      stripe_session_id: session.id,
+      total_amount: finalAmount,
+      lawyer_amount: lawyerAmount,
+      platform_fee: platformFee,
+      currency: "clp",
+      status: "pending",
+      service_description: serviceDescription,
+    });
+
     const { error: insertError } = await supabaseService
       .from("payments")
       .insert({
         client_user_id: userId,
-        lawyer_user_id: lawyerId,
+        lawyer_user_id: lawyerUuid,
         stripe_session_id: session.id,
         total_amount: finalAmount,
         lawyer_amount: lawyerAmount,
@@ -120,7 +143,7 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Error inserting payment:", insertError);
-      throw new Error("Failed to create payment record");
+      throw new Error(`Failed to create payment record: ${insertError.message}`);
     }
 
     console.log("Payment created successfully:", session.id, "amount:", finalAmount);
