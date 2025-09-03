@@ -45,9 +45,13 @@ serve(async (req) => {
 
     console.log("Creating payment for:", { userId, lawyerId, amount, serviceDescription, customerEmail });
 
-    // Calculate platform fee (15%) and lawyer amount (85%)
-    const platformFee = Math.round(amount * 0.15);
-    const lawyerAmount = amount - platformFee;
+    // Enforce minimum amount in CLP to satisfy Stripe's 50¢ USD equivalent
+    const MIN_AMOUNT_CLP = 1000;
+    const finalAmount = Math.max(Math.round(amount), MIN_AMOUNT_CLP);
+
+    // Calculate platform fee (15%) and lawyer amount (85%) based on final amount
+    const platformFee = Math.round(finalAmount * 0.15);
+    const lawyerAmount = finalAmount - platformFee;
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -77,7 +81,7 @@ serve(async (req) => {
               name: `Legal Service - ${serviceDescription}`,
               description: `Legal service provided by lawyer ID: ${lawyerId}`
             },
-            unit_amount: amount,
+            unit_amount: finalAmount,
           },
           quantity: 1,
         },
@@ -106,7 +110,7 @@ serve(async (req) => {
         client_user_id: userId,
         lawyer_user_id: lawyerId,
         stripe_session_id: session.id,
-        total_amount: amount,
+        total_amount: finalAmount,
         lawyer_amount: lawyerAmount,
         platform_fee: platformFee,
         currency: "clp",
@@ -119,7 +123,7 @@ serve(async (req) => {
       throw new Error("Failed to create payment record");
     }
 
-    console.log("Payment created successfully:", session.id);
+    console.log("Payment created successfully:", session.id, "amount:", finalAmount);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

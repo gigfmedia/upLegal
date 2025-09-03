@@ -59,7 +59,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
     try {
       // CLP es moneda sin decimales; enviar el monto total sin convertir a centavos
-      const totalAmount = Math.round(estimatedCost);
+      const totalAmount = chargeAmount;
       
       const { data, error } = await supabase.functions.invoke('create-payment', {
         body: {
@@ -123,6 +123,8 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   // Calculate estimated cost
   const estimatedCost = (parseInt(formData.duration || "60") / 60) * hourlyRate;
+  const MIN_AMOUNT_CLP = 1000;
+  const chargeAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -257,12 +259,17 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             <div className="flex justify-between items-center">
               <span className="font-medium">Costo estimado:</span>
               <span className="text-xl font-bold text-green-600">
-                ${estimatedCost.toLocaleString()}
+                ${chargeAmount.toLocaleString()}
               </span>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              {formData.duration} min × ${hourlyRate}/hora
-            </p>
+              <p className="text-sm text-gray-600 mt-1">
+                {formData.duration} min × ${hourlyRate}/hora
+              </p>
+              {chargeAmount > estimatedCost && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  Se aplica monto mínimo de $1.000 CLP para pagos con tarjeta.
+                </p>
+              )}
           </div>
           
           <div className="flex justify-end space-x-2">
@@ -273,7 +280,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               type="submit"
               disabled={isProcessing}
             >
-              {isProcessing ? "Procesando..." : `Pagar $${estimatedCost.toLocaleString()}`}
+              {isProcessing ? "Procesando..." : `Pagar $${chargeAmount.toLocaleString()}`}
             </Button>
           </div>
         </form>
