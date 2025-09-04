@@ -76,9 +76,32 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       if (data?.url) {
         window.open(data.url, '_blank');
         
+        // Send appointment confirmation email
+        try {
+          await supabase.functions.invoke('send-appointment-email', {
+            body: {
+              clientEmail: formData.email,
+              clientName: formData.name,
+              lawyerName: lawyerName,
+              appointmentDate: formData.date,
+              appointmentTime: formData.time,
+              serviceType: consultationTypes.find(t => t.value === formData.consultationType)?.label || formData.consultationType,
+              status: 'scheduled',
+              meetingDetails: `Duración: ${formData.duration} minutos`,
+              notes: formData.description,
+              sendToLawyer: false // For now, only send to client
+            }
+          });
+          
+          console.log("Appointment email sent successfully");
+        } catch (emailError) {
+          console.error("Error sending appointment email:", emailError);
+          // Don't block the flow if email fails
+        }
+        
         toast({
-          title: "Redirigiendo a Stripe",
-          description: "Se ha abierto una nueva pestaña para completar el pago",
+          title: "¡Cita agendada!",
+          description: "Revisa tu email para los detalles de la cita. Completa el pago en la nueva pestaña.",
         });
         
         // Reset form

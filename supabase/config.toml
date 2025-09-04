@@ -54,5 +54,11 @@ verify_jwt = false
 [functions.verify-payment]
 verify_jwt = false
 
+[functions.send-transaction-email]
+verify_jwt = false
+
+[functions.send-appointment-email]
+verify_jwt = false
+
 [analytics]
 enabled = false

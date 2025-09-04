@@ -58,6 +58,47 @@ serve(async (req) => {
 
     console.log("Payment status updated to:", status);
 
+    // Send transaction email notification if payment is completed
+    if (status === "paid") {
+      try {
+        console.log("Sending transaction email notification...");
+        
+        // Get payment details for email
+        const { data: paymentData, error: paymentError } = await supabaseService
+          .from("payments")
+          .select("*")
+          .eq("stripe_session_id", sessionId)
+          .single();
+
+        if (paymentError) {
+          console.error("Error fetching payment data for email:", paymentError);
+        } else if (paymentData) {
+          // Send email using the send-transaction-email function
+          const emailResponse = await supabaseService.functions.invoke('send-transaction-email', {
+            body: {
+              paymentId: paymentData.id,
+              customerEmail: session.customer_details?.email || "guest@example.com",
+              customerName: session.customer_details?.name || "",
+              amount: paymentData.total_amount,
+              currency: paymentData.currency,
+              serviceDescription: paymentData.service_description || "Servicio legal",
+              status: "paid",
+              transactionId: sessionId
+            }
+          });
+          
+          if (emailResponse.error) {
+            console.error("Error sending transaction email:", emailResponse.error);
+          } else {
+            console.log("Transaction email sent successfully");
+          }
+        }
+      } catch (emailError) {
+        console.error("Error in email notification process:", emailError);
+        // Don't fail the whole request if email fails
+      }
+    }
+
     return new Response(JSON.stringify({ 
       status,
       sessionId,
