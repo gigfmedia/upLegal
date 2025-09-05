@@ -177,10 +177,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Processing appointment email request...");
+    console.log("Procesando solicitud de email de agendamiento...");
 
     const emailData: AppointmentEmailRequest = await req.json();
-    console.log("Email data received:", { 
+    console.log("Datos de email recibidos:", { 
       clientEmail: emailData.clientEmail, 
       lawyerName: emailData.lawyerName,
       status: emailData.status,
@@ -222,7 +222,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResults = await Promise.all(emailPromises);
-    console.log("Appointment emails sent successfully:", emailResults);
+    console.log("Emails de agendamiento enviados exitosamente:", emailResults);
 
     return new Response(JSON.stringify({ 
       success: true,
@@ -242,11 +242,11 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error("Error sending appointment email:", error);
+    console.error("Error enviando email de agendamiento:", error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: "Failed to send appointment notification email"
+        details: "Error al enviar email de notificación de agendamiento"
       }),
       {
         status: 500,

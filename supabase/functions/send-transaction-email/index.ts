@@ -119,10 +119,10 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Processing transaction email request...");
+    console.log("Procesando solicitud de email de transacción...");
 
     const emailData: TransactionEmailRequest = await req.json();
-    console.log("Email data received:", { 
+    console.log("Datos de email recibidos:", { 
       paymentId: emailData.paymentId, 
       email: emailData.customerEmail, 
       status: emailData.status,
@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: htmlContent,
     });
 
-    console.log("Transaction email sent successfully:", emailResponse);
+    console.log("Email de transacción enviado exitosamente:", emailResponse);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -161,11 +161,11 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
   } catch (error: any) {
-    console.error("Error sending transaction email:", error);
+    console.error("Error enviando email de transacción:", error);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: "Failed to send transaction notification email"
+        details: "Error al enviar email de notificación de transacción"
       }),
       {
         status: 500,

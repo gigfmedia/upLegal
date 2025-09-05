@@ -12,7 +12,7 @@ export function EmailTestComponent() {
   const testAppointmentEmail = async () => {
     setIsLoading(true);
     try {
-      console.log("Sending test appointment email...");
+      console.log("Enviando email de prueba de agendamiento...");
       
       const { data, error } = await supabase.functions.invoke('send-appointment-email', {
         body: {
@@ -31,14 +31,14 @@ export function EmailTestComponent() {
       });
 
       if (error) {
-        console.error("Error sending test email:", error);
+        console.error("Error enviando email de prueba:", error);
         toast({
           title: "Error",
           description: `Error al enviar email de prueba: ${error.message}`,
           variant: "destructive",
         });
       } else {
-        console.log("Test email sent successfully:", data);
+        console.log("Email de prueba enviado exitosamente:", data);
         toast({
           title: "Email enviado",
           description: "Email de prueba enviado exitosamente a gigfmedia@icloud.com",
