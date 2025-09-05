@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 export function EmailTestComponent() {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,8 +20,8 @@ export function EmailTestComponent() {
           clientName: "Test Usuario",
           lawyerName: "Dr. Juan Pérez",
           lawyerEmail: "abogado@test.com",
-          appointmentDate: new Date(Date.now() + 86400000).toISOString().split('T')[0], // tomorrow
-          appointmentTime: "14:00",
+          appointmentDate: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Argentina/Buenos_Aires'), 'yyyy-MM-dd'),
+          appointmentTime: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Argentina/Buenos_Aires'), 'HH:mm'),
           serviceType: "Consulta inicial",
           status: "scheduled",
           meetingDetails: "Reunión vía Zoom - Link será enviado 1 hora antes",
