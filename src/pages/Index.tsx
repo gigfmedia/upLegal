@@ -12,6 +12,7 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { LawyerCard } from "@/components/LawyerCard";
 import { Header } from "@/components/Header";
+import { EmailTestComponent } from "@/components/EmailTestComponent";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -400,7 +401,12 @@ const Index = () => {
         </div>
       </section>
 
-      <AuthModal 
+      {/* Email Test Section - Temporary for testing */}
+      <section className="container mx-auto px-4 py-8 max-w-md">
+        <EmailTestComponent />
+      </section>
+
+      <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
