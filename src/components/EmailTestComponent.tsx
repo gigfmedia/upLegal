@@ -24,9 +24,10 @@ export function EmailTestComponent() {
           appointmentTime: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Santiago'), 'HH:mm'),
           serviceType: "Consulta inicial",
           status: "scheduled",
-          meetingDetails: "Reunión vía Zoom - Link será enviado 1 hora antes",
+          meetingDetails: "Reunión vía Zoom - Link incluido abajo",
           notes: "Este es un email de prueba del sistema de notificaciones",
-          sendToLawyer: false
+          sendToLawyer: false,
+          zoomLink: "https://us04web.zoom.us/j/123456789?pwd=abcdefgh"
         }
       });
 

@@ -17,6 +17,7 @@ interface LawyerProfile {
   verified: boolean;
   rating?: number;
   reviews?: number;
+  zoomLink?: string;
 }
 
 interface AuthContextType {

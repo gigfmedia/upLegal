@@ -20,6 +20,7 @@ interface AppointmentEmailRequest {
   meetingDetails?: string;
   notes?: string;
   sendToLawyer?: boolean;
+  zoomLink?: string;
 }
 
 const getAppointmentEmailTemplate = (data: AppointmentEmailRequest, isForLawyer = false) => {
@@ -121,6 +122,16 @@ const getAppointmentEmailTemplate = (data: AppointmentEmailRequest, isForLawyer 
                   </span>
                 </td>
               </tr>
+              ${data.zoomLink ? `
+              <tr style="border-bottom: 1px solid #f1f3f4;">
+                <td style="padding: 12px 0; font-weight: bold; color: #6c757d;">🎥 Videollamada:</td>
+                <td style="padding: 12px 0;">
+                  <a href="${data.zoomLink}" style="color: #2563eb; text-decoration: none; font-weight: 500; background: #dbeafe; padding: 8px 12px; border-radius: 6px; display: inline-block;">
+                    📹 Unirse a la reunión
+                  </a>
+                </td>
+              </tr>
+              ` : ''}
               ${data.meetingDetails ? `
               <tr style="border-bottom: 1px solid #f1f3f4;">
                 <td style="padding: 12px 0; font-weight: bold; color: #6c757d;">🔗 Detalles:</td>

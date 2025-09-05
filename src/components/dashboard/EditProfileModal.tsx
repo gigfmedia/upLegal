@@ -46,6 +46,7 @@ const attorneyProfileSchema = z.object({
   barNumber: z.string().optional(),
   languages: z.array(z.string()).optional(),
   availableForHire: z.boolean().default(true),
+  zoomLink: z.string().optional(),
 });
 
 type BasicInfoData = z.infer<typeof basicInfoSchema>;
@@ -119,6 +120,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       barNumber: user?.profile?.barNumber || "",
       languages: user?.profile?.languages || [],
       availableForHire: user?.profile?.availableForHire ?? true,
+      zoomLink: user?.profile?.zoomLink || "",
     },
   });
 
@@ -340,6 +342,29 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  <FormField
+                    control={attorneyForm.control}
+                    name="zoomLink"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Enlace Personal de Zoom</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://us04web.zoom.us/j/123456789?pwd=..." 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <div className="text-sm text-muted-foreground">
+                          Configura tu enlace personal de Zoom para las videollamadas con clientes
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div>
                   </div>
 
                   {/* Specialties */}
