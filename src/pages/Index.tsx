@@ -215,7 +215,7 @@ const Index = () => {
       <Header onAuthClick={handleAuthClick} />
       
       {/* Hero Section */}
-      <section className="pt-26 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Encuentra el
@@ -332,9 +332,9 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">
-              Abogados Destacados
+              Abogados destacados
             </h2>
-            <Button variant="outline">Ver Todos</Button>
+            <Button variant="outline">Ver todos</Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -373,7 +373,7 @@ const Index = () => {
                 }}
                 className="mt-4"
               >
-                Limpiar Filtros
+                Limpiar filtros
               </Button>
             </div>
           )}
