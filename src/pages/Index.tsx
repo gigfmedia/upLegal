@@ -387,7 +387,7 @@ const Index = () => {
             ¿Eres Abogado? Únete a Nuestra Plataforma
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
+            Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.</br>
             Haz crecer tu estudio y desarrolla tu carrera legal.
           </p>
           <Button 
