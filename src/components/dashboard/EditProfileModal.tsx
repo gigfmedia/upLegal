@@ -192,7 +192,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nombre Completo</FormLabel>
+                        <FormLabel>Nombre completo</FormLabel>
                         <FormControl>
                           <Input placeholder="Ingresa tu nombre completo" {...field} />
                         </FormControl>
@@ -220,7 +220,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Número de Teléfono</FormLabel>
+                        <FormLabel>Número de teléfono</FormLabel>
                         <FormControl>
                           <Input placeholder="Ingresa tu número de teléfono" {...field} />
                         </FormControl>
@@ -266,7 +266,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                   <Button type="button" variant="outline" onClick={onClose}>
                     Cancelar
                   </Button>
-                  <Button type="submit">Guardar Cambios</Button>
+                  <Button type="submit">Guardar cambios</Button>
                 </div>
               </form>
             </Form>
@@ -282,7 +282,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="hourlyRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tarifa por Hora ($)</FormLabel>
+                          <FormLabel>Tarifa por hora ($)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -301,7 +301,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="experience"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Años de Experiencia</FormLabel>
+                          <FormLabel>Años de experiencia</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
@@ -334,7 +334,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       name="barNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Número de Colegiatura</FormLabel>
+                          <FormLabel>Número de colegiatura</FormLabel>
                           <FormControl>
                             <Input placeholder="Ingresa tu número de colegiatura" {...field} />
                           </FormControl>
@@ -349,7 +349,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="zoomLink"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Enlace Personal de Zoom</FormLabel>
+                        <FormLabel>Enlace personal de Zoom</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="https://us04web.zoom.us/j/123456789?pwd=..." 
@@ -430,7 +430,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     <Button type="button" variant="outline" onClick={onClose}>
                       Cancelar
                     </Button>
-                    <Button type="submit">Guardar Cambios</Button>
+                    <Button type="submit">Guardar cambios</Button>
                   </div>
                 </form>
               </Form>
