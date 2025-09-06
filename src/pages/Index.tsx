@@ -215,7 +215,7 @@ const Index = () => {
       <Header onAuthClick={handleAuthClick} />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-26 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Encuentra el
