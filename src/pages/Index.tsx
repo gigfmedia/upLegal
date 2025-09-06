@@ -384,11 +384,11 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
-            ¿Sos un Profesional del Derecho?
+            ¿Eres Abogado? Únete a Nuestra Plataforma
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Unite a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
-            Hace crecer tu estudio y desarrollá tu carrera legal.
+            Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
+            Haz crecer tu estudio y desarrolla tu carrera legal.
           </p>
           <Button 
             size="lg" 
@@ -396,7 +396,7 @@ const Index = () => {
             onClick={() => handleAuthClick('signup')}
             className="bg-white text-blue-600 hover:bg-gray-100"
           >
-            Unirse como Abogado
+            Comenzar como Abogado
           </Button>
         </div>
       </section>
