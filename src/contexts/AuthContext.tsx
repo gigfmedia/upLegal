@@ -1,12 +1,14 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile, Profile } from "@/hooks/useProfile";
 
 interface User {
   id: string;
   email: string;
   name: string;
   role: 'client' | 'lawyer';
-  profile?: LawyerProfile;
+  profile?: Profile;
 }
 
 interface LawyerProfile {
@@ -26,7 +28,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'client' | 'lawyer') => Promise<void>;
   logout: () => void;
-  updateProfile: (profile: Partial<LawyerProfile>) => Promise<void>;
+  updateProfile: (profile: Partial<Profile>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,78 +37,159 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock authentication - in a real app, this would use Supabase
+  // Check for authenticated user on mount
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    checkUser();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        await loadUserProfile(session.user);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // Mock login logic
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: email.split('@')[0],
-      role: email.includes('lawyer') ? 'lawyer' : 'client',
-    };
-    
-    if (mockUser.role === 'lawyer') {
-      mockUser.profile = {
-        specialties: ['Corporate Law'],
-        hourlyRate: 300,
-        location: 'New York, NY',
-        bio: 'Experienced lawyer with expertise in various legal areas.',
-        verified: false,
-        rating: 0,
-        reviews: 0,
-      };
+  const checkUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await loadUserProfile(session.user);
+      }
+    } catch (error) {
+      console.error('Error checking user:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+  };
+
+  const loadUserProfile = async (authUser: any) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .single();
+
+      const userData: User = {
+        id: authUser.id,
+        email: authUser.email,
+        name: profile?.display_name || authUser.user_metadata?.name || authUser.email.split('@')[0],
+        role: authUser.user_metadata?.role || 'client',
+        profile: profile || undefined
+      };
+
+      setUser(userData);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setUser({
+        id: authUser.id,
+        email: authUser.email,
+        name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+        role: authUser.user_metadata?.role || 'client'
+      });
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.user) {
+        await loadUserProfile(data.user);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const signup = async (email: string, password: string, name: string, role: 'client' | 'lawyer') => {
-    // Mock signup logic
-    const mockUser: User = {
-      id: Date.now().toString(),
-      email,
-      name,
-      role,
-    };
-    
-    if (role === 'lawyer') {
-      mockUser.profile = {
-        specialties: [],
-        hourlyRate: 0,
-        location: '',
-        bio: '',
-        verified: false,
-        rating: 0,
-        reviews: 0,
-      };
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // Create initial profile
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            display_name: name,
+            first_name: name.split(' ')[0],
+            last_name: name.split(' ').slice(1).join(' ') || '',
+            specialties: role === 'lawyer' ? [] : undefined,
+            hourly_rate_clp: role === 'lawyer' ? 0 : undefined,
+            verified: false,
+            rating: 0,
+            review_count: 0
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+
+        await loadUserProfile(data.user);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      throw error;
     }
-    
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
-  const updateProfile = async (profile: Partial<LawyerProfile>) => {
-    if (user && user.role === 'lawyer') {
-      const updatedUser = {
-        ...user,
-        profile: { ...user.profile, ...profile } as LawyerProfile,
-      };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: user.id,
+          ...updates,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      // Reload user profile
+      await loadUserProfile({ id: user.id, email: user.email });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
     }
   };
 

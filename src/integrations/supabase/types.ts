@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      lawyer_services: {
+        Row: {
+          available: boolean | null
+          created_at: string
+          delivery_time: string | null
+          description: string | null
+          features: string[] | null
+          id: string
+          lawyer_user_id: string
+          price_clp: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean | null
+          created_at?: string
+          delivery_time?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          lawyer_user_id: string
+          price_clp: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean | null
+          created_at?: string
+          delivery_time?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          lawyer_user_id?: string
+          price_clp?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       linkedin_profiles: {
         Row: {
           connections_count: number | null
@@ -110,6 +149,96 @@ export type Database = {
           stripe_session_id?: string | null
           total_amount?: number | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          availability: string | null
+          available_for_hire: boolean | null
+          avatar_url: string | null
+          bar_number: string | null
+          bio: string | null
+          certifications: Json | null
+          created_at: string
+          display_name: string | null
+          education: Json | null
+          experience_years: number | null
+          first_name: string | null
+          hourly_rate_clp: number | null
+          id: string
+          languages: string[] | null
+          last_name: string | null
+          location: string | null
+          phone: string | null
+          rating: number | null
+          response_time: string | null
+          review_count: number | null
+          satisfaction_rate: number | null
+          specialties: string[] | null
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+          website: string | null
+          zoom_link: string | null
+        }
+        Insert: {
+          availability?: string | null
+          available_for_hire?: boolean | null
+          avatar_url?: string | null
+          bar_number?: string | null
+          bio?: string | null
+          certifications?: Json | null
+          created_at?: string
+          display_name?: string | null
+          education?: Json | null
+          experience_years?: number | null
+          first_name?: string | null
+          hourly_rate_clp?: number | null
+          id?: string
+          languages?: string[] | null
+          last_name?: string | null
+          location?: string | null
+          phone?: string | null
+          rating?: number | null
+          response_time?: string | null
+          review_count?: number | null
+          satisfaction_rate?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+          website?: string | null
+          zoom_link?: string | null
+        }
+        Update: {
+          availability?: string | null
+          available_for_hire?: boolean | null
+          avatar_url?: string | null
+          bar_number?: string | null
+          bio?: string | null
+          certifications?: Json | null
+          created_at?: string
+          display_name?: string | null
+          education?: Json | null
+          experience_years?: number | null
+          first_name?: string | null
+          hourly_rate_clp?: number | null
+          id?: string
+          languages?: string[] | null
+          last_name?: string | null
+          location?: string | null
+          phone?: string | null
+          rating?: number | null
+          response_time?: string | null
+          review_count?: number | null
+          satisfaction_rate?: number | null
+          specialties?: string[] | null
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+          website?: string | null
+          zoom_link?: string | null
         }
         Relationships: []
       }

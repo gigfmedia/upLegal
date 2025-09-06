@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Header } from "@/components/Header";
 import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
+import { ServicesSection } from "@/components/ServicesSection";
 import { 
   Star, 
   MapPin, 
@@ -141,7 +142,7 @@ const PublicProfile = () => {
                       <div className="flex items-center">
                         <Star className="h-5 w-5 text-yellow-500 mr-1" />
                         <span className="font-semibold">{user.profile?.rating || 4.9}</span>
-                        <span className="text-gray-600 ml-1">({user.profile?.reviews || 127} reseñas)</span>
+                        <span className="text-gray-600 ml-1">({user.profile?.review_count || 127} reseñas)</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -175,7 +176,12 @@ const PublicProfile = () => {
 
                   <div className="text-right">
                     <div className="text-3xl font-bold text-green-600 mb-1">
-                      ${publicProfile.hourlyRate}/hr
+                      {new Intl.NumberFormat('es-CL', {
+                        style: 'currency',
+                        currency: 'CLP',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                      }).format(publicProfile.hourlyRate * 800)}/hora
                     </div>
                     <div className="space-y-2">
                       <Button 
@@ -272,6 +278,9 @@ const PublicProfile = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Services Section */}
+            <ServicesSection />
 
             {/* Languages */}
             <Card>

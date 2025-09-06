@@ -218,7 +218,12 @@ export function ProfileSettings() {
               <div>
                 <label className="text-sm font-medium text-gray-500">Tarifa por Hora</label>
                 <p className="text-gray-900">
-                  ${user.profile?.hourlyRate || 0}/hora
+                  {new Intl.NumberFormat('es-CL', {
+                    style: 'currency',
+                    currency: 'CLP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  }).format(user.profile?.hourly_rate_clp || 0)}/hora
                 </p>
               </div>
               

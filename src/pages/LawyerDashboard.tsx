@@ -29,7 +29,7 @@ const LawyerDashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     specialties: user?.profile?.specialties || [],
-    hourlyRate: user?.profile?.hourlyRate || 0,
+    hourlyRate: user?.profile?.hourly_rate_clp || 0,
     location: user?.profile?.location || '',
     bio: user?.profile?.bio || '',
   });
@@ -55,7 +55,12 @@ const LawyerDashboard = () => {
 
   const handleSave = async () => {
     try {
-      await updateProfile(formData);
+      await updateProfile({
+        specialties: formData.specialties,
+        hourly_rate_clp: formData.hourlyRate,
+        location: formData.location,
+        bio: formData.bio
+      });
       setIsEditing(false);
       setSuccess('¡Perfil actualizado exitosamente!');
       setTimeout(() => setSuccess(''), 3000);
@@ -174,7 +179,7 @@ const LawyerDashboard = () => {
                         if (isEditing) {
                           setFormData({
                             specialties: user?.profile?.specialties || [],
-                            hourlyRate: user?.profile?.hourlyRate || 0,
+                            hourlyRate: user?.profile?.hourly_rate_clp || 0,
                             location: user?.profile?.location || '',
                             bio: user?.profile?.bio || '',
                           });
@@ -189,14 +194,14 @@ const LawyerDashboard = () => {
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="hourlyRate">Tarifa por Hora ($)</Label>
+                      <Label htmlFor="hourlyRate">Tarifa por Hora (CLP)</Label>
                       <Input
                         id="hourlyRate"
                         type="number"
                         value={formData.hourlyRate}
                         onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: Number(e.target.value) }))}
                         disabled={!isEditing}
-                        placeholder="ej., 300"
+                        placeholder="ej., 50000"
                       />
                     </div>
 
@@ -304,14 +309,14 @@ const LawyerDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Progreso del Perfil</span>
                       <span className="text-sm font-medium">
-                        {user.profile?.specialties?.length && user.profile?.hourlyRate && user.profile?.location && user.profile?.bio ? '100%' : '75%'}
+                        {user.profile?.specialties?.length && user.profile?.hourly_rate_clp && user.profile?.location && user.profile?.bio ? '100%' : '75%'}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
                         style={{ 
-                          width: user.profile?.specialties?.length && user.profile?.hourlyRate && user.profile?.location && user.profile?.bio ? '100%' : '75%' 
+                          width: user.profile?.specialties?.length && user.profile?.hourly_rate_clp && user.profile?.location && user.profile?.bio ? '100%' : '75%' 
                         }}
                       ></div>
                     </div>

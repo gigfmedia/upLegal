@@ -104,7 +104,7 @@ const AttorneyDashboard = () => {
                   <div className="flex items-center space-x-4 mt-1">
                     <div className="flex items-center">
                       <Star className="h-4 w-4 text-yellow-500 mr-1" />
-                      <span className="text-sm text-gray-600">{user.profile?.rating || 4.8} ({user.profile?.reviews || 0} reseñas)</span>
+                      <span className="text-sm text-gray-600">{user.profile?.rating || 4.8} ({user.profile?.review_count || 0} reseñas)</span>
                     </div>
                     <Badge variant={dashboardStats.availability === "Disponible" ? "default" : "secondary"}>
                       {dashboardStats.availability}

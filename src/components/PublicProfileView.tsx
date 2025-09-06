@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { ServicesSection } from "@/components/ServicesSection";
 import { 
   Star, 
   MapPin, 
@@ -151,7 +152,12 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
 
                 <div className="text-right">
                   <div className="text-3xl font-bold text-green-600 mb-1">
-                    ${publicProfile.hourlyRate}/hora
+                    {new Intl.NumberFormat('es-CL', {
+                      style: 'currency',
+                      currency: 'CLP',
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0
+                    }).format(publicProfile.hourlyRate * 800)}/hora
                   </div>
                   <div className="space-y-2">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700">
@@ -241,6 +247,9 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
               </div>
             </CardContent>
           </Card>
+
+          {/* Services Section */}
+          <ServicesSection />
 
           {/* Languages */}
           <Card>
