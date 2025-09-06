@@ -73,7 +73,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             <Scale className="h-10 w-10 text-blue-600" />
           </div>
           <DialogTitle className="text-2xl">
-            {mode === 'login' ? 'Ingresa a tu cuenta' : 'Crear Cuenta'}
+            {mode === 'login' ? 'Ingresa a tu cuenta' : 'Crea tu cuenta'}
           </DialogTitle>
         </DialogHeader>
 
