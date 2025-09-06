@@ -87,7 +87,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           {mode === 'signup' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre Completo</Label>
+                <Label htmlFor="name">Nombre completo</Label>
                 <Input
                   id="name"
                   type="text"
@@ -99,7 +99,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Tipo de Cuenta</Label>
+                <Label htmlFor="role">Tipo de cuenta</Label>
                 <Select 
                   value={formData.role} 
                   onValueChange={(value: 'client' | 'lawyer') => handleInputChange('role', value)}
@@ -117,7 +117,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="email">Correo Electrónico</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -142,7 +142,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
 
           {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
               <Input
                 id="confirmPassword"
                 type="password"
