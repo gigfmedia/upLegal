@@ -73,7 +73,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             <Scale className="h-10 w-10 text-blue-600" />
           </div>
           <DialogTitle className="text-2xl">
-            {mode === 'login' ? 'Bienvenido de Vuelta' : 'Crear Cuenta'}
+            {mode === 'login' ? 'Bienvenido a UpLegal' : 'Crear Cuenta'}
           </DialogTitle>
         </DialogHeader>
 
@@ -167,7 +167,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         <div className="text-center text-sm text-gray-600">
           {mode === 'login' ? (
             <>
-              ¿No tenés cuenta?{' '}
+              ¿No tienes cuenta?{' '}
               <button
                 type="button"
                 onClick={() => onModeChange('signup')}
@@ -178,7 +178,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             </>
           ) : (
             <>
-              ¿Ya tenés cuenta?{' '}
+              ¿Ya tienes cuenta?{' '}
               <button
                 type="button"
                 onClick={() => onModeChange('login')}
