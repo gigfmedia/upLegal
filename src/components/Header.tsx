@@ -27,7 +27,7 @@ export function Header({ onAuthClick }: HeaderProps) {
           {/* Logo */}
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => handleNavigation('/')}>
             <Scale className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">LegalConnect</span>
+            <span className="text-xl font-bold text-gray-900">UpLegal</span>
           </div>
 
           {/* Navigation */}
