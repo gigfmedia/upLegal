@@ -179,7 +179,7 @@ export function ProfileCompletion({ user, onNavigateToTab }: ProfileCompletionPr
       {/* Next Steps */}
       <Card>
         <CardHeader>
-          <CardTitle>Próximos Pasos</CardTitle>
+          <CardTitle>Próximos pasos</CardTitle>
           <CardDescription>
             Acciones recomendadas para mejorar tu perfil
           </CardDescription>
