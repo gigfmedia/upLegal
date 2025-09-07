@@ -220,7 +220,8 @@ const Index = () => {
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 mt-8">
             Encuentra el 
-            <span className="text-blue-600"> Abogado Ideal</span>
+            <span className="text-blue-600"> Abogado</span>
+            ideal
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos 
