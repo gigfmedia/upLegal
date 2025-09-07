@@ -289,7 +289,7 @@ const Index = () => {
             ¿Por qué elegir nuestra plataforma?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center border-none shadow-lg">
+            <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
                 <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Profesionales Verificados</CardTitle>
@@ -301,9 +301,9 @@ const Index = () => {
               </CardContent>
             </Card>
             
-            <Card className="text-center border-none shadow-lg">
+            <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
-                <Scale className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Money className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Precios Transparentes</CardTitle>
               </CardHeader>
               <CardContent>
@@ -313,7 +313,7 @@ const Index = () => {
               </CardContent>
             </Card>
             
-            <Card className="text-center border-none shadow-lg">
+            <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
                 <FileText className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Seguro y Confidencial</CardTitle>
