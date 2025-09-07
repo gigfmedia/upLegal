@@ -303,7 +303,7 @@ const Index = () => {
             
             <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
-                <Money className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <Scale className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Precios Transparentes</CardTitle>
               </CardHeader>
               <CardContent>
