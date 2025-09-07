@@ -174,6 +174,7 @@ export type Database = {
           rating: number | null
           response_time: string | null
           review_count: number | null
+          role: string | null
           satisfaction_rate: number | null
           specialties: string[] | null
           updated_at: string
@@ -203,6 +204,7 @@ export type Database = {
           rating?: number | null
           response_time?: string | null
           review_count?: number | null
+          role?: string | null
           satisfaction_rate?: number | null
           specialties?: string[] | null
           updated_at?: string
@@ -232,6 +234,7 @@ export type Database = {
           rating?: number | null
           response_time?: string | null
           review_count?: number | null
+          role?: string | null
           satisfaction_rate?: number | null
           specialties?: string[] | null
           updated_at?: string
