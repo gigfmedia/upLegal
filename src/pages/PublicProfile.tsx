@@ -175,13 +175,13 @@ const PublicProfile = () => {
                   </div>
 
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-green-600 mb-1">
+                    <div className="text-3xl font-bold text-primary mb-1">
                       {new Intl.NumberFormat('es-CL', {
                         style: 'currency',
                         currency: 'CLP',
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
-                      }).format(publicProfile.hourlyRate * 800)}/hora
+                      }).format(publicProfile.hourlyRate * 800)} / hora
                     </div>
                     <div className="space-y-2">
                       <Button 
