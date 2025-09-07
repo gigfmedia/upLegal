@@ -94,17 +94,6 @@ const PublicProfile = () => {
       
       <div className="pt-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          {/* Back Button */}
-          <div className="mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Dashboard
-            </Button>
-          </div>
 
           {/* Page Header */}
           <div className="mb-8">
