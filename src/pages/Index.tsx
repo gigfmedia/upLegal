@@ -387,9 +387,9 @@ const Index = () => {
           <h2 className="text-3xl font-bold mb-4">
             ¿Eres Abogado? Únete a Nuestra Plataforma
           </h2>
-          <p className="text-xl mb-8 text-blue-100 whitespace-pre-line">
-            Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
-            Haz crecer tu estudio y desarrolla tu carrera legal.
+          <p className="text-xl mb-8 text-blue-100 space-y-2">
+            <span>Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.</span>
+            <span>Haz crecer tu estudio y desarrolla tu carrera legal.</span>
           </p>
           <Button 
             size="lg" 
