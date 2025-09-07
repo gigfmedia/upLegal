@@ -308,7 +308,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Precios claros y directos sin tarifas ocultas. Sabés exactamente lo que vas a pagar antes de comenzar.
+                  Precios claros y directos sin tarifas ocultas. Sabes exactamente lo que vas a pagar antes de comenzar.
                 </p>
               </CardContent>
             </Card>
@@ -387,7 +387,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold mb-4">
             ¿Eres Abogado? Únete a Nuestra Plataforma
           </h2>
-          <p className="text-xl mb-8 text-blue-100">
+          <p className="text-xl mb-8 text-blue-100 whitespace-pre-line">
             Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.
             Haz crecer tu estudio y desarrolla tu carrera legal.
           </p>
