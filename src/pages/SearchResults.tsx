@@ -267,12 +267,6 @@ const SearchResults = () => {
       {/* Search Header - Fixed height */}
       <div className="bg-white border-b sticky top-16 z-40 h-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 h-full flex flex-col justify-center">
-          <div className="flex items-center space-x-4 mb-4">
-            <Link to="/" className="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Home
-            </Link>
-          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative">
