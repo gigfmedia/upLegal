@@ -35,7 +35,7 @@ export function ClientManagement() {
       id: 2,
       name: "Sarah Wilson",
       email: "sarah.wilson@email.com",
-      avatar: "/placeholder.svg",
+      avatar: "",
       status: "active",
       totalSpent: 3200,
       currentProject: "Divorce proceedings",
@@ -145,7 +145,7 @@ export function ClientManagement() {
               <CardTitle>Gestión de Clientes</CardTitle>
               <CardDescription>Gestiona las relaciones con tus clientes y proyectos</CardDescription>
             </div>
-            <Button>Agregar Nuevo Cliente</Button>
+            <Button>Agregar nuevo cliente</Button>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
