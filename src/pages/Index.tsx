@@ -35,7 +35,7 @@ const Index = () => {
       reviews: 127,
       location: "New York, NY",
       hourlyRate: 350,
-      image: "/placeholder.svg",
+      image: "",
       bio: "Expert in corporate law with 15+ years of experience helping businesses navigate complex legal challenges.",
       verified: true
     },
@@ -219,8 +219,8 @@ const Index = () => {
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Encuentra el
-            <span className="text-blue-600">Abogado Ideal</span>
+            Encuentra el 
+            <span className="text-blue-600"> Abogado Ideal</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos 
