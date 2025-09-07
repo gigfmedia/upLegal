@@ -54,7 +54,18 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         role: 'client',
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocurrió un error');
+      const errorMessage = err instanceof Error ? err.message : 'Ocurrió un error';
+      
+      // Provide user-friendly error messages
+      if (errorMessage.includes('Email not confirmed')) {
+        setError('Por favor, confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.');
+      } else if (errorMessage.includes('Invalid login credentials')) {
+        setError('Email o contraseña incorrectos. Por favor, verifica tus datos.');
+      } else if (errorMessage.includes('User already registered')) {
+        setError('Ya existe una cuenta con este email. Intenta iniciar sesión.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }

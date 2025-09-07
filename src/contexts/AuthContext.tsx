@@ -117,10 +117,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = async (email: string, password: string, name: string, role: 'client' | 'lawyer') => {
     try {
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             name,
             role
@@ -132,26 +135,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
 
-      // Create initial profile
+      // Profile will be created automatically by database trigger
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            display_name: name,
-            first_name: name.split(' ')[0],
-            last_name: name.split(' ').slice(1).join(' ') || '',
-            specialties: role === 'lawyer' ? [] : undefined,
-            hourly_rate_clp: role === 'lawyer' ? 0 : undefined,
-            verified: false,
-            rating: 0,
-            review_count: 0
-          });
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-        }
-
         await loadUserProfile(data.user);
       }
     } catch (error) {
