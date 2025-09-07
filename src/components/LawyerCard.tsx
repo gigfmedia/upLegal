@@ -82,23 +82,23 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
               <span className="text-2xl font-bold text-gray-900">
                 ${lawyer.hourlyRate}
               </span>
-              <span className="text-gray-600">/hora</span>
+              <span className="text-gray-600"> / hora</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex space-x-2 pt-2">
-            <Button 
+            <Button
+              variant="outline"
               onClick={onContact}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="flex-1"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Contactar
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
               onClick={onSchedule}
-              className="flex-1"
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
               <Calendar className="h-4 w-4 mr-2" />
               Agendar
