@@ -26,6 +26,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   signup: (email: string, password: string, name: string, role: 'client' | 'lawyer') => Promise<void>;
   logout: () => void;
   updateProfile: (profile: Partial<Profile>) => Promise<void>;
@@ -115,6 +116,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw error;
+    }
+  };
+
   const signup = async (email: string, password: string, name: string, role: 'client' | 'lawyer') => {
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -184,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isLoading,
         login,
+        loginWithGoogle,
         signup,
         logout,
         updateProfile,
