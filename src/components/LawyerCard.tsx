@@ -84,7 +84,7 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <span className="text-2xl font-bold text-gray-900">
-                ${formatCLP(lawyer.hourlyRate)}
+                {formatCLP(lawyer.hourlyRate)}
               </span>
               <span className="text-gray-600"> / hora</span>
             </div>
