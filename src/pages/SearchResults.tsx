@@ -272,7 +272,7 @@ const SearchResults = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <Input
-                placeholder="Search lawyers or specialties..."
+                placeholder="Buscar abogados o especialidades..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -282,10 +282,10 @@ const SearchResults = () => {
             
             <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
               <SelectTrigger>
-                <SelectValue placeholder="All Specialties" />
+                <SelectValue placeholder="Todas las Especialidades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Specialties</SelectItem>
+                <SelectItem value="all">Todas las Especialidades</SelectItem>
                 {specialties.map((specialty) => (
                   <SelectItem key={specialty} value={specialty}>
                     {specialty}
@@ -297,7 +297,7 @@ const SearchResults = () => {
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Location"
+                placeholder="Ubicación"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="pl-10"
@@ -307,7 +307,7 @@ const SearchResults = () => {
             
             <Button onClick={handleSearch} className="bg-blue-600 hover:bg-blue-700">
               <Search className="mr-2 h-4 w-4" />
-              Search
+              Buscar
             </Button>
           </div>
         </div>
@@ -319,10 +319,10 @@ const SearchResults = () => {
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {filteredLawyers.length} lawyers found
+                {filteredLawyers.length} Abogados encontrados
                 {(searchTerm || selectedSpecialty !== 'all' || location) && (
                   <span className="text-gray-600 font-normal">
-                    {' '}for "{searchTerm || selectedSpecialty || location}"
+                    {' '}para "{searchTerm || selectedSpecialty || location}"
                   </span>
                 )}
               </h1>
@@ -353,10 +353,10 @@ const SearchResults = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="price_low">Price: Low to High</SelectItem>
-                  <SelectItem value="price_high">Price: High to Low</SelectItem>
-                  <SelectItem value="reviews">Most Reviews</SelectItem>
+                  <SelectItem value="rating">Más valorados</SelectItem>
+                  <SelectItem value="price_low">Precio: más bajo a más alto</SelectItem>
+                  <SelectItem value="price_high">Precio: más alto a mas bajo</SelectItem>
+                  <SelectItem value="reviews">Con mayor reseñas</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -365,7 +365,7 @@ const SearchResults = () => {
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <SlidersHorizontal className="h-4 w-4 mr-2" />
-                Filters
+                Filtros
               </Button>
             </div>
           </div>
@@ -374,20 +374,20 @@ const SearchResults = () => {
           {showFilters && (
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle className="text-lg">Filters</CardTitle>
+                <CardTitle className="text-lg">Filtros</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Price Range
+                      Rango de precio
                     </label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Input placeholder="Min" type="number" className="w-24" />
                         <span>-</span>
                         <Input placeholder="Max" type="number" className="w-24" />
-                        <span className="text-sm text-gray-500">/hour</span>
+                        <span className="text-sm text-gray-500"> / hora</span>
                       </div>
                     </div>
                   </div>
@@ -401,28 +401,28 @@ const SearchResults = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Ratings</SelectItem>
-                        <SelectItem value="4.5">4.5+ Stars</SelectItem>
-                        <SelectItem value="4.0">4.0+ Stars</SelectItem>
-                        <SelectItem value="3.5">3.5+ Stars</SelectItem>
+                        <SelectItem value="all">Ratings</SelectItem>
+                        <SelectItem value="4.5">4.5+ Estrellas</SelectItem>
+                        <SelectItem value="4.0">4.0+ Estrellas</SelectItem>
+                        <SelectItem value="3.5">3.5+ Estrellas</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Experience
+                      Experiencia
                     </label>
                     <Select defaultValue="all">
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Experience Levels</SelectItem>
-                        <SelectItem value="20">20+ Years</SelectItem>
-                        <SelectItem value="15">15+ Years</SelectItem>
-                        <SelectItem value="10">10+ Years</SelectItem>
-                        <SelectItem value="5">5+ Years</SelectItem>
+                        <SelectItem value="all">Todos los niveles de experiencia</SelectItem>
+                        <SelectItem value="20">20+ Años</SelectItem>
+                        <SelectItem value="15">15+ Años</SelectItem>
+                        <SelectItem value="10">10+ Años</SelectItem>
+                        <SelectItem value="5">5+ Años</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -461,9 +461,9 @@ const SearchResults = () => {
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">
                 <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No lawyers found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron abogados</h3>
                 <p className="text-gray-600 mb-4">
-                  Try adjusting your search criteria or browse all lawyers.
+                  Intenta ajustar los criterios de búsqueda o busca todos los abogados.
                 </p>
                 <Button 
                   variant="outline" 
@@ -473,7 +473,7 @@ const SearchResults = () => {
                     setLocation("");
                   }}
                 >
-                  Clear All Filters
+                  Borrar todos los filtros
                 </Button>
               </div>
             </div>
