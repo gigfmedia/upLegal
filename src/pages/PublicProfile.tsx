@@ -245,7 +245,7 @@ const PublicProfile = () => {
             {/* Recent Work & Reviews */}
             <Card>
               <CardHeader>
-                <CardTitle>Trabajos Recientes y Comentarios de Clientes</CardTitle>
+                <CardTitle>Trabajos recientes y Comentarios de clientes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
