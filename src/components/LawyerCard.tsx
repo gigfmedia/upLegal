@@ -24,6 +24,10 @@ interface LawyerCardProps {
   onSchedule: () => void;
 }
 
+const formatCLP = (amount: number): string => {
+  return amount.toLocaleString("es-CL") + " CLP";
+}
+
 export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
@@ -81,6 +85,7 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
             <div>
               <span className="text-2xl font-bold text-gray-900">
                 ${lawyer.hourlyRate}
+                ${formatCLP(lawyer.hourlyRate)}
               </span>
               <span className="text-gray-600"> / hora</span>
             </div>
