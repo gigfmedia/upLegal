@@ -34,7 +34,7 @@ const Index = () => {
       rating: 4.9,
       reviews: 127,
       location: "New York, NY",
-      hourlyRate: 50,000,
+      hourlyRate: 50.000,
       image: "",
       bio: "Expert in corporate law with 15+ years of experience helping businesses navigate complex legal challenges.",
       verified: true
