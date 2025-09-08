@@ -28,6 +28,7 @@ export interface Profile {
   experience_years?: number;
   rating?: number;
   review_count?: number;
+  verification_documents?: any;
 }
 
 export interface LawyerService {

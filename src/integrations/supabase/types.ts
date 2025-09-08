@@ -179,6 +179,7 @@ export type Database = {
           specialties: string[] | null
           updated_at: string
           user_id: string
+          verification_documents: Json | null
           verified: boolean | null
           website: string | null
           zoom_link: string | null
@@ -209,6 +210,7 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string
           user_id: string
+          verification_documents?: Json | null
           verified?: boolean | null
           website?: string | null
           zoom_link?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           specialties?: string[] | null
           updated_at?: string
           user_id?: string
+          verification_documents?: Json | null
           verified?: boolean | null
           website?: string | null
           zoom_link?: string | null

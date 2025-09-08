@@ -28,24 +28,13 @@ export function ProfileSettings() {
   if (!user) return null;
 
   const handleSaveProfile = async (profileData: any) => {
-    
     try {
-      if (profileData.type === 'basic') {
-        // For basic info updates, we would need to extend the AuthContext
-        // to handle updating basic user info, not just lawyer profile
-        console.log('Basic profile update:', profileData.data);
-        toast({
-          title: "Perfil Actualizado",
-          description: "Tu información básica se ha guardado exitosamente.",
-        });
-      } else if (profileData.type === 'attorney') {
-        // Update lawyer profile through AuthContext
-        await updateProfile(profileData.data);
-        toast({
-          title: "Perfil de Abogado Actualizado",
-          description: "Tu perfil profesional se ha guardado exitosamente.",
-        });
-      }
+      await updateProfile(profileData.data);
+      
+      toast({
+        title: "Perfil Actualizado",
+        description: "Tu información se ha guardado exitosamente.",
+      });
       
       setIsEditModalOpen(false);
     } catch (error) {

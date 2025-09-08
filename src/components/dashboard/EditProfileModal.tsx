@@ -141,11 +141,28 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
   };
 
   const onBasicSubmit = (data: BasicInfoData) => {
-    onSave({ type: "basic", data: { ...data, avatarUrl } });
+    const profileData = {
+      display_name: data.name,
+      phone: data.phone,
+      location: data.location,
+      bio: data.bio,
+      avatar_url: avatarUrl
+    };
+    onSave({ type: "basic", data: profileData });
   };
 
   const onAttorneySubmit = (data: AttorneyProfileData) => {
-    onSave({ type: "attorney", data: { ...data, specialties: selectedSpecialties, languages: selectedLanguages } });
+    const profileData = {
+      specialties: selectedSpecialties,
+      hourly_rate_clp: data.hourlyRate,
+      experience_years: data.experience,
+      education: data.education,
+      bar_number: data.barNumber,
+      languages: selectedLanguages,
+      available_for_hire: data.availableForHire,
+      zoom_link: data.zoomLink
+    };
+    onSave({ type: "attorney", data: profileData });
   };
 
   return (
@@ -281,18 +298,18 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       control={attorneyForm.control}
                       name="hourlyRate"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tarifa por hora ($)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="Ingresa tu tarifa por hora"
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                         <FormItem>
+                           <FormLabel>Tarifa por hora (CLP)</FormLabel>
+                           <FormControl>
+                             <Input
+                               type="number"
+                               placeholder="Ingresa tu tarifa por hora en CLP"
+                               {...field}
+                               onChange={(e) => field.onChange(Number(e.target.value))}
+                             />
+                           </FormControl>
+                           <FormMessage />
+                         </FormItem>
                       )}
                     />
 
@@ -364,8 +381,59 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     )}
                   />
 
-                  <div>
-                  </div>
+                   {/* Verification Documents */}
+                   <div>
+                     <FormLabel>Documentos de Validación</FormLabel>
+                     <div className="mt-2 space-y-2">
+                       <div className="text-sm text-muted-foreground mb-2">
+                         Sube tus documentos profesionales para verificar tu identidad como abogado
+                       </div>
+                       <FileUpload
+                         onUpload={(url) => {
+                           const currentDocs = user?.profile?.verification_documents || [];
+                           const newDocs = [...currentDocs, { 
+                             name: 'Documento de validación', 
+                             url, 
+                             uploadedAt: new Date().toISOString() 
+                           }];
+                           onSave({ 
+                             type: "attorney", 
+                             data: { verification_documents: newDocs } 
+                           });
+                         }}
+                         bucket="documents"
+                         userId={user?.id}
+                         accept="image/*,.pdf,.doc,.docx"
+                         maxSize={10 * 1024 * 1024} // 10MB
+                       />
+                       {user?.profile?.verification_documents?.length > 0 && (
+                         <div className="mt-3">
+                           <p className="text-sm font-medium mb-2">Documentos subidos:</p>
+                           <div className="space-y-1">
+                             {user.profile.verification_documents.map((doc: any, index: number) => (
+                               <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
+                                 <span>{doc.name}</span>
+                                 <Button
+                                   type="button"
+                                   variant="outline"
+                                   size="sm"
+                                   onClick={() => {
+                                     const updatedDocs = user.profile.verification_documents.filter((_: any, i: number) => i !== index);
+                                     onSave({ 
+                                       type: "attorney", 
+                                       data: { verification_documents: updatedDocs } 
+                                     });
+                                   }}
+                                 >
+                                   <X className="h-3 w-3" />
+                                 </Button>
+                               </div>
+                             ))}
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
 
                   {/* Specialties */}
                   <div>

@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await loadUserProfile(data.user);
         // Send custom welcome email (non-blocking)
         supabase.functions.invoke('send-welcome-email', {
-          body: { name, email }
+          body: { name, email, role }
         }).catch((e) => console.error('Welcome email error:', e));
       }
     } catch (error) {
