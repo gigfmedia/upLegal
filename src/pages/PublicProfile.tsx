@@ -175,18 +175,18 @@ const PublicProfile = () => {
                     <div className="space-y-2">
                       <Button 
                         className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => setIsContactModalOpen(true)}
-                      >
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        Contactar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
                         onClick={() => setIsScheduleModalOpen(true)}
                       >
                         <Calendar className="h-4 w-4 mr-2" />
                         Agendar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => setIsContactModalOpen(true)}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contactar
                       </Button>
                     </div>
                   </div>
