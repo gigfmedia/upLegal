@@ -192,20 +192,20 @@ const SearchResults = () => {
   ];
 
   const specialties = [
-    "Corporate Law",
-    "Criminal Defense", 
-    "Immigration Law",
-    "Family Law",
-    "Personal Injury",
-    "Real Estate Law",
-    "Employment Law",
-    "Intellectual Property",
-    "Estate Planning",
-    "Tax Law",
-    "Medical Malpractice",
-    "Patent Law",
-    "DUI Defense",
-    "Divorce"
+    "Derecho Corporativo",
+    "Defensa Penal", 
+    "Derecho Migratorio",
+    "Derecho de Familia",
+    "Accidentes y Lesiones",
+    "Derecho Inmobiliario",
+    "Derecho Laboral",
+    "Propiedad Intelectual",
+    "Planificación Patrimonial",
+    "Derecho Tributario",
+    "Negligencia Médica",
+    "Derecho de Patentes",
+    "Defensa DUI",
+    "Divorcio"
   ];
 
   // Filter and sort lawyers
