@@ -17,6 +17,7 @@ import PaymentCanceled from "./pages/PaymentCanceled";
 import NotFound from "./pages/NotFound";
 import Footer from "./components/Footer";
 import LegalAgent from "./components/LegalAgent";
+import RequireLawyer from "@/components/auth/RequireLawyer";
 
 const queryClient = new QueryClient();
 
@@ -49,7 +50,7 @@ const AppContent = () => {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
           <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-          <Route path="/profile" element={<PublicProfile />} />
+          <Route path="/profile" element={<RequireLawyer><PublicProfile /></RequireLawyer>} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-canceled" element={<PaymentCanceled />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

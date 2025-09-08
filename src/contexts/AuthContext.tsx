@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, Profile } from "@/hooks/useProfile";
-
+import type { Session } from '@supabase/supabase-js';
 interface User {
   id: string;
   email: string;
@@ -36,16 +36,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
   // Check for authenticated user on mount
   useEffect(() => {
     checkUser();
     
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
       if (session?.user) {
-        await loadUserProfile(session.user);
+        setTimeout(() => {
+          loadUserProfile(session.user);
+        }, 0);
       } else {
         setUser(null);
       }
@@ -58,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkUser = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
       if (session?.user) {
         await loadUserProfile(session.user);
       }
@@ -157,6 +161,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Profile will be created automatically by database trigger
       if (data.user) {
         await loadUserProfile(data.user);
+        // Send custom welcome email (non-blocking)
+        supabase.functions.invoke('send-welcome-email', {
+          body: { name, email }
+        }).catch((e) => console.error('Welcome email error:', e));
       }
     } catch (error) {
       console.error('Signup error:', error);
