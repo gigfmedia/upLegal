@@ -25,7 +25,7 @@ interface LawyerCardProps {
 }
 
 const formatCLP = (amount: number): string => {
-  return amount.toLocaleString("es-CL") + " CLP";
+  return amount.toLocaleString("es-CL") + "";
 }
 
 export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
