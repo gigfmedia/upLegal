@@ -103,7 +103,7 @@ export function ServicesSection({ services = [], isOwner = false, onContactServi
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Servicios Ofrecidos</CardTitle>
+        <CardTitle>Servicios ofrecidos</CardTitle>
         <CardDescription>
           Servicios legales especializados con precios transparentes
         </CardDescription>
@@ -153,8 +153,7 @@ export function ServicesSection({ services = [], isOwner = false, onContactServi
               >
                 {service.available ? (
                   <>
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Solicitar Servicio
+                    Solicitar servicio
                   </>
                 ) : (
                   "No Disponible"
@@ -169,7 +168,7 @@ export function ServicesSection({ services = [], isOwner = false, onContactServi
             <p>No hay servicios configurados aún.</p>
             {isOwner && (
               <Button variant="outline" className="mt-4">
-                Agregar Primer Servicio
+                Agregar primer servicio
               </Button>
             )}
           </div>
@@ -181,7 +180,7 @@ export function ServicesSection({ services = [], isOwner = false, onContactServi
             Si no encuentras el servicio que necesitas, puedo crear una propuesta personalizada para tu caso específico.
           </p>
           <Button variant="outline" size="sm">
-            Solicitar Cotización Personalizada
+            Solicitar cotización personalizada
           </Button>
         </div>
       </CardContent>
