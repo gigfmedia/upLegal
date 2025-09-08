@@ -53,9 +53,9 @@ const SearchResults = () => {
       reviews: 127,
       location: "New York, NY",
       hourlyRate: 350.000,
-      image: "/placeholder.svg",
+      image: "",
       bio: "Expert in corporate law with 15+ years of experience helping businesses navigate complex legal challenges.",
-      verified: true
+      verified: false
     },
     {
       id: 2,
