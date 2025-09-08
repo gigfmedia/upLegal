@@ -68,10 +68,12 @@ export function Header({ onAuthClick }: HeaderProps) {
                         </Badge>
                       </div>
                     </div>
-                    <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
-                      <User className="mr-2 h-4 w-4" />
-                      Perfil
-                    </DropdownMenuItem>
+                    {user.role === 'lawyer' && (
+                      <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+                        <User className="mr-2 h-4 w-4" />
+                        Perfil
+                      </DropdownMenuItem>
+                    )}
                     {user.role === 'lawyer' && (
                       <DropdownMenuItem onClick={() => handleNavigation('/attorney-dashboard')}>
                         <Settings className="mr-2 h-4 w-4" />
