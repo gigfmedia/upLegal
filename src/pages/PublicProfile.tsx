@@ -97,8 +97,7 @@ const PublicProfile = () => {
 
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Perfil Público</h1>
-            <p className="text-gray-600">Así es como tu perfil aparece a potenciales clientes</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Perfil</h1>
           </div>
 
           <div className="space-y-6">
