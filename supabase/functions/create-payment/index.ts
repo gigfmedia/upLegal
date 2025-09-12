@@ -60,8 +60,8 @@ serve(async (req) => {
     const MIN_AMOUNT_CLP = 1000;
     const finalAmount = Math.max(Math.round(amount), MIN_AMOUNT_CLP);
 
-    // Calculate platform fee (15%) and lawyer amount (85%) based on final amount
-    const platformFee = Math.round(finalAmount * 0.15);
+    // Calculate platform fee (20%) and lawyer amount (80%) based on final amount
+    const platformFee = Math.round(finalAmount * 0.20);
     const lawyerAmount = finalAmount - platformFee;
 
     // Initialize Stripe
@@ -80,28 +80,68 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Create Stripe checkout session
+    // Get lawyer's Stripe account ID
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+    const { data: lawyerProfile, error: lawyerError } = await supabaseService
+      .from('profiles')
+      .select('stripe_account_id, stripe_account_status')
+      .eq('id', lawyerUuid)
+      .single();
+
+    if (lawyerError || !lawyerProfile?.stripe_account_id || lawyerProfile.stripe_account_status !== 'complete') {
+      throw new Error('El abogado no tiene una cuenta de pago configurada correctamente');
+    }
+
+    // Create payment intent with Stripe Connect
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: finalAmount,
+      currency: 'clp',
+      application_fee_amount: platformFee,
+      transfer_data: {
+        destination: lawyerProfile.stripe_account_id,
+      },
+      metadata: {
+        client_user_id: userId ?? 'guest',
+        lawyer_user_id: lawyerId,
+        platform_fee: platformFee.toString(),
+        lawyer_amount: lawyerAmount.toString(),
+      },
+      description: serviceDescription || 'Servicio Legal',
+    });
+
+    // Create checkout session with manual fee retention
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : customerEmail,
+      payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: "clp",
-            product_data: { 
-              name: `Legal Service - ${serviceDescription}`,
-              description: `Legal service provided by lawyer ID: ${lawyerId}`
+            currency: 'clp',
+            product_data: {
+              name: serviceDescription || 'Servicio Legal',
+              description: `Pago por servicios legales de ${lawyerId || 'abogado'}`,
             },
             unit_amount: finalAmount,
           },
           quantity: 1,
         },
       ],
-      mode: "payment",
-      success_url: `${req.headers.get("origin")}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/payment-canceled`,
+      mode: 'payment',
+      success_url: `${req.headers.get('origin')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/payment-canceled`,
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: lawyerProfile.stripe_account_id,
+        },
+      },
       metadata: {
-        client_user_id: userId ?? "guest",
+        client_user_id: userId ?? 'guest',
         lawyer_user_id: lawyerId,
         platform_fee: platformFee.toString(),
         lawyer_amount: lawyerAmount.toString(),
@@ -109,8 +149,6 @@ serve(async (req) => {
     });
 
     // Create payment record in database using service role
-    const supabaseService = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { persistSession: false } }
     );

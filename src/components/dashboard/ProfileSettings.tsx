@@ -12,7 +12,13 @@ import {
   Users, 
   CheckCircle,
   Edit,
-  Linkedin
+  Linkedin,
+  Eye,
+  EyeOff,
+  Wifi,
+  WifiOff,
+  MessageSquare,
+  MessageSquareOff
 } from "lucide-react";
 import { useLinkedInProfile } from "@/hooks/useLinkedInProfile";
 import { useAuth } from "@/contexts/AuthContext";
@@ -264,6 +270,112 @@ export function ProfileSettings() {
         user={user}
         onSave={handleSaveProfile}
       />
+
+      {/* Privacy Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Configuración de Privacidad
+          </CardTitle>
+          <CardDescription>
+            Controla la visibilidad de tu perfil y cómo interactúas con otros usuarios
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-gray-600" />
+                <span className="font-medium">Visibilidad del Perfil</span>
+              </div>
+              <p className="text-sm text-gray-500">
+                {user.profile?.visibility_settings?.profile_visible 
+                  ? "Tu perfil es visible para otros usuarios" 
+                  : "Tu perfil está oculto para otros usuarios"}
+              </p>
+            </div>
+            <Button 
+              variant={user.profile?.visibility_settings?.profile_visible ? "default" : "outline"}
+              size="sm"
+              onClick={async () => {
+                await updateProfile({
+                  visibility_settings: {
+                    ...user.profile?.visibility_settings,
+                    profile_visible: !user.profile?.visibility_settings?.profile_visible
+                  }
+                });
+              }}
+            >
+              {user.profile?.visibility_settings?.profile_visible ? "Visible" : "Oculto"}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                {user.profile?.visibility_settings?.show_online_status ? (
+                  <Wifi className="h-4 w-4 text-green-500" />
+                ) : (
+                  <WifiOff className="h-4 w-4 text-gray-400" />
+                )}
+                <span className="font-medium">Mostrar Estado en Línea</span>
+              </div>
+              <p className="text-sm text-gray-500">
+                {user.profile?.visibility_settings?.show_online_status 
+                  ? "Otros usuarios pueden ver cuando estás en línea" 
+                  : "Tu estado en línea es privado"}
+              </p>
+            </div>
+            <Button 
+              variant={user.profile?.visibility_settings?.show_online_status ? "default" : "outline"}
+              size="sm"
+              onClick={async () => {
+                await updateProfile({
+                  visibility_settings: {
+                    ...user.profile?.visibility_settings,
+                    show_online_status: !user.profile?.visibility_settings?.show_online_status
+                  }
+                });
+              }}
+            >
+              {user.profile?.visibility_settings?.show_online_status ? "Activado" : "Desactivado"}
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                {user.profile?.visibility_settings?.allow_direct_messages ? (
+                  <MessageSquare className="h-4 w-4 text-blue-500" />
+                ) : (
+                  <MessageSquareOff className="h-4 w-4 text-gray-400" />
+                )}
+                <span className="font-medium">Permitir Mensajes Directos</span>
+              </div>
+              <p className="text-sm text-gray-500">
+                {user.profile?.visibility_settings?.allow_direct_messages 
+                  ? "Otros usuarios pueden enviarte mensajes directos" 
+                  : "Los mensajes directos están desactivados"}
+              </p>
+            </div>
+            <Button 
+              variant={user.profile?.visibility_settings?.allow_direct_messages ? "default" : "outline"}
+              size="sm"
+              onClick={async () => {
+                await updateProfile({
+                  visibility_settings: {
+                    ...user.profile?.visibility_settings,
+                    allow_direct_messages: !user.profile?.visibility_settings?.allow_direct_messages
+                  }
+                });
+              }}
+            >
+              {user.profile?.visibility_settings?.allow_direct_messages ? "Permitidos" : "No permitidos"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

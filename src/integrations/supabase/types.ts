@@ -13,6 +13,22 @@ export type Database = {
     PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
+    Functions: {
+      create_consultation_with_free_check: {
+        Args: {
+          p_client_id: string
+          p_lawyer_id: string
+          p_message: string
+          p_is_free: boolean
+          p_price: number
+        }
+        Returns: {
+          id: string
+          success: boolean
+          is_free: boolean
+        }
+      }
+    }
     Tables: {
       lawyer_services: {
         Row: {
@@ -154,63 +170,48 @@ export type Database = {
       }
       profiles: {
         Row: {
-          availability: string | null
-          available_for_hire: boolean | null
-          avatar_url: string | null
-          bar_number: string | null
-          bio: string | null
-          certifications: Json | null
-          created_at: string
-          display_name: string | null
-          education: Json | null
-          experience_years: number | null
-          first_name: string | null
-          hourly_rate_clp: number | null
           id: string
-          languages: string[] | null
+          user_id: string
+          first_name: string | null
           last_name: string | null
+          display_name: string | null
+          avatar_url: string | null
+          bio: string | null
           location: string | null
           phone: string | null
-          rating: number | null
-          response_time: string | null
-          review_count: number | null
-          role: string | null
-          satisfaction_rate: number | null
-          specialties: string[] | null
-          updated_at: string
-          user_id: string
-          verification_documents: Json | null
-          verified: boolean | null
           website: string | null
+          specialties: string[] | null
+          hourly_rate_clp: number | null
+          response_time: string | null
+          satisfaction_rate: number | null
+          languages: string[] | null
+          availability: Json | null
+          verified: boolean
+          available_for_hire: boolean
+          bar_number: string | null
           zoom_link: string | null
+          education: Json[] | null
+          certifications: Json[] | null
+          experience_years: number | null
+          rating: number
+          review_count: number
+          has_used_free_consultation: boolean
+          visibility_settings: Json
+          verification_documents: Json
+          created_at: string
+          updated_at: string | null
         }
         Insert: {
-          availability?: string | null
-          available_for_hire?: boolean | null
-          avatar_url?: string | null
-          bar_number?: string | null
-          bio?: string | null
-          certifications?: Json | null
-          created_at?: string
-          display_name?: string | null
-          education?: Json | null
-          experience_years?: number | null
-          first_name?: string | null
-          hourly_rate_clp?: number | null
           id?: string
           languages?: string[] | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
-          rating?: number | null
           response_time?: string | null
-          review_count?: number | null
-          role?: string | null
           satisfaction_rate?: number | null
           specialties?: string[] | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
-          verification_documents?: Json | null
           verified?: boolean | null
           website?: string | null
           zoom_link?: string | null
@@ -222,37 +223,103 @@ export type Database = {
           bar_number?: string | null
           bio?: string | null
           certifications?: Json | null
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           education?: Json | null
           experience_years?: number | null
           first_name?: string | null
+          has_used_free_consultation?: boolean
           hourly_rate_clp?: number | null
           id?: string
           languages?: string[] | null
           last_name?: string | null
           location?: string | null
           phone?: string | null
-          rating?: number | null
           response_time?: string | null
-          review_count?: number | null
-          role?: string | null
           satisfaction_rate?: number | null
           specialties?: string[] | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
-          verification_documents?: Json | null
           verified?: boolean | null
           website?: string | null
           zoom_link?: string | null
         }
         Relationships: []
       }
+      consultations: {
+        Row: {
+          id: string
+          client_id: string
+          lawyer_id: string
+          message: string
+          is_free: boolean
+          status: 'pending' | 'accepted' | 'rejected' | 'completed'
+          price: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          lawyer_id: string
+          message: string
+          is_free: boolean
+          status?: 'pending' | 'accepted' | 'rejected' | 'completed'
+          price: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          lawyer_id?: string
+          message?: string
+          is_free?: boolean
+          status?: 'pending' | 'accepted' | 'rejected' | 'completed'
+          price?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_client_id_fkey"
+            columns: ["client_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultations_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      create_consultation_with_free_check: {
+        Args: {
+          p_client_id: string
+          p_lawyer_id: string
+          p_message: string
+          p_is_free: boolean
+          p_price: number
+        }
+        Returns: {
+          id: string
+          success: boolean
+          is_free: boolean
+        }
+      },
+      mark_free_consultation_used: {
+        Args: {
+          user_id: string
+        }
+        Returns: void
+      }
       [_ in never]: never
     }
     Enums: {
@@ -384,5 +451,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {},
+    Functions: {
+      mark_free_consultation_used: {
+        Args: {
+          user_id: string
+        }
+        Returns: void
+      }
+    }
+    Tables: {},
   },
 } as const

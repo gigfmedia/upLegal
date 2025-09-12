@@ -2,33 +2,56 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
 export interface Profile {
-  id?: string;
+  id: string;
   user_id: string;
-  first_name?: string;
-  last_name?: string;
-  display_name?: string;
-  avatar_url?: string;
-  bio?: string;
-  location?: string;
-  phone?: string;
-  website?: string;
-  specialties?: string[];
-  hourly_rate_clp?: number;
-  response_time?: string;
-  satisfaction_rate?: number;
-  languages?: string[];
-  availability?: string;
-  verified?: boolean;
-  available_for_hire?: boolean;
-  bar_number?: string;
-  zoom_link?: string;
-  education?: any;
-  certifications?: any;
-  experience_years?: number;
-  rating?: number;
-  review_count?: number;
-  verification_documents?: any;
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  location: string | null;
+  phone: string | null;
+  website: string | null;
+  specialties: string[] | null;
+  hourly_rate_clp: number | null;
+  response_time: string | null;
+  satisfaction_rate: number | null;
+  languages: string[] | null;
+  availability: string | null;
+  verified: boolean | null;
+  available_for_hire: boolean | null;
+  bar_number: string | null;
+  zoom_link: string | null;
+  education: Json | null;
+  certifications: Json | null;
+  experience_years: number | null;
+  rating: number | null;
+  review_count: number | null;
+  has_used_free_consultation: boolean;
+  visibility_settings: {
+    profile_visible: boolean;
+    show_online_status: boolean;
+    allow_direct_messages: boolean;
+  } | null;
+  verification_documents: {
+    id_verification?: {
+      status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
+      rejection_reason?: string;
+      verified_at?: string;
+    };
+    bar_verification?: {
+      status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
+      bar_number: string;
+      state: string;
+      rejection_reason?: string;
+      verified_at?: string;
+    };
+  } | null;
+  created_at: string;
+  updated_at: string | null;
 }
 
 export interface LawyerService {

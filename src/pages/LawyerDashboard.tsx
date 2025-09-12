@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
-import { Header } from "@/components/Header";
+import Header from "@/components/Header";
 import { Navigate } from "react-router-dom";
 import { 
   User, 

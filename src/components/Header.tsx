@@ -1,23 +1,80 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Scale, User, Settings, LogOut, PlusCircle } from "lucide-react";
+import { Scale, User, Settings, LogOut, PlusCircle, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { NotificationDropdown } from "./NotificationDropdown";
+
+// Custom Dropdown component with hover functionality
+const HoverDropdown = ({ children, content, align = "end" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    setIsOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 200); // Small delay to prevent flickering when moving to dropdown
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div 
+      className="relative inline-block" 
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      ref={dropdownRef}
+    >
+      <div>{children}</div>
+      {isOpen && (
+        <div 
+          className="absolute right-0 z-50 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {content}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface HeaderProps {
-  onAuthClick: (mode: 'login' | 'signup') => void;
+  onAuthClick?: (mode: 'login' | 'signup') => void;
 }
 
-export function Header({ onAuthClick }: HeaderProps) {
+export default function Header({ onAuthClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleNavigation = (path: string) => {
     navigate(path);
+  };
+
+  const handleAuthNavigation = (mode: 'login' | 'signup') => {
+    if (onAuthClick) {
+      onAuthClick(mode);
+    } else {
+      navigate(`/${mode}`);
+    }
   };
 
   return (
@@ -44,60 +101,87 @@ export function Header({ onAuthClick }: HeaderProps) {
           </nav>
 
           {/* Auth Section */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
+            {user && (
+              <div className="flex items-center justify-center h-10 w-10 -mt-0.5">
+                <NotificationDropdown />
+              </div>
+            )}
             {user ? (
-              <div className="flex items-center space-x-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src="/placeholder.svg" alt={user.name} />
-                        <AvatarFallback className="bg-blue-600 text-white">
-                          {user.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56 bg-white" align="end" forceMount>
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
-                        <Badge variant="secondary" className="w-fit text-xs">
-                          {user.role === 'lawyer' ? 'Abogado' : 'Cliente'}
-                        </Badge>
+              <div className="flex items-center">
+                <HoverDropdown
+                  content={
+                    <div className="py-1">
+                      <div className="flex items-center justify-start gap-2 p-2">
+                        <div className="flex flex-col space-y-1 leading-none">
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <Badge variant="secondary" className="w-fit text-xs">
+                            {user.role === 'lawyer' ? 'Abogado' : 'Cliente'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div 
+                        className="px-2 py-1.5 text-sm rounded-md hover:bg-gray-100 cursor-pointer flex items-center"
+                        onClick={() => handleNavigation('/dashboard')}
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </div>
+                      {user.role === 'lawyer' && (
+                        <div 
+                          className="px-2 py-1.5 text-sm rounded-md hover:bg-gray-100 cursor-pointer flex items-center"
+                          onClick={() => handleNavigation('/profile')}
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          Perfil
+                        </div>
+                      )}
+                      {user.role === 'lawyer' && (
+                        <div 
+                          className="px-2 py-1.5 text-sm rounded-md hover:bg-gray-100 cursor-pointer flex items-center"
+                          onClick={() => handleNavigation('/attorney-dashboard')}
+                        >
+                          <Settings className="mr-2 h-4 w-4" />
+                          Panel
+                        </div>
+                      )}
+                      <div 
+                        className="px-2 py-1.5 text-sm rounded-md hover:bg-gray-100 cursor-pointer flex items-center text-red-600"
+                        onClick={logout}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Cerrar Sesión
                       </div>
                     </div>
-                    {user.role === 'lawyer' && (
-                      <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
-                        <User className="mr-2 h-4 w-4" />
-                        Perfil
-                      </DropdownMenuItem>
-                    )}
-                    {user.role === 'lawyer' && (
-                      <DropdownMenuItem onClick={() => handleNavigation('/attorney-dashboard')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        Panel
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={logout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Cerrar Sesión
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  }
+                >
+                  <Button variant="ghost" className="h-10 w-10 p-0 rounded-full relative">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src="/placeholder.svg" alt={user.name} />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-white text-lg font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </HoverDropdown>
               </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Button 
                   variant="ghost" 
-                  onClick={() => onAuthClick('login')}
+                  onClick={() => handleAuthNavigation('login')}
                   className="text-gray-600"
                 >
                   Iniciar Sesión
                 </Button>
                 <Button 
-                  onClick={() => onAuthClick('signup')}
+                  onClick={() => handleAuthNavigation('signup')}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   Registrarse

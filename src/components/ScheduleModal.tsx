@@ -118,7 +118,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         
         onClose();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating payment:', error);
       toast({
         title: "Error",
@@ -281,12 +281,12 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
               <span className="font-medium">Costo estimado:</span>
-              <span className="text-xl font-bold text-green-600">
+              <span className="text-xl font-bold text-black-600">
                 ${chargeAmount.toLocaleString()}
               </span>
             </div>
               <p className="text-sm text-gray-600 mt-1">
-                {formData.duration} min × ${hourlyRate}/hora
+                {formData.duration} min × ${hourlyRate} / hora
               </p>
               {chargeAmount > estimatedCost && (
                 <p className="text-xs text-yellow-600 mt-1">

@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
+import { Lawyer } from "@/components/LawyerCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { LawyerCard } from "@/components/LawyerCard";
-import { Header } from "@/components/Header";
+import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
 import { ContactModal } from "@/components/ContactModal";
@@ -29,7 +29,7 @@ const SearchResults = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [selectedLawyer, setSelectedLawyer] = useState<any>(null);
+  const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
   // Get search parameters from URL
@@ -44,147 +44,159 @@ const SearchResults = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   // Mock data - same as Index page
-  const mockLawyers = [
+  const mockLawyers: Lawyer[] = [
     {
-      id: 1,
+      id: "1",
       name: "Sarah Johnson",
       specialties: ["Corporate Law", "Business Law"],
       rating: 4.9,
       reviews: 127,
       location: "New York, NY",
       hourlyRate: 350000,
+      consultationPrice: 35000,
       image: "",
       bio: "Expert in corporate law with 15+ years of experience helping businesses navigate complex legal challenges.",
       verified: false
     },
     {
-      id: 2,
+      id: "2",
       name: "Michael Chen",
       specialties: ["Criminal Defense", "Personal Injury"],
       rating: 4.8,
       reviews: 89,
       location: "Los Angeles, CA",
-      hourlyRate: 275,
+      hourlyRate: 275000,
+      consultationPrice: 40000,
       image: "/placeholder.svg",
       bio: "Dedicated criminal defense attorney with a track record of successful case outcomes.",
       verified: true
     },
     {
-      id: 3,
+      id: "3",
       name: "Emily Rodriguez",
       specialties: ["Immigration Law", "Family Law"],
       rating: 4.7,
       reviews: 156,
       location: "Miami, FL",
-      hourlyRate: 225,
+      hourlyRate: 225000,
+      consultationPrice: 30000,
       image: "/placeholder.svg",
       bio: "Compassionate immigration and family law attorney serving diverse communities.",
       verified: true
     },
     {
-      id: 4,
+      id: "4",
       name: "David Thompson",
       specialties: ["Real Estate Law", "Corporate Law"],
       rating: 4.9,
       reviews: 203,
       location: "Chicago, IL",
-      hourlyRate: 400,
+      hourlyRate: 400000,
+      consultationPrice: 45000,
       image: "/placeholder.svg",
       bio: "Specializing in commercial real estate transactions and corporate acquisitions with 20+ years experience.",
       verified: true
     },
     {
-      id: 5,
+      id: "5",
       name: "Lisa Park",
       specialties: ["Employment Law", "Intellectual Property"],
       rating: 4.6,
       reviews: 78,
       location: "San Francisco, CA",
-      hourlyRate: 320,
+      hourlyRate: 320000,
+      consultationPrice: 38000,
       image: "/placeholder.svg",
       bio: "Tech-focused attorney helping startups and employees navigate workplace and IP matters.",
       verified: true
     },
     {
-      id: 6,
+      id: "6",
       name: "Robert Martinez",
       specialties: ["Personal Injury", "Medical Malpractice"],
       rating: 4.8,
       reviews: 145,
       location: "Houston, TX",
-      hourlyRate: 300,
+      hourlyRate: 300000,
+      consultationPrice: 35000,
       image: "/placeholder.svg",
       bio: "Aggressive advocate for injury victims with a proven track record of substantial settlements.",
       verified: true
     },
     {
-      id: 7,
+      id: "7",
       name: "Jennifer Liu",
       specialties: ["Family Law", "Divorce"],
       rating: 4.7,
       reviews: 112,
       location: "Seattle, WA",
-      hourlyRate: 250,
+      hourlyRate: 250000,
+      consultationPrice: 30000,
       image: "/placeholder.svg",
       bio: "Compassionate family law attorney helping clients through difficult transitions with dignity.",
       verified: true
     },
     {
-      id: 8,
+      id: "8",
       name: "Thomas Anderson",
       specialties: ["Criminal Defense", "DUI Defense"],
       rating: 4.9,
       reviews: 167,
       location: "Phoenix, AZ",
-      hourlyRate: 285,
+      hourlyRate: 285000,
+      consultationPrice: 35000,
       image: "/placeholder.svg",
       bio: "Former prosecutor turned defense attorney with insider knowledge of the criminal justice system.",
       verified: true
     },
     {
-      id: 9,
+      id: "9",
       name: "Amanda Foster",
       specialties: ["Estate Planning", "Tax Law"],
       rating: 4.8,
       reviews: 94,
       location: "Boston, MA",
-      hourlyRate: 375,
+      hourlyRate: 375000,
+      consultationPrice: 45000,
       image: "/placeholder.svg",
       bio: "Helping families protect their wealth and plan for the future with comprehensive estate strategies.",
       verified: true
     },
     {
-      id: 10,
+      id: "10",
       name: "Carlos Mendez",
       specialties: ["Immigration Law", "Deportation Defense"],
       rating: 4.6,
       reviews: 134,
       location: "Austin, TX",
-      hourlyRate: 200,
+      hourlyRate: 200000,
+      consultationPrice: 25000,
       image: "/placeholder.svg",
       bio: "Bilingual attorney dedicated to keeping families together and achieving the American dream.",
       verified: true
     },
     {
-      id: 11,
+      id: "11",
       name: "Dr. Rachel Green",
       specialties: ["Medical Malpractice", "Personal Injury"],
       rating: 4.9,
       reviews: 89,
       location: "Denver, CO",
-      hourlyRate: 425,
+      hourlyRate: 425000,
+      consultationPrice: 50000,
       image: "/placeholder.svg",
       bio: "Former medical professional turned attorney, uniquely qualified to handle complex medical cases.",
       verified: true
     },
     {
-      id: 12,
+      id: "12",
       name: "Kevin O'Brien",
       specialties: ["Intellectual Property", "Patent Law"],
       rating: 4.7,
       reviews: 76,
       location: "Portland, OR",
-      hourlyRate: 450,
+      hourlyRate: 450000,
+      consultationPrice: 55000,
       image: "/placeholder.svg",
       bio: "Engineering background with expertise in protecting innovations and intellectual property rights.",
       verified: true
@@ -208,6 +220,39 @@ const SearchResults = () => {
     "Divorcio"
   ];
 
+  // Map of Spanish to English specialty translations
+  const specialtyTranslations: Record<string, string> = {
+    'Derecho Corporativo': 'Corporate Law',
+    'Defensa Penal': 'Criminal Defense',
+    'Derecho Migratorio': 'Immigration Law',
+    'Derecho de Familia': 'Family Law',
+    'Accidentes y Lesiones': 'Personal Injury',
+    'Derecho Inmobiliario': 'Real Estate Law',
+    'Derecho Laboral': 'Employment Law',
+    'Propiedad Intelectual': 'Intellectual Property',
+    'Planificación Patrimonial': 'Estate Planning',
+    'Derecho Tributario': 'Tax Law',
+    'Negligencia Médica': 'Medical Malpractice',
+    'Derecho de Patentes': 'Patent Law',
+    'Defensa DUI': 'DUI Defense',
+    'Divorcio': 'Divorce',
+    'Business Law': 'Business Law',
+    'Corporate Law': 'Corporate Law',
+    'Criminal Defense': 'Criminal Defense',
+    'Immigration Law': 'Immigration Law',
+    'Family Law': 'Family Law',
+    'Personal Injury': 'Personal Injury',
+    'Real Estate Law': 'Real Estate Law',
+    'Employment Law': 'Employment Law',
+    'Intellectual Property': 'Intellectual Property',
+    'Estate Planning': 'Estate Planning',
+    'Tax Law': 'Tax Law',
+    'Medical Malpractice': 'Medical Malpractice',
+    'Patent Law': 'Patent Law',
+    'DUI Defense': 'DUI Defense',
+    'Divorce': 'Divorce'
+  };
+
   // Filter and sort lawyers
   const filteredLawyers = mockLawyers
     .filter(lawyer => {
@@ -216,7 +261,13 @@ const SearchResults = () => {
         lawyer.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesSpecialty = selectedSpecialty === "all" || 
-        lawyer.specialties.includes(selectedSpecialty);
+        lawyer.specialties.some(specialty => {
+          // Check if the lawyer's specialty matches the selected one (in any language)
+          const translatedSpecialty = specialtyTranslations[selectedSpecialty];
+          return specialty === selectedSpecialty || 
+                 specialty === translatedSpecialty ||
+                 specialtyTranslations[specialty] === selectedSpecialty;
+        });
       
       const matchesLocation = location === '' ||
         lawyer.location.toLowerCase().includes(location.toLowerCase());
@@ -437,10 +488,14 @@ const SearchResults = () => {
               {filteredLawyers.map((lawyer) => (
                 <LawyerCard 
                   key={lawyer.id} 
-                  lawyer={lawyer} 
+                  lawyer={{
+                    ...lawyer,
+                    id: String(lawyer.id)
+                  }} 
                   onContact={() => {
                     if (!user) {
-                      handleAuthClick('login');
+                      setAuthMode('login');
+                      setShowAuthModal(true);
                     } else {
                       setSelectedLawyer(lawyer);
                       setShowContactModal(true);
@@ -448,7 +503,8 @@ const SearchResults = () => {
                   }}
                   onSchedule={() => {
                     if (!user) {
-                      handleAuthClick('login');
+                      setAuthMode('login');
+                      setShowAuthModal(true);
                     } else {
                       setSelectedLawyer(lawyer);
                       setShowScheduleModal(true);

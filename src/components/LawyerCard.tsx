@@ -1,12 +1,16 @@
-
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle, MessageCircle, Calendar } from "lucide-react";
+import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ConsultationModal } from "./ConsultationModal";
+import { AuthModal } from "./AuthModal";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface Lawyer {
-  id: number;
+export interface Lawyer {
+  id: string;
   name: string;
   specialties: string[];
   rating: number;
@@ -16,6 +20,7 @@ interface Lawyer {
   image: string;
   bio: string;
   verified: boolean;
+  consultationPrice: number;
 }
 
 interface LawyerCardProps {
@@ -29,73 +34,113 @@ const formatCLP = (amount: number): string => {
 }
 
 export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
+  const { user, isLoading } = useAuth();
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  
+  // Check if user has already used their free consultation
+  const hasUsedFreeConsultation = user?.hasUsedFreeConsultation || false;
+  const hasFreeConsultation = !!user && !hasUsedFreeConsultation;
+
+  const navigate = useNavigate();
+
+  const handleContactClick = () => {
+    if (!user) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
+    }
+    setIsConsultationOpen(true);
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md">
-      <CardHeader className="pb-4">
-        <div className="flex items-start space-x-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={lawyer.image} alt={lawyer.name} />
-            <AvatarFallback className="bg-blue-600 text-white text-lg">
-              {lawyer.name.split(' ').map(n => n[0]).join('')}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
-              <h3 className="font-bold text-lg text-gray-900 truncate">
-                {lawyer.name}
-              </h3>
-              {lawyer.verified && (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              )}
+    <>
+      <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
+        <div className="flex-1 flex flex-col p-6">
+          {/* Sección superior - Info básica */}
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex space-x-4">
+              <Avatar className="h-16 w-16 flex-shrink-0">
+                <AvatarImage src={lawyer.image} alt={lawyer.name} />
+                <AvatarFallback className="bg-blue-600 text-white text-lg">
+                  {lawyer.name.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-lg font-semibold">
+                    {lawyer.name}
+                  </h3>
+                  {lawyer.verified && (
+                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{lawyer.specialties.join(', ')}</p>
+                <div className="flex items-center space-x-1 text-gray-500 text-sm">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{lawyer.location}</span>
+                  <span className="mx-1">•</span>
+                  <Star className="h-3.5 w-3.5 text-yellow-400 fill-current" />
+                  <span>{lawyer.rating}</span>
+                  <span>({lawyer.reviews})</span>
+                </div>
+              </div>
             </div>
             
-            <div className="flex items-center space-x-1 mt-1">
-              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-              <span className="font-medium text-gray-900">{lawyer.rating}</span>
-              <span className="text-gray-500">({lawyer.reviews} reseñas)</span>
-            </div>
-            
-            <div className="flex items-center space-x-1 mt-1 text-gray-600">
-              <MapPin className="h-4 w-4" />
-              <span className="text-sm">{lawyer.location}</span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="space-y-4">
-          {/* Specialties */}
-          <div className="flex flex-wrap gap-2">
-            {lawyer.specialties.map((specialty) => (
-              <Badge key={specialty} variant="secondary" className="text-xs">
-                {specialty}
-              </Badge>
-            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 h-8 mt-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/lawyer/${lawyer.id}`);
+              }}
+            >
+              Ver perfil
+            </Button>
           </div>
 
-          {/* Bio */}
-          <p className="text-gray-600 text-sm line-clamp-3">
-            {lawyer.bio}
-          </p>
+          {/* Contenido con alineación fija */}
+          <div className="flex flex-col space-y-4 mt-auto">
+            {/* Especialidades */}
+            <div className="h-6">
+              <div className="flex flex-wrap gap-2">
+                {lawyer.specialties.map((specialty) => (
+                  <Badge key={specialty} variant="secondary" className="text-xs">
+                    {specialty}
+                  </Badge>
+                ))}
+              </div>
+            </div>
 
-          {/* Pricing */}
-          <div className="flex items-center justify-between">
-            <div>
+            {/* Sección media - Resumen */}
+            <div className="">
+              {lawyer.bio ? (
+                <p className="text-sm text-gray-600 line-clamp-3">
+                  {lawyer.bio}
+                </p>
+              ) : <div className="h-full"></div>}
+            </div>
+
+            {/* Precio */}
+            <div className="h-8 flex items-center">
               <span className="text-2xl font-bold text-gray-900">
                 ${formatCLP(lawyer.hourlyRate)}
               </span>
-              <span className="text-gray-600"> / hora</span>
+              <span className="text-gray-500 text-sm ml-1">/hora</span>
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex space-x-2 pt-2">
-            <Button
-              variant="outline"
-              onClick={onContact}
-              className="flex-1"
+        {/* Botones de acción - Fijos en la parte inferior */}
+        <div className="p-4 pt-0">
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              className="flex-1 bg-white hover:bg-gray-50 border-gray-300"
+              onClick={handleContactClick}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               Contactar
@@ -109,7 +154,22 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </Card>
+
+      <ConsultationModal
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+        lawyerName={lawyer.name}
+        lawyerId={String(lawyer.id)}
+        hasFreeConsultation={hasFreeConsultation}
+        consultationPrice={lawyer.consultationPrice}
+      />
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
+    </>
   );
 }

@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Header } from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
+import Header from "@/components/Header";
 import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { ServicesSection } from "@/components/ServicesSection";
+import { AuthModal } from "@/components/AuthModal";
 import { 
   Star, 
   MapPin, 
@@ -22,38 +24,81 @@ import {
   ArrowLeft
 } from "lucide-react";
 
-const PublicProfile = () => {
+interface PublicProfileProps {
+  userData?: {
+    id?: string;
+    name: string;
+    profile?: {
+      rating: number;
+      reviews: number;
+      specialties: string[];
+      hourlyRate: number;
+      location: string;
+      bio: string;
+    };
+    stats?: {
+      profileViews: number;
+    };
+  };
+}
+
+const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: currentUser } = useAuth();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
-  // Get user data passed from the dashboard or use default data
-  const { user, stats } = location.state || {
-    user: {
-      name: "John Smith",
-      profile: {
-        rating: 4.9,
-        reviews: 127,
-        specialties: ["Corporate Law", "Contract Law", "Business Litigation"],
-        hourlyRate: 350,
-        location: "New York, NY",
-        bio: "Experienced corporate attorney with over 10 years of experience helping businesses navigate complex legal challenges."
-      }
+  const handleAuthModalClose = () => {
+    setShowAuthModal(false);
+  };
+  
+  const handleAuthModeChange = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+  };
+  
+  // Use props or location state or default data
+  const defaultUserData = {
+    id: 'default-id',
+    name: "John Smith",
+    profile: {
+      rating: 4.9,
+      reviews: 127,
+      specialties: ["Corporate Law", "Contract Law", "Business Litigation"],
+      hourlyRate: 350,
+      location: "New York, NY",
+      bio: "Experienced corporate attorney with over 10 years of experience helping businesses navigate complex legal challenges."
     },
     stats: {
       profileViews: 1247
     }
   };
+  
+  const userData = propUser || location.state?.userData || defaultUserData;
 
-  const handleAuthClick = () => {};
+  const handleAuthRequired = (action: 'contact' | 'schedule') => {
+    if (!currentUser) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return false;
+    }
+    // If user is logged in, open the appropriate modal
+    if (action === 'contact') {
+      setIsContactModalOpen(true);
+    } else {
+      setIsScheduleModalOpen(true);
+    }
+    return true;
+  };
 
   // Mock data for the public profile view
   const publicProfile = {
-    hourlyRate: user.profile?.hourlyRate || 350,
-    specialties: user.profile?.specialties || ["Corporate Law", "Contract Law", "Business Litigation"],
-    location: user.profile?.location || "New York, NY",
-    bio: user.profile?.bio || "Experienced corporate attorney with over 10 years of experience helping businesses navigate complex legal challenges. Specializing in contract negotiations, mergers & acquisitions, and regulatory compliance.",
+    hourlyRate: userData.profile.hourlyRate,
+    specialties: userData.profile.specialties,
+    location: userData.profile.location,
+    bio: userData.profile.bio,
     education: ["Harvard Law School - JD", "Yale University - BA Economics"],
     experience: [
       "Senior Partner at Goldman & Associates (2018-Present)",
@@ -90,7 +135,7 @@ const PublicProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onAuthClick={handleAuthClick} />
+      <Header />
       
       <div className="pt-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -107,9 +152,9 @@ const PublicProfile = () => {
                 <div className="flex flex-col md:flex-row gap-6">
                   <div className="flex flex-col items-center md:items-start">
                     <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src="/placeholder.svg" alt={user.name} />
+                      <AvatarImage src="/placeholder.svg" alt={userData.name} />
                       <AvatarFallback className="bg-blue-600 text-white text-2xl">
-                        {user.name.charAt(0).toUpperCase()}
+                        {userData.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <Badge variant="default" className="mb-2">
@@ -122,15 +167,15 @@ const PublicProfile = () => {
 
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-2xl font-bold">{user.name}</h2>
+                      <h2 className="text-2xl font-bold">{userData.name}</h2>
                       <CheckCircle className="h-6 w-6 text-green-500" />
                     </div>
                     
                     <div className="flex items-center gap-4 mb-3">
                       <div className="flex items-center">
                         <Star className="h-5 w-5 text-yellow-500 mr-1" />
-                        <span className="font-semibold">{user.profile?.rating || 4.9}</span>
-                        <span className="text-gray-600 ml-1">({user.profile?.review_count || 127} reseñas)</span>
+                        <span className="font-semibold">{userData.profile?.rating || 4.9}</span>
+                        <span className="text-gray-600 ml-1">({userData.profile?.reviews || 127} reseñas)</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-1" />
@@ -157,7 +202,7 @@ const PublicProfile = () => {
                       </div>
                       <div className="flex items-center">
                         <Eye className="h-4 w-4 mr-1" />
-                        <span>{stats.profileViews} visualizaciones del perfil</span>
+                        <span>{userData.stats?.profileViews} visualizaciones del perfil</span>
                       </div>
                     </div>
                   </div>
@@ -174,7 +219,11 @@ const PublicProfile = () => {
                     <div className="space-y-2">
                       <Button 
                         className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => setIsScheduleModalOpen(true)}
+                        onClick={() => {
+                          if (handleAuthRequired('schedule')) {
+                            setIsScheduleModalOpen(true);
+                          }
+                        }}
                       >
                         <Calendar className="h-4 w-4 mr-2" />
                         Agendar
@@ -182,7 +231,11 @@ const PublicProfile = () => {
                       <Button 
                         variant="outline" 
                         className="w-full"
-                        onClick={() => setIsContactModalOpen(true)}
+                        onClick={() => {
+                          if (handleAuthRequired('contact')) {
+                            setIsContactModalOpen(true);
+                          }
+                        }}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Contactar
@@ -287,20 +340,28 @@ const PublicProfile = () => {
             </Card>
           </div>
         </div>
-      </div>
+      
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={handleAuthModalClose}
+        mode={authMode}
+        onModeChange={handleAuthModeChange}
+      />
+    </div>
 
       {/* Modals */}
       <ContactModal
         isOpen={isContactModalOpen}
         onClose={() => setIsContactModalOpen(false)}
-        lawyerName={user.name}
+        lawyerName={userData.name}
       />
       <ScheduleModal
         isOpen={isScheduleModalOpen}
         onClose={() => setIsScheduleModalOpen(false)}
-        lawyerName={user.name}
+        lawyerName={userData.name}
         hourlyRate={publicProfile.hourlyRate}
-        lawyerId={user.id || ""}
+        lawyerId={userData.id || ""}
       />
     </div>
   );
