@@ -6,6 +6,12 @@ export interface User {
   role?: 'client' | 'lawyer' | 'admin';
   isOnline?: boolean;
   lastSeen?: Date;
+  user_metadata?: {
+    name?: string;
+    avatar_url?: string;
+    email?: string;
+  };
+  avatar_url?: string;
 }
 
 export interface Message {
@@ -34,15 +40,7 @@ export interface Conversation {
   updatedAt: Date;
 }
 
-export interface User {
-  id: string;
-  name?: string;
-  avatarUrl?: string;
-  email?: string;
-  role?: 'client' | 'lawyer' | 'admin';
-  isOnline?: boolean;
-  lastSeen?: Date;
-}
+// Remove duplicate User interface
 
 export interface SendMessagePayload {
   conversationId: string;
@@ -56,7 +54,7 @@ export interface SendMessagePayload {
 }
 
 export interface CreateConversationPayload {
-  participantIds: string[];
+  participantIds?: string[];  // Made optional with ?
   isGroup?: boolean;
   groupName?: string;
   initialMessage?: string;

@@ -1,48 +1,57 @@
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { MessageProvider } from "@/contexts/MessageProvider";
-import { Progress } from "@/components/ui/progress";
-import { useState, useEffect } from "react";
-import Index from "./pages/Index";
-import SearchResults from "./pages/SearchResults";
-import LawyerDashboard from "./pages/LawyerDashboard";
-import AttorneyDashboard from "./pages/AttorneyDashboard";
-import PublicProfile from "./pages/PublicProfile";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentCanceled from "./pages/PaymentCanceled";
-import NotFound from "./pages/NotFound";
-import UserDashboard from "./pages/UserDashboard";
-import DashboardProfile from "./pages/DashboardProfile";
-import DashboardSettings from "./pages/DashboardSettings";
+// UI Components
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
+
+// Context Providers
+import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { MessageProvider } from '@/contexts/MessageProvider';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+
+// Layouts
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import RequireLawyer from '@/components/auth/RequireLawyer';
+import Footer from '@/components/Footer';
+
+// Pages
+import Index from './pages/Index';
+import SearchResults from './pages/SearchResults';
+import LawyerDashboard from './pages/LawyerDashboard';
+import AttorneyDashboard from './pages/AttorneyDashboard';
+import PublicProfile from './pages/PublicProfile';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCanceled from './pages/PaymentCanceled';
+import NotFound from './pages/NotFound';
+import UserDashboard from './pages/UserDashboard';
+import DashboardProfile from './pages/DashboardProfile';
+import DashboardSettings from './pages/DashboardSettings';
 import DashboardConsultations from './pages/DashboardConsultations';
 import DashboardAppointments from './pages/DashboardAppointments';
 import DashboardPayments from './pages/DashboardPayments';
 import DashboardMessages from './pages/DashboardMessages';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
-import Footer from "./components/Footer";
-import LegalAgent from "./components/LegalAgent";
-import RequireLawyer from "@/components/auth/RequireLawyer";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 const queryClient = new QueryClient();
 
 const LoadingIndicator = () => {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const { isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 300);
     return () => clearTimeout(timer);
-  }, [location.pathname]);
+  }, [location]);
 
-  if (!isLoading) return null;
+  if (!isLoading && !isAuthLoading) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
@@ -52,6 +61,16 @@ const LoadingIndicator = () => {
 };
 
 const AppContent = () => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
   return (
     <div className="min-h-screen flex flex-col">
       <TooltipProvider>
@@ -89,7 +108,6 @@ const AppContent = () => {
               </RequireLawyer>
             } />
             
-            {/* Dashboard routes with single layout wrapper */}
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<UserDashboard />} />
               <Route path="profile" element={<DashboardProfile />} />
@@ -103,7 +121,6 @@ const AppContent = () => {
             
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
@@ -116,15 +133,13 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <NotificationProvider>
-        <MessageProvider>
+      <MessageProvider>
+        <NotificationProvider>
           <BrowserRouter>
             <AppContent />
-            <Toaster />
-            <Sonner />
           </BrowserRouter>
-        </MessageProvider>
-      </NotificationProvider>
+        </NotificationProvider>
+      </MessageProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

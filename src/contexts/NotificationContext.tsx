@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext/clean/useAuth';
 import { toast } from '@/components/ui/use-toast';
 
 interface NotificationPreference {

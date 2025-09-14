@@ -15,39 +15,40 @@ export interface Profile {
   location: string | null;
   phone: string | null;
   website: string | null;
+  role: 'client' | 'lawyer';
   specialties: string[] | null;
   hourly_rate_clp: number | null;
   response_time: string | null;
   satisfaction_rate: number | null;
   languages: string[] | null;
   availability: string | null;
-  verified: boolean | null;
-  available_for_hire: boolean | null;
+  verified: boolean;
+  available_for_hire: boolean;
   bar_number: string | null;
   zoom_link: string | null;
-  education: Json | null;
-  certifications: Json | null;
+  education: Record<string, unknown> | null;
+  certifications: Record<string, unknown> | null;
   experience_years: number | null;
-  rating: number | null;
-  review_count: number | null;
+  rating: number;
+  review_count: number;
   has_used_free_consultation: boolean;
   visibility_settings: {
     profile_visible: boolean;
     show_online_status: boolean;
     allow_direct_messages: boolean;
-  } | null;
+  };
   verification_documents: {
     id_verification?: {
       status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
-      rejection_reason?: string;
-      verified_at?: string;
+      rejection_reason?: string | null;
+      verified_at?: string | null;
     };
     bar_verification?: {
       status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
       bar_number: string;
       state: string;
-      rejection_reason?: string;
-      verified_at?: string;
+      rejection_reason?: string | null;
+      verified_at?: string | null;
     };
   } | null;
   created_at: string;

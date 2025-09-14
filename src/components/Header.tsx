@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Scale, User, Settings, LogOut, PlusCircle, Bell } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useNavigate } from "react-router-dom";
 import { NotificationDropdown } from "./NotificationDropdown";
 
@@ -114,10 +114,10 @@ export default function Header({ onAuthClick }: HeaderProps) {
                     <div className="py-1">
                       <div className="flex items-center justify-start gap-2 p-2">
                         <div className="flex flex-col space-y-1 leading-none">
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'}</p>
                           <p className="text-xs text-muted-foreground">{user.email}</p>
                           <Badge variant="secondary" className="w-fit text-xs">
-                            {user.role === 'lawyer' ? 'Abogado' : 'Cliente'}
+                            {user.user_metadata?.role === 'lawyer' ? 'Abogado' : 'Cliente'}
                           </Badge>
                         </div>
                       </div>
@@ -148,7 +148,14 @@ export default function Header({ onAuthClick }: HeaderProps) {
                       )}
                       <div 
                         className="px-2 py-1.5 text-sm rounded-md hover:bg-gray-100 cursor-pointer flex items-center text-red-600"
-                        onClick={logout}
+                        onClick={async () => {
+                          try {
+                            await logout();
+                            navigate('/');
+                          } catch (error) {
+                            console.error('Error during logout:', error);
+                          }
+                        }}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
                         Cerrar Sesión
@@ -158,14 +165,14 @@ export default function Header({ onAuthClick }: HeaderProps) {
                 >
                   <Button variant="ghost" className="h-10 w-10 p-0 rounded-full relative">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src="/placeholder.svg" alt={user.name} />
+                      <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} alt={user.user_metadata?.name || 'User'} />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-white text-lg font-semibold">
-                          {user.name.charAt(0).toUpperCase()}
+                          {user.user_metadata?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </span>
                       </div>
                       <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
-                        {user.name.charAt(0).toUpperCase()}
+                        {user.user_metadata?.name?.charAt(0)?.toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

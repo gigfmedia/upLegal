@@ -7,7 +7,7 @@ import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User } from "lucide
 import { useNavigate } from "react-router-dom";
 import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 
 export interface Lawyer {
   id: string;
@@ -16,42 +16,65 @@ export interface Lawyer {
   rating: number;
   reviews: number;
   location: string;
+  cases: number;
   hourlyRate: number;
+  consultationPrice: number;
   image: string;
   bio: string;
   verified: boolean;
-  consultationPrice: number;
+  availability: {
+    availableToday: boolean;
+    availableThisWeek: boolean;
+    quickResponse: boolean;
+    emergencyConsultations: boolean;
+  };
 }
 
 interface LawyerCardProps {
   lawyer: Lawyer;
-  onContact: () => void;
-  onSchedule: () => void;
+  onContactClick?: () => void;
+  onScheduleClick?: () => void;
+  onContact?: () => void; // Old prop name for backward compatibility
+  onSchedule?: () => void; // Old prop name for backward compatibility
 }
 
 const formatCLP = (amount: number): string => {
   return amount.toLocaleString("es-CL");
 }
 
-export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
-  const { user, isLoading } = useAuth();
+export function LawyerCard({ 
+  lawyer, 
+  onContactClick, 
+  onScheduleClick, 
+  onContact, 
+  onSchedule 
+}: LawyerCardProps) {
+  // For backward compatibility, use the new props if provided, fall back to old ones
+  const handleContact = onContactClick || onContact || (() => {});
+  const handleSchedule = onScheduleClick || onSchedule || (() => {});
+  
+  const { user } = useAuth();
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
   // Check if user has already used their free consultation
-  const hasUsedFreeConsultation = user?.hasUsedFreeConsultation || false;
+  const hasUsedFreeConsultation = user?.user_metadata?.hasUsedFreeConsultation || false;
   const hasFreeConsultation = !!user && !hasUsedFreeConsultation;
 
   const navigate = useNavigate();
 
-  const handleContactClick = () => {
+  const handleContactClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!user) {
       setAuthMode('login');
       setShowAuthModal(true);
       return;
     }
     setIsConsultationOpen(true);
+    if (onContactClick) {
+      onContactClick();
+    }
   };
 
   return (
@@ -63,7 +86,7 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
             <div className="flex space-x-4">
               <Avatar className="h-16 w-16 flex-shrink-0">
                 <AvatarImage src={lawyer.image} alt={lawyer.name} />
-                <AvatarFallback className="bg-blue-600 text-white text-lg">
+                <AvatarFallback>
                   {lawyer.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
@@ -77,14 +100,21 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
                     <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   )}
                 </div>
-                <p className="text-sm text-gray-500">{lawyer.specialties.join(', ')}</p>
-                <div className="flex items-center space-x-1 text-gray-500 text-sm">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{lawyer.location}</span>
-                  <span className="mx-1">•</span>
-                  <Star className="h-3.5 w-3.5 text-yellow-400 fill-current" />
-                  <span>{lawyer.rating}</span>
-                  <span>({lawyer.reviews})</span>
+                <div className="flex items-center text-sm text-gray-600 space-x-2">
+                  <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <span className="truncate">{lawyer.location}</span>
+                </div>
+                
+                <div className="flex items-center space-x-4 text-sm whitespace-nowrap">
+                  <div className="flex items-center space-x-1 text-gray-500">
+                    <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
+                    <span className="font-medium">{lawyer.rating}</span>
+                    <span className="text-gray-400">({lawyer.reviews})</span>
+                  </div>
+                  <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
+                  <span className="text-blue-600 font-medium">
+                    {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
+                  </span>
                 </div>
               </div>
             </div>
@@ -116,13 +146,11 @@ export function LawyerCard({ lawyer, onContact, onSchedule }: LawyerCardProps) {
             </div>
 
             {/* Sección media - Resumen */}
-            <div className="">
-              {lawyer.bio ? (
-                <p className="text-sm text-gray-600 line-clamp-3">
-                  {lawyer.bio}
-                </p>
-              ) : <div className="h-full"></div>}
-            </div>
+            {lawyer.bio && (
+              <p className="text-sm text-gray-600 line-clamp-3">
+                {lawyer.bio}
+              </p>
+            )}
 
             {/* Precio */}
             <div className="h-8 flex items-center">

@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMessages } from '@/hooks/useMessages';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { Loader2, Search, MessageSquarePlus, MessageSquare } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MessageSquarePlus, MessageSquare } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChatWindow } from '@/components/messages/ChatWindow';
-import type { Conversation, User } from '@/types/message';
+import type { User } from '@/types/message';
 
 interface Participant extends User {
   id: string;
@@ -19,8 +18,19 @@ interface Participant extends User {
   avatarUrl?: string;
 }
 
-interface ConversationWithParticipants extends Omit<Conversation, 'participants'> {
+interface ConversationWithParticipants {
+  id: string;
   participants: Participant[];
+  unreadCount?: number;
+  lastMessage?: {
+    content: string;
+    timestamp: Date;
+    senderId: string;
+  };
+  isGroup?: boolean;
+  groupName?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // This component is used by DashboardLayout
@@ -46,8 +56,9 @@ export default function DashboardMessages() {
   // Set document title and fetch conversations on mount
   useEffect(() => {
     document.title = 'Mensajes | upLegal';
-    fetchConversations();
-  }, [fetchConversations]);
+    // fetchConversations is already being called by the MessageProvider
+    // when the component mounts or when the user changes
+  }, []);
   
   // Log conversations for debugging
   useEffect(() => {
@@ -56,13 +67,16 @@ export default function DashboardMessages() {
   
   // Select first conversation by default
   useEffect(() => {
-    if (conversations.length > 0 && !currentConversation) {
+    if (conversations?.length > 0 && !currentConversation) {
       console.log('Selecting first conversation:', conversations[0].id);
       selectConversation(conversations[0].id);
     }
   }, [conversations, currentConversation, selectConversation]);
   
-  if (isLoading && conversations.length === 0) {
+  // Ensure conversations is always an array
+  const safeConversations = conversations || [];
+  
+  if (isLoading && safeConversations.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -73,18 +87,27 @@ export default function DashboardMessages() {
 
   // Get display name for a conversation
   const getConversationName = (conv: ConversationWithParticipants) => {
+    if (!conv) return 'Conversación';
     if (conv.groupName) return conv.groupName;
-    if (conv.participants.length === 2) {
-      const otherUser = conv.participants.find((p: Participant) => p.id !== user?.id);
+    
+    const participants = conv.participants || [];
+    
+    if (participants.length === 2) {
+      const otherUser = participants.find((p: Participant) => p.id !== user?.id);
       return otherUser?.name || otherUser?.email || 'Conversación';
     }
-    return conv.participants.map((p: Participant) => p.name || p.email).join(', ');
+    
+    return participants
+      .map((p: Participant) => p?.name || p?.email || '')
+      .filter(Boolean)
+      .join(', ') || 'Conversación';
   };
   
   // Get last message preview
   const getLastMessagePreview = (conv: ConversationWithParticipants): string => {
-    if (!conv.lastMessage) return 'Nuevo chat';
-    const sender = conv.participants.find((p: Participant) => p.id === conv.lastMessage?.senderId);
+    if (!conv?.lastMessage) return 'Nuevo chat';
+    const participants = conv.participants || [];
+    const sender = participants.find((p: Participant) => p.id === conv.lastMessage?.senderId);
     const prefix = sender?.id === user?.id ? 'Tú: ' : '';
     return prefix + (conv.lastMessage.content || 'Nuevo mensaje');
   };
@@ -150,10 +173,11 @@ export default function DashboardMessages() {
               </div>
               
               <div className="flex-1 overflow-y-auto">
-                {filteredConversations.map((conversation: any) => {
+                {(filteredConversations || []).map((conversation: ConversationWithParticipants) => {
                   const isActive = currentConversation?.id === conversation.id;
                   const unreadCount = conversation.unreadCount || 0;
-                  const otherUser = conversation.participants.find((p: any) => p.id !== user?.id);
+                  const participants = conversation.participants || [];
+                  const otherUser = participants.find((p) => p.id !== user?.id);
                   
                   return (
                     <div

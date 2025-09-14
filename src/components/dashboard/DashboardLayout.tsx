@@ -17,7 +17,7 @@ import {
   TrendingUp,
   LogOut
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import Header from '@/components/Header';
 
 function DashboardLayout() {
@@ -145,8 +145,15 @@ function DashboardLayout() {
                       <button
                         type="button"
                         onClick={() => {
-                          logout();
-                          navigate('/');
+                          const handleLogout = async () => {
+                            try {
+                              await logout();
+                              navigate('/');
+                            } catch (error) {
+                              console.error('Error during logout:', error);
+                            }
+                          };
+                          handleLogout();
                         }}
                         className="flex w-full items-center px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50"
                       >
