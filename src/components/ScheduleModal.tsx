@@ -21,8 +21,8 @@ interface ScheduleModalProps {
 export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerId }: ScheduleModalProps) {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
+  const [formData, setFormData] = useState(() => ({
+    name: user?.user_metadata?.full_name || "",
     email: "",
     phone: "",
     date: "",
@@ -30,7 +30,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     duration: "60",
     consultationType: "",
     description: ""
-  });
+  }));
   const { toast } = useToast();
 
   const timeSlots = [
@@ -74,34 +74,26 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
       // Open Stripe checkout in a new tab
       if (data?.url) {
-        window.open(data.url, '_blank');
+        // Store appointment data in localStorage to be used after payment
+        const appointmentData = {
+          clientEmail: formData.email,
+          clientName: formData.name,
+          lawyerName: lawyerName,
+          appointmentDate: formData.date,
+          appointmentTime: formData.time,
+          serviceType: consultationTypes.find(t => t.value === formData.consultationType)?.label || formData.consultationType,
+          duration: formData.duration,
+          description: formData.description,
+          sessionId: data.sessionId
+        };
+        localStorage.setItem('pendingAppointment', JSON.stringify(appointmentData));
         
-        // Send appointment confirmation email
-        try {
-          await supabase.functions.invoke('send-appointment-email', {
-            body: {
-              clientEmail: formData.email,
-              clientName: formData.name,
-              lawyerName: lawyerName,
-              appointmentDate: formData.date,
-              appointmentTime: formData.time,
-              serviceType: consultationTypes.find(t => t.value === formData.consultationType)?.label || formData.consultationType,
-              status: 'scheduled',
-              meetingDetails: `Duración: ${formData.duration} minutos`,
-              notes: formData.description,
-              sendToLawyer: false // For now, only send to client
-            }
-          });
-          
-          console.log("Appointment email sent successfully");
-        } catch (emailError) {
-          console.error("Error sending appointment email:", emailError);
-          // Don't block the flow if email fails
-        }
+        // Redirect to payment page in the same tab
+        window.location.href = data.url;
         
         toast({
-          title: "¡Cita agendada!",
-          description: "Revisa tu email para los detalles de la cita. Completa el pago en la nueva pestaña.",
+          title: "¡Redirigiendo a pago!",
+          description: "Estás siendo redirigido a la página de pago seguro.",
         });
         
         // Reset form
@@ -142,6 +134,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       ...prev,
       [field]: value
     }));
+  };
+
+  // Format number with dots as thousand separators
+  const formatNumber = (num: number) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
   // Calculate estimated cost
@@ -282,11 +279,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             <div className="flex justify-between items-center">
               <span className="font-medium">Costo estimado:</span>
               <span className="text-xl font-bold text-black-600">
-                ${chargeAmount.toLocaleString()}
+                ${formatNumber(chargeAmount)}
               </span>
             </div>
               <p className="text-sm text-gray-600 mt-1">
-                {formData.duration} min × ${hourlyRate} / hora
+                {formData.duration} min × ${formatNumber(hourlyRate)} / hora
               </p>
               {chargeAmount > estimatedCost && (
                 <p className="text-xs text-yellow-600 mt-1">
@@ -303,7 +300,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               type="submit"
               disabled={isProcessing}
             >
-              {isProcessing ? "Procesando..." : `Pagar $${chargeAmount.toLocaleString()}`}
+              {isProcessing ? "Procesando..." : `Pagar $${formatNumber(chargeAmount)}`}
             </Button>
           </div>
         </form>

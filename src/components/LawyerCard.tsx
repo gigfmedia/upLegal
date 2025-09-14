@@ -39,7 +39,7 @@ interface LawyerCardProps {
 }
 
 const formatCLP = (amount: number): string => {
-  return amount.toLocaleString("es-CL");
+  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export function LawyerCard({ 

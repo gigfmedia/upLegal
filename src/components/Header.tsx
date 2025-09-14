@@ -89,9 +89,12 @@ export default function Header({ onAuthClick }: HeaderProps) {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
+            <button 
+              onClick={() => handleNavigation('/search')} 
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
               Encontrar Abogados
-            </a>
+            </button>
             <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
               Recursos Legales
             </a>

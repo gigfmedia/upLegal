@@ -52,11 +52,23 @@ const getTransactionEmailTemplate = (data: TransactionEmailRequest) => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Confirmación de Transacción</title>
+        <title>Confirmación de Transacción - upLegal</title>
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">Confirmación de Transacción</h1>
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px;">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#2563eb"/>
+              <path d="M2 17L12 22L22 17" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 12V22M12 8V12M12 2V4" stroke="#2563eb" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <h1 style="color: #2563eb; margin: 0; font-size: 28px; font-weight: 700; display: flex; align-items: center;">
+              <span style="color: #2563eb;">up</span><span style="color: #10b981;">Legal</span>
+            </h1>
+          </div>
+          <h2 style="color: #1e40af; margin: 0 0 20px 0; font-size: 22px;">Confirmación de Transacción</h2>
+          <div style="height: 3px; background: linear-gradient(90deg, #2563eb, #10b981); margin: 0 auto 20px; max-width: 200px;"></div>
         </div>
         
         <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef;">
@@ -99,14 +111,13 @@ const getTransactionEmailTemplate = (data: TransactionEmailRequest) => {
           </div>
           ` : ''}
           
-          <div style="text-align: center; margin-top: 30px; padding-top: 25px; border-top: 1px solid #e9ecef;">
-            <p style="color: #6c757d; margin: 0; font-size: 14px;">
-              Este es un email automático. Si tienes alguna consulta, puedes responder a este correo.
-            </p>
-            <p style="color: #6c757d; margin: 10px 0 0 0; font-size: 12px;">
-              Fecha: ${new Date().toLocaleString('es-CL')}
-            </p>
+          <div style="text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px;">
+            <p>Si tienes alguna pregunta, por favor contacta a nuestro equipo de soporte.</p>
+            <p>&copy; ${new Date().getFullYear()} upLegal. Todos los derechos reservados.</p>
           </div>
+          <p style="color: #6c757d; margin: 10px 0 0 0; font-size: 12px;">
+            Fecha: ${new Date().toLocaleString('es-CL')}
+          </p>
         </div>
       </body>
     </html>

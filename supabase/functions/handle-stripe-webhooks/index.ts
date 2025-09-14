@@ -97,18 +97,78 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  // Update payment record with payment intent details
-  const { error } = await supabase
-    .from('payments')
-    .update({
-      status: 'completed',
-      stripe_payment_intent_id: paymentIntent.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('stripe_payment_intent_id', paymentIntent.id);
+  try {
+    // 1. Update payment record with payment intent details
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        stripe_payment_intent_id: paymentIntent.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_payment_intent_id', paymentIntent.id)
+      .select(`
+        id,
+        appointment_id (
+          id,
+          client_id,
+          lawyer_id,
+          date,
+          time,
+          service_type,
+          status,
+          client:client_id (email, full_name),
+          lawyer:lawyer_id (email, full_name)
+        )
+      `)
+      .single();
 
-  if (error) {
-    console.error('Error updating payment record with payment intent:', error);
+    if (paymentError) {
+      console.error('Error updating payment record with payment intent:', paymentError);
+      throw paymentError;
+    }
+
+    // 2. If we have appointment data, send confirmation email
+    if (payment?.appointment_id) {
+      const appointment = payment.appointment_id;
+      
+      // Format date to DD/MM/YYYY
+      const appointmentDate = new Date(appointment.date);
+      const formattedDate = `${String(appointmentDate.getDate()).padStart(2, '0')}/${String(appointmentDate.getMonth() + 1).padStart(2, '0')}/${appointmentDate.getFullYear()}`;
+      
+      // Prepare email data
+      const emailData = {
+        clientEmail: appointment.client.email,
+        clientName: appointment.client.full_name,
+        lawyerName: appointment.lawyer.full_name,
+        lawyerEmail: appointment.lawyer.email,
+        appointmentDate: formattedDate,
+        appointmentTime: appointment.time,
+        serviceType: appointment.service_type,
+        status: 'confirmed' as const,
+        sendToLawyer: true
+      };
+
+      // Send email using the existing send-appointment-email function
+      const emailResponse = await fetch(
+        `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-appointment-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
+          },
+          body: JSON.stringify(emailData)
+        }
+      );
+
+      if (!emailResponse.ok) {
+        const error = await emailResponse.text();
+        console.error('Error sending appointment email:', error);
+      }
+    }
+  } catch (error) {
+    console.error('Error in handlePaymentIntentSucceeded:', error);
     throw error;
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 import { 
   Calendar, 
   Search, 
@@ -25,24 +26,29 @@ import {
   Filter,
   Trash2
 } from 'lucide-react';
+import { appointmentsApi, type AppointmentData, type AppointmentStatus, type AppointmentType } from '@/lib/api';
 
-interface Appointment {
-  id: string;
-  title: string;
-  description: string;
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
-  type: 'video' | 'phone' | 'in-person';
+// Local UI type that extends the API type with display-specific fields
+interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'meeting_link' | 'created_at' | 'updated_at' | 'stripe_payment_intent_id'> {
   lawyerName: string;
   lawyerSpecialty: string;
-  date: string;
-  time: string;
-  duration: number;
-  location?: string;
   meetingLink?: string;
-  price: number;
-  notes?: string;
   createdAt: string;
 }
+
+// Helper function to map API appointment to UI appointment
+const mapApiToUiAppointment = (apiAppt: AppointmentData, userRole: 'client' | 'lawyer'): Appointment => {
+  // In a real app, you would fetch the lawyer's name and specialty from the user's profile
+  // For now, we'll use placeholder values
+  return {
+    ...apiAppt,
+    id: apiAppt.id,
+    lawyerName: userRole === 'lawyer' ? 'Tú' : 'Abogado/a',
+    lawyerSpecialty: 'Derecho',
+    meetingLink: apiAppt.meeting_link,
+    createdAt: new Date(apiAppt.date).toISOString().split('T')[0],
+  };
+};
 
 // Mock data para citas
 const mockAppointments: Appointment[] = [
@@ -69,7 +75,8 @@ export default function DashboardAppointments() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [isLoading, setIsLoading] = useState(true);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -81,17 +88,54 @@ export default function DashboardAppointments() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [rescheduleNotes, setRescheduleNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [newAppointment, setNewAppointment] = useState({
     title: '',
     description: '',
-    type: 'video' as 'video' | 'phone' | 'in-person',
+    type: 'video' as const,
     date: '',
     time: '',
-    lawyerName: '',
+    lawyerName: '', // This would be selected from a list of lawyers
     lawyerSpecialty: '',
     notes: ''
   });
+
+  // Load appointments on component mount
+  useEffect(() => {
+    const loadAppointments = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const userRole = user.role as 'client' | 'lawyer' || 'client'; // Default to 'client' if role is not set
+        const response = await appointmentsApi.list({ status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus });
+        
+        // Filter appointments based on user role
+        const filteredAppointments = response.filter(appt => 
+          userRole === 'lawyer' ? appt.lawyer_id === user.id : appt.client_id === user.id
+        );
+        
+        // Map API appointments to UI appointments
+        const uiAppointments = filteredAppointments.map(appt => 
+          mapApiToUiAppointment(appt, userRole)
+        );
+        
+        setAppointments(uiAppointments);
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudieron cargar las citas. Por favor, inténtalo de nuevo.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadAppointments();
+  }, [user, statusFilter, toast]);
 
   const handleJoinMeeting = (appointment: Appointment) => {
     if (appointment.meetingLink) {
@@ -124,16 +168,29 @@ export default function DashboardAppointments() {
     }
   };
 
-  const handleCancelAppointment = (appointmentId: string) => {
+  const handleCancelAppointment = async (appointmentId: string) => {
     const appointment = appointments.find(a => a.id === appointmentId);
-    if (appointment) {
-      setSelectedAppointment(appointment);
-      setIsCancelModalOpen(true);
-    }
+    if (!appointment) return;
+    
+    setSelectedAppointment(appointment);
+    setIsCancelModalOpen(true);
   };
 
-  const handleConfirmReschedule = () => {
-    if (rescheduleDate && rescheduleTime && selectedAppointment) {
+  const handleConfirmReschedule = async () => {
+    if (!rescheduleDate || !rescheduleTime || !selectedAppointment) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Update the appointment via API
+      await appointmentsApi.update(selectedAppointment.id, {
+        date: rescheduleDate,
+        time: rescheduleTime,
+        status: 'rescheduled',
+        notes: rescheduleNotes || selectedAppointment.notes,
+      });
+      
+      // Update the local state
       setAppointments(prev => 
         prev.map(apt => 
           apt.id === selectedAppointment.id 
@@ -147,29 +204,60 @@ export default function DashboardAppointments() {
             : apt
         )
       );
+      
       toast({
         title: "Cita reagendada",
-        description: `Tu cita ha sido reagendada para el ${rescheduleDate} a las ${rescheduleTime}.`,
+        description: `La cita ha sido reagendada para el ${rescheduleDate} a las ${rescheduleTime}.`,
       });
+      
       setIsRescheduleModalOpen(false);
+    } catch (error) {
+      console.error('Error rescheduling appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo reagendar la cita. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleConfirmCancel = () => {
-    if (selectedAppointment) {
+  const handleConfirmCancel = async () => {
+    if (!selectedAppointment) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Update the appointment status via API
+      await appointmentsApi.update(selectedAppointment.id, {
+        status: 'cancelled',
+      });
+      
+      // Update the local state
       setAppointments(prev => 
         prev.map(apt => 
           apt.id === selectedAppointment.id 
-            ? { ...apt, status: 'cancelled' }
+            ? { ...apt, status: 'cancelled' } 
             : apt
         )
       );
+      
       toast({
         title: "Cita cancelada",
         description: "La cita ha sido cancelada exitosamente.",
-        variant: "destructive",
       });
+      
       setIsCancelModalOpen(false);
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo cancelar la cita. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -187,39 +275,102 @@ export default function DashboardAppointments() {
     setIsNewAppointmentModalOpen(true);
   };
 
-  const handleCreateAppointment = () => {
-    if (newAppointment.title && newAppointment.description && newAppointment.date && 
-        newAppointment.time && newAppointment.lawyerName && newAppointment.lawyerSpecialty) {
+  const handleCreateAppointment = async () => {
+    if (!user) {
+      toast({
+        title: 'Error de autenticación',
+        description: 'Debes iniciar sesión para agendar una cita.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!newAppointment.title || !newAppointment.date || !newAppointment.time) {
+      toast({
+        title: 'Campos requeridos',
+        description: 'Por favor completa todos los campos obligatorios.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // In a real app, you would select a lawyer from a list
+      // For now, we'll use a placeholder lawyer ID
+      const lawyerId = '00000000-0000-0000-0000-000000000000';
+      const now = new Date().toISOString();
       
-      const appointmentId = `apt-${Date.now()}`;
-      const newApt: Appointment = {
-        id: appointmentId,
+      // Create the appointment data with proper typing
+      let meetingLink: string | null = null;
+      let location: string | null = null;
+      
+      // Use type predicates to help TypeScript understand the type narrowing
+      if (newAppointment.type === 'video') {
+        meetingLink = `https://meet.google.com/meet-${Date.now()}`;
+      } else if (newAppointment.type === 'in-person') {
+        location = 'Oficina Central - Santiago Centro';
+      }
+      
+      const appointmentData: Omit<AppointmentData, 'id'> = {
         title: newAppointment.title,
-        description: newAppointment.description,
+        description: newAppointment.description || '',
         status: 'scheduled',
         type: newAppointment.type,
+        lawyer_id: lawyerId,
+        client_id: user.id,
         date: newAppointment.date,
         time: newAppointment.time,
         duration: 60,
-        lawyerName: newAppointment.lawyerName,
-        lawyerSpecialty: newAppointment.lawyerSpecialty,
-        price: 50000,
-        createdAt: new Date().toISOString().split('T')[0],
-        notes: newAppointment.notes,
-        meetingLink: newAppointment.type === 'video' ? `https://meet.google.com/${appointmentId}` : undefined,
-        location: newAppointment.type === 'in-person' ? 'Oficina Central - Santiago Centro' : undefined
+        price: 50000, // Default price, could be based on lawyer's rate
+        notes: newAppointment.notes || '',
+        meeting_link: meetingLink,
+        location: location,
+        created_at: now,
+        updated_at: now,
+        stripe_payment_intent_id: null
       };
 
-      setAppointments(prev => [newApt, ...prev]);
-      toast({
-        title: "Cita agendada",
-        description: `Tu cita con ${newAppointment.lawyerName} ha sido agendada para el ${newAppointment.date}.`,
+      // Create the appointment via API
+      const createdAppointment = await appointmentsApi.create(appointmentData);
+      
+      // Add the new appointment to the list
+      const uiAppointment = mapApiToUiAppointment(createdAppointment, 'client');
+      
+      setAppointments(prev => [uiAppointment, ...prev]);
+      
+      // Reset form
+      setNewAppointment({
+        title: '',
+        description: '',
+        type: 'video',
+        date: '',
+        time: '',
+        lawyerName: '',
+        lawyerSpecialty: '',
+        notes: ''
       });
+      
+      toast({
+        title: '¡Cita agendada!',
+        description: `Tu cita ha sido agendada para el ${newAppointment.date} a las ${newAppointment.time}.`,
+      });
+      
       setIsNewAppointmentModalOpen(false);
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo agendar la cita. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: AppointmentStatus) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'scheduled': return 'bg-blue-100 text-blue-800';
@@ -259,7 +410,7 @@ export default function DashboardAppointments() {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type: AppointmentType) => {
     switch (type) {
       case 'video': return 'bg-blue-100 text-blue-800';
       case 'phone': return 'bg-green-100 text-green-800';
@@ -269,11 +420,16 @@ export default function DashboardAppointments() {
   };
 
   const filteredAppointments = appointments.filter(appointment => {
-    const matchesSearch = appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         appointment.lawyerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter;
-    const matchesType = typeFilter === 'all' || appointment.type === typeFilter;
+    if (isLoading) return false;
+    
+    const matchesSearch = searchTerm === '' || 
+      appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      appointment.lawyerName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || appointment.status === (statusFilter as AppointmentStatus);
+    const matchesType = typeFilter === 'all' || appointment.type === (typeFilter as AppointmentType);
+    
     return matchesSearch && matchesStatus && matchesType;
   });
 
@@ -568,12 +724,15 @@ export default function DashboardAppointments() {
               <Label htmlFor="type">Tipo de consulta</Label>
               <Select 
                 value={newAppointment.type}
-                onValueChange={(value: 'video' | 'phone' | 'in-person') => 
-                  setNewAppointment({...newAppointment, type: value})
+                onValueChange={(value) => 
+                  setNewAppointment(prev => ({
+                    ...prev,
+                    type: value as AppointmentType
+                  }))
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un tipo" />
+                  <SelectValue placeholder="Tipo de cita" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="video">Videollamada</SelectItem>

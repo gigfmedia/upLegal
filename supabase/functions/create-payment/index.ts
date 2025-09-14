@@ -58,6 +58,7 @@ serve(async (req) => {
 
     // Enforce minimum amount in CLP to satisfy Stripe's 50¢ USD equivalent
     const MIN_AMOUNT_CLP = 1000;
+    // El monto ya viene en CLP, solo aseguramos que cumpla con el mínimo
     const finalAmount = Math.max(Math.round(amount), MIN_AMOUNT_CLP);
 
     // Calculate platform fee (20%) and lawyer amount (80%) based on final amount

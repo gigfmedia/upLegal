@@ -13,7 +13,6 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
-import { EmailTestComponent } from "@/components/EmailTestComponent";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -24,7 +23,7 @@ const Index = () => {
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [location, setLocation] = useState("");
 
   // Expanded mock data for lawyers
   const mockLawyers: Lawyer[] = [
@@ -50,7 +49,7 @@ const Index = () => {
       location: "Los Angeles, CA",
       hourlyRate: 275000,
       consultationPrice: 40000,
-      image: "/placeholder.svg",
+      image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       bio: "Dedicated criminal defense attorney with a track record of successful case outcomes.",
       verified: true
     },
@@ -206,20 +205,47 @@ const Index = () => {
   const filteredLawyers = mockLawyers.filter(lawyer => {
     const matchesSearch = lawyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          lawyer.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesSpecialty = selectedSpecialty === "all" || 
-                            lawyer.specialties.includes(selectedSpecialty);
-    return matchesSearch && matchesSpecialty;
+    const matchesLocation = !location || 
+                          (lawyer.location && lawyer.location.toLowerCase().includes(location.toLowerCase()));
+    return matchesSearch && matchesLocation;
   });
 
-  const handleAuthClick = (mode: 'login' | 'signup') => {
+  const handleAuthClick = (mode: 'login' | 'signup', role: 'client' | 'lawyer' = 'client') => {
     setAuthMode(mode);
+    // If signing up as a lawyer, we'll set the role in the AuthModal
+    if (mode === 'signup' && role === 'lawyer') {
+      // We'll use a small timeout to ensure the modal is open before setting the role
+      setTimeout(() => {
+        const lawyerRadio = document.querySelector('input[value="lawyer"]') as HTMLInputElement;
+        const lawyerLabel = lawyerRadio?.closest('label');
+        if (lawyerRadio && lawyerLabel) {
+          // Uncheck client radio if it's checked
+          const clientRadio = document.querySelector('input[value="client"]') as HTMLInputElement;
+          const clientLabel = clientRadio?.closest('label');
+          
+          if (clientRadio && clientLabel) {
+            clientRadio.checked = false;
+            clientLabel.classList.remove('border-blue-500', 'bg-blue-50');
+            clientLabel.classList.add('border-gray-200', 'hover:border-gray-300', 'hover:bg-gray-50');
+          }
+          
+          // Set and style lawyer radio
+          lawyerRadio.checked = true;
+          lawyerLabel.classList.add('border-blue-500', 'bg-blue-50');
+          lawyerLabel.classList.remove('border-gray-200', 'hover:border-gray-300', 'hover:bg-gray-50');
+          
+          // Trigger change event
+          lawyerRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }, 100);
+    }
     setShowAuthModal(true);
   };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (searchTerm) params.set('q', searchTerm);
-    if (selectedSpecialty !== 'all') params.set('specialty', selectedSpecialty);
+    if (location) params.set('location', location);
     navigate(`/search?${params.toString()}`);
   };
 
@@ -247,26 +273,23 @@ const Index = () => {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  placeholder="Buscar abogados o especialidades legales..."
+                  placeholder="Buscar abogados o especialidades..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-12"
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
-              <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Todas las Especialidades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las Especialidades</SelectItem>
-                  {specialties.map((specialty) => (
-                    <SelectItem key={specialty} value={specialty}>
-                      {specialty}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  placeholder="Ubicación (opcional)"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="pl-10 h-12"
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
               <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={handleSearch}>
                 <Search className="mr-2 h-5 w-5" />
                 Buscar
@@ -349,7 +372,9 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-gray-900">
               Abogados destacados
             </h2>
-            <Button variant="outline">Ver todos</Button>
+            <Button variant="outline" onClick={() => navigate('/search')}>
+              Ver todos
+            </Button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -389,7 +414,7 @@ const Index = () => {
                 variant="outline" 
                 onClick={() => {
                   setSearchTerm("");
-                  setSelectedSpecialty("all");
+                  setLocation("");
                 }}
                 className="mt-4"
               >
@@ -413,17 +438,12 @@ const Index = () => {
           <Button 
             size="lg" 
             variant="secondary"
-            onClick={() => handleAuthClick('signup')}
+            onClick={() => handleAuthClick('signup', 'lawyer')}
             className="bg-white text-blue-600 hover:bg-gray-100"
           >
             Comenzar como Abogado
           </Button>
         </div>
-      </section>
-
-      {/* Email Test Section - Temporary for testing */}
-      <section className="container mx-auto px-4 py-8 max-w-md">
-        <EmailTestComponent />
       </section>
 
       <AuthModal

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 
@@ -74,6 +75,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <TooltipProvider>
+        <ScrollToTop />
         <LoadingIndicator />
         <main className="flex-1">
           <Routes>

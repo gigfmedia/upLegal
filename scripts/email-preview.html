@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa de Correo - upLegal</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .email-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #f8fafc;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .email-preview {
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .email-header {
+            text-align: center;
+            padding: 30px 20px;
+            background: #ffffff;
+        }
+        .logo {
+            color: #1e40af;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .logo span.legal {
+            color: #10b981;
+        }
+        .divider {
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #10b981);
+            width: 100px;
+            margin: 0 auto;
+        }
+        .email-content {
+            padding: 30px;
+            background: #ffffff;
+        }
+        h1 {
+            color: #1e40af;
+            margin: 0 0 20px 0;
+            font-size: 22px;
+        }
+        p {
+            color: #475569;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #2563eb;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-preview">
+            <div class="email-header">
+                <div class="logo">up<span class="legal">Legal</span></div>
+                <div class="divider"></div>
+            </div>
+            <div class="email-content">
+                <h1>¡Bienvenido a upLegal, Usuario!</h1>
+                
+                <p>Gracias por unirte a nuestra plataforma. Estamos encantados de tenerte con nosotros.</p>
+                
+                <p>Con upLegal podrás gestionar tus servicios legales de manera sencilla y eficiente.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="#" class="btn">Buscar Abogados</a>
+                </div>
+                
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px;">
+                    <p style="color: #64748b; font-size: 13px; margin: 0 0 10px 0;">
+                        Si tienes alguna pregunta, no dudes en contactarnos en 
+                        <a href="mailto:soporte@uplegal.app" style="color: #2563eb; text-decoration: none;">soporte@uplegal.app</a>
+                    </p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; padding: 20px; background-color: #f8fafc; border-top: 1px solid #e2e8f0;">
+                <p style="color: #94a3b8; font-size: 12px; margin: 0 0 5px 0;">
+                    © 2025 upLegal. Todos los derechos reservados.
+                </p>
+                <p style="color: #cbd5e1; font-size: 11px; margin: 0;">
+                    Este es un correo automático, por favor no respondas a este mensaje.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
