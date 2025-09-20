@@ -3,7 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft, Scale } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
 
 interface PaymentDetails {
@@ -128,7 +128,7 @@ export default function PaymentSuccess() {
         onClick={() => window.location.href = '/'}
       >
         <Scale className="h-8 w-8 text-blue-600" />
-        <span className="text-2xl font-bold text-gray-900">UpLegal</span>
+        <span className="text-2xl font-bold text-gray-900">LegalUp</span>
       </div>
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">

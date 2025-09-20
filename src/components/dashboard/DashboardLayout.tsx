@@ -28,24 +28,30 @@ function DashboardLayout() {
 
   // Different navigation items based on user role
   const getNavItems = () => {
-    const commonItems = [
-      { href: '/dashboard', icon: Activity, label: 'Resumen' },
-      { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
-      { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
-      { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
-      { href: '/dashboard/profile', icon: User, label: 'Perfil' },
-    ];
-
-    if (user?.role === 'lawyer') {
+    // Check if we're in the lawyer section from the URL path
+    const isLawyerPath = location.pathname.startsWith('/lawyer');
+    
+    // Get user role from different possible locations
+    const userRole = isLawyerPath 
+      ? 'lawyer' 
+      : user?.user_metadata?.role || user?.role || 'client';
+    
+    if (userRole === 'lawyer') {
       return [
-        ...commonItems,
-        { href: '/dashboard/services', icon: FileText, label: 'Servicios' },
-        { href: '/dashboard/clients', icon: Users, label: 'Clientes' },
-        { href: '/dashboard/earnings', icon: TrendingUp, label: 'Ingresos' },
+        { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
+        { href: '/lawyer/profile', icon: User, label: 'Perfil' },
+        { href: '/lawyer/services', icon: FileText, label: 'Servicios' },
+        { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
+        { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
+        { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
       ];
     } else {
       return [
-        ...commonItems,
+        { href: '/dashboard', icon: Activity, label: 'Resumen' },
+        { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
+        { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
+        { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
+        { href: '/dashboard/profile', icon: User, label: 'Perfil' },
         { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
       ];
     }
@@ -58,7 +64,7 @@ function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header onAuthClick={handleAuthClick} />
       
       <div className="flex-1 pt-16 bg-white">

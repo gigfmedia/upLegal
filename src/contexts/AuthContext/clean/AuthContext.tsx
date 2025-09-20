@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 import type { Session, User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +11,31 @@ export interface UserData {
   firstName: string;
   lastName: string;
   role: UserRole;
+}
+
+export interface Profile {
+  id?: string;
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+  bio: string | null;
+  phone: string | null;
+  location: string | null;
+  website: string | null;
+  avatar_url: string | null;
+  specialties: string[];
+  specialization: string | null;
+  hourly_rate: number;
+  hourly_rate_clp: number;
+  experience: number;
+  experience_years: number;
+  education: string | null;
+  bar_association_number: string | null;
+  zoom_link: string | null;
+  languages: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AuthContextType {
@@ -29,6 +54,7 @@ export interface AuthContextType {
     requiresEmailConfirmation?: boolean;
   }>;
   logout: (options?: { redirect?: string }) => Promise<{ success: boolean; error: Error | null }>;
+  updateProfile: (profile: Partial<Profile>) => Promise<User | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -300,7 +326,112 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription?.unsubscribe();
     };
-  }, []);
+  }, []); // Added missing dependency array and closing parenthesis and brace
+
+  // Update user profile - optimized for performance
+  const updateProfile = useCallback(async (profile: Partial<Profile>) => {
+    if (!user) {
+      throw new Error('No user is currently signed in');
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Only include fields that have changed
+      const changedFields: Record<string, any> = {};
+      const fieldsToCheck = [
+        'first_name', 'last_name', 'bio', 'phone', 'location', 'website',
+        'specialization', 'experience', 'languages', 'education', 'zoom_link',
+        'bar_association_number'
+      ];
+
+      fieldsToCheck.forEach(field => {
+        if (field in profile) {
+          if (field === 'specialization') {
+            changedFields.specialties = profile[field] ? [profile[field]] : [];
+          } else if (field === 'bar_association_number') {
+            changedFields.bar_number = profile[field] || null;
+          } else if (field === 'experience') {
+            changedFields.experience_years = profile[field] || 0;
+          } else if (field === 'languages' && !Array.isArray(profile[field])) {
+            changedFields[field] = [];
+          } else {
+            changedFields[field] = profile[field] || null;
+          }
+        }
+      });
+
+      // Add updated_at timestamp
+      changedFields.updated_at = new Date().toISOString();
+
+      // First update the user's metadata in auth.users
+      const { data: authUpdate, error: authUpdateError } = await supabase.auth.updateUser({
+        data: {
+          ...user.user_metadata,
+          ...changedFields
+        }
+      });
+
+      if (authUpdateError) throw authUpdateError;
+      
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      let updatedProfile;
+
+      if (!existingProfile) {
+        // Create new profile with only the changed fields
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([{
+            user_id: user.id,
+            ...changedFields,
+            created_at: new Date().toISOString()
+          }])
+          .select('*')
+          .single();
+          
+        if (createError) throw createError;
+        updatedProfile = newProfile;
+      } else {
+        // Update existing profile with only the changed fields
+        const { data: updated, error: updateError } = await supabase
+          .from('profiles')
+          .update(changedFields)
+          .eq('user_id', user.id)
+          .select('*')
+          .single();
+
+        if (updateError) throw updateError;
+        updatedProfile = updated;
+      }
+
+      if (!updatedProfile) {
+        throw new Error('No se pudo actualizar el perfil');
+      }
+
+      // Update the local state with only the changed fields
+      const updatedUser = {
+        ...user,
+        user_metadata: {
+          ...user.user_metadata,
+          ...updatedProfile
+        }
+      };
+      
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      console.error('[Auth] Error in updateProfile:', error);
+      throw error instanceof Error ? error : new Error('Error desconocido al actualizar el perfil');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   const value = {
     user,
@@ -314,6 +445,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     signup,
     logout,
+    updateProfile
   };
 
   return (

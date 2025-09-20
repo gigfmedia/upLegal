@@ -52,7 +52,7 @@ const getTransactionEmailTemplate = (data: TransactionEmailRequest) => {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Confirmación de Transacción - upLegal</title>
+        <title>Confirmación de Transacción - LegalUp</title>
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="text-align: center; margin-bottom: 20px;">
@@ -113,7 +113,7 @@ const getTransactionEmailTemplate = (data: TransactionEmailRequest) => {
           
           <div style="text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px;">
             <p>Si tienes alguna pregunta, por favor contacta a nuestro equipo de soporte.</p>
-            <p>&copy; ${new Date().getFullYear()} upLegal. Todos los derechos reservados.</p>
+            <p>&copy; ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
           </div>
           <p style="color: #6c757d; margin: 10px 0 0 0; font-size: 12px;">
             Fecha: ${new Date().toLocaleString('es-CL')}

@@ -11,7 +11,7 @@ export default function PaymentCanceled() {
         onClick={() => window.location.href = '/'}
       >
         <Scale className="h-8 w-8 text-blue-600" />
-        <span className="text-2xl font-bold text-gray-900">UpLegal</span>
+        <span className="text-2xl font-bold text-gray-900">LegalUp</span>
       </div>
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">

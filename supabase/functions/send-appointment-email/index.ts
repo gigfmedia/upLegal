@@ -68,9 +68,9 @@ const getAppointmentEmailTemplate = (data: AppointmentEmailRequest, isForLawyer 
   };
   
   // Generate calendar links
-  const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Cita+upLegal&details=${encodeURIComponent(`Cita con ${isForLawyer ? data.clientName || 'cliente' : data.lawyerName} para ${data.serviceType}`)}&dates=${formatDateForGoogleCalendar(data.appointmentDate, data.appointmentTime)}`;
+  const googleCalendarLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Cita+LegalUp&details=${encodeURIComponent(`Cita con ${isForLawyer ? data.clientName || 'cliente' : data.lawyerName} para ${data.serviceType}`)}&dates=${formatDateForGoogleCalendar(data.appointmentDate, data.appointmentTime)}`;
   
-  const outlookCalendarLink = `https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=Cita upLegal&startdt=${formatDateForOutlook(data.appointmentDate, data.appointmentTime)}&body=Cita con ${encodeURIComponent(isForLawyer ? data.clientName || 'cliente' : data.lawyerName)} para ${encodeURIComponent(data.serviceType)}`;
+  const outlookCalendarLink = `https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=Cita LegalUp&startdt=${formatDateForOutlook(data.appointmentDate, data.appointmentTime)}&body=Cita con ${encodeURIComponent(isForLawyer ? data.clientName || 'cliente' : data.lawyerName)} para ${encodeURIComponent(data.serviceType)}`;
 
   const statusMessages = {
     scheduled: {
@@ -207,19 +207,19 @@ const getAppointmentEmailTemplate = (data: AppointmentEmailRequest, isForLawyer 
         
         <!-- Acciones -->
         <div style="margin-top: 30px; text-align: center;">
-          <a href="https://uplegal.app/dashboard" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 15px; margin-bottom: 20px;">
+          <a href="https://LegalUp.app/dashboard" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 15px; margin-bottom: 20px;">
             Ver detalles en mi cuenta
           </a>
           
           <p style="color: #64748b; font-size: 13px; margin: 20px 0 0 0; line-height: 1.6;">
-            ¿Neitas ayuda? Contáctanos en <a href="mailto:soporte@uplegal.app" style="color: #2563eb; text-decoration: none;">soporte@uplegal.app</a>
+            ¿Neitas ayuda? Contáctanos en <a href="mailto:soporte@LegalUp.app" style="color: #2563eb; text-decoration: none;">soporte@LegalUp.app</a>
           </p>
         </div>
         
         <!-- Footer -->
         <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; text-align: center;">
           <p style="margin: 0 0 10px 0; color: #94a3b8; font-size: 12px;">
-            © ${new Date().getFullYear()} upLegal. Todos los derechos reservados.
+            © ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.
           </p>
           <p style="margin: 0; color: #cbd5e1; font-size: 11px;">
             Este es un correo automático, por favor no respondas a este mensaje.
@@ -310,7 +310,7 @@ const getAppointmentEmailTemplate = (data: AppointmentEmailRequest, isForLawyer 
           
           <div style="text-align: center; margin: 30px 0;">
             <p style="margin: 0; font-size: 14px; color: #6b7280;">
-              &copy; ${new Date().getFullYear()} upLegal. Todos los derechos reservados.
+              &copy; ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.
             </p>
           </div>
         </div>

@@ -25,3 +25,35 @@ ip_version = "IPv6"
 enabled = true
 port = 54323
 api_url = "http://127.0.0.1"
+
+[auth]
+site_url = "http://localhost:3000"
+uri_allow_list = ["http://localhost:3000/*"]
+
+# Configuración de correo personalizado
+[mailer]
+SMTP_ADMIN_EMAIL = "no-reply@legalup.app"
+SMTP_HOST = "smtp.resend.com"
+SMTP_PORT = 587
+SMTP_USER = "resend"
+SMTP_PASS = "${RESEND_API_KEY}"
+SMTP_SENDER_NAME = "LegalUp"
+
+# Deshabilitar correos de Supabase
+[mailer.autoconfirm]
+enabled = false
+
+[mailer.otp]
+enabled = false
+
+[mailer.email_change]
+enabled = false
+
+[mailer.invite]
+enabled = false
+
+[mailer.magic_link]
+enabled = false
+
+[mailer.recovery]
+enabled = false

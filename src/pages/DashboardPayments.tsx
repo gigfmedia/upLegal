@@ -15,9 +15,13 @@ import {
   Download,
   Eye,
   Filter,
+  Menu,
+  PlusCircle,
   Receipt,
+  Settings,
   TrendingUp,
-  Wallet
+  Wallet,
+  X
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -265,54 +269,59 @@ export default function DashboardPayments() {
     .reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
+    <div className="h-full flex flex-col max-w-full overflow-x-hidden">
+      <div className="px-0 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+          <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">Pagos y Facturación</h1>
-            <p className="text-muted-foreground">Gestiona tus pagos, facturas y suscripciones</p>
+            <p className="text-muted-foreground text-sm sm:text-base">Gestiona tus pagos, facturas y suscripciones</p>
+          </div>
+          
+          {/* Desktop Menu - Removed unnecessary buttons */}
+          <div className="hidden sm:flex">
+            {/* Empty container to maintain layout */}
           </div>
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-4">
+          <Card className="hover:shadow-md transition-shadow rounded-none sm:rounded-lg border-x-0 sm:border-x border-t-0 sm:border-t">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Pagado</p>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(totalPaid)}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Pagado</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-600">{formatPrice(totalPaid)}</p>
                 </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="p-2 sm:p-3 bg-green-100 rounded-full">
+                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="hover:shadow-md transition-shadow rounded-none sm:rounded-lg border-x-0 sm:border-x border-t-0 border-b sm:border-t">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pagos Pendientes</p>
-                  <p className="text-2xl font-bold text-yellow-600">{formatPrice(pendingAmount)}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Pagos Pendientes</p>
+                  <p className="text-xl sm:text-2xl font-bold text-yellow-600">{formatPrice(pendingAmount)}</p>
                 </div>
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <Wallet className="h-6 w-6 text-yellow-600" />
+                <div className="p-2 sm:p-3 bg-yellow-100 rounded-full">
+                  <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
+          <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Reembolsos</p>
-                  <p className="text-2xl font-bold text-blue-600">{formatPrice(totalRefunded)}</p>
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Reembolsos</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-600">{formatPrice(totalRefunded)}</p>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Receipt className="h-6 w-6 text-blue-600" />
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
+                  <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -320,28 +329,26 @@ export default function DashboardPayments() {
         </div>
 
         {/* Filtros */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Buscar por descripción, factura o abogado..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
+        <Card className="mb-4 sm:mb-6 overflow-hidden rounded-none sm:rounded-lg">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Buscar pagos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 text-sm sm:text-base w-full h-10"
+                />
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-3 w-full">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10 w-full min-w-0"
                 >
-                  <option value="all">Todos los estados</option>
+                  <option value="all">Todos</option>
                   <option value="completed">Completado</option>
                   <option value="pending">Pendiente</option>
                   <option value="failed">Fallido</option>
@@ -351,7 +358,7 @@ export default function DashboardPayments() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10 w-full min-w-0"
                 >
                   <option value="all">Todos los tipos</option>
                   <option value="consultation">Consultas</option>
@@ -365,65 +372,62 @@ export default function DashboardPayments() {
         </Card>
 
         {/* Lista de pagos */}
-      <div className="space-y-6">
-        {filteredPayments.map((payment) => (
-          <Card key={payment.id} className="border-t border-gray-200">
-            <CardContent className="p-6">
-              <div className="flex flex-col space-y-4">
+      <div className="space-y-0 sm:space-y-4">
+        {filteredPayments.map((payment, index) => (
+          <Card 
+            key={payment.id} 
+            className={`border-t border-gray-200 hover:shadow-md transition-shadow rounded-none sm:rounded-lg ${index === filteredPayments.length - 1 ? 'border-b' : ''}`}
+          >
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col space-y-3 sm:space-y-4">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                  <div className="overflow-hidden">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                       {payment.description}
                     </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
                       {payment.lawyerName || 'Pago de servicio'}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className={getTypeColor(payment.type)}>
-                      <span className="flex items-center">
-                        {payment.type === 'consultation' && <CreditCard className="h-4 w-4 mr-1" />}
-                        {payment.type === 'appointment' && <Calendar className="h-4 w-4 mr-1" />}
-                        {payment.type === 'subscription' && <DollarSign className="h-4 w-4 mr-1" />}
-                        {payment.type === 'refund' && <Receipt className="h-4 w-4 mr-1" />}
-                        {getTypeText(payment.type)}
-                      </span>
+                  <div className="flex items-center space-x-1.5 sm:space-x-2">
+                    <Badge variant="outline" className={`${getTypeColor(payment.type)} text-xs sm:text-sm py-0.5 sm:py-1`}>
+                      {getTypeText(payment.type)}
                     </Badge>
-                    <Badge className={getStatusColor(payment.status)}>
+                    <Badge className={`${getStatusColor(payment.status)} text-xs sm:text-sm py-0.5 sm:py-1`}>
                       {getStatusText(payment.status)}
                     </Badge>
                   </div>
                 </div>
 
                   {/* Detalles principales */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Fecha</p>
-                        <p className="text-sm">{formatDate(payment.date)}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-1 sm:pt-2">
+                    <div className="flex items-start space-x-2">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div className="overflow-hidden">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Fecha</p>
+                        <p className="text-xs sm:text-sm truncate">{formatDate(payment.date)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <CreditCard className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Método</p>
-                        <p className="text-sm">{getMethodText(payment.method)}</p>
+                    <div className="flex items-start space-x-2">
+                      <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <div className="overflow-hidden">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Método</p>
+                        <p className="text-xs sm:text-sm truncate">{getMethodText(payment.method)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="h-5 w-5 flex items-center justify-center text-gray-500">#</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Factura</p>
-                        <p className="text-sm">{payment.invoiceNumber}</p>
+                    <div className="flex items-start space-x-2">
+                      <span className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-gray-500 mt-0.5">#</span>
+                      <div className="overflow-hidden">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Factura</p>
+                        <p className="text-xs sm:text-sm font-mono truncate">{payment.invoiceNumber}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="h-5 w-5 flex items-center justify-center text-gray-500">$</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">Monto</p>
-                        <p className={`text-sm font-medium ${
+                    <div className="flex items-start space-x-2">
+                      <span className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-gray-500 mt-0.5">$</span>
+                      <div className="overflow-hidden">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500">Monto</p>
+                        <p className={`text-xs sm:text-sm font-medium truncate ${
                           payment.amount >= 0 ? 'text-gray-900' : 'text-red-600'
                         }`}>
                           {formatPrice(payment.amount)}
@@ -433,28 +437,28 @@ export default function DashboardPayments() {
                   </div>
 
                 {/* Acciones */}
-                <div className="border-t mt-4 pt-4">
-                  <div className="flex flex-col items-end space-y-2 sm:flex-row sm:justify-end sm:space-x-2 sm:space-y-0 w-full">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full sm:w-auto"
-                      onClick={() => handleViewPayment(payment.id)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver detalles
-                    </Button>
+                <div className="border-t mt-3 sm:mt-4 pt-3 sm:pt-4">
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
                     {payment.status === 'completed' && (
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="w-full sm:w-auto"
+                        className="w-full sm:w-auto text-xs sm:text-sm py-1 h-8 sm:h-9"
                         onClick={() => handleDownloadInvoice(payment)}
                       >
-                        <Download className="h-4 w-4 mr-1" />
+                        <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                         Descargar
                       </Button>
                     )}
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full sm:w-auto text-xs sm:text-sm py-1 h-8 sm:h-9"
+                      onClick={() => handleViewPayment(payment.id)}
+                    >
+                      <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                      Ver detalles
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -464,12 +468,12 @@ export default function DashboardPayments() {
       </div>
 
       {filteredPayments.length === 0 && (
-        <div className="text-center py-12">
-          <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <Receipt className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">
             No se encontraron pagos
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto px-4">
             {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
               ? 'Intenta ajustar los filtros de búsqueda'
               : 'Aún no tienes pagos registrados.'
@@ -480,90 +484,99 @@ export default function DashboardPayments() {
 
       {/* Modal para ver detalles del pago */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-2xl w-full h-full sm:h-auto sm:w-auto">
-          <DialogHeader>
-            <DialogTitle className="text-gray-700">Detalles del Pago</DialogTitle>
-            <DialogDescription className="text-gray-500">
+        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] sm:w-full mx-auto my-4 sm:my-8 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-lg sm:text-xl text-gray-900">Detalles del Pago</DialogTitle>
+            <DialogDescription className="text-sm sm:text-base text-gray-500">
               Información completa de la transacción
             </DialogDescription>
           </DialogHeader>
           {selectedPayment && (
-            <div className="space-y-4">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <Label className="text-sm font-medium text-gray-500">Descripción</Label>
-                <p className="text-gray-900">{selectedPayment.description}</p>
+                <Label className="text-xs sm:text-sm font-medium text-gray-500">Descripción</Label>
+                <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.description}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 block">Tipo</Label>
-                  <Badge className={getTypeColor(selectedPayment.type)}>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 block mb-1">Tipo</Label>
+                  <Badge className={`${getTypeColor(selectedPayment.type)} text-xs sm:text-sm py-1`}>
                     {getTypeText(selectedPayment.type)}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500 block">Estado</Label>
-                  <Badge className={getStatusColor(selectedPayment.status)}>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500 block mb-1">Estado</Label>
+                  <Badge className={`${getStatusColor(selectedPayment.status)} text-xs sm:text-sm py-1`}>
                     {getStatusText(selectedPayment.status)}
                   </Badge>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Número de Factura</Label>
-                  <p className="text-gray-900 font-mono">{selectedPayment.invoiceNumber}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Número de Factura</Label>
+                  <p className="text-sm sm:text-base text-gray-900 font-mono mt-1">{selectedPayment.invoiceNumber}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">ID de Transacción</Label>
-                  <p className="text-gray-900 font-mono text-sm">{selectedPayment.transactionId}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">ID de Transacción</Label>
+                  <p className="text-xs sm:text-sm text-gray-500 font-mono mt-1 break-all">{selectedPayment.transactionId}</p>
                 </div>
               </div>
               
-              
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Monto</Label>
-                  <p className={`text-lg font-semibold ${
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Monto</Label>
+                  <p className={`text-base sm:text-lg font-semibold mt-1 ${
                     selectedPayment.amount >= 0 ? 'text-gray-900' : 'text-red-600'
                   }`}>
                     {formatPrice(selectedPayment.amount)}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Método de Pago</Label>
-                  <p className="text-gray-900">{getMethodText(selectedPayment.method)}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Método de Pago</Label>
+                  <p className="text-sm sm:text-base text-gray-900 mt-1">{getMethodText(selectedPayment.method)}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Fecha</Label>
-                  <p className="text-gray-900">{formatDate(selectedPayment.date)}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Fecha</Label>
+                  <p className="text-sm sm:text-base text-gray-900 mt-1">{formatDate(selectedPayment.date)}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Servicio</Label>
-                  <p className="text-gray-900">{selectedPayment.relatedService}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Servicio</Label>
+                  <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.relatedService}</p>
                 </div>
               </div>
               
               {selectedPayment.lawyerName && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Abogado</Label>
-                  <p className="text-gray-900">{selectedPayment.lawyerName}</p>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Abogado</Label>
+                  <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.lawyerName}</p>
                 </div>
               )}
+              
+              <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-end">
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto"
+                  onClick={() => setIsViewModalOpen(false)}
+                >
+                  Cerrar
+                </Button>
+                {selectedPayment?.status === 'completed' && (
+                  <Button 
+                    variant="default" 
+                    className="w-full sm:w-auto bg-black hover:bg-gray-800"
+                    onClick={() => handleDownloadInvoice(selectedPayment)}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Descargar factura
+                  </Button>
+                )}
+              </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
-              Cerrar
-            </Button>
-            {selectedPayment?.status === 'completed' && (
-              <Button onClick={() => selectedPayment && handleDownloadInvoice(selectedPayment)}>
-                <Download className="h-4 w-4 mr-2" />
-                Descargar Factura
-              </Button>
-            )}
-          </DialogFooter>
+          <DialogFooter />
         </DialogContent>
       </Dialog>
       </div>

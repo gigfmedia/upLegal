@@ -72,7 +72,7 @@ serve(async (req) => {
       },
       business_profile: {
         mcc: '8111', // Legal services
-        product_description: 'Servicios legales a través de UpLegal',
+        product_description: 'Servicios legales a través de LegalUp',
       },
       individual: {
         email: profile.email,

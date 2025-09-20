@@ -21,6 +21,8 @@ interface Message {
   sender: 'user' | 'agent';
   text: string;
   fileName?: string;
+  fileUrl?: string;
+  fileType?: string;
   timestamp: string;
   matches?: Abogado[];
   showBadges?: boolean;
@@ -296,14 +298,40 @@ Mensaje del usuario:
     [selectedEspecialidad]
   );
 
-  const handleSend = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Crear URL de vista previa para imágenes y PDFs
+      if (selectedFile.type.startsWith('image/') || selectedFile.type === 'application/pdf') {
+        const fileUrl = URL.createObjectURL(selectedFile);
+        // No necesitamos hacer nada más aquí, ya que la URL se usará al enviar el mensaje
+      }
+    }
+  };
+
+  const handleSendMessage = useCallback(() => {
     if (!input.trim() && !file) return;
+    
+    // Crear URL de vista previa si es un archivo de imagen o PDF
+    let fileUrl: string | undefined;
+    let fileType: string | undefined;
+    
+    if (file) {
+      fileUrl = URL.createObjectURL(file);
+      fileType = file.type;
+    }
     
     const newMessage: Message = {
       id: generateId(),
       sender: 'user',
       text: input,
-      ...(file && { fileName: file.name }),
+      ...(file && { 
+        fileName: file.name,
+        fileUrl,
+        fileType
+      }),
       timestamp: formatTime(new Date()),
     };
 
@@ -316,7 +344,7 @@ Mensaje del usuario:
       processInput(input + (file ? ` (archivo adjunto: ${file.name})` : ''));
       setLoading(false);
     }, 500);
-  };
+  }, [input, file, processInput]);
 
   const handleBadgeClick = (esp: string) => {
     setSelectedEspecialidad(esp);
@@ -355,172 +383,194 @@ Mensaje del usuario:
       {/* Chat Container */}
       {open && (
         <div className="fixed bottom-6 right-6 w-full max-w-md z-50">
-          <div
-            className={`bg-card p-4 rounded-2xl shadow-2xl w-full transition-all duration-300 transform border ${
-              isVisible
-                ? 'translate-y-0 opacity-100'
-                : 'translate-y-10 opacity-0'
-            }`}
-          >
-            {/* Header */}
-            <div className="flex justify-between items-center mb-2">
-              <h1 className="text-xl font-semibold text-foreground">👩‍⚖️ Asistente Legal</h1>
-              <button
-                onClick={handleToggleChat}
-                className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-accent"
-              >
-                <XIcon className="w-5 h-5" />
-              </button>
-            </div>
+        <div
+          className={`bg-card p-4 rounded-2xl shadow-2xl w-full transition-all duration-300 transform border ${
+            isVisible
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-10 opacity-0'
+          }`}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center mb-2">
+            <h1 className="text-xl font-semibold text-foreground">👩‍⚖️ Asistente Legal</h1>
+            <button
+              onClick={handleToggleChat}
+              className="text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-accent"
+            >
+              <XIcon className="w-5 h-5" />
+            </button>
+          </div>
 
-            {/* Mensajes */}
-            <div className="h-[50vh] overflow-y-auto flex flex-col gap-2 p-2 rounded bg-background">
-              {messages.map((msg) => (
-                <React.Fragment key={msg.id}>
-                  <div className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`p-2 rounded-xl max-w-[80%] text-sm inline-block ${
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      <div>{msg.text}</div>
-                      {msg.fileName && (
-                        <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
-                          <FileIcon className="w-4 h-4" />
+          {/* Mensajes */}
+          <div className="h-[50vh] overflow-y-auto flex flex-col gap-2 p-2 rounded bg-background">
+            {messages.map((msg) => (
+              <React.Fragment key={msg.id}>
+                <div className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`p-2 rounded-xl max-w-[80%] text-sm inline-block ${
+                      msg.sender === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    <div>{msg.text}</div>
+                    {msg.fileName && (
+                      <div className="mt-2 border rounded-lg overflow-hidden">
+                        {msg.fileType?.startsWith('image/') && msg.fileUrl ? (
+                          <img 
+                            src={msg.fileUrl} 
+                            alt={msg.fileName} 
+                            className="max-w-full max-h-40 object-contain mx-auto"
+                          />
+                        ) : msg.fileType === 'application/pdf' && msg.fileUrl ? (
+                          <div className="p-3 bg-muted/50 flex flex-col items-center">
+                            <FileIcon className="w-10 h-10 text-muted-foreground mb-2" />
+                            <span className="text-xs text-center break-all px-2">{msg.fileName}</span>
+                          </div>
+                        ) : (
+                          <div className="p-2 bg-muted/50 flex items-center gap-2">
+                            <FileIcon className="w-4 h-4 flex-shrink-0" />
+                            <span className="text-xs truncate">{msg.fileName}</span>
+                          </div>
+                        )}
+                        <div className="text-[10px] text-muted-foreground p-1 bg-muted/30 truncate">
                           {msg.fileName}
                         </div>
-                      )}
-                      <div className="text-[10px] mt-1 text-right opacity-70">
-                        {msg.timestamp}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Badges de especialidades cuando el mensaje lo requiere */}
-                  {msg.showBadges && (
-                    <div className="flex flex-wrap gap-2 mt-2 max-w-[80%]">
-                      {especialidadesValidas.map((esp) => (
-                        <button
-                          key={esp}
-                          onClick={() => handleBadgeClick(esp)}
-                          className={`text-xs px-3 py-1 rounded-full transition ${
-                            selectedEspecialidad === esp
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
-                          }`}
-                        >
-                          {esp}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {msg.matches && msg.matches.length > 0 && (
-                    <Card className="mt-2 bg-card border max-w-[80%] shadow-sm self-start animate-in fade-in">
-                      <CardContent className="p-3">
-                        <h4 className="font-semibold text-sm mb-2 text-foreground">Abogados encontrados:</h4>
-                        {msg.matches.slice(0, 2).map((abogado, idx) => (
-                          <div key={idx} className="border-b border-border pb-2 mb-2 last:border-b-0 last:mb-0">
-                            <div className="flex justify-between items-start mb-1">
-                              <div>
-                                <h5 className="font-medium text-sm text-foreground">{abogado.nombre}</h5>
-                                <p className="text-xs text-muted-foreground capitalize">{abogado.especialidad}</p>
-                              </div>
-                              <div className="text-right">
-                                <div className="flex items-center gap-1">
-                                  <StarIcon className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                  <span className="text-xs font-medium">{abogado.rating}</span>
-                                  <span className="text-xs text-muted-foreground">({abogado.reviews})</span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1 mb-1">
-                              <MapPinIcon className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">{abogado.ciudad}</span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mb-2">{abogado.descripcion}</p>
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs font-medium text-foreground">
-                                ${abogado.tarifa.toLocaleString()}/hora
-                              </span>
-                              <div className="flex gap-1">
-                                <Button 
-                                  size="sm" 
-                                  variant="outline" 
-                                  className="text-xs h-6 px-2"
-                                  onClick={() => handleContact(abogado)}
-                                >
-                                  <MessageCircleIcon className="w-3 h-3 mr-1" />
-                                  Contactar
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="default" 
-                                  className="text-xs h-6 px-2"
-                                  onClick={() => handleSchedule(abogado)}
-                                >
-                                  <CalendarIcon className="w-3 h-3 mr-1" />
-                                  Agendar
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
-                </React.Fragment>
-              ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="p-2 rounded-xl bg-muted text-muted-foreground text-sm">
-                    <div className="flex space-x-2">
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce delay-100"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce delay-200"></div>
+                    )}
+                    <div className="text-[10px] mt-1 text-right opacity-70">
+                      {msg.timestamp}
                     </div>
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Input area */}
-            <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-muted rounded-full">
-              <button
-                className="hover:bg-accent text-primary-foreground bg-primary p-1.5 rounded-full"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <PlusIcon className="w-5 h-5" />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-              </button>
-              <input
-                className="flex-grow bg-transparent focus:outline-none text-sm text-foreground placeholder:text-muted-foreground"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe tu mensaje..."
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              />
-              <button
-                onClick={handleSend}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium"
-                disabled={loading}
-              >
-                Enviar
-              </button>
-            </div>
+                {/* Badges de especialidades cuando el mensaje lo requiere */}
+                {msg.showBadges && (
+                  <div className="flex flex-wrap gap-2 mt-2 max-w-[80%]">
+                    {especialidadesValidas.map((esp) => (
+                      <button
+                        key={esp}
+                        onClick={() => handleBadgeClick(esp)}
+                        className={`text-xs px-3 py-1 rounded-full transition ${
+                          selectedEspecialidad === esp
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
+                        }`}
+                      >
+                        {esp}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {msg.matches && msg.matches.length > 0 && (
+                  <Card className="mt-2 bg-card border max-w-[80%] shadow-sm self-start animate-in fade-in">
+                    <CardContent className="p-3">
+                      <h4 className="font-semibold text-sm mb-2 text-foreground">Abogados encontrados:</h4>
+                      {msg.matches.slice(0, 2).map((abogado, idx) => (
+                        <div key={idx} className="border-b border-border pb-2 mb-2 last:border-b-0 last:mb-0">
+                          <div className="flex justify-between items-start mb-1">
+                            <div>
+                              <h5 className="font-medium text-sm text-foreground">{abogado.nombre}</h5>
+                              <p className="text-xs text-muted-foreground capitalize">{abogado.especialidad}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center gap-1">
+                                <StarIcon className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="text-xs font-medium">{abogado.rating}</span>
+                                <span className="text-xs text-muted-foreground">({abogado.reviews})</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 mb-1">
+                            <MapPinIcon className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">{abogado.ciudad}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{abogado.descripcion}</p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-foreground">
+                              ${abogado.tarifa.toLocaleString()}/hora
+                            </span>
+                            <div className="flex gap-1">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-xs h-6 px-2"
+                                onClick={() => handleContact(abogado)}
+                              >
+                                <MessageCircleIcon className="w-3 h-3 mr-1" />
+                                Contactar
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="default" 
+                                className="text-xs h-6 px-2"
+                                onClick={() => handleSchedule(abogado)}
+                              >
+                                <CalendarIcon className="w-3 h-3 mr-1" />
+                                Agendar
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </React.Fragment>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="p-2 rounded-xl bg-muted text-muted-foreground text-sm">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce"></div>
+                    <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 rounded-full bg-muted-foreground animate-bounce delay-200"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input area */}
+          <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-muted rounded-full">
+            <button
+              type="button"
+              className="hover:bg-accent text-primary-foreground bg-primary p-1.5 rounded-full"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <PlusIcon className="w-5 h-5" />
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*,.pdf,.doc,.docx,.txt"
+            />
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none text-sm"
+              placeholder="Escribe tu mensaje..."
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+            />
+            <button
+              type="button"
+              onClick={handleSendMessage}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-sm px-4 py-1.5 rounded-full font-medium"
+              disabled={loading}
+            >
+              Enviar
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* Botón flotante */}
+    {/* Botón flotante */}
       {!open && (
         <button
           onClick={handleToggleChat}

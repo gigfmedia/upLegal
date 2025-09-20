@@ -1,0 +1,1372 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { X, SlidersHorizontal, ChevronLeft, ChevronRight, Search, Loader2 } from "lucide-react";
+import { Lawyer } from "@/components/LawyerCard";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { SearchBar } from "@/components/SearchBar";
+import { SearchFilters } from "@/components/SearchFilters";
+import { LawyerCard } from "@/components/LawyerCard";
+import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
+import type { AuthContextType } from "@/contexts/AuthContext";
+import { AuthModal } from "@/components/AuthModal";
+import { ContactModal } from "@/components/ContactModal";
+import { ScheduleModal } from "@/components/ScheduleModal";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import { supabase } from "@/integrations/supabase/client";
+
+// Define the Lawyer interface if not already defined in LawyerCard
+export interface Lawyer {
+  id: string;
+  name: string;
+  specialties: string[];
+  rating: number;
+  reviews: number;
+  location: string;
+  cases: number;
+  hourlyRate: number;
+  consultationPrice: number;
+  image: string;
+  bio: string;
+  verified: boolean;
+  availability: {
+    availableToday: boolean;
+    availableThisWeek: boolean;
+    quickResponse: boolean;
+    emergencyConsultations: boolean;
+  };
+}
+
+const specialties = [
+  "Derecho Civil",
+  "Derecho Penal",
+  "Derecho Laboral",
+  "Derecho de Familia",
+  "Derecho Comercial",
+  "Derecho Tributario",
+  "Derecho Inmobiliario",
+  "Derecho de Salud",
+  "Derecho de Seguros",
+  "Derecho Ambiental",
+  "Derecho de Consumidor",
+  "Derecho Administrativo",
+  "Derecho Procesal",
+  "Derecho de Propiedad Intelectual",
+  "Derecho de Seguridad Social",
+  "Derecho Minero",
+  "Derecho Aduanero",
+  "Derecho Marítimo",
+  "Derecho Aeronáutico",
+  "Derecho Deportivo"
+];
+
+const chileanLocations = [
+  // Región de Arica y Parinacota
+  'Arica', 'Putre', 'General Lagos', 'Camarones',
+  
+  // Región de Tarapacá
+  'Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Colchane',
+  
+  // Región de Antofagasta
+  'Antofagasta', 'Calama', 'Tocopilla', 'Mejillones', 'Taltal', 'San Pedro de Atacama', 'María Elena',
+  
+  // Región de Atacama
+  'Copiapó', 'Caldera', 'Tierra Amarilla', 'Chañaral', 'Diego de Almagro', 'Vallenar', 'Alto del Carmen', 'Freirina', 'Huasco',
+  
+  // Región de Coquimbo
+  'La Serena', 'Coquimbo', 'Ovalle', 'Illapel', 'Los Vilos', 'Salamanca', 'Vicuña', 'Paihuano', 'Andacollo', 'La Higuera',
+  
+  // Región de Valparaíso
+  'Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'San Antonio', 'Quillota', 'San Felipe', 'Los Andes', 'La Ligua', 'Zapallar',
+  
+  // Región Metropolitana
+  'Santiago', 'Maipú', 'Puente Alto', 'La Florida', 'Las Condes', 'Providencia', 'Ñuñoa', 'La Reina', 'Peñalolén', 'La Pintana',
+  
+  // Región del Libertador Bernardo O'Higgins
+  'Rancagua', 'San Fernando', 'Santa Cruz', 'Pichilemu', 'San Vicente de Tagua Tagua', 'Rengo', 'Machalí',
+  
+  // Región del Maule
+  'Talca', 'Curicó', 'Linares', 'Constitución', 'Cauquenes', 'Parral', 'San Javier',
+  
+  // Región de Ñuble
+  'Chillán', 'Chillán Viejo', 'Bulnes', 'Quirihue', 'San Carlos', 'Coihueco',
+  
+  // Región del Biobío
+  'Concepción', 'Talcahuano', 'Los Ángeles', 'Coronel', 'Chiguayante', 'San Pedro de la Paz', 'Lota', 'Lebu', 'Los Ángeles',
+  
+  // Región de La Araucanía
+  'Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Lautaro',
+  
+  // Región de Los Ríos
+  'Valdivia', 'La Unión', 'Panguipulli', 'Río Bueno', 'Paillaco', 'Los Lagos',
+  
+  // Región de Los Lagos
+  'Puerto Montt', 'Osorno', 'Castro', 'Ancud', 'Puerto Varas', 'Puerto Octay', 'Frutillar', 'Calbuco',
+  
+  // Región Aysén
+  'Coyhaique', 'Aysén', 'Chile Chico', 'Cochrane', 'Villa O\'Higgins',
+  
+  // Región de Magallanes
+  'Punta Arenas', 'Puerto Natales', 'Porvenir', 'Puerto Williams'
+];
+
+const SearchResults = () => {
+  const { user } = useAuth() as AuthContextType;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
+  
+  // Get search parameters from URL
+  const initialQuery = searchParams.get('q') || '';
+  const initialSpecialty = searchParams.get('specialty') || 'all';
+  const initialLocation = searchParams.get('location') || '';
+  
+  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const [selectedSpecialty, setSelectedSpecialty] = useState(initialSpecialty);
+  const [location, setLocation] = useState(initialLocation);
+  const [sortBy, setSortBy] = useState('rating');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [minRating, setMinRating] = useState<number>(0);
+  const [minExperience, setMinExperience] = useState<number>(0);
+  const [availableNow, setAvailableNow] = useState<boolean>(false);
+  
+  // State for lawyers and loading
+  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch lawyers from the database
+  const fetchLawyers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Build the query
+      let query = supabase
+        .from('profiles')
+        .select(`
+          id,
+          user_id,
+          first_name,
+          last_name,
+          display_name,
+          avatar_url,
+          bio,
+          location,
+          specialties,
+          hourly_rate_clp,
+          verified,
+          rating,
+          review_count,
+          experience_years,
+          available_for_hire,
+          response_time
+        `)
+        .eq('role', 'lawyer')
+        .eq('available_for_hire', true);
+
+      // Apply search filters
+      if (searchTerm) {
+        // Trim and normalize the search term
+        const trimmedSearchTerm = searchTerm.trim();
+        // Normalize the search term to handle accented characters and make it case-insensitive
+        const normalizedSearchTerm = trimmedSearchTerm
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+        
+        // Search with both accented and unaccented versions, case-insensitive
+        query = query.or(
+          `first_name.ilike.%${trimmedSearchTerm}%,
+          last_name.ilike.%${trimmedSearchTerm}%,
+          bio.ilike.%${trimmedSearchTerm}%,
+          first_name.ilike.%${normalizedSearchTerm}%,
+          last_name.ilike.%${normalizedSearchTerm}%`
+        );
+      }
+      
+      if (selectedSpecialty !== 'all') {
+        query = query.contains('specialties', [selectedSpecialty]);
+      }
+      
+      if (location) {
+        query = query.ilike('location', `%${location}%`);
+      }
+
+      // Execute the query
+      const { data, error: queryError } = await query;
+
+      if (queryError) throw queryError;
+
+      // Transform the data to match the Lawyer interface
+      const formattedLawyers = data.map((lawyer) => ({
+        id: lawyer.user_id,
+        name: `${lawyer.first_name} ${lawyer.last_name}`,
+        specialties: lawyer.specialties || [],
+        rating: lawyer.rating || 0,
+        reviews: lawyer.review_count || 0,
+        location: lawyer.location || 'Ubicación no especificada',
+        cases: 0, // This would need to be calculated from actual cases
+        hourlyRate: lawyer.hourly_rate_clp || 0,
+        consultationPrice: Math.round((lawyer.hourly_rate_clp || 0) * 0.1), // 10% of hourly rate as consultation fee
+        image: lawyer.avatar_url || '',
+        bio: lawyer.bio || 'No hay biografía disponible',
+        verified: lawyer.verified || false,
+        availability: {
+          availableToday: true, // This would need to be calculated from availability
+          availableThisWeek: true, // This would need to be calculated from availability
+          quickResponse: lawyer.response_time ? lawyer.response_time.includes('hora') : false,
+          emergencyConsultations: true // This would need to be set in the profile
+        }
+      }));
+
+      // Apply sorting
+      const sortedLawyers = formattedLawyers.sort((a, b) => {
+        switch (sortBy) {
+          case 'rating':
+            return (b.rating || 0) - (a.rating || 0);
+          case 'price-low':
+            return a.hourlyRate - b.hourlyRate;
+          case 'price-high':
+            return b.hourlyRate - a.hourlyRate;
+          case 'experience':
+            return (b.experience_years || 0) - (a.experience_years || 0);
+          default:
+            return 0;
+        }
+      });
+
+      setLawyers(sortedLawyers);
+    } catch (err) {
+      console.error('Error fetching lawyers:', err);
+      setError('Error al cargar los abogados. Por favor, intente nuevamente.');
+      setLawyers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, selectedSpecialty, location, sortBy]);
+
+  // Fetch lawyers when component mounts or search params change
+  useEffect(() => {
+    fetchLawyers();
+  }, [fetchLawyers]);
+
+  return (
+    // Your JSX here
+  );
+};
+
+export default SearchResults;
+      id: "7",
+      name: "Valentina Soto",
+      specialties: ["Derecho de Propiedad Intelectual", "Derecho Comercial"],
+      rating: 4.7,
+      reviews: 78,
+      location: "Concepción, Chile",
+      cases: 312,
+      hourlyRate: 270000,
+      consultationPrice: 35000,
+      image: "",
+      bio: "Especialista en propiedad intelectual con más de 8 años de experiencia protegiendo los derechos de creadores y empresas. Enfoque en marcas, patentes y derechos de autor con un enfoque estratégico.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "8",
+      name: "Roberto Navarro",
+      specialties: ["Derecho Penal", "Derecho Procesal"],
+      rating: 4.5,
+      reviews: 201,
+      location: "Valparaíso, Chile",
+      cases: 423,
+      hourlyRate: 290000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "Abogado penalista con amplia experiencia en defensa penal y derecho procesal penal. Más de 15 años representando clientes en casos complejos con un enfoque en la protección de sus derechos fundamentales.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "9",
+      name: "Daniela Castro",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 187,
+      location: "La Florida, Chile",
+      cases: 456,
+      hourlyRate: 310000,
+      consultationPrice: 37000,
+      image: "",
+      bio: "Abogada especializada en derecho de familia y civil con más de 12 años de experiencia. Enfoque en soluciones efectivas para temas de divorcio, cuidado personal y bienes familiares, priorizando siempre el bienestar de las familias.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "10",
+      name: "Felipe Gutiérrez",
+      specialties: ["Derecho Laboral", "Derecho Administrativo"],
+      rating: 4.6,
+      reviews: 112,
+      location: "Maipú, Chile",
+      cases: 278,
+      hourlyRate: 260000,
+      consultationPrice: 31000,
+      image: "",
+      bio: "Especialista en derecho laboral y administrativo con más de 8 años de experiencia asesorando tanto a trabajadores como empleadores. Enfoque en despidos, negociaciones colectivas y procedimientos administrativos laborales, ofreciendo soluciones efectivas y personalizadas.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "11",
+      name: "Camila Riquelme",
+      specialties: ["Derecho Administrativo", "Derecho de Extranjería"],
+      rating: 4.7,
+      reviews: 95,
+      location: "Antofagasta, Chile",
+      cases: 234,
+      hourlyRate: 240000,
+      consultationPrice: 29000,
+      image: "",
+      bio: "Especialista en derecho administrativo y extranjería con más de 7 años de experiencia. Enfoque en procedimientos migratorios, permisos de residencia y asesoría a extranjeros, ofreciendo un acompañamiento cercano y soluciones efectivas en materia migratoria y administrativa.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "12",
+      name: "Diego Pizarro",
+      specialties: ["Derecho de Propiedad Intelectual", "Derecho Comercial"],
+      rating: 4.8,
+      reviews: 103,
+      location: "Las Condes, Chile",
+      cases: 321,
+      hourlyRate: 350000,
+      consultationPrice: 42000,
+      image: "",
+      bio: "Especialista en propiedad intelectual y derecho comercial con más de 10 años de experiencia. Enfoque en la protección de marcas, patentes y derechos de autor, así como en asesoría a empresas en materia contractual y regulatoria. Apasionado por encontrar soluciones innovadoras para proteger los activos intangibles de mis clientes.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "13",
+      name: "Fernanda Guzmán",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 176,
+      location: "Ñuñoa, Chile",
+      cases: 401,
+      hourlyRate: 280000,
+      consultationPrice: 34000,
+      image: "",
+      bio: "Abogada especializada en derecho de familia con más de 10 años de experiencia. Enfoque en casos complejos de custodia, alimentos y bienes familiares. Comprometida con soluciones justas y efectivas para mis clientes.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "14",
+      name: "Gustavo Méndez",
+      specialties: ["Derecho Comercial", "Derecho de Seguros"],
+      rating: 4.7,
+      reviews: 84,
+      location: "Vitacura, Chile",
+      cases: 219,
+      hourlyRate: 330000,
+      consultationPrice: 40000,
+      image: "",
+      bio: "Experto en derecho comercial y de seguros con más de 12 años de experiencia. Asesoro a empresas en la contratación mercantil, reclamaciones de seguros y cumplimiento regulatorio. Enfoque en soluciones prácticas y efectivas.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "15",
+      name: "Paulina Rivas",
+      specialties: ["Derecho de Salud", "Derecho Administrativo"],
+      rating: 4.8,
+      reviews: 142,
+      location: "Providencia, Chile",
+      cases: 356,
+      hourlyRate: 300000,
+      consultationPrice: 36000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "16",
+      name: "Rodrigo Silva",
+      specialties: ["Derecho Ambiental", "Derecho Administrativo"],
+      rating: 4.6,
+      reviews: 67,
+      location: "Puerto Varas, Chile",
+      cases: 187,
+      hourlyRate: 290000,
+      consultationPrice: 35000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "17",
+      name: "Andrea Muñoz",
+      specialties: ["Derecho de Consumidor", "Derecho Comercial"],
+      rating: 4.7,
+      reviews: 93,
+      location: "La Reina, Chile",
+      cases: 245,
+      hourlyRate: 260000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "18",
+      name: "Hernán Lagos",
+      specialties: ["Derecho Comercial", "Derecho Tributario"],
+      rating: 4.8,
+      reviews: 118,
+      location: "Las Condes, Chile",
+      cases: 312,
+      hourlyRate: 370000,
+      consultationPrice: 45000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "19",
+      name: "Francisca Tapia",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 156,
+      location: "La Florida, Chile",
+      cases: 378,
+      hourlyRate: 270000,
+      consultationPrice: 33000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "20",
+      name: "Tomás Herrera",
+      specialties: ["Derecho Deportivo", "Derecho Civil"],
+      rating: 4.5,
+      reviews: 72,
+      location: "Vitacura, Chile",
+      cases: 201,
+      hourlyRate: 250000,
+      consultationPrice: 30000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "21",
+      name: "Carolina Poblete",
+      specialties: ["Derecho Laboral", "Derecho de Seguridad Social"],
+      rating: 4.7,
+      reviews: 88,
+      location: "Valparaíso, Chile",
+      cases: 234,
+      hourlyRate: 240000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "22",
+      name: "Francisco Rojas",
+      specialties: ["Derecho Penal", "Derecho Procesal Penal"],
+      rating: 4.8,
+      reviews: 145,
+      location: "Concepción, Chile",
+      cases: 356,
+      hourlyRate: 280000,
+      consultationPrice: 35000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "23",
+      name: "Valentina Muñoz",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 167,
+      location: "La Serena, Chile",
+      cases: 394,
+      hourlyRate: 260000,
+      consultationPrice: 31000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "24",
+      name: "Diego González",
+      specialties: ["Derecho Comercial", "Derecho Tributario"],
+      rating: 4.6,
+      reviews: 94,
+      location: "Antofagasta, Chile",
+      cases: 251,
+      hourlyRate: 320000,
+      consultationPrice: 38000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "25",
+      name: "Camila Rojas",
+      specialties: ["Derecho Inmobiliario", "Derecho Civil"],
+      rating: 4.7,
+      reviews: 112,
+      location: "Viña del Mar, Chile",
+      cases: 287,
+      hourlyRate: 300000,
+      consultationPrice: 36000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "26",
+      name: "Javier López",
+      specialties: ["Derecho de Salud", "Derecho Administrativo"],
+      rating: 4.5,
+      reviews: 76,
+      location: "Temuco, Chile",
+      cases: 206,
+      hourlyRate: 250000,
+      consultationPrice: 30000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "27",
+      name: "Daniela Soto",
+      specialties: ["Derecho Ambiental", "Derecho Administrativo"],
+      rating: 4.8,
+      reviews: 98,
+      location: "Puerto Montt, Chile",
+      cases: 263,
+      hourlyRate: 290000,
+      consultationPrice: 34000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "28",
+      name: "Roberto Díaz",
+      specialties: ["Derecho de Consumidor", "Derecho Civil"],
+      rating: 4.6,
+      reviews: 84,
+      location: "Rancagua, Chile",
+      cases: 229,
+      hourlyRate: 230000,
+      consultationPrice: 28000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "29",
+      name: "María José Gutiérrez",
+      specialties: ["Derecho de Familia", "Derecho de Menores"],
+      rating: 4.9,
+      reviews: 178,
+      location: "Talca, Chile",
+      cases: 412,
+      hourlyRate: 270000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "30",
+      name: "Carlos Andrade",
+      specialties: ["Derecho Minero", "Derecho Ambiental"],
+      rating: 4.7,
+      reviews: 102,
+      location: "Calama, Chile",
+      cases: 278,
+      hourlyRate: 350000,
+      consultationPrice: 36000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "31",
+      name: "Paula Contreras",
+      specialties: ["Derecho de Propiedad Intelectual", "Derecho Comercial"],
+      rating: 4.8,
+      reviews: 91,
+      location: "Iquique, Chile",
+      hourlyRate: 310000,
+      consultationPrice: 37000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "32",
+      name: "Felipe Muñoz",
+      specialties: ["Derecho Aduanero", "Derecho Tributario"],
+      rating: 4.6,
+      reviews: 87,
+      location: "Arica, Chile",
+      hourlyRate: 280000,
+      consultationPrice: 33000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "33",
+      name: "Valeria Riquelme",
+      specialties: ["Derecho de Seguros", "Derecho Civil"],
+      rating: 4.7,
+      reviews: 105,
+      location: "Punta Arenas, Chile",
+      hourlyRate: 260000,
+      consultationPrice: 31000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "34",
+      name: "Gabriel Torres",
+      specialties: ["Derecho Marítimo", "Derecho Comercial"],
+      rating: 4.8,
+      reviews: 93,
+      location: "Valdivia, Chile",
+      hourlyRate: 320000,
+      consultationPrice: 38000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "35",
+      name: "Daniela Castro",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 187,
+      location: "La Florida, Chile",
+      hourlyRate: 310000,
+      consultationPrice: 37000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "36",
+      name: "Felipe Gutiérrez",
+      specialties: ["Derecho Laboral", "Derecho Administrativo"],
+      rating: 4.6,
+      reviews: 112,
+      location: "Maipú, Chile",
+      hourlyRate: 260000,
+      consultationPrice: 31000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "37",
+      name: "Camila Riquelme",
+      specialties: ["Derecho Administrativo", "Derecho de Extranjería"],
+      rating: 4.7,
+      reviews: 95,
+      location: "Antofagasta, Chile",
+      hourlyRate: 240000,
+      consultationPrice: 29000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "38",
+      name: "Diego Pizarro",
+      specialties: ["Derecho de Propiedad Intelectual", "Derecho Comercial"],
+      rating: 4.8,
+      reviews: 103,
+      location: "Las Condes, Chile",
+      hourlyRate: 350000,
+      consultationPrice: 42000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "39",
+      name: "Fernanda Guzmán",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 176,
+      location: "Ñuñoa, Chile",
+      hourlyRate: 280000,
+      consultationPrice: 34000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "40",
+      name: "Gustavo Méndez",
+      specialties: ["Derecho Comercial", "Derecho de Seguros"],
+      rating: 4.7,
+      reviews: 84,
+      location: "Vitacura, Chile",
+      hourlyRate: 330000,
+      consultationPrice: 40000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "41",
+      name: "Paulina Rivas",
+      specialties: ["Derecho de Salud", "Derecho Administrativo"],
+      rating: 4.8,
+      reviews: 142,
+      location: "Providencia, Chile",
+      hourlyRate: 300000,
+      consultationPrice: 36000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "42",
+      name: "Rodrigo Silva",
+      specialties: ["Derecho Ambiental", "Derecho Administrativo"],
+      rating: 4.6,
+      reviews: 67,
+      location: "Puerto Varas, Chile",
+      hourlyRate: 290000,
+      consultationPrice: 35000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "43",
+      name: "Andrea Muñoz",
+      specialties: ["Derecho de Consumidor", "Derecho Comercial"],
+      rating: 4.7,
+      reviews: 93,
+      location: "La Reina, Chile",
+      hourlyRate: 260000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "44",
+      name: "Hernán Lagos",
+      specialties: ["Derecho Comercial", "Derecho Tributario"],
+      rating: 4.8,
+      reviews: 118,
+      location: "Las Condes, Chile",
+      hourlyRate: 370000,
+      consultationPrice: 45000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "45",
+      name: "Francisca Tapia",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 156,
+      location: "La Florida, Chile",
+      hourlyRate: 270000,
+      consultationPrice: 33000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "46",
+      name: "Tomás Herrera",
+      specialties: ["Derecho Deportivo", "Derecho Civil"],
+      rating: 4.5,
+      reviews: 72,
+      location: "Vitacura, Chile",
+      hourlyRate: 250000,
+      consultationPrice: 30000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "47",
+      name: "Carolina Poblete",
+      specialties: ["Derecho Laboral", "Derecho de Seguridad Social"],
+      rating: 4.7,
+      reviews: 88,
+      location: "Valparaíso, Chile",
+      hourlyRate: 240000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "48",
+      name: "Francisco Rojas",
+      specialties: ["Derecho Penal", "Derecho Procesal Penal"],
+      rating: 4.8,
+      reviews: 145,
+      location: "Concepción, Chile",
+      hourlyRate: 280000,
+      consultationPrice: 35000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "49",
+      name: "Valentina Muñoz",
+      specialties: ["Derecho de Familia", "Derecho Civil"],
+      rating: 4.9,
+      reviews: 167,
+      location: "La Serena, Chile",
+      hourlyRate: 260000,
+      consultationPrice: 31000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "50",
+      name: "Diego González",
+      specialties: ["Derecho Comercial", "Derecho Tributario"],
+      rating: 4.6,
+      reviews: 94,
+      location: "Antofagasta, Chile",
+      hourlyRate: 320000,
+      consultationPrice: 38000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "51",
+      name: "Camila Rojas",
+      specialties: ["Derecho Inmobiliario", "Derecho Civil"],
+      rating: 4.7,
+      reviews: 112,
+      location: "Viña del Mar, Chile",
+      hourlyRate: 300000,
+      consultationPrice: 36000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "52",
+      name: "Javier López",
+      specialties: ["Derecho de Salud", "Derecho Administrativo"],
+      rating: 4.5,
+      reviews: 76,
+      location: "Temuco, Chile",
+      hourlyRate: 250000,
+      consultationPrice: 30000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "53",
+      name: "Daniela Soto",
+      specialties: ["Derecho Ambiental", "Derecho Administrativo"],
+      rating: 4.8,
+      reviews: 98,
+      location: "Puerto Montt, Chile",
+      hourlyRate: 290000,
+      consultationPrice: 34000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "54",
+      name: "Roberto Díaz",
+      specialties: ["Derecho de Consumidor", "Derecho Civil"],
+      rating: 4.6,
+      reviews: 84,
+      location: "Rancagua, Chile",
+      hourlyRate: 230000,
+      consultationPrice: 28000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    },
+    {
+      id: "55",
+      name: "María José Gutiérrez",
+      specialties: ["Derecho de Familia", "Derecho de Menores"],
+      rating: 4.9,
+      reviews: 178,
+      location: "Talca, Chile",
+      hourlyRate: 270000,
+      consultationPrice: 32000,
+      image: "",
+      bio: "",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: false,
+        emergencyConsultations: false
+      }
+    }
+  ];
+
+  // Lista de especialidades en español de Chile
+
+const handleSearch = (query: string, specialty: string, location: string) => {
+  setSearchTerm(query);
+  setSelectedSpecialty(specialty);
+  setLocation(location);
+  
+  // Update URL
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (specialty !== 'all') params.set('specialty', specialty);
+  if (location) params.set('location', location);
+  
+  window.history.pushState({}, '', `?${params.toString()}`);
+};
+
+const handleApplyFilters = (filters: {
+  priceRange: [number, number];
+  minRating: number;
+  minExperience: number;
+  availableNow: boolean;
+}) => {
+  setPriceRange(filters.priceRange);
+  setMinRating(filters.minRating);
+  setMinExperience(filters.minExperience);
+  setAvailableNow(filters.availableNow);
+};
+
+const clearFilters = () => {
+  setSearchTerm('');
+    }
+  };
+
+  const handleSearch = (query, specialty, location) => {
+    setSearchTerm(query);
+    setSelectedSpecialty(specialty);
+    setLocation(location);
+    setSearchParams({
+      q: query,
+      specialty: specialty !== 'all' ? specialty : undefined,
+      location,
+    });
+    fetchLawyers();
+  };
+
+  const handleApplyFilters = (filters) => {
+    setPriceRange(filters.priceRange);
+    setMinRating(filters.minRating);
+    setMinExperience(filters.minExperience);
+    setAvailableNow(filters.availableNow);
+    fetchLawyers();
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedSpecialty('all');
+    setLocation('');
+    setPriceRange([0, 1000000]);
+    setMinRating(0);
+    setMinExperience(0);
+    setAvailableNow(false);
+    fetchLawyers();
+  };
+
+  const filteredLawyers = lawyers.filter((lawyer) => {
+    const matchesPrice = lawyer.hourlyRate >= priceRange[0] && lawyer.hourlyRate <= priceRange[1];
+    const matchesRating = (lawyer.rating || 0) >= minRating;
+    const matchesExperience = (lawyer.experience || 0) >= minExperience;
+    const matchesAvailability = !availableNow || lawyer.availability.availableToday;
+    return matchesPrice && matchesRating && matchesExperience && matchesAvailability;
+  });
+
+  const sortedLawyers = filteredLawyers.sort((a, b) => {
+    switch (sortBy) {
+      case 'rating':
+        return b.rating - a.rating;
+      case 'price-low':
+        return a.hourlyRate - b.hourlyRate;
+      case 'price-high':
+        return b.hourlyRate - a.hourlyRate;
+      case 'experience':
+        return b.experience - a.experience;
+      default:
+        return 0;
+    }
+  });
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Search and Filters */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-bold">
+            {loading ? (
+              'Buscando abogados...'
+            ) : error ? (
+              'Error al cargar los abogados'
+            ) : searchTerm || selectedSpecialty !== 'all' || location ? (
+              `${filteredLawyers.length} abogados encontrados`
+            ) : (
+              'Abogados destacados'
+            )}
+          </h1>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+              disabled={loading}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              Filtros
+            </Button>
+          </div>
+        )}
+      </div>
+      
+      {/* Modals */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        mode={authMode}
+        onModeChange={(mode) => setAuthMode(mode)}
+      />
+      
+      {selectedLawyer && (
+        <>
+          <ContactModal
+            isOpen={showContactModal}
+            onClose={() => setShowContactModal(false)}
+            lawyerName={selectedLawyer.name}
+          />
+          
+          <ScheduleModal
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            lawyerId={selectedLawyer.id}
+            lawyerName={selectedLawyer.name}
+            hourlyRate={selectedLawyer.hourlyRate}
+          />
+        </>
+      )}
+    </div>
+  );
+};
+
+export default SearchResults;

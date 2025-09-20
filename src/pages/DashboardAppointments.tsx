@@ -476,10 +476,15 @@ export default function DashboardAppointments() {
               Gestiona tus citas programadas y consultas
             </p>
           </div>
-          <Button onClick={handleNewAppointment}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Cita
-          </Button>
+          {appointments.length > 0 && (
+            <Button 
+              onClick={handleNewAppointment}
+              className="bg-black hover:bg-gray-800"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Cita
+            </Button>
+          )}
         </div>
 
         {/* Filtros y búsqueda */}
@@ -546,12 +551,9 @@ export default function DashboardAppointments() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className={getTypeColor(appointment.type)}>
-                        <span className="flex items-center">
-                          {getTypeIcon(appointment.type)}
-                          <span className="ml-1">{getTypeText(appointment.type)}</span>
-                        </span>
+                        {getTypeText(appointment.type)}
                       </Badge>
-                      <Badge variant="outline" className={getStatusColor(appointment.status)}>
+                      <Badge className={getStatusColor(appointment.status)}>
                         {getStatusText(appointment.status)}
                       </Badge>
                     </div>
@@ -657,16 +659,18 @@ export default function DashboardAppointments() {
             <p className="text-gray-600 mb-4">
               {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
                 ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Aún no tienes citas agendadas. ¡Agenda tu primera cita!'
+                : 'Aún no tienes citas agendadas.'
               }
             </p>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={handleNewAppointment}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Agendar cita
-            </Button>
+            {appointments.length === 0 && !searchTerm && statusFilter === 'all' && typeFilter === 'all' && (
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={handleNewAppointment}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Agendar cita
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -857,7 +861,7 @@ export default function DashboardAppointments() {
                 )}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Estado</Label>
-                  <Badge variant="outline" className={getStatusColor(selectedAppointment.status)}>
+                  <Badge className={getStatusColor(selectedAppointment.status)}>
                     {getStatusText(selectedAppointment.status)}
                   </Badge>
                 </div>
@@ -868,17 +872,12 @@ export default function DashboardAppointments() {
                   </div>
                 )}
               </div>
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsViewModalOpen(false)}
-                >
-                  Cerrar
-                </Button>
+              <DialogFooter className="flex justify-end gap-2">
                 {selectedAppointment.status === 'scheduled' && (
                   <Button 
                     variant="outline"
                     onClick={() => {
+                      // Add logic for rescheduling
                       setIsViewModalOpen(false);
                       handleReschedule(selectedAppointment.id);
                     }}
@@ -895,7 +894,6 @@ export default function DashboardAppointments() {
                       handleCancelAppointment(selectedAppointment.id);
                     }}
                   >
-                    <X className="h-4 w-4 mr-1" />
                     Cancelar cita
                   </Button>
                 )}
@@ -908,6 +906,12 @@ export default function DashboardAppointments() {
                     Unirse a la reunión
                   </Button>
                 )}
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsViewModalOpen(false)}
+                >
+                  Cerrar
+                </Button>
               </DialogFooter>
             </>
           )}

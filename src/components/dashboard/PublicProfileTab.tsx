@@ -17,9 +17,29 @@ import {
   Eye
 } from "lucide-react";
 
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  profile?: {
+    hourlyRate?: number;
+    specialties?: string[];
+    location?: string;
+    bio?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface Stats {
+  responseTime?: string;
+  successRate?: number;
+  [key: string]: unknown;
+}
+
 interface PublicProfileTabProps {
-  user: any;
-  stats: any;
+  user: UserProfile;
+  stats: Stats;
 }
 
 export function PublicProfileTab({ user, stats }: PublicProfileTabProps) {
@@ -68,13 +88,25 @@ export function PublicProfileTab({ user, stats }: PublicProfileTabProps) {
       {/* Header Note */}
       <Card className="border-blue-200 bg-blue-50">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-2 text-blue-700">
-            <Eye className="h-5 w-5" />
-            <p className="font-medium">Public Profile Preview</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-blue-700">
+                <Eye className="h-5 w-5" />
+                <p className="font-medium">Vista Previa del Perfil Público</p>
+              </div>
+              <p className="text-sm text-blue-600 mt-1">
+                Así es como ven tu perfil los clientes potenciales cuando buscan abogados en nuestra plataforma.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="bg-white hover:bg-blue-50 border-blue-200 text-blue-700"
+              onClick={() => window.open(`/abogado/${user.id}`, '_blank')}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Ver Mi Perfil Público
+            </Button>
           </div>
-          <p className="text-sm text-blue-600 mt-1">
-            This is how your profile appears to potential clients when they view your public listing.
-          </p>
         </CardContent>
       </Card>
 

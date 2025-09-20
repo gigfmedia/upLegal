@@ -42,18 +42,18 @@ const html = `
   
   <!-- Main content -->
   <div style="background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-    <h2 style="color: #1e40af; font-size: 20px; margin: 0 0 20px 0; font-weight: 600;">¡Bienvenido a upLegal, ${testData.name}!</h2>
+    <h2 style="color: #1e40af; font-size: 20px; margin: 0 0 20px 0; font-weight: 600;">¡Bienvenido a LegalUp, ${testData.name}!</h2>
     
     <p style="color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
       Gracias por unirte a nuestra plataforma. Estamos encantados de tenerte con nosotros.
     </p>
     
     <p style="color: #475569; line-height: 1.6; margin: 0 0 25px 0;">
-      Con upLegal podrás gestionar tus servicios legales de manera sencilla y eficiente.
+      Con LegalUp podrás gestionar tus servicios legales de manera sencilla y eficiente.
     </p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="https://uplegal.app/dashboard" 
+      <a href="https://LegalUp.app/dashboard" 
          style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 15px;">
         Buscar Abogados
       </a>
@@ -61,7 +61,7 @@ const html = `
     
     <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px;">
       <p style="color: #64748b; font-size: 13px; margin: 0 0 10px 0;">
-        Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@uplegal.app" style="color: #2563eb; text-decoration: none;">soporte@uplegal.app</a>
+        Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@LegalUp.app" style="color: #2563eb; text-decoration: none;">soporte@LegalUp.app</a>
       </p>
     </div>
   </div>
@@ -69,7 +69,7 @@ const html = `
   <!-- Footer -->
   <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
     <p style="color: #94a3b8; font-size: 12px; margin: 0 0 5px 0;">
-      © ${new Date().getFullYear()} upLegal. Todos los derechos reservados.
+      © ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.
     </p>
     <p style="color: #cbd5e1; font-size: 11px; margin: 0;">
       Este es un correo automático, por favor no respondas a este mensaje.
@@ -82,9 +82,9 @@ const html = `
 async function sendTestEmail() {
   try {
     const data = await resend.emails.send({
-      from: 'upLegal <onboarding@resend.dev>',
+      from: 'LegalUp <onboarding@resend.dev>',
       to: testData.email,
-      subject: '¡Bienvenido a upLegal!',
+      subject: '¡Bienvenido a LegalUp!',
       html: html
     });
 

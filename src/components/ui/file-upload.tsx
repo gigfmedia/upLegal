@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, X, Image, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 
 interface FileUploadProps {
   onUpload: (url: string) => void;
@@ -40,12 +40,24 @@ export function FileUpload({
 
     setUploading(true);
     try {
+      // Eliminar la imagen anterior si existe
+      if (currentImageUrl) {
+        const fileName = currentImageUrl.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from(bucket)
+            .remove([`${userId}/${fileName}`]);
+        }
+      }
+
+      // Subir la nueva imagen
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${folder ? folder + '/' : ''}${Date.now()}.${fileExt}`;
       
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file, {
+          cacheControl: '3600',
           upsert: true
         });
 
@@ -53,6 +65,7 @@ export function FileUpload({
         throw uploadError;
       }
 
+      // Obtener URL pública
       const { data: { publicUrl } } = supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
@@ -97,9 +110,27 @@ export function FileUpload({
     disabled: uploading
   });
 
-  const removeImage = () => {
+  const removeImage = async () => {
+    if (currentImageUrl) {
+      try {
+        const fileName = currentImageUrl.split('/').pop();
+        if (fileName) {
+          await supabase.storage
+            .from(bucket)
+            .remove([`${userId}/${fileName}`]);
+        }
+      } catch (error) {
+        console.error('Error al eliminar la imagen:', error);
+      }
+    }
+    
     setPreviewUrl(null);
     onUpload('');
+    
+    toast({
+      title: "Imagen eliminada",
+      description: "La imagen se ha eliminado correctamente",
+    });
   };
 
   return (

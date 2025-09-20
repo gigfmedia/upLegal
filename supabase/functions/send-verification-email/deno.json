@@ -1,0 +1,28 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.190.0/",
+    "resend": "npm:resend@2.0.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.0"
+  },
+  "tasks": {
+    "start": "deno run --allow-net --allow-env --allow-read --allow-write --allow-run index.ts",
+    "dev": "deno run --allow-net --allow-env --allow-read --allow-write --allow-run dev.ts"
+  },
+  "compilerOptions": {
+    "lib": ["esnext", "dom"],
+    "strict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "target": "es2022"
+  },
+  "lint": {
+    "files": {
+      "include": ["**/*.ts"],
+      "exclude": ["node_modules"]
+    },
+    "rules": {
+      "tags": ["recommended"],
+      "include": ["ban-untagged-todo"]
+    }
+  }
+}

@@ -104,7 +104,7 @@ export default function BankAccountForm() {
       <CardHeader>
         <CardTitle>Información Bancaria</CardTitle>
         <CardDescription>
-          Ingresa los datos de tu cuenta bancaria para recibir pagos. UpLegal te transferirá el 80% de cada pago.
+          Ingresa los datos de tu cuenta bancaria para recibir pagos. LegalUp te transferirá el 80% de cada pago.
         </CardDescription>
       </CardHeader>
       <CardContent>

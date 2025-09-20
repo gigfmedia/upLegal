@@ -496,10 +496,7 @@ export default function DashboardAppointments() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Badge variant="outline" className={getTypeColor(appointment.type)}>
-                        <span className="flex items-center">
-                          {getTypeIcon(appointment.type)}
-                          <span className="ml-1">{getTypeText(appointment.type)}</span>
-                        </span>
+                        {getTypeText(appointment.type)}
                       </Badge>
                       <Badge className={getStatusColor(appointment.status)}>
                         {getStatusText(appointment.status)}

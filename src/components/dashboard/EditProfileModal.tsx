@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { User, Briefcase, X, Plus } from "lucide-react";
+import { User, Briefcase, X, Plus, XCircle } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 
 const basicInfoSchema = z.object({
@@ -97,6 +97,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     user?.profile?.languages || []
   );
   const [avatarUrl, setAvatarUrl] = useState<string>(user?.profile?.avatarUrl || '');
+  const [newSpecialty, setNewSpecialty] = useState('');
 
   const basicForm = useForm<BasicInfoData>({
     resolver: zodResolver(basicInfoSchema),
@@ -128,6 +129,22 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
     const updated = selectedSpecialties.includes(specialty)
       ? selectedSpecialties.filter(s => s !== specialty)
       : [...selectedSpecialties, specialty];
+    setSelectedSpecialties(updated);
+    attorneyForm.setValue("specialties", updated);
+  };
+
+  const handleAddSpecialty = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newSpecialty.trim() && !selectedSpecialties.includes(newSpecialty.trim())) {
+      const updated = [...selectedSpecialties, newSpecialty.trim()];
+      setSelectedSpecialties(updated);
+      attorneyForm.setValue("specialties", updated);
+      setNewSpecialty('');
+    }
+  };
+
+  const handleRemoveSpecialty = (specialty: string) => {
+    const updated = selectedSpecialties.filter(s => s !== specialty);
     setSelectedSpecialties(updated);
     attorneyForm.setValue("specialties", updated);
   };
@@ -360,6 +377,82 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={attorneyForm.control}
+                    name="specialties"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Especialidades</FormLabel>
+                        
+                        {/* Selected Specialties as Badges */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {selectedSpecialties.map((specialty) => (
+                            <Badge 
+                              key={specialty} 
+                              variant="secondary" 
+                              className="flex items-center gap-1 px-3 py-1 text-sm"
+                            >
+                              {specialty}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleRemoveSpecialty(specialty);
+                                }}
+                                className="ml-1 rounded-full hover:bg-gray-200 p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {/* Add New Specialty */}
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Agregar especialidad"
+                            value={newSpecialty}
+                            onChange={(e) => setNewSpecialty(e.target.value)}
+                            className="flex-1"
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            size="sm"
+                            onClick={handleAddSpecialty}
+                            disabled={!newSpecialty.trim()}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Agregar
+                          </Button>
+                        </div>
+
+                        {/* Common Specialties Suggestions */}
+                        <div className="mt-3">
+                          <p className="text-sm text-muted-foreground mb-2">Sugerencias:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {legalSpecialties
+                              .filter(s => !selectedSpecialties.includes(s))
+                              .map((specialty) => (
+                                <Badge 
+                                  key={specialty}
+                                  variant="outline"
+                                  className="cursor-pointer hover:bg-gray-100"
+                                  onClick={() => handleSpecialtyToggle(specialty)}
+                                >
+                                  {specialty}
+                                </Badge>
+                              ))
+                            }
+                          </div>
+                        </div>
+                        
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={attorneyForm.control}

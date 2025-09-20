@@ -7,9 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { AvatarUpload } from '@/components/AvatarUpload';
 import { 
-  User, 
   Mail, 
   Phone, 
   MapPin, 
@@ -17,31 +16,46 @@ import {
   Edit,
   Save,
   X,
-  Camera,
   Star,
   Award
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+
+type ProfileFormData = {
+  display_name: string;
+  first_name: string;
+  last_name: string;
+  bio: string;
+  phone: string;
+  location: string;
+  website: string;
+  specialties: string[];
+  hourly_rate_clp: number;
+  experience_years: number;
+  languages: string[];
+  avatar_updated?: number;
+};
 
 export default function DashboardProfile() {
   const { user, updateProfile } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarTimestamp, setAvatarTimestamp] = useState<number>(Date.now());
   
-  const [formData, setFormData] = useState({
-    display_name: user?.profile?.display_name || user?.name || '',
-    first_name: user?.profile?.first_name || '',
-    last_name: user?.profile?.last_name || '',
-    bio: user?.profile?.bio || '',
-    phone: user?.profile?.phone || '',
-    location: user?.profile?.location || '',
-    website: user?.profile?.website || '',
-    specialties: user?.profile?.specialties || [],
-    hourly_rate_clp: user?.profile?.hourly_rate_clp || 0,
-    experience_years: user?.profile?.experience_years || 0,
-    languages: user?.profile?.languages || [],
-  });
+  const [formData, setFormData] = useState<ProfileFormData>(() => ({
+    display_name: user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
+    first_name: user?.user_metadata?.first_name || '',
+    last_name: user?.user_metadata?.last_name || '',
+    bio: user?.user_metadata?.bio || '',
+    phone: user?.user_metadata?.phone || '',
+    location: user?.user_metadata?.location || '',
+    website: user?.user_metadata?.website || '',
+    specialties: user?.user_metadata?.specialties || [],
+    hourly_rate_clp: user?.user_metadata?.hourly_rate_clp || 0,
+    experience_years: user?.user_metadata?.experience_years || 0,
+    languages: user?.user_metadata?.languages || []
+  }));
 
   const handleInputChange = (field: string, value: string | number | string[]) => {
     setFormData(prev => ({
@@ -53,16 +67,48 @@ export default function DashboardProfile() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      await updateProfile(formData);
+      const profileData = {
+        first_name: formData.first_name || null,
+        last_name: formData.last_name || null,
+        display_name: formData.display_name || null,
+        bio: formData.bio || null,
+        phone: formData.phone || null,
+        location: formData.location || null,
+        website: formData.website || null,
+        specialties: formData.specialties || [],
+        hourly_rate_clp: formData.hourly_rate_clp || 0,
+        experience_years: formData.experience_years || 0,
+        languages: formData.languages || [],
+      };
+
+      const updatedUser = await updateProfile(profileData);
+      
+      if (updatedUser?.user_metadata) {
+        setFormData({
+          display_name: updatedUser.user_metadata.display_name || updatedUser.user_metadata.full_name || updatedUser.email?.split('@')[0] || '',
+          first_name: updatedUser.user_metadata.first_name || '',
+          last_name: updatedUser.user_metadata.last_name || '',
+          bio: updatedUser.user_metadata.bio || '',
+          phone: updatedUser.user_metadata.phone || '',
+          location: updatedUser.user_metadata.location || '',
+          website: updatedUser.user_metadata.website || '',
+          specialties: updatedUser.user_metadata.specialties || [],
+          hourly_rate_clp: updatedUser.user_metadata.hourly_rate_clp || 0,
+          experience_years: updatedUser.user_metadata.experience_years || 0,
+          languages: updatedUser.user_metadata.languages || [],
+        });
+      }
+      
       setIsEditing(false);
       toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated.",
+        title: "Perfil actualizado",
+        description: "Tus cambios se han guardado correctamente.",
       });
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: "No se pudo actualizar el perfil. Por favor, inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -72,314 +118,355 @@ export default function DashboardProfile() {
 
   const handleCancel = () => {
     setFormData({
-      display_name: user?.profile?.display_name || user?.name || '',
-      first_name: user?.profile?.first_name || '',
-      last_name: user?.profile?.last_name || '',
-      bio: user?.profile?.bio || '',
-      phone: user?.profile?.phone || '',
-      location: user?.profile?.location || '',
-      website: user?.profile?.website || '',
-      specialties: user?.profile?.specialties || [],
-      hourly_rate_clp: user?.profile?.hourly_rate_clp || 0,
-      experience_years: user?.profile?.experience_years || 0,
-      languages: user?.profile?.languages || [],
+      display_name: user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
+      first_name: user?.user_metadata?.first_name || '',
+      last_name: user?.user_metadata?.last_name || '',
+      bio: user?.user_metadata?.bio || '',
+      phone: user?.user_metadata?.phone || '',
+      location: user?.user_metadata?.location || '',
+      website: user?.user_metadata?.website || '',
+      specialties: user?.user_metadata?.specialties || [],
+      hourly_rate_clp: user?.user_metadata?.hourly_rate_clp || 0,
+      experience_years: user?.user_metadata?.experience_years || 0,
+      languages: user?.user_metadata?.languages || [],
     });
     setIsEditing(false);
   };
 
-  return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mi Perfil</h1>
-          <p className="text-muted-foreground">
-            Gestiona la información de tu perfil y preferencias
-          </p>
-        </div>
-        {!isEditing ? (
-          <Button onClick={() => setIsEditing(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Editar Perfil
-          </Button>
-        ) : (
-          <div className="space-x-2">
-            <Button variant="outline" onClick={handleCancel}>
-              <X className="h-4 w-4 mr-2" />
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={isLoading}>
-              <Save className="h-4 w-4 mr-2" />
-              {isLoading ? 'Guardando...' : 'Guardar Cambios'}
-            </Button>
-          </div>
-        )}
+  const renderProfileHeader = () => (
+    <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Mi Perfil</h1>
+        <p className="text-muted-foreground">
+          Gestiona la información de tu perfil y preferencias
+        </p>
       </div>
+      {!isEditing ? (
+        <Button onClick={() => setIsEditing(true)}>
+          <Edit className="h-4 w-4 mr-2" />
+          Editar Perfil
+        </Button>
+      ) : (
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleCancel} className="w-full sm:w-auto">
+            <X className="h-4 w-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
+            <Save className="h-4 w-4 mr-2" />
+            {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
 
-        <div className="grid gap-6 md:grid-cols-3">
-          {/* Profile Picture and Basic Info */}
-          <Card className="md:col-span-1">
-            <CardHeader>
-              <CardTitle>Foto de Perfil</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="relative">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.profile?.avatar_url} />
-                    <AvatarFallback className="text-lg">
-                      {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isEditing && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="text-center">
-                  <h3 className="font-semibold">Hola! {user?.name}</h3>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                  <Badge variant="secondary" className="mt-2">
-                    {user?.role === 'lawyer' ? 'Abogado' : 'Cliente'}
-                  </Badge>
-                </div>
-
-                {user?.role === 'lawyer' && user?.profile && (
-                  <div className="text-center space-y-2">
-                    {user.profile.verified && (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
-                        <Award className="h-3 w-3 mr-1" />
-                        Verificado
-                      </Badge>
-                    )}
-                    {user.profile.rating && (
-                      <div className="flex items-center justify-center space-x-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{user.profile.rating}</span>
-                        <span className="text-sm text-muted-foreground">
-                          ({user.profile.review_count} reseñas)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
+  const renderProfilePicture = () => (
+    <Card className="md:col-span-1">
+      <CardHeader>
+        <CardTitle className="text-lg sm:text-xl">Foto de Perfil</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative">
+            <Avatar className="h-24 w-24 border-4 border-white shadow-lg bg-gray-100">
+              {user?.user_metadata?.avatar_url ? (
+                <AvatarImage 
+                  key={`avatar-${avatarTimestamp}`}
+                  src={`${user.user_metadata.avatar_url}${user.user_metadata.avatar_url.includes('?') ? '&' : '?'}t=${avatarTimestamp}`} 
+                  alt="User Avatar"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <AvatarFallback className="text-2xl bg-gray-100 flex items-center justify-center w-full h-full">
+                  {user?.user_metadata?.first_name?.charAt(0).toUpperCase() || 
+                   user?.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            {isEditing && (
+              <div className="absolute -bottom-2 -right-2">
+                <AvatarUpload 
+                  userId={user?.id || ''} 
+                  currentAvatarUrl={user?.user_metadata?.avatar_url} 
+                  onUpload={() => setAvatarTimestamp(Date.now())} 
+                />
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
+          
+          <div className="text-center">
+            <h3 className="font-semibold">Hola! {user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario'}</h3>
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+            <Badge variant="secondary" className="mt-2">
+              {user?.user_metadata?.role === 'lawyer' ? 'Abogado' : 'Cliente'}
+            </Badge>
+          </div>
 
-          {/* Profile Details */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle>Información Personal</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="display_name">Nombre</Label>
-                  {isEditing ? (
-                    <Input
-                      id="display_name"
-                      value={formData.display_name}
-                      onChange={(e) => handleInputChange('display_name', e.target.value)}
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{formData.display_name || 'No configurado'}</span>
-                    </div>
-                  )}
+          {user?.role === 'lawyer' && user?.profile && (
+            <div className="text-center space-y-2">
+              {user.profile.verified && (
+                <Badge variant="default" className="bg-green-100 text-green-800">
+                  Verificado
+                </Badge>
+              )}
+              {user.profile.rating && (
+                <div className="flex items-center justify-center space-x-1">
+                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-medium">{user.profile.rating}</span>
+                  <span className="text-sm text-muted-foreground">
+                    ({user.profile.review_count} reseñas)
+                  </span>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span>{user?.email}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="first_name">Nombre</Label>
-                  {isEditing ? (
-                    <Input
-                      id="first_name"
-                      value={formData.first_name}
-                      onChange={(e) => handleInputChange('first_name', e.target.value)}
-                    />
-                  ) : (
-                    <div className="p-2 border rounded-md bg-gray-50">
-                      <span>{formData.first_name || 'No configurado'}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="last_name">Apellido</Label>
-                  {isEditing ? (
-                    <Input
-                      id="last_name"
-                      value={formData.last_name}
-                      onChange={(e) => handleInputChange('last_name', e.target.value)}
-                    />
-                  ) : (
-                    <div className="p-2 border rounded-md bg-gray-50">
-                      <span>{formData.last_name || 'No configurado'}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  {isEditing ? (
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{formData.phone || 'No configurado'}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Ubicación</Label>
-                  {isEditing ? (
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{formData.location || 'No configurado'}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Sitio Web</Label>
-                {isEditing ? (
-                  <Input
-                    id="website"
-                    value={formData.website}
-                    onChange={(e) => handleInputChange('website', e.target.value)}
-                    placeholder="https://your-website.com"
-                  />
-                ) : (
-                  <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span>{formData.website || 'No configurado'}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Biografía</Label>
-                {isEditing ? (
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => handleInputChange('bio', e.target.value)}
-                    placeholder="Cuéntanos sobre ti..."
-                    rows={4}
-                  />
-                ) : (
-                  <div className="p-2 border rounded-md bg-gray-50 min-h-[100px]">
-                    <span>{formData.bio || 'Sin biografía'}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Professional Information (for lawyers) */}
-          {user?.role === 'lawyer' && (
-            <Card className="md:col-span-3">
-              <CardHeader>
-                <CardTitle>Información Profesional</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="experience_years">Años de Experiencia</Label>
-                    {isEditing ? (
-                      <Input
-                        id="experience_years"
-                        type="number"
-                        value={formData.experience_years}
-                        onChange={(e) => handleInputChange('experience_years', parseInt(e.target.value) || 0)}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">
-                        <span>{formData.experience_years || 0} años</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="hourly_rate_clp">Tarifa por Hora (CLP)</Label>
-                    {isEditing ? (
-                      <Input
-                        id="hourly_rate_clp"
-                        type="number"
-                        value={formData.hourly_rate_clp}
-                        onChange={(e) => handleInputChange('hourly_rate_clp', parseInt(e.target.value) || 0)}
-                      />
-                    ) : (
-                      <div className="p-2 border rounded-md bg-gray-50">
-                        <span>${formData.hourly_rate_clp?.toLocaleString() || 0} CLP</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Especialidades</Label>
-                  <div className="p-2 border rounded-md bg-gray-50 min-h-[60px]">
-                    {formData.specialties?.length ? (
-                      <div className="flex flex-wrap gap-2">
-                        {formData.specialties.map((specialty, index) => (
-                          <Badge key={index} variant="secondary">
-                            {specialty}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Sin especialidades agregadas</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Idiomas</Label>
-                  <div className="p-2 border rounded-md bg-gray-50 min-h-[60px]">
-                    {formData.languages?.length ? (
-                      <div className="flex flex-wrap gap-2">
-                        {formData.languages.map((language, index) => (
-                          <Badge key={index} variant="outline">
-                            {language}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Sin idiomas agregados</span>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           )}
         </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderPersonalInfo = () => (
+    <Card className="md:col-span-2">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg sm:text-xl">Información Personal</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="first_name" className="text-sm font-medium">Nombre</Label>
+            {isEditing ? (
+              <Input
+                id="first_name"
+                value={formData.first_name}
+                onChange={(e) => handleInputChange('first_name', e.target.value)}
+              />
+            ) : (
+              <div className="p-2 border rounded-md bg-gray-50">
+                <span className="text-sm">{formData.first_name || 'No configurado'}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="last_name" className="text-sm font-medium">Apellido</Label>
+            {isEditing ? (
+              <Input
+                id="last_name"
+                value={formData.last_name}
+                onChange={(e) => handleInputChange('last_name', e.target.value)}
+              />
+            ) : (
+              <div className="p-2 border rounded-md bg-gray-50">
+                <span className="text-sm">{formData.last_name || 'No configurado'}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{user?.email}</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-sm font-medium">Teléfono</Label>
+            {isEditing ? (
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+              />
+            ) : (
+              <div className="flex items-center space-x-2 p-2 border rounded-md bg-gray-50">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">{formData.phone || 'No configurado'}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Biografía</Label>
+          {isEditing ? (
+            <Textarea
+              value={formData.bio}
+              onChange={(e) => handleInputChange('bio', e.target.value)}
+              className="min-h-[100px]"
+            />
+          ) : (
+            <div className="p-3 border rounded-md bg-gray-50 min-h-[80px]">
+              <p className="text-sm text-muted-foreground">
+                {formData.bio || 'No hay biografía disponible'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Ubicación</Label>
+          {isEditing ? (
+            <Input
+              value={formData.location}
+              onChange={(e) => handleInputChange('location', e.target.value)}
+            />
+          ) : (
+            <div className="flex items-center space-x-2 p-3 border rounded-md bg-gray-50">
+              <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-sm text-muted-foreground truncate">
+                {formData.location || 'No especificada'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Sitio Web</Label>
+          {isEditing ? (
+            <Input
+              value={formData.website}
+              onChange={(e) => handleInputChange('website', e.target.value)}
+              placeholder="https://"
+            />
+          ) : (
+            <div className="flex items-center space-x-2 p-3 border rounded-md bg-gray-50">
+              <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              {formData.website ? (
+                <a 
+                  href={formData.website.startsWith('http') ? formData.website : `https://${formData.website}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline truncate"
+                >
+                  {formData.website}
+                </a>
+              ) : (
+                <span className="text-sm text-muted-foreground">No especificado</span>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderProfessionalInfo = () => {
+    if (user?.user_metadata?.role !== 'lawyer') return null;
+    
+    return (
+      <Card className="md:col-span-3">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg sm:text-xl">Información Profesional</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="experience_years" className="text-sm font-medium">Años de Experiencia</Label>
+              {isEditing ? (
+                <Input
+                  id="experience_years"
+                  type="number"
+                  min="0"
+                  value={formData.experience_years}
+                  onChange={(e) => handleInputChange('experience_years', parseInt(e.target.value) || 0)}
+                />
+              ) : (
+                <div className="p-3 border rounded-md bg-gray-50">
+                  <span className="text-sm">
+                    {formData.experience_years} {formData.experience_years === 1 ? 'año' : 'años'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="hourly_rate_clp" className="text-sm font-medium">Tarifa por Hora (CLP)</Label>
+              {isEditing ? (
+                <Input
+                  id="hourly_rate_clp"
+                  type="number"
+                  min="0"
+                  value={formData.hourly_rate_clp}
+                  onChange={(e) => handleInputChange('hourly_rate_clp', parseInt(e.target.value) || 0)}
+                />
+              ) : (
+                <div className="p-3 border rounded-md bg-gray-50">
+                  <span className="text-sm">
+                    ${formData.hourly_rate_clp?.toLocaleString() || '0'} CLP/hora
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Especialidades</Label>
+            {isEditing ? (
+              <Input
+                value={formData.specialties?.join(', ')}
+                onChange={(e) => handleInputChange('specialties', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                placeholder="Ej: Derecho Laboral, Contratos, Familia"
+              />
+            ) : (
+              <div className="p-3 border rounded-md bg-gray-50 min-h-[60px]">
+                {formData.specialties?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.specialties.map((specialty, index) => (
+                      <Badge key={index} variant="secondary">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Sin especialidades agregadas</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium">Idiomas</Label>
+            {isEditing ? (
+              <Input
+                value={formData.languages?.join(', ')}
+                onChange={(e) => handleInputChange('languages', e.target.value.split(',').map(l => l.trim()).filter(Boolean))}
+                placeholder="Ej: Español, Inglés, Francés"
+              />
+            ) : (
+              <div className="p-3 border rounded-md bg-gray-50 min-h-[60px]">
+                {formData.languages?.length ? (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.languages.map((language, index) => (
+                      <Badge key={index} variant="outline">
+                        {language}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">Sin idiomas agregados</span>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-6 p-4 sm:p-6">
+      {renderProfileHeader()}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+        {renderProfilePicture()}
+        {renderPersonalInfo()}
+        {renderProfessionalInfo()}
       </div>
+    </div>
   );
 }

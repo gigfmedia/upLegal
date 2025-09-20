@@ -72,7 +72,7 @@ export function NotificationDropdown() {
 
   return (
     <div 
-      className="relative flex items-center justify-center h-10 w-10" 
+      className="relative h-full flex items-center" 
       ref={dropdownRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -91,7 +91,7 @@ export function NotificationDropdown() {
         modal={false}
       >
         <div 
-          className="h-full w-full flex items-center justify-center"
+          className="h-full flex items-center px-2"
           onMouseEnter={() => {
             if (timeoutRef.current) {
               clearTimeout(timeoutRef.current);
@@ -104,22 +104,16 @@ export function NotificationDropdown() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className={`h-10 w-10 p-0 rounded-full ${isOpen ? 'bg-accent' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(!isOpen);
-            }}
-            onMouseEnter={handleMouseEnter}
+            size="icon"
+            className="relative rounded-full h-10 w-10 flex items-center justify-center hover:bg-gray-100"
+            onClick={() => setIsOpen(!isOpen)}
           >
-            <div className="relative h-10 w-10 flex items-center justify-center">
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white ring-2 ring-background">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </div>
-            <span className="sr-only">Notificaciones</span>
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs flex items-center justify-center text-white">
+                {unreadCount}
+              </span>
+            )}
           </Button>
         </DropdownMenuTrigger>
         </div>

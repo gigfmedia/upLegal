@@ -55,7 +55,7 @@ export default function DashboardMessages() {
   
   // Set document title and fetch conversations on mount
   useEffect(() => {
-    document.title = 'Mensajes | upLegal';
+    document.title = 'Mensajes | LegalUp';
     // fetchConversations is already being called by the MessageProvider
     // when the component mounts or when the user changes
   }, []);

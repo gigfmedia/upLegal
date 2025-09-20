@@ -47,7 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
       
       <!-- Contenido principal -->
       <div style="background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <h2 style="color: #1e40af; font-size: 20px; margin: 0 0 20px 0; font-weight: 600;">¡Bienvenido/a a upLegal, ${name}!</h2>
+        <h2 style="color: #1e40af; font-size: 20px; margin: 0 0 20px 0; font-weight: 600;">¡Bienvenido/a a LegalUp, ${name}!</h2>
         
         <p style="margin: 0 0 20px 0; line-height: 1.6; color: #334155;">
           Tu cuenta ha sido creada exitosamente en nuestra plataforma.
@@ -71,17 +71,17 @@ const handler = async (req: Request): Promise<Response> => {
         `}
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="https://uplegal.app" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 15px;">
-            Comenzar en upLegal
+          <a href="https://LegalUp.app" style="display: inline-block; background-color: #2563eb; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 15px;">
+            Comenzar en LegalUp
           </a>
         </div>
         
         <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 20px; text-align: center;">
           <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px;">
-            Si tienes alguna pregunta, no dudes en contactarnos a <a href="mailto:soporte@uplegal.app" style="color: #2563eb; text-decoration: none;">soporte@uplegal.app</a>
+            Si tienes alguna pregunta, no dudes en contactarnos a <a href="mailto:soporte@LegalUp.app" style="color: #2563eb; text-decoration: none;">soporte@LegalUp.app</a>
           </p>
           <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-            © ${new Date().getFullYear()} upLegal. Todos los derechos reservados.
+            © ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -90,9 +90,9 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "upLegal <no-reply@uplegal.app>",
+      from: "LegalUp <no-reply@LegalUp.app>",
       to: [email],
-      subject: isLawyer ? "¡Bienvenido a upLegal! - Completa tu perfil profesional" : "¡Bienvenido a upLegal!",
+      subject: isLawyer ? "¡Bienvenido a LegalUp! - Completa tu perfil profesional" : "¡Bienvenido a LegalUp!",
       html,
     });
 

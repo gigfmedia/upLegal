@@ -81,7 +81,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           });
         } else {
           toast({
-            title: '¡Bienvenido a upLegal!',
+            title: '¡Bienvenido a LegalUp!',
             description: 'Tu cuenta ha sido creada y verificada correctamente.',
             variant: 'default',
           });
@@ -179,7 +179,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
           {mode === 'signup' && (
             <>
               <div className="space-y-3">
-                <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar upLegal?</h3>
+                <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
                 <div className="space-y-3">
                   <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                     formData.role === 'client' 

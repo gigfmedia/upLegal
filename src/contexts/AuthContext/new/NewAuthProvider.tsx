@@ -1,7 +1,7 @@
 'use client';
 
 import { useContext, useEffect, useState } from 'react';
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { AuthContext, type AuthContextType } from './auth-context';
 

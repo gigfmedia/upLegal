@@ -102,7 +102,7 @@ export default function PaymentSettings() {
           <CardTitle>Cuenta de Stripe</CardTitle>
           <CardDescription>
             Conecta tu cuenta de Stripe para recibir pagos por tus servicios legales.
-            UpLegal retiene una comisión del 20% por cada transacción.
+            LegalUp retiene una comisión del 20% por cada transacción.
           </CardDescription>
         </CardHeader>
         <CardContent>

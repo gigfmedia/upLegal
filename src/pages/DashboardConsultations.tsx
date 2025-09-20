@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,28 +8,50 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { PaymentForm } from '@/components/PaymentForm';
 import { 
   Search, 
   MessageSquare, 
   Clock, 
   DollarSign, 
-  Calendar, 
   AlertCircle, 
   CheckCircle2, 
-  Clock4, 
   XCircle, 
-  ChevronDown, 
-  ChevronUp, 
   MessageCircle, 
-  Edit2, 
-  Trash2, 
+  Edit2,
+  Trash2,
   Plus,
-  ArrowRight,
-  Eye
+  Eye,
+  Send,
+  Save,
+  Loader2
 } from 'lucide-react';
 
-type ConsultationStatus = 'pending' | 'in-progress' | 'resolved' | 'rejected';
-type Priority = 'low' | 'medium' | 'high';
+const CONSULTATION_STATUS = ['pending', 'in-progress', 'resolved', 'rejected'] as const;
+type ConsultationStatus = typeof CONSULTATION_STATUS[number];
+
+const PRIORITY_LEVELS = ['low', 'medium', 'high'] as const;
+type Priority = typeof PRIORITY_LEVELS[number];
+
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+// Utility function to ensure a string is a valid ConsultationStatus
+function ensureConsultationStatus(status: string): ConsultationStatus {
+  if (CONSULTATION_STATUS.includes(status as ConsultationStatus)) {
+    return status as ConsultationStatus;
+  }
+  return 'pending';
+}
+
+// Utility function to ensure a string is a valid Priority
+function ensurePriority(priority: string): Priority {
+  if (PRIORITY_LEVELS.includes(priority as Priority)) {
+    return priority as Priority;
+  }
+  return 'medium';
+}
 
 interface Lawyer {
   id: string;
@@ -49,330 +71,285 @@ interface Consultation {
   lawyerName: string;
   lawyerSpecialty: string;
   createdAt: string;
-  lastUpdate: string;
+  updatedAt: string;
   messages: number;
-  price: number;
-  category: string;
-  isFree?: boolean;
+  price: number | null;
+  isFirstConsultation: boolean;
+  paymentIntentId?: string;
 }
 
-// Mock abogados
+// Mock data
 const mockLawyers: Lawyer[] = [
-  { id: '1', name: 'María González', specialty: 'Derecho Laboral', hourlyRate: 45000, image: 'https://randomuser.me/api/portraits/women/45.jpg' },
-  { id: '2', name: 'Carlos Rodríguez', specialty: 'Derecho Familiar', hourlyRate: 120000, image: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { id: '3', name: 'Ana Martínez', specialty: 'Derecho Comercial', hourlyRate: 80000, image: 'https://randomuser.me/api/portraits/women/63.jpg' },
-  { id: '4', name: 'Pedro Silva', specialty: 'Derecho Civil', hourlyRate: 60000, image: 'https://randomuser.me/api/portraits/men/54.jpg' },
-];
-
-// Mock consultas
-const mockConsultations: Consultation[] = [
   {
     id: '1',
-    title: 'Consulta sobre contrato laboral',
-    description: 'Necesito asesoría sobre los términos de mi contrato laboral actual y si son favorables.',
-    status: 'in-progress',
-    priority: 'high',
-    lawyerId: '1',
-    lawyerName: 'María González',
-    lawyerSpecialty: 'Derecho Laboral',
-    createdAt: '2024-01-10T10:30:00',
-    lastUpdate: '2024-01-10T11:15:00',
-    messages: 3,
-    price: 45000,
-    category: 'Laboral',
-    isFree: true
+    name: 'Juan Pérez',
+    specialty: 'Derecho Laboral',
+    hourlyRate: 50000,
+    image: '/lawyers/juan-perez.jpg'
   },
   {
     id: '2',
-    title: 'División de bienes en divorcio',
-    description: 'Necesito asesoría sobre cómo se dividirían los bienes en mi proceso de divorcio de mutuo acuerdo.',
-    status: 'pending',
-    priority: 'medium',
-    lawyerId: '2',
-    lawyerName: 'Carlos Rodríguez',
-    lawyerSpecialty: 'Derecho Familiar',
-    createdAt: '2024-01-12T14:20:00',
-    lastUpdate: '2024-01-12T14:20:00',
-    messages: 0,
-    price: 120000,
-    category: 'Familia',
-    isFree: false
+    name: 'María González',
+    specialty: 'Derecho de Familia',
+    hourlyRate: 60000,
+    image: '/lawyers/maria-gonzalez.jpg'
   },
-  {
-    id: '3',
-    title: 'Contrato de arriendo comercial',
-    description: 'Revisión de cláusulas de un contrato de arriendo para local comercial.',
-    status: 'resolved',
-    priority: 'low',
-    lawyerId: '3',
-    lawyerName: 'Ana Martínez',
-    lawyerSpecialty: 'Derecho Comercial',
-    createdAt: '2023-12-15T09:10:00',
-    lastUpdate: '2023-12-20T16:45:00',
-    messages: 5,
-    price: 80000,
-    category: 'Comercial',
-    isFree: false
-  },
-  {
-    id: '4',
-    title: 'Demanda por daños y perjuicios',
-    description: 'Asesoría para iniciar una demanda por daños y perjuicios por incumplimiento de contrato.',
-    status: 'in-progress',
-    priority: 'high',
-    lawyerId: '4',
-    lawyerName: 'Pedro Silva',
-    lawyerSpecialty: 'Derecho Civil',
-    createdAt: '2024-01-05T11:30:00',
-    lastUpdate: '2024-01-08T17:20:00',
-    messages: 7,
-    price: 60000,
-    category: 'Civil',
-    isFree: false
-  },
-  {
-    id: '5',
-    title: 'Consulta sobre herencia',
-    description: 'Tengo dudas sobre el proceso de aceptación de herencia y reparto de bienes.',
-    status: 'pending',
-    priority: 'medium',
-    lawyerId: '2',
-    lawyerName: 'Carlos Rodríguez',
-    lawyerSpecialty: 'Derecho Familiar',
-    createdAt: '2024-01-18T16:45:00',
-    lastUpdate: '2024-01-18T16:45:00',
-    messages: 0,
-    price: 120000,
-    category: 'Sucesiones',
-    isFree: false
-  }
+  // Add more mock lawyers as needed
 ];
+
+const mockConsultations: Omit<Consultation, 'status' | 'priority' | 'isFirstConsultation'>[] = [
+  {
+    id: '1',
+    title: 'Consulta sobre contrato laboral',
+    description: 'Necesito asesoría sobre un despido injustificado',
+    lawyerId: '1',
+    lawyerName: 'Juan Pérez',
+    lawyerSpecialty: 'Derecho Laboral',
+    createdAt: '2023-10-01T10:00:00Z',
+    updatedAt: '2023-10-01T10:00:00Z',
+    messages: 3,
+    price: 50000
+  },
+  // Add more mock consultations as needed
+];
+
+const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 export default function DashboardConsultations() {
   const { toast } = useToast();
-  const [consultations, setConsultations] = useState<Consultation[]>(mockConsultations);
+  
+  // State
+  const [consultations, setConsultations] = useState<Consultation[]>(() => {
+    return mockConsultations.map(consultation => ({
+      ...consultation,
+      status: ensureConsultationStatus('pending'),
+      priority: ensurePriority('medium'),
+      isFirstConsultation: false
+    }));
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ConsultationStatus | 'all'>('all');
-  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isNewConsultationOpen, setIsNewConsultationOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [newConsultation, setNewConsultation] = useState({ 
-    title: '', 
-    description: '', 
-    category: '', 
-    priority: 'medium' as Priority, 
-    lawyerId: '' 
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
+  
+  const [newConsultation, setNewConsultation] = useState({
+    title: '',
+    description: '',
+    category: '',
+    priority: 'medium' as Priority,
+    lawyerId: ''
   });
 
-  const filteredConsultations = useCallback(() => 
-    consultations.filter(c => {
-      const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          c.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          c.lawyerName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+  const categories = Array.from(new Set(mockLawyers.map(lawyer => lawyer.specialty))).sort();
+
+  // Filter consultations based on search term and status
+  const filteredConsultations = useCallback(() => {
+    return consultations.filter(consultation => {
+      const matchesSearch = 
+        consultation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        consultation.description.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || consultation.status === statusFilter;
+      
       return matchesSearch && matchesStatus;
-    }), 
-    [consultations, searchTerm, statusFilter]
-  );
-
-  const handleSendReply = () => {
-    if (!selectedConsultation || !replyMessage.trim()) return;
-    
-    // Update the consultation with the new reply
-    const updatedConsultations = consultations.map(c => 
-      c.id === selectedConsultation.id 
-        ? { ...c, messages: c.messages + 1, lastUpdate: new Date().toISOString() }
-        : c
-    );
-    
-    setConsultations(updatedConsultations);
-    setReplyMessage('');
-    setIsReplyModalOpen(false);
-    
-    toast({
-      title: "Respuesta enviada",
-      description: "Tu respuesta ha sido enviada al abogado.",
     });
-  };
+  }, [consultations, searchTerm, statusFilter]);
 
-  const handleSaveEdit = () => {
-    if (!selectedConsultation || !editTitle.trim() || !editDescription.trim()) return;
-    
-    const updatedConsultations = consultations.map(c => 
-      c.id === selectedConsultation.id 
-        ? { 
-            ...c, 
-            title: editTitle, 
-            description: editDescription,
-            lastUpdate: new Date().toISOString() 
-          }
-        : c
-    );
-    
-    setConsultations(updatedConsultations);
-    setIsEditModalOpen(false);
-    
-    toast({
-      title: "Consulta actualizada",
-      description: "Los cambios en tu consulta han sido guardados.",
-    });
-  };
-
-  const handleDeleteConsultation = () => {
-    if (!selectedConsultation) return;
-    
-    setConsultations(consultations.filter(c => c.id !== selectedConsultation.id));
-    setIsDeleteModalOpen(false);
-    
-    toast({
-      title: "Consulta eliminada",
-      description: "La consulta ha sido cancelada exitosamente.",
-    });
-  };
-
-  const handleCreateNewConsultation = () => {
-    if (!newConsultation.title.trim() || !newConsultation.description.trim() || !newConsultation.lawyerId) {
+  // Handle payment success
+  const handlePaymentSuccess = async (paymentIntentId: string) => {
+    try {
+      // Create the consultation after successful payment
+      await createConsultation(paymentIntentId);
+      setShowPaymentForm(false);
+      
       toast({
-        title: "Error",
-        description: "Por favor completa todos los campos requeridos.",
-        variant: "destructive",
+        title: '¡Pago exitoso!',
+        description: 'Tu consulta ha sido creada exitosamente.',
       });
-      return;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear la consulta';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
-    
-    const selectedLawyer = mockLawyers.find(l => l.id === newConsultation.lawyerId);
-    if (!selectedLawyer) return;
-    
-    const newConsult: Consultation = {
-      id: `consult-${Date.now()}`,
+  };
+
+  // Create a new consultation
+  const createConsultation = async (paymentIntentId?: string) => {
+    if (!selectedLawyer) {
+      throw new Error('No se pudo encontrar el abogado seleccionado');
+    }
+
+    const isFirstConsultation = consultations.length === 0;
+    const consultationPrice = isFirstConsultation ? 0 : selectedLawyer.hourlyRate;
+
+    const newConsultationObj: Consultation = {
+      id: `cons_${Date.now()}`,
       title: newConsultation.title,
       description: newConsultation.description,
       status: 'pending',
       priority: newConsultation.priority,
-      lawyerId: newConsultation.lawyerId,
+      lawyerId: selectedLawyer.id,
       lawyerName: selectedLawyer.name,
       lawyerSpecialty: selectedLawyer.specialty,
       createdAt: new Date().toISOString(),
-      lastUpdate: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       messages: 0,
-      price: selectedLawyer.hourlyRate,
-      category: newConsultation.category,
-      isFree: consultations.length === 0 // First consultation is free
+      price: consultationPrice,
+      isFirstConsultation,
+      paymentIntentId
     };
+
+    setConsultations([newConsultationObj, ...consultations]);
     
-    setConsultations([newConsult, ...consultations]);
-    setNewConsultation({ title: '', description: '', category: '', priority: 'medium', lawyerId: '' });
-    setIsNewConsultationOpen(false);
-    
-    toast({
-      title: "Consulta creada",
-      description: "Tu consulta ha sido enviada al abogado.",
+    // Reset form
+    setNewConsultation({
+      title: '',
+      description: '',
+      category: '',
+      priority: 'medium',
+      lawyerId: ''
     });
-  };
-
-  const getStatusIcon = (status: ConsultationStatus | 'alert-circle' | 'clock') => {
-    if (status === 'alert-circle') return <AlertCircle className="h-4 w-4" />;
-    if (status === 'clock') return <Clock4 className="h-4 w-4" />;
     
-    switch (status) {
-      case 'pending':
-        return <Clock4 className="h-4 w-4" />;
-      case 'in-progress':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'resolved':
-        return <CheckCircle2 className="h-4 w-4" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return null;
+    setSelectedCategory('');
+    setSelectedLawyer(null);
+    setIsNewConsultationOpen(false);
+  };
+
+  // Handle creating a new consultation
+  const handleCreateNewConsultation = async () => {
+    if (!newConsultation.title.trim() || !newConsultation.description.trim() || !newConsultation.lawyerId) {
+      toast({
+        title: 'Error',
+        description: 'Por favor completa todos los campos obligatorios',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    const lawyer = mockLawyers.find(l => l.id === newConsultation.lawyerId);
+    if (!lawyer) {
+      toast({
+        title: 'Error',
+        description: 'No se pudo encontrar el abogado seleccionado',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSelectedLawyer(lawyer);
+    
+    // First consultation is free
+    const isFirstConsultation = consultations.length === 0;
+    
+    if (isFirstConsultation) {
+      await createConsultation();
+      toast({
+        title: '¡Consulta creada!',
+        description: 'Tu primera consulta ha sido creada exitosamente.',
+      });
+    } else {
+      // Show payment form for non-first consultations
+      setPaymentAmount(lawyer.hourlyRate);
+      setShowPaymentForm(true);
     }
   };
 
-  const getPriorityColor = (priority: Priority) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'medium':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      case 'low':
-        return 'bg-green-50 text-green-700 border-green-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status: ConsultationStatus) => {
-    switch (status) {
-      case 'in-progress':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'resolved':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'rejected':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'pending':
-      default:
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-  };
-
+  // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CL', {
-      day: '2-digit',
-      month: '2-digit',
       year: 'numeric',
+      month: 'long',
+      day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
+  // Get status badge color
+  const getStatusColor = (status: ConsultationStatus) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Get priority badge color
+  const getPriorityColor = (priority: Priority) => {
+    switch (priority) {
+      case 'high':
+        return 'text-red-600 border-red-200';
+      case 'medium':
+        return 'text-yellow-600 border-yellow-200';
+      case 'low':
+        return 'text-green-600 border-green-200';
+      default:
+        return 'text-gray-600 border-gray-200';
+    }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Mis Consultas</h1>
-            <p className="text-muted-foreground">
-              Gestiona tus consultas legales y comunicación con abogados
-            </p>
-          </div>
-          <Button onClick={() => setIsNewConsultationOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nueva Consulta
-          </Button>
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Mis Consultas</h1>
+          <p className="text-muted-foreground">
+            Gestiona tus consultas legales y comunicación con abogados
+          </p>
         </div>
+        <Button 
+          onClick={() => setIsNewConsultationOpen(true)}
+          className="mt-4 md:mt-0"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Nueva Consulta
+        </Button>
+      </div>
 
-      {/* Filtros y búsqueda */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Search and filter */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            type="search"
             placeholder="Buscar consultas..."
-            className="pl-10"
+            className="w-full pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ConsultationStatus | 'all')}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value as ConsultationStatus | 'all')}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filtrar por estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
             <SelectItem value="pending">Pendiente</SelectItem>
             <SelectItem value="in-progress">En progreso</SelectItem>
             <SelectItem value="resolved">Resuelto</SelectItem>
@@ -381,123 +358,55 @@ export default function DashboardConsultations() {
         </Select>
       </div>
 
-      {/* Lista de consultas */}
-      <div className="space-y-4">
+      {/* Consultations list */}
+      <div className="grid gap-4">
         {filteredConsultations().length > 0 ? (
           filteredConsultations().map((consultation) => (
             <Card key={consultation.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {consultation.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {consultation.lawyerName} • {consultation.lawyerSpecialty}
-                      </p>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-lg">{consultation.title}</h3>
+                      <Badge className={getStatusColor(consultation.status)}>
+                        {consultation.status === 'pending' ? 'Pendiente' :
+                         consultation.status === 'in-progress' ? 'En progreso' :
+                         consultation.status === 'resolved' ? 'Resuelto' : 'Rechazado'}
+                      </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className={`${getPriorityColor(consultation.priority)} flex items-center gap-1`}>
-                        {getStatusIcon(consultation.priority === 'high' ? 'alert-circle' : 'clock')}
-                        <span className="ml-1">
-                          {consultation.priority === 'high' ? 'Alta' : 
-                           consultation.priority === 'medium' ? 'Media' : 'Baja'} prioridad
-                        </span>
-                      </Badge>
-                      <Badge variant="outline" className={`${getStatusColor(consultation.status)} flex items-center gap-1`}>
-                        {getStatusIcon(consultation.status)}
-                        <span className="ml-1">
-                          {consultation.status === 'pending' ? 'Pendiente' :
-                           consultation.status === 'in-progress' ? 'En progreso' :
-                           consultation.status === 'resolved' ? 'Resuelto' : 'Rechazado'}
-                        </span>
-                      </Badge>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {consultation.description.length > 100 
+                        ? `${consultation.description.substring(0, 100)}...` 
+                        : consultation.description}
+                    </p>
+                    <div className="flex items-center gap-4 mt-2 text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        {consultation.messages} mensajes
+                      </div>
+                      <div className="flex items-center text-muted-foreground">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {formatDate(consultation.updatedAt)}
+                      </div>
+                      {consultation.price !== null && (
+                        <div className="flex items-center text-muted-foreground">
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          ${consultation.price.toLocaleString('es-CL')}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {consultation.description}
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 border-t border-gray-100">
-                    <div className="flex items-center text-sm text-gray-500 space-x-4">
-                      <span className="flex items-center">
-                        <MessageCircle className="h-4 w-4 mr-1" />
-                        {consultation.messages} {consultation.messages === 1 ? 'mensaje' : 'mensajes'}
-                      </span>
-                      <span className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {formatDate(consultation.lastUpdate)}
-                      </span>
-                      {consultation.isFree && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          Gratis
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col sm:flex-row gap-2 mt-3 sm:mt-0 w-full sm:w-auto">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                          setSelectedConsultation(consultation);
-                          setIsViewModalOpen(true);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Ver detalles
-                      </Button>
-                      
-                      {consultation.status === 'pending' && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full sm:w-auto"
-                            onClick={() => {
-                              setSelectedConsultation(consultation);
-                              setEditTitle(consultation.title);
-                              setEditDescription(consultation.description);
-                              setIsEditModalOpen(true);
-                            }}
-                          >
-                            <Edit2 className="h-4 w-4 mr-1" />
-                            Editar
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="w-full text-red-600 hover:text-red-700 sm:w-auto"
-                            onClick={() => {
-                              setSelectedConsultation(consultation);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Cancelar
-                          </Button>
-                        </>
-                      )}
-                      
-                      {consultation.status === 'in-progress' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full sm:w-auto"
-                          onClick={() => {
-                            setSelectedConsultation(consultation);
-                            setReplyMessage('');
-                            setIsReplyModalOpen(true);
-                          }}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Responder
-                        </Button>
-                      )}
-                    </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedConsultation(consultation);
+                        setIsViewModalOpen(true);
+                      }}
+                    >
+                      <Eye className="h-4 w-4 mr-1" /> Ver
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -505,295 +414,84 @@ export default function DashboardConsultations() {
           ))
         ) : (
           <div className="text-center py-12">
-            <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No se encontraron consultas
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || statusFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Aún no tienes consultas. ¡Crea tu primera consulta legal!'}
+            <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay consultas</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Comienza creando una nueva consulta.
             </p>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => setIsNewConsultationOpen(true)}
-            >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Nueva Consulta
-            </Button>
+            <div className="mt-6">
+              <Button onClick={() => setIsNewConsultationOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Consulta
+              </Button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Modal Ver Consulta */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          {selectedConsultation && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-gray-700">Detalles de la Consulta</DialogTitle>
-                <DialogDescription className="text-gray-500">
-                  Información detallada sobre tu consulta legal
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Título</h4>
-                  <p className="text-base">{selectedConsultation.title}</p>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Descripción</h4>
-                  <p className="whitespace-pre-line text-base">{selectedConsultation.description}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Abogado</h4>
-                    <p>{selectedConsultation.lawyerName}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Especialidad</h4>
-                    <p>{selectedConsultation.lawyerSpecialty}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Estado</h4>
-                    <div className="flex items-center">
-                      {getStatusIcon(selectedConsultation.status)}
-                      <span className="ml-2">
-                        {selectedConsultation.status === 'pending' ? 'Pendiente' :
-                         selectedConsultation.status === 'in-progress' ? 'En progreso' :
-                         selectedConsultation.status === 'resolved' ? 'Resuelto' : 'Rechazado'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Prioridad</h4>
-                    <p>
-                      {selectedConsultation.priority === 'high' ? 'Alta' : 
-                       selectedConsultation.priority === 'medium' ? 'Media' : 'Baja'}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Creada</h4>
-                    <p>{formatDate(selectedConsultation.createdAt)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Última actualización</h4>
-                    <p>{formatDate(selectedConsultation.lastUpdate)}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-muted-foreground">Mensajes</h4>
-                  <p>{selectedConsultation.messages} {selectedConsultation.messages === 1 ? 'mensaje' : 'mensajes'}</p>
-                </div>
-                {selectedConsultation.isFree && (
-                  <div className="bg-green-50 p-3 rounded-md">
-                    <p className="text-green-700 text-sm flex items-center">
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Esta consulta es gratuita
-                    </p>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsViewModalOpen(false)}
-                >
-                  Cerrar
-                </Button>
-                {selectedConsultation.status === 'in-progress' && (
-                  <Button 
-                    onClick={() => {
-                      setIsViewModalOpen(false);
-                      setReplyMessage('');
-                      setIsReplyModalOpen(true);
-                    }}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Responder
-                  </Button>
-                )}
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Responder Consulta */}
-      <Dialog open={isReplyModalOpen} onOpenChange={setIsReplyModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Responder Consulta</DialogTitle>
-            <DialogDescription>
-              Escribe tu mensaje para el abogado a continuación.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reply">Tu mensaje</Label>
-              <Textarea 
-                id="reply" 
-                placeholder="Escribe tu mensaje aquí..." 
-                rows={4}
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsReplyModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSendReply}
-              disabled={!replyMessage.trim()}
-            >
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Enviar respuesta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Editar Consulta */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Editar Consulta</DialogTitle>
-            <DialogDescription>
-              Realiza los cambios necesarios en tu consulta.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título</Label>
-              <Input 
-                id="title" 
-                placeholder="Título de la consulta" 
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Describe tu consulta con el mayor detalle posible..." 
-                rows={5}
-                value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSaveEdit}
-              disabled={!editTitle.trim() || !editDescription.trim()}
-            >
-              <Edit2 className="h-4 w-4 mr-2" />
-              Guardar cambios
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Eliminar Consulta */}
-      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle>¿Estás seguro de cancelar esta consulta?</DialogTitle>
-            <DialogDescription>
-              Esta acción no se puede deshacer. La consulta será eliminada permanentemente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            {selectedConsultation && (
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h4 className="font-medium">{selectedConsultation.title}</h4>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedConsultation.description.substring(0, 100)}...
-                </p>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsDeleteModalOpen(false)}
-            >
-              Volver
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDeleteConsultation}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Sí, cancelar consulta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal Nueva Consulta */}
+      {/* New Consultation Dialog */}
       <Dialog open={isNewConsultationOpen} onOpenChange={setIsNewConsultationOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Nueva Consulta Legal</DialogTitle>
-            <DialogDescription>
-              Completa el formulario para crear una nueva consulta con un abogado.
-            </DialogDescription>
           </DialogHeader>
+          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="new-title">Título <span className="text-red-500">*</span></Label>
+              <Label htmlFor="title">Título de la consulta</Label>
               <Input 
-                id="new-title" 
-                placeholder="Ej: Problema con contrato laboral" 
+                id="title" 
+                placeholder="Ej: Despido injustificado" 
                 value={newConsultation.title}
                 onChange={(e) => setNewConsultation({...newConsultation, title: e.target.value})}
               />
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="new-description">Descripción detallada <span className="text-red-500">*</span></Label>
+              <Label htmlFor="description">Descripción detallada</Label>
               <Textarea 
-                id="new-description" 
-                placeholder="Describe tu situación con el mayor detalle posible..." 
+                id="description" 
+                placeholder="Describe tu situación legal con el mayor detalle posible..." 
                 rows={5}
                 value={newConsultation.description}
                 onChange={(e) => setNewConsultation({...newConsultation, description: e.target.value})}
               />
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="new-category">Categoría</Label>
-                <Input 
-                  id="new-category" 
-                  placeholder="Ej: Derecho Laboral" 
-                  value={newConsultation.category}
-                  onChange={(e) => setNewConsultation({...newConsultation, category: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-priority">Prioridad</Label>
+                <Label>Especialidades</Label>
                 <Select 
-                  value={newConsultation.priority}
-                  onValueChange={(value) => setNewConsultation({...newConsultation, priority: value as Priority})}
+                  value={selectedCategory}
+                  onValueChange={(value) => {
+                    setSelectedCategory(value);
+                    // Reset lawyer when category changes
+                    setNewConsultation(prev => ({ ...prev, lawyerId: '' }));
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecciona una prioridad" />
+                    <SelectValue placeholder="Selecciona una especialidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Prioridad</Label>
+                <Select 
+                  value={newConsultation.priority}
+                  onValueChange={(value) => 
+                    setNewConsultation({...newConsultation, priority: value as Priority})
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona prioridad" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low">Baja</SelectItem>
@@ -803,61 +501,220 @@ export default function DashboardConsultations() {
                 </Select>
               </div>
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="new-lawyer">Selecciona un abogado <span className="text-red-500">*</span></Label>
-              <Select
+              <Label>Seleccionar abogado</Label>
+              <Select 
                 value={newConsultation.lawyerId}
-                onValueChange={(value) => setNewConsultation({...newConsultation, lawyerId: value})}
+                onValueChange={(value) => 
+                  setNewConsultation({...newConsultation, lawyerId: value})
+                }
+                disabled={!selectedCategory}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un abogado" />
+                  <SelectValue placeholder={selectedCategory ? "Selecciona un abogado" : "Primero selecciona una especialidad"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockLawyers.map((lawyer) => (
-                    <SelectItem key={lawyer.id} value={lawyer.id}>
-                      <div className="flex items-center">
-                        <img 
-                          src={lawyer.image} 
-                          alt={lawyer.name} 
-                          className="h-6 w-6 rounded-full mr-2"
-                        />
-                        <div>
-                          <p className="font-medium">{lawyer.name}</p>
-                          <p className="text-xs text-gray-500">{lawyer.specialty} • {formatPrice(lawyer.hourlyRate)}/hora</p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {selectedCategory ? (
+                    mockLawyers
+                      .filter(lawyer => lawyer.specialty === selectedCategory)
+                      .map((lawyer) => (
+                        <SelectItem key={lawyer.id} value={lawyer.id}>
+                          <div className="flex items-center gap-3 w-full">
+                            <div className="h-8 w-8 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center text-sm font-medium">
+                              {lawyer.name.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <p className="font-medium truncate">{lawyer.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{lawyer.specialty}</p>
+                            </div>
+                            <div className="whitespace-nowrap ml-2">
+                              <p className="text-sm font-medium">${lawyer.hourlyRate.toLocaleString('es-CL')}/hora</p>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500">
+                      Selecciona una especialidad para ver abogados disponibles
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
-            {consultations.length === 0 && (
-              <div className="bg-blue-50 p-3 rounded-md">
-                <p className="text-blue-700 text-sm flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  ¡Tu primera consulta es gratuita!
-                </p>
-              </div>
-            )}
           </div>
+          
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setIsNewConsultationOpen(false)}
+              onClick={() => {
+                setIsNewConsultationOpen(false);
+                setSelectedCategory('');
+                setNewConsultation({ 
+                  title: '', 
+                  description: '', 
+                  category: '', 
+                  priority: 'medium', 
+                  lawyerId: '' 
+                });
+              }}
             >
               Cancelar
             </Button>
             <Button 
               onClick={handleCreateNewConsultation}
-              disabled={!newConsultation.title.trim() || !newConsultation.description.trim() || !newConsultation.lawyerId}
+              disabled={
+                !newConsultation.title.trim() || 
+                !newConsultation.description.trim() || 
+                !newConsultation.lawyerId ||
+                isProcessingPayment
+              }
             >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              {consultations.length === 0 ? 'Crear consulta gratis' : 'Crear consulta'}
+              {isProcessingPayment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : consultations.length === 0 ? (
+                'Crear consulta gratis'
+              ) : (
+                `Pagar $${mockLawyers.find(l => l.id === newConsultation.lawyerId)?.hourlyRate.toLocaleString('es-CL')}`
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
+
+      {/* Payment Dialog */}
+      <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Pagar por la consulta</DialogTitle>
+            <DialogDescription>
+              Por favor ingresa los datos de tu tarjeta para continuar con el pago.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Elements stripe={stripePromise}>
+            <PaymentForm 
+              amount={paymentAmount}
+              onSuccess={handlePaymentSuccess}
+              onError={(error) => {
+                toast({
+                  title: 'Error en el pago',
+                  description: error,
+                  variant: 'destructive',
+                });
+              }}
+            />
+          </Elements>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Consultation Dialog */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          {selectedConsultation && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedConsultation.title}</DialogTitle>
+                <div className="flex items-center gap-2 pt-2">
+                  <Badge className={getStatusColor(selectedConsultation.status)}>
+                    {selectedConsultation.status === 'pending' ? 'Pendiente' : 
+                     selectedConsultation.status === 'in-progress' ? 'En progreso' : 
+                     selectedConsultation.status === 'resolved' ? 'Resuelto' : 'Rechazado'}
+                  </Badge>
+                  <Badge variant="outline" className={getPriorityColor(selectedConsultation.priority)}>
+                    {selectedConsultation.priority === 'high' ? 'Alta prioridad' : 
+                     selectedConsultation.priority === 'medium' ? 'Prioridad media' : 'Baja prioridad'}
+                  </Badge>
+                </div>
+              </DialogHeader>
+              
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Descripción</h4>
+                  <p className="text-gray-700">{selectedConsultation.description}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Abogado</h4>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        {selectedConsultation.lawyerName.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{selectedConsultation.lawyerName}</p>
+                        <p className="text-sm text-muted-foreground">{selectedConsultation.lawyerSpecialty}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Información</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Creada:</span>
+                        <span>{formatDate(selectedConsultation.createdAt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Última actualización:</span>
+                        <span>{formatDate(selectedConsultation.updatedAt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Mensajes:</span>
+                        <span>{selectedConsultation.messages}</span>
+                      </div>
+                      {selectedConsultation.price !== null && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Precio:</span>
+                          <span>${selectedConsultation.price.toLocaleString('es-CL')}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Mensajes</h4>
+                  <div className="space-y-4">
+                    {selectedConsultation.messages > 0 ? (
+                      <div className="text-sm text-muted-foreground">
+                        {selectedConsultation.messages} mensajes en esta conversación.
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No hay mensajes en esta conversación todavía.
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2 mt-4">
+                      <Input 
+                        placeholder="Escribe tu mensaje..." 
+                        value={replyMessage}
+                        onChange={(e) => setReplyMessage(e.target.value)}
+                      />
+                      <Button>
+                        <Send className="h-4 w-4 mr-2" /> Enviar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
+                  Cerrar
+                </Button>
+                <Button>
+                  <MessageSquare className="h-4 w-4 mr-2" /> Enviar mensaje
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import LegalAgent from '@/components/LegalAgent';
 
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
@@ -25,6 +26,7 @@ import Footer from '@/components/Footer';
 import Index from './pages/Index';
 import SearchResults from './pages/SearchResults';
 import LawyerDashboard from './pages/LawyerDashboard';
+import LawyerDashboardPage from './pages/lawyer/DashboardPage';
 import AttorneyDashboard from './pages/AttorneyDashboard';
 import PublicProfile from './pages/PublicProfile';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -38,6 +40,12 @@ import DashboardAppointments from './pages/DashboardAppointments';
 import DashboardPayments from './pages/DashboardPayments';
 import DashboardMessages from './pages/DashboardMessages';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
+import EmailVerification from './pages/auth/EmailVerification';
+import ServicesPage from './pages/lawyer/ServicesPage';
+import ConsultasPage from './pages/lawyer/ConsultasPage';
+import CitasPage from './pages/lawyer/CitasPage';
+import EarningsPage from './pages/lawyer/EarningsPage';
+import ProfilePage from './pages/lawyer/ProfilePage';
 
 const queryClient = new QueryClient();
 
@@ -64,7 +72,16 @@ const LoadingIndicator = () => {
 const AppContent = () => {
   const { user, isLoading } = useAuth();
   
-  if (isLoading) {
+  // Only show loading state for the initial auth check
+  const [initialAuthCheck, setInitialAuthCheck] = useState(true);
+  
+  useEffect(() => {
+    if (!isLoading) {
+      setInitialAuthCheck(false);
+    }
+  }, [isLoading]);
+  
+  if (initialAuthCheck) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -78,10 +95,29 @@ const AppContent = () => {
         <ScrollToTop />
         <LoadingIndicator />
         <main className="flex-1">
+          <LegalAgent />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/search" element={<SearchResults />} />
-            <Route path="/lawyer-dashboard" element={<LawyerDashboard />} />
+            {/* New lawyer dashboard routes */}
+            <Route path="/lawyer" element={
+              <div data-role="lawyer">
+                <DashboardLayout />
+              </div>
+            }>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<LawyerDashboardPage />} />
+              <Route path="services" element={<ServicesPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="consultas" element={<ConsultasPage />} />
+              <Route path="citas" element={<CitasPage />} />
+              <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
+              <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
+              <Route path="earnings" element={<EarningsPage />} />
+            </Route>
+            
+            {/* Legacy route for backward compatibility */}
+            <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
             <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
             <Route 
               path="/lawyer/:id" 
@@ -123,6 +159,7 @@ const AppContent = () => {
             
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

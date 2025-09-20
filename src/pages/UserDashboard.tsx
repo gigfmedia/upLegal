@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Search
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 function DashboardSkeleton() {
   return (
@@ -348,72 +349,61 @@ function ClientDashboardContent() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
           <CardHeader>
             <CardTitle>Mis Consultas</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {myConsultations.length > 0 ? (
-                myConsultations.map((consultation) => (
-                  <div
-                    key={consultation.id}
-                    className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/dashboard/consultations/${consultation.id}`)}
-                  >
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
-                          {consultation.lawyer.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium leading-none">
-                          {consultation.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {consultation.lawyer}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <p className="text-xs text-muted-foreground">{consultation.date}</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                        consultation.status === 'Completado'
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {consultation.status}
-                      </span>
-                    </div>
+          <CardContent className="space-y-4">
+            {myConsultations.length > 0 ? (
+              myConsultations.map((consultation) => (
+                <div key={consultation.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{consultation.title}</p>
+                    <p className="text-sm text-muted-foreground">{consultation.lawyer} • {consultation.date}</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <MessageSquare className="mx-auto h-8 w-8 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes consultas</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Comienza una nueva consulta para verla aquí.
-                  </p>
-                  <div className="mt-6">
-                    <Button
-                      onClick={() => navigate('/dashboard/consultations/new')}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <MessageSquare className="-ml-1 mr-2 h-4 w-4" />
-                      Nueva Consulta
-                    </Button>
-                  </div>
+                  <Badge variant={consultation.status === 'Completado' ? 'default' : 'outline'}>
+                    {consultation.status}
+                  </Badge>
                 </div>
-              )}
-            </div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="mx-auto h-8 w-8 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes consultas</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Comienza una nueva consulta para verla aquí.
+                </p>
+                <div className="mt-6">
+                  <Button
+                    onClick={() => navigate('/dashboard/consultations/new')}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <MessageSquare className="-ml-1 mr-2 h-4 w-4" />
+                    Nueva Consulta
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Próximas Citas</CardTitle>
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle>Próximas Citas</CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-sm text-muted-foreground hover:bg-transparent hover:underline p-0 h-auto" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/dashboard/appointments');
+                }}
+              >
+                Ver todas
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -421,7 +411,7 @@ function ClientDashboardContent() {
                 upcomingAppointments.map((appointment) => (
                   <div 
                     key={appointment.id}
-                    className="flex items-start p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="flex items-start p-3 rounded-lg hover:bg-accent/50 cursor-pointer transition-colors"
                     onClick={() => navigate(`/dashboard/appointments/${appointment.id}`)}
                   >
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-blue-100 text-blue-600 mr-3">
@@ -431,12 +421,9 @@ function ClientDashboardContent() {
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {appointment.title}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {appointment.lawyer}
+                      <p className="text-sm text-muted-foreground">
+                        {appointment.lawyer} • {appointment.date} a las {appointment.time}
                       </p>
-                    </div>
-                    <div className="text-sm text-gray-500 whitespace-nowrap ml-2">
-                      {appointment.time}
                     </div>
                   </div>
                 ))
@@ -450,7 +437,10 @@ function ClientDashboardContent() {
                   <div className="mt-4">
                     <Button
                       variant="outline"
-                      onClick={handleFindLawyer}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFindLawyer();
+                      }}
                       className="inline-flex items-center"
                     >
                       <Search className="-ml-1 mr-2 h-4 w-4" />
