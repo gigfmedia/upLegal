@@ -408,7 +408,6 @@ export default function DashboardAppointments() {
   const confirmCancelAppointment = () => {
     if (selectedAppointment) {
       // In a real app, you would make an API call here
-      console.log('Cancelling appointment:', selectedAppointment.id);
       setIsCancelModalOpen(false);
       // Show success message
       toast({

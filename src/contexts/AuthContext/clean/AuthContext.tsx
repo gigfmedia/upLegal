@@ -1,9 +1,13 @@
 'use client';
 
-import { createContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createContext, useCallback, useMemo } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { useNavigate } from 'react-router-dom';
+import { sendWelcomeEmail } from '@/lib/emails/welcomeEmail';
+import { clearAuthData } from '@/lib/authUtils';
+import { refreshSession } from '@/lib/sessionUtils';
+import { handleAuthError } from '@/lib/authErrorHandler';
+import { useAuth } from '@/hooks/useAuthState';
+import { supabase } from '@/lib/supabaseClient';
 
 export type UserRole = 'client' | 'lawyer';
 
@@ -25,17 +29,22 @@ export interface Profile {
   website: string | null;
   avatar_url: string | null;
   specialties: string[];
-  specialization: string | null;
-  hourly_rate: number;
-  hourly_rate_clp: number;
-  experience: number;
-  experience_years: number;
-  education: string | null;
-  bar_association_number: string | null;
+  hourly_rate_clp: number | null;
+  response_time?: string;
+  satisfaction_rate?: number;
+  experience_years: number | null;
+  education: any | null; // JSONB field
+  bar_number: string | null;
   zoom_link: string | null;
   languages: string[];
+  verified?: boolean;
+  available_for_hire?: boolean;
   created_at?: string;
   updated_at?: string;
+  profile_setup_completed?: boolean;
+  
+  // For backward compatibility (will be converted to specialties array)
+  specialization?: string;
 }
 
 export interface AuthContextType {
@@ -43,6 +52,7 @@ export interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   error: Error | null;
+  isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setIsLoading: (isLoading: boolean) => void;
@@ -60,94 +70,81 @@ export interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const {
+    user,
+    session,
+    isLoading,
+    error,
+    checkSession,
+    refreshAuth,
+    isAuthenticated,
+  } = useAuth();
+  
+  // Set error helper function
+  const setErrorState = useCallback((error: Error | null) => {
+    handleAuthError(error, { showToast: false });
+  }, []);
+  
+  // Set loading state helper function
+  const setLoadingState = useCallback((loading: boolean) => {
+    // Loading state is managed by useAuth hook
+    if (loading !== isLoading) {
+      // If we need to manually set loading state, we can add logic here
+    }
+  }, [isLoading]);
 
-  const login = async (email: string, password: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // Basic validation
-      if (!email || !password) {
-        const error = new Error('Por favor ingresa tu correo y contraseña');
-        setError(error);
-        return { user: null, error };
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      
-      if (error) {
-        console.error('Supabase auth error:', error);
+  // Login function
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        setLoadingState(true);
+        setErrorState(null);
         
-        // Map Supabase auth errors to more user-friendly messages
-        let errorMessage = 'Error al iniciar sesión';
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Correo o contraseña incorrectos';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = 'Demasiados intentos. Por favor intente más tarde';
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        
+        if (error) throw error;
+        
+        // The useAuth hook will handle updating the user and session
+        // We just need to check if the session is valid
+        const isValid = await checkSession();
+        
+        if (!isValid) {
+          throw new Error('Failed to establish a valid session');
         }
         
+        return { user: data.user, error: null };
+      } catch (error) {
+        console.error('Login error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
         const formattedError = new Error(errorMessage);
-        setError(formattedError);
+        setErrorState(formattedError);
         return { user: null, error: formattedError };
+      } finally {
+        setLoadingState(false);
       }
-      
-      if (!data.session || !data.user) {
-        const error = new Error('No se pudo iniciar sesión. Por favor intente de nuevo.');
-        setError(error);
-        return { user: null, error };
-      }
-      
-      setUser(data.user);
-      setSession(data.session);
-      
-      // Clear any previous errors on successful login
-      setError(null);
-      
-      return { user: data.user, error: null };
-    } catch (error) {
-      console.error('Unexpected error during login:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Ocurrió un error inesperado al iniciar sesión';
-      
-      const formattedError = new Error(errorMessage);
-      setError(formattedError);
-      return { user: null, error: formattedError };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [checkSession, setErrorState, setLoadingState]
+  );
 
-  const signup = async (email: string, password: string, userData: UserData) => {
+  // Signup function
+  const signup = useCallback(async (email: string, password: string, userData: UserData) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setLoadingState(true);
+      setErrorState(null);
       
       // Basic validation
       if (!email || !password) {
-        const error = new Error('Por favor ingresa un correo y contraseña válidos');
-        setError(error);
-        return { user: null, error };
-      }
-      
-      if (!userData.firstName?.trim() || !userData.lastName?.trim()) {
-        const error = new Error('Por favor ingresa tu nombre completo');
-        setError(error);
+        const error = new Error('Email and password are required');
+        setErrorState(error);
         return { user: null, error };
       }
       
       if (password.length < 6) {
-        const error = new Error('La contraseña debe tener al menos 6 caracteres');
-        setError(error);
+        const error = new Error('Password must be at least 6 characters');
+        setErrorState(error);
         return { user: null, error };
       }
 
@@ -169,194 +166,223 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (signUpError) {
         console.error('Supabase signup error:', signUpError);
         
-        let errorMessage = 'Error al crear la cuenta';
+        let errorMessage = 'Error creating account';
         if (signUpError.message.includes('already registered')) {
-          errorMessage = 'Este correo ya está registrado. ¿Olvidaste tu contraseña?';
+          errorMessage = 'This email is already registered. Did you forget your password?';
         } else if (signUpError.message.includes('password')) {
-          errorMessage = 'La contraseña no cumple con los requisitos mínimos';
+          errorMessage = 'Password does not meet the minimum requirements';
         } else if (signUpError.message.includes('email')) {
-          errorMessage = 'Por favor ingresa un correo electrónico válido';
+          errorMessage = 'Please enter a valid email address';
         }
         
         const formattedError = new Error(errorMessage);
-        setError(formattedError);
+        setErrorState(formattedError);
         return { user: null, error: formattedError };
       }
       
       if (!data.user) {
-        const error = new Error('No se pudo crear la cuenta. Por favor intente de nuevo.');
-        setError(error);
+        const error = new Error('Failed to create account. Please try again.');
+        setErrorState(error);
         return { user: null, error };
       }
       
       // Create user profile in the database
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: data.user.id,
-            user_id: data.user.id,
-            email: data.user.email,
-            first_name: userData.firstName.trim(),
-            last_name: userData.lastName.trim(),
-            display_name: `${userData.firstName} ${userData.lastName}`.trim(),
-            updated_at: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-            role: userData.role,
-            // Include other required fields with default values
-            bio: '',
-            avatar_url: '',
-            phone: '',
-            website: '',
-            location: '',
-            specialties: [],
-            languages: [],
-            verified: false,
-            response_time: '24h',
-            satisfaction_rate: 0,
-            zoom_link: '',
-            profile_visible: true,
-            show_online_status: true,
-            allow_direct_messages: true,
-            // Add any other required fields with default values
-            settings: {},
-            notifications: { email: true, push: true },
-            preferences: { theme: 'light', language: 'es' },
-            metadata: { signup_method: 'email', signup_date: new Date().toISOString() }
-          });
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: data.user.id,
+              user_id: data.user.id,
+              email: data.user.email,
+              first_name: userData.firstName.trim(),
+              last_name: userData.lastName.trim(),
+              display_name: `${userData.firstName} ${userData.lastName}`.trim(),
+              profile_setup_completed: userData.role === 'lawyer' ? false : true,
+              updated_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+              role: userData.role,
+              // Include other required fields with default values
+              bio: '',
+              avatar_url: '',
+              phone: '',
+              website: '',
+              location: '',
+              specialties: [],
+              languages: [],
+              verified: false,
+              response_time: '24h',
+              satisfaction_rate: 0,
+              zoom_link: '',
+              profile_visible: true,
+              show_online_status: true,
+              allow_direct_messages: true,
+              settings: {},
+              notifications: { email: true, push: true },
+              preferences: { theme: 'light', language: 'es' },
+              metadata: { signup_method: 'email', signup_date: new Date().toISOString() }
+            });
 
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-          // Don't fail the entire signup if profile creation fails
-          // The user can update their profile later
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+            // Don't fail the entire signup if profile creation fails
+            // The user can update their profile later
+          }
+        } catch (profileError) {
+          console.error('Unexpected error creating profile:', profileError);
+          // Continue with signup even if profile creation fails
         }
       }
-
-      // Update local state
-      setUser(data.user);
-      setSession(data.session);
       
-      // Clear any previous errors on successful signup
-      setError(null);
+      // The useAuth hook will handle updating the user and session
+      await checkSession();
       
       return { 
         user: data.user, 
         error: null,
-        // Add additional metadata if needed
         requiresEmailConfirmation: !data.session
       };
     } catch (error) {
       console.error('Unexpected error during signup:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Ocurrió un error inesperado al crear la cuenta';
+        : 'An unexpected error occurred while creating your account';
       
       const formattedError = new Error(errorMessage);
-      setError(formattedError);
+      setErrorState(formattedError);
       return { user: null, error: formattedError };
     } finally {
-      setIsLoading(false);
+      setLoadingState(false);
     }
-  };
+  }, [checkSession, setErrorState, setLoadingState]);
 
-  const logout = async (options: { redirect?: string } = {}) => {
+  const logout = useCallback(async (options: { redirect?: string } = {}) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setLoadingState(true);
+      setErrorState(null);
       
-      // Clear any existing session data first
-      const { error } = await supabase.auth.signOut();
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut().catch(error => {
+        console.warn('Supabase sign out had issues, but continuing with cleanup:', error);
+        return { error };
+      });
       
-      if (error) {
-        console.error('Supabase sign out error:', error);
-        throw new Error('Error al cerrar la sesión. Por favor intente de nuevo.');
-      }
+      // Clear all auth data
+      await clearAuthData();
       
-      // Clear local state
-      setUser(null);
-      setSession(null);
+      // The useAuth hook will handle updating the user and session state
       
-      // Clear any cached data or local storage if needed
-      window.localStorage.removeItem('supabase.auth.token');
-      
-      // Handle redirection if needed
+      // Handle redirect if needed
       if (options.redirect && typeof window !== 'undefined') {
-        window.location.href = options.redirect;
+        // Add a small delay to ensure all cleanup is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Use window.location for redirects instead of useNavigate
+        // to avoid router context issues
+        const timestamp = new Date().getTime();
+        const separator = options.redirect.includes('?') ? '&' : '?';
+        window.location.href = `${options.redirect}${separator}t=${timestamp}`;
+        
+        // Prevent further execution
+        await new Promise(() => {});
       }
       
       return { success: true, error: null };
     } catch (error) {
       console.error('Error during logout:', error);
+      
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Ocurrió un error inesperado al cerrar la sesión';
+        : 'An unexpected error occurred while signing out';
       
       const formattedError = new Error(errorMessage);
-      setError(formattedError);
+      setErrorState(formattedError);
       return { success: false, error: formattedError };
     } finally {
-      setIsLoading(false);
+      setLoadingState(false);
     }
-  };
+  }, [setErrorState, setLoadingState]);
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession()
-      .then(({ data: { session } }) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-      })
-      .catch((error) => {
-        setError(error);
-      })
-      .finally(() => {
-        setIsLoading(false);
+  const confirmEmail = useCallback(async (token: string, email: string): Promise<boolean> => {
+    try {
+      setLoadingState(true);
+      setErrorState(null);
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email',
       });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+      if (error) throw error;
+
+      // Update user's email_confirmed_at in the profiles table
+      if (data.user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            email_confirmed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString() 
+          })
+          .eq('user_id', data.user.id);
       }
-    );
 
-    // Cleanup subscription on unmount
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []); // Added missing dependency array and closing parenthesis and brace
+      // Refresh the auth state to get the latest session
+      await checkSession();
+      
+      return true;
+    } catch (error) {
+      console.error('Error confirming email:', error);
+      setErrorState(error as Error);
+      return false;
+    } finally {
+      setLoadingState(false);
+    }
+  }, [checkSession, setErrorState, setLoadingState]);
 
-  // Update user profile - optimized for performance
   const updateProfile = useCallback(async (profile: Partial<Profile>) => {
     if (!user) {
       throw new Error('No user is currently signed in');
     }
 
     try {
-      setIsLoading(true);
+      setLoadingState(true);
+      
+      // Get the supabase client
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session found');
+      }
       
       // Only include fields that have changed
       const changedFields: Record<string, any> = {};
       const fieldsToCheck = [
         'first_name', 'last_name', 'bio', 'phone', 'location', 'website',
-        'specialization', 'experience', 'languages', 'education', 'zoom_link',
-        'bar_association_number'
+        'specialties', 'languages', 'education', 'zoom_link', 
+        'bar_association_number', 'avatar_url', 'hourly_rate_clp',
+        'experience_years', 'profile_setup_completed'
       ];
 
+      // Handle specialties (convert from string to array if needed)
+      if ('specialization' in profile || 'specialties' in profile) {
+        changedFields.specialties = Array.isArray(profile.specialties)
+          ? profile.specialties
+          : (profile.specialization || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+
+      // Handle other fields
       fieldsToCheck.forEach(field => {
         if (field in profile) {
-          if (field === 'specialization') {
-            changedFields.specialties = profile[field] ? [profile[field]] : [];
-          } else if (field === 'bar_association_number') {
+          if (field === 'bar_association_number') {
             changedFields.bar_number = profile[field] || null;
-          } else if (field === 'experience') {
-            changedFields.experience_years = profile[field] || 0;
+          } else if (field === 'hourly_rate') {
+            changedFields.hourly_rate_clp = profile[field] || 0;
           } else if (field === 'languages' && !Array.isArray(profile[field])) {
             changedFields[field] = [];
-          } else {
-            changedFields[field] = profile[field] || null;
+          } else if (field === 'profile_setup_completed') {
+            changedFields[field] = Boolean(profile[field]);
+          } else if (field !== 'specialties') {  // Skip specialties as it's already handled
+            changedFields[field] = profile[field as keyof Profile] ?? null;
           }
         }
       });
@@ -364,7 +390,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Add updated_at timestamp
       changedFields.updated_at = new Date().toISOString();
 
-      // First update the user's metadata in auth.users
+      // First update or create the profile in the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            user_id: user.id,
+            ...changedFields
+          },
+          { onConflict: 'user_id' }
+        )
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Error upserting profile:', profileError);
+        throw profileError;
+      }
+
+      // Then update the user's metadata in auth.users
       const { data: authUpdate, error: authUpdateError } = await supabase.auth.updateUser({
         data: {
           ...user.user_metadata,
@@ -374,82 +418,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (authUpdateError) throw authUpdateError;
       
-      // Check if profile exists
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      let updatedProfile;
-
-      if (!existingProfile) {
-        // Create new profile with only the changed fields
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert([{
-            user_id: user.id,
-            ...changedFields,
-            created_at: new Date().toISOString()
-          }])
-          .select('*')
-          .single();
-          
-        if (createError) throw createError;
-        updatedProfile = newProfile;
-      } else {
-        // Update existing profile with only the changed fields
-        const { data: updated, error: updateError } = await supabase
-          .from('profiles')
-          .update(changedFields)
-          .eq('user_id', user.id)
-          .select('*')
-          .single();
-
-        if (updateError) throw updateError;
-        updatedProfile = updated;
-      }
-
-      if (!updatedProfile) {
-        throw new Error('No se pudo actualizar el perfil');
-      }
-
-      // Update the local state with only the changed fields
-      const updatedUser = {
-        ...user,
-        user_metadata: {
-          ...user.user_metadata,
-          ...updatedProfile
-        }
-      };
+      // Refresh the auth state to get the latest user data
+      await checkSession();
       
-      setUser(updatedUser);
-      return updatedUser;
+      // Return the updated user data
+      return authUpdate.user;
     } catch (error) {
-      console.error('[Auth] Error in updateProfile:', error);
-      throw error instanceof Error ? error : new Error('Error desconocido al actualizar el perfil');
+      console.error('Error updating profile:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An error occurred while updating your profile';
+      
+      const formattedError = new Error(errorMessage);
+      setErrorState(formattedError);
+      throw formattedError;
     } finally {
-      setIsLoading(false);
+      setLoadingState(false);
     }
-  }, [user]);
+  }, [user, checkSession, setErrorState, setLoadingState]);
 
-  const value = {
-    user,
-    session,
-    isLoading,
-    error,
-    setUser,
-    setSession,
-    setIsLoading,
-    setError,
-    login,
-    signup,
-    logout,
-    updateProfile
-  };
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      session,
+      isLoading,
+      error,
+      isAuthenticated,
+      setUser: () => {
+        console.warn('setUser should not be called directly. Use login/signup methods instead.');
+      },
+      setSession: () => {
+        console.warn('setSession should not be called directly. Use login/signup methods instead.');
+      },
+      setIsLoading: setLoadingState,
+      setError: setErrorState,
+      login,
+      signup,
+      logout,
+      updateProfile,
+      confirmEmail,
+      checkSession: async () => checkSession(),
+      refreshAuth: async () => {
+        await refreshAuth();
+      },
+    }),
+    [
+      user,
+      session,
+      isLoading,
+      error,
+      isAuthenticated,
+      setLoadingState,
+      setErrorState,
+      login,
+      signup,
+      logout,
+      updateProfile,
+      confirmEmail,
+      checkSession,
+      refreshAuth,
+    ]
+  );
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

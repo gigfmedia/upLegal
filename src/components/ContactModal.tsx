@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -6,13 +6,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+interface Service {
+  id: string;
+  title: string;
+  description: string;
+  price_clp: number;
+}
+
 interface ContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   lawyerName: string;
+  lawyerId: string;
+  service?: Service | null;
 }
 
-export function ContactModal({ isOpen, onClose, lawyerName }: ContactModalProps) {
+export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }: ContactModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,6 +34,25 @@ export function ContactModal({ isOpen, onClose, lawyerName }: ContactModalProps)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prepare the message with service details if available
+    const messageDetails = service 
+      ? `\n\nServicio de interés: ${service.title}\nPrecio: ${new Intl.NumberFormat('es-CL', {
+          style: 'currency',
+          currency: 'CLP',
+          minimumFractionDigits: 0,
+        }).format(service.price_clp)}`
+      : '';
+    
+    const fullMessage = `${formData.message}${messageDetails}`;
+    
+    // In a real app, you would send this to your backend
+    console.log('Sending message to lawyer:', {
+      lawyerId,
+      serviceId: service?.id,
+      ...formData,
+      message: fullMessage,
+    });
+    
     // Simulate sending message
     toast({
       title: "Mensaje enviado",
@@ -36,7 +64,7 @@ export function ContactModal({ isOpen, onClose, lawyerName }: ContactModalProps)
       name: "",
       email: "",
       phone: "",
-      subject: "",
+      subject: service ? `Consulta sobre servicio: ${service.title}` : "",
       message: ""
     });
     
@@ -50,12 +78,38 @@ export function ContactModal({ isOpen, onClose, lawyerName }: ContactModalProps)
     }));
   };
 
+  // Set default subject if service is provided
+  useEffect(() => {
+    if (service && !formData.subject) {
+      setFormData(prev => ({
+        ...prev,
+        subject: `Consulta sobre servicio: ${service.title}`
+      }));
+    }
+  }, [service]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Contactar a {lawyerName}</DialogTitle>
+          <DialogTitle>
+            {service ? `Solicitar servicio: ${service.title}` : `Contactar a ${lawyerName}`}
+          </DialogTitle>
         </DialogHeader>
+        
+        {service && (
+          <div className="bg-blue-50 p-4 rounded-lg mb-4">
+            <h4 className="font-medium text-blue-800 mb-1">Detalles del servicio</h4>
+            <p className="text-sm text-blue-700">{service.description}</p>
+            <p className="text-sm font-medium text-blue-900 mt-2">
+              Precio: {new Intl.NumberFormat('es-CL', {
+                style: 'currency',
+                currency: 'CLP',
+                minimumFractionDigits: 0,
+              }).format(service.price_clp)}
+            </p>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

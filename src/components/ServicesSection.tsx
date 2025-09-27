@@ -1,8 +1,12 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, CheckCircle, MessageSquare } from "lucide-react";
+import { Clock, Calendar, CheckCircle, MessageSquare, Plus, FileText, Building2, Scale } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Service {
   id: string;
@@ -17,74 +21,44 @@ interface Service {
 interface ServicesSectionProps {
   services?: Service[];
   isOwner?: boolean;
+  isLoading?: boolean;
   onContactService?: (service: Service) => void;
+  lawyerId?: string;
 }
 
-export function ServicesSection({ services = [], isOwner = false, onContactService }: ServicesSectionProps) {
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
-
-  // Mock services if none provided
-  const defaultServices: Service[] = [
-    {
-      id: "1",
-      title: "Consulta Legal Inicial",
-      description: "Consulta de 1 hora para evaluar tu caso y brindar orientación legal inicial.",
-      price_clp: 75000,
-      delivery_time: "Inmediato",
-      features: [
-        "Evaluación completa del caso",
-        "Orientación legal especializada",
-        "Plan de acción recomendado",
-        "Seguimiento por email"
-      ],
-      available: true
-    },
-    {
-      id: "2", 
-      title: "Redacción de Contratos",
-      description: "Elaboración profesional de contratos civiles y comerciales adaptados a tus necesidades.",
-      price_clp: 200000,
-      delivery_time: "3 días hábiles",
-      features: [
-        "Contratos personalizados",
-        "Revisión legal completa",
-        "2 rondas de revisiones",
-        "Asesoría sobre términos"
-      ],
-      available: true
-    },
-    {
-      id: "3",
-      title: "Representación Legal", 
-      description: "Representación completa en procesos judiciales y administrativos.",
-      price_clp: 150000,
-      delivery_time: "Variable",
-      features: [
-        "Representación en tribunales",
-        "Estrategia legal personalizada",
-        "Seguimiento del caso",
-        "Comunicación constante"
-      ],
-      available: true
-    },
-    {
-      id: "4",
-      title: "Asesoría Empresarial",
-      description: "Asesoría legal integral para empresas en temas de compliance y operaciones.",
-      price_clp: 300000,
-      delivery_time: "1 semana",
-      features: [
-        "Auditoría de compliance", 
-        "Políticas corporativas",
-        "Recomendaciones legales",
-        "Informe final detallado"
-      ],
-      available: false
+export function ServicesSection({ 
+  services: initialServices = [], 
+  isOwner = false, 
+  isLoading = false, 
+  onContactService, 
+  lawyerId: lawyerIdProp 
+}: ServicesSectionProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  // Process services to ensure they're in pairs and last one is unavailable if odd count
+  const services = useMemo(() => {
+    if (!initialServices.length) return [];
+    
+    // Sort services to put unavailable ones at the end
+    const sortedServices = [...initialServices].sort((a, b) => {
+      if (a.available === b.available) return 0;
+      return a.available ? -1 : 1;
+    });
+    
+    return sortedServices;
+  }, [initialServices]);
+  
+  // Group services into pairs
+  const servicePairs = useMemo(() => {
+    const pairs = [];
+    for (let i = 0; i < services.length; i += 2) {
+      pairs.push(services.slice(i, i + 2));
     }
-  ];
-
-  const servicesToShow = services.length > 0 ? services : defaultServices;
-
+    return pairs;
+  }, [services]);
+  
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CL', {
       style: 'currency',
@@ -93,97 +67,285 @@ export function ServicesSection({ services = [], isOwner = false, onContactServi
       maximumFractionDigits: 0
     }).format(price);
   };
+  
+  const handleServiceSelect = async (service: Service) => {
+    if (!user) {
+      toast({
+        title: "Inicia sesión",
+        description: "Debes iniciar sesión para solicitar un servicio.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!service.available) return;
+    
+    setIsProcessing(true);
+    try {
+      const lawyerId = lawyerIdProp || window.location.pathname.split('/').pop();
+      if (!lawyerId) throw new Error('No se pudo identificar al abogado');
+      
+      const { data: response, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          lawyerId,
+          amount: service.price_clp,
+          serviceDescription: service.title,
+          email: user.email,
+        }
+      });
 
-  const handleServiceContact = (service: Service) => {
-    if (onContactService) {
-      onContactService(service);
+      if (error || !response?.data?.url) {
+        throw error || new Error('No se pudo obtener la URL de pago');
+      }
+      
+      // Store service data for after payment
+      localStorage.setItem('pendingServicePayment', JSON.stringify({
+        serviceId: service.id,
+        serviceTitle: service.title,
+        amount: service.price_clp,
+        sessionId: response.data.sessionId || response.data.id,
+        timestamp: new Date().toISOString(),
+        lawyerId,
+        userId: user.id
+      }));
+      
+      // Redirect to Stripe checkout
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error('Error al redirigir al checkout:', error);
+      toast({
+        title: "Error al procesar la solicitud",
+        description: error instanceof Error ? error.message : "Ocurrió un error al intentar procesar tu solicitud. Por favor, inténtalo de nuevo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Servicios ofrecidos</CardTitle>
-        <CardDescription>
-          Servicios legales especializados con precios transparentes
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-6">
-          {servicesToShow.map((service) => (
-            <div key={service.id} className="border rounded-lg p-6 space-y-4">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold mb-2">{service.title}</h4>
-                  <div className="text-2xl font-bold text-primary mb-2">
-                    {formatPrice(service.price_clp)}
-                  </div>
+  const renderServiceCard = (service: Service) => {
+    if (!service) return null;
+    
+    const formatDeliveryTime = () => {
+      const raw = (service.delivery_time || '').trim();
+      const hasPipe = raw.includes('|');
+      const hoursRaw = hasPipe ? raw.split('|')[0].trim() : '';
+      const daysRaw = hasPipe ? (raw.split('|')[1]?.trim() || '') : raw;
+      
+      // Build hours label
+      let hoursLabel = '';
+      if (hoursRaw) {
+        if (!isNaN(Number(hoursRaw))) {
+          const h = Number(hoursRaw);
+          hoursLabel = `${h} ${h === 1 ? 'hora' : 'horas'}`;
+        } else if (hoursRaw.toLowerCase().includes('min')) {
+          const mins = Number(hoursRaw.replace(/[^0-9]/g, ''));
+          if (!isNaN(mins)) {
+            if (mins >= 60 && mins % 60 === 0) {
+              const h = mins / 60;
+              hoursLabel = `${h} ${h === 1 ? 'hora' : 'horas'}`;
+            } else if (mins > 0) {
+              hoursLabel = `${mins} min`;
+            }
+          }
+        }
+      }
+
+      // Build days label
+      let daysLabel = '';
+      if (daysRaw) {
+        const lower = daysRaw.toLowerCase();
+        if (lower === 'variable') {
+          daysLabel = 'variable';
+        } else if (/^\d+$/.test(daysRaw)) {
+          const d = Number(daysRaw);
+          if (d % 7 === 0) {
+            const w = d / 7;
+            daysLabel = `${w} ${w === 1 ? 'semana' : 'semanas'}`;
+          } else {
+            daysLabel = `${d} ${d === 1 ? 'día' : 'días'}`;
+          }
+        } else {
+          const rangePattern = /^\d+\s*-\s*\d+$/;
+          daysLabel = rangePattern.test(daysRaw) ? `${daysRaw} días` : daysRaw;
+        }
+      }
+
+      return { hoursLabel, daysLabel };
+    };
+    
+    const { hoursLabel, daysLabel } = formatDeliveryTime();
+    
+    return (
+      <Card key={service.id} className="w-full hover:shadow-md transition-shadow">
+        <div className="p-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-blue-50">
+                  {service.title.toLowerCase().includes('consulta') ? (
+                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                  ) : service.title.toLowerCase().includes('contrato') ? (
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  ) : service.title.toLowerCase().includes('empresa') || 
+                     service.title.toLowerCase().includes('corporativo') ? (
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                  ) : service.title.toLowerCase().includes('familiar') || 
+                     service.title.toLowerCase().includes('familia') ? (
+                    <Scale className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                  )}
                 </div>
-                <Badge variant={service.available ? "default" : "secondary"}>
-                  {service.available ? "Disponible" : "No Disponible"}
-                </Badge>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900">{service.title}</h3>
+                  {!service.available && (
+                    <Badge variant="outline" className="mt-1 bg-white text-gray-500 border-gray-300 text-xs">
+                      No disponible
+                    </Badge>
+                  )}
+                </div>
               </div>
-
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {service.description}
+              <p className="text-sm text-gray-600 mt-1">{service.description}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-gray-900">
+                {service.price_clp > 0 ? formatPrice(service.price_clp) : 'A convenir'}
               </p>
-
-              <div className="flex items-center text-sm text-gray-500">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>Entrega: {service.delivery_time}</span>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Incluye:</p>
-                <ul className="space-y-1">
-                  {service.features.map((feature, index) => (
-                    <li key={index} className="flex items-center text-sm text-gray-600">
-                      <CheckCircle className="h-3 w-3 text-green-500 mr-2 flex-shrink-0" />
-                      {feature}
+            </div>
+          </div>
+          
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span className="inline-flex items-center">
+                <Clock className="h-4 w-4 mr-1.5 text-gray-500" />
+                {hoursLabel || 'Duración a convenir'}
+              </span>
+              <span className="inline-flex items-center">
+                <Calendar className="h-4 w-4 mr-1.5 text-gray-500" />
+                {daysLabel ? `Entrega: ${daysLabel}` : 'Plazo a convenir'}
+              </span>
+            </div>
+            
+            {service.features && service.features.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Incluye:</h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  {service.features.map((feature, i) => (
+                    <li key={i} className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-
-              <Button 
-                className="w-full"
-                variant={service.available ? "default" : "secondary"}
-                disabled={!service.available}
-                onClick={() => handleServiceContact(service)}
-              >
-                {service.available ? (
-                  <>
-                    Solicitar servicio
-                  </>
-                ) : (
-                  "No Disponible"
-                )}
-              </Button>
-            </div>
-          ))}
-        </div>
-
-        {servicesToShow.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <p>No hay servicios configurados aún.</p>
-            {isOwner && (
-              <Button variant="outline" className="mt-4">
-                Agregar primer servicio
-              </Button>
             )}
           </div>
-        )}
+          
+          {!isOwner && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <Button 
+                variant="default"
+                className={`w-full ${service.available ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 opacity-70 cursor-not-allowed'} text-white`}
+                disabled={!service.available || isProcessing}
+                onClick={() => service.available && handleServiceSelect(service)}
+              >
+                {isProcessing ? 'Procesando...' : service.available ? 'Solicitar servicio' : 'No disponible'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  };
 
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h5 className="font-medium mb-2">¿Necesitas algo personalizado?</h5>
-          <p className="text-sm text-gray-600 mb-3">
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="w-full">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="h-full p-6">
+              <div className="space-y-4">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+                <Skeleton className="h-10 w-full mt-4" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // No services state
+  if (services.length === 0) {
+    if (isOwner) {
+      return (
+        <div className="bg-white rounded-lg shadow p-6 text-center border-2 border-dashed border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Aún no has agregado servicios</h3>
+          <p className="text-gray-500 mb-4">Comienza ofreciendo tus servicios legales a los clientes</p>
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Agregar primer servicio
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No hay servicios disponibles en este momento.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="space-y-6">
+        {servicePairs.map((pair, pairIndex) => (
+          <div key={pairIndex} className="grid gap-4 grid-cols-1 md:grid-cols-2 w-full">
+            {pair.map((service, serviceIndex) => (
+              <div key={service?.id || `empty-${pairIndex}-${serviceIndex}`} className={!service ? 'hidden md:block' : ''}>
+                {renderServiceCard(service as Service)}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      
+      {!isOwner && (
+        <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-100">
+          <h5 className="font-medium text-blue-800 mb-2">¿Necesitas algo personalizado?</h5>
+          <p className="text-sm text-blue-700 mb-4">
             Si no encuentras el servicio que necesitas, puedo crear una propuesta personalizada para tu caso específico.
           </p>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-blue-200 text-blue-700 hover:bg-blue-100"
+            onClick={() => onContactService && onContactService({
+              id: 'custom',
+              title: 'Servicio personalizado',
+              description: 'Solicitud de servicio personalizado',
+              price_clp: 0,
+              delivery_time: 'A convenir',
+              features: [],
+              available: true
+            })}
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
             Solicitar cotización personalizada
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

@@ -66,6 +66,15 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			animation: {
+				slide: 'slide 1.5s ease-in-out infinite',
+			},
+			keyframes: {
+				slide: {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(200%)' },
+				},
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

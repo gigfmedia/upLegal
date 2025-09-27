@@ -59,7 +59,6 @@ export default function CitasPage() {
         // Aquí iría la llamada a la API para eliminar la cita
         setAppointments(appointments.filter(appt => appt.id !== appointmentId));
       } catch (error) {
-        console.error('Error al eliminar la cita:', error);
         alert('No se pudo eliminar la cita. Por favor, inténtalo de nuevo.');
       }
     }

@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   Dialog, 
   DialogContent, 
@@ -19,11 +20,12 @@ import { useToast } from "@/hooks/use-toast";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onLoginSuccess?: () => void;
   mode: 'login' | 'signup';
   onModeChange: (mode: 'login' | 'signup') => void;
 }
 
-export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
   const { login, signup } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -38,6 +40,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,12 +82,23 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
             description: 'Por favor revisa tu correo electrónico para confirmar tu cuenta.',
             variant: 'default',
           });
+          onClose();
         } else {
-          toast({
-            title: '¡Bienvenido a LegalUp!',
-            description: 'Tu cuenta ha sido creada y verificada correctamente.',
-            variant: 'default',
-          });
+          if (formData.role === 'lawyer') {
+            // Redirect lawyer to profile setup
+            navigate('/dashboard/profile/setup');
+            toast({
+              title: '¡Bienvenido a LegalUp!',
+              description: 'Completa tu perfil para comenzar a recibir clientes.',
+              variant: 'default',
+            });
+          } else {
+            toast({
+              title: '¡Bienvenido a LegalUp!',
+              description: 'Tu cuenta ha sido creada y verificada correctamente.',
+              variant: 'default',
+            });
+          }
           onClose();
         }
       } else {
@@ -114,7 +128,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         }
       }
       
-      // Reset form and close modal on success
+      // Reset form
       setFormData({ 
         email: '', 
         password: '', 
@@ -123,7 +137,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange }: AuthModalProp
         lastName: '', 
         role: 'client' 
       });
-      onClose();
+      
+      // Handle success based on mode
+      if (mode === 'login' && onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        // Default behavior for signup or if no callback is provided
+        onClose();
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error('Auth error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Ocurrió un error inesperado';

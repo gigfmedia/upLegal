@@ -60,15 +60,9 @@ export default function DashboardMessages() {
     // when the component mounts or when the user changes
   }, []);
   
-  // Log conversations for debugging
-  useEffect(() => {
-    console.log('Conversations updated:', conversations);
-  }, [conversations]);
-  
   // Select first conversation by default
   useEffect(() => {
     if (conversations?.length > 0 && !currentConversation) {
-      console.log('Selecting first conversation:', conversations[0].id);
       selectConversation(conversations[0].id);
     }
   }, [conversations, currentConversation, selectConversation]);
@@ -119,8 +113,6 @@ export default function DashboardMessages() {
     try {
       setIsCreatingConversation(true);
       // In a real app, we would make an API call here
-      // For now, we'll just log it
-      console.log('Creating conversation with:', newConversationEmail);
       
       // Reset form
       setNewConversationEmail('');

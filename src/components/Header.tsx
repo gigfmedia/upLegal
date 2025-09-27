@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Scale, User, LogOut, Eye } from "lucide-react";
+import { Scale, User, LogOut, Eye, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useNavigate } from "react-router-dom";
 import { NotificationDropdown } from "./NotificationDropdown";
@@ -18,49 +18,7 @@ export default function Header({ onAuthClick }: HeaderProps) {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
-    }
-    setIsDropdownOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      const isHovering = dropdownRef.current?.matches(':hover') || 
-                        document.querySelector('[data-radix-popper-content-wrapper]')?.matches(':hover');
-      if (!isHovering) {
-        setIsDropdownOpen(false);
-      }
-    }, 150);
-  };
-
-  const handleDropdownMouseEnter = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
-    }
-  };
-
-  const handleDropdownMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      const isHovering = dropdownRef.current?.matches(':hover') || 
-                        document.querySelector('[data-radix-popper-content-wrapper]')?.matches(':hover');
-      if (!isHovering) {
-        setIsDropdownOpen(false);
-      }
-    }, 150);
-  };
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   useEffect(() => {
     const getUserRole = async () => {
@@ -96,8 +54,8 @@ export default function Header({ onAuthClick }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto">
         <div className="flex justify-between items-center h-full">
           {/* Logo */}
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => handleNavigation('/')}>
@@ -107,18 +65,24 @@ export default function Header({ onAuthClick }: HeaderProps) {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <button 
+          <button 
               onClick={() => handleNavigation('/search')} 
               className="text-gray-600 hover:text-blue-600 transition-colors"
             >
-              Encontrar Abogados
+              Explorar Servicios
             </button>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
-              Recursos Legales
-            </a>
-            <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors">
+            <button 
+              onClick={() => handleNavigation('/how-it-works')} 
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              Cómo Funciona
+            </button>
+            <button 
+              onClick={() => handleNavigation('/pricing')} 
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
               Acerca de
-            </a>
+            </button>
           </nav>
 
           {/* Auth Section */}
@@ -130,35 +94,32 @@ export default function Header({ onAuthClick }: HeaderProps) {
             )}
             {user ? (
               <div className="flex items-center h-full px-1">
-                <div className="relative">
-                  <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-                    <div 
-                      className="inline-block"
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                      ref={dropdownRef}
+                <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="h-10 w-10 p-0 rounded-full relative hover:bg-gray-100 transition-colors"
                     >
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          className="h-10 w-10 p-0 rounded-full relative hover:bg-gray-100 transition-colors"
-                        >
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} alt={user.user_metadata?.name || 'User'} />
-                            <AvatarFallback className="bg-blue-600 text-white text-lg font-semibold">
-                              {user.user_metadata?.name?.charAt(0)?.toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </div>
-                    <DropdownMenuContent 
-                      className="w-56 mt-1" 
-                      align="end"
-                      onMouseEnter={handleDropdownMouseEnter}
-                      onMouseLeave={handleDropdownMouseLeave}
-                      sideOffset={8}
-                    >
+                      <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
+                        <AvatarImage 
+                          src={user.user_metadata?.avatar_url} 
+                          alt={user.user_metadata?.name || 'User'} 
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                          {user.user_metadata?.name 
+                            ? user.user_metadata.name.split(' ').map(n => n[0]).join('').toUpperCase()
+                            : user.email?.charAt(0).toUpperCase() || 'U'
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    className="w-56 mt-1" 
+                    align="end"
+                    sideOffset={8}
+                  >
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">
@@ -191,30 +152,18 @@ export default function Header({ onAuthClick }: HeaderProps) {
                       <DropdownMenuItem 
                         onSelect={(e) => {
                           e.preventDefault();
-                          window.open(`/abogado/${user.id}`, '_blank');
+                          const profilePath = userRole === 'lawyer' ? `/lawyer/${user.id}` : `/cliente/${user.id}`;
+                          handleNavigation(profilePath);
                         }}
                       >
                         <Eye className="mr-2 h-4 w-4" />
-                        <span>Ver Perfil Público</span>
+                        <span>Ver Perfil</span>
                       </DropdownMenuItem>
-
-                      {userRole === 'lawyer' && (
-                        <DropdownMenuItem 
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            handleNavigation('/lawyer-dashboard/profile');
-                          }}
-                        >
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Perfil</span>
-                        </DropdownMenuItem>
-                      )}
                       
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
                         className="text-red-600 focus:text-red-700 focus:bg-red-50"
-                        onSelect={async (e) => {
-                          e.preventDefault();
+                        onClick={async () => {
                           try {
                             await logout();
                             navigate('/');
@@ -226,9 +175,8 @@ export default function Header({ onAuthClick }: HeaderProps) {
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>Cerrar Sesión</span>
                       </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex items-center space-x-3 h-16">
@@ -250,6 +198,6 @@ export default function Header({ onAuthClick }: HeaderProps) {
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

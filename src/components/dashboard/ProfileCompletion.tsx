@@ -99,7 +99,7 @@ export function ProfileCompletion({ onNavigateToTab }: ProfileCompletionProps) {
   const totalItems = progressItems.length;
 
   return (
-    <Card className="mb-6 border-0 shadow-none">
+    <Card className="border-0 shadow-none">
       <CardHeader className="p-0 pb-4">
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg">Progreso del perfil</CardTitle>

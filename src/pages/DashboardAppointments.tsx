@@ -677,7 +677,7 @@ export default function DashboardAppointments() {
 
       {/* Modal de nueva cita */}
       <Dialog open={isNewAppointmentModalOpen} onOpenChange={setIsNewAppointmentModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Nueva Cita</DialogTitle>
             <DialogDescription>
@@ -799,13 +799,13 @@ export default function DashboardAppointments() {
 
       {/* Modal de detalles de la cita */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           {selectedAppointment && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-gray-700">Detalles de la cita</DialogTitle>
-                <DialogDescription className="text-gray-500">
-                  Información detallada de la cita seleccionada.
+                <DialogTitle>Detalles de la cita</DialogTitle>
+                <DialogDescription>
+                  Información detallada de la cita seleccionada
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -920,11 +920,11 @@ export default function DashboardAppointments() {
 
       {/* Modal de reagendamiento */}
       <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Reagendar cita</DialogTitle>
             <DialogDescription>
-              Selecciona una nueva fecha y hora para tu cita.
+              Selecciona una nueva fecha y hora para tu cita
             </DialogDescription>
           </DialogHeader>
           {selectedAppointment && (
@@ -987,11 +987,11 @@ export default function DashboardAppointments() {
 
       {/* Modal de confirmación de cancelación */}
       <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>¿Estás seguro de que deseas cancelar esta cita?</DialogTitle>
+            <DialogTitle>Confirmar cancelación</DialogTitle>
             <DialogDescription>
-              Esta acción no se puede deshacer. La cita será eliminada de tu agenda.
+              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
           {selectedAppointment && (

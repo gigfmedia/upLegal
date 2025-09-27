@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext/clean/useAuth';
+import { useAuth } from '@/hooks/useAuthState';
 import { toast } from '@/components/ui/use-toast';
 
 interface NotificationPreference {
@@ -48,7 +48,7 @@ const defaultSettings: NotificationSettings = {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +57,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Load notifications and settings from API
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated && user) {
       fetchNotifications();
       fetchSettings();
     }

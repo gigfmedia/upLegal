@@ -43,7 +43,6 @@ export function useLinkedInProfile(userId: string) {
       setProfile(data);
     } catch (err) {
       setError(err as Error);
-      console.error('Error fetching LinkedIn profile:', err);
     } finally {
       setIsLoading(false);
     }
@@ -82,10 +81,8 @@ export function useLinkedInProfile(userId: string) {
       }
 
       setProfile(data);
-    } catch (err) {
-      setError(err as Error);
-      console.error('Error connecting LinkedIn:', err);
-      throw err;
+    } catch (error) {
+      setError(error instanceof Error ? error : new Error('Failed to fetch LinkedIn profile'));
     }
   };
 
@@ -108,7 +105,6 @@ export function useLinkedInProfile(userId: string) {
       setProfile(null);
     } catch (err) {
       setError(err as Error);
-      console.error('Error disconnecting LinkedIn:', err);
     }
   };
 

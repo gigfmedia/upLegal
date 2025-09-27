@@ -76,7 +76,6 @@ export default function PaymentSuccess() {
               description: "Tu pago se ha procesado exitosamente y hemos enviado los detalles de tu cita por email.",
             });
           } catch (emailError) {
-            console.error("Error sending appointment email:", emailError);
             // Still show success but with a note about email
             toast({
               title: "¡Pago completado!",
@@ -91,7 +90,6 @@ export default function PaymentSuccess() {
           });
         }
       } catch (error) {
-        console.error('Error verifying payment:', error);
         toast({
           title: "Error",
           description: "No se pudo verificar el pago",

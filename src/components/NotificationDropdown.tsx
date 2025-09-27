@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Bell, Check, Clock, MessageSquare, Calendar, DollarSign, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,41 +26,9 @@ const notificationIcons = {
 export function NotificationDropdown() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
 
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
-    }
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    timeoutRef.current = setTimeout(() => {
-      // Only close if mouse is not over any part of the dropdown
-      if (!dropdownRef.current?.querySelector(':hover')) {
-        setIsOpen(false);
-      }
-    }, 200);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleNotificationClick = (e: React.MouseEvent, id: string, link?: string) => {
-    e.preventDefault();
+  const handleNotificationClick = (id: string, link?: string) => {
     markAsRead(id);
-    setIsOpen(false);
     if (link) {
       window.location.href = link;
     }
@@ -71,36 +39,8 @@ export function NotificationDropdown() {
   };
 
   return (
-    <div 
-      className="relative h-full flex items-center" 
-      ref={dropdownRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <DropdownMenu 
-        open={isOpen} 
-        onOpenChange={(open) => {
-          if (!open) {
-            if (!dropdownRef.current?.querySelector(':hover')) {
-              setIsOpen(false);
-            }
-          } else {
-            setIsOpen(true);
-          }
-        }} 
-        modal={false}
-      >
-        <div 
-          className="h-full flex items-center px-2"
-          onMouseEnter={() => {
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = undefined;
-            }
-            setIsOpen(true);
-          }}
-          onMouseLeave={handleMouseLeave}
-        >
+    <div className="relative h-full flex items-center">
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -116,31 +56,15 @@ export function NotificationDropdown() {
             )}
           </Button>
         </DropdownMenuTrigger>
-        </div>
         <DropdownMenuContent
           className="w-80 p-0 shadow-lg rounded-lg border border-gray-200 bg-white"
           align="end"
           onCloseAutoFocus={(e) => e.preventDefault()}
-          onMouseEnter={() => {
-            if (timeoutRef.current) {
-              clearTimeout(timeoutRef.current);
-              timeoutRef.current = undefined;
-            }
-          }}
-          onMouseLeave={handleMouseLeave}
           forceMount
           sideOffset={8}
           side="bottom"
         >
-          <div 
-            className="flex items-center justify-between px-4 py-3 border-b bg-gray-50 rounded-t-lg"
-            onMouseEnter={() => {
-              if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = undefined;
-              }
-            }}
-          >
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50 rounded-t-lg">
             <h3 className="text-sm font-medium">Notificaciones</h3>
             {unreadCount > 0 && (
               <Button
@@ -157,10 +81,7 @@ export function NotificationDropdown() {
             )}
           </div>
           <DropdownMenuSeparator />
-          <ScrollArea 
-            className="h-[300px] w-full"
-            onMouseEnter={handleMouseEnter}
-          >
+          <ScrollArea className="h-[300px] w-full">
             {isLoading ? (
               <div className="flex items-center justify-center p-4">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
@@ -178,7 +99,7 @@ export function NotificationDropdown() {
                       'flex cursor-pointer items-start gap-3 p-4 hover:bg-muted/50',
                       !notification.read && 'bg-muted/25'
                     )}
-                    onClick={(e) => handleNotificationClick(e, notification.id, notification.link)}
+                    onClick={() => handleNotificationClick(notification.id, notification.link)}
                   >
                     <div className="mt-0.5">
                       {notificationIcons[notification.type as keyof typeof notificationIcons] || notificationIcons.system}

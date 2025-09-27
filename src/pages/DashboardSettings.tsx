@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Bell, 
   Eye, 
@@ -15,8 +16,13 @@ import {
   Calendar, 
   CreditCard, 
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  DollarSign,
+  Settings,
+  Banknote
 } from 'lucide-react';
+import { StripeAccountStatus } from '@/components/StripeAccountStatus';
+import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
@@ -35,6 +41,7 @@ import {
 export default function DashboardSettings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('general');
   const [isLoading, setIsLoading] = useState(false);
 
   const [notifications, setNotifications] = useState({
@@ -50,6 +57,9 @@ export default function DashboardSettings() {
     allowMessages: true,
     showRating: true,
   });
+
+  // Fetch user profile with Stripe info
+  const { profile, loading: profileLoading } = useProfile(user?.id);
 
   // Load existing settings when component mounts
   useEffect(() => {
@@ -67,7 +77,7 @@ export default function DashboardSettings() {
           setPrivacy(prev => ({ ...prev, ...JSON.parse(savedPrivacy) }));
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        // Error loading settings
       }
     };
 
@@ -105,7 +115,6 @@ export default function DashboardSettings() {
         description: "Tus preferencias han sido actualizadas exitosamente.",
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
       toast({
         title: "Error",
         description: "No se pudieron guardar las configuraciones. Inténtalo de nuevo.",
@@ -126,22 +135,52 @@ export default function DashboardSettings() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="container mx-auto px-8 py-6 space-y-6">
+      <Tabs defaultValue="general" className="w-full">
+        <div className="space-y-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Configuración</h2>
+            <h1 className="text-2xl font-bold tracking-tight">Configuración</h1>
             <p className="text-muted-foreground">
               Gestiona la configuración de tu cuenta y preferencias
             </p>
           </div>
-          <Button onClick={handleSaveSettings} disabled={isLoading}>
-            {isLoading ? 'Guardando...' : 'Guardar Cambios'}
-          </Button>
+          
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+            <TabsTrigger value="general" className="flex items-center">
+              <span className="hidden sm:inline">General</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center">
+              <span className="hidden sm:inline">Notificaciones</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center">
+              <span className="hidden sm:inline">Seguridad</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center">
+              <span className="hidden sm:inline">Pagos</span>
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center">
+              <span className="hidden sm:inline">Facturación</span>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        <div className="space-y-6">
-          {/* Notification Settings */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Preferencias Generales</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveSettings} disabled={isLoading}>
+                  {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          {/* Existing Notifications Content */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -408,8 +447,154 @@ export default function DashboardSettings() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          {/* Security Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5" />
+                <span>Seguridad</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Contraseña Actual</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  placeholder="Ingresa tu contraseña actual"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nueva Contraseña</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Ingresa nueva contraseña"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Confirma nueva contraseña"
+                />
+              </div>
+
+              <Button variant="outline" className="w-full">
+                Actualizar Contraseña
+              </Button>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h4 className="font-medium">Autenticación de Dos Factores</h4>
+                <p className="text-sm text-muted-foreground">
+                  Agrega una capa extra de seguridad a tu cuenta
+                </p>
+                <Button variant="outline">
+                  Habilitar 2FA
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Globe className="h-5 w-5" />
+                <span>Gestión de Cuenta</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">Exportar Datos</h4>
+                <p className="text-sm text-muted-foreground">
+                  Descargar una copia de los datos de tu cuenta
+                </p>
+                <Button variant="outline">
+                  Solicitar Exportación de Datos
+                </Button>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-red-600">Zona de Peligro</h4>
+                <p className="text-sm text-muted-foreground">
+                  Estas acciones no se pueden deshacer
+                </p>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="w-full">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar Cuenta
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="w-full h-full sm:h-auto sm:w-auto">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center space-x-2">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        <span>¿Estás completamente seguro?</span>
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente tu
+                        cuenta y removerá tus datos de nuestros servidores. Todas tus consultas,
+                        citas e información de perfil se perderán.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Sí, eliminar mi cuenta
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Add empty tabs for payments and billing to be implemented later */}
+        <TabsContent value="payments" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuración de Pagos</CardTitle>
+              <CardDescription>
+                Gestiona tus métodos de pago y configuración de facturación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Configuración de pagos estará disponible pronto.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Facturación</CardTitle>
+              <CardDescription>
+                Visualiza y gestiona tu historial de facturación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">La sección de facturación estará disponible pronto.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

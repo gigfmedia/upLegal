@@ -1,124 +1,124 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import Stripe from 'https://esm.sh/stripe@13.10.0?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+  apiVersion: '2023-10-16',
+  httpClient: Stripe.createFetchHttpClient()
+})
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2023-10-16',
-});
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false },
-});
-
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { userId, refreshUrl, returnUrl } = await req.json();
-
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
-
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (profileError || !profile) {
-      throw new Error('User profile not found');
-    }
-
-    // Check if user already has a connected account
-    if (profile.stripe_account_id) {
-      // Generate account link for existing account
-      const accountLink = await stripe.accountLinks.create({
-        account: profile.stripe_account_id,
-        refresh_url: refreshUrl || `${Deno.env.get('SITE_URL')}/dashboard/settings`,
-        return_url: returnUrl || `${Deno.env.get('SITE_URL')}/dashboard/settings`,
-        type: 'account_onboarding',
-      });
-
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
       return new Response(
-        JSON.stringify({ url: accountLink.url, accountId: profile.stripe_account_id }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
+        JSON.stringify({ error: 'Authorization header is required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Create new connected account
+    // Initialize Supabase client with service role key
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Extract the JWT token from the Authorization header
+    const token = authHeader.replace('Bearer ', '')
+    
+    // Verify the JWT token
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (userError || !user) {
+      console.error('User not authenticated:', userError?.message || 'No user found')
+      return new Response(
+        JSON.stringify({ 
+          error: 'User not authenticated',
+          details: userError?.message || 'No user found'
+        }),
+        { 
+          status: 401, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      )
+    }
+    
+    console.log('Authenticated user:', user.email)
+
+    // Create a new Stripe Connect account
     const account = await stripe.accounts.create({
       type: 'express',
       country: 'CL',
-      email: profile.email,
+      email: user.email,
       business_type: 'individual',
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
       },
-      business_profile: {
-        mcc: '8111', // Legal services
-        product_description: 'Servicios legales a través de LegalUp',
-      },
-      individual: {
-        email: profile.email,
-        first_name: profile.full_name?.split(' ')[0],
-        last_name: profile.full_name?.split(' ').slice(1).join(' '),
-      },
-    });
+    })
 
-    // Generate account link for onboarding
+    // Create an account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: refreshUrl || `${Deno.env.get('SITE_URL')}/dashboard/settings`,
-      return_url: returnUrl || `${Deno.env.get('SITE_URL')}/dashboard/settings`,
+      refresh_url: `${Deno.env.get('FRONTEND_URL')}/dashboard/settings`,
+      return_url: `${Deno.env.get('FRONTEND_URL')}/dashboard/settings?success=true`,
       type: 'account_onboarding',
-    });
+    })
 
-    // Save Stripe account ID to profile
-    const { error: updateError } = await supabase
+    // Update user profile with Stripe account ID
+    const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({
+      .update({ 
         stripe_account_id: account.id,
         stripe_account_status: 'pending',
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
-      .eq('id', userId);
+      .eq('id', user.id)
 
     if (updateError) {
-      console.error('Error updating profile with Stripe account ID:', updateError);
-      throw new Error('Failed to update user profile');
+      console.error('Error updating profile:', updateError)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to update profile',
+          details: updateError.message 
+        }),
+        { 
+          status: 500, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      )
     }
+    
+    console.log('Updated profile with Stripe account ID:', account.id)
 
+    // Return the account link URL
     return new Response(
-      JSON.stringify({ url: accountLink.url, accountId: account.id }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+      JSON.stringify({ url: accountLink.url }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   } catch (error) {
-    console.error('Error creating Stripe Connect account:', error);
+    console.error('Error in create-connect-account:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
-    );
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})

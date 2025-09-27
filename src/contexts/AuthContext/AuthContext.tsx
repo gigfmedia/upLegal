@@ -27,7 +27,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         .single();
 
       if (error) {
-        console.error('Error loading profile:', error);
         throw new Error('No se pudo cargar el perfil del usuario');
       }
       
@@ -439,8 +438,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log(`[Auth] Auth state changed: ${event}`, { hasSession: !!session });
-        
         try {
           setSession(session);
           

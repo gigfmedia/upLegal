@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabaseClient';
 
 const specializations = [
   'Derecho Civil',
@@ -24,18 +25,21 @@ const specializations = [
 const formSchema = z.object({
   firstName: z.string().min(2, { message: 'El nombre debe tener al menos 2 caracteres' }),
   lastName: z.string().min(2, { message: 'El apellido debe tener al menos 2 caracteres' }),
-  email: z.string().email({ message: 'Ingrese un correo electrónico válido' }),
-  phone: z.string().min(8, { message: 'Ingrese un número de teléfono válido' }),
+  email: z.string().email({ message: 'Ingresa un correo electrónico válido' }),
+  phone: z.string().min(8, { message: 'Ingresa un número de teléfono válido' }),
   bio: z.string().min(20, { message: 'La biografía debe tener al menos 20 caracteres' }),
   specialization: z.string().min(1, { message: 'Seleccione una especialidad' }),
-  experience: z.string().min(1, { message: 'Ingrese los años de experiencia' }),
-  hourlyRate: z.string().min(1, { message: 'Ingrese una tarifa por hora' }),
-  languages: z.string().min(1, { message: 'Ingrese los idiomas que habla' }),
-  education: z.string().min(1, { message: 'Ingrese su formación académica' }),
+  experience: z.string().min(1, { message: 'Ingresa los años de experiencia' }),
+  hourlyRate: z.string().min(1, { message: 'Ingresa una tarifa por hora' }),
+  languages: z.string().min(1, { message: 'Ingresa los idiomas que habla' }),
+  education: z.string().min(1, { message: 'Ingresa su formación académica' }),
+  university: z.string().min(1, { message: 'Ingresa el nombre de la universidad' }),
+  studyStartYear: z.string().min(4, { message: 'Ingresa el año de inicio' }),
+  studyEndYear: z.string().min(4, { message: 'Ingresa el año de término' }),
   certifications: z.string().optional(),
-  barAssociationNumber: z.string().min(1, { message: 'Ingrese su número de colegiado' }),
+  barAssociationNumber: z.string().min(1, { message: 'Ingresa su número de colegiado' }),
   availability: z.string().min(1, { message: 'Seleccione su disponibilidad' }),
-  zoomLink: z.string().url({ message: 'Ingrese una URL de Zoom válida' }).optional().or(z.literal('')),
+  zoomLink: z.string().url({ message: 'Ingresa una URL de Zoom válida' }).optional().or(z.literal('')),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +47,7 @@ type FormValues = z.infer<typeof formSchema>;
 export function LawyerProfileForm() {
   const { user, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isStripeLoading, setIsStripeLoading] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -53,14 +58,17 @@ export function LawyerProfileForm() {
       phone: user?.user_metadata?.phone || '',
       bio: user?.user_metadata?.bio || '',
       specialization: user?.user_metadata?.specialization || '',
-      experience: user?.user_metadata?.experience?.toString() || '',
-      hourlyRate: user?.user_metadata?.hourly_rate?.toString() || '',
-      languages: user?.user_metadata?.languages?.join(', ') || '',
+      experience: user?.user_metadata?.experience || '',
+      hourlyRate: user?.user_metadata?.hourlyRate || '',
+      languages: user?.user_metadata?.languages || '',
       education: user?.user_metadata?.education || '',
-      certifications: user?.user_metadata?.certifications?.join(', ') || '',
-      barAssociationNumber: user?.user_metadata?.bar_association_number || '',
-      availability: user?.user_metadata?.availability || 'Disponibilidad completa',
-      zoomLink: user?.user_metadata?.zoom_link || '',
+      university: user?.user_metadata?.university || '',
+      studyStartYear: user?.user_metadata?.studyStartYear || '',
+      studyEndYear: user?.user_metadata?.studyEndYear || '',
+      certifications: user?.user_metadata?.certifications || '',
+      barAssociationNumber: user?.user_metadata?.barAssociationNumber || '',
+      availability: user?.user_metadata?.availability || 'disponible',
+      zoomLink: user?.user_metadata?.zoomLink || '',
     },
   });
 
@@ -73,11 +81,14 @@ export function LawyerProfileForm() {
         phone: data.phone,
         bio: data.bio,
         specialization: data.specialization,
-        experience: parseInt(data.experience),
-        hourly_rate: parseFloat(data.hourlyRate),
-        languages: data.languages.split(',').map(lang => lang.trim()),
+        experience: data.experience,
+        hourly_rate: data.hourlyRate, // This is a string from the form
+        languages: data.languages,
         education: data.education,
-        certifications: data.certifications ? data.certifications.split(',').map(cert => cert.trim()) : [],
+        university: data.university,
+        study_start_year: data.studyStartYear,
+        study_end_year: data.studyEndYear,
+        certifications: data.certifications,
         bar_association_number: data.barAssociationNumber,
         availability: data.availability,
         zoom_link: data.zoomLink,
@@ -102,6 +113,48 @@ export function LawyerProfileForm() {
 
   return (
     <div className="space-y-8">
+      <div className="rounded-lg border p-4 bg-white">
+        <h3 className="text-lg font-semibold">Pagos</h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Conecta tu cuenta con Stripe para recibir pagos automáticamente. Necesitas completar este paso para habilitar el botón "Solicitar servicio" en tu perfil público.
+        </p>
+        <Button
+          variant="default"
+          onClick={async () => {
+            try {
+              setIsStripeLoading(true);
+              const { data, error } = await supabase.functions.invoke('create-connect-account', {
+                body: {
+                  returnUrl: window.location.origin + '/dashboard/settings',
+                },
+              });
+              if (error) throw error;
+              const url = (data as any)?.url;
+              if (url) {
+                window.location.href = url;
+              } else {
+                toast({
+                  title: 'No se pudo iniciar el onboarding',
+                  description: 'Inténtalo nuevamente más tarde.',
+                  variant: 'destructive',
+                });
+              }
+            } catch (e: any) {
+              console.error('Error iniciando onboarding de Stripe:', e);
+              toast({
+                title: 'Error',
+                description: e?.message || 'No se pudo iniciar el onboarding de Stripe.',
+                variant: 'destructive',
+              });
+            } finally {
+              setIsStripeLoading(false);
+            }
+          }}
+          disabled={isStripeLoading}
+        >
+          {isStripeLoading ? 'Abriendo Stripe…' : 'Configurar pagos con Stripe'}
+        </Button>
+      </div>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Perfil Profesional</h2>
         <p className="text-muted-foreground">
@@ -240,11 +293,10 @@ export function LawyerProfileForm() {
               name="education"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Formación académica</FormLabel>
+                  <FormLabel>Título profesional</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Ej: Abogado, Universidad de Chile, 2015"
-                      className="min-h-[100px]"
+                    <Input
+                      placeholder="Ej: Abogado"
                       {...field}
                     />
                   </FormControl>
@@ -252,6 +304,65 @@ export function LawyerProfileForm() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="university"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Universidad</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Ej: Universidad de Chile"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="studyStartYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Año de inicio</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1900"
+                        max={new Date().getFullYear()}
+                        placeholder="Ej: 2010"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="studyEndYear"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Año de término</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1900"
+                        max={new Date().getFullYear() + 10}
+                        placeholder="Ej: 2015"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -279,7 +390,7 @@ export function LawyerProfileForm() {
                 <FormItem>
                   <FormLabel>Número de colegiado</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ingrese su número de colegiado" {...field} />
+                    <Input placeholder="Ingresa tu número de colegiado" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

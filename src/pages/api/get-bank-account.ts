@@ -34,14 +34,12 @@ export default async function handler(req, res) {
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-      console.error('Error fetching bank account:', error);
       return res.status(500).json({ error: 'Error fetching bank account information' });
     }
 
     // Return the data or null if no record found
     return res.status(200).json(data || null);
   } catch (error) {
-    console.error('Error in get-bank-account:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }

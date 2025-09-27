@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { refreshSession } from './sessionUtils';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD';
 
@@ -7,53 +8,116 @@ interface ApiRequestOptions {
   headers?: Record<string, string>;
   body?: any;
   authToken?: string;
+  /** Whether to automatically refresh the session if token is expired */
+  autoRefresh?: boolean;
+  /** Maximum number of retry attempts for auth failures */
+  maxRetries?: number;
 }
 
+/**
+ * Makes an authenticated API request with automatic token refresh
+ * @param endpoint The API endpoint (without the base URL)
+ * @param options Request options including method, headers, body, etc.
+ * @returns Promise with the response data
+ */
 export async function apiRequest<T = any>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<T> {
-  const { method = 'GET', headers = {}, body, authToken } = options;
+  const { 
+    method = 'GET', 
+    headers = {}, 
+    body, 
+    authToken,
+    autoRefresh = true,
+    maxRetries = 1
+  } = options;
   
   // Get the Supabase URL for the function
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error('VITE_SUPABASE_URL is not defined in environment variables');
+  }
+  
   const functionUrl = `${supabaseUrl}/functions/v1/${endpoint.replace(/^\/+/, '')}`;
   
   // Get the current session for the auth token if not provided
-  const token = authToken || (await supabase.auth.getSession()).data.session?.access_token;
-  
-  const requestOptions: RequestInit = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...headers,
-    },
+  const getToken = async (): Promise<string | undefined> => {
+    if (authToken) return authToken;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token;
   };
-
-  if (body && method !== 'GET' && method !== 'HEAD') {
-    requestOptions.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(functionUrl, requestOptions);
   
-  if (!response.ok) {
-    let errorMessage = 'An error occurred';
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.error || errorData.message || errorMessage;
-    } catch (e) {
-      errorMessage = await response.text() || errorMessage;
+  // Make the API request with retry logic for auth failures
+  const makeRequest = async (attempt = 0): Promise<Response> => {
+    const token = await getToken();
+    
+    const requestOptions: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...headers,
+      },
+    };
+
+    if (body && method !== 'GET' && method !== 'HEAD') {
+      requestOptions.body = JSON.stringify(body);
     }
-    throw new Error(errorMessage);
-  }
 
-  // For 204 No Content responses
-  if (response.status === 204) {
-    return undefined as unknown as T;
-  }
+    const response = await fetch(functionUrl, requestOptions);
+    
+    // Handle 401 Unauthorized with auto-refresh
+    if (response.status === 401 && autoRefresh && attempt < maxRetries) {
+      try {
+        // Try to refresh the session
+        const refreshed = await refreshSession();
+        if (refreshed) {
+          // Retry the request with the new token
+          return makeRequest(attempt + 1);
+        }
+      } catch (refreshError) {
+        // Error refreshing session
+      }
+      
+      // If we get here, refresh failed or max retries exceeded
+      throw new Error('Session expired. Please log in again.');
+    }
+    
+    return response;
+  };
+  
+  try {
+    const response = await makeRequest();
+    
+    if (!response.ok) {
+      let errorMessage = 'An error occurred';
+      let errorCode: string | number = 'UNKNOWN_ERROR';
+      
+      try {
+        const errorData = await response.json().catch(() => ({}));
+        errorMessage = errorData.error || errorData.message || errorMessage;
+        errorCode = errorData.code || response.status;
+      } catch (e) {
+        errorMessage = await response.text().catch(() => errorMessage);
+        errorCode = response.status;
+      }
+      
+      const error = new Error(errorMessage) as any;
+      error.status = response.status;
+      error.code = errorCode;
+      throw error;
+    }
 
-  return response.json();
+    // For 204 No Content responses
+    if (response.status === 204) {
+      return undefined as unknown as T;
+    }
+
+    return response.json();
+  } catch (error) {
+    throw error;
+  }
 }
 
 // Appointment API

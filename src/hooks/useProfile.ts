@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+// Define a more flexible Json type that can handle nested objects and arrays
+type Json = 
+  | string 
+  | number 
+  | boolean 
+  | null 
+  | { [key: string]: Json | undefined } 
+  | Json[]
+  | Record<string, unknown>;
 
 export interface Profile {
+  // Basic profile info
   id: string;
   user_id: string;
   first_name: string | null;
@@ -18,6 +27,15 @@ export interface Profile {
   role: 'client' | 'lawyer';
   specialties: string[] | null;
   hourly_rate_clp: number | null;
+  
+  // Stripe Connect fields
+  stripe_account_id: string | null;
+  stripe_account_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  stripe_charges_enabled: boolean;
+  stripe_payouts_enabled: boolean;
+  stripe_dashboard_url: string | null;
+  
+  // Profile metadata
   response_time: string | null;
   satisfaction_rate: number | null;
   languages: string[] | null;
@@ -32,11 +50,15 @@ export interface Profile {
   rating: number;
   review_count: number;
   has_used_free_consultation: boolean;
+  
+  // Settings
   visibility_settings: {
     profile_visible: boolean;
     show_online_status: boolean;
     allow_direct_messages: boolean;
   };
+  
+  // Verification
   verification_documents: {
     id_verification?: {
       status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
@@ -51,6 +73,8 @@ export interface Profile {
       verified_at?: string | null;
     };
   } | null;
+  
+  // Timestamps
   created_at: string;
   updated_at: string | null;
 }
@@ -66,41 +90,58 @@ export interface LawyerService {
   available: boolean;
 }
 
+// Define the database profile type
+interface DatabaseProfile {
+  id: string;
+  user_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  location: string | null;
+  phone: string | null;
+  website: string | null;
+  role: 'client' | 'lawyer';
+  specialties: string[] | null;
+  hourly_rate_clp: number | null;
+  stripe_account_id?: string | null;
+  stripe_account_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
+  stripe_charges_enabled?: boolean;
+  stripe_payouts_enabled?: boolean;
+  stripe_dashboard_url?: string | null;
+  visibility_settings?: {
+    profile_visible: boolean;
+    show_online_status: boolean;
+    allow_direct_messages: boolean;
+  } | null;
+  verification_documents?: {
+    id_verification?: {
+      status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
+      rejection_reason?: string | null;
+      verified_at?: string | null;
+    };
+    bar_verification?: {
+      status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
+      bar_number: string;
+      state: string;
+      rejection_reason?: string | null;
+      verified_at?: string | null;
+    };
+  } | null;
+  created_at?: string;
+  updated_at?: string | null;
+  [key: string]: unknown; // Allow additional properties
+}
+
 export function useProfile(userId?: string) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [services, setServices] = useState<LawyerService[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (userId) {
-      fetchProfile(userId);
-      fetchServices(userId);
-    }
-  }, [userId]);
-
-  const fetchProfile = async (id: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return;
-      }
-
-      setProfile(data as Profile);
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchServices = async (id: string) => {
+  const fetchServices = useCallback(async (id: string) => {
     try {
       const { data, error } = await supabase
         .from('lawyer_services')
@@ -110,154 +151,340 @@ export function useProfile(userId?: string) {
 
       if (error) {
         console.error('Error fetching services:', error);
-        return;
+        return [];
       }
 
-      setServices(data || []);
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!userId) return false;
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: userId,
-          ...updates,
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo actualizar el perfil: " + error.message
-        });
-        return false;
+      // Define a type for the service data from the database
+      interface DatabaseService {
+        id?: string;
+        lawyer_user_id: string;
+        title: string;
+        description: string;
+        price_clp: number;
+        delivery_time: string;
+        features: string[] | string | null;
+        available: boolean;
+        [key: string]: unknown;
       }
 
-      await fetchProfile(userId);
-      toast({
-        title: "Éxito",
-        description: "Perfil actualizado correctamente"
-      });
-      return true;
+      const servicesData = (data as DatabaseService[] || []).map((service) => ({
+        ...service,
+        features: Array.isArray(service.features) 
+          ? service.features 
+          : typeof service.features === 'string' 
+            ? service.features.split('\n').filter(Boolean)
+            : []
+      }));
+
+      setServices(servicesData);
+      return servicesData;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error in fetchServices:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Error inesperado al actualizar el perfil"
+        description: "Could not fetch services. Please try again.",
       });
-      return false;
+      return [];
     }
-  };
+  }, [toast]);
 
-  const createService = async (service: Omit<LawyerService, 'id' | 'lawyer_user_id'>) => {
-    if (!userId) return false;
-
+  const fetchProfile = useCallback(async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('lawyer_services')
-        .insert({
-          ...service,
-          lawyer_user_id: userId
-        });
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', id)
+        .single<DatabaseProfile>();
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo crear el servicio: " + error.message
-        });
-        return false;
+      if (error || !data) {
+        console.error('Error fetching profile:', error);
+        setError('Failed to load profile');
+        return null;
       }
 
-      await fetchServices(userId);
-      toast({
-        title: "Éxito",
-        description: "Servicio creado correctamente"
-      });
-      return true;
+      // Convert the database profile to our Profile type
+      // Convert the database profile to our Profile type with proper type safety
+      const profileData: Profile = {
+        ...data,
+        // Required fields with defaults
+        id: data.id || '',
+        user_id: data.user_id || '',
+        first_name: data.first_name || null,
+        last_name: data.last_name || null,
+        display_name: data.display_name || null,
+        avatar_url: data.avatar_url || null,
+        bio: data.bio || null,
+        location: data.location || null,
+        phone: data.phone || null,
+        website: data.website || null,
+        role: data.role || 'client',
+        specialties: data.specialties || null,
+        hourly_rate_clp: data.hourly_rate_clp || null,
+        
+        // Stripe fields
+        stripe_account_id: data.stripe_account_id || null,
+        stripe_account_status: data.stripe_account_status || 'unverified',
+        stripe_charges_enabled: data.stripe_charges_enabled || false,
+        stripe_payouts_enabled: data.stripe_payouts_enabled || false,
+        stripe_dashboard_url: data.stripe_dashboard_url || null,
+        
+        // Profile metadata
+        response_time: data.response_time || null,
+        satisfaction_rate: data.satisfaction_rate || null,
+        languages: data.languages || null,
+        availability: data.availability || null,
+        verified: data.verified || false,
+        available_for_hire: data.available_for_hire || false,
+        bar_number: data.bar_number || null,
+        zoom_link: data.zoom_link || null,
+        education: data.education || null,
+        certifications: data.certifications || null,
+        experience_years: data.experience_years || null,
+        rating: data.rating || 0,
+        review_count: data.review_count || 0,
+        has_used_free_consultation: data.has_used_free_consultation || false,
+        
+        // Settings
+        visibility_settings: data.visibility_settings || {
+          profile_visible: true,
+          show_online_status: true,
+          allow_direct_messages: true
+        },
+        
+        // Verification
+        verification_documents: data.verification_documents || null,
+        
+        // Timestamps
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString()
+      };
+
+      setProfile(profileData);
+      setError(null);
+      return profileData;
     } catch (error) {
-      console.error('Error creating service:', error);
-      return false;
+      console.error('Error in fetchProfile:', error);
+      setError('An error occurred while fetching profile');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not fetch profile data. Please try again.",
+      });
+      return null;
+    } finally {
+      setLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchProfile(userId);
+      fetchServices(userId);
+    }
+  }, [userId, fetchProfile, fetchServices]);
+
+  // Define a type for the updates that can be sent to the database
+  type ProfileUpdate = Omit<Partial<Profile>, 'verification_documents' | 'visibility_settings' | 'certifications' | 'education'> & {
+    verification_documents?: Json;
+    certifications?: Json;
+    education?: Json;
+    visibility_settings?: {
+      profile_visible: boolean;
+      show_online_status: boolean;
+      allow_direct_messages: boolean;
+    };
   };
 
-  const updateService = async (serviceId: string, updates: Partial<LawyerService>) => {
+  const updateProfile = useCallback(async (updates: ProfileUpdate) => {
+    if (!profile) return null;
+    
     try {
-      const { error } = await supabase
-        .from('lawyer_services')
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
         .update(updates)
-        .eq('id', serviceId);
+        .eq('id', profile.id)
+        .select()
+        .single<DatabaseProfile>();
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo actualizar el servicio: " + error.message
-        });
-        return false;
+      if (error || !data) {
+        console.error('Error updating profile:', error);
+        throw error || new Error('Failed to update profile');
       }
 
+      const updatedProfile: Profile = {
+        ...data,
+        role: data.role || 'client',
+        stripe_account_id: data.stripe_account_id ?? null,
+        stripe_account_status: data.stripe_account_status ?? 'unverified',
+        stripe_charges_enabled: data.stripe_charges_enabled ?? false,
+        stripe_payouts_enabled: data.stripe_payouts_enabled ?? false,
+        stripe_dashboard_url: data.stripe_dashboard_url ?? null,
+        visibility_settings: data.visibility_settings ?? {
+          profile_visible: true,
+          show_online_status: true,
+          allow_direct_messages: true
+        },
+        verification_documents: data.verification_documents ?? null,
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString(),
+        response_time: null,
+        satisfaction_rate: null,
+        languages: null,
+        availability: null,
+        verified: false,
+        available_for_hire: false,
+        bar_number: null,
+        zoom_link: null,
+        education: null,
+        certifications: null,
+        experience_years: null,
+        rating: 0,
+        review_count: 0,
+        has_used_free_consultation: false
+      };
+
+      setProfile(updatedProfile);
+      
+      // Refresh services if needed
       if (userId) {
         await fetchServices(userId);
       }
+      
       toast({
-        title: "Éxito",
-        description: "Servicio actualizado correctamente"
+        title: "Success",
+        description: "Profile updated successfully"
       });
-      return true;
+      
+      return updatedProfile;
     } catch (error) {
-      console.error('Error updating service:', error);
-      return false;
+      console.error('Error in updateProfile:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not update profile. Please try again.",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [profile, toast, userId, fetchServices]);
 
-  const deleteService = async (serviceId: string) => {
+  const createService = useCallback(async (service: Omit<LawyerService, 'id' | 'lawyer_user_id'>) => {
+    if (!profile) return null;
+    
     try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('lawyer_services')
+        .insert([{ ...service, lawyer_user_id: profile.user_id }])
+        .select()
+        .single<LawyerService>();
+
+      if (error || !data) {
+        console.error('Error creating service:', error);
+        throw error || new Error('Failed to create service');
+      }
+
+      setServices(prev => [data, ...prev]);
+      return data;
+    } catch (error) {
+      console.error('Error in createService:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not create service. Please try again.",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [profile, toast]);
+
+  const updateService = useCallback(async (serviceId: string, updates: Partial<LawyerService>) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('lawyer_services')
+        .update(updates)
+        .eq('id', serviceId)
+        .select()
+        .single<LawyerService>();
+
+      if (error || !data) {
+        console.error('Error updating service:', error);
+        throw error || new Error('Failed to update service');
+      }
+
+      setServices(prev => prev.map(s => s.id === serviceId ? { ...s, ...data } : s));
+      return data;
+    } catch (error) {
+      console.error('Error in updateService:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not update service. Please try again.",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  const deleteService = useCallback(async (serviceId: string) => {
+    try {
+      setLoading(true);
       const { error } = await supabase
         .from('lawyer_services')
         .delete()
         .eq('id', serviceId);
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo eliminar el servicio: " + error.message
-        });
-        return false;
+        console.error('Error deleting service:', error);
+        throw error;
       }
 
-      if (userId) {
-        await fetchServices(userId);
-      }
-      toast({
-        title: "Éxito",
-        description: "Servicio eliminado correctamente"
-      });
+      setServices(prev => prev.filter(s => s.id !== serviceId));
       return true;
     } catch (error) {
-      console.error('Error deleting service:', error);
-      return false;
+      console.error('Error in deleteService:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete service. Please try again.",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [toast]);
+
+  const refreshProfile = useCallback(() => {
+    if (userId) {
+      return fetchProfile(userId);
+    }
+    return Promise.resolve(null);
+  }, [fetchProfile, userId]);
+
+  const refreshServices = useCallback(() => {
+    if (userId) {
+      return fetchServices(userId);
+    }
+    return Promise.resolve([]);
+  }, [fetchServices, userId]);
 
   return {
     profile,
     services,
     loading,
+    error,
     updateProfile,
     createService,
     updateService,
     deleteService,
-    refreshProfile: () => userId && fetchProfile(userId),
-    refreshServices: () => userId && fetchServices(userId)
+    refreshProfile,
+    refreshServices
   };
 }

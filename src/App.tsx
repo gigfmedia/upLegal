@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
 
 // UI Components
 import { Toaster } from '@/components/ui/toaster';
@@ -41,13 +42,29 @@ import DashboardPayments from './pages/DashboardPayments';
 import DashboardMessages from './pages/DashboardMessages';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import EmailVerification from './pages/auth/EmailVerification';
+import ProfileSetupPage from './pages/ProfileSetupPage';
 import ServicesPage from './pages/lawyer/ServicesPage';
 import ConsultasPage from './pages/lawyer/ConsultasPage';
 import CitasPage from './pages/lawyer/CitasPage';
 import EarningsPage from './pages/lawyer/EarningsPage';
 import ProfilePage from './pages/lawyer/ProfilePage';
+import PaymentSettings from './pages/PaymentSettings';
 
-const queryClient = new QueryClient();
+// Create a single QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+// Initialize Stripe with proper options
+export const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY || '', {
+  // Suppress HTTP warning in development
+  ...(import.meta.env.DEV ? { betas: ['elements_enable_deferred_intent_beta_1'] } : {}),
+});
 
 const LoadingIndicator = () => {
   const location = useLocation();
@@ -60,12 +77,17 @@ const LoadingIndicator = () => {
     return () => clearTimeout(timer);
   }, [location]);
 
-  if (!isLoading && !isAuthLoading) return null;
+  // Only show loading indicator if not in the middle of auth check
+  if (isAuthLoading) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
-      <Progress value={undefined} className="h-1 rounded-none" />
-    </div>
+    <>
+      {isLoading && (
+        <div className="fixed top-0 left-0 right-0 h-1 z-50">
+          <Progress value={0} className="h-1" />
+        </div>
+      )}
+    </>
   );
 };
 
@@ -119,27 +141,7 @@ const AppContent = () => {
             {/* Legacy route for backward compatibility */}
             <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
             <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-            <Route 
-              path="/lawyer/:id" 
-              element={
-                <PublicProfile 
-                  userData={{
-                    name: "John Smith",
-                    profile: {
-                      rating: 4.9,
-                      reviews: 127,
-                      specialties: ["Corporate Law", "Contract Law", "Business Litigation"],
-                      hourlyRate: 350,
-                      location: "New York, NY",
-                      bio: "Experienced corporate attorney with over 10 years of experience helping businesses navigate complex legal challenges."
-                    },
-                    stats: {
-                      profileViews: 1247
-                    }
-                  }}
-                />
-              } 
-            />
+            <Route path="/lawyer/:id" element={<PublicProfile />} />
             <Route path="/profile" element={
               <RequireLawyer>
                 <PublicProfile />
@@ -149,10 +151,12 @@ const AppContent = () => {
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<UserDashboard />} />
               <Route path="profile" element={<DashboardProfile />} />
+              <Route path="profile/setup" element={<ProfileSetupPage />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="consultations" element={<DashboardConsultations />} />
               <Route path="appointments" element={<DashboardAppointments />} />
               <Route path="payments" element={<DashboardPayments />} />
+              <Route path="payment-settings" element={<PaymentSettings />} />
               <Route path="messages" element={<DashboardMessages />} />
               <Route path="notifications" element={<NotificationSettingsPage />} />
             </Route>
@@ -160,6 +164,7 @@ const AppContent = () => {
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/auth/confirm-email" element={<EmailVerification />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
@@ -172,13 +177,20 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <MessageProvider>
-        <NotificationProvider>
-          <BrowserRouter>
+      <NotificationProvider>
+        <MessageProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <Toaster />
+            <Sonner />
             <AppContent />
           </BrowserRouter>
-        </NotificationProvider>
-      </MessageProvider>
+        </MessageProvider>
+      </NotificationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

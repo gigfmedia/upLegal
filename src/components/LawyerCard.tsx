@@ -82,14 +82,42 @@ export function LawyerCard({
       <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
         <div className="flex-1 flex flex-col p-6">
           {/* Sección superior - Info básica */}
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex justify-between items-start mb-4 w-full">
             <div className="flex space-x-4">
-              <Avatar className="h-16 w-16 flex-shrink-0">
-                <AvatarImage src={lawyer.image} alt={lawyer.name} />
-                <AvatarFallback>
-                  {lawyer.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative h-16 w-16 flex-shrink-0">
+                <div className="relative w-full h-full rounded-full overflow-hidden">
+                  {lawyer.image ? (
+                    <div 
+                      className="w-full h-full bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url(${lawyer.image})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center center',
+                        backgroundRepeat: 'no-repeat',
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <img 
+                        src={lawyer.image} 
+                        alt={lawyer.name}
+                        className="opacity-0 w-full h-full"
+                        onError={(e) => {
+                          console.error('Error loading avatar image:', e);
+                          // @ts-ignore - TypeScript doesn't know about currentTarget for some reason
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-700 text-xl font-medium">
+                      {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              </div>
               
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
@@ -100,7 +128,7 @@ export function LawyerCard({
                     <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   )}
                 </div>
-                <div className="flex items-center text-sm text-gray-600 space-x-2">
+                <div className="flex items-center text-sm text-gray-600 space-x-2 w-full max-w-[200px]">
                   <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
                   <span className="truncate">{lawyer.location}</span>
                 </div>
@@ -119,26 +147,37 @@ export function LawyerCard({
               </div>
             </div>
             
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 h-8 mt-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/lawyer/${lawyer.id}`);
-              }}
-            >
-              Ver perfil
-            </Button>
+            <div className="flex-shrink-0 ml-2 z-10">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 h-8 px-4 py-1.5 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/lawyer/${lawyer.id}`);
+                }}
+              >
+                Ver perfil
+              </Button>
+            </div>
           </div>
 
           {/* Contenido con alineación fija */}
           <div className="flex flex-col space-y-4 mt-auto">
             {/* Especialidades */}
-            <div className="h-6">
+            <div className="min-h-6">
               <div className="flex flex-wrap gap-2">
-                {lawyer.specialties.map((specialty) => (
-                  <Badge key={specialty} variant="secondary" className="text-xs">
+                {(Array.isArray(lawyer.specialties) 
+                  ? lawyer.specialties.flatMap(s => 
+                      typeof s === 'string' ? s.split(',').map(x => x.trim()) : []
+                    )
+                  : typeof lawyer.specialties === 'string'
+                    ? lawyer.specialties.split(',').map(s => s.trim())
+                    : []
+                )
+                .filter(s => s) // Remove empty strings
+                .map((specialty, index) => (
+                  <Badge key={`${specialty}-${index}`} variant="secondary" className="text-xs">
                     {specialty}
                   </Badge>
                 ))}
@@ -146,11 +185,17 @@ export function LawyerCard({
             </div>
 
             {/* Sección media - Resumen */}
-            {lawyer.bio && (
-              <p className="text-sm text-gray-600 line-clamp-3">
-                {lawyer.bio}
-              </p>
-            )}
+            <div className="prose max-w-none">
+              {lawyer.bio && lawyer.bio.trim() !== '' ? (
+                <div className="whitespace-pre-line text-gray-700 text-sm line-clamp-3">
+                  {lawyer.bio}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic text-sm">
+                  Este abogado no ha proporcionado una biografía.
+                </p>
+              )}
+            </div>
 
             {/* Precio */}
             <div className="h-8 flex items-center">
@@ -163,7 +208,7 @@ export function LawyerCard({
         </div>
 
         {/* Botones de acción - Fijos en la parte inferior */}
-        <div className="p-4 pt-0">
+        <div className="p-6 pt-0">
           <div className="flex space-x-2">
             <Button 
               variant="outline" 

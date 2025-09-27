@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-08-27.basil', // Latest version that matches the type definitions
 });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -39,7 +39,6 @@ export default async function handler(req, res) {
       .single();
 
     if (profileError) {
-      console.error('Error fetching profile:', profileError);
       return res.status(500).json({ error: 'Error fetching user profile' });
     }
 
@@ -55,14 +54,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: accountLink.url });
     }
 
-    // Create new connected account
+    // Create new connected account with 80/20 revenue split
     const account = await stripe.accounts.create({
       type: 'express',
       country: 'CL',
       email: user.email,
       business_type: 'individual',
       capabilities: {
-        card_payments: { requested: true },
+        // Remove card_payments as it's not supported in Chile
         transfers: { requested: true },
       },
       business_profile: {
@@ -74,14 +73,34 @@ export default async function handler(req, res) {
         first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
         last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
       },
+      // Set default platform fees to 20% (80/20 split)
+      settings: {
+        payouts: {
+          schedule: {
+            interval: 'manual', // Platform will trigger payouts manually
+          },
+        },
+      },
     });
 
-    // Generate account link for onboarding
+    // Generate account link for onboarding with bank account collection
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url: refreshUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings/payments`,
-      return_url: returnUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings/payments`,
+      return_url: returnUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/settings/payments?success=true`,
       type: 'account_onboarding',
+      collect: 'currently_due',
+    });
+
+    // Create a transfer schedule for the 80/20 split
+    await stripe.accounts.update(account.id, {
+      settings: {
+        payouts: {
+          schedule: {
+            interval: 'manual',
+          },
+        },
+      },
     });
 
     // Save Stripe account ID to profile
@@ -95,13 +114,11 @@ export default async function handler(req, res) {
       .eq('id', userId);
 
     if (updateError) {
-      console.error('Error updating profile with Stripe account ID:', updateError);
       return res.status(500).json({ error: 'Failed to update user profile' });
     }
 
     return res.status(200).json({ url: accountLink.url });
   } catch (error) {
-    console.error('Error creating Stripe Connect account:', error);
     return res.status(500).json({ 
       error: error.message || 'Error creating Stripe Connect account' 
     });

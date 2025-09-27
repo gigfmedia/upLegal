@@ -97,7 +97,7 @@ export default function EarningsPage() {
           localStorage.setItem('lawyerTransactions', JSON.stringify(mockTransactions));
         }
       } catch (error) {
-        console.error('Error loading transactions:', error);
+        // Error loading transactions
       } finally {
         setIsLoading(false);
       }

@@ -1,10 +1,37 @@
-import { buffer } from 'micro';
 import { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { Readable } from 'stream';
+
+// Helper to convert stream to buffer
+async function buffer(readable: Readable) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of readable) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+// Utility function to log errors
+async function logError(context: string, error: unknown, metadata: Record<string, unknown> = {}) {
+  console.error(`[${new Date().toISOString()}] ${context}:`, error, metadata);
+  // You can add more sophisticated error logging here
+}
+
+// Utility function to send payment confirmation emails
+async function sendPaymentConfirmationEmail(
+  email: string | null,
+  data: { amount: number; serviceId?: string; paymentId?: string }
+) {
+  if (!email) return;
+  
+  // Implement your email sending logic here
+  console.log(`Sending payment confirmation to ${email}`, data);
+  // Example: await sendEmail({ to: email, template: 'payment-confirmation', data });
+}
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-08-27.basil',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -39,7 +66,6 @@ export default async function handler(
   try {
     event = stripe.webhooks.constructEvent(buf, signature, webhookSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
@@ -58,70 +84,159 @@ export default async function handler(
         await handleAccountUpdated(event.data.object as Stripe.Account);
         break;
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // Unhandled event type
+        break;
     }
 
     return res.status(200).json({ received: true });
   } catch (error) {
-    console.error('Error processing webhook:', error);
     return res.status(500).json({ error: 'Error processing webhook' });
   }
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const paymentIntent = session.payment_intent as string;
+  const paymentIntentId = session.payment_intent as string;
   const clientUserId = session.metadata?.client_user_id;
   const lawyerUserId = session.metadata?.lawyer_user_id;
   const platformFee = parseInt(session.metadata?.platform_fee || '0');
   const lawyerAmount = parseInt(session.metadata?.lawyer_amount || '0');
   const totalAmount = session.amount_total || 0;
+  const serviceId = session.metadata?.service_id;
 
-  // Update payment record in database
-  await supabase
-    .from('payments')
-    .update({
-      status: 'succeeded',
-      stripe_payment_intent_id: paymentIntent,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('stripe_session_id', session.id);
+  try {
+    // Get payment intent to verify the split was applied correctly
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
+      expand: ['charges.data.balance_transaction'],
+    });
 
-  // Send confirmation emails, notifications, etc.
-  // ...
+    // Update payment record in database
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .update({
+        status: 'succeeded',
+        stripe_payment_intent_id: paymentIntentId,
+        platform_fee: platformFee,
+        lawyer_amount: lawyerAmount,
+        total_amount: totalAmount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_session_id', session.id)
+      .select()
+      .single();
+
+    if (paymentError) throw paymentError;
+
+    // Update lawyer's balance
+    if (lawyerUserId) {
+      await supabase.rpc('increment_lawyer_balance', {
+        lawyer_id: lawyerUserId,
+        amount: lawyerAmount,
+      });
+    }
+
+    // Send email notifications
+    await sendPaymentConfirmationEmail(session.customer_email, {
+      amount: totalAmount / 100, // Convert back to dollars
+      serviceId,
+      paymentId: payment?.id,
+    });
+
+  } catch (error) {
+    console.error('Error handling checkout session completed:', error);
+    // Log error for monitoring
+    await logError('checkout_session_completed', error, {
+      sessionId: session.id,
+      paymentIntentId,
+    });
+  }
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  // Update payment record with payment intent details
-  await supabase
-    .from('payments')
-    .update({
-      status: 'completed',
-      stripe_payment_intent_id: paymentIntent.id,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('stripe_payment_intent_id', paymentIntent.id);
+  try {
+    // Get the payment record
+    const { data: payment, error: fetchError } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('stripe_payment_intent_id', paymentIntent.id)
+      .single();
+
+    if (fetchError || !payment) {
+      console.error('Payment not found for intent:', paymentIntent.id);
+      return;
+    }
+
+    // Update payment record with payment intent details
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({
+        status: 'completed',
+        stripe_payment_intent_id: paymentIntent.id,
+        updated_at: new Date().toISOString(),
+        metadata: {
+          ...payment.metadata,
+          stripe_status: paymentIntent.status,
+          amount_received: paymentIntent.amount_received,
+          application_fee_amount: paymentIntent.application_fee_amount,
+        }
+      })
+      .eq('id', payment.id);
+
+    if (updateError) throw updateError;
+
+    // If this is a connected account payment, the transfer will be handled separately
+    if (paymentIntent.transfer_data?.destination) {
+      console.log(`Payment ${paymentIntent.id} completed for connected account ${paymentIntent.transfer_data.destination}`);
+    }
+  } catch (error) {
+    console.error('Error handling payment intent succeeded:', error);
+    await logError('payment_intent_succeeded', error, {
+      paymentIntentId: paymentIntent.id,
+    });
+  }
 }
 
 async function handleTransferCreated(transfer: Stripe.Transfer) {
-  // Update payment record with transfer details
-  await supabase
-    .from('payments')
-    .update({
-      stripe_transfer_id: transfer.id,
-      transfer_status: transfer.status,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('stripe_payment_intent_id', transfer.payment_intent as string);
+  try {
+    // Update payment record with transfer details
+    const { error } = await supabase
+      .from('payments')
+      .update({
+        stripe_transfer_id: transfer.id,
+        transfer_status: 'succeeded',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_payment_intent_id', transfer.destination_payment as string);
+      
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error handling transfer created:', error);
+    await logError('transfer_created', error, {
+      transferId: transfer.id,
+    });
+  }
 }
 
 async function handleAccountUpdated(account: Stripe.Account) {
-  // Update lawyer's account status when their Stripe account is updated
-  await supabase
-    .from('profiles')
-    .update({
-      stripe_account_status: account.details_submitted ? 'complete' : 'pending',
-      payout_enabled: account.payouts_enabled || false,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('stripe_account_id', account.id);
+  try {
+    // Update lawyer's account status when their Stripe account is updated
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        stripe_account_status: account.details_submitted ? 'active' : 'pending',
+        payout_enabled: account.payouts_enabled || false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('stripe_account_id', account.id);
+      
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error handling account updated:', error);
+    await logError('account_updated', error, {
+      accountId: account.id,
+    });
+  }
 }

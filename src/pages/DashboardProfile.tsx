@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,12 +37,24 @@ type ProfileFormData = {
   avatar_updated?: number;
 };
 
-export default function DashboardProfile() {
-  const { user, updateProfile } = useAuth();
+interface DashboardProfileProps {
+  setupMode?: boolean;
+}
+
+export default function DashboardProfile({ setupMode = false }: DashboardProfileProps) {
+  const { user, updateProfile, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(setupMode);
   const [isLoading, setIsLoading] = useState(false);
   const [avatarTimestamp, setAvatarTimestamp] = useState<number>(Date.now());
+  const navigate = useNavigate();
+
+  // Redirect to setup if in setup mode and already completed
+  useEffect(() => {
+    if (setupMode && user?.profile_setup_completed) {
+      navigate('/dashboard');
+    }
+  }, [setupMode, user, navigate]);
   
   const [formData, setFormData] = useState<ProfileFormData>(() => ({
     display_name: user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
@@ -65,12 +78,22 @@ export default function DashboardProfile() {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      
+      // Check required fields for setup completion
+      const isSetupComplete = Boolean(
+        formData.first_name && 
+        formData.last_name && 
+        formData.bio && 
+        formData.specialties?.length > 0 && 
+        formData.hourly_rate_clp > 0
+      );
+      
       const profileData = {
-        first_name: formData.first_name || null,
-        last_name: formData.last_name || null,
-        display_name: formData.display_name || null,
+        display_name: formData.display_name || `${formData.first_name} ${formData.last_name}`.trim(),
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         bio: formData.bio || null,
         phone: formData.phone || null,
         location: formData.location || null,
@@ -79,37 +102,33 @@ export default function DashboardProfile() {
         hourly_rate_clp: formData.hourly_rate_clp || 0,
         experience_years: formData.experience_years || 0,
         languages: formData.languages || [],
+        // Mark profile setup as completed if all required fields are filled
+        profile_setup_completed: isSetupComplete,
+        ...(formData.avatar_updated && { avatar_updated: formData.avatar_updated })
       };
 
-      const updatedUser = await updateProfile(profileData);
+      const { error } = await updateProfile(profileData);
       
-      if (updatedUser?.user_metadata) {
-        setFormData({
-          display_name: updatedUser.user_metadata.display_name || updatedUser.user_metadata.full_name || updatedUser.email?.split('@')[0] || '',
-          first_name: updatedUser.user_metadata.first_name || '',
-          last_name: updatedUser.user_metadata.last_name || '',
-          bio: updatedUser.user_metadata.bio || '',
-          phone: updatedUser.user_metadata.phone || '',
-          location: updatedUser.user_metadata.location || '',
-          website: updatedUser.user_metadata.website || '',
-          specialties: updatedUser.user_metadata.specialties || [],
-          hourly_rate_clp: updatedUser.user_metadata.hourly_rate_clp || 0,
-          experience_years: updatedUser.user_metadata.experience_years || 0,
-          languages: updatedUser.user_metadata.languages || [],
-        });
-      }
+      if (error) throw error;
       
-      setIsEditing(false);
       toast({
-        title: "Perfil actualizado",
-        description: "Tus cambios se han guardado correctamente.",
+        title: setupMode ? '¡Bienvenido!' : 'Perfil actualizado',
+        description: setupMode 
+          ? 'Tu perfil ha sido configurado correctamente. Ahora puedes comenzar a usar la plataforma.'
+          : 'Tus cambios se han guardado correctamente.',
       });
+      
+      if (setupMode) {
+        // Redirect to dashboard after successful setup
+        navigate('/dashboard');
+      } else {
+        setIsEditing(false);
+      }
     } catch (error) {
-      console.error('Error updating profile:', error);
       toast({
-        title: "Error",
-        description: "No se pudo actualizar el perfil. Por favor, inténtalo de nuevo.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'No se pudo actualizar el perfil. Inténtalo de nuevo.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

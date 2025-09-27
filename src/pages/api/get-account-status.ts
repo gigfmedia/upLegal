@@ -39,7 +39,6 @@ export default async function handler(req, res) {
       .single();
 
     if (profileError || !profile) {
-      console.error('Error fetching profile:', profileError);
       return res.status(500).json({ error: 'Error fetching user profile' });
     }
 
@@ -67,8 +66,9 @@ export default async function handler(req, res) {
           { stripeAccount: profile.stripe_account_id }
         );
       } catch (error) {
-        console.error('Error fetching Stripe account details:', error);
-        // Continue with null values if there's an error
+        return res.status(500).json({ 
+          error: error.message || 'Error fetching Stripe account details' 
+        });
       }
     }
 
@@ -79,7 +79,6 @@ export default async function handler(req, res) {
       recentPayouts: payouts?.data || [],
     });
   } catch (error) {
-    console.error('Error getting account status:', error);
     return res.status(500).json({ 
       error: error.message || 'Error getting account status' 
     });

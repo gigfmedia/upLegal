@@ -107,6 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          metadata: Json | null
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           client_user_id: string | null
@@ -157,6 +190,7 @@ export type Database = {
           availability: string | null
           available_for_hire: boolean | null
           avatar_url: string | null
+          bar_association_number: string | null
           bar_number: string | null
           bio: string | null
           certifications: Json | null
@@ -189,6 +223,7 @@ export type Database = {
           availability?: string | null
           available_for_hire?: boolean | null
           avatar_url?: string | null
+          bar_association_number?: string | null
           bar_number?: string | null
           bio?: string | null
           certifications?: Json | null
@@ -221,6 +256,7 @@ export type Database = {
           availability?: string | null
           available_for_hire?: boolean | null
           avatar_url?: string | null
+          bar_association_number?: string | null
           bar_number?: string | null
           bio?: string | null
           certifications?: Json | null

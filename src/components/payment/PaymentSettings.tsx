@@ -89,117 +89,119 @@ export default function PaymentSettings() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Configuración de Pagos</h2>
-        <p className="text-muted-foreground">
-          Gestiona tu cuenta de Stripe para recibir pagos
-        </p>
-      </div>
+    <div className="h-full flex flex-col">
+      <div className="p-6space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Configuración de Pagos</h2>
+          <p className="text-muted-foreground">
+            Gestiona tu cuenta de Stripe para recibir pagos
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cuenta de Stripe</CardTitle>
-          <CardDescription>
-            Conecta tu cuenta de Stripe para recibir pagos por tus servicios legales.
-            LegalUp retiene una comisión del 20% por cada transacción.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : accountStatus.connected ? (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Estado de la cuenta:</p>
-                  <p className="text-sm text-muted-foreground">
-                    {accountStatus.status === 'complete' ? 'Verificada' : 'Pendiente de verificación'}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium">Pagos habilitados:</p>
-                  <p className="text-sm text-muted-foreground">
-                    {accountStatus.payoutsEnabled ? 'Sí' : 'No'}
-                  </p>
-                </div>
-              </div>
-
-              {accountStatus.balance && (
-                <div className="pt-4 border-t">
-                  <h3 className="font-medium mb-2">Saldo disponible</h3>
-                  {accountStatus.balance.available.map((balance: any) => (
-                    <div key={balance.currency} className="flex items-center justify-between">
-                      <span>{balance.currency.toUpperCase()}</span>
-                      <span className="font-medium">
-                        {formatCurrency(balance.amount, balance.currency)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="pt-4 border-t flex justify-end">
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.open(accountStatus.loginLink, '_blank')}
-                >
-                  Ver en Stripe
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center py-8 space-y-4">
-              <p className="text-center text-muted-foreground">
-                Conecta tu cuenta de Stripe para comenzar a recibir pagos por tus servicios legales.
-              </p>
-              <Button 
-                onClick={connectStripeAccount}
-                disabled={loading}
-              >
-                {loading ? 'Conectando...' : 'Conectar con Stripe'}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {accountStatus.recentPayouts.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Pagos recientes</CardTitle>
+            <CardTitle>Cuenta de Stripe</CardTitle>
             <CardDescription>
-              Historial de tus últimos pagos realizados
+              Conecta tu cuenta de Stripe para recibir pagos por tus servicios legales.
+              LegalUp retiene una comisión del 20% por cada transacción.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {accountStatus.recentPayouts.map((payout: any) => (
-                <div key={payout.id} className="flex items-center justify-between p-4 border rounded-lg">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : accountStatus.connected ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">
-                      {new Date(payout.arrival_date * 1000).toLocaleDateString()}
-                    </p>
+                    <p className="font-medium">Estado de la cuenta:</p>
                     <p className="text-sm text-muted-foreground">
-                      {payout.status === 'paid' ? 'Completado' : 'Pendiente'}
+                      {accountStatus.status === 'complete' ? 'Verificada' : 'Pendiente de verificación'}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">
-                      {formatCurrency(payout.amount, payout.currency)}
-                    </p>
+                  <div>
+                    <p className="font-medium">Pagos habilitados:</p>
                     <p className="text-sm text-muted-foreground">
-                      {payout.bank_account?.bank_name || payout.destination?.bank_name || ''}
+                      {accountStatus.payoutsEnabled ? 'Sí' : 'No'}
                     </p>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {accountStatus.balance && (
+                  <div className="pt-4 border-t">
+                    <h3 className="font-medium mb-2">Saldo disponible</h3>
+                    {accountStatus.balance.available.map((balance: any) => (
+                      <div key={balance.currency} className="flex items-center justify-between">
+                        <span>{balance.currency.toUpperCase()}</span>
+                        <span className="font-medium">
+                          {formatCurrency(balance.amount, balance.currency)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="pt-4 border-t flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => window.open(accountStatus.loginLink, '_blank')}
+                  >
+                    Ver en Stripe
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-8 space-y-4">
+                <p className="text-center text-muted-foreground">
+                  Conecta tu cuenta de Stripe para comenzar a recibir pagos por tus servicios legales.
+                </p>
+                <Button 
+                  onClick={connectStripeAccount}
+                  disabled={loading}
+                >
+                  {loading ? 'Conectando...' : 'Conectar con Stripe'}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {accountStatus.recentPayouts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Pagos recientes</CardTitle>
+              <CardDescription>
+                Historial de tus últimos pagos realizados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {accountStatus.recentPayouts.map((payout: any) => (
+                  <div key={payout.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <p className="font-medium">
+                        {new Date(payout.arrival_date * 1000).toLocaleDateString()}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {payout.status === 'paid' ? 'Completado' : 'Pendiente'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {formatCurrency(payout.amount, payout.currency)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {payout.bank_account?.bank_name || payout.destination?.bank_name || ''}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
