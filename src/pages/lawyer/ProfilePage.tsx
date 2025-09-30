@@ -1,18 +1,37 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import type { Profile } from '@/contexts/AuthContext/clean/AuthContext';
+import { calculateProfileCompletion } from '@/utils/profileCompletion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye } from 'lucide-react';
+import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { initializeFormData } from '@/utils/initializeFormData';
 import { supabase } from '@/lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { DocumentUpload } from '@/components/ui/document-upload';
 import { ProfileAvatarUpload } from '@/components/ProfileAvatarUpload';
+import { useProfile } from '@/hooks/useProfile';
+import { ProfileCompletion } from '@/components/ProfileCompletion';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+export interface Service {
+  id?: string;
+  lawyer_user_id: string;
+  title: string;
+  description: string;
+  price_clp: number;
+  delivery_time: string;
+  features: string[];
+  available: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
 
 interface ProfileFormData {
   first_name: string;
@@ -26,7 +45,12 @@ interface ProfileFormData {
   hourly_rate: number;
   languages: string[];
   education: string;
+  university: string;
+  study_start_year?: string | number | null;
+  study_end_year?: string | number | null;
   bar_association_number: string;
+  rut: string;
+  pjud_verified: boolean;
   zoom_link: string;
   avatar_url?: string;
 };
@@ -37,8 +61,296 @@ export default function LawyerProfilePage() {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isStripeLoading, setIsStripeLoading] = useState(false);
+  const [rutError, setRutError] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
+  
+  // Use the useProfile hook to get services and profile data
+  const { profile: userProfile, services, loading: profileLoading } = useProfile(user?.id);
+  
+  // Handle number input changes specifically
+  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // Special handling for study years - keep as strings
+    if (name === 'study_start_year' || name === 'study_end_year') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value // Keep as string
+      }));
+    } else {
+      // For other number inputs, convert to number
+      const numValue = value === '' ? '' : Math.max(0, parseInt(value) || 0);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numValue
+      }));
+    }
+    
+    setHasChanges(true);
+  };
+
+  // Handle input changes for form fields
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    
+    // Handle different input types
+    if (type === 'checkbox') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked
+      }));
+    } else if (type === 'number') {
+      // Use handleNumberInput for number inputs
+      handleNumberInput(e as React.ChangeEvent<HTMLInputElement>);
+      return;
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+    
+    setHasChanges(true);
+  };
+  
+  // RUT validation function (Chilean ID) with improved error messages
+  const validateRUT = (rut: string): { isValid: boolean; error?: string } => {
+    if (!rut || typeof rut !== 'string') {
+      return { isValid: false, error: 'RUT no válido' };
+    }
+
+    // Clean RUT (remove dots and hyphen)
+    const cleanRut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    
+    // Validate RUT format (8-9 digits + 1 check digit or 'K')
+    if (!/^\d{7,8}[0-9Kk]$/.test(cleanRut)) {
+      return { isValid: false, error: 'Formato de RUT inválido' };
+    }
+
+    // Extract number and check digit
+    const rutNumber = cleanRut.slice(0, -1);
+    const checkDigit = cleanRut.slice(-1).toUpperCase();
+
+    // Calculate expected check digit
+    let sum = 0;
+    let multiplier = 2;
+
+    for (let i = rutNumber.length - 1; i >= 0; i--) {
+      sum += parseInt(rutNumber.charAt(i)) * multiplier;
+      multiplier = multiplier === 7 ? 2 : multiplier + 1;
+    }
+
+    const expectedCheckDigit = (11 - (sum % 11)) === 11 ? '0' : 
+                             (11 - (sum % 11)) === 10 ? 'K' : 
+                             String(11 - (sum % 11));
+
+    // Compare calculated check digit with provided one
+    if (expectedCheckDigit !== checkDigit) {
+      return { isValid: false, error: 'RUT no válido' };
+    }
+
+    return { isValid: true };
+  };
+
+  // Handle verification button click
+  const handleVerifyRUT = async () => {
+    if (!formData.rut) {
+      setRutError('Por favor ingresa un RUT para verificar');
+      return;
+    }
+    
+    try {
+      const currentRut = formData.rut; // Store the current RUT value
+      const result = await verifyWithPJUD(
+        currentRut, 
+        `${formData.first_name} ${formData.last_name}`.trim()
+      );
+      
+      if (result?.verified) {
+        // Update local state with verification result
+        setFormData(prev => ({
+          ...prev,
+          rut: currentRut, // Use the stored RUT value
+          pjud_verified: true,
+          verification_message: result.message || 'Verificación exitosa'
+        }));
+        
+        // Update verification status
+        setVerificationStatus('success');
+        setRutError(null);
+        
+        // Show success message
+        toast({
+          title: '¡Verificación exitosa!',
+          description: result.message || 'Tu RUT ha sido verificado exitosamente.',
+          variant: 'default'
+        });
+      }
+    } catch (error) {
+      // Set error state
+      setVerificationStatus('error');
+      
+      // Show error message if not already shown
+      if (error instanceof Error) {
+        setRutError(error.message);
+      }
+      
+      // Log the error
+      console.error('Verification failed:', error);
+    }
+  };
+
+  // Define the verification response type
+  interface VerificationResponse {
+    verified: boolean;
+    message: string;
+    error?: string;
+    details?: Record<string, unknown>;
+  }
+
+  // Verify lawyer against PJUD database
+  const verifyWithPJUD = async (rut: string, fullName: string): Promise<VerificationResponse> => {
+    // Clear previous state
+    setRutError(null);
+    setIsVerifying(true);
+    setVerificationStatus('verifying');
+    
+    // Clear any previous verification status
+    setFormData(prev => ({
+      ...prev,
+      pjud_verified: false
+    }));
+    
+    try {
+      // Get the auth token for the request
+      console.log('Getting user session...');
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        const errorMsg = 'No se pudo obtener la sesión del usuario. Por favor, inicia sesión nuevamente.';
+        console.error('Session error:', sessionError?.message || 'No active session');
+        throw new Error(errorMsg);
+      }
+      
+      const { session } = sessionData;
+      console.log('Session obtained, calling verification function...');
+      
+      // Call the verification API using our helper
+      const { data, error } = await invokeFunction<VerificationResponse>(
+        'verify-lawyer',
+        { 
+          rut, 
+          fullName: fullName.trim(),
+          timestamp: new Date().toISOString()
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'x-client-info': 'web-app/1.0'
+          }
+        }
+      );
+      
+      console.log('Verification response:', { data, error });
+      
+      if (error) {
+        console.error('Error from verification function:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('No se recibió respuesta del servidor de verificación');
+      }
+      
+      if (!data.verified) {
+        throw new Error(data.message || 'La verificación del RUT falló');
+      }
+      
+      console.log('Verification successful, updating profile...');
+      
+      // Update local form data immediately to show the verification
+      setFormData(prev => ({
+        ...prev,
+        rut: rut,
+        pjud_verified: true
+      }));
+      
+      // Mark that we have changes to save
+      setHasChanges(true);
+      
+      // Try to update the profile with the verified RUT
+      try {
+        console.log('Updating profile with RUT:', rut);
+        
+        // First, try to update using the RPC function
+        const { error: rpcError } = await supabase.rpc('update_profile_rut', {
+          p_user_id: user?.id,
+          p_rut: rut
+        });
+        
+        if (rpcError) {
+          console.error('RPC update failed, trying direct update...', rpcError);
+          
+          // If RPC fails, try a direct update with just the RUT field
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              rut: rut,
+              pjud_verified: true,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user?.id);
+            
+          if (updateError) {
+            console.error('Direct update also failed:', updateError);
+          }
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+      }
+      
+      // Show success message
+      toast({ 
+        title: "¡Verificación exitosa!", 
+        description: data.message || "Tu RUT ha sido verificado correctamente. No olvides guardar los cambios para conservar la verificación.", 
+        variant: "default"
+      });
+      
+      return {
+        verified: true,
+        message: data.message || 'Verificación exitosa',
+        ...(data.details && { details: data.details })
+      };
+  } catch (error) {
+    console.error('Error in verifyWithPJUD:', error);
+    setVerificationStatus('error');
+
+    // Set appropriate error message
+    let errorMessage = 'Error al verificar el RUT';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('timed out')) {
+        errorMessage = 'La verificación está tomando más tiempo de lo esperado. Por favor, inténtalo de nuevo.';
+      } else if (error.message.includes('network') || error.message.includes('Failed to fetch')) {
+        errorMessage = 'Error de conexión. Por favor, verifica tu conexión a internet.';
+      } else if (error.message.includes('401') || error.message.includes('No active session')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+        // Redirect to login after showing the error
+        setTimeout(() => navigate('/login'), 3000);
+      } else {
+        errorMessage = error.message || 'Error al verificar el RUT';
+      }
+    }
+    
+    setRutError(errorMessage);
+    throw new Error(errorMessage);
+  } finally {
+    setIsVerifying(false);
+  }
+  };
   
   // Define available specializations
   const availableSpecializations = [
@@ -63,6 +375,27 @@ export default function LawyerProfilePage() {
     'Derecho Deportivo',
   ];
 
+  // Helper function to get education data from user metadata
+  const getEducationData = (userData: Record<string, unknown>) => {
+    // Try to get from the new education object first
+    if (userData.education && typeof userData.education === 'object') {
+      return {
+        education: userData.education.degree || '',
+        university: userData.education.university || '',
+        study_start_year: userData.education.start_year || '',
+        study_end_year: userData.education.end_year || ''
+      };
+    }
+    
+    // Fall back to legacy fields
+    return {
+      education: userData.education || '',
+      university: userData.university || '',
+      study_start_year: userData.study_start_year || '',
+      study_end_year: userData.study_end_year || ''
+    };
+  };
+
   const [formData, setFormData] = useState<ProfileFormData>({
     first_name: '',
     last_name: '',
@@ -75,203 +408,197 @@ export default function LawyerProfilePage() {
     hourly_rate: 0,
     languages: [],
     education: '',
+    university: '',
     bar_association_number: '',
-    zoom_link: ''
+    rut: '',
+    pjud_verified: false,
+    zoom_link: '',
+    avatar_url: ''
   });
 
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [profileCompletion, setProfileCompletion] = useState(0);
+  const [showCompletionAlert, setShowCompletionAlert] = useState(true);
+  const [forceUpdate, setForceUpdate] = useState(false);
 
-  // Load user data
+  // Calculate profile completion percentage using the centralized utility
+  const calculateProfileCompletionPercentage = useCallback((formData: ProfileFormData) => {
+    return calculateProfileCompletion({
+      ...formData,
+      study_start_year: formData.study_start_year,
+      study_end_year: formData.study_end_year,
+      servicesCount: services?.length || 0
+    } as ProfileCompletionData);
+  }, [services?.length]);
+  
+  // Update profile completion whenever form data changes
   useEffect(() => {
-    if (user?.user_metadata) {
-      // First, handle specializations to ensure they're properly formatted
-      let specialties: string[] = [];
-      
-      // Check both 'specialties' and 'specialization' for backward compatibility
-      const specialtiesSource = user.user_metadata.specialties || user.user_metadata.specialization;
-      
-      if (specialtiesSource) {
-        if (Array.isArray(specialtiesSource)) {
-          specialties = specialtiesSource;
-        } else if (typeof specialtiesSource === 'string') {
-          specialties = specialtiesSource
-            .split(',')
-            .map((s: string) => s.trim())
-            .filter(Boolean);
-        }
-      }
-      
-      setSelectedSpecializations(specialties);
-      
-      // Then set the form data
-      const userData = {
-        first_name: user.user_metadata.first_name || '',
-        last_name: user.user_metadata.last_name || '',
-        bio: user.user_metadata.bio || '',
-        phone: user.user_metadata.phone || '',
-        location: user.user_metadata.location || '',
-        website: user.user_metadata.website || '',
-        specialties: specialties, // Use the processed specialties
-        experience: user.user_metadata.experience || 0,
-        hourly_rate: user.user_metadata.hourly_rate || 0,
-        languages: user.user_metadata.languages || [],
-        education: user.user_metadata.education || '',
-        bar_association_number: user.user_metadata.bar_association_number || '',
-        zoom_link: user.user_metadata.zoom_link || '',
-        avatar_url: user.user_metadata.avatar_url || ''
-      };
-      
-      setFormData(userData);
+    const completion = calculateProfileCompletionPercentage(formData);
+    setProfileCompletion(completion);
+    console.log('Profile completion updated:', completion, '%');
+  }, [formData, calculateProfileCompletionPercentage]);
+
+  useEffect(() => {
+    if (user) {
+      console.log('User metadata:', user.user_metadata);
+      const initialData = initializeFormData(user.user_metadata);
+      console.log('Initializing form data:', initialData);
+      setFormData({
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        bio: initialData.bio || '',
+        phone: initialData.phone || '',
+        location: initialData.location || '',
+        website: initialData.website || '',
+        specialties: initialData.specialties || [],
+        experience: initialData.experience || 0,
+        hourly_rate: initialData.hourly_rate || 0,
+        languages: initialData.languages || [],
+        education: initialData.education || '',
+        university: initialData.university || '',
+        bar_association_number: initialData.bar_association_number || '',
+        rut: initialData.rut || '',
+        pjud_verified: initialData.pjud_verified || false,
+        zoom_link: initialData.zoom_link || '',
+        avatar_url: initialData.avatar_url || ''
+      });
+      setSelectedSpecializations(initialData.specialties || []);
     }
   }, [user]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    setFormData(prev => {
-      // Handle empty strings
-      const newValue = value === '' ? '' : value;
-      
-      // For URL fields, add https:// if missing and not empty
-      if ((name === 'website' || name === 'zoom_link') && newValue && !newValue.match(/^https?:\/\//)) {
-        return {
-          ...prev,
-          [name]: `https://${newValue}`
-        };
-      }
-      
-      return {
-        ...prev,
-        [name]: newValue
-      };
-    });
-    
-    setHasChanges(true);
-  };
-
-  const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value === '' ? 0 : Number(value) || 0
-    }));
-    setHasChanges(true);
-  };
-
-  const toggleSpecialization = (spec: string) => {
-    const newSpecializations = selectedSpecializations.includes(spec)
-      ? selectedSpecializations.filter(s => s !== spec)
-      : [...selectedSpecializations, spec];
-    
-    // Update both states to keep them in sync
-    setSelectedSpecializations(newSpecializations);
-    setFormData(prev => ({
-      ...prev,
-      specialties: newSpecializations
-    }));
-    setHasChanges(true);
-    
-    // Force a re-render to update the UI
-    setForceUpdate(prev => !prev);
-  };
-  
-  // Add a force update state to ensure UI updates
-  const [, setForceUpdate] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    
-    setIsSaving(true);
-    setError(null);
-    
-    try {
-      // Prepare the data to update with default values
-      const updateData: any = {
-        first_name: formData.first_name || null,
-        last_name: formData.last_name || null,
-        bio: formData.bio || null,
-        phone: formData.phone || null,
-        location: formData.location || null,
-        website: formData.website || null,
-        // Send both formats for backward compatibility
-        specialties: selectedSpecializations.length > 0 ? selectedSpecializations : [],
-        specialization: selectedSpecializations.length > 0 ? selectedSpecializations.join(', ') : null,
-        experience: typeof formData.experience === 'number' ? formData.experience : 0,
-        hourly_rate: typeof formData.hourly_rate === 'number' ? formData.hourly_rate : 0,
-        languages: Array.isArray(formData.languages) ? formData.languages : [],
-        education: formData.education || null,
-        bar_association_number: formData.bar_association_number || null,
-        zoom_link: formData.zoom_link || null,
-        avatar_url: formData.avatar_url || null,
-        updated_at: new Date().toISOString()
-      };
-      
-      // Clean up data - remove any undefined or null values that might cause issues
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key as keyof typeof updateData] === undefined) {
-          updateData[key as keyof typeof updateData] = null as any;
-        }
+  // Handle cancel button click
+  const handleCancel = () => {
+    if (user?.user_metadata) {
+      const initialData = initializeFormData(user.user_metadata);
+      setFormData({
+        first_name: initialData.first_name || '',
+        last_name: initialData.last_name || '',
+        bio: initialData.bio || '',
+        phone: initialData.phone || '',
+        location: initialData.location || '',
+        website: initialData.website || '',
+        specialties: initialData.specialties || [],
+        experience: initialData.experience || 0,
+        hourly_rate: initialData.hourly_rate || 0,
+        languages: initialData.languages || [],
+        education: initialData.education || '',
+        university: initialData.university || '',
+        bar_association_number: initialData.bar_association_number || '',
+        rut: initialData.rut || '',
+        pjud_verified: initialData.pjud_verified || false,
+        zoom_link: initialData.zoom_link || '',
+        avatar_url: initialData.avatar_url || ''
       });
+      setSelectedSpecializations(initialData.specialties || []);
+    }
+    setIsEditing(false);
+    setError(null);
+  };
+
+  // Toggle edit mode
+  const toggleEditMode = () => {
+    if (isEditing) {
+      // If canceling edit, reset form to original values
+      if (user?.user_metadata) {
+        const initialData = initializeFormData(user.user_metadata);
+        setFormData({
+          first_name: initialData.first_name || '',
+          last_name: initialData.last_name || '',
+          bio: initialData.bio || '',
+          phone: initialData.phone || '',
+          location: initialData.location || '',
+          website: initialData.website || '',
+          specialties: initialData.specialties || [],
+          experience: initialData.experience || 0,
+          hourly_rate: initialData.hourly_rate || 0,
+          languages: initialData.languages || [],
+          education: initialData.education || '',
+          bar_association_number: initialData.bar_association_number || '',
+          rut: initialData.rut || '',
+          pjud_verified: initialData.pjud_verified || false,
+          zoom_link: initialData.zoom_link || '',
+          avatar_url: initialData.avatar_url || ''
+        });
+      }
+    }
+    setIsEditing(!isEditing);
+  };
+
+  // Handle save button click
+  const handleSave = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      setError(null);
+      console.log('Saving form data:', formData);
+      // Prepare the update data with only fields that exist in the database
+      const updateData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        bio: formData.bio,
+        phone: formData.phone,
+        location: formData.location,
+        website: formData.website,
+        specialties: selectedSpecializations,
+        experience_years: formData.experience ? Number(formData.experience) : null,
+        hourly_rate_clp: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+        languages: formData.languages || [],
+        education: formData.education || '',
+        university: formData.university || null,
+        study_start_year: formData.study_start_year ? Number(formData.study_start_year) : null,
+        study_end_year: formData.study_end_year ? Number(formData.study_end_year) : null,
+        bar_association_number: formData.bar_association_number || null,
+        rut: formData.rut || null,
+        pjud_verified: formData.pjud_verified || false,
+        zoom_link: formData.zoom_link || null,
+        avatar_url: formData.avatar_url || null
+      };
+      console.log('Update data being sent to API:', updateData);
+
+      console.log('Updating profile with data:', updateData);
       
       await updateProfile(updateData);
       
       // Update local state
-      if (user.user_metadata) {
-        user.user_metadata = {
-          ...user.user_metadata,
-          ...updateData,
-          specialties: selectedSpecializations
-        };
-      }
+      setHasChanges(false);
+      setIsEditing(false);
       
       toast({
         title: 'Perfil actualizado',
         description: 'Tus cambios se han guardado correctamente.',
+        variant: 'default'
       });
       
-      setHasChanges(false);
-      setIsEditing(false);
     } catch (error) {
-      setError('Ocurrió un error al actualizar el perfil. Por favor, inténtalo de nuevo.');
+      console.error('Error updating profile:', error);
+      setError(error instanceof Error ? error.message : 'Error al actualizar el perfil');
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [formData, selectedSpecializations, updateProfile, toast]);
 
-  const handleCancel = () => {
-    if (user?.user_metadata) {
-      setFormData({
-        first_name: user.user_metadata.first_name || '',
-        last_name: user.user_metadata.last_name || '',
-        bio: user.user_metadata.bio || '',
-        phone: user.user_metadata.phone || '',
-        location: user.user_metadata.location || '',
-        website: user.user_metadata.website || '',
-        specialization: user.user_metadata.specialization || '',
-        experience: user.user_metadata.experience || 0,
-        hourly_rate: user.user_metadata.hourly_rate || 0,
-        languages: user.user_metadata.languages || [],
-        education: user.user_metadata.education || '',
-        bar_association_number: user.user_metadata.bar_association_number || '',
-        zoom_link: user.user_metadata.zoom_link || ''
-      });
-      
-      if (user.user_metadata.specialization) {
-        setSelectedSpecializations(
-          user.user_metadata.specialization
-            .split(',')
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        );
-      } else {
-        setSelectedSpecializations([]);
+  // Auto-save when profile is 100% complete
+  useEffect(() => {
+    const autoSave = async () => {
+      if (profileCompletion === 100 && hasChanges && isEditing) {
+        await handleSave();
       }
-    }
+    };
+    autoSave();
+  }, [isEditing, profileCompletion, hasChanges, handleSave]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSaving) return; // Prevent multiple submissions
     
-    setHasChanges(false);
-    setIsEditing(false);
+    try {
+      await handleSave();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setError(error instanceof Error ? error.message : 'Error al guardar el perfil');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -304,13 +631,13 @@ export default function LawyerProfilePage() {
                 </a>
               </Button>
               <Button 
-                onClick={() => setIsEditing(true)}
+                onClick={toggleEditMode}
                 variant="default"
                 type="button"
                 className="bg-black text-white hover:bg-gray-800"
               >
                 <Edit className="mr-2 h-4 w-4" />
-                Editar perfil
+                {isEditing ? 'Cancelar' : 'Editar perfil'}
               </Button>
             </div>
           ) : (
@@ -345,54 +672,80 @@ export default function LawyerProfilePage() {
           )}
         </div>
 
-        {/* Personal Information */}
-        <Card>
+      {/* Profile Status */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle className="text-lg">Estado de tu Perfil</CardTitle>
+              <CardDescription className="text-sm">
+                Un perfil completo te ayuda a ser más visible para los clientes.
+              </CardDescription>
+            </div>
+            <div className="w-full md:w-2/3">
+              <ProfileCompletion completion={profileCompletion} />
+              
+              {showCompletionAlert && profileCompletion < 100 && (
+                <Alert className="mt-4 bg-blue-50 border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-700" />
+                  <AlertDescription className="text-sm text-blue-800">
+                    Completa tu perfil para mejorar tu visibilidad y atraer más clientes potenciales.
+                  </AlertDescription>
+                  <button 
+                    onClick={() => setShowCompletionAlert(false)}
+                    className="absolute right-2 top-2 text-blue-500 hover:text-blue-700"
+                    aria-label="Cerrar"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </Alert>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Personal Information */}
+      <Card>
           <CardHeader>
             <CardTitle>Información Personal</CardTitle>
-            <CardDescription>
-              Tu información personal y de contacto
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-col items-center md:items-start md:flex-row md:space-x-8 space-y-6 md:space-y-0">
-              <div className="flex-shrink-0 w-56 flex flex-col items-center">
-                <div className="w-24 h-24">
-                  <ProfileAvatarUpload 
-                    avatarUrl={formData.avatar_url || user?.user_metadata?.avatar_url || null}
-                    onUpload={(url) => {
-                      if (user) {
-                        // Update the user metadata
-                        const updatedMetadata = {
-                          ...user.user_metadata,
-                          avatar_url: url
-                        };
-                        
-                        // @ts-ignore - Supabase types don't include this property
-                        user.user_metadata = updatedMetadata;
-                        
-                        // Update the form data to trigger the save button
-                        setFormData(prev => {
-                          const updated = {
-                            ...prev,
-                            avatar_url: url
-                          };
-                          return updated;
-                        });
-                        
-                        // Enable the save button
-                        setHasChanges(true);
-                        
-                        // Show success message
-                        toast({
-                          title: '¡Éxito!',
-                          description: 'La foto de perfil se ha subido correctamente. No olvides guardar los cambios.',
-                        });
-                      } else {
-                        console.error('No user object available when updating avatar');
-                      }
-                    }}
-                    disabled={!isEditing}
-                  />
+        <CardContent className="space-y-6">
+          <div className="flex flex-col items-center md:items-start md:flex-row md:space-x-8 space-y-6 md:space-y-0">
+            <div className="flex-shrink-0 w-56 flex flex-col items-center">
+              <div className="w-24 h-24">
+                <ProfileAvatarUpload 
+                  avatarUrl={formData.avatar_url || user?.user_metadata?.avatar_url || null}
+                  onUpload={(url) => {
+                    if (user) {
+                      // Update the user metadata
+                      const updatedMetadata = {
+                        ...user.user_metadata,
+                        avatar_url: url
+                      };
+                      
+                      // @ts-expect-error - Supabase types don't include this property
+                      user.user_metadata = updatedMetadata;
+                      
+                      // Update the form data to trigger the save button
+                      setFormData(prev => ({
+                        ...prev,
+                        avatar_url: url
+                      }));
+                      
+                      setHasChanges(true);
+                      
+                      // Show success message
+                      toast({
+                        title: '¡Éxito!',
+                        description: 'La foto de perfil se ha subido correctamente. No olvides guardar los cambios.',
+                      });
+                    } else {
+                      console.error('No user object available when updating avatar');
+                    }
+                  }}
+                  disabled={!isEditing}
+                />
                 </div>
               </div>
               
@@ -464,40 +817,107 @@ export default function LawyerProfilePage() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="website">Sitio Web</Label>
-                  <div className="relative">
-                    <Input
-                      id="website"
-                      name="website"
-                      type="text"
-                      value={formData.website || ''}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
-                      placeholder="tusitio.com"
-                      className="pr-8"
-                    />
-                    {formData.website && (
-                      <a 
-                        href={formData.website.startsWith('http') ? formData.website : `https://${formData.website}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
-                        title="Abrir enlace"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                          <polyline points="15 3 21 3 21 9"></polyline>
-                          <line x1="10" y1="14" x2="21" y2="3"></line>
-                        </svg>
-                      </a>
-                    )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rut">RUT</Label>
+                    <div className="space-y-2 w-full">
+                      <div className="relative">
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Input
+                              id="rut"
+                              name="rut"
+                              type="text"
+                              value={formData.rut || ''}
+                              onChange={(e) => {
+                                if (rutError) setRutError(null);
+                                handleInputChange(e);
+                              }}
+                              disabled={!isEditing || formData.pjud_verified}
+                              placeholder="12.345.678-9"
+                              className={`w-full ${rutError ? 'border-red-500 pr-10' : ''}`}
+                            />
+                            {verificationStatus === 'success' && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              </div>
+                            )}
+                            {verificationStatus === 'error' && (
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleVerifyRUT}
+                            disabled={isVerifying || !formData.rut || formData.pjud_verified || !isEditing}
+                            className="whitespace-nowrap h-10 px-3"
+                          >
+                            {isVerifying ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                Verificando
+                              </>
+                            ) : formData.pjud_verified ? 'Verificado' : 'Verificar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                      
+                      {/* Error message */}
+                      {rutError && (
+                        <p className="text-xs text-red-500 flex items-start gap-1 mt-1">
+                          <XCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                          <span>{rutError}</span>
+                        </p>
+                      )}
+                      
+                      {/* Success message */}
+                      {formData.pjud_verified && (
+                        <p className="text-xs text-green-600 flex items-start gap-1 mt-1">
+                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                          <span>Verificado con el Poder Judicial de Chile</span>
+                        </p>
+                      )}
+                    </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Sitio Web</Label>
+                    <div className="relative">
+                      <Input
+                        id="website"
+                        name="website"
+                        type="text"
+                        value={formData.website || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        placeholder="tusitio.com"
+                        className="pr-8"
+                      />
+                      {formData.website && (
+                        <a 
+                          href={formData.website.startsWith('http') ? formData.website : `https://${formData.website}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
+                          title="Abrir enlace"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                            <polyline points="15 3 21 3 21 9"></polyline>
+                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                          </svg>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </CardContent>
-        </Card>
+      </Card>
 
         {/* Professional Information */}
         <Card>
@@ -598,48 +1018,145 @@ export default function LawyerProfilePage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="education">Formación Académica</Label>
-              <Textarea
-                id="education"
-                name="education"
-                value={formData.education || ''}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                placeholder="Títulos y certificaciones"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="languages">Idiomas</Label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground">
-                  <Languages className="h-4 w-4" />
-                </span>
-                <Input
-                  id="languages"
-                  name="languages"
-                  value={formData.languages.join(', ') || ''}
-                  onChange={(e) => {
-                    const languages = e.target.value.split(',').map(lang => lang.trim());
-                    setFormData(prev => ({
-                      ...prev,
-                      languages: languages.filter(lang => lang !== '')
-                    }));
-                    setHasChanges(true);
-                  }}
-                  disabled={!isEditing}
-                  placeholder="Español, Inglés, Francés..."
-                  className="rounded-l-none"
-                />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="education">Título Profesional</Label>
+                {!isEditing ? (
+                  <div className="p-2 border rounded-md bg-gray-50">
+                    <p className="text-sm">
+                      {formData.education || 'No especificado'}
+                      {formData.university && (
+                        <span className="block text-muted-foreground">
+                          {formData.university}
+                        </span>
+                      )}
+                      {(formData.study_start_year || formData.study_end_year) && (
+                        <span className="block text-muted-foreground text-sm">
+                          {formData.study_start_year} - {formData.study_end_year || 'Presente'}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      id="education"
+                      name="education"
+                      value={formData.education || ''}
+                      onChange={handleInputChange}
+                      placeholder="Ej: Abogado, Licenciado en Derecho"
+                    />
+                  </div>
+                )}
               </div>
+              {isEditing && (
+                <div className="space-y-2">
+                  <Label htmlFor="university">Universidad</Label>
+                  <select
+                    id="university"
+                    name="university"
+                    value={formData.university || ''}
+                    onChange={handleInputChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Selecciona tu universidad</option>
+                    <option value="Universidad de Chile">Universidad de Chile</option>
+                    <option value="Pontificia Universidad Católica de Chile">Pontificia Universidad Católica de Chile</option>
+                    <option value="Universidad de Concepción">Universidad de Concepción</option>
+                    <option value="Universidad de Valparaíso">Universidad de Valparaíso</option>
+                    <option value="Universidad Católica de Valparaíso">Universidad Católica de Valparaíso</option>
+                    <option value="Universidad de Santiago de Chile">Universidad de Santiago de Chile</option>
+                    <option value="Universidad Diego Portales">Universidad Diego Portales</option>
+                    <option value="Universidad Adolfo Ibáñez">Universidad Adolfo Ibáñez</option>
+                    <option value="Universidad de Talca">Universidad de Talca</option>
+                    <option value="Universidad Austral de Chile">Universidad Austral de Chile</option>
+                    <option value="Universidad Católica del Norte">Universidad Católica del Norte</option>
+                    <option value="Universidad de La Frontera">Universidad de La Frontera</option>
+                    <option value="Universidad Católica de la Santísima Concepción">Universidad Católica de la Santísima Concepción</option>
+                    <option value="Universidad de Los Andes">Universidad de Los Andes</option>
+                    <option value="Universidad del Desarrollo">Universidad del Desarrollo</option>
+                    <option value="Universidad Finis Terrae">Universidad Finis Terrae</option>
+                    <option value="Universidad Andrés Bello">Universidad Andrés Bello</option>
+                    <option value="Universidad Alberto Hurtado">Universidad Alberto Hurtado</option>
+                    <option value="Universidad de Los Lagos">Universidad de Los Lagos</option>
+                    <option value="Universidad de Antofagasta">Universidad de Antofagasta</option>
+                    <option value="Otra universidad">Otra universidad (especificar en la biografía)</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="study_start_year">Año de ingreso</Label>
+                  <Input
+                    id="study_start_year"
+                    name="study_start_year"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear()}
+                    value={formData.study_start_year || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        study_start_year: value
+                      }));
+                      setHasChanges(true);
+                    }}
+                    disabled={!isEditing}
+                    placeholder="Año de inicio"
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="study_end_year">Año de egreso</Label>
+                  <Input
+                    id="study_end_year"
+                    name="study_end_year"
+                    type="number"
+                    min="1950"
+                    max={new Date().getFullYear() + 10}
+                    value={formData.study_end_year || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        study_end_year: value
+                      }));
+                      setHasChanges(true);
+                    }}
+                    disabled={!isEditing}
+                    placeholder="Año de egreso"
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Idiomas</Label>
+                <div className="flex">
+                  <Input
+                    value={formData.languages.join(', ')}
+                    onChange={(e) => {
+                      const languages = e.target.value.split(',').map(lang => lang.trim());
+                      setFormData(prev => ({
+                        ...prev,
+                        languages: languages.filter(lang => lang !== '')
+                      }));
+                      setHasChanges(true);
+                    }}
+                    disabled={!isEditing}
+                    placeholder="Español, Inglés, Francés..."
+                    className="rounded-r-none"
+                  />
+                </div>
               <p className="text-xs text-muted-foreground">
                 Separa los idiomas con comas
               </p>
             </div>
+          </div>
 
-            <div className="space-y-2">
+          <div className="space-y-2">
               <Label htmlFor="zoom_link">Enlace de Zoom para Consultas</Label>
               <div className="relative">
                 <Input
@@ -674,83 +1191,62 @@ export default function LawyerProfilePage() {
             </div>
           </CardContent>
         </Card>
+        
+        <div className="flex justify-end space-x-2 pt-4">
+          {!isEditing ? (
+            <div className="flex space-x-2">
+              <Button 
+                asChild 
+                variant="outline"
+                type="button"
+              >
+                <a href={`/lawyer/${user?.id}`} target="_blank" rel="noopener noreferrer">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Ver perfil
+                </a>
+              </Button>
+              <Button 
+                onClick={() => setIsEditing(true)}
+                variant="default"
+                type="button"
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Editar perfil
+              </Button>
+            </div>
+          ) : (
+            <div className="space-x-2">
+              <Button 
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isSaving}
+                type="button"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSaving || !hasChanges}
+                className="min-w-[120px]"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Guardar cambios
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
       </form>
-
-      {/* Payments Setup (Stripe Connect) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Pagos</CardTitle>
-          <CardDescription>
-            Conecta tu cuenta con Stripe para recibir pagos automáticamente. Necesitas completar este paso para habilitar el botón "Solicitar servicio" en tu perfil público.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            onClick={async () => {
-              try {
-                setIsStripeLoading(true);
-                
-                // Prepare the request
-                const requestBody = {
-                  returnUrl: `${window.location.origin}/lawyer/profile`,
-                  refreshUrl: `${window.location.origin}/lawyer/profile`,
-                };
-
-                // Get the current session
-                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-                
-                if (sessionError || !session?.access_token) {
-                  throw new Error('No se pudo obtener la sesión. Por favor inicia sesión nuevamente.');
-                }
-                
-                // Call the create-connect-account function
-                const response = await fetch(
-                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-connect-account`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${session.access_token}`,
-                    },
-                    body: JSON.stringify({
-                      return_url: requestBody.returnUrl,
-                      refresh_url: requestBody.refreshUrl
-                    }),
-                  }
-                );
-
-                if (!response.ok) {
-                  const errorData = await response.json();
-                  throw new Error(errorData.error || 'Failed to connect with Stripe');
-                }
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                  throw new Error(data.error || 'Error al conectar con Stripe');
-                }
-                
-                if (data.url) {
-                  window.location.href = data.url;
-                } else {
-                  throw new Error('No se pudo obtener la URL de onboarding de Stripe');
-                }
-              } catch (e: any) {
-                toast({
-                  title: 'Error',
-                  description: e?.message || e?.error?.message || 'No se pudo iniciar el onboarding de Stripe.',
-                  variant: 'destructive',
-                });
-              } finally {
-                setIsStripeLoading(false);
-              }
-            }}
-            disabled={isStripeLoading}
-          >
-            {isStripeLoading ? 'Abriendo Stripe…' : 'Configurar pagos con Stripe'}
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
