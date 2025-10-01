@@ -1,0 +1,30 @@
+[functions.verify-lawyer]
+  # Enable the function
+  enabled = true
+  
+  # Set the function timeout to 60 seconds (maximum allowed)
+  timeout_seconds = 60
+  
+  # Set the memory limit to 1GB (maximum allowed)
+  memory_mb = 1024
+  
+  # Enable the function to access the internet
+  allow_net = true
+  
+  # Allow the function to access environment variables
+  allow_env = true
+  
+  # Allow the function to read files
+  allow_read = true
+  
+  # Allow the function to write files
+  allow_write = true
+  
+  # Allow the function to run subprocesses
+  allow_run = true
+  
+  # Allow the function to load dynamic libraries
+  allow_ffi = true
+  
+  # Enable unstable features (required for some Puppeteer functionality)
+  unstable = true

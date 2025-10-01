@@ -8,9 +8,6 @@ export interface Payment {
   lawyer_amount: number; // in cents
   currency: string;
   status: 'pending' | 'succeeded' | 'failed' | 'refunded' | 'disputed';
-  stripe_payment_intent_id?: string;
-  stripe_transfer_id?: string;
-  transfer_status?: string;
   metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;

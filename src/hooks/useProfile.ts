@@ -28,12 +28,9 @@ export interface Profile {
   specialties: string[] | null;
   hourly_rate_clp: number | null;
   
-  // Stripe Connect fields
-  stripe_account_id: string | null;
-  stripe_account_status: 'unverified' | 'pending' | 'verified' | 'rejected';
-  stripe_charges_enabled: boolean;
-  stripe_payouts_enabled: boolean;
-  stripe_dashboard_url: string | null;
+  // Payment fields
+  payment_method: string | null;
+  payment_status: 'unverified' | 'pending' | 'verified' | 'rejected';
   
   // Profile metadata
   response_time: string | null;
@@ -105,11 +102,8 @@ interface DatabaseProfile {
   role: 'client' | 'lawyer';
   specialties: string[] | null;
   hourly_rate_clp: number | null;
-  stripe_account_id?: string | null;
-  stripe_account_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
-  stripe_charges_enabled?: boolean;
-  stripe_payouts_enabled?: boolean;
-  stripe_dashboard_url?: string | null;
+  payment_method?: string | null;
+  payment_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
   visibility_settings?: {
     profile_visible: boolean;
     show_online_status: boolean;
@@ -223,12 +217,7 @@ export function useProfile(userId?: string) {
         specialties: data.specialties || null,
         hourly_rate_clp: data.hourly_rate_clp || null,
         
-        // Stripe fields
-        stripe_account_id: data.stripe_account_id || null,
-        stripe_account_status: data.stripe_account_status || 'unverified',
-        stripe_charges_enabled: data.stripe_charges_enabled || false,
-        stripe_payouts_enabled: data.stripe_payouts_enabled || false,
-        stripe_dashboard_url: data.stripe_dashboard_url || null,
+        // Payment fields
         
         // Profile metadata
         response_time: data.response_time || null,
@@ -317,11 +306,6 @@ export function useProfile(userId?: string) {
       const updatedProfile: Profile = {
         ...data,
         role: data.role || 'client',
-        stripe_account_id: data.stripe_account_id ?? null,
-        stripe_account_status: data.stripe_account_status ?? 'unverified',
-        stripe_charges_enabled: data.stripe_charges_enabled ?? false,
-        stripe_payouts_enabled: data.stripe_payouts_enabled ?? false,
-        stripe_dashboard_url: data.stripe_dashboard_url ?? null,
         visibility_settings: data.visibility_settings ?? {
           profile_visible: true,
           show_online_status: true,

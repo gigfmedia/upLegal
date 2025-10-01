@@ -139,7 +139,6 @@ export interface AppointmentData {
   meeting_link?: string;
   price: number;
   notes?: string;
-  stripe_payment_intent_id?: string;
   created_at: string;
   updated_at: string;
 }

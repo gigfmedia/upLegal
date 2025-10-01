@@ -1,0 +1,7 @@
+[verify-lawyer]
+import_map = []
+
+[functions.verify-lawyer]
+verify_jwt = true
+# Uncomment and set to true when ready to use the real PJUD API
+# import_map = ["import_map.json"]

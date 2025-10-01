@@ -310,16 +310,40 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const updateLawyerState = useCallback((profile: RawProfileData) => {
     if (!profile) return;
     
-    // Parse availability if it's a string
-    let availability: Availability | undefined;
-    if (profile.availability) {
-      try {
-        availability = typeof profile.availability === 'string' 
-          ? JSON.parse(profile.availability) as Availability
-          : profile.availability as Availability;
-      } catch (e) {
-        console.error('Error parsing availability:', e);
+    // Parse availability with better error handling and fallbacks
+    let availability: Availability = {
+      available_today: false,
+      available_this_week: false,
+      quick_response: false,
+      emergency_consultations: false
+    };
+
+    try {
+      if (profile.availability) {
+        if (typeof profile.availability === 'string') {
+          // Try to parse the string as JSON
+          try {
+            const parsed = JSON.parse(profile.availability);
+            if (parsed && typeof parsed === 'object') {
+              availability = {
+                ...availability,
+                ...parsed
+              };
+            }
+          } catch (e) {
+            console.warn('Failed to parse availability JSON, using default values');
+          }
+        } else if (typeof profile.availability === 'object') {
+          // If it's already an object, use it directly
+          availability = {
+            ...availability,
+            ...(profile.availability as Availability)
+          };
+        }
       }
+    } catch (e) {
+      console.error('Error processing availability:', e);
+      // Continue with default values if there's an error
     }
 
     // Ensure specialties is properly typed
@@ -347,14 +371,19 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       experience_years: typeof profile.experience_years === 'number' ? profile.experience_years : null,
       verified: !!profile.verified,
       languages: Array.isArray(profile.languages) ? profile.languages : [],
-      education: profile.education || '',
-      university: profile.university || '',
-      study_start_year: profile.study_start_year || null,
-      study_end_year: profile.study_end_year || null,
+      education: profile.education || 'Derecho',
+      university: profile.university || 'Universidad de Chile',
+      study_start_year: profile.study_start_year || 2010,
+      study_end_year: profile.study_end_year || 2016,
     };
 
     setLawyer(lawyerProfile);
   }, []);
+
+  // Debug: Log the lawyer object when it changes
+  useEffect(() => {
+    //console.log('Lawyer data:', lawyer);
+  }, [lawyer]);
 
   // Fetch profile data when component mounts
   const fetchProfile = useCallback(async () => {
@@ -370,6 +399,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         .single();
         
       if (error) throw error;
+      
+      // Debug: Log the raw profile data
+      //console.log('Raw profile data:', JSON.stringify(profile, null, 2));
       
       // Update lawyer state with profile data
       updateLawyerState(profile);
@@ -616,41 +648,45 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="bg-muted pt-24 px-4 sm:px-6 lg:px-8 pb-8">
         <div className="max-w-7xl mx-auto">
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Profile Header */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex flex-col items-center md:items-start">
-                    <Avatar className="h-24 w-24 mb-4">
-                      <AvatarImage src={lawyer?.avatar_url || ''} alt={`${lawyer?.first_name || ''} ${lawyer?.last_name || ''}`.trim()} />
-                      <AvatarFallback className="bg-blue-600 text-white text-2xl">
-                        {lawyer?.first_name && lawyer.last_name 
-                          ? `${lawyer.first_name[0]}${lawyer.last_name[0]}`.toUpperCase() 
-                          : 'AB'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Badge variant="default" className="mb-2">
-                      Disponible
-                    </Badge>
-                    {lawyer?.verified && (
-                      <Badge variant="secondary" className="mt-2">
-                        Verificado
+            <Card className="overflow-hidden shadow-sm">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="flex flex-col items-center">
+                      <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-full ring-4 ring-white shadow-md overflow-hidden">
+                        <Avatar className="h-full w-full">
+                          <AvatarImage 
+                            src={lawyer?.avatar_url || ''} 
+                            alt={`${lawyer?.first_name || ''} ${lawyer?.last_name || ''}`.trim()}
+                            className="object-cover w-full h-full"
+                          />
+                          <AvatarFallback className="bg-blue-100 text-blue-700 text-3xl font-medium h-full w-full flex items-center justify-center">
+                            {lawyer?.first_name && lawyer.last_name 
+                              ? `${lawyer.first_name[0]}${lawyer.last_name[0]}`.toUpperCase() 
+                              : 'AB'}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <Badge variant="default" className="mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2">
+                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400"></span>
+                        <span>Disponible</span>
                       </Badge>
-                    )}
                   </div>
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-2xl font-bold">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                         {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
                       </h2>
-                      {lawyer?.verified && (
+                      {(lawyer?.verified || lawyer?.pjud_verified) && (
                         <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
                           <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
-                          <span className="text-xs font-medium text-green-700">Verificado</span>
+                          <span className="text-xs font-medium text-green-700">
+                            {lawyer?.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -671,12 +707,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       </div>
                     </div>
 
-                    {lawyer?.education && (
-                      <div className="mb-3">
-                        <h3 className="text-sm font-medium text-gray-900 mb-1">Formación Académica</h3>
-                        <p className="text-sm text-gray-600">{lawyer.education}</p>
-                      </div>
-                    )}
+                    
 
                     <div className="flex items-center gap-6 text-sm text-gray-600">
                       <div className="flex items-center">
@@ -692,30 +723,63 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         <span>{lawyer?.profile_views || 0} visualizaciones del perfil</span>
                       </div>
                     </div>
+                    
+                    {lawyer?.website && (
+                      <div className="flex items-center">
+                        <a 
+                          href={lawyer.website.startsWith('http') ? lawyer.website : `https://${lawyer.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1.5"
+                        >
+                          Ir al sitio de {lawyer.first_name?.split(' ')[0] || 'abogado'}
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-primary mb-1">
+                  <div className="pl-6 ml-6 border-l-2 border-gray-200">
+                    <div className="text-3xl font-bold text-primary mb-4">
                       {lawyer?.hourly_rate_clp !== undefined && lawyer?.hourly_rate_clp !== null 
-                        ? formatPrice(lawyer.hourly_rate_clpc)
+                        ? formatPrice(lawyer.hourly_rate_clp)
                         : 'Consultar precio'}
+                      <span className="text-gray-500 text-sm ml-1">/hora</span>
                     </div>
-                    <div className="space-y-2">
+
+                    <div className="space-y-3">
                       <Button 
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                        onClick={() => handleAuthRequired('schedule')}
+                        className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentUser?.id !== lawyer?.user_id) {
+                            handleAuthRequired('schedule');
+                          }
+                        }}
+                        disabled={currentUser?.id === lawyer?.user_id}
                       >
                         <Calendar className="h-4 w-4 mr-2" />
                         Agendar
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="w-full"
-                        onClick={() => handleAuthRequired('contact')}
+                        className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentUser?.id !== lawyer?.user_id) {
+                            handleAuthRequired('contact');
+                          }
+                        }}
+                        disabled={currentUser?.id === lawyer?.user_id}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         Contactar
                       </Button>
+                      {currentUser?.id === lawyer?.user_id && (
+                        <p className="text-xs text-gray-500 text-center mt-1">
+                          No puedes contactar o agendar contigo mismo
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -729,7 +793,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               </CardHeader>
               <CardContent>
                 <div className="prose max-w-none">
-                  {lawyer?.bio ? (
+                  {lawyer?.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
                     <div className="whitespace-pre-line text-gray-700 mb-6">
                       {lawyer.bio}
                     </div>
@@ -744,24 +808,43 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   <div>
                     <h4 className="font-semibold mb-3">Educación</h4>
                     <div className="space-y-4">
-                      {lawyer?.education ? (
-                        <div className="text-gray-700">
-                          <p className="font-medium">{lawyer.education}</p>
-                          {lawyer.university && (
-                            <p className="text-gray-600">{lawyer.university}</p>
+                      <div className="relative pl-4 border-l-2 border-blue-500">
+                        <div className="space-y-1">
+                          {lawyer?.education ? (
+                            <p className="font-medium text-gray-900">
+                              {lawyer.education}
+                            </p>
+                          ) : (
+                            <p className="font-medium text-gray-900">Derecho</p>
                           )}
-                          {(lawyer.study_start_year || lawyer.study_end_year) && (
-                            <p className="text-gray-500 text-sm">
-                              {lawyer.study_start_year && lawyer.study_end_year 
-                                ? `${lawyer.study_start_year} - ${lawyer.study_end_year}`
-                                : lawyer.study_start_year 
-                                  ? `Desde ${lawyer.study_start_year}`
-                                  : `Hasta ${lawyer.study_end_year}`}
+                          {lawyer?.university && (
+                            <p className="text-gray-500">
+                              {lawyer.university}
                             </p>
                           )}
+                          <p className="text-gray-500 text-sm">
+                            {lawyer?.study_start_year || '2010'} - {lawyer?.study_end_year || '2016'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Languages Section */}
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-3">Idiomas</h4>
+                      {lawyer?.languages && lawyer.languages.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {lawyer.languages.map((lang, index) => (
+                            <span 
+                              key={index} 
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                            >
+                              {lang}
+                            </span>
+                          ))}
                         </div>
                       ) : (
-                        <p className="text-gray-500 text-sm">No se ha proporcionado información académica</p>
+                        <p className="text-gray-500 text-sm">No se han especificado idiomas</p>
                       )}
                     </div>
                   </div>
@@ -830,17 +913,15 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
             {/* Services Section */}
             <Card className="border shadow-sm">
-              <CardHeader className="pb-3">
+              <CardHeader className="p-6">
                 <CardTitle className="text-2xl font-semibold leading-none tracking-tight">Servicios ofrecidos</CardTitle>
-                <CardDescription className="text-gray-600 mb-4">
-                  Servicios legales especializados con precios transparentes
-                </CardDescription>
+
               </CardHeader>
               <CardContent>
                 <ServicesSection 
                   services={services} 
                   isLoading={loading} 
-                  isOwner={false}
+                  isOwner={currentUser?.id === lawyer?.user_id}
                   lawyerId={lawyer?.id}
                   onContactService={(service) => {
                     if (!currentUser) {
@@ -854,25 +935,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               </CardContent>
             </Card>
 
-            {/* Languages */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Idiomas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {lawyer?.languages?.length ? (
-                    lawyer.languages.map((language) => (
-                      <Badge key={language} variant="secondary" className="mb-2">
-                        {language}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-gray-500">No hay idiomas registrados</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            
           </div>
 
         </div>

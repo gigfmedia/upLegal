@@ -48,26 +48,11 @@ export const getPaymentById = async (paymentId: string): Promise<PaymentWithDeta
 
 export const updatePaymentStatus = async (
   paymentId: string,
-  status: Payment['status'],
-  stripePaymentIntentId?: string,
-  stripeTransferId?: string,
-  transferStatus?: string
+  status: Payment['status']
 ): Promise<Payment | null> => {
   const updates: Partial<Payment> = {
     status,
     updated_at: new Date().toISOString(),
-  };
-
-  if (stripePaymentIntentId) {
-    updates.stripe_payment_intent_id = stripePaymentIntentId;
-  }
-
-  if (stripeTransferId) {
-    updates.stripe_transfer_id = stripeTransferId;
-  }
-
-  if (transferStatus) {
-    updates.transfer_status = transferStatus;
   }
 
   const { data, error } = await supabase

@@ -1,14 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
 
-const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const VITE_SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Use environment variables with fallbacks for development
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://lgxsfmvyjctxehwslvyw.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxneHNmbXZ5amN0eGVod3Nsdnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTkyMTAsImV4cCI6MjA2ODM3NTIxMH0.s2DoNuKigl_G3erwGeC4oLCC_3UiMQu5KJd0gnnYDeU';
 
-if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY) {
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables');
+  console.log('Current env:', {
+    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY
+  });
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 export const AVATAR_BUCKET = 'avatars';
 

@@ -129,10 +129,11 @@ const LawyerRow = ({ index, style, data }: { index: number, style: React.CSSProp
   if (!lawyer) return null;
 
   return (
-    <div style={style} className="px-2 py-2">
+    <div style={style}>
       <LawyerCard 
         key={lawyer.id}
         lawyer={lawyer}
+        user={user}
         onContactClick={() => {
           if (!user) {
             setAuthMode('login');
@@ -180,9 +181,9 @@ const VirtualizedList = ({
   return (
     <div 
       ref={parentRef}
-      className={`overflow-auto ${className}`}
+      className={`${className}`}
       style={{
-        height: '100%',
+        height: 'auto',
         width: '100%',
       }}
     >
@@ -307,31 +308,37 @@ const SearchResults = () => {
         }, page, currentPageSize);
         
         if (response) {
-          const formattedLawyers = response.lawyers.map(lawyer => ({
-            id: lawyer.id,
-            name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
-            specialties: lawyer.specialties || [],
-            rating: lawyer.rating || 0,
-            reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Ubicación no especificada',
-            cases: 0,
-            hourlyRate: lawyer.hourly_rate_clp || 0,
-            consultationPrice: lawyer.hourly_rate_clp || 0,
-            image: lawyer.avatar_url || '',
-            bio: lawyer.bio || 'Este abogado no ha proporcionado una biografía.',
-            verified: lawyer.verified || false,
-            availability: {
+          console.log('Raw API response:', response);
+          
+          const formattedLawyers = response.lawyers.map(lawyer => {
+            console.log('Lawyer bio:', lawyer.id, lawyer.first_name, lawyer.last_name, 'Bio:', lawyer.bio);
+            return {
+              id: lawyer.id,
+              user_id: lawyer.user_id, // Include the user_id
+              name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
+              specialties: lawyer.specialties || [],
+              rating: lawyer.rating || 0,
+              reviews: lawyer.review_count || 0,
+              location: lawyer.location || 'Ubicación no especificada',
+              cases: 0,
+              hourlyRate: lawyer.hourly_rate_clp || 0,
+              consultationPrice: lawyer.hourly_rate_clp || 0,
+              image: lawyer.avatar_url || '',
+              bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
+              verified: lawyer.verified || false,
+              availability: {
+                availableToday: true,
+                availableThisWeek: true,
+                quickResponse: true,
+                emergencyConsultations: true
+              },
               availableToday: true,
               availableThisWeek: true,
               quickResponse: true,
-              emergencyConsultations: true
-            },
-            availableToday: true,
-            availableThisWeek: true,
-            quickResponse: true,
-            emergencyConsultations: true,
-            experienceYears: lawyer.experience_years || 0
-          }));
+              emergencyConsultations: true,
+              experienceYears: lawyer.experience_years || 0
+            };
+          });
 
           setSearchResult(prev => ({
             lawyers: page === 1 ? formattedLawyers : [...prev.lawyers, ...formattedLawyers],
@@ -583,7 +590,7 @@ const SearchResults = () => {
       />
 
       {/* Contenido principal */}
-      <div className="py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-muted min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Filtros y ordenamiento */}
           <div className="flex justify-end items-center gap-4 mb-6">
@@ -654,7 +661,7 @@ const SearchResults = () => {
               <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : searchResult.lawyers.length > 0 ? (
-            <div className="w-full h-[calc(100vh-250px)]">
+            <div className="w-full">
               <VirtualizedList
                 items={searchResult.lawyers}
                 itemSize={240}

@@ -61,7 +61,7 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     // Only select the fields we need for the card view
     let query = supabase
       .from('profiles')
-      .select('id, first_name, last_name, specialties, rating, review_count, location, avatar_url, hourly_rate_clp, experience_years, verified', 
+      .select('id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified', 
         { count: 'exact' })
       .eq('role', 'lawyer')
       .eq('verified', true)

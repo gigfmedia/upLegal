@@ -9,7 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import type { User } from '@supabase/supabase-js';
+import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 interface FormData {
   bio: string;
@@ -19,6 +21,8 @@ interface FormData {
   education: string;
   barNumber: string;
   languages: string;
+  rut: string;
+  pjud_verified: boolean;
 }
 
 export default function ProfileSetupWizard() {
@@ -72,7 +76,12 @@ export default function ProfileSetupWizard() {
     education: '',
     barNumber: '',
     languages: '',
+    rut: '',
+    pjud_verified: false,
   });
+  
+  const [isVerifyingRut, setIsVerifyingRut] = useState(false);
+  const [rutError, setRutError] = useState<string | null>(null);
 
   const steps = [
     { id: 1, name: 'Información profesional' },
@@ -82,6 +91,51 @@ export default function ProfileSetupWizard() {
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, steps.length));
   const handleBack = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  
+  const handleVerifyRUT = async () => {
+    if (!formData.rut) {
+      setRutError('Por favor ingresa un RUT válido');
+      return;
+    }
+    
+    setIsVerifyingRut(true);
+    setRutError(null);
+    
+    try {
+      const { data, error } = await invokeFunction('verify-lawyer', { rut: formData.rut });
+      
+      if (error) throw new Error(error.message || 'Error al verificar el RUT');
+      if (!data) throw new Error('No se recibió respuesta del servidor de verificación');
+      
+      if (!data.verified) {
+        throw new Error(data.message || 'La verificación del RUT falló');
+      }
+      
+      // Update form data with verification status
+      setFormData(prev => ({
+        ...prev,
+        pjud_verified: true
+      }));
+      
+      toast({
+        title: '¡Verificación exitosa!',
+        description: 'Tu RUT ha sido verificado correctamente.',
+        variant: 'default',
+      });
+      
+    } catch (error) {
+      console.error('Error verifying RUT:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error al verificar el RUT';
+      setRutError(errorMessage);
+      toast({
+        title: 'Error de verificación',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingRut(false);
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -98,6 +152,8 @@ export default function ProfileSetupWizard() {
         bio: formData.bio || '',
         specialties: formData.specialties ? formData.specialties.split(',').map(s => s.trim()).filter(Boolean) : [],
         hourly_rate_clp: Number(formData.hourlyRate) || 0,
+        rut: formData.rut || null,
+        pjud_verified: formData.pjud_verified || false,
         experience_years: Number(formData.experienceYears) || 0,
         education: formData.education || '',
         bar_number: formData.barNumber || '',
@@ -159,6 +215,57 @@ export default function ProfileSetupWizard() {
               />
               <p className="text-sm text-muted-foreground mt-1">Separa las especialidades con comas</p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="rut">RUT</Label>
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    id="rut"
+                    value={formData.rut}
+                    onChange={(e) => {
+                      setFormData({...formData, rut: e.target.value});
+                      if (rutError) setRutError(null);
+                    }}
+                    placeholder="12.345.678-9"
+                    disabled={formData.pjud_verified}
+                    className={rutError ? 'border-red-500 pr-10' : ''}
+                  />
+                  {formData.pjud_verified && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleVerifyRUT}
+                  disabled={isVerifyingRut || !formData.rut || formData.pjud_verified}
+                  className="whitespace-nowrap"
+                >
+                  {isVerifyingRut ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : formData.pjud_verified ? (
+                    'Verificado'
+                  ) : (
+                    'Verificar'
+                  )}
+                </Button>
+              </div>
+              {rutError && (
+                <p className="text-sm text-red-500 flex items-start gap-1">
+                  <XCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>{rutError}</span>
+                </p>
+              )}
+              {formData.pjud_verified && (
+                <p className="text-sm text-green-600 flex items-start gap-1">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Verificado con el Poder Judicial de Chile</span>
+                </p>
+              )}
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="hourlyRate">Tarifa por hora (CLP)</Label>
@@ -238,6 +345,18 @@ export default function ProfileSetupWizard() {
               <div>
                 <h4 className="font-medium">Años de experiencia</h4>
                 <p className="text-sm">{formData.experienceYears || '0'}</p>
+              </div>
+              <div>
+                <h4 className="font-medium">RUT</h4>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm">{formData.rut || 'No proporcionado'}</p>
+                  {formData.pjud_verified && (
+                    <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      <CheckCircle className="h-3 w-3" />
+                      Verificado
+                    </span>
+                  )}
+                </div>
               </div>
               <div>
                 <h4 className="font-medium">Formación académica</h4>

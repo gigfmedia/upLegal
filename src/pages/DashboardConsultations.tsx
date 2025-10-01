@@ -8,9 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
-import { PaymentForm } from '@/components/PaymentForm';
 import { 
   Search, 
   MessageSquare, 
@@ -34,8 +31,6 @@ type ConsultationStatus = typeof CONSULTATION_STATUS[number];
 
 const PRIORITY_LEVELS = ['low', 'medium', 'high'] as const;
 type Priority = typeof PRIORITY_LEVELS[number];
-
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 // Utility function to ensure a string is a valid ConsultationStatus
 function ensureConsultationStatus(status: string): ConsultationStatus {
@@ -75,7 +70,6 @@ interface Consultation {
   messages: number;
   price: number | null;
   isFirstConsultation: boolean;
-  paymentIntentId?: string;
 }
 
 // Mock data
@@ -85,14 +79,14 @@ const mockLawyers: Lawyer[] = [
     name: 'Juan Pérez',
     specialty: 'Derecho Laboral',
     hourlyRate: 50000,
-    image: '/lawyers/juan-perez.jpg'
+    image: '/placeholder-lawyer.jpg'
   },
   {
     id: '2',
     name: 'María González',
     specialty: 'Derecho de Familia',
     hourlyRate: 60000,
-    image: '/lawyers/maria-gonzalez.jpg'
+    image: '/placeholder-lawyer-2.jpg'
   },
   // Add more mock lawyers as needed
 ];
@@ -100,7 +94,7 @@ const mockLawyers: Lawyer[] = [
 const mockConsultations: Omit<Consultation, 'status' | 'priority' | 'isFirstConsultation'>[] = [
   {
     id: '1',
-    title: 'Consulta sobre contrato laboral',
+    title: 'Consulta sobre despido laboral',
     description: 'Necesito asesoría sobre un despido injustificado',
     lawyerId: '1',
     lawyerName: 'Juan Pérez',
@@ -112,8 +106,6 @@ const mockConsultations: Omit<Consultation, 'status' | 'priority' | 'isFirstCons
   },
   // Add more mock consultations as needed
 ];
-
-const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
 export default function DashboardConsultations() {
   const { toast } = useToast();
@@ -140,10 +132,7 @@ export default function DashboardConsultations() {
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState(0);
-  const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
+  const [isCreatingConsultation, setIsCreatingConsultation] = useState(false);
   
   const [newConsultation, setNewConsultation] = useState({
     title: '',
@@ -168,35 +157,16 @@ export default function DashboardConsultations() {
     });
   }, [consultations, searchTerm, statusFilter]);
 
-  // Handle payment success
-  const handlePaymentSuccess = async (paymentIntentId: string) => {
-    try {
-      // Create the consultation after successful payment
-      await createConsultation(paymentIntentId);
-      setShowPaymentForm(false);
-      
-      toast({
-        title: '¡Pago exitoso!',
-        description: 'Tu consulta ha sido creada exitosamente.',
-      });
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al crear la consulta';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    }
-  };
-
   // Create a new consultation
-  const createConsultation = async (paymentIntentId?: string) => {
+  const createConsultation = async (): Promise<Consultation> => {
+    const selectedLawyer = mockLawyers.find(lawyer => lawyer.id === newConsultation.lawyerId);
+    
     if (!selectedLawyer) {
       throw new Error('No se pudo encontrar el abogado seleccionado');
     }
 
     const isFirstConsultation = consultations.length === 0;
-    const consultationPrice = isFirstConsultation ? 0 : selectedLawyer.hourlyRate;
+    const now = new Date().toISOString();
 
     const newConsultationObj: Consultation = {
       id: `cons_${Date.now()}`,
@@ -207,28 +177,16 @@ export default function DashboardConsultations() {
       lawyerId: selectedLawyer.id,
       lawyerName: selectedLawyer.name,
       lawyerSpecialty: selectedLawyer.specialty,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       messages: 0,
-      price: consultationPrice,
-      isFirstConsultation,
-      paymentIntentId
+      price: isFirstConsultation ? 0 : selectedLawyer.hourlyRate,
+      isFirstConsultation
     };
 
-    setConsultations([newConsultationObj, ...consultations]);
-    
-    // Reset form
-    setNewConsultation({
-      title: '',
-      description: '',
-      category: '',
-      priority: 'medium',
-      lawyerId: ''
-    });
-    
-    setSelectedCategory('');
-    setSelectedLawyer(null);
-    setIsNewConsultationOpen(false);
+    // In a real app, you would make an API call here to save the consultation
+    // For now, we'll just return the new consultation object
+    return newConsultationObj;
   };
 
   // Handle creating a new consultation
@@ -241,32 +199,40 @@ export default function DashboardConsultations() {
       });
       return;
     }
-    
-    const lawyer = mockLawyers.find(l => l.id === newConsultation.lawyerId);
-    if (!lawyer) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo encontrar el abogado seleccionado',
-        variant: 'destructive',
-      });
-      return;
-    }
 
-    setSelectedLawyer(lawyer);
-    
-    // First consultation is free
-    const isFirstConsultation = consultations.length === 0;
-    
-    if (isFirstConsultation) {
-      await createConsultation();
+    try {
+      setIsCreatingConsultation(true);
+      
+      // Create the new consultation
+      const newConsultationObj = await createConsultation();
+      
+      // Update the consultations state
+      setConsultations(prev => [newConsultationObj, ...prev]);
+      
+      // Reset form
+      setNewConsultation({
+        title: '',
+        description: '',
+        category: '',
+        priority: 'medium',
+        lawyerId: ''
+      });
+      setSelectedCategory('');
+      setIsNewConsultationOpen(false);
+      
       toast({
         title: '¡Consulta creada!',
-        description: 'Tu primera consulta ha sido creada exitosamente.',
+        description: 'Tu consulta ha sido creada exitosamente.',
       });
-    } else {
-      // Show payment form for non-first consultations
-      setPaymentAmount(lawyer.hourlyRate);
-      setShowPaymentForm(true);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear la consulta';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingConsultation(false);
     }
   };
 
@@ -566,48 +532,19 @@ export default function DashboardConsultations() {
               disabled={
                 !newConsultation.title.trim() || 
                 !newConsultation.description.trim() || 
-                !newConsultation.lawyerId ||
-                isProcessingPayment
+                !newConsultation.lawyerId
               }
             >
-              {isProcessingPayment ? (
+              {isCreatingConsultation ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
+                  Creando...
                 </>
-              ) : consultations.length === 0 ? (
-                'Crear consulta gratis'
               ) : (
-                `Pagar $${mockLawyers.find(l => l.id === newConsultation.lawyerId)?.hourlyRate.toLocaleString('es-CL')}`
+                'Crear consulta'
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Payment Dialog */}
-      <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Pagar por la consulta</DialogTitle>
-            <DialogDescription>
-              Por favor ingresa los datos de tu tarjeta para continuar con el pago.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Elements stripe={stripePromise}>
-            <PaymentForm 
-              amount={paymentAmount}
-              onSuccess={handlePaymentSuccess}
-              onError={(error) => {
-                toast({
-                  title: 'Error en el pago',
-                  description: error,
-                  variant: 'destructive',
-                });
-              }}
-            />
-          </Elements>
         </DialogContent>
       </Dialog>
 

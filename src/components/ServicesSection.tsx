@@ -93,30 +93,13 @@ export function ServicesSection({
           email: user.email,
         }
       });
-
-      if (error || !response?.data?.url) {
-        throw error || new Error('No se pudo obtener la URL de pago');
-      }
       
-      // Store service data for after payment
-      localStorage.setItem('pendingServicePayment', JSON.stringify({
-        serviceId: service.id,
-        serviceTitle: service.title,
-        amount: service.price_clp,
-        sessionId: response.data.sessionId || response.data.id,
-        timestamp: new Date().toISOString(),
-        lawyerId,
-        userId: user.id
-      }));
-      
-      // Redirect to Stripe checkout
-      window.location.href = response.data.url;
     } catch (error) {
-      console.error('Error al redirigir al checkout:', error);
+      console.error('Error al procesar la solicitud:', error);
       toast({
-        title: "Error al procesar la solicitud",
-        description: error instanceof Error ? error.message : "Ocurrió un error al intentar procesar tu solicitud. Por favor, inténtalo de nuevo.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'No se pudo procesar la solicitud. Por favor, inténtalo de nuevo más tarde.',
+        variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);
@@ -181,7 +164,7 @@ export function ServicesSection({
         <div className="p-6">
           <div className="flex justify-between items-start">
             <div>
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-blue-50">
                   {service.title.toLowerCase().includes('consulta') ? (
                     <MessageSquare className="h-5 w-5 text-blue-600" />
@@ -242,18 +225,22 @@ export function ServicesSection({
             )}
           </div>
           
-          {!isOwner && (
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <Button 
-                variant="default"
-                className={`w-full ${service.available ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 opacity-70 cursor-not-allowed'} text-white`}
-                disabled={!service.available || isProcessing}
-                onClick={() => service.available && handleServiceSelect(service)}
-              >
-                {isProcessing ? 'Procesando...' : service.available ? 'Solicitar servicio' : 'No disponible'}
-              </Button>
-            </div>
-          )}
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <Button 
+              variant="default"
+              className={`w-full ${
+                isOwner 
+                  ? 'bg-blue-600 hover:bg-blue-600 cursor-not-allowed opacity-70' 
+                  : service.available 
+                    ? 'bg-blue-600 hover:bg-blue-700' 
+                    : 'bg-blue-600 opacity-70 cursor-not-allowed'
+              } text-white`}
+              disabled={isOwner || !service.available || isProcessing}
+              onClick={() => service.available && !isOwner && handleServiceSelect(service)}
+            >
+              {isProcessing ? 'Procesando...' : service.available ? 'Solicitar servicio' : 'No disponible'}
+            </Button>
+          </div>
         </div>
       </Card>
     );

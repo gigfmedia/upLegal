@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
+import type { Profile } from '@/contexts/AuthContext/clean/AuthContext';
 
 const specializations = [
   'Derecho Civil',
@@ -31,11 +33,17 @@ const formSchema = z.object({
   specialization: z.string().min(1, { message: 'Seleccione una especialidad' }),
   experience: z.string().min(1, { message: 'Ingresa los años de experiencia' }),
   hourlyRate: z.string().min(1, { message: 'Ingresa una tarifa por hora' }),
-  languages: z.string().min(1, { message: 'Ingresa los idiomas que habla' }),
+  languages: z.array(z.string()).min(1, { message: 'Ingresa al menos un idioma' }),
   education: z.string().min(1, { message: 'Ingresa su formación académica' }),
   university: z.string().min(1, { message: 'Ingresa el nombre de la universidad' }),
-  studyStartYear: z.string().min(4, { message: 'Ingresa el año de inicio' }),
-  studyEndYear: z.string().min(4, { message: 'Ingresa el año de término' }),
+  studyStartYear: z.union([
+    z.string().min(4, { message: 'Ingresa un año válido (4 dígitos)' }),
+    z.string().length(0)
+  ]).optional().transform(val => val === '' ? undefined : val),
+  studyEndYear: z.union([
+    z.string().min(4, { message: 'Ingresa un año válido (4 dígitos)' }),
+    z.string().length(0)
+  ]).optional().transform(val => val === '' ? undefined : val),
   certifications: z.string().optional(),
   barAssociationNumber: z.string().min(1, { message: 'Ingresa su número de colegiado' }),
   availability: z.string().min(1, { message: 'Seleccione su disponibilidad' }),
@@ -47,52 +55,139 @@ type FormValues = z.infer<typeof formSchema>;
 export function LawyerProfileForm() {
   const { user, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [isStripeLoading, setIsStripeLoading] = useState(false);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: user?.user_metadata?.first_name || '',
       lastName: user?.user_metadata?.last_name || '',
-      email: user?.email || '',
       phone: user?.user_metadata?.phone || '',
       bio: user?.user_metadata?.bio || '',
-      specialization: user?.user_metadata?.specialization || '',
-      experience: user?.user_metadata?.experience || '',
-      hourlyRate: user?.user_metadata?.hourlyRate || '',
-      languages: user?.user_metadata?.languages || '',
+      specialization: Array.isArray(user?.user_metadata?.specialties) && user.user_metadata.specialties.length > 0 
+        ? user.user_metadata.specialties[0] 
+        : user?.user_metadata?.specialization || '',
+      experience: user?.user_metadata?.experience_years?.toString() || '',
+      hourlyRate: user?.user_metadata?.hourly_rate_clp?.toString() || '',
+      languages: Array.isArray(user?.user_metadata?.languages) 
+        ? user.user_metadata.languages 
+        : (user?.user_metadata?.languages ? [user.user_metadata.languages] : ['']),
       education: user?.user_metadata?.education || '',
       university: user?.user_metadata?.university || '',
-      studyStartYear: user?.user_metadata?.studyStartYear || '',
-      studyEndYear: user?.user_metadata?.studyEndYear || '',
+      // Load study years from user metadata - handle both string and number values
+      studyStartYear: user?.user_metadata?.study_start_year !== undefined && 
+                     user?.user_metadata?.study_start_year !== null && 
+                     user.user_metadata.study_start_year !== ''
+        ? String(user.user_metadata.study_start_year)
+        : '',
+      studyEndYear: user?.user_metadata?.study_end_year !== undefined && 
+                   user?.user_metadata?.study_end_year !== null && 
+                   user.user_metadata.study_end_year !== ''
+        ? String(user.user_metadata.study_end_year)
+        : '',
       certifications: user?.user_metadata?.certifications || '',
-      barAssociationNumber: user?.user_metadata?.barAssociationNumber || '',
+      barAssociationNumber: user?.user_metadata?.bar_association_number || '',
       availability: user?.user_metadata?.availability || 'disponible',
-      zoomLink: user?.user_metadata?.zoomLink || '',
+      zoomLink: user?.user_metadata?.zoom_link || '',
     },
   });
 
   const onSubmit = async (data: FormValues) => {
     try {
       setIsLoading(true);
-      await updateProfile({
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone,
-        bio: data.bio,
-        specialization: data.specialization,
-        experience: data.experience,
-        hourly_rate: data.hourlyRate, // This is a string from the form
-        languages: data.languages,
-        education: data.education,
-        university: data.university,
-        study_start_year: data.studyStartYear,
-        study_end_year: data.studyEndYear,
-        certifications: data.certifications,
-        bar_association_number: data.barAssociationNumber,
-        availability: data.availability,
-        zoom_link: data.zoomLink,
+      
+      console.log('Form submitted with raw data:', {
+        studyStartYear: data.studyStartYear,
+        studyEndYear: data.studyEndYear,
+        studyStartYearType: typeof data.studyStartYear,
+        studyEndYearType: typeof data.studyEndYear
       });
+      
+      // Process study years - convert empty strings to null and validate years
+      const processYear = (year: string | undefined): number | null => {
+        console.log('Processing year:', { year, type: typeof year });
+        if (!year || year.trim() === '') {
+          console.log('Year is empty, returning null');
+          return null;
+        }
+        const num = Number(year);
+        const result = isNaN(num) ? null : num;
+        console.log('Processed year result:', { year, result });
+        return result;
+      };
+
+      const studyStartYear = processYear(data.studyStartYear);
+      const studyEndYear = processYear(data.studyEndYear);
+      
+      console.log('Processed study years:', { studyStartYear, studyEndYear });
+      
+      // Validate end year is after start year if both are provided
+      if (studyStartYear && studyEndYear) {
+        console.log('Validating years:', { studyStartYear, studyEndYear });
+        if (studyEndYear < studyStartYear) {
+          console.log('Validation failed: end year is before start year');
+          form.setError('studyEndYear', {
+            type: 'manual',
+            message: 'El año de término debe ser posterior al año de inicio'
+          });
+          setIsLoading(false);
+          return;
+        }
+        console.log('Year validation passed');
+      }
+      
+      console.log('Form submitted with data:', {
+        ...data,
+        studyStartYear,
+        studyEndYear,
+        studyStartYearType: typeof data.studyStartYear,
+        studyEndYearType: typeof data.studyEndYear
+      });
+      
+      // Prepare the profile data with proper type conversion
+      const profileData: Partial<Profile> = {
+        first_name: data.firstName || null,
+        last_name: data.lastName || null,
+        // Use the processed study years
+        study_start_year: studyStartYear,
+        study_end_year: studyEndYear,
+        phone: data.phone || null,
+        bio: data.bio || null,
+        // Map form fields to profile fields
+        display_name: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}`.trim() : null,
+        website: null, // Not in form
+        location: null, // Not in form
+        avatar_url: null, // Handled separately
+        specialties: data.specialization ? [data.specialization] : [],
+        experience_years: data.experience ? parseInt(data.experience, 10) : null,
+        hourly_rate_clp: data.hourlyRate ? parseFloat(data.hourlyRate) : null,
+        languages: Array.isArray(data.languages) 
+          ? data.languages.filter(lang => lang.trim() !== '')
+          : [],
+        education: data.education || null,
+        university: data.university || null,
+        // Handle study years - convert to number or null
+        study_start_year: data.studyStartYear ? Number(data.studyStartYear) : null,
+        study_end_year: data.studyEndYear ? Number(data.studyEndYear) : null,
+        certifications: data.certifications || null,
+        bar_association_number: data.barAssociationNumber || null,
+        availability: data.availability || null,
+        zoom_link: data.zoomLink || null,
+        // Default values for required fields
+        rut: null, // Not in form
+        pjud_verified: false, // Not in form
+        profile_setup_completed: true
+      };
+      
+      console.log('Prepared profile data for update:', JSON.stringify(profileData, null, 2));
+
+      console.log('Submitting profile data:', JSON.stringify(profileData, null, 2));
+      
+      const result = await updateProfile(profileData);
+      
+      if (!result) {
+        throw new Error('Failed to update profile');
+      }
 
       toast({
         title: 'Perfil actualizado',
@@ -113,48 +208,6 @@ export function LawyerProfileForm() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-lg border p-4 bg-white">
-        <h3 className="text-lg font-semibold">Pagos</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Conecta tu cuenta con Stripe para recibir pagos automáticamente. Necesitas completar este paso para habilitar el botón "Solicitar servicio" en tu perfil público.
-        </p>
-        <Button
-          variant="default"
-          onClick={async () => {
-            try {
-              setIsStripeLoading(true);
-              const { data, error } = await supabase.functions.invoke('create-connect-account', {
-                body: {
-                  returnUrl: window.location.origin + '/dashboard/settings',
-                },
-              });
-              if (error) throw error;
-              const url = (data as any)?.url;
-              if (url) {
-                window.location.href = url;
-              } else {
-                toast({
-                  title: 'No se pudo iniciar el onboarding',
-                  description: 'Inténtalo nuevamente más tarde.',
-                  variant: 'destructive',
-                });
-              }
-            } catch (e: any) {
-              console.error('Error iniciando onboarding de Stripe:', e);
-              toast({
-                title: 'Error',
-                description: e?.message || 'No se pudo iniciar el onboarding de Stripe.',
-                variant: 'destructive',
-              });
-            } finally {
-              setIsStripeLoading(false);
-            }
-          }}
-          disabled={isStripeLoading}
-        >
-          {isStripeLoading ? 'Abriendo Stripe…' : 'Configurar pagos con Stripe'}
-        </Button>
-      </div>
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Perfil Profesional</h2>
         <p className="text-muted-foreground">
@@ -279,62 +332,71 @@ export function LawyerProfileForm() {
               name="languages"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Idiomas que hablas (separados por comas)</FormLabel>
+                  <FormLabel>Idiomas que hablas</FormLabel>
                   <FormControl>
-                    <Input placeholder="Español, Inglés, Francés" {...field} />
+                    <div className="space-y-2">
+                      {field.value.map((lang, index) => (
+                        <div key={index} className="flex space-x-2">
+                          <Input
+                            value={lang}
+                            onChange={(e) => {
+                              const newLangs = [...field.value];
+                              newLangs[index] = e.target.value;
+                              field.onChange(newLangs);
+                            }}
+                            placeholder="Ej: Español"
+                          />
+                          {index === field.value.length - 1 ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => field.onChange([...field.value, ''])}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newLangs = field.value.filter((_, i) => i !== index);
+                                field.onChange(newLangs);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                      {field.value.length === 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => field.onChange([''])}
+                        >
+                          <Plus className="h-4 w-4 mr-2" /> Agregar idioma
+                        </Button>
+                      )}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="education"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Título profesional</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ej: Abogado"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="university"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Universidad</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Ej: Universidad de Chile"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="studyStartYear"
+                name="education"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Año de inicio</FormLabel>
+                    <FormLabel>Título profesional</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        min="1900"
-                        max={new Date().getFullYear()}
-                        placeholder="Ej: 2010"
+                        placeholder="Ej: Abogado"
                         {...field}
                       />
                     </FormControl>
@@ -345,22 +407,122 @@ export function LawyerProfileForm() {
 
               <FormField
                 control={form.control}
-                name="studyEndYear"
+                name="university"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Año de término</FormLabel>
+                    <FormLabel>Universidad</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        min="1900"
-                        max={new Date().getFullYear() + 10}
-                        placeholder="Ej: 2015"
+                        placeholder="Ej: Universidad de Chile"
                         {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="studyStartYear"
+                render={({ field }) => {
+                  const currentYear = new Date().getFullYear();
+                  const startYear = field.value ? parseInt(field.value, 10) : null;
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Año de inicio</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1900"
+                          max={currentYear}
+                          placeholder="Ej: 2010"
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty string or valid year
+                            if (value === '' || /^\d{0,4}$/.test(value)) {
+                              field.onChange(value || '');
+                            }
+                          }}
+                          onBlur={() => {
+                            // Validate year range when field loses focus
+                            if (field.value) {
+                              const year = parseInt(field.value, 10);
+                              if (year < 1900 || year > currentYear) {
+                                form.setError('studyStartYear', {
+                                  type: 'manual',
+                                  message: `Año debe estar entre 1900 y ${currentYear}`
+                                });
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription className="text-xs text-muted-foreground">
+                        Año entre 1900 y {currentYear}
+                      </FormDescription>
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
+                name="studyEndYear"
+                render={({ field }) => {
+                  const currentYear = new Date().getFullYear();
+                  const startYear = form.watch('studyStartYear');
+                  const parsedStartYear = startYear ? parseInt(startYear, 10) : null;
+                  const minYear = parsedStartYear || 1900;
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Año de término</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={minYear}
+                          max={currentYear}
+                          placeholder="Ej: 2015"
+                          value={field.value || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty string or valid year
+                            if (value === '' || /^\d{0,4}$/.test(value)) {
+                              field.onChange(value || '');
+                            }
+                          }}
+                          onBlur={() => {
+                            // Validate year range when field loses focus
+                            if (field.value) {
+                              const year = parseInt(field.value, 10);
+                              if (year < minYear || year > currentYear) {
+                                form.setError('studyEndYear', {
+                                  type: 'manual',
+                                  message: `Año debe estar entre ${minYear} y ${currentYear}`
+                                });
+                              } else if (parsedStartYear && year < parsedStartYear) {
+                                form.setError('studyEndYear', {
+                                  type: 'manual',
+                                  message: 'El año de término no puede ser anterior al año de inicio'
+                                });
+                              }
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription className="text-xs text-muted-foreground">
+                        {parsedStartYear ? `Año entre ${parsedStartYear} y ${currentYear}` : `Año hasta ${currentYear}`}
+                      </FormDescription>
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 

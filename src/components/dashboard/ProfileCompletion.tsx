@@ -16,50 +16,137 @@ interface ProgressItem {
 
 interface ProfileCompletionProps {
   onNavigateToTab?: (tabValue: string) => void;
+  completionPercentage: number;
 }
 
-export function ProfileCompletion({ onNavigateToTab }: ProfileCompletionProps) {
+export function ProfileCompletion({ onNavigateToTab, completionPercentage }: ProfileCompletionProps) {
   const { user } = useAuth();
   const { services } = useServices();
+  
+  // Use the provided completion percentage
+  const profileProgress = completionPercentage;
+  const overallProgress = completionPercentage; // Single progress value now includes services
 
-  // Calculate profile completion with all required fields
-  const profileProgress = useMemo(() => {
-    if (!user?.user_metadata) return 0;
+  // Calculate missing items for the profile completion
+  const missingItems = useMemo(() => {
+    if (!user?.user_metadata) return [];
+
+    const items: { label: string; tab: 'profile' | 'services' | 'billing'; description: string }[] = [];
     
-    const requiredFields = {
-      'Nombres': user.user_metadata.first_name,
-      'Apellidos': user.user_metadata.last_name,
-      'Teléfono': user.user_metadata.phone,
-      'Biografía': user.user_metadata.bio,
-      'Especialización': user.user_metadata.specialization,
-      'Años de experiencia': user.user_metadata.experience,
-      'Tarifa por hora': user.user_metadata.hourly_rate,
-      'Idiomas': user.user_metadata.languages,
-      'Educación': user.user_metadata.education,
-      'Número de colegiado': user.user_metadata.bar_association_number,
-      'Enlace de Zoom': user.user_metadata.zoom_link,
-      'Foto de perfil': user.user_metadata.avatar_url,
-      'Ubicación': user.user_metadata.location,
-      'Correo electrónico': user.email
-    };
+    if (!user.user_metadata.first_name || !user.user_metadata.last_name) {
+      items.push({
+        label: 'Información personal',
+        tab: 'profile',
+        description: 'Agrega tu nombre y apellido'
+      });
+    }
 
-    const fields = Object.entries(requiredFields);
-    const completedFields = fields.filter(([_, value]) => {
-      if (Array.isArray(value)) return value.length > 0;
-      return value !== undefined && value !== null && value !== '';
-    });
+    if (!user.user_metadata.bio) {
+      items.push({
+        label: 'Biografía',
+        tab: 'profile',
+        description: 'Cuéntales a los clientes sobre ti y tu experiencia'
+      });
+    }
 
-    return Math.round((completedFields.length / fields.length) * 100);
-  }, [user]);
+    if (!user.user_metadata.phone) {
+      items.push({
+        label: 'Teléfono de contacto',
+        tab: 'profile',
+        description: 'Agrega un número donde los clientes puedan contactarte'
+      });
+    }
 
-  // Calculate services completion
-  const servicesProgress = useMemo(() => {
-    const hasServices = services && services.length > 0;
-    return hasServices ? 100 : 0;
-  }, [services]);
+    if (!user.user_metadata.location) {
+      items.push({
+        label: 'Ubicación',
+        tab: 'profile',
+        description: 'Indica tu ubicación para clientes cercanos'
+      });
+    }
 
-  // Calculate overall progress (60% profile, 40% services)
-  const overallProgress = Math.round((profileProgress * 0.6) + (servicesProgress * 0.4));
+    if (!user.user_metadata.specialties?.length) {
+      items.push({
+        label: 'Especialidades',
+        tab: 'profile',
+        description: 'Selecciona tus áreas de especialización legal'
+      });
+    }
+
+    if (!user.user_metadata.experience) {
+      items.push({
+        label: 'Años de experiencia',
+        tab: 'profile',
+        description: 'Indica cuántos años de experiencia tienes'
+      });
+    }
+
+    if (!user.user_metadata.hourly_rate && !user.user_metadata.hourly_rate_clp) {
+      items.push({
+        label: 'Tarifa por hora',
+        tab: 'profile',
+        description: 'Establece tu tarifa por hora en CLP'
+      });
+    }
+
+    if (!user.user_metadata.languages?.length) {
+      items.push({
+        label: 'Idiomas',
+        tab: 'profile',
+        description: 'Agrega los idiomas que hablas'
+      });
+    }
+
+    if (!user.user_metadata.education) {
+      items.push({
+        label: 'Educación',
+        tab: 'profile',
+        description: 'Agrega tu título profesional'
+      });
+    }
+
+    if (!user.user_metadata.university) {
+      items.push({
+        label: 'Universidad',
+        tab: 'profile',
+        description: 'Indica dónde estudiaste'
+      });
+    }
+
+    if (!user.user_metadata.bar_association_number) {
+      items.push({
+        label: 'N° de colegiado',
+        tab: 'profile',
+        description: 'Agrega tu número de colegiado para verificación'
+      });
+    }
+
+    if (!user.user_metadata.rut) {
+      items.push({
+        label: 'RUT',
+        tab: 'profile',
+        description: 'Agrega tu RUT para facturación'
+      });
+    }
+
+    if (!user.user_metadata.avatar_url) {
+      items.push({
+        label: 'Foto de perfil',
+        tab: 'profile',
+        description: 'Agrega una foto profesional'
+      });
+    }
+
+    if (!services?.length) {
+      items.push({
+        label: 'Servicios',
+        tab: 'services',
+        description: 'Agrega al menos un servicio que ofreces'
+      });
+    }
+
+    return items;
+  }, [user, services]);
 
   // Progress items with detailed field tracking
   const progressItems: ProgressItem[] = [

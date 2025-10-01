@@ -29,7 +29,7 @@ import {
 import { appointmentsApi, type AppointmentData, type AppointmentStatus, type AppointmentType } from '@/lib/api';
 
 // Local UI type that extends the API type with display-specific fields
-interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'meeting_link' | 'created_at' | 'updated_at' | 'stripe_payment_intent_id'> {
+interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'meeting_link' | 'created_at' | 'updated_at'> {
   lawyerName: string;
   lawyerSpecialty: string;
   meetingLink?: string;
@@ -328,8 +328,7 @@ export default function DashboardAppointments() {
         meeting_link: meetingLink,
         location: location,
         created_at: now,
-        updated_at: now,
-        stripe_payment_intent_id: null
+        updated_at: now
       };
 
       // Create the appointment via API

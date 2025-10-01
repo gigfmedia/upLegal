@@ -17,8 +17,16 @@ export interface UserData {
   role: UserRole;
 }
 
-export interface Profile {
-  id?: string;
+export // Interface for database profile with all fields
+interface DatabaseProfile extends Omit<Profile, 'id' | 'user_id' | 'created_at' | 'updated_at'> {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Profile {
+  id: string;
   user_id: string;
   first_name: string | null;
   last_name: string | null;
@@ -33,8 +41,15 @@ export interface Profile {
   response_time?: string;
   satisfaction_rate?: number;
   experience_years: number | null;
-  education: any | null; // JSONB field
-  bar_number: string | null;
+  education: string | null;
+  university: string | null;
+  study_start_year?: number | string | null;
+  study_end_year?: number | string | null;
+  certifications?: string | null;
+  availability?: string | null;
+  bar_association_number: string | null;
+  rut: string | null;
+  pjud_verified: boolean;
   zoom_link: string | null;
   languages: string[];
   verified?: boolean;
@@ -42,7 +57,6 @@ export interface Profile {
   created_at?: string;
   updated_at?: string;
   profile_setup_completed?: boolean;
-  
   // For backward compatibility (will be converted to specialties array)
   specialization?: string;
 }
@@ -346,96 +360,186 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      setLoadingState(true);
+      console.log('Starting profile update with data:', {
+        ...profile,
+        study_start_year_type: typeof profile.study_start_year,
+        study_end_year_type: typeof profile.study_end_year,
+        study_start_year_value: profile.study_start_year,
+        study_end_year_value: profile.study_end_year
+      });
       
-      // Get the supabase client
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session found');
-      }
-      
-      // Only include fields that have changed
-      const changedFields: Record<string, any> = {};
-      const fieldsToCheck = [
-        'first_name', 'last_name', 'bio', 'phone', 'location', 'website',
-        'specialties', 'languages', 'education', 'zoom_link', 
-        'bar_association_number', 'avatar_url', 'hourly_rate_clp',
-        'experience_years', 'profile_setup_completed'
-      ];
+      // Get current user data
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const currentMetadata = currentUser?.user_metadata || {};
+      // Prepare the update data with only the fields that exist in the database
+      // Handle study years - ensure they are properly converted to numbers or null
+      let studyStartYear = null;
+      let studyEndYear = null;
 
-      // Handle specialties (convert from string to array if needed)
-      if ('specialization' in profile || 'specialties' in profile) {
-        changedFields.specialties = Array.isArray(profile.specialties)
-          ? profile.specialties
-          : (profile.specialization || '').split(',').map((s: string) => s.trim()).filter(Boolean);
-      }
-
-      // Handle other fields
-      fieldsToCheck.forEach(field => {
-        if (field in profile) {
-          if (field === 'bar_association_number') {
-            changedFields.bar_number = profile[field] || null;
-          } else if (field === 'hourly_rate') {
-            changedFields.hourly_rate_clp = profile[field] || 0;
-          } else if (field === 'languages' && !Array.isArray(profile[field])) {
-            changedFields[field] = [];
-          } else if (field === 'profile_setup_completed') {
-            changedFields[field] = Boolean(profile[field]);
-          } else if (field !== 'specialties') {  // Skip specialties as it's already handled
-            changedFields[field] = profile[field as keyof Profile] ?? null;
-          }
-        }
+      console.log('Raw study years from profile:', {
+        study_start_year: profile.study_start_year,
+        study_end_year: profile.study_end_year,
+        study_start_year_type: typeof profile.study_start_year,
+        study_end_year_type: typeof profile.study_end_year
       });
 
-      // Add updated_at timestamp
-      changedFields.updated_at = new Date().toISOString();
+      if (profile.study_start_year !== undefined && profile.study_start_year !== null && profile.study_start_year !== '') {
+        studyStartYear = typeof profile.study_start_year === 'string' 
+          ? parseInt(profile.study_start_year, 10) 
+          : Number(profile.study_start_year);
+        // Ensure it's a valid number
+        studyStartYear = isNaN(studyStartYear) ? null : studyStartYear;
+        console.log('Processed study_start_year:', { 
+          from: profile.study_start_year, 
+          to: studyStartYear,
+          type: typeof studyStartYear
+        });
+      } else {
+        console.log('study_start_year is empty or null, setting to null');
+      }
+      
+      if (profile.study_end_year !== undefined && profile.study_end_year !== null && profile.study_end_year !== '') {
+        studyEndYear = typeof profile.study_end_year === 'string' 
+          ? parseInt(profile.study_end_year, 10) 
+          : Number(profile.study_end_year);
+        // Ensure it's a valid number
+        studyEndYear = isNaN(studyEndYear) ? null : studyEndYear;
+        console.log('Processed study_end_year:', { 
+          from: profile.study_end_year, 
+          to: studyEndYear,
+          type: typeof studyEndYear
+        });
+      } else {
+        console.log('study_end_year is empty or null, setting to null');
+      }
 
-      // First update or create the profile in the profiles table
-      const { data: profileData, error: profileError } = await supabase
+      const updateData: Omit<Profile, 'id' | 'user_id' | 'created_at'> & { updated_at: string } = {
+        first_name: profile.first_name || null,
+        last_name: profile.last_name || null,
+        display_name: profile.display_name || null,
+        bio: profile.bio || null,
+        phone: profile.phone || null,
+        location: profile.location || null,
+        website: profile.website || null,
+        specialties: Array.isArray(profile.specialties) ? profile.specialties : [],
+        experience_years: typeof profile.experience_years === 'number' ? profile.experience_years : null,
+        hourly_rate_clp: typeof profile.hourly_rate_clp === 'number' ? profile.hourly_rate_clp : null,
+        languages: Array.isArray(profile.languages) ? profile.languages : [],
+        education: profile.education || null,
+        university: profile.university || null,
+        study_start_year: studyStartYear,
+        study_end_year: studyEndYear,
+        bar_association_number: profile.bar_association_number || null,
+        rut: profile.rut || null,
+        pjud_verified: Boolean(profile.pjud_verified),
+        zoom_link: profile.zoom_link || null,
+        avatar_url: profile.avatar_url || null,
+        profile_setup_completed: true,
+        updated_at: new Date().toISOString()
+      };
+
+      // First update the profiles table
+      const updatePayload = {
+        ...updateData,
+        study_start_year: studyStartYear,
+        study_end_year: studyEndYear,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Updating profiles table with data:', {
+        ...updatePayload,
+        // Log the raw values being sent to the database
+        raw_study_start_year: profile.study_start_year,
+        raw_study_end_year: profile.study_end_year,
+        processed_study_start_year: studyStartYear,
+        processed_study_end_year: studyEndYear
+      });
+
+      try {
+        // First, ensure we have all required fields for the update
+        const updateData = {
+          user_id: user.id,
+          ...updatePayload
+        };
+        
+        console.log('Sending update to database:', updateData);
+        
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .upsert(updateData, {
+            onConflict: 'user_id'
+          });
+
+        if (profileError) {
+          console.error('Error updating profile in database:', profileError);
+          throw profileError;
+        }
+
+        console.log('Profile update successful. Response data:', profileData);
+      } catch (error) {
+        console.error('Exception during profile update:', error);
+        throw error;
+      }
+
+      // Fetch the updated profile to verify the data
+      const { data: updatedProfile, error: fetchError } = await supabase
         .from('profiles')
-        .upsert(
-          {
-            user_id: user.id,
-            ...changedFields
-          },
-          { onConflict: 'user_id' }
-        )
-        .select()
-        .single();
+        .select('*')
+        .eq('user_id', user.id)
+        .single<DatabaseProfile>();
 
-      if (profileError) {
-        console.error('Error upserting profile:', profileError);
-        throw profileError;
+      if (fetchError) {
+        console.error('Error fetching updated profile:', fetchError);
+      } else if (updatedProfile) {
+        console.log('Updated profile data from database:', {
+          study_start_year: updatedProfile.study_start_year,
+          study_end_year: updatedProfile.study_end_year,
+          study_start_year_type: typeof updatedProfile.study_start_year,
+          study_end_year_type: typeof updatedProfile.study_end_year
+        });
       }
 
-      // Then update the user's metadata in auth.users
-      const { data: authUpdate, error: authUpdateError } = await supabase.auth.updateUser({
-        data: {
-          ...user.user_metadata,
-          ...changedFields
-        }
+      // Then update the auth user metadata with the same data
+      const userMetadata = {
+        ...currentMetadata, // Keep existing metadata
+        first_name: updateData.first_name,
+        last_name: updateData.last_name,
+        bio: updateData.bio,
+        phone: updateData.phone,
+        location: updateData.location,
+        website: updateData.website,
+        specialties: updateData.specialties,
+        experience_years: updateData.experience_years,
+        hourly_rate_clp: updateData.hourly_rate_clp,
+        education: updateData.education,
+        university: updateData.university,
+        study_start_year: studyStartYear,
+        study_end_year: studyEndYear,
+        certifications: updateData.certifications,
+        bar_association_number: updateData.bar_association_number,
+        availability: updateData.availability,
+        zoom_link: updateData.zoom_link,
+        languages: updateData.languages,
+        profile_setup_completed: true
+      };
+
+      console.log('Updating user metadata with data:', userMetadata);
+      const { data: updatedUser, error: updateError } = await supabase.auth.updateUser({
+        data: userMetadata
       });
 
-      if (authUpdateError) throw authUpdateError;
+      if (updateError) throw updateError;
+      if (!updatedUser.user) throw new Error('No se pudo actualizar el perfil');
+
+      // The useAuth hook will automatically update the user state
+      // by listening to auth state changes
       
-      // Refresh the auth state to get the latest user data
-      await checkSession();
-      
-      // Return the updated user data
-      return authUpdate.user;
+      return updatedUser.user;
     } catch (error) {
       console.error('Error updating profile:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'An error occurred while updating your profile';
-      
-      const formattedError = new Error(errorMessage);
-      setErrorState(formattedError);
-      throw formattedError;
-    } finally {
-      setLoadingState(false);
+      throw error;
     }
-  }, [user, checkSession, setErrorState, setLoadingState]);
+  }, [user]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(

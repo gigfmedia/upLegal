@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY: string;
-  readonly VITE_STRIPE_SECRET_KEY: string;
-  readonly VITE_STRIPE_WEBHOOK_SECRET: string;
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
-  // Agrega aquí otras variables de entorno que necesites
+  readonly VITE_APP_URL: string;
+  readonly VITE_MERCADOPAGO_PUBLIC_KEY: string;
+  readonly VITE_SUPABASE_PROJECT_ID: string;
+  // Add other environment variables as needed
 }
 
 interface ImportMeta {

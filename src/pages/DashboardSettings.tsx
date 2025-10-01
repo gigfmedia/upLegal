@@ -14,14 +14,11 @@ import {
   Mail, 
   Smartphone, 
   Calendar, 
-  CreditCard, 
   Trash2,
   AlertTriangle,
-  DollarSign,
-  Settings,
-  Banknote
+  Settings
 } from 'lucide-react';
-import { StripeAccountStatus } from '@/components/StripeAccountStatus';
+import { CreditCard as CreditCardIcon } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -145,7 +142,7 @@ export default function DashboardSettings() {
             </p>
           </div>
           
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3">
             <TabsTrigger value="general" className="flex items-center">
               <span className="hidden sm:inline">General</span>
             </TabsTrigger>
@@ -154,12 +151,6 @@ export default function DashboardSettings() {
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center">
               <span className="hidden sm:inline">Seguridad</span>
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center">
-              <span className="hidden sm:inline">Pagos</span>
-            </TabsTrigger>
-            <TabsTrigger value="billing" className="flex items-center">
-              <span className="hidden sm:inline">Facturación</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -246,7 +237,7 @@ export default function DashboardSettings() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="flex items-center space-x-2">
-                    <CreditCard className="h-4 w-4" />
+                    <CreditCardIcon className="h-4 w-4" />
                     <span>Notificaciones de Pagos</span>
                   </Label>
                   <p className="text-sm text-muted-foreground">
@@ -566,34 +557,7 @@ export default function DashboardSettings() {
           </Card>
         </TabsContent>
 
-        {/* Add empty tabs for payments and billing to be implemented later */}
-        <TabsContent value="payments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configuración de Pagos</CardTitle>
-              <CardDescription>
-                Gestiona tus métodos de pago y configuración de facturación
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Configuración de pagos estará disponible pronto.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="billing" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Facturación</CardTitle>
-              <CardDescription>
-                Visualiza y gestiona tu historial de facturación
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">La sección de facturación estará disponible pronto.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Payment and billing tabs have been removed */}
       </Tabs>
     </div>
   );

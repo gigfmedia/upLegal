@@ -367,12 +367,21 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     
     try {
       console.log('[Auth] Updating profile for user:', user.id);
+      console.log('[Auth] Profile update data:', profile);
+      
+      // Ensure all fields are properly included in the update
+      const updateData = {
+        ...profile,
+        university: profile.university || null,
+        study_start_year: profile.study_start_year ? parseInt(profile.study_start_year as any) : null,
+        study_end_year: profile.study_end_year ? parseInt(profile.study_end_year as any) : null,
+        education: profile.education || null,
+        updated_at: new Date().toISOString()
+      };
+      
       const { error } = await supabase
         .from('profiles')
-        .update({
-          ...profile,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('user_id', user.id);
 
       if (error) {

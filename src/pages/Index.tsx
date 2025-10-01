@@ -28,6 +28,25 @@ const Index = () => {
   // Expanded mock data for lawyers
   const mockLawyers: Lawyer[] = [
     {
+      id: "7",
+      name: "Gabriela Gómez",
+      specialties: ["Derecho Laboral", "Derecho de Familia"],
+      rating: 4.9,
+      reviews: 142,
+      location: "Santiago, Chile",
+      hourlyRate: 350000,
+      consultationPrice: 40000,
+      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1588&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      bio: "Abogada especializada en derecho laboral y de familia con más de 10 años de experiencia. Comprometida con la defensa de los derechos de los trabajadores y las familias chilenas.",
+      verified: true,
+      availability: {
+        availableToday: true,
+        availableThisWeek: true,
+        quickResponse: true,
+        emergencyConsultations: true
+      }
+    },
+    {
       id: "1",
       name: "Sarah Johnson",
       specialties: ["Corporate Law", "Business Law"],
@@ -202,13 +221,27 @@ const Index = () => {
     "Divorcio"
   ];
 
-  const filteredLawyers = mockLawyers.filter(lawyer => {
-    const matchesSearch = lawyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  // Get Gabriela Gómez separately to ensure she's always included
+  const gabrielaGomez = mockLawyers.find(lawyer => lawyer.id === "7");
+  
+  // Filter other lawyers based on search criteria
+  const otherFilteredLawyers = mockLawyers.filter(lawyer => {
+    // Skip Gabriela Gómez as we'll add her separately
+    if (lawyer.id === "7") return false;
+    
+    const matchesSearch = searchTerm === "" || 
+                         lawyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          lawyer.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesLocation = !location || 
                           (lawyer.location && lawyer.location.toLowerCase().includes(location.toLowerCase()));
     return matchesSearch && matchesLocation;
   });
+  
+  // Combine Gabriela Gómez with other filtered lawyers, ensuring no duplicates
+  const filteredLawyers = [
+    ...(gabrielaGomez ? [gabrielaGomez] : []),
+    ...otherFilteredLawyers
+  ].slice(0, 6); // Limit to 6 lawyers total
 
   const handleAuthClick = (mode: 'login' | 'signup', role: 'client' | 'lawyer' = 'client') => {
     setAuthMode(mode);

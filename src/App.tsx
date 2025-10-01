@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 
 // UI Components
 import { Toaster } from '@/components/ui/toaster';
@@ -60,11 +59,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize Stripe with proper options
-export const stripePromise = loadStripe(import.meta.env.VITE_PUBLIC_STRIPE_PUBLISHABLE_KEY || '', {
-  // Suppress HTTP warning in development
-  ...(import.meta.env.DEV ? { betas: ['elements_enable_deferred_intent_beta_1'] } : {}),
-});
+// Payment configuration will be added here in the future
 
 const LoadingIndicator = () => {
   const location = useLocation();
@@ -175,24 +170,24 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <NotificationProvider>
-        <MessageProvider>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
+  <BrowserRouter
+    future={{
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}
+  >
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <NotificationProvider>
+          <MessageProvider>
             <Toaster />
             <Sonner />
             <AppContent />
-          </BrowserRouter>
-        </MessageProvider>
-      </NotificationProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+          </MessageProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </BrowserRouter>
 );
 
 export default App;

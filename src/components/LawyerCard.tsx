@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User } from "lucide-react";
+import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 
 export interface Lawyer {
   id: string;
+  user_id?: string; // Add this line
   name: string;
   specialties: string[];
   rating: number;
@@ -32,6 +33,7 @@ export interface Lawyer {
 
 interface LawyerCardProps {
   lawyer: Lawyer;
+  user?: any; // Add user prop
   onContactClick?: () => void;
   onScheduleClick?: () => void;
   onContact?: () => void; // Old prop name for backward compatibility
@@ -47,13 +49,22 @@ export function LawyerCard({
   onContactClick, 
   onScheduleClick, 
   onContact, 
-  onSchedule 
-}: LawyerCardProps) {
-  // For backward compatibility, use the new props if provided, fall back to old ones
-  const handleContact = onContactClick || onContact || (() => {});
-  const handleSchedule = onScheduleClick || onSchedule || (() => {});
+  onSchedule,
+  user
+}: LawyerCardProps & { user?: any }) {
+  // Check if the current user is the owner of this lawyer profile
+  const isOwnProfile = Boolean(
+    user?.id && 
+    (user.id === lawyer.user_id || user.id === lawyer.id)
+  );
   
-  const { user } = useAuth();
+  // Debug logs - only log if we have a user to reduce noise
+  if (user?.id) {
+    console.debug('LawyerCard - User ID:', user.id);
+    console.debug('LawyerCard - Lawyer ID:', lawyer.id, 'User ID:', lawyer.user_id);
+    console.debug('isOwnProfile:', isOwnProfile, 'User matches lawyer.user_id:', user.id === lawyer.user_id, 'User matches lawyer.id:', user.id === lawyer.id);
+  }
+
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -61,9 +72,10 @@ export function LawyerCard({
   // Check if user has already used their free consultation
   const hasUsedFreeConsultation = user?.user_metadata?.hasUsedFreeConsultation || false;
   const hasFreeConsultation = !!user && !hasUsedFreeConsultation;
-
+  
   const navigate = useNavigate();
 
+  // Handle contact button click
   const handleContactClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
@@ -71,12 +83,25 @@ export function LawyerCard({
       setShowAuthModal(true);
       return;
     }
-    setIsConsultationOpen(true);
-    if (onContactClick) {
-      onContactClick();
+    if (onContactClick) onContactClick();
+    else if (onContact) onContact();
+  };
+  
+  // Handle schedule button click
+  const handleScheduleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      setAuthMode('login');
+      setShowAuthModal(true);
+      return;
     }
+    if (onScheduleClick) onScheduleClick();
+    else if (onSchedule) onSchedule();
   };
 
+  // Debug log for bio
+  console.log('LawyerCard - Bio:', lawyer.id, lawyer.name, 'Bio:', lawyer.bio);
+  
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
@@ -84,48 +109,29 @@ export function LawyerCard({
           {/* Sección superior - Info básica */}
           <div className="flex justify-between items-start mb-4 w-full">
             <div className="flex space-x-4">
-              <div className="relative h-16 w-16 flex-shrink-0">
-                <div className="relative w-full h-full rounded-full overflow-hidden">
-                  {lawyer.image ? (
-                    <div 
-                      className="w-full h-full bg-cover bg-center"
-                      style={{
-                        backgroundImage: `url(${lawyer.image})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center center',
-                        backgroundRepeat: 'no-repeat',
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                    >
-                      <img 
-                        src={lawyer.image} 
-                        alt={lawyer.name}
-                        className="opacity-0 w-full h-full"
-                        onError={(e) => {
-                          console.error('Error loading avatar image:', e);
-                          // @ts-ignore - TypeScript doesn't know about currentTarget for some reason
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-700 text-xl font-medium">
-                      {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Avatar className="h-16 w-16 flex-shrink-0">
+                <AvatarImage 
+                  src={lawyer.image} 
+                  alt={lawyer.name}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
+                  {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg font-semibold">
                     {lawyer.name}
                   </h3>
-                  {lawyer.verified && (
-                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                </div>
+                <div className="flex items-center space-x-2">
+                  {lawyer?.verified && (
+                    <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
+                      <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+                      <span className="text-xs font-medium text-green-700">Verificado</span>
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center text-sm text-gray-600 space-x-2 w-full max-w-[200px]">
@@ -185,13 +191,34 @@ export function LawyerCard({
             </div>
 
             {/* Sección media - Resumen */}
-            <div className="prose max-w-none">
-              {lawyer.bio && lawyer.bio.trim() !== '' ? (
-                <div className="whitespace-pre-line text-gray-700 text-sm line-clamp-3">
-                  {lawyer.bio}
+            <div className="max-w-full">
+              {lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
+                <div className="text-gray-700 text-sm">
+                  <p className="overflow-hidden text-ellipsis" style={{ 
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    lineClamp: 2,
+                    maxHeight: '2.8em',
+                    lineHeight: '1.4em',
+                    whiteSpace: 'normal',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
+                    {lawyer.bio}
+                  </p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic text-sm">
+                <p className="text-gray-500 italic text-sm" style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  lineClamp: 2,
+                  maxHeight: '2.8em',
+                  lineHeight: '1.4em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
                   Este abogado no ha proporcionado una biografía.
                 </p>
               )}
@@ -212,20 +239,36 @@ export function LawyerCard({
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
-              className="flex-1 bg-white hover:bg-gray-50 border-gray-300"
+              className={`flex-1 bg-white border-gray-300 ${
+                isOwnProfile 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:bg-gray-50'
+              }`}
               onClick={handleContactClick}
+              disabled={isOwnProfile}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              Contactar
+              {isOwnProfile ? 'No disponible' : 'Contactar'}
             </Button>
             <Button
-              onClick={onSchedule}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              variant="default"
+              className={`flex-1 bg-blue-600 ${
+                isOwnProfile 
+                  ? 'opacity-50 cursor-not-allowed' 
+                  : 'hover:bg-blue-700'
+              }`}
+              onClick={handleScheduleClick}
+              disabled={isOwnProfile}
             >
               <Calendar className="h-4 w-4 mr-2" />
-              Agendar
+              {isOwnProfile ? 'No disponible' : 'Agendar'}
             </Button>
           </div>
+          {isOwnProfile && (
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              No puedes contactar o agendar contigo mismo
+            </p>
+          )}
         </div>
       </Card>
 

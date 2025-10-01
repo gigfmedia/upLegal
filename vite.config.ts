@@ -26,6 +26,10 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
   plugins: [
     react(),
@@ -48,12 +52,6 @@ export default defineConfig(({ mode }) => ({
       define: {
         global: 'globalThis',
       },
-    },
-  },
-  build: {
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
     },
   },
 }));
