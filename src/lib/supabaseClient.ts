@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/integrations/supabase/types';
+import type { Database } from '@/types/supabase';
 
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';

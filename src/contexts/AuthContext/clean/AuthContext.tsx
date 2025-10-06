@@ -429,6 +429,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         university: profile.university || null,
         study_start_year: studyStartYear,
         study_end_year: studyEndYear,
+        certifications: profile.certifications || null,
         bar_association_number: profile.bar_association_number || null,
         rut: profile.rut || null,
         pjud_verified: Boolean(profile.pjud_verified),

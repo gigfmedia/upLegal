@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle } from 'lucide-react';
+import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFormData } from '@/utils/initializeFormData';
 import { supabase } from '@/lib/supabaseClient';
@@ -48,6 +48,7 @@ interface ProfileFormData {
   university: string;
   study_start_year?: string | number | null;
   study_end_year?: string | number | null;
+  certifications?: string;
   bar_association_number: string;
   rut: string;
   pjud_verified: boolean;
@@ -376,23 +377,27 @@ export default function LawyerProfilePage() {
   ];
 
   // Helper function to get education data from user metadata
-  const getEducationData = (userData: Record<string, unknown>) => {
-    // Try to get from the new education object first
+  const initializeFormData = (userData: any): ProfileFormData => {
+    // Check if userData.education is an object (new format) or string (old format)
     if (userData.education && typeof userData.education === 'object') {
       return {
+        ...userData,
         education: userData.education.degree || '',
         university: userData.education.university || '',
         study_start_year: userData.education.start_year || '',
-        study_end_year: userData.education.end_year || ''
+        study_end_year: userData.education.end_year || '',
+        certifications: userData.certifications || ''
       };
     }
     
-    // Fall back to legacy fields
+    // Fallback to old format
     return {
+      ...userData,
       education: userData.education || '',
       university: userData.university || '',
       study_start_year: userData.study_start_year || '',
-      study_end_year: userData.study_end_year || ''
+      study_end_year: userData.study_end_year || '',
+      certifications: userData.certifications || ''
     };
   };
 
@@ -418,26 +423,16 @@ export default function LawyerProfilePage() {
 
   const [selectedSpecializations, setSelectedSpecializations] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
-  const [profileCompletion, setProfileCompletion] = useState(0);
   const [showCompletionAlert, setShowCompletionAlert] = useState(true);
   const [forceUpdate, setForceUpdate] = useState(false);
-
-  // Calculate profile completion percentage using the centralized utility
-  const calculateProfileCompletionPercentage = useCallback((formData: ProfileFormData) => {
-    return calculateProfileCompletion({
-      ...formData,
-      study_start_year: formData.study_start_year,
-      study_end_year: formData.study_end_year,
-      servicesCount: services?.length || 0
-    } as ProfileCompletionData);
-  }, [services?.length]);
+  const { completionPercentage } = useProfile(user?.id);
   
-  // Update profile completion whenever form data changes
+  // Sincronizar el porcentaje de completitud del perfil
   useEffect(() => {
-    const completion = calculateProfileCompletionPercentage(formData);
-    setProfileCompletion(completion);
-    console.log('Profile completion updated:', completion, '%');
-  }, [formData, calculateProfileCompletionPercentage]);
+    if (completionPercentage !== undefined) {
+      console.log('Profile completion updated from hook:', completionPercentage, '%');
+    }
+  }, [completionPercentage]);
 
   useEffect(() => {
     if (user) {
@@ -531,14 +526,25 @@ export default function LawyerProfilePage() {
       setIsSaving(true);
       setError(null);
       console.log('Saving form data:', formData);
+      
+      // Validar RUT si se está editando
+      if (isEditing && formData.rut) {
+        const { isValid, error: rutError } = validateRUT(formData.rut);
+        if (!isValid) {
+          setError(rutError || 'RUT inválido');
+          setIsSaving(false);
+          return;
+        }
+      }
+      
       // Prepare the update data with only fields that exist in the database
       const updateData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        bio: formData.bio,
-        phone: formData.phone,
-        location: formData.location,
-        website: formData.website,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        bio: formData.bio.trim(),
+        phone: formData.phone.trim(),
+        location: formData.location.trim(),
+        website: formData.website.trim(),
         specialties: selectedSpecializations,
         experience_years: formData.experience ? Number(formData.experience) : null,
         hourly_rate_clp: formData.hourly_rate ? Number(formData.hourly_rate) : null,
@@ -547,19 +553,26 @@ export default function LawyerProfilePage() {
         university: formData.university || null,
         study_start_year: formData.study_start_year ? Number(formData.study_start_year) : null,
         study_end_year: formData.study_end_year ? Number(formData.study_end_year) : null,
-        bar_association_number: formData.bar_association_number || null,
-        rut: formData.rut || null,
+        certifications: formData.certifications?.trim() || null,
+        bar_association_number: formData.bar_association_number.trim() || null,
+        rut: formData.rut.trim() || null,
         pjud_verified: formData.pjud_verified || false,
-        zoom_link: formData.zoom_link || null,
+        zoom_link: formData.zoom_link.trim() || null,
         avatar_url: formData.avatar_url || null
       };
+      
       console.log('Update data being sent to API:', updateData);
-
-      console.log('Updating profile with data:', updateData);
       
       await updateProfile(updateData);
       
       // Update local state
+      setFormData(prev => ({
+        ...prev,
+        ...updateData,
+        experience: updateData.experience_years || 0,
+        hourly_rate: updateData.hourly_rate_clp || 0
+      }));
+      
       setHasChanges(false);
       setIsEditing(false);
       
@@ -575,21 +588,26 @@ export default function LawyerProfilePage() {
     } finally {
       setIsSaving(false);
     }
-  }, [formData, selectedSpecializations, updateProfile, toast]);
+  }, [formData, selectedSpecializations, updateProfile, toast, isEditing]);
 
   // Auto-save when profile is 100% complete
   useEffect(() => {
     const autoSave = async () => {
-      if (profileCompletion === 100 && hasChanges && isEditing) {
-        await handleSave();
+      if (completionPercentage === 100 && hasChanges) {
+        try {
+          await handleSave();
+          console.log('Perfil guardado automáticamente al alcanzar 100% de completitud');
+        } catch (error) {
+          console.error('Error al guardar automáticamente el perfil:', error);
+        }
       }
     };
+
     autoSave();
-  }, [isEditing, profileCompletion, hasChanges, handleSave]);
+  }, [completionPercentage, hasChanges, handleSave]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSaving) return; // Prevent multiple submissions
     
     try {
       await handleSave();
@@ -683,9 +701,9 @@ export default function LawyerProfilePage() {
               </CardDescription>
             </div>
             <div className="w-full md:w-2/3">
-              <ProfileCompletion completion={profileCompletion} />
+              <ProfileCompletion completion={completionPercentage} />
               
-              {showCompletionAlert && profileCompletion < 100 && (
+              {showCompletionAlert && completionPercentage < 100 && (
                 <Alert className="mt-4 bg-blue-50 border-blue-200">
                   <AlertCircle className="h-4 w-4 text-blue-700" />
                   <AlertDescription className="text-sm text-blue-800">
@@ -876,9 +894,11 @@ export default function LawyerProfilePage() {
                       
                       {/* Success message */}
                       {formData.pjud_verified && (
-                        <p className="text-xs text-green-600 flex items-start gap-1 mt-1">
-                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                          <span>Verificado con el Poder Judicial de Chile</span>
+                        <p className="text-xs text-green-600 flex items-center gap-1.5 mt-1">
+                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="flex items-center gap-1">
+                            <span>Verificado con el Poder Judicial de Chile</span>
+                          </span>
                         </p>
                       )}
                     </div>
@@ -1035,6 +1055,16 @@ export default function LawyerProfilePage() {
                           {formData.study_start_year} - {formData.study_end_year || 'Presente'}
                         </span>
                       )}
+                      {formData.certifications && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-muted-foreground mb-1">Certificaciones:</p>
+                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground text-sm">
+                            {formData.certifications.split('\n').map((cert, index) => (
+                              <li key={index}>{cert.trim()}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </p>
                   </div>
                 ) : (
@@ -1128,6 +1158,18 @@ export default function LawyerProfilePage() {
                     disabled={!isEditing}
                     placeholder="Año de egreso"
                     className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certifications">Certificaciones</Label>
+                  <Textarea
+                    id="certifications"
+                    name="certifications"
+                    value={formData.certifications || ''}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    placeholder="Ingresa tus certificaciones, una por línea"
+                    className="min-h-[100px]"
                   />
                 </div>
               </div>

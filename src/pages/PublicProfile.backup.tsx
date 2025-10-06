@@ -46,10 +46,8 @@ import {
   Eye,
   Building2,
   DollarSign,
-  CheckCircle,
-  Heart
+  CheckCircle
 } from "lucide-react";
-import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface PublicProfileProps {
   userData?: {
@@ -125,16 +123,22 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: currentUser } = useAuth();
+  // Estados para manejar la carga y errores
+  const [initialLoad, setInitialLoad] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados para los datos del perfil
   const [lawyer, setLawyer] = useState<LawyerWithViews | null>(null);
+  const [services, setServices] = useState<ServiceType[]>([]);
+  
+  // Estados para los modales
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authAction, setAuthAction] = useState<(() => void) | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
-  const [services, setServices] = useState<ServiceType[]>([]);
   const { toast } = useToast();
   
   // Memoize the handleServiceAction function to prevent unnecessary re-renders
@@ -387,18 +391,41 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     //console.log('Lawyer data:', lawyer);
   }, [lawyer]);
 
-  // Fetch profile data when component mounts
+  // Cache para almacenar los perfiles cargados
+  const profileCache = useMemo(() => new Map<string, {
+    profile: LawyerWithViews | null;
+    services: ServiceType[];
+    timestamp: number;
+  }>(), []);
+
+  // Fetch lawyer profile and services
   const fetchProfile = useCallback(async () => {
     if (!id) return;
     
+    // Verificar si ya tenemos los datos en caché
+    const cachedData = profileCache.get(id);
+    const cacheExpiration = 5 * 60 * 1000; // 5 minutos de caché
+    
+    if (cachedData && (Date.now() - cachedData.timestamp < cacheExpiration)) {
+      setLawyer(cachedData.profile);
+      setServices(cachedData.services);
+      setLoading(false);
+      setInitialLoad(false);
+      return;
+    }
+    
+    // Si no hay caché o está expirada, cargar los datos
+    if (initialLoad) setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
       // Fetch profile by ID or user_id
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .or(`id.eq.${id},user_id.eq.${id}`)
         .single();
+{{ ... }}
         
       if (error) throw error;
       
@@ -533,11 +560,24 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           return 0;
         });
       
+      // Actualizar el estado con los nuevos datos
+      setLawyer(profile);
       setServices(formattedServices);
+      
+      // Guardar en caché
+      profileCache.set(id, {
+        profile,
+        services: formattedServices,
+        timestamp: Date.now()
+      });
+      
       setLoading(false);
+      setInitialLoad(false);
     } catch (error) {
+      console.error('Error loading profile:', error);
       setError('Error al cargar el perfil');
       setLoading(false);
+      setInitialLoad(false);
     }
   }, [id, updateLawyerState]);
 
@@ -691,16 +731,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           </span>
                         </div>
                       )}
-                      {lawyer && (
-                        <div className="flex items-center">
-                          <FavoriteButton 
-                            lawyerId={lawyer.id} 
-                            showText={false}
-                            onAuthRequired={() => setIsAuthModalOpen(true)}
-                            className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full"
-                          />
-                        </div>
-                      )}
                     </div>
                     
                     <div className="flex items-center gap-4 mb-3">
@@ -721,22 +751,19 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                     
 
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-6 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          <span>{profileData.completionRate} éxito en trabajos</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          <span>{lawyer?.profile_views || 0} visualizaciones</span>
-                        </div>
+                    <div className="flex items-center gap-6 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span>Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
                       </div>
-                      
+                      <div className="flex items-center">
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                        <span>{profileData.completionRate} éxito en trabajos</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        <span>{lawyer?.profile_views || 0} visualizaciones del perfil</span>
+                      </div>
                     </div>
                     
                     {lawyer?.website && (
@@ -754,44 +781,42 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     )}
                   </div>
 
-                  <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-auto mt-6 md:mt-0">
-                    <div className="text-3xl font-bold text-primary mb-4 text-center md:text-left">
+                  <div className="pl-6 ml-6 border-l-2 border-gray-200">
+                    <div className="text-3xl font-bold text-primary mb-4">
                       {lawyer?.hourly_rate_clp !== undefined && lawyer?.hourly_rate_clp !== null 
                         ? formatPrice(lawyer.hourly_rate_clp)
                         : 'Consultar precio'}
                       <span className="text-gray-500 text-sm ml-1">/hora</span>
                     </div>
 
-                    <div className="space-y-3 flex flex-col md:block">
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
-                        <Button 
-                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentUser?.id !== lawyer?.user_id) {
-                              handleAuthRequired('schedule');
-                            }
-                          }}
-                          disabled={currentUser?.id === lawyer?.user_id}
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Agendar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentUser?.id !== lawyer?.user_id) {
-                              handleAuthRequired('contact');
-                            }
-                          }}
-                          disabled={currentUser?.id === lawyer?.user_id}
-                        >
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Contactar
-                        </Button>
-                      </div>
+                    <div className="space-y-3">
+                      <Button 
+                        className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentUser?.id !== lawyer?.user_id) {
+                            handleAuthRequired('schedule');
+                          }
+                        }}
+                        disabled={currentUser?.id === lawyer?.user_id}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Agendar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentUser?.id !== lawyer?.user_id) {
+                            handleAuthRequired('contact');
+                          }
+                        }}
+                        disabled={currentUser?.id === lawyer?.user_id}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contactar
+                      </Button>
                       {currentUser?.id === lawyer?.user_id && (
                         <p className="text-xs text-gray-500 text-center mt-1">
                           No puedes contactar o agendar contigo mismo

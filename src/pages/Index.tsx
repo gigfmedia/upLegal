@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Star, MapPin, Users, Shield, Scale, FileText } from "lucide-react";
+import { Search, Star, MapPin, Users, Shield, Scale, FileText, Loader2, Briefcase, Building2, ShieldCheck, Home } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Lawyer } from "@/components/LawyerCard";
 import { AuthModal } from "@/components/AuthModal";
@@ -13,6 +13,8 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
+import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verifiedLawyers";
+import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -24,12 +26,100 @@ const Index = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
+  const [verifiedCount, setVerifiedCount] = useState<number | null>(null);
+  const [completedCasesCount, setCompletedCasesCount] = useState<number | null>(null);
+  const [isLoadingCount, setIsLoadingCount] = useState({
+    verified: true,
+    completed: true
+  });
+
+  // Efecto para cargar los contadores y suscribirse a cambios
+  useEffect(() => {
+    let isMounted = true;
+    const unsubscribeFunctions: Array<() => void> = [];
+
+    // Función para manejar la carga inicial
+    const loadInitialCounts = async () => {
+      try {
+        // Mostrar carga mientras se obtienen los datos
+        setIsLoadingCount({
+          verified: true,
+          completed: true
+        });
+
+        // Cargar ambos contadores en paralelo
+        const [verifiedCount, completedCount] = await Promise.all([
+          getVerifiedLawyersCount(),
+          getCompletedCasesCount()
+        ]);
+        
+        if (isMounted) {
+          setVerifiedCount(verifiedCount);
+          setCompletedCasesCount(completedCount);
+        }
+      } catch (error) {
+        console.error('Error al cargar los contadores:', error);
+        // Establecer valores por defecto en caso de error
+        if (isMounted) {
+          setVerifiedCount(0);
+          setCompletedCasesCount(1000);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCount({
+            verified: false,
+            completed: false
+          });
+        }
+      }
+    };
+
+    // Configurar las suscripciones
+    const setupSubscriptions = () => {
+      if (!isMounted) return;
+
+      // Suscripción a cambios en abogados verificados
+      const verifiedUnsubscribe = subscribeToVerifiedLawyers((count) => {
+        if (isMounted) {
+          setVerifiedCount(count);
+        }
+      });
+      unsubscribeFunctions.push(verifiedUnsubscribe);
+
+      // Suscripción a cambios en casos resueltos
+      const casesUnsubscribe = subscribeToCompletedCases((count) => {
+        if (isMounted) {
+          setCompletedCasesCount(count);
+        }
+      });
+      unsubscribeFunctions.push(casesUnsubscribe);
+    };
+
+    // Cargar datos iniciales
+    loadInitialCounts();
+    
+    // Configurar suscripciones con un pequeño retraso para no bloquear la UI
+    const subscriptionTimer = setTimeout(setupSubscriptions, 100);
+
+    // Función de limpieza
+    return () => {
+      isMounted = false;
+      clearTimeout(subscriptionTimer);
+      unsubscribeFunctions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('Error al cancelar suscripción:', error);
+        }
+      });
+    };
+  }, []);
 
   // Expanded mock data for lawyers
   const mockLawyers: Lawyer[] = [
     {
       id: "7",
-      name: "Gabriela Gómez",
+      name: "Gabriela Ignacia Gómez Fernández",
       specialties: ["Derecho Laboral", "Derecho de Familia"],
       rating: 4.9,
       reviews: 142,
@@ -81,7 +171,7 @@ const Index = () => {
       location: "Miami, FL",
       hourlyRate: 225000,
       consultationPrice: 30000,
-      image: "/placeholder.svg",
+      image: "",
       bio: "Compassionate immigration and family law attorney serving diverse communities.",
       verified: true
     },
@@ -94,7 +184,7 @@ const Index = () => {
       location: "Chicago, IL",
       hourlyRate: 400000,
       consultationPrice: 45000,
-      image: "/placeholder.svg",
+      image: "",
       bio: "Specializing in commercial real estate transactions and corporate acquisitions with 20+ years experience.",
       verified: true
     },
@@ -107,7 +197,7 @@ const Index = () => {
       location: "San Francisco, CA",
       hourlyRate: 320000,
       consultationPrice: 38000,
-      image: "/placeholder.svg",
+      image: "",
       bio: "Tech-focused attorney helping startups and employees navigate workplace and IP matters.",
       verified: true
     },
@@ -333,11 +423,23 @@ const Index = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
+              <div className="text-3xl font-bold text-blue-600 mb-2 flex items-center justify-center gap-2">
+                {isLoadingCount.verified ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <>{verifiedCount !== null ? `${verifiedCount}+` : '500+'}</>
+                )}
+              </div>
               <div className="text-gray-600">Abogados Verificados</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">10k+</div>
+              <div className="text-3xl font-bold text-blue-600 mb-2 flex items-center justify-center gap-2">
+                {isLoadingCount.completed ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <>{completedCasesCount !== null ? `${completedCasesCount}+` : '10k+'}</>
+                )}
+              </div>
               <div className="text-gray-600">Casos Resueltos</div>
             </div>
             <div className="text-center">
@@ -392,6 +494,135 @@ const Index = () => {
                 <p className="text-gray-600">
                   Tus asuntos legales están protegidos con seguridad nivel bancario y secreto profesional abogado-cliente.
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Categorías de Práctica */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+        <p className="text-left text-blue-600 mb-2">
+            Directorio de Abogados
+          </p>
+          <h2 className="text-3xl font-bold text-left text-gray-900 mb-4">
+            Busca abogados por área de práctica
+          </h2>
+          <p className="text-left text-gray-600 mb-12">
+          Al buscar asistencia legal, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades legales.
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Derecho Laboral */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=laboral')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Briefcase className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho Laboral</h3>
+                <p className="text-sm text-gray-600">Despidos, finiquitos, acoso laboral, accidentes del trabajo, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho de Familia */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=familia')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Users className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
+                <p className="text-sm text-gray-600">Divorcios, pensión de alimentos, tuición, adopciones, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho Civil */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=civil')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Scale className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho Civil</h3>
+                <p className="text-sm text-gray-600">Contratos, herencias, arriendos, responsabilidad civil, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho Penal */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=penal')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Shield className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho Penal</h3>
+                <p className="text-sm text-gray-600">Defensa penal, querellas, juicios orales, libertad condicional, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho Comercial */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=comercial')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Building2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho Comercial</h3>
+                <p className="text-sm text-gray-600">Sociedades, quiebras, concursos, propiedad intelectual, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho de Seguros */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=seguros')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <ShieldCheck className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho de Seguros</h3>
+                <p className="text-sm text-gray-600">Reclamos a aseguradoras, siniestros, coberturas, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho Inmobiliario */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/search?category=inmobiliario')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Home className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Derecho Inmobiliario</h3>
+                <p className="text-sm text-gray-600">Compraventa, regularización, propiedad horizontal, etc.</p>
+              </CardContent>
+            </Card>
+
+            {/* Ver todas las especialidades */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full border-2 border-dashed border-gray-300 hover:border-blue-500"
+              onClick={() => navigate('/search')}
+            >
+              <CardContent className="p-6 flex flex-col items-center justify-center h-full">
+                <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Search className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-center">Ver todas las especialidades</h3>
+                <p className="text-sm text-gray-600 text-center">Explora todas nuestras categorías de práctica legal</p>
               </CardContent>
             </Card>
           </div>
@@ -462,7 +693,7 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
-            ¿Eres Abogado? Únete a Nuestra Plataforma
+            ¿Eres Abogado? Únete a nuestra Plataforma
           </h2>
           <p className="text-xl mb-8 text-blue-100">
             Unete a nuestra plataforma y conecta con clientes que necesitan tu experiencia.

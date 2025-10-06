@@ -48,6 +48,7 @@ import CitasPage from './pages/lawyer/CitasPage';
 import EarningsPage from './pages/lawyer/EarningsPage';
 import ProfilePage from './pages/lawyer/ProfilePage';
 import PaymentSettings from './pages/PaymentSettings';
+import DashboardFavorites from './pages/DashboardFavorites';
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -131,6 +132,7 @@ const AppContent = () => {
               <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
               <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
               <Route path="earnings" element={<EarningsPage />} />
+              <Route path="favorites" element={<DashboardFavorites />} />
             </Route>
             
             {/* Legacy route for backward compatibility */}
@@ -153,6 +155,7 @@ const AppContent = () => {
               <Route path="payments" element={<DashboardPayments />} />
               <Route path="payment-settings" element={<PaymentSettings />} />
               <Route path="messages" element={<DashboardMessages />} />
+              <Route path="favorites" element={<DashboardFavorites />} />
               <Route path="notifications" element={<NotificationSettingsPage />} />
             </Route>
             

@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
+import { calculateProfileCompletion } from "@/utils/profileCompletion";
 
 // Define a more flexible Json type that can handle nested objects and arrays
 type Json = 
@@ -39,7 +40,7 @@ export interface Profile {
   availability: string | null;
   verified: boolean;
   available_for_hire: boolean;
-  bar_number: string | null;
+  bar_association_number: string | null;
   zoom_link: string | null;
   education: Record<string, unknown> | null;
   certifications: Record<string, unknown> | null;
@@ -226,7 +227,7 @@ export function useProfile(userId?: string) {
         availability: data.availability || null,
         verified: data.verified || false,
         available_for_hire: data.available_for_hire || false,
-        bar_number: data.bar_number || null,
+        bar_association_number: data.bar_association_number || null,
         zoom_link: data.zoom_link || null,
         education: data.education || null,
         certifications: data.certifications || null,
@@ -459,6 +460,15 @@ export function useProfile(userId?: string) {
     return Promise.resolve([]);
   }, [fetchServices, userId]);
 
+  // Calcular el porcentaje de completitud del perfil
+  const completionPercentage = useMemo(() => {
+    if (!profile) return 0;
+    return calculateProfileCompletion({
+      ...profile,
+      servicesCount: services?.length || 0
+    });
+  }, [profile, services]);
+
   return {
     profile,
     services,
@@ -469,6 +479,7 @@ export function useProfile(userId?: string) {
     updateService,
     deleteService,
     refreshProfile,
-    refreshServices
+    refreshServices,
+    completionPercentage
   };
 }

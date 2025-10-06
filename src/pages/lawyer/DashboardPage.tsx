@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, Briefcase, MessageSquare } from 'lucide-react';
@@ -6,24 +6,11 @@ import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
-import { calculateProfileCompletion } from '@/utils/profileCompletion';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { profile, services } = useProfile(user?.id);
-  const [completionPercentage, setCompletionPercentage] = useState(0);
-
-  // Calculate profile completion when profile or services change
-  useEffect(() => {
-    if (profile) {
-      const percentage = calculateProfileCompletion({
-        ...profile,
-        servicesCount: services?.length || 0
-      });
-      setCompletionPercentage(percentage);
-    }
-  }, [profile, services]);
+  const { profile, services, completionPercentage } = useProfile(user?.id);
 
   const handleNavigateToTab = (tab: string) => {
     if (tab === 'profile') {

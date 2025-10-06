@@ -308,10 +308,10 @@ const SearchResults = () => {
         }, page, currentPageSize);
         
         if (response) {
-          console.log('Raw API response:', response);
+          //console.log('Raw API response:', response);
           
           const formattedLawyers = response.lawyers.map(lawyer => {
-            console.log('Lawyer bio:', lawyer.id, lawyer.first_name, lawyer.last_name, 'Bio:', lawyer.bio);
+            //console.log('Lawyer bio:', lawyer.id, lawyer.first_name, lawyer.last_name, 'Bio:', lawyer.bio);
             return {
               id: lawyer.id,
               user_id: lawyer.user_id, // Include the user_id

@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
+import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
+import { FavoriteButton } from "./FavoriteButton";
 
 export interface Lawyer {
   id: string;
@@ -68,6 +69,7 @@ export function LawyerCard({
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const { user: authUser } = useAuth();
   
   // Check if user has already used their free consultation
   const hasUsedFreeConsultation = user?.user_metadata?.hasUsedFreeConsultation || false;
@@ -100,7 +102,7 @@ export function LawyerCard({
   };
 
   // Debug log for bio
-  console.log('LawyerCard - Bio:', lawyer.id, lawyer.name, 'Bio:', lawyer.bio);
+  //console.log('LawyerCard - Bio:', lawyer.id, lawyer.name, 'Bio:', lawyer.bio);
   
   return (
     <>
@@ -109,46 +111,75 @@ export function LawyerCard({
           {/* Sección superior - Info básica */}
           <div className="flex justify-between items-start mb-4 w-full">
             <div className="flex space-x-4">
-              <Avatar className="h-16 w-16 flex-shrink-0">
-                <AvatarImage 
-                  src={lawyer.image} 
-                  alt={lawyer.name}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
-                  {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <div className="relative">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage 
+                      src={lawyer.image} 
+                      alt={lawyer.name}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
+                      {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </div>
               
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <h3 className="text-lg font-semibold">
-                    {lawyer.name}
-                  </h3>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {lawyer?.verified && (
-                    <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
-                      <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
-                      <span className="text-xs font-medium text-green-700">Verificado</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start w-full">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex justify-between items-start w-full">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" title={lawyer.name}>
+                        {lawyer.name}
+                      </h3>
+                      {authUser && authUser.id !== lawyer.id && (
+                        <div className="hidden sm:block">
+                          <FavoriteButton 
+                            lawyerId={lawyer.id} 
+                            showText={false}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-full -mt-1 -mr-1"
+                            onAuthRequired={() => {
+                              setAuthMode('login');
+                              setShowAuthModal(true);
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center text-sm text-gray-600 space-x-2 w-full max-w-[200px]">
-                  <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                  <span className="truncate">{lawyer.location}</span>
-                </div>
-                
-                <div className="flex items-center space-x-4 text-sm whitespace-nowrap">
-                  <div className="flex items-center space-x-1 text-gray-500">
-                    <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
-                    <span className="font-medium">{lawyer.rating}</span>
-                    <span className="text-gray-400">({lawyer.reviews})</span>
+                    {lawyer.verified && (
+                      <Badge variant="secondary" className="w-fit mt-1 flex items-center gap-1 bg-green-50 text-green-700">
+                        <ShieldCheck className="h-3 w-3" />
+                        Verificado en PJUD
+                      </Badge>
+                    )}
                   </div>
-                  <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
-                  <span className="text-blue-600 font-medium">
-                    {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
-                  </span>
+                </div> {/* Close flex-col div */}
+                
+                <div className="mt-1 w-full">
+                  <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden">
+                    <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span 
+                      className="truncate block w-full max-w-[180px]" 
+                      title={lawyer.location || 'Ubicación no disponible'}
+                    >
+                      {lawyer.location || 'Ubicación no disponible'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4 text-sm mt-1">
+                    <div className="flex items-center space-x-1 text-gray-500">
+                      <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
+                      <span className="font-medium">{lawyer.rating}</span>
+                      <span className="text-gray-400">({lawyer.reviews})</span>
+                    </div>
+                    <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
+                    <span className="text-blue-600 font-medium">
+                      {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -272,14 +303,16 @@ export function LawyerCard({
         </div>
       </Card>
 
-      <ConsultationModal
-        isOpen={isConsultationOpen}
-        onClose={() => setIsConsultationOpen(false)}
-        lawyerName={lawyer.name}
-        lawyerId={String(lawyer.id)}
-        hasFreeConsultation={hasFreeConsultation}
-        consultationPrice={lawyer.consultationPrice}
-      />
+      {isConsultationOpen && (
+        <ConsultationModal
+          isOpen={true}
+          onClose={() => setIsConsultationOpen(false)}
+          lawyerName={lawyer.name}
+          lawyerId={String(lawyer.id)}
+          hasFreeConsultation={lawyer.consultationPrice === 0}
+          consultationPrice={lawyer.consultationPrice}
+        />
+      )}
       <AuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -287,5 +320,5 @@ export function LawyerCard({
         onModeChange={setAuthMode}
       />
     </>
-  );
-}
+    );
+  }

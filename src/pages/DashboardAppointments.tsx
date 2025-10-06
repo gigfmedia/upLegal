@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { incrementCaseCount } from '@/lib/caseCounter';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -338,6 +339,14 @@ export default function DashboardAppointments() {
       const uiAppointment = mapApiToUiAppointment(createdAppointment, 'client');
       
       setAppointments(prev => [uiAppointment, ...prev]);
+      
+      // Increment the case count for the lawyer
+      try {
+        await incrementCaseCount(lawyerId);
+      } catch (error) {
+        console.error('Error incrementing case count:', error);
+        // Don't fail the appointment creation if case count update fails
+      }
       
       // Reset form
       setNewAppointment({

@@ -53,7 +53,6 @@ export const calculateProfileCompletion = (profileData: ProfileCompletionData): 
     { name: 'last_name', value: profileData.last_name },
     { name: 'bio', value: profileData.bio },
     { name: 'phone', value: profileData.phone },
-    { name: 'location', value: profileData.location },
     { name: 'specialties', value: !!profileData.specialties?.length },
     { name: 'experience', value: (profileData.experience_years || 0) > 0 },
     { name: 'hourly_rate', value: (profileData.hourly_rate_clp || 0) > 0 },
@@ -66,12 +65,15 @@ export const calculateProfileCompletion = (profileData: ProfileCompletionData): 
       name: 'university', 
       value: !!university 
     },
-    { name: 'bar_association_number', value: profileData.bar_number },
+    { 
+      name: 'certifications', 
+      value: !!profileData.certifications?.length 
+    },
+    { name: 'bar_association_number', value: profileData.bar_association_number },
     { name: 'rut', value: profileData.rut },
     { name: 'avatar_url', value: profileData.avatar_url },
     { name: 'has_services', value: (profileData.servicesCount || 0) > 0 }
   ];
-
   const completedFields = requiredFields.filter(field => {
     // Check if the field has a value
     if (Array.isArray(field.value)) {

@@ -87,11 +87,13 @@ export default function Header({ onAuthClick }: HeaderProps) {
 
           {/* Auth Section */}
           <div className="flex items-center gap-2 h-full">
+            {/* Notifications temporarily hidden
             {user && (
               <div className="flex items-center h-full px-1">
                 <NotificationDropdown />
               </div>
             )}
+            */}
             {user ? (
               <div className="flex items-center h-full px-1">
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>

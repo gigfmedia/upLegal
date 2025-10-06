@@ -13,7 +13,8 @@ import {
   Menu,
   X,
   TrendingUp,
-  LogOut
+  LogOut,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -33,6 +34,7 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const { user, logout, isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>('client');
   
   // Get user role safely
   const getUserRole = (): UserRole => {
@@ -47,6 +49,11 @@ function DashboardLayout() {
     }
     return 'client';
   };
+
+  // Update user role when location or user changes
+  useEffect(() => {
+    setUserRole(getUserRole());
+  }, [location.pathname, user]);
 
   // Check authentication and profile setup
   useEffect(() => {
@@ -80,21 +87,35 @@ function DashboardLayout() {
     checkAuthAndProfile();
   }, [user, isLoading, navigate, location.pathname]);
   
+  // Client navigation items
+  const clientNavItems: NavItem[] = [
+    { href: '/dashboard', icon: Activity, label: 'Resumen' },
+    { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
+    { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
+    { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
+    { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
+    { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
+    { href: '/dashboard/profile', icon: User, label: 'Perfil' },
+    { href: '/dashboard/settings', icon: Settings, label: 'Configuración' },
+  ];
+
+  // Common navigation items
+  const commonItems: NavItem[] = [
+    { 
+      href: '/dashboard/payment-settings', 
+      icon: CreditCard, 
+      label: 'Configuración de Pagos',
+      exact: true 
+    }
+  ];
+
   // Get navigation items based on user role
   const getNavItems = (): NavItem[] => {
-    const userRole = getUserRole();
-    const commonItems: NavItem[] = [
-      { 
-        href: '/dashboard/payment-settings', 
-        icon: CreditCard, 
-        label: 'Configuración de Pagos',
-        exact: true 
-      }
-    ];
 
     if (userRole === 'lawyer') {
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
+        { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios' },
         { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
@@ -105,19 +126,13 @@ function DashboardLayout() {
     }
 
     return [
-      { href: '/dashboard', icon: Activity, label: 'Resumen', exact: true },
-      { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
-      { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
-      { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
-      { href: '/dashboard/profile', icon: User, label: 'Perfil' },
-      { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
+      ...clientNavItems,
       ...commonItems
     ];
   };
 
-  const navItems = getNavItems();
   const currentPath = location.pathname;
-  const userRole = getUserRole();
+  const navItems = getNavItems();
 
   // Check if a navigation item is active
   const isActive = (href: string, exact: boolean = false): boolean => {

@@ -7,14 +7,47 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
-      lawyer_services: {
+      favorites: {
+        Row: {
+          id: string
+          user_id: string
+          lawyer_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          lawyer_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          lawyer_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      },
+      gigs: {
         Row: {
           available: boolean | null
           created_at: string
@@ -295,6 +328,10 @@ export type Database = {
       mark_free_consultation_used: {
         Args: { user_id: string }
         Returns: undefined
+      },
+      is_favorited: {
+        Args: { p_user_id: string; p_lawyer_id: string }
+        Returns: boolean
       }
     }
     Enums: {
