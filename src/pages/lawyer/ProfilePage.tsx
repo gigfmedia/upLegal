@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle, Heart } from 'lucide-react';
+import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle, Heart, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFormData } from '@/utils/initializeFormData';
 import { supabase } from '@/lib/supabaseClient';
@@ -226,17 +226,17 @@ export default function LawyerProfilePage() {
     
     try {
       // Get the auth token for the request
-      console.log('Getting user session...');
+      //console.log('Getting user session...');
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         const errorMsg = 'No se pudo obtener la sesión del usuario. Por favor, inicia sesión nuevamente.';
-        console.error('Session error:', sessionError?.message || 'No active session');
+        //console.error('Session error:', sessionError?.message || 'No active session');
         throw new Error(errorMsg);
       }
       
       const { session } = sessionData;
-      console.log('Session obtained, calling verification function...');
+      //console.log('Session obtained, calling verification function...');
       
       // Call the verification API using our helper
       const { data, error } = await invokeFunction<VerificationResponse>(
@@ -764,8 +764,8 @@ export default function LawyerProfilePage() {
                   }}
                   disabled={!isEditing}
                 />
-                </div>
               </div>
+            </div>
               
               <div className="flex-grow space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -866,20 +866,20 @@ export default function LawyerProfilePage() {
                               </div>
                             )}
                           </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleVerifyRUT}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleVerifyRUT}
                             disabled={isVerifying || !formData.rut || formData.pjud_verified || !isEditing}
                             className="whitespace-nowrap h-10 px-3"
-                          >
-                            {isVerifying ? (
+                            >
+                              {isVerifying ? (
                               <>
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                 Verificando
                               </>
                             ) : formData.pjud_verified ? 'Verificado' : 'Verificar'}
-                          </Button>
+                            </Button>
                         </div>
                       </div>
                     </div>
@@ -901,7 +901,7 @@ export default function LawyerProfilePage() {
                           </span>
                         </p>
                       )}
-                    </div>
+                  </div>
                   
                   <div className="space-y-2">
                     <Label htmlFor="website">Sitio Web</Label>
@@ -937,7 +937,7 @@ export default function LawyerProfilePage() {
               </div>
             </div>
           </CardContent>
-      </Card>
+        </Card>
 
         {/* Professional Information */}
         <Card>
@@ -986,18 +986,6 @@ export default function LawyerProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="bar_association_number">N° de Colegio de Abogados</Label>
-                <Input
-                  id="bar_association_number"
-                  name="bar_association_number"
-                  value={formData.bar_association_number || ''}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                  placeholder="Ej: 12345"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="experience">Años de Experiencia</Label>
                 <Input
                   id="experience"
@@ -1010,9 +998,6 @@ export default function LawyerProfilePage() {
                   placeholder="Ej: 5"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="hourly_rate">Tarifa por Hora (CLP)</Label>
                 <Input
@@ -1027,45 +1012,94 @@ export default function LawyerProfilePage() {
                 />
               </div>
             </div>
+            
+            
+            
+              <div className="space-y-2">
+                <Label htmlFor="documento_profesional">Documento Profesional</Label>
+                <fieldset disabled={!isEditing} className={!isEditing ? 'opacity-70' : ''}>
+                <DocumentUpload
+                  bucket="documents"
+                  userId={user?.id}
+                  onUpload={async (url, fileName) => {
+                    try {
+                      // Update user metadata with the new document URL
+                      const { data, error } = await supabase.auth.updateUser({
+                        data: {
+                          ...user?.user_metadata,
+                          professional_document: url,
+                          document_file_name: fileName
+                        }
+                      });
 
-            <div className="space-y-2">
-              <DocumentUpload
-                bucket="documents"
-                userId={user?.id}
-                onUpload={() => {}}
-                currentDocumentUrl={user?.user_metadata?.professional_document}
-                disabled={!isEditing}
-              />
-            </div>
+                      if (error) throw error;
 
-            <div className="space-y-4">
+                      // Update local state
+                      setFormData(prev => ({
+                        ...prev,
+                        professional_document: url
+                      }));
+
+                      toast({
+                        title: "Documento actualizado",
+                        description: "El documento profesional se ha guardado correctamente.",
+                        variant: "default",
+                      });
+                    } catch (error) {
+                      console.error('Error updating document:', error);
+                      toast({
+                        title: "Error",
+                        description: "No se pudo guardar el documento. Por favor, inténtalo de nuevo.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  currentDocumentUrl={user?.user_metadata?.professional_document}
+                  disabled={!isEditing}
+                  
+                  description="Sube tu título profesional o certificado"
+                  fileName={user?.user_metadata?.document_file_name || ''}
+                />
+                </fieldset>
+              </div>
+            
+
               <div className="space-y-2">
                 <Label htmlFor="education">Título Profesional</Label>
                 {!isEditing ? (
-                  <div className="p-2 border rounded-md bg-gray-50">
-                    <p className="text-sm">
+                  <div className="p-4 border rounded-md bg-gray-50 space-y-2">
+                    <div className="text-sm">
                       {formData.education || 'No especificado'}
-                      {formData.university && (
-                        <span className="block text-muted-foreground">
-                          {formData.university}
-                        </span>
-                      )}
-                      {(formData.study_start_year || formData.study_end_year) && (
-                        <span className="block text-muted-foreground text-sm">
-                          {formData.study_start_year} - {formData.study_end_year || 'Presente'}
-                        </span>
-                      )}
-                      {formData.certifications && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-muted-foreground mb-1">Certificaciones:</p>
-                          <ul className="list-disc pl-5 space-y-1 text-muted-foreground text-sm">
-                            {formData.certifications.split('\n').map((cert, index) => (
-                              <li key={index}>{cert.trim()}</li>
+                    </div>
+                    {formData.university && (
+                      <div className="text-muted-foreground text-sm">
+                        {formData.university}
+                      </div>
+                    )}
+                    {(formData.study_start_year || formData.study_end_year) && (
+                      <div className="text-muted-foreground text-sm">
+                        {formData.study_start_year} - {formData.study_end_year || 'Presente'}
+                      </div>
+                    )}
+                    {formData.certifications && (
+                      <div className="mt-2 w-full">
+                        <Label htmlFor="certifications-display" className="text-sm font-medium text-muted-foreground">
+                          Certificaciones
+                        </Label>
+                        <div className="mt-1">
+                          <div 
+                            id="certifications-display"
+                            className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto"
+                          >
+                            {formData.certifications.split('\n').map((cert, index, array) => (
+                              <span key={index} className="block text-foreground text-sm">
+                                {cert.trim()}{index < array.length - 1 ? '\n' : ''}
+                              </span>
                             ))}
-                          </ul>
+                          </div>
                         </div>
-                      )}
-                    </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -1124,14 +1158,25 @@ export default function LawyerProfilePage() {
                     type="number"
                     min="1950"
                     max={new Date().getFullYear()}
-                    value={formData.study_start_year || ''}
+                    value={formData.study_start_year?.toString() || ''}
                     onChange={(e) => {
-                      const value = e.target.value;
+                      const value = e.target.value ? parseInt(e.target.value, 10) : null;
                       setFormData(prev => ({
                         ...prev,
                         study_start_year: value
                       }));
                       setHasChanges(true);
+                    }}
+                    onBlur={(e) => {
+                      // Asegurar que el valor esté dentro del rango válido
+                      let value = e.target.value ? parseInt(e.target.value, 10) : null;
+                      if (value && (value < 1950 || value > new Date().getFullYear())) {
+                        value = null;
+                      }
+                      setFormData(prev => ({
+                        ...prev,
+                        study_start_year: value
+                      }));
                     }}
                     disabled={!isEditing}
                     placeholder="Año de inicio"
@@ -1146,14 +1191,25 @@ export default function LawyerProfilePage() {
                     type="number"
                     min="1950"
                     max={new Date().getFullYear() + 10}
-                    value={formData.study_end_year || ''}
+                    value={formData.study_end_year?.toString() || ''}
                     onChange={(e) => {
-                      const value = e.target.value;
+                      const value = e.target.value ? parseInt(e.target.value, 10) : null;
                       setFormData(prev => ({
                         ...prev,
                         study_end_year: value
                       }));
                       setHasChanges(true);
+                    }}
+                    onBlur={(e) => {
+                      // Ensure the value is within valid range
+                      let value = e.target.value ? parseInt(e.target.value, 10) : null;
+                      if (value && (value < 1950 || value > new Date().getFullYear() + 10)) {
+                        value = null;
+                      }
+                      setFormData(prev => ({
+                        ...prev,
+                        study_end_year: value
+                      }));
                     }}
                     disabled={!isEditing}
                     placeholder="Año de egreso"
@@ -1162,15 +1218,43 @@ export default function LawyerProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="certifications">Certificaciones</Label>
-                  <Textarea
-                    id="certifications"
-                    name="certifications"
-                    value={formData.certifications || ''}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    placeholder="Ingresa tus certificaciones, una por línea"
-                    className="min-h-[100px]"
-                  />
+                  {isEditing ? (
+                    <Textarea
+                      id="certifications"
+                      name="certifications"
+                      value={formData.certifications || ''}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          certifications: e.target.value
+                        }));
+                        setHasChanges(true);
+                      }}
+                      onBlur={(e) => {
+                        // Trim and clean up the certifications text
+                        const cleanedValue = e.target.value.trim();
+                        setFormData(prev => ({
+                          ...prev,
+                          certifications: cleanedValue
+                        }));
+                      }}
+                      placeholder="Ingresa tus certificaciones, una por línea"
+                      className="min-h-[100px]"
+                      disabled={!isEditing}
+                    />
+                  ) : (
+                    <div 
+                      className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto"
+                    >
+                      {formData.certifications ? (
+                        <div className="whitespace-pre-wrap text-foreground text-sm">
+                          {formData.certifications}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No hay certificaciones ingresadas</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1195,8 +1279,8 @@ export default function LawyerProfilePage() {
               <p className="text-xs text-muted-foreground">
                 Separa los idiomas con comas
               </p>
-            </div>
-          </div>
+              </div>
+            
 
           <div className="space-y-2">
               <Label htmlFor="zoom_link">Enlace de Zoom para Consultas</Label>
@@ -1231,8 +1315,8 @@ export default function LawyerProfilePage() {
                 Este enlace se usará para las consultas virtuales con tus clientes
               </p>
             </div>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
         
         <div className="flex justify-end space-x-2 pt-4">
           {!isEditing ? (

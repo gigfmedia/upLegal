@@ -8,6 +8,7 @@ import {
   DialogTitle, 
   DialogDescription 
 } from "@/components/ui/dialog";
+import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,7 +27,7 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
-  const { login, signup } = useAuth();
+  const { login, signup, user } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -48,6 +49,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     setSubmitting(true);
     
     try {
+      // Store the current path before login for redirecting back
+      const redirectTo = new URLSearchParams(window.location.search).get('redirectTo');
       if (mode === 'signup') {
         // Validate form data for signup
         if (formData.password !== formData.confirmPassword) {
@@ -139,12 +142,38 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       });
       
       // Handle success based on mode
-      if (mode === 'login' && onLoginSuccess) {
-        onLoginSuccess();
+      if (mode === 'login') {
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        } else {
+          // Get the user data from the login response
+          const { data: { user: currentUser }, error: loginError } = await supabase.auth.signInWithPassword({
+            email: formData.email.trim(),
+            password: formData.password
+          });
+
+          if (loginError) throw loginError;
+          
+          // Get the user's role from the user_metadata
+          const userRole = currentUser?.user_metadata?.role || 'client';
+          
+          // Close the modal
+          onClose();
+          
+          // If there's a redirect URL in the query params, use it
+          if (redirectTo) {
+            window.location.href = redirectTo;
+            return;
+          }
+          
+          // Otherwise, redirect based on user role
+          navigate(userRole === 'lawyer' ? '/lawyer/dashboard' : '/dashboard');
+        }
       } else {
-        // Default behavior for signup or if no callback is provided
+        // For signup, we'll use the role from the form data
         onClose();
-        navigate('/dashboard');
+        const userRole = formData.role || 'client';
+        navigate(userRole === 'lawyer' ? '/lawyer/dashboard' : '/dashboard');
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -352,7 +381,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Procesando...
+                Iniciando sesión...
               </>
             ) : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </Button>

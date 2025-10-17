@@ -1,35 +1,24 @@
 import { useState, useEffect } from 'react';
 import { format, isToday, isTomorrow, addDays, startOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Search, X, Clock, Video, Phone, MapPin, MoreHorizontal, Badge, Eye, Edit, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Search, X, Clock, Video, Phone, MapPin, MoreHorizontal, Badge, Eye, Edit, Trash } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/components/ui/use-toast';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AppointmentForm } from '@/components/appointments/AppointmentForm';
-
-type AppointmentStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled';
-
-interface Appointment {
-  id: string;
-  clientName: string;
-  clientEmail: string;
-  clientPhone: string;
-  service: string;
-  date: Date;
-  duration: number;
-  status: AppointmentStatus;
-  type: 'video' | 'phone' | 'in_person';
-  notes?: string;
-}
-
 export default function CitasPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [showNewAppointmentForm, setShowNewAppointmentForm] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
 
   // Navegación de días
   const goToPreviousDay = () => setSelectedDate(prev => addDays(prev, -1));
@@ -53,14 +42,29 @@ export default function CitasPage() {
     setShowNewAppointmentForm(true);
   };
 
-  const handleDeleteAppointment = async (appointmentId: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
-      try {
-        // Aquí iría la llamada a la API para eliminar la cita
-        setAppointments(appointments.filter(appt => appt.id !== appointmentId));
-      } catch (error) {
-        alert('No se pudo eliminar la cita. Por favor, inténtalo de nuevo.');
-      }
+  const handleDeleteAppointment = (appointmentId: string) => {
+    setAppointmentToDelete(appointmentId);
+  };
+
+  const confirmDeleteAppointment = async () => {
+    if (!appointmentToDelete) return;
+    
+    try {
+      // Aquí iría la llamada a la API para eliminar la cita
+      setAppointments(appointments.filter(appt => appt.id !== appointmentToDelete));
+      toast({
+        title: 'Cita cancelada',
+        description: 'La cita ha sido cancelada correctamente.',
+      });
+    } catch (error) {
+      console.error('Error al cancelar la cita:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo cancelar la cita. Inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setAppointmentToDelete(null);
     }
   };
 
@@ -294,11 +298,11 @@ export default function CitasPage() {
                     <Button
                       variant="outline"
                       size="default"
-                      className="h-9 flex items-center gap-2 px-4 text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
+                      className="h-9 flex items-center gap-2 px-4 text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
                       onClick={() => handleDeleteAppointment(appointment.id)}
                     >
-                      <Trash className="h-4 w-4" />
-                      Eliminar
+                      <X className="h-4 w-4" />
+                      Cancelar
                     </Button>
                   </div>
                 </CardHeader>
@@ -308,94 +312,88 @@ export default function CitasPage() {
         </div>
       </div>
 
-      {/* Modal de Ver Cita */}
-      {viewingAppointment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-2xl">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium">Detalles de la Cita</h3>
-                <Button variant="ghost" size="icon" onClick={() => setViewingAppointment(null)}>
-                  <X className="h-5 w-5" />
-                </Button>
+      {/* View Appointment Dialog */}
+      <Dialog open={!!viewingAppointment} onOpenChange={(open) => !open && setViewingAppointment(null)}>
+        <DialogContent 
+          className="sm:max-w-2xl fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Detalles de la Cita</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <h4 className="font-medium">Cliente</h4>
+              <p className="text-muted-foreground">{viewingAppointment?.clientName}</p>
+            </div>
+            <div>
+              <h4 className="font-medium">Servicio</h4>
+              <p className="text-muted-foreground">{viewingAppointment?.service}</p>
+            </div>
+            <div>
+              <h4 className="font-medium">Fecha y Hora</h4>
+              <p className="text-muted-foreground">
+                {viewingAppointment && format(viewingAppointment.date, 'PPP', { locale: es })} a las{' '}
+                {viewingAppointment && format(viewingAppointment.date, 'p', { locale: es })}
+              </p>
+            </div>
+            <div>
+              <h4 className="font-medium">Duración</h4>
+              <p className="text-muted-foreground">{viewingAppointment?.duration} minutos</p>
+            </div>
+            <div>
+              <h4 className="font-medium">Tipo</h4>
+              <p className="text-muted-foreground capitalize">
+                {viewingAppointment?.type === 'video' 
+                  ? 'Videollamada' 
+                  : viewingAppointment?.type === 'phone' 
+                    ? 'Llamada telefónica' 
+                    : 'Reunión presencial'}
+              </p>
+            </div>
+            {viewingAppointment?.notes && (
+              <div>
+                <h4 className="font-medium">Notas</h4>
+                <p className="text-muted-foreground whitespace-pre-line">{viewingAppointment.notes}</p>
               </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium">Cliente</h4>
-                  <p className="text-muted-foreground">{viewingAppointment.clientName}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium">Servicio</h4>
-                  <p className="text-muted-foreground">{viewingAppointment.service}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium">Fecha y Hora</h4>
-                  <p className="text-muted-foreground">
-                    {format(viewingAppointment.date, 'PPP', { locale: es })} a las{' '}
-                    {format(viewingAppointment.date, 'p', { locale: es })}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium">Duración</h4>
-                  <p className="text-muted-foreground">{viewingAppointment.duration} minutos</p>
-                </div>
-                <div>
-                  <h4 className="font-medium">Tipo</h4>
-                  <p className="text-muted-foreground capitalize">
-                    {viewingAppointment.type === 'video' 
-                      ? 'Videollamada' 
-                      : viewingAppointment.type === 'phone' 
-                        ? 'Llamada telefónica' 
-                        : 'Reunión presencial'}
-                  </p>
-                </div>
-                {viewingAppointment.notes && (
-                  <div>
-                    <h4 className="font-medium">Notas</h4>
-                    <p className="text-muted-foreground whitespace-pre-line">{viewingAppointment.notes}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="mt-6 flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => {
+            )}
+          </div>
+          
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              className="mr-2"
+              onClick={() => {
+                if (viewingAppointment) {
                   setViewingAppointment(null);
                   handleEditAppointment(viewingAppointment);
-                }}>
-                  Editar
-                </Button>
-                <Button onClick={() => setViewingAppointment(null)}>Cerrar</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                }
+              }}
+            >
+              Editar
+            </Button>
+            <Button onClick={() => setViewingAppointment(null)}>Cerrar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Formulario para nueva/editar cita */}
-      {showNewAppointmentForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-background rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium">
-                  {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
-                </h3>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => {
-                    setShowNewAppointmentForm(false);
-                    setEditingAppointment(null);
-                  }}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
+      {/* New/Edit Appointment Dialog */}
+      <Dialog open={showNewAppointmentForm} onOpenChange={(open) => !open && setShowNewAppointmentForm(false)}>
+        <DialogContent 
+          className="sm:max-w-2xl max-h-[90vh] overflow-y-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" 
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">
+              {editingAppointment ? 'Editar Cita' : 'Nueva Cita'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
 
-              <AppointmentForm
-                initialData={editingAppointment ? {
-                  ...editingAppointment,
+            <AppointmentForm
+              initialData={editingAppointment ? {
+                ...editingAppointment,
                   date: format(editingAppointment.date, 'yyyy-MM-dd'),
                   time: format(editingAppointment.date, 'HH:mm'),
                   duration: editingAppointment.duration.toString(),
@@ -427,19 +425,49 @@ export default function CitasPage() {
                       date: new Date(`${data.date}T${data.time}`),
                       status: 'confirmed',
                     };
-                    setAppointments([...appointments, newAppointment]);
+                    setAppointments(prev => [...prev, newAppointment]);
+                    setShowNewAppointmentForm(false);
                   }
-                  setShowNewAppointmentForm(false);
                 }}
                 onCancel={() => {
                   setShowNewAppointmentForm(false);
                   setEditingAppointment(null);
                 }}
-              />
-            </div>
+                isEditing={!!editingAppointment}
+            />
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
+      {/* Confirmation Dialog for Appointment Cancellation */}
+      <Dialog open={!!appointmentToDelete} onOpenChange={(open) => !open && setAppointmentToDelete(null)}>
+        <DialogContent 
+          className="sm:max-w-[425px] fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" 
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">¿Cancelar cita?</DialogTitle>
+            <DialogDescription className="mt-2">
+              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setAppointmentToDelete(null)}
+              className="mr-2"
+            >
+              Volver
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={confirmDeleteAppointment}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sí, cancelar cita
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

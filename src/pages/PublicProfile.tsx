@@ -585,7 +585,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       experience: [
         `Abogado con ${lawyerWithViews?.experience_years || 0} años de experiencia`
       ],
-      certifications: [],
+      certifications: lawyerWithViews?.certifications 
+        ? (typeof lawyerWithViews.certifications === 'string' 
+            ? lawyerWithViews.certifications.split('\n').filter(cert => cert.trim() !== '')
+            : Array.isArray(lawyerWithViews.certifications) 
+              ? lawyerWithViews.certifications 
+              : [])
+        : [],
       languages: lawyerWithViews?.languages || ["Español"],
       availability: "Disponible",
       responseTime: "< 2 horas",
@@ -646,6 +652,245 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     }
   };
 
+  // Skeleton component for the profile header
+  const ProfileHeaderSkeleton = () => (
+    <Card className="overflow-hidden shadow-sm">
+      <CardContent className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex flex-col items-center">
+            <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-full ring-4 ring-white shadow-md overflow-hidden">
+              <Skeleton className="h-full w-full rounded-full" />
+            </div>
+            <Skeleton className="h-5 w-24 rounded-full" />
+          </div>
+          
+          <div className="flex-1 space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-9 w-64" />
+              <Skeleton className="h-5 w-24 rounded-full" />
+              <Skeleton className="h-5 w-5 rounded-full" />
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <Skeleton className="h-5 w-5 mr-1" />
+                <Skeleton className="h-5 w-16" />
+                <Skeleton className="h-4 w-20 ml-1" />
+              </div>
+              <div className="flex items-center">
+                <Skeleton className="h-4 w-4 mr-1" />
+                <Skeleton className="h-4 w-40" />
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-1" />
+                  <Skeleton className="h-4 w-36" />
+                </div>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-1" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
+                <div className="flex items-center">
+                  <Skeleton className="h-4 w-4 mr-1" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center">
+              <Skeleton className="h-4 w-48" />
+            </div>
+          </div>
+          
+          <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-64 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
+            <Skeleton className="h-10 w-40 mb-4" />
+            <div className="space-y-3 w-full">
+              <Skeleton className="h-10 w-full rounded-md" />
+              <Skeleton className="h-10 w-full rounded-md" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Skeleton component for the about section
+  const AboutSectionSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-32" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-6 mt-8">
+          <div className="space-y-6">
+            <div>
+              <Skeleton className="h-5 w-24 mb-3" />
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            </div>
+            
+            <div>
+              <Skeleton className="h-5 w-24 mb-3" />
+              <div className="flex flex-wrap gap-2">
+                <Skeleton className="h-6 w-16 rounded-full" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <Skeleton className="h-5 w-32 mb-3" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Skeleton component for the experience section
+  const ExperienceSectionSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-32" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border-l-2 border-blue-200 pl-4">
+              <Skeleton className="h-5 w-64" />
+              <Skeleton className="h-4 w-48 mt-1" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Skeleton component for the reviews section
+  const ReviewsSectionSkeleton = () => (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-64" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {[1, 2].map((i) => (
+            <div key={i}>
+              <div className="flex justify-between items-start mb-2">
+                <Skeleton className="h-5 w-48" />
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Skeleton key={star} className="h-4 w-4 rounded-full mx-0.5" />
+                  ))}
+                </div>
+              </div>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-20 mt-3" />
+              {i < 2 && <Separator className="mt-6" />}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  // Skeleton component for the services section
+  const ServicesSectionSkeleton = () => (
+    <Card className="border shadow-sm">
+      <CardHeader className="p-6">
+        <CardTitle className="text-2xl font-semibold leading-none tracking-tight">
+          <Skeleton className="h-7 w-48" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {[1, 2].map((row, rowIndex) => (
+            <div key={rowIndex} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map((col, colIndex) => (
+                <div key={`${rowIndex}-${colIndex}`} className="border rounded-lg p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                  <Skeleton className="h-5 w-32 mb-4" />
+                  <div className="space-y-3 mb-6">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center">
+                        <Skeleton className="h-4 w-4 rounded-full mr-2" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t">
+                    <div className="flex items-center">
+                      <Skeleton className="h-4 w-4 mr-2" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-10 w-32 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="bg-muted pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <ProfileHeaderSkeleton />
+            <AboutSectionSkeleton />
+            <ExperienceSectionSkeleton />
+            <ReviewsSectionSkeleton />
+            <ServicesSectionSkeleton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <AlertCircle className="h-6 w-6 text-red-600" />
+          </div>
+          <h2 className="mt-3 text-lg font-medium text-gray-900">Error al cargar el perfil</h2>
+          <p className="mt-2 text-sm text-gray-600">{error}</p>
+          <Button 
+            onClick={() => fetchProfile()} 
+            className="mt-4"
+            variant="outline"
+          >
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -654,10 +899,32 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         <div className="max-w-7xl mx-auto">
           <div className="space-y-8">
             {/* Profile Header */}
-            <Card className="overflow-hidden shadow-sm">
+            <Card className="overflow-hidden shadow-sm relative">
               <CardContent className="p-6 md:p-8">
+                {/* Mobile favorite button */}
+                {lawyer && (
+                  <div className="absolute top-4 right-4 sm:hidden z-10">
+                    <FavoriteButton 
+                      lawyerId={lawyer.id} 
+                      showText={false}
+                      onAuthRequired={() => setIsAuthModalOpen(true)}
+                      className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full p-2"
+                    />
+                  </div>
+                )}
                 <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center relative">
+                      {/* Mobile-only verified badge */}
+                      {(lawyer?.verified || lawyer?.pjud_verified) && (
+                        <div className="sm:hidden absolute -top-1 -left-1 z-10">
+                          <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            <ShieldCheck className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                            <span className="text-xs font-medium text-green-700">
+                              {lawyer?.pjud_verified ? 'Verificado PJUD' : 'Verificado'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-full ring-4 ring-white shadow-md overflow-hidden">
                         <Avatar className="h-full w-full">
                           <AvatarImage 
@@ -680,19 +947,32 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                   <div className="flex-1 space-y-4">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                        {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
-                      </h2>
-                      {(lawyer?.verified || lawyer?.pjud_verified) && (
-                        <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
-                          <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
-                          <span className="text-xs font-medium text-green-700">
-                            {lawyer?.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
-                          </span>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                          {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
+                        </h2>
+                        {/* Desktop verified badge next to name */}
+                        {(lawyer?.verified || lawyer?.pjud_verified) && (
+                          <div className="hidden sm:flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
+                            <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+                            <span className="text-xs font-medium text-green-700">
+                              {lawyer?.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {lawyer && (
+                        <div className="sm:hidden absolute top-4 right-4">
+                          <FavoriteButton 
+                            lawyerId={lawyer.id} 
+                            showText={false}
+                            onAuthRequired={() => setIsAuthModalOpen(true)}
+                            className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full p-2"
+                          />
                         </div>
                       )}
                       {lawyer && (
-                        <div className="flex items-center">
+                        <div className="hidden sm:flex items-center">
                           <FavoriteButton 
                             lawyerId={lawyer.id} 
                             showText={false}
@@ -703,40 +983,41 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       )}
                     </div>
                     
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center">
-                        <Star className="h-5 w-5 text-yellow-500 mr-1" />
-                        <span className="font-semibold">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 w-full">
+                      <div className="flex items-center w-full sm:w-auto">
+                        <Star className="h-5 w-5 text-yellow-500 mr-1 flex-shrink-0" />
+                        <span className="font-semibold whitespace-nowrap">
                           {lawyer?.rating ? Number(lawyer.rating).toFixed(1) : 'N/A'}
                         </span>
                         <span className="text-gray-600 ml-1">
                           ({lawyer?.review_count || 0} reseñas)
                         </span>
                       </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1 text-gray-600" />
-                        <span>{lawyer?.location || 'Ubicación no especificada'}</span>
+                      <div className="flex items-center w-full sm:w-auto pt-3 sm:border-t-0 sm:pt-0">
+                        <MapPin className="h-4 w-4 mr-1 text-gray-600 flex-shrink-0" />
+                        <span className="truncate">{lawyer?.location || 'Ubicación no especificada'}</span>
                       </div>
                     </div>
 
                     
 
-                    <div className="flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex items-center gap-6 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          <span>Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <ThumbsUp className="h-4 w-4 mr-1" />
-                          <span>{profileData.completionRate} éxito en trabajos</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          <span>{lawyer?.profile_views || 0} visualizaciones</span>
+                    <div className="w-full">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 w-full sm:w-auto">
+                          <div className="flex items-center min-w-[160px]">
+                            <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
+                          </div>
+                          <div className="flex items-center min-w-[140px]">
+                            <ThumbsUp className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{profileData.completionRate} éxito en trabajos</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span>{lawyer?.profile_views || 0} visualizaciones</span>
+                          </div>
                         </div>
                       </div>
-                      
                     </div>
                     
                     {lawyer?.website && (
@@ -754,7 +1035,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     )}
                   </div>
 
-                  <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-auto mt-6 md:mt-0">
+                  <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-68 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
                     <div className="text-3xl font-bold text-primary mb-4 text-center md:text-left">
                       {lawyer?.hourly_rate_clp !== undefined && lawyer?.hourly_rate_clp !== null 
                         ? formatPrice(lawyer.hourly_rate_clp)
@@ -762,8 +1043,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       <span className="text-gray-500 text-sm ml-1">/hora</span>
                     </div>
 
-                    <div className="space-y-3 flex flex-col md:block">
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
+                    <div className="space-y-3 w-full">
+                      <div className="flex flex-col gap-3 w-full">
                         <Button 
                           className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
                           onClick={(e) => {
@@ -939,6 +1220,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   services={services} 
                   isLoading={loading} 
                   isOwner={currentUser?.id === lawyer?.user_id}
+                  onAuthRequired={() => setIsAuthModalOpen(true)}
                   lawyerId={lawyer?.id}
                   onContactService={(service) => {
                     if (!currentUser) {

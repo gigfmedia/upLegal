@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useNavigate } from "react-router-dom";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { supabase } from "@/lib/supabaseClient";
+import { AuthModal } from "./AuthModal";
 
 interface HeaderProps {
   onAuthClick?: (mode: 'login' | 'signup') => void;
@@ -19,6 +20,8 @@ export default function Header({ onAuthClick }: HeaderProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
     const getUserRole = async () => {
@@ -46,11 +49,8 @@ export default function Header({ onAuthClick }: HeaderProps) {
   };
 
   const handleAuthNavigation = (mode: 'login' | 'signup') => {
-    if (onAuthClick) {
-      onAuthClick(mode);
-    } else {
-      navigate(`/${mode}`);
-    }
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
   };
 
   return (
@@ -200,6 +200,13 @@ export default function Header({ onAuthClick }: HeaderProps) {
           </div>
         </div>
       </div>
+      
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)}
+        mode={authMode}
+        onModeChange={setAuthMode}
+      />
     </div>
   );
 }

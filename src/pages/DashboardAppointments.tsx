@@ -177,6 +177,44 @@ export default function DashboardAppointments() {
     setIsCancelModalOpen(true);
   };
 
+  const handleConfirmCancel = async () => {
+    if (!selectedAppointment) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Update the appointment status to 'cancelled' via API
+      await appointmentsApi.update(selectedAppointment.id, {
+        status: 'cancelled',
+      });
+      
+      // Update the local state
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.id === selectedAppointment.id 
+            ? { ...apt, status: 'cancelled' } 
+            : apt
+        )
+      );
+      
+      toast({
+        title: "Cita cancelada",
+        description: "La cita ha sido cancelada exitosamente.",
+      });
+      
+      setIsCancelModalOpen(false);
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo cancelar la cita. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleConfirmReschedule = async () => {
     if (!rescheduleDate || !rescheduleTime || !selectedAppointment) return;
     
@@ -224,43 +262,7 @@ export default function DashboardAppointments() {
     }
   };
 
-  const handleConfirmCancel = async () => {
-    if (!selectedAppointment) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Update the appointment status via API
-      await appointmentsApi.update(selectedAppointment.id, {
-        status: 'cancelled',
-      });
-      
-      // Update the local state
-      setAppointments(prev => 
-        prev.map(apt => 
-          apt.id === selectedAppointment.id 
-            ? { ...apt, status: 'cancelled' } 
-            : apt
-        )
-      );
-      
-      toast({
-        title: "Cita cancelada",
-        description: "La cita ha sido cancelada exitosamente.",
-      });
-      
-      setIsCancelModalOpen(false);
-    } catch (error) {
-      console.error('Error cancelling appointment:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo cancelar la cita. Por favor, inténtalo de nuevo.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // handleConfirmCancel implementation is already defined above
 
   const handleNewAppointment = () => {
     setNewAppointment({

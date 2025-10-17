@@ -23,6 +23,7 @@ interface ServicesSectionProps {
   isOwner?: boolean;
   isLoading?: boolean;
   onContactService?: (service: Service) => void;
+  onAuthRequired?: () => void;
   lawyerId?: string;
 }
 
@@ -31,6 +32,7 @@ export function ServicesSection({
   isOwner = false, 
   isLoading = false, 
   onContactService, 
+  onAuthRequired,
   lawyerId: lawyerIdProp 
 }: ServicesSectionProps) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -70,11 +72,15 @@ export function ServicesSection({
   
   const handleServiceSelect = async (service: Service) => {
     if (!user) {
-      toast({
-        title: "Inicia sesión",
-        description: "Debes iniciar sesión para solicitar un servicio.",
-        variant: "destructive"
-      });
+      if (onAuthRequired) {
+        onAuthRequired();
+      } else {
+        toast({
+          title: "Inicia sesión",
+          description: "Debes iniciar sesión para solicitar un servicio.",
+          variant: "destructive"
+        });
+      }
       return;
     }
     

@@ -330,61 +330,71 @@ export function LawyerProfileForm() {
             <FormField
               control={form.control}
               name="languages"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Idiomas que hablas</FormLabel>
-                  <FormControl>
-                    <div className="space-y-2">
-                      {field.value.map((lang, index) => (
-                        <div key={index} className="flex space-x-2">
-                          <Input
-                            value={lang}
-                            onChange={(e) => {
-                              const newLangs = [...field.value];
-                              newLangs[index] = e.target.value;
-                              field.onChange(newLangs);
-                            }}
-                            placeholder="Ej: Español"
-                          />
-                          {index === field.value.length - 1 ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => field.onChange([...field.value, ''])}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const newLangs = field.value.filter((_, i) => i !== index);
-                                field.onChange(newLangs);
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      {field.value.length === 0 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => field.onChange([''])}
-                        >
-                          <Plus className="h-4 w-4 mr-2" /> Agregar idioma
-                        </Button>
-                      )}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                // Convert array to string for input
+                const inputValue = Array.isArray(field.value) 
+                  ? field.value.join(', ')
+                  : field.value || '';
+
+                return (
+                  <FormItem>
+                    <FormLabel>Idiomas que hablas</FormLabel>
+                    <FormControl>
+                      <div className="space-y-2">
+                        <Input
+                          value={inputValue}
+                          onChange={(e) => {
+                            // Store the raw input value
+                            field.onChange([e.target.value]);
+                          }}
+                          onBlur={(e) => {
+                            // Split by commas and clean up when input loses focus
+                            if (e.target.value) {
+                              const languages = e.target.value
+                                .split(',')
+                                .map(lang => lang.trim())
+                                .filter(lang => lang.length > 0);
+                              field.onChange(languages);
+                            }
+                          }}
+                          placeholder="Ej: Español, Inglés, Francés"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Separa los idiomas con comas
+                        </p>
+                        
+                        {/* Display tags for each language */}
+                        {Array.isArray(field.value) && field.value.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {field.value.map((lang, index) => (
+                              lang.trim() && (
+                                <div 
+                                  key={index} 
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                                >
+                                  {lang}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const newLangs = field.value.filter((_, i) => i !== index);
+                                      field.onChange(newLangs);
+                                    }}
+                                    className="ml-1.5 text-blue-600 hover:text-blue-800"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              )
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

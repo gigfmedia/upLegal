@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck, Heart } from "lucide-react";
+import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { FavoriteButton } from "./FavoriteButton";
+import { LawyerRatings } from "./ratings/LawyerRatings";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export interface Lawyer {
   id: string;
@@ -68,8 +76,11 @@ export function LawyerCard({
 
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showRatingsDialog, setShowRatingsDialog] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const { user: authUser } = useAuth();
+  const [currentRating, setCurrentRating] = useState(lawyer.rating);
+  const [currentReviewCount, setCurrentReviewCount] = useState(lawyer.reviews);
   
   // Check if user has already used their free consultation
   const hasUsedFreeConsultation = user?.user_metadata?.hasUsedFreeConsultation || false;
@@ -170,11 +181,17 @@ export function LawyerCard({
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm mt-1">
-                    <div className="flex items-center space-x-1 text-gray-500">
+                    <button 
+                      className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowRatingsDialog(true);
+                      }}
+                    >
                       <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
-                      <span className="font-medium">{lawyer.rating}</span>
-                      <span className="text-gray-400">({lawyer.reviews})</span>
-                    </div>
+                      <span className="font-medium">{currentRating.toFixed(1)}</span>
+                      <span className="text-gray-400">({currentReviewCount})</span>
+                    </button>
                     <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
                     <span className="text-blue-600 font-medium">
                       {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
@@ -303,16 +320,38 @@ export function LawyerCard({
         </div>
       </Card>
 
-      {isConsultationOpen && (
-        <ConsultationModal
-          isOpen={true}
-          onClose={() => setIsConsultationOpen(false)}
-          lawyerName={lawyer.name}
-          lawyerId={String(lawyer.id)}
-          hasFreeConsultation={lawyer.consultationPrice === 0}
-          consultationPrice={lawyer.consultationPrice}
-        />
-      )}
+      {/* Ratings Dialog */}
+      <Dialog open={showRatingsDialog} onOpenChange={setShowRatingsDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="ratings-dialog-description">
+          <DialogHeader>
+            <DialogTitle>Reseñas y calificaciones</DialogTitle>
+            <DialogDescription id="ratings-dialog-description">
+              Opiniones de clientes sobre {lawyer.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <LawyerRatings 
+            lawyerId={lawyer.id}
+            averageRating={currentRating}
+            ratingCount={currentReviewCount}
+            onRatingUpdate={(newAverage, newCount) => {
+              setCurrentRating(newAverage);
+              setCurrentReviewCount(newCount);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Consultation Modal */}
+      <ConsultationModal
+        isOpen={isConsultationOpen}
+        onClose={() => setIsConsultationOpen(false)}
+        lawyer={lawyer}
+        hasFreeConsultation={hasFreeConsultation}
+        consultationPrice={lawyer.consultationPrice}
+      />
+
+      {/* Auth Modal */}
       <AuthModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}

@@ -11,20 +11,25 @@ export function useFavorites(lawyerId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if the current lawyer is in favorites using the is_favorited function
+  // Check if the current lawyer is in favorites by querying the favorites table directly
   const checkFavorite = useCallback(async () => {
     if (!user || !lawyerId) return;
     
     try {
-      const { data: isFavorited, error } = await supabase
-        .rpc('is_favorited', { 
-          p_user_id: user.id, 
-          p_lawyer_id: lawyerId 
-        });
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('lawyer_id', lawyerId)
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking favorite:', error);
+        setError('Error al verificar favoritos');
+        return;
+      }
       
-      setIsFavorite(!!isFavorited);
+      setIsFavorite(!!data);
     } catch (err) {
       console.error('Error checking favorite status:', err);
       setError('Error al verificar favoritos');
@@ -36,9 +41,6 @@ export function useFavorites(lawyerId?: string) {
     if (!user) return { error: 'Debes iniciar sesión para guardar favoritos' };
     if (!lawyerId) return { error: 'ID de abogado no válido' };
     
-    // Ensure lawyerId is treated as a string
-    const lawyerIdStr = String(lawyerId);
-    
     setIsLoading(true);
     setError(null);
     
@@ -48,21 +50,21 @@ export function useFavorites(lawyerId?: string) {
         const { error: deleteError } = await supabase
           .from('favorites')
           .delete()
-          .eq('user_id', user.id)
-          .eq('lawyer_id', lawyerIdStr);
+          .match({
+            user_id: user.id,
+            lawyer_id: lawyerId
+          });
         
         if (deleteError) throw deleteError;
         setIsFavorite(false);
       } else {
         // Add to favorites
-        const newFavorite: Favorite = { 
-          user_id: user.id, 
-          lawyer_id: lawyerIdStr
-        };
-        
         const { error: insertError } = await supabase
           .from('favorites')
-          .insert(newFavorite);
+          .insert({
+            user_id: user.id,
+            lawyer_id: lawyerId
+          });
         
         if (insertError) throw insertError;
         setIsFavorite(true);

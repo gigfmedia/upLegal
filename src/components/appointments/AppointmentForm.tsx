@@ -21,9 +21,10 @@ interface AppointmentFormProps {
   };
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  isEditing?: boolean;
 }
 
-export function AppointmentForm({ initialData, onSubmit, onCancel }: AppointmentFormProps) {
+export function AppointmentForm({ initialData, onSubmit, onCancel, isEditing = false }: AppointmentFormProps) {
   const [formData, setFormData] = useState(initialData);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -159,7 +160,7 @@ export function AppointmentForm({ initialData, onSubmit, onCancel }: Appointment
         />
       </div>
 
-      <div className="flex justify-end space-x-2 pt-4 border-t">
+      <div className="flex justify-end space-x-2 pt-4">
         <Button
           type="button"
           variant="outline"
@@ -168,8 +169,7 @@ export function AppointmentForm({ initialData, onSubmit, onCancel }: Appointment
           Cancelar
         </Button>
         <Button type="submit">
-          <Plus className="mr-2 h-4 w-4" />
-          Crear Cita
+          {isEditing ? 'Guardar Cambios' : 'Crear Cita'}
         </Button>
       </div>
     </form>

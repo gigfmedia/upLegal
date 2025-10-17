@@ -113,15 +113,7 @@ export function ProfileCompletion({ onNavigateToTab, completionPercentage }: Pro
       });
     }
 
-    if (!user.user_metadata.bar_association_number) {
-      items.push({
-        label: 'N° de colegiado',
-        tab: 'profile',
-        description: 'Agrega tu número de colegiado para verificación'
-      });
-    }
-
-    if (!user.user_metadata.rut) {
+if (!user.user_metadata.rut) {
       items.push({
         label: 'RUT',
         tab: 'profile',

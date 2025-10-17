@@ -5,11 +5,12 @@ import { Plus, Pencil, Trash2, X, Clock, DollarSign, CheckCircle, Loader2, FileT
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface Service {
   id?: string;
@@ -43,6 +44,8 @@ export default function ServicesPage() {
   // Services state
   const [services, setServices] = useState<Service[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<EditingService>({
     id: null,
     title: '',
@@ -295,18 +298,21 @@ export default function ServicesPage() {
     }
   };
   
-  const handleDeleteService = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este servicio? Esta acción no se puede deshacer.')) {
-      return;
-    }
+  const handleDeleteClick = (id: string) => {
+    setServiceToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
+  const handleDeleteService = async () => {
+    if (!serviceToDelete) return;
+    
     try {
       setIsLoading(true);
       
       const { error } = await supabase
         .from('lawyer_services')
         .delete()
-        .eq('id', id);
+        .eq('id', serviceToDelete);
         
       if (error) throw error;
       
@@ -333,6 +339,8 @@ export default function ServicesPage() {
       });
     } finally {
       setIsLoading(false);
+      setServiceToDelete(null);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -403,6 +411,45 @@ export default function ServicesPage() {
 
   return (
     <div className="container mx-auto px-8 py-6">
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex justify-between items-center">
+              <AlertDialogTitle>¿Eliminar servicio?</AlertDialogTitle>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="h-8 w-8 p-0 -mr-2"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Cerrar</span>
+              </Button>
+            </div>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El servicio será eliminado permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteService}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mis Servicios</h1>
@@ -420,17 +467,10 @@ export default function ServicesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {services.map((service) => (
             <Card key={service.id} className={`h-full flex flex-col hover:shadow-md transition-shadow border ${service.available === false ? 'opacity-70' : ''} border-gray-200 shadow-sm`}>
-              {service.available === false && (
-                <div className="absolute top-2 right-2">
-                  <Badge variant="destructive" className="text-xs">
-                    No disponible
-                  </Badge>
-                </div>
-              )}
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1 pr-4">
-                    <div className="flex items-center gap-2 mb-8">
+                    <div className="flex items-center gap-2 mb-2">
                       <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-50">
                         {service.title.toLowerCase().includes('contrat') ? (
                           <FileText className="h-5 w-5 text-blue-600" />
@@ -444,9 +484,16 @@ export default function ServicesPage() {
                           <DollarSign className="h-5 w-5 text-blue-600" />
                         )}
                       </div>
-                      <CardTitle className="text-lg font-semibold">
-                        {service.title}
-                      </CardTitle>
+                      <div>
+                        <CardTitle className="text-lg font-semibold">
+                          {service.title}
+                        </CardTitle>
+                        {service.available === false && (
+                          <Badge variant="outline" className="text-xs mt-1 bg-white/80 text-gray-700 border-gray-200 hover:bg-white">
+                            No disponible
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <CardDescription className="mt-2 text-sm text-gray-600">
                       {service.description}
@@ -560,7 +607,7 @@ export default function ServicesPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => handleDeleteService(service.id)}
+                    onClick={() => handleDeleteClick(service.id!)}
                     className="text-red-500 hover:bg-red-50 hover:text-red-600 gap-1.5 w-full px-4 py-2 h-9"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

@@ -90,9 +90,9 @@ function DashboardLayout() {
   // Client navigation items
   const clientNavItems: NavItem[] = [
     { href: '/dashboard', icon: Activity, label: 'Resumen' },
-    { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
     { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
+    { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
     { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
     { href: '/dashboard/profile', icon: User, label: 'Perfil' },
@@ -115,11 +115,11 @@ function DashboardLayout() {
     if (userRole === 'lawyer') {
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
-        { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios' },
         { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
+        { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems
       ];

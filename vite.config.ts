@@ -9,6 +9,21 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '::',
     port: 8080,
+    strictPort: true,
+    hmr: {
+      port: 8080,
+    },
+    // Permitir cualquier host, incluyendo ngrok
+    cors: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    // Permitir el host de ngrok
+    allowedHosts: [
+      '4b8d111bae68.ngrok-free.app',
+      'localhost',
+      '127.0.0.1'
+    ],
   },
   preview: {
     port: 8080,

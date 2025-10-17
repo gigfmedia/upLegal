@@ -16,6 +16,7 @@ interface DocumentUploadProps {
   label?: string;
   description?: string;
   disabled?: boolean;
+  fileName?: string;
 }
 
 export function DocumentUpload({
@@ -25,6 +26,7 @@ export function DocumentUpload({
   bucket,
   folder = 'documents',
   userId,
+  fileName,
   currentDocumentUrl,
   disabled = false,
   label = 'Documento',
@@ -32,9 +34,8 @@ export function DocumentUpload({
 }: DocumentUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentDocumentUrl || null);
-  const [fileName, setFileName] = useState<string>('');
   const { toast } = useToast();
-
+  console.log('DocumentUpload fileName:', fileName);
   const getFileIcon = (fileType: string) => {
     if (fileType === 'application/pdf') return <FileText className="h-5 w-5" />;
     if (fileType.startsWith('image/')) return <ImageIcon className="h-5 w-5" />;
@@ -64,14 +65,16 @@ export function DocumentUpload({
       }
 
       // Subir el nuevo documento
-      const fileExt = file.name.split('.').pop();
-      const newFileName = `${userId}/${folder}/${Date.now()}.${fileExt}`;
+      // Usar el nombre original del archivo
+      const safeFileName = file.name.replace(/[^\w\d.-]/g, '_'); // Reemplazar caracteres especiales
+      const newFileName = `${userId}/${folder}/${safeFileName}`;
       
       const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(newFileName, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
+          contentType: file.type
         });
 
       if (uploadError) {
@@ -153,11 +156,6 @@ export function DocumentUpload({
 
   return (
     <div className="space-y-2">
-      {label && (
-        <label className="text-sm font-medium leading-none">
-          {label}
-        </label>
-      )}
       
       {previewUrl ? (
         <div className="border rounded-md p-4">
@@ -165,17 +163,23 @@ export function DocumentUpload({
             <div className="flex items-center space-x-2">
               {getFileIcon(accept[0])}
               <span className="text-sm font-medium truncate max-w-[200px]">
-                {fileName || 'Documento subido'}
+                {fileName || 'Archivo.pdf'}
               </span>
             </div>
             <div className="flex space-x-2">
               <a 
-                href={previewUrl} 
+                href={disabled ? '#' : previewUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-primary hover:underline text-sm"
+                className={`p-0 w-200 text-center p-1 rounded-md text-xs ${
+                  disabled 
+                    ? 'text-muted-foreground cursor-not-allowed' 
+                    : 'text-primary hover:bg-accent hover:text-primary'
+                }`}
+                onClick={(e) => disabled && e.preventDefault()}
+                aria-disabled={disabled}
               >
-                Ver
+                Ver documento
               </a>
               <Button
                 type="button"
