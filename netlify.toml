@@ -1,10 +1,11 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  environment = { NODE_VERSION = "18.0.0" }
 
 [dev]
   command = "npm run dev"
-  port = 8080  # Your Vite dev server port
+  port = 8080
   targetPort = 8080
 
 [[redirects]]
@@ -13,4 +14,10 @@
   status = 200
 
 [build.environment]
-  NODE_VERSION = "18.0.0"  # Or your current Node.js version
+  NODE_VERSION = "18.0.0"
+  # Asegúrate de que estas variables coincidan con tu .env
+  VITE_SUPABASE_URL = "https://lgxsfmvyjctxehwslvyw.supabase.co"
+  VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxneHNmbXZ5amN0eGVod3Nsdnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTkyMTAsImV4cCI6MjA2ODM3NTIxMH0.s2DoNuKigl_G3erwGeC4oLCC_3UiMQu5KJd0gnnYDeU"
+  VITE_APP_URL = "https://tu-url-de-netlify.netlify.app"
+  VITE_MERCADOPAGO_PUBLIC_KEY = "TEST-fc031350-c24b-4741-b4da-345c02486417A"
+  VITE_SUPABASE_PROJECT_ID = "lgxsfmvyjctxehwslvyw"
