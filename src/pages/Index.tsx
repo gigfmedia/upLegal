@@ -23,7 +23,8 @@ import {
   Calendar,
   Clock, 
   User,
-  Scale
+  Scale,
+  DollarSign
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -559,7 +560,7 @@ const Index = () => {
             
             <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
-                <Scale className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <DollarSign className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Precios Transparentes</CardTitle>
               </CardHeader>
               <CardContent>

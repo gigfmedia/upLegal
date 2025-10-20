@@ -1,11 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { Database } from '@/types/supabase';
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+import { scrapePoderJudicial } from '@/lib/pjudScraper';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -24,18 +18,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const rutDigits = cleanRut.slice(0, -1);
     const checkDigit = cleanRut.slice(-1);
     
-    // Call the PJUD API (this is a placeholder - you'll need to implement the actual API call)
-    // For now, we'll simulate a successful verification
-    const isVerified = await verifyWithPJUD(rutDigits, checkDigit, fullName);
-
-    if (isVerified) {
-      return res.status(200).json({ verified: true });
-    } else {
-      return res.status(200).json({ 
-        verified: false,
-        message: 'No se pudo verificar el abogado en los registros del Poder Judicial'
-      });
-    }
+    // Call the PJUD verification
+    const { verified, message } = await verifyWithPJUD(rutDigits, checkDigit, fullName);
+    
+    return res.status(200).json({ 
+      verified,
+      message: message || (verified 
+        ? 'Abogado verificado exitosamente' 
+        : 'No se pudo verificar el abogado en los registros del Poder Judicial')
+    });
   } catch (error) {
     console.error('Error verifying lawyer:', error);
     return res.status(500).json({ 
@@ -45,39 +36,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-// This is a placeholder function - you'll need to implement the actual PJUD API integration
-async function verifyWithPJUD(rutDigits: string, checkDigit: string, fullName: string): Promise<boolean> {
+// Verify RUT with Poder Judicial
+async function verifyWithPJUD(rutDigits: string, checkDigit: string, fullName: string): Promise<{ verified: boolean; message?: string }> {
   try {
-    // TODO: Implement actual PJUD API integration
-    // This is a mock implementation that simulates verification
+    const rut = `${rutDigits}${checkDigit}`;
+    console.log(`Verifying RUT: ${rut} for ${fullName}`);
     
-    // For now, we'll simulate a successful verification 80% of the time
-    // In a real implementation, you would make an HTTP request to the PJUD API
-    // and parse the response to determine if the lawyer is verified
+    const result = await scrapePoderJudicial(rut, fullName);
+    console.log('PJUD Verification Result:', JSON.stringify(result, null, 2));
     
-    // Example of how you might structure the actual API call:
-    /*
-    const response = await fetch('https://api.pjud.cl/consulta-abogados', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.PJUD_API_KEY}`
-      },
-      body: JSON.stringify({
-        rut: rutDigits,
-        dv: checkDigit,
-        nombre: fullName
-      })
-    });
-    
-    const data = await response.json();
-    return data.verificado === true;
-    */
-    
-    // For now, we'll simulate a response
-    return Math.random() < 0.8; // 80% chance of verification success
+    return {
+      verified: result.verified,
+      message: result.message
+    };
   } catch (error) {
     console.error('Error in PJUD verification:', error);
-    return false;
+    return {
+      verified: false,
+      message: 'Error al conectar con el servicio de verificación'
+    };
   }
 }

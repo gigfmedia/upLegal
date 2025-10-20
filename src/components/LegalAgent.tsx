@@ -571,14 +571,14 @@ Mensaje del usuario:
     )}
 
     {/* Botón flotante */}
-      {!open && (
+      {/*!open && (
         <button
           onClick={handleToggleChat}
           className="fixed bottom-6 right-6 bg-primary hover:bg-primary/90 text-primary-foreground p-4 rounded-full shadow-lg z-50 transition-transform hover:scale-110"
         >
           <MessageCircleIcon className="w-6 h-6" />
         </button>
-      )}
+      )}*/}
 
       {/* Modales */}
       {selectedLawyer && (
