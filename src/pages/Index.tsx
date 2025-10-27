@@ -150,6 +150,18 @@ const Index = () => {
   const [registeredLawyer, setRegisteredLawyer] = useState<Lawyer | null>(null);
   const [isLoadingLawyer, setIsLoadingLawyer] = useState(true);
 
+  // Handle contact click
+  const handleContactClick = (lawyer: Lawyer) => {
+    setSelectedLawyer(lawyer);
+    setShowContactModal(true);
+  };
+
+  // Handle schedule click
+  const handleScheduleClick = (lawyer: Lawyer) => {
+    setSelectedLawyer(lawyer);
+    setShowScheduleModal(true);
+  };
+
   // Fetch all lawyers
   useEffect(() => {
     const fetchAllLawyers = async () => {

@@ -95,8 +95,7 @@ function DashboardLayout() {
     { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
     { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
-    { href: '/dashboard/profile', icon: User, label: 'Perfil' },
-    { href: '/dashboard/settings', icon: Settings, label: 'Configuración' },
+    { href: '/dashboard/profile', icon: User, label: 'Perfil' }
   ];
 
   // Common navigation items

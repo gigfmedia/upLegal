@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { Scale, Loader2, Eye, EyeOff } from "lucide-react";
+import { Scale, Loader2, Eye, EyeOff, Key, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthModalProps {
@@ -41,7 +41,39 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const navigate = useNavigate();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!formData.email) {
+      setError('Por favor ingresa tu correo electrónico');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+      
+      setResetEmailSent(true);
+      toast({
+        title: "Correo enviado",
+        description: "Hemos enviado un enlace para restablecer tu contraseña a tu correo electrónico.",
+      });
+    } catch (error) {
+      console.error('Error al enviar el correo de recuperación:', error);
+      setError('Error al enviar el correo de recuperación. Por favor, inténtalo de nuevo.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,6 +226,90 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
   };
+
+  if (forgotPassword) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) onClose();
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Scale className="h-10 w-10 text-blue-600" />
+            </div>
+            <DialogTitle className="text-2xl">
+              Recuperar contraseña
+            </DialogTitle>
+          </DialogHeader>
+
+          {resetEmailSent ? (
+            <div className="space-y-4 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <Check className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900">¡Correo enviado!</h3>
+              <p className="text-sm text-gray-500">
+                Hemos enviado un enlace para restablecer tu contraseña a <span className="font-medium text-gray-900">{formData.email}</span>.
+                Por favor revisa tu bandeja de entrada y sigue las instrucciones.
+              </p>
+              <Button 
+                onClick={() => {
+                  setForgotPassword(false);
+                  setResetEmailSent(false);
+                }}
+                className="w-full mt-4"
+              >
+                Volver al inicio de sesión
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <p className="text-sm font-normal text-gray-500 mt-1">
+                Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  required
+                  placeholder="tucorreo@ejemplo.com"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enviando...
+                  </>
+                ) : 'Enviar enlace'}
+              </Button>
+              <div className="text-center text-sm">
+                <button
+                  type="button"
+                  onClick={() => setForgotPassword(false)}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ← Volver al inicio de sesión
+                </button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -381,10 +497,22 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Iniciando sesión...
+                {mode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...'}
               </>
             ) : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           </Button>
+          
+          {mode === 'login' && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setForgotPassword(true)}
+                className="text-sm text-blue-600 hover:underline font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+          )}
         </form>
 
         <div className="text-center text-sm text-gray-600">

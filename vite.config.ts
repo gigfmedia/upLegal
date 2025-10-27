@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
     hmr: {
       port: 8080,
+      host: 'localhost',
+      protocol: 'ws',
     },
     // Permitir cualquier host, incluyendo ngrok
     cors: true,
@@ -20,8 +22,10 @@ export default defineConfig(({ mode }) => ({
     // Permitir el host de ngrok
     allowedHosts: [
       '4b8d111bae68.ngrok-free.app',
+      '834703e13045.ngrok-free.app',
       'localhost',
-      '127.0.0.1'
+      '127.0.0.1',
+      '.ngrok-free.app'
     ],
   },
   preview: {
@@ -45,10 +49,7 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     },
   },
-  plugins: [
-    react(),
-    mode === 'development' && componentTagger(),
-  ].filter(Boolean),
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

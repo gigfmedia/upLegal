@@ -41,6 +41,7 @@ import DashboardPayments from './pages/DashboardPayments';
 import DashboardMessages from './pages/DashboardMessages';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import EmailVerification from './pages/auth/EmailVerification';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
 import ServicesPage from './pages/lawyer/ServicesPage';
 import ConsultasPage from './pages/lawyer/ConsultasPage';
@@ -163,6 +164,7 @@ const AppContent = () => {
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
             <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/auth/confirm-email" element={<EmailVerification />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

@@ -151,18 +151,20 @@ export default function Header({ onAuthClick }: HeaderProps) {
                         <span>{userRole === 'lawyer' ? 'Panel de Abogado' : 'Panel de Cliente'}</span>
                       </DropdownMenuItem>
 
-                      <DropdownMenuItem 
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          const profilePath = userRole === 'lawyer' ? `/lawyer/${user.id}` : `/cliente/${user.id}`;
-                          handleNavigation(profilePath);
-                        }}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        <span>Ver Perfil</span>
-                      </DropdownMenuItem>
-                      
-                      <DropdownMenuSeparator />
+                      {userRole === 'lawyer' && (
+                        <>
+                          <DropdownMenuItem 
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleNavigation(`/lawyer/${user.id}`);
+                            }}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>Ver Perfil</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem 
                         className="text-red-600 focus:text-red-700 focus:bg-red-50"
                         onClick={async () => {
