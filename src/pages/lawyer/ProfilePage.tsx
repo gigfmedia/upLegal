@@ -226,17 +226,14 @@ export default function LawyerProfilePage() {
     
     try {
       // Get the auth token for the request
-      //console.log('Getting user session...');
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
         const errorMsg = 'No se pudo obtener la sesión del usuario. Por favor, inicia sesión nuevamente.';
-        //console.error('Session error:', sessionError?.message || 'No active session');
         throw new Error(errorMsg);
       }
       
       const { session } = sessionData;
-      //console.log('Session obtained, calling verification function...');
       
       // Call the verification API using our helper
       const { data, error } = await invokeFunction<VerificationResponse>(
@@ -267,90 +264,81 @@ export default function LawyerProfilePage() {
       }
       
       if (!data.verified) {
-        throw new Error(data.message || 'La verificación del RUT falló');
+        setVerificationStatus('error');
+        setRutError('El RUT no está registrado como abogado en el sistema.');
+        return { 
+          verified: false, 
+          message: 'RUT no verificado',
+          error: 'El RUT no está registrado como abogado en el sistema.'
+        };
       }
       
-      console.log('Verification successful, updating profile...');
+      // Update the profile with verification status
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          rut: rut,
+          pjud_verified: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user?.id);
       
-      // Update local form data immediately to show the verification
+      if (updateError) {
+        console.error('Error updating verification status:', updateError);
+        throw new Error('No se pudo guardar la verificación. Por favor, intenta guardar manualmente.');
+      }
+      
+      // Update local state
       setFormData(prev => ({
         ...prev,
         rut: rut,
         pjud_verified: true
       }));
       
-      // Mark that we have changes to save
-      setHasChanges(true);
+      setVerificationStatus('success');
       
-      // Try to update the profile with the verified RUT
-      try {
-        console.log('Updating profile with RUT:', rut);
-        
-        // First, try to update using the RPC function
-        const { error: rpcError } = await supabase.rpc('update_profile_rut', {
-          p_user_id: user?.id,
-          p_rut: rut
-        });
-        
-        if (rpcError) {
-          console.error('RPC update failed, trying direct update...', rpcError);
-          
-          // If RPC fails, try a direct update with just the RUT field
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ 
-              rut: rut,
-              pjud_verified: true,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', user?.id);
-            
-          if (updateError) {
-            console.error('Direct update also failed:', updateError);
-          }
-        }
-      } catch (error) {
-        console.error('Error updating profile:', error);
-      }
-      
-      // Show success message
-      toast({ 
-        title: "¡Verificación exitosa!", 
-        description: data.message || "Tu RUT ha sido verificado correctamente. No olvides guardar los cambios para conservar la verificación.", 
-        variant: "default"
+      toast({
+        title: 'RUT verificado',
+        description: 'El RUT ha sido verificado exitosamente como abogado.',
+        variant: 'default'
       });
       
       return {
         verified: true,
-        message: data.message || 'Verificación exitosa',
-        ...(data.details && { details: data.details })
+        message: 'Verificación exitosa',
+        details: data.details
       };
-  } catch (error) {
-    console.error('Error in verifyWithPJUD:', error);
-    setVerificationStatus('error');
+      
+    } catch (error) {
+      console.error('Error in verifyWithPJUD:', error);
+      setVerificationStatus('error');
 
-    // Set appropriate error message
-    let errorMessage = 'Error al verificar el RUT';
-    
-    if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message.includes('timed out')) {
-        errorMessage = 'La verificación está tomando más tiempo de lo esperado. Por favor, inténtalo de nuevo.';
-      } else if (error.message.includes('network') || error.message.includes('Failed to fetch')) {
-        errorMessage = 'Error de conexión. Por favor, verifica tu conexión a internet.';
-      } else if (error.message.includes('401') || error.message.includes('No active session')) {
-        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
-        // Redirect to login after showing the error
-        setTimeout(() => navigate('/login'), 3000);
-      } else {
-        errorMessage = error.message || 'Error al verificar el RUT';
+      // Set appropriate error message
+      let errorMessage = 'Error al verificar el RUT';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('timeout') || error.message.includes('timed out')) {
+          errorMessage = 'La verificación está tomando más tiempo de lo esperado. Por favor, inténtalo de nuevo.';
+        } else if (error.message.includes('network') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Error de conexión. Por favor, verifica tu conexión a internet.';
+        } else if (error.message.includes('401') || error.message.includes('No active session')) {
+          errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+          // Redirect to login after showing the error
+          setTimeout(() => navigate('/login'), 3000);
+        } else {
+          errorMessage = error.message || 'Error al verificar el RUT';
+        }
       }
+      
+      setRutError(errorMessage);
+      return {
+        verified: false,
+        message: errorMessage,
+        error: errorMessage
+      };
+    } finally {
+      setIsVerifying(false);
     }
-    
-    setRutError(errorMessage);
-    throw new Error(errorMessage);
-  } finally {
-    setIsVerifying(false);
-  }
   };
   
   // Define available specializations

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, CheckCircle2, AlertCircle, Loader2, Verified } from 'lucide-react';
+import { verifyRutWithPJUD, formatRut, cleanRut, validateRut } from '@/services/pjudService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +34,8 @@ const formSchema = z.object({
   specialization: z.string().min(1, { message: 'Seleccione una especialidad' }),
   experience: z.string().min(1, { message: 'Ingresa los años de experiencia' }),
   hourlyRate: z.string().min(1, { message: 'Ingresa una tarifa por hora' }),
+  rut: z.string().min(8, { message: 'Ingresa un RUT válido' }),
+  pjudVerified: z.boolean().default(false),
   languages: z.array(z.string()).min(1, { message: 'Ingresa al menos un idioma' }),
   education: z.string().min(1, { message: 'Ingresa su formación académica' }),
   university: z.string().min(1, { message: 'Ingresa el nombre de la universidad' }),
@@ -53,8 +56,130 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function LawyerProfileForm() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, profile } = useAuth();
+  
+  // Set initial verification status based on profile data
+  useEffect(() => {
+    if (profile?.pjud_verified) {
+      setVerificationStatus('verified');
+    }
+  }, [profile]);
+
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
+  const [verificationError, setVerificationError] = useState('');
+
+  // Mock function to simulate PJUD API verification
+  const verifyWithPJUD = async (rut: string) => {
+    setIsVerifying(true);
+    setVerificationStatus('verifying');
+    setVerificationError('');
+    
+    try {
+      // In a real implementation, you would call your backend API here
+      // which would then call the PJUD API with proper authentication
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      
+      // Mock response - in a real app, this would come from your backend
+      const isVerified = Math.random() > 0.5; // 50% chance of success for demo
+      
+      if (isVerified) {
+        setVerificationStatus('verified');
+        form.setValue('pjudVerified', true, { shouldValidate: true });
+        toast({
+          title: 'Verificación exitosa',
+          description: 'El RUT ha sido verificado exitosamente con el Poder Judicial.',
+          variant: 'default',
+        });
+      } else {
+        throw new Error('No se pudo verificar el RUT con el Poder Judicial');
+      }
+    } catch (error) {
+      console.error('Error verifying RUT with PJUD:', error);
+      setVerificationStatus('error');
+      setVerificationError(error instanceof Error ? error.message : 'Error al verificar el RUT');
+      form.setValue('pjudVerified', false, { shouldValidate: true });
+      toast({
+        title: 'Error de verificación',
+        description: 'No se pudo verificar el RUT con el Poder Judicial. Por favor, inténtalo de nuevo más tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Handle RUT input change with formatting
+  const handleRutChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    const formattedValue = formatRut(value);
+    form.setValue('rut', formattedValue, { shouldValidate: true });
+    
+    // Reset verification status if RUT changes
+    if (verificationStatus !== 'idle') {
+      setVerificationStatus('idle');
+      form.setValue('pjudVerified', false, { shouldValidate: true });
+    }
+  };
+
+  // Verify RUT with PJUD API
+  const handleVerifyRut = async () => {
+    const rut = form.getValues('rut');
+    if (!rut || !validateRut(rut)) {
+      toast({
+        title: 'RUT inválido',
+        description: 'Por favor ingresa un RUT válido antes de verificar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationStatus('verifying');
+    setVerificationError('');
+
+    try {
+      const result = await verifyRutWithPJUD(rut);
+      
+      if (result.verified) {
+        setVerificationStatus('verified');
+        form.setValue('pjudVerified', true, { shouldValidate: true });
+        
+        toast({
+          title: 'Verificación exitosa',
+          description: 'El RUT ha sido verificado exitosamente con el Poder Judicial.',
+          variant: 'default',
+        });
+        
+        // Update user's name if available from PJUD data
+        if (result.data?.nombre) {
+          const [firstName, ...lastNameParts] = result.data.nombre.split(' ');
+          const lastName = lastNameParts.join(' ');
+          
+          if (firstName) form.setValue('firstName', firstName, { shouldValidate: true });
+          if (lastName) form.setValue('lastName', lastName, { shouldValidate: true });
+        }
+      } else {
+        throw new Error('El RUT no pudo ser verificado con el Poder Judicial');
+      }
+    } catch (error) {
+      console.error('Error verifying RUT with PJUD:', error);
+      setVerificationStatus('error');
+      setVerificationError(
+        error instanceof Error ? error.message : 'Error al verificar el RUT con el Poder Judicial'
+      );
+      form.setValue('pjudVerified', false, { shouldValidate: true });
+      
+      toast({
+        title: 'Error de verificación',
+        description: 'No se pudo verificar el RUT con el Poder Judicial. Por favor, inténtalo de nuevo más tarde.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
 
   const form = useForm<FormValues>({
@@ -87,6 +212,8 @@ export function LawyerProfileForm() {
         : '',
       certifications: user?.user_metadata?.certifications || '',
       barAssociationNumber: user?.user_metadata?.bar_association_number || '',
+      rut: user?.user_metadata?.rut || '',
+      pjudVerified: user?.user_metadata?.pjud_verified || false,
       availability: user?.user_metadata?.availability || 'disponible',
       zoomLink: user?.user_metadata?.zoom_link || '',
     },
@@ -322,6 +449,75 @@ export function LawyerProfileForm() {
                   <FormControl>
                     <Input type="number" placeholder="50000" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="rut"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>RUT</FormLabel>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <div className="relative flex-1">
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          onChange={handleRutChange}
+                          placeholder="12.345.678-9"
+                          className={verificationStatus === 'verified' ? 'border-green-500' : ''}
+                        />
+                        {verificationStatus === 'verified' && (
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          </div>
+                        )}
+                      </div>
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant={verificationStatus === 'verified' ? 'outline' : 'default'}
+                      onClick={handleVerifyRut}
+                      disabled={isVerifying || !form.getValues('rut') || !validateRut(form.getValues('rut'))}
+                      className="whitespace-nowrap"
+                    >
+                      {isVerifying ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verificando...
+                        </>
+                      ) : verificationStatus === 'verified' ? (
+                        <>
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Verificado
+                        </>
+                      ) : (
+                        <>
+                          <Verified className="mr-2 h-4 w-4" />
+                          Verificar con PJUD
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <FormDescription>
+                    {verificationStatus === 'error' && (
+                      <span className="text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {verificationError || 'Error al verificar el RUT'}
+                      </span>
+                    )}
+                    {verificationStatus === 'idle' && 'Ingresa tu RUT para verificar con el Poder Judicial'}
+                    {verificationStatus === 'verifying' && 'Verificando con el Poder Judicial...'}
+                    {verificationStatus === 'verified' && (
+                      <span className="text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-4 w-4" />
+                        RUT verificado correctamente
+                      </span>
+                    )}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

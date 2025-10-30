@@ -5,7 +5,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Badge } from "@/components/ui/badge";
 import { Scale, User, LogOut, Eye, ChevronDown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthModal } from "./AuthModal";
@@ -17,7 +18,14 @@ interface HeaderProps {
 export default function Header({ onAuthClick }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  const isActive = (path: string) => {
+    return location.pathname === path || 
+           (path === '/search' && location.pathname.startsWith('/search')) ||
+           (path === '/abogados' && location.pathname.startsWith('/abogados'));
+  };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -65,21 +73,30 @@ export default function Header({ onAuthClick }: HeaderProps) {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-          <button 
+            <button 
               onClick={() => handleNavigation('/search')} 
-              className="text-gray-600 hover:text-blue-600 transition-colors"
+              className={cn(
+                "transition-colors hover:text-blue-600",
+                isActive('/search') ? 'text-blue-600 font-medium' : 'text-gray-600'
+              )}
             >
               Explorar Servicios
             </button>
             <button 
-              onClick={() => handleNavigation('/how-it-works')} 
-              className="text-gray-600 hover:text-blue-600 transition-colors"
+              onClick={() => handleNavigation('/como-funciona')} 
+              className={cn(
+                "transition-colors hover:text-blue-600",
+                isActive('/como-funciona') ? 'text-blue-600 font-medium' : 'text-gray-600'
+              )}
             >
               Cómo Funciona
             </button>
             <button 
-              onClick={() => handleNavigation('/pricing')} 
-              className="text-gray-600 hover:text-blue-600 transition-colors"
+              onClick={() => handleNavigation('/about')} 
+              className={cn(
+                "transition-colors hover:text-blue-600",
+                isActive('/about') ? 'text-blue-600 font-medium' : 'text-gray-600'
+              )}
             >
               Acerca de
             </button>

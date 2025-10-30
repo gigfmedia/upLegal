@@ -48,6 +48,8 @@ import ConsultasPage from './pages/lawyer/ConsultasPage';
 import CitasPage from './pages/lawyer/CitasPage';
 import EarningsPage from './pages/lawyer/EarningsPage';
 import ProfilePage from './pages/lawyer/ProfilePage';
+import AboutPage from './pages/AboutPage';
+import HowItWorksPage from './pages/HowItWorksPage';
 import PaymentSettings from './pages/PaymentSettings';
 import DashboardFavorites from './pages/DashboardFavorites';
 
@@ -118,6 +120,8 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/search" element={<SearchResults />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/como-funciona" element={<HowItWorksPage />} />
             {/* New lawyer dashboard routes */}
             <Route path="/lawyer" element={
               <div data-role="lawyer">

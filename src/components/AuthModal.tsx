@@ -15,7 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { Scale, Loader2, Eye, EyeOff, Key, Check } from "lucide-react";
+import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthModalProps {
@@ -34,8 +35,111 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     confirmPassword: '',
     firstName: '',
     lastName: '',
+    rut: '',
     role: 'client' as 'client' | 'lawyer',
   });
+  const [rutVerificationStatus, setRutVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
+  const [rutError, setRutError] = useState<string | null>(null);
+
+  // Format RUT as user types (XX.XXX.XXX-X)
+  const formatRut = (rut: string): string => {
+    // Remove all non-alphanumeric characters and convert to uppercase
+    let cleanRut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    
+    if (cleanRut.length === 0) return '';
+    
+    // Format with dots and dash
+    let formattedRut = '';
+    if (cleanRut.length > 1) {
+      formattedRut = cleanRut.slice(-4, -1) + '-' + cleanRut.substr(cleanRut.length - 1);
+      for (let i = 4; i < cleanRut.length; i += 3) {
+        const start = Math.max(0, cleanRut.length - i - 3);
+        const end = cleanRut.length - i;
+        formattedRut = cleanRut.slice(start, end) + '.' + formattedRut;
+      }
+    } else {
+      formattedRut = cleanRut;
+    }
+    
+    return formattedRut;
+  };
+
+  // Validate RUT format and verification digit
+  const validateRut = (rut: string): { isValid: boolean; message?: string } => {
+    if (!rut) return { isValid: false, message: 'El RUT es requerido' };
+    
+    // Remove dots and dash, and convert to uppercase
+    const cleanRut = rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+    
+    // Check basic format
+    if (!/^\d{7,8}[0-9K]$/i.test(cleanRut)) {
+      return { isValid: false, message: 'Formato de RUT inválido' };
+    }
+    
+    // Extract verifier digit
+    const rutDigits = cleanRut.slice(0, -1);
+    const verifier = cleanRut.slice(-1);
+    
+    // Calculate expected verifier digit
+    let sum = 0;
+    let multiplier = 2;
+    
+    for (let i = rutDigits.length - 1; i >= 0; i--) {
+      sum += parseInt(rutDigits.charAt(i)) * multiplier;
+      multiplier = multiplier === 7 ? 2 : multiplier + 1;
+    }
+    
+    const calculatedVerifier = (11 - (sum % 11)) % 11;
+    const expectedVerifier = calculatedVerifier === 10 ? 'K' : calculatedVerifier.toString();
+    
+    if (verifier !== expectedVerifier) {
+      return { 
+        isValid: false, 
+        message: 'Dígito verificador inválido' 
+      };
+    }
+    
+    return { isValid: true };
+  };
+
+  // Verify RUT format (client-side only)
+  const verifyRutFormat = (rut: string): { isValid: boolean; message?: string } => {
+    const validation = validateRut(rut);
+    if (!validation.isValid) {
+      return { isValid: false, message: validation.message };
+    }
+    return { isValid: true };
+  };
+
+  // Handle RUT verification (client-side only)
+  const handleRutVerification = (rut: string): boolean => {
+    const validation = verifyRutFormat(rut);
+    if (!validation.isValid) {
+      setRutVerificationStatus('error');
+      setRutError(validation.message);
+      return false;
+    }
+    setRutVerificationStatus('verified');
+    setRutError(null);
+    return true;
+  };
+
+  // Handle RUT input change
+  const handleRutChange = (value: string) => {
+    // Format the RUT as user types
+    const formattedRut = formatRut(value);
+    setFormData(prev => ({ ...prev, rut: formattedRut }));
+    
+    // Reset verification status when RUT changes
+    if (rutVerificationStatus !== 'idle') {
+      setRutVerificationStatus('idle');
+    }
+    
+    // Clear error when user starts typing
+    if (rutError) {
+      setRutError(null);
+    }
+  };
   const { toast } = useToast();
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +147,29 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  
+  // Password requirements state
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSymbol: false,
+  });
+
+  // Check password strength and update requirements
+  const checkPasswordStrength = (password: string) => {
+    setPasswordRequirements({
+      length: password.length >= 8 && password.length <= 18,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+/.test(password),
+    });
+  };
+  
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
   const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -75,6 +202,32 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     }
   };
 
+  const validateEmail = (email: string): { isValid: boolean; message: string } => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const commonDomains = ['gmail.com', 'hotmail.com', 'icloud.com', 'outlook.com', 'yahoo.com'];
+    
+    if (!email) {
+      return { isValid: false, message: 'El correo electrónico es requerido' };
+    }
+    
+    if (!emailRegex.test(email)) {
+      return { 
+        isValid: false, 
+        message: 'Formato de correo electrónico inválido. Ejemplos válidos: usuario@gmail.com, nombre@hotmail.com, ejemplo@icloud.com' 
+      };
+    }
+    
+    const domain = email.split('@')[1];
+    if (!commonDomains.some(d => domain.endsWith(d))) {
+      return { 
+        isValid: true, 
+        message: 'Asegúrate de usar un correo personalizado. Ejemplo: tu.nombre@tudominio.cl' 
+      };
+    }
+    
+    return { isValid: true, message: '' };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -83,6 +236,13 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     try {
       // Store the current path before login for redirecting back
       const redirectTo = new URLSearchParams(window.location.search).get('redirectTo');
+      
+      // Validate email format
+      const emailValidation = validateEmail(formData.email);
+      if (!emailValidation.isValid) {
+        throw new Error(emailValidation.message);
+      }
+      
       if (mode === 'signup') {
         // Validate form data for signup
         if (formData.password !== formData.confirmPassword) {
@@ -93,8 +253,32 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           throw new Error('Por favor ingresa tu nombre completo');
         }
         
-        if (formData.password.length < 6) {
-          throw new Error('La contraseña debe tener al menos 6 caracteres');
+        // Validate RUT for lawyers
+        if (formData.role === 'lawyer') {
+          if (!formData.rut) {
+            throw new Error('Por favor ingresa tu RUT');
+          }
+          // Client-side RUT validation only
+          const rutValidation = verifyRutFormat(formData.rut);
+          if (!rutValidation.isValid) {
+            throw new Error(rutValidation.message || 'RUT inválido');
+          }
+          
+          // Set verification status for UI feedback
+          setRutVerificationStatus('verified');
+        }
+        
+        // Enhanced password validation
+        if (formData.password.length < 8) {
+          throw new Error('La contraseña debe tener al menos 8 caracteres');
+        }
+        
+        if (formData.password.length > 18) {
+          throw new Error('La contraseña no puede tener más de 18 caracteres');
+        }
+        
+        if (!isPasswordValid) {
+          throw new Error('La contraseña no cumple con todos los requisitos de seguridad');
         }
         
         // Call signup
@@ -225,7 +409,22 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
+    
+    // Check password strength when password changes
+    if (field === 'password') {
+      checkPasswordStrength(value);
+    }
   };
+
+  // Password requirement component
+  const PasswordRequirement = ({ met, children }: { met: boolean; children: React.ReactNode }) => (
+    <div className="flex items-center">
+      <div className={`w-2 h-2 rounded-full mr-2 ${met ? 'bg-green-500' : 'bg-gray-200'}`}></div>
+      <span className={`text-sm ${met ? 'text-gray-600' : 'text-gray-400'}`}>
+        {children}
+      </span>
+    </div>
+  );
 
   if (forgotPassword) {
     return (
@@ -399,7 +598,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     required
-                    placeholder="Nombre"
+                    placeholder="Juan"
                   />
                 </div>
                 <div className="space-y-2">
@@ -410,11 +609,105 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     required
-                    placeholder="Apellido"
+                    placeholder="Pérez"
                   />
                 </div>
               </div>
             </>
+          )}
+
+          {mode === 'signup' && formData.role === 'lawyer' && (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="rut">RUT</Label>
+                {rutVerificationStatus === 'verified' && (
+                  <span className="inline-flex items-center text-xs text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                    Verificado
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="rut"
+                    type="text"
+                    value={formData.rut}
+                    onChange={(e) => handleRutChange(e.target.value)}
+                    onBlur={() => {
+                      // Auto-validate on blur
+                      if (formData.rut) {
+                        const validation = validateRut(formData.rut);
+                        if (!validation.isValid) {
+                          setRutError(validation.message || 'RUT inválido');
+                        }
+                      }
+                    }}
+                    placeholder="12.345.678-9"
+                    required
+                    className={`uppercase pr-10 ${
+                      rutError ? 'border-red-500' : 
+                      rutVerificationStatus === 'verified' ? 'border-green-500' : ''
+                    }`}
+                    maxLength={12}
+                  />
+                  {rutVerificationStatus === 'verifying' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                    </div>
+                  )}
+                  {rutVerificationStatus === 'verified' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    </div>
+                  )}
+                  {rutVerificationStatus === 'error' && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    </div>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    const isValid = await verifyRutWithPJUD(formData.rut);
+                    if (isValid) {
+                      toast({
+                        title: 'RUT verificado',
+                        description: 'El RUT ha sido verificado exitosamente como abogado.',
+                        variant: 'default'
+                      });
+                    }
+                  }}
+                  disabled={!formData.rut || rutVerificationStatus === 'verifying'}
+                  className="whitespace-nowrap"
+                >
+                  {rutVerificationStatus === 'verifying' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Verificando
+                    </>
+                  ) : (
+                    rutVerificationStatus === 'verified' ? 'Verificado' : 'Verificar'
+                  )}
+                </Button>
+              </div>
+              
+              {rutError && (
+                <p className="text-xs text-red-500 mt-1">{rutError}</p>
+              )}
+              {!rutError && formData.rut && !validateRut(formData.rut).isValid && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  Formato de RUT inválido. Usa el formato: 12.345.678-9
+                </p>
+              )}
+              {rutVerificationStatus === 'verified' && (
+                <p className="text-xs text-green-600 mt-1">
+                  El RUT ha sido verificado como abogado en el sistema.
+                </p>
+              )}
+            </div>
           )}
 
           <div className="space-y-2">
@@ -423,39 +716,98 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, email: e.target.value }));
+                // Clear email-specific errors when typing
+                if (error && error.includes('correo electrónico')) {
+                  setError('');
+                }
+              }}
               required
-              placeholder="Ingresa tu correo electrónico"
+              placeholder="ejemplo@gmail.com"
+              className={error && error.includes('correo electrónico') ? 'border-red-500' : ''}
             />
+            {error && error.includes('correo electrónico') && (
+              <p className="text-xs text-red-500 mt-1">{error}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                required
-                placeholder="Ingresa tu contraseña"
-                className="pr-10"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-                <span className="sr-only">
-                  {showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                </span>
-              </button>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="password">Contraseña</Label>
+              </div>
+              {formData.password && (
+                <div className="flex items-center">
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 12 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 16 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${isPasswordValid ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${isPasswordValid ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                </div>
+              )}
             </div>
+            <Tooltip open={isPasswordFocused || undefined}>
+              <TooltipTrigger asChild>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onFocus={() => setIsPasswordFocused(true)}
+                    onBlur={() => setIsPasswordFocused(false)}
+                    onClick={() => setIsPasswordFocused(true)}
+                    required
+                    placeholder="Crea una contraseña segura"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowPassword(!showPassword);
+                    }}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    </span>
+                  </button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="w-64 p-4 space-y-2 text-sm" side="bottom" align="start">
+                <p className="font-medium mb-2">La contraseña debe contener:</p>
+                <ul className="space-y-1">
+                  <li className="flex items-start">
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.length ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span>8 a 18 caracteres</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasUppercase ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span>1 letra mayúscula (A-Z)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasLowercase ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span>1 letra minúscula (a-z)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasNumber ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span>1 número (0-9)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasSymbol ? 'text-green-500' : 'text-gray-300'}`} />
+                    <span>1 símbolo (!@#$%^&*)</span>
+                  </li>
+                </ul>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {mode === 'signup' && (

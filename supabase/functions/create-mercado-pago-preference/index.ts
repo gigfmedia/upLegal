@@ -69,7 +69,8 @@ serve(async (req) => {
 
   try {
     // Log request headers for debugging
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    const headers = Object.fromEntries(req.headers.entries());
+    console.log('Request headers:', headers);
     
     // Get the raw body as text first
     const rawBody = await req.text();
@@ -93,7 +94,48 @@ serve(async (req) => {
       );
     }
     
-    console.log('Parsed request data:', JSON.stringify(requestData, null, 2));
+    // Determine the base URL based on environment
+    const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+    const baseUrl = isProduction 
+      ? 'https://uplegal.netlify.app' 
+      : 'http://localhost:8080';
+
+    // Define URL paths
+    const urlPaths = {
+      success: '/payment/success',
+      failure: '/payment/failure',
+      pending: '/payment/pending',
+      notification: isProduction 
+        ? 'https://uplegal.netlify.app/api/mercadopago/webhook'
+        : 'http://localhost:8080/api/mercadopago/webhook'
+    };
+
+    // Build complete URLs
+    const urls = {
+      success: `${baseUrl}${urlPaths.success}`,
+      failure: `${baseUrl}${urlPaths.failure}`,
+      pending: `${baseUrl}${urlPaths.pending}`,
+      notification: urlPaths.notification
+    };
+    
+    // Log the URLs we're using
+    console.log('Using URLs:', JSON.stringify(urls, null, 2));
+    
+    // Validate all URLs
+    const validatedUrls: Record<string, string> = {};
+    for (const [key, url] of Object.entries(urls)) {
+      if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+        throw new Error(`Invalid ${key} URL: ${url}`);
+      }
+      try {
+        const urlObj = new URL(url);
+        validatedUrls[key] = urlObj.toString();
+      } catch (e) {
+        throw new Error(`Invalid URL format for ${key}: ${url}`);
+      }
+    }
+    
+    console.log('Validated URLs:', JSON.stringify(validatedUrls, null, 2));
 
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
@@ -165,32 +207,55 @@ serve(async (req) => {
           ],
           installments: 1
         },
+        // Main configuration with all required fields
+        items: requestData.items.map(item => ({
+          id: item.id || `item-${Date.now()}`,
+          title: item.title,
+          description: item.description || 'Servicio legal',
+          quantity: item.quantity || 1,
+          unit_price: parseFloat(item.unit_price) || 0,
+          currency_id: 'CLP'
+        })),
+        payer: testPayer,
         back_urls: {
-          success: requestData.back_urls?.success || 'http://localhost:8080/payment/success',
-          failure: requestData.back_urls?.failure || 'http://localhost:8080/payment/failure',
-          pending: requestData.back_urls?.pending || 'http://localhost:8080/payment/pending'
+          success: validatedUrls.success,
+          failure: validatedUrls.failure,
+          pending: validatedUrls.pending
         },
         auto_return: 'approved',
         binary_mode: true,
         statement_descriptor: 'UPLEGAL',
+        purpose: 'onboarding_credits',
         external_reference: `ref-${Date.now()}`,
-        notification_url: requestData.notification_url || 'https://834703e13045.ngrok-free.app/api/mercadopago/webhook',
-        metadata: {
-          ...requestData.metadata,
-          platform: 'upLegal',
-          version: '1.0.0',
-          environment: 'sandbox'
+        notification_url: validatedUrls.notification,
+        success_url: validatedUrls.success,
+        payment_methods: {
+          excluded_payment_types: [
+            { id: 'ticket' },
+            { id: 'bank_transfer' },
+            { id: 'atm' }
+          ],
+          installments: 12,
+          default_installments: 1
         },
+        expires: false,
         additional_info: {
           items: requestData.items.map(item => ({
             id: item.id,
             title: item.title,
-            description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            category_id: 'services',
-            currency_id: 'CLP'
+            description: item.description || 'Servicio legal',
+            quantity: item.quantity || 1,
+            unit_price: parseFloat(item.unit_price) || 0,
+            currency_id: 'CLP',
+            category_id: 'services'
           }))
+        },
+        metadata: {
+          ...requestData.metadata,
+          platform: 'upLegal',
+          version: '1.0.0',
+          environment: 'sandbox',
+          created_at: new Date().toISOString()
         }
       }),
     });

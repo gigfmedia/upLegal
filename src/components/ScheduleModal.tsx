@@ -294,14 +294,35 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const MIN_AMOUNT_CLP = 1000;
   const chargeAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
 
-  // Calculate minimum date (tomorrow, not Sunday)
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (tomorrow.getDay() === 0) { // If it's Sunday, skip to Monday
-    tomorrow.setDate(tomorrow.getDate() + 1);
+  // Calculate minimum date (today if there are hours left, otherwise tomorrow, not Sunday)
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  
+  // Check if there are still business hours left today (assuming business hours until 18:00)
+  const isBusinessDay = currentDay >= 1 && currentDay <= 5; // Monday to Friday
+  const isBusinessHours = currentHour < 18 || (currentHour === 18 && currentMinute < 30);
+  
+  let minDate: Date;
+  
+  if (isBusinessDay && isBusinessHours) {
+    // If it's a business day and there are still business hours left, allow today
+    minDate = new Date(now);
+  } else {
+    // Otherwise, set minimum date to the next business day
+    minDate = new Date(now);
+    minDate.setDate(minDate.getDate() + 1);
+    
+    // Skip weekends
+    if (minDate.getDay() === 0) { // Sunday
+      minDate.setDate(minDate.getDate() + 1);
+    } else if (minDate.getDay() === 6) { // Saturday
+      minDate.setDate(minDate.getDate() + 2);
+    }
   }
-  const minDate = tomorrow.toISOString().split('T')[0];
+  
+  const minDateString = minDate.toISOString().split('T')[0];
 
   // Calculate maximum date (90 days from now, not Sunday)
   const maxDate = new Date();

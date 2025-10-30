@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { FavoriteButton } from "./FavoriteButton";
 import { LawyerRatings } from "./ratings/LawyerRatings";
 import {
   Dialog,
@@ -144,21 +143,7 @@ export function LawyerCard({
                       <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" title={lawyer.name}>
                         {lawyer.name}
                       </h3>
-                      {authUser && authUser.id !== lawyer.id && (
-                        <div className="hidden sm:block">
-                          <FavoriteButton 
-                            lawyerId={lawyer.id} 
-                            showText={false}
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-gray-50 rounded-full -mt-1 -mr-1"
-                            onAuthRequired={() => {
-                              setAuthMode('login');
-                              setShowAuthModal(true);
-                            }}
-                          />
-                        </div>
-                      )}
+                      {/* Favorite button removed as per request */}
                     </div>
                     {lawyer.verified && (
                       <Badge variant="secondary" className="w-fit mt-1 flex items-center gap-1 bg-green-50 text-green-700">
