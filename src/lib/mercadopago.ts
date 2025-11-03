@@ -46,19 +46,9 @@ type CreatePreferenceData = {
   external_reference?: string;
 };
 
-// Force production mode if in production environment
-const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-console.log('Environment check:', {
-  hostname: window.location.hostname,
-  isProduction,
-  envVar: import.meta.env.VITE_MERCADOPAGO_ENV,
-  publicKey: import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY?.substring(0, 10) + '...'
-});
-
-// Always use production access token in production
-const accessToken = isProduction 
-  ? import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN
-  : import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN_SANDBOX;
+// Force production mode
+console.log('MercadoPago: Forcing PRODUCTION mode');
+const accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
 
 if (!accessToken) {
   console.error('MercadoPago access token is not defined');
@@ -158,58 +148,22 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       preference_id: result.id
     });
     
-    // In production, always construct the URL directly
-    if (isProduction) {
-      console.group('Production URL Handling');
-      console.log('Production mode - Forcing production URLs');
+    // Always use production URL
+    console.group('MercadoPago Production Flow');
+    
+    if (result.id) {
+      const timestamp = Date.now();
+      const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}&ts=${timestamp}`;
+      console.log('Redirecting to production URL:', prodUrl);
+      console.groupEnd();
       
-      // Always construct the production URL directly with cache buster
-      if (result.id) {
-        const timestamp = Date.now();
-        const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}&ts=${timestamp}`;
-        console.log('Using direct production URL with cache buster:', prodUrl);
-        console.groupEnd();
-        
-        // Force redirect immediately
-        window.location.href = prodUrl;
-        return prodUrl;
-      }
-      
-      // If no init_point, try to construct it from the preference ID
-      if (result.id) {
-        console.log('Constructing production URL from preference ID');
-        const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}`;
-        console.log('Using direct production URL:', prodUrl);
-        console.log('Constructed production URL:', prodUrl);
-        console.groupEnd();
-        return prodUrl;
-      }
-      
-      // If we get here, we couldn't create a valid URL
-      console.error('Failed to create valid production URL', {
-        preferenceId: result.id,
-        hasInitPoint: !!result.init_point,
-        hasSandboxInitPoint: !!result.sandbox_init_point
-      });
-      throw new Error('Failed to create valid production payment URL');
+      // Force redirect immediately
+      window.location.href = prodUrl;
+      return prodUrl;
     }
     
-    // In development/sandbox mode
-    if (!result.sandbox_init_point) {
-      // If sandbox_init_point is missing but we have a preference ID, construct the URL
-      if (result.id) {
-        const sandboxUrl = `https://sandbox.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}`;
-        console.log('Constructed sandbox URL from preference ID:', sandboxUrl);
-        return sandboxUrl;
-      }
-      
-      console.error('sandbox_init_point is missing in development mode', result);
-      throw new Error('Failed to get sandbox payment URL');
-    }
-    
-    // Log the sandbox URL for debugging
-    console.log('Using sandbox URL:', result.sandbox_init_point);
-    return result.sandbox_init_point;
+    console.error('Failed to create production URL - missing preference ID');
+    throw new Error('Failed to create production payment URL');
   } catch (error) {
     console.error('Error creating preference:', error);
     throw new Error('Failed to create payment preference');

@@ -85,54 +85,31 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
     sdkObject: sdkAvailable ? { ...window.MercadoPago } : undefined
   };
 
-  // Attach to window immediately
-  if (typeof window !== 'undefined') {
-    window.__mp_debug = debugInfo;
-    console.log('MercadoPago debug info attached to window.__mp_debug');
-  }
   
   if (!publicKey) {
-    const errorMsg = 'MercadoPago public key is not defined';
-    console.error(errorMsg);
-    if (window.__mp_debug) {
-      window.__mp_debug.error = errorMsg;
-    }
+    console.error('MercadoPago public key is not defined');
     return null;
   }
 
-  // Validate public key format for production
-  if (isProduction && publicKey.startsWith('TEST-')) {
-    const errorMsg = 'Using sandbox public key in production mode!';
-    console.error('ERROR:', errorMsg);
-    if (window.__mp_debug) {
-      window.__mp_debug.error = errorMsg;
-    }
-    return null;
-  }
-
+  // Always enforce production mode
+  console.log('Initializing MercadoPago in PRODUCTION mode with key:', publicKey.substring(0, 10) + '...');
+  
   try {
-    console.log('Initializing MercadoPago with key:', publicKey.substring(0, 10) + '...');
-    
     const mp = new window.MercadoPago(publicKey, {
       locale: 'es-CL',
       advancedFraudPrevention: true,
-      environment: isProduction ? 'production' : 'sandbox' // Explicitly set environment
+      environment: 'production' // Force production environment
     });
 
-    // Update debug info after successful initialization
-    if (window.__mp_debug) {
-      window.__mp_debug.initialized = true;
-      window.__mp_debug.sdkLoaded = true;
-      window.__mp_debug.sdkVersion = window.MercadoPago?.VERSION || 'unknown';
-    }
-
-    // Enhanced debug output
-    console.group('MercadoPago Initialization');
-    console.log('SDK Version:', sdkVersion);
-    console.log('SDK Available:', sdkAvailable);
-    console.log('Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
-    console.log('Public Key:', publicKey.substring(0, 5) + '...' + publicKey.substring(publicKey.length - 3));
+    console.log('MercadoPago SDK initialized in PRODUCTION mode');
     
+    // Add to window for debugging
+    (window as any).__mp = {
+      env: 'production',
+      publicKey: publicKey.substring(0, 10) + '...',
+      timestamp: new Date().toISOString(),
+      version: window.MercadoPago?.VERSION || 'unknown'
+    };
     // Create a safe debug info object without circular references
     const safeDebugInfo = { ...debugInfo };
     if (safeDebugInfo.sdkObject) {
