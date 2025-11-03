@@ -14,9 +14,22 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="" />
 
-    <!--<meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="" />-->
+    <meta name="twitter:image" content="" />
+    
+    <!-- MercadoPago SDK -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <script>
+      // Initialize MercadoPago with the public key from environment variables
+      const mp = new MercadoPago(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY, {
+        locale: 'es-CL'
+      });
+      
+      // Log the environment for debugging
+      console.log('MercadoPago SDK initialized in', 
+        import.meta.env.VITE_MERCADOPAGO_ENV || 'development', 'mode');
+    </script>
   </head>
 
   <body>
