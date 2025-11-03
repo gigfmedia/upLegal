@@ -126,7 +126,7 @@ const Index = () => {
   
   // Debug: Log user object to verify structure
   useEffect(() => {
-    console.log('Current user:', user);
+    //console.log('Current user:', user);
   }, [user]);
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -181,7 +181,7 @@ const Index = () => {
           return;
         }
 
-        console.log('Abogados encontrados:', lawyers);
+        //console.log('Abogados encontrados:', lawyers);
         
         if (lawyers && lawyers.length > 0) {
           const formattedLawyers = lawyers.map(lawyer => ({

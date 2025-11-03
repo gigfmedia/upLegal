@@ -8,7 +8,7 @@ const isBrowser = typeof window !== 'undefined';
 const DEBUG = true;
 const log = (...args: any[]) => {
   if (DEBUG && isBrowser) {
-    console.log('[SupabaseClient]', ...args);
+    //console.log('[SupabaseClient]', ...args);
   }
 };
 

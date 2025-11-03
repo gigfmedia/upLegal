@@ -66,6 +66,19 @@ export const mercadopago = new MercadoPagoConfig({
   },
 });
 
+// Log the environment being used
+console.log('MercadoPago Config:', {
+  environment: isProduction ? 'production' : 'sandbox',
+  accessTokenPrefix: accessToken?.substring(0, 10) + '...',
+  isProduction,
+  usingProductionCredentials: accessToken?.startsWith('APP_USR-')
+});
+
+// Ensure we're using the correct environment
+if (isProduction && accessToken?.startsWith('TEST-')) {
+  console.error('WARNING: Using sandbox credentials in production mode!');
+}
+
 // Create a preference
 export const createPreference = async (items: PreferenceItem[], payer: PreferencePayer) => {
   const preference = new Preference(mercadopago);
@@ -83,6 +96,10 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       ...(item.category_id && { category_id: item.category_id }),
     }));
 
+    // Debug log environment and URLs
+    console.log('MercadoPago Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
+    console.log('Using base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
+    
     // Create preference data with proper typing
     const preferenceData: any = {
       binary_mode: true,
@@ -93,25 +110,41 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
         email: payer.email, // Email is required in our type
       },
       back_urls: {
-        success: `${window.location.origin}/payment/success`,
-        failure: `${window.location.origin}/payment/failure`,
-        pending: `${window.location.origin}/payment/pending`,
+        success: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/success`,
+        failure: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/failure`,
+        pending: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/pending`,
       },
       ...(import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL && {
         notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL,
       }),
     };
 
+    // Debug log the preference data being sent
+    console.log('Creating preference with data:', {
+      ...preferenceData,
+      payer: { ...preferenceData.payer, email: '[REDACTED]' } // Don't log full email
+    });
+    
     // Create preference
     const result = await preference.create({ body: preferenceData });
     
-    // Always use init_point in production, fallback to sandbox_init_point in development
+    // Debug log the response
+    console.log('MercadoPago response:', {
+      init_point: result.init_point ? '***init_point present***' : 'init_point missing',
+      sandbox_init_point: result.sandbox_init_point ? '***sandbox_init_point present***' : 'sandbox_init_point missing',
+      preference_id: result.id
+    });
+    
+    // In production, ensure we're using the production URL
     if (isProduction) {
-      if (!result.init_point) {
-        console.error('init_point is missing in production mode', result);
-        throw new Error('Failed to get production payment URL');
+      if (result.init_point) {
+        // Force production URL if it's not already
+        const productionUrl = result.init_point.replace('sandbox.', '');
+        console.log('Using production URL:', productionUrl);
+        return productionUrl;
       }
-      return result.init_point;
+      console.error('init_point is missing in production mode', result);
+      throw new Error('Failed to get production payment URL');
     }
     
     // In development/sandbox mode
