@@ -4,11 +4,29 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Cargar variables de entorno
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  // Load environment variables
+  const env = loadEnv(mode, process.cwd(), '');
 
   return {
     base: '/',
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
+    define: {
+      'process.env': {
+        ...Object.entries(env).reduce((prev, [key, val]) => {
+          if (key.startsWith('VITE_')) {
+            return {
+              ...prev,
+              [key]: val
+            };
+          }
+          return prev;
+        }, {}),
+      },
+    },
     server: {
       host: '::',
       port: 8080,
@@ -17,16 +35,16 @@ export default defineConfig(({ mode }) => {
         port: 8080,
         host: 'localhost',
         protocol: 'ws',
+      },
+      // Allow ngrok host
+      allowedHosts: [
+        '4b8d111bae68.ngrok-free.app',
+        '834703e13045.ngrok-free.app',
+        'localhost',
+        '127.0.0.1',
+        '.ngrok-free.app'
+      ],
     },
-    // Permitir el host de ngrok
-    allowedHosts: [
-      '4b8d111bae68.ngrok-free.app',
-      '834703e13045.ngrok-free.app',
-      'localhost',
-      '127.0.0.1',
-      '.ngrok-free.app'
-    ],
-  },
   preview: {
     port: 8080,
   },
