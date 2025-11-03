@@ -101,22 +101,36 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     console.log('MercadoPago Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
     console.log('Using base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
     
+    // Force production URLs
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    
     // Create preference data with proper typing
     const preferenceData: any = {
       binary_mode: true,
-      auto_return: 'approved' as const, // Explicitly type as 'approved' literal
+      auto_return: 'approved' as const,
       items: preferenceItems,
       payer: {
         ...payer,
-        email: payer.email, // Email is required in our type
+        email: payer.email,
       },
+      // Force production URLs
       back_urls: {
-        success: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/success`,
-        failure: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/failure`,
-        pending: `${import.meta.env.VITE_APP_URL || window.location.origin}/payment/pending`,
+        success: `${baseUrl}/payment/success`,
+        failure: `${baseUrl}/payment/failure`,
+        pending: `${baseUrl}/payment/pending`,
       },
-      ...(import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL && {
+      // Force production webhook URL if in production
+      ...(isProduction && import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL && {
         notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL,
+      }),
+      // Force production settings
+      ...(isProduction && {
+        marketplace: 'NONE',
+        processing_modes: ['aggregator'],
+        integrator_id: import.meta.env.VITE_MERCADOPAGO_INTEGRATOR_ID,
+        sponsor_id: import.meta.env.VITE_MERCADOPAGO_SPONSOR_ID,
+        external_reference: `uplegal-${Date.now()}`,
+        statement_descriptor: 'UPLEGAL',
       }),
     };
 
@@ -138,25 +152,39 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     
     // In production, ensure we're using the production URL
     if (isProduction) {
-      // Always use init_point in production, never sandbox_init_point
+      console.group('Production URL Handling');
+      
+      // First try to use the init_point if available
       if (result.init_point) {
+        console.log('Found init_point, converting to production URL');
         const paymentUrl = new URL(result.init_point);
         
         // Force production domain and HTTPS
         paymentUrl.hostname = 'www.mercadopago.cl';
         paymentUrl.protocol = 'https:';
         
-        // Ensure no sandbox in the URL
-        const finalUrl = paymentUrl.toString().replace('sandbox.', '');
+        // Remove any sandbox references
+        let finalUrl = paymentUrl.toString().replace(/sandbox\./g, '');
         
-        console.log('Using production URL:', finalUrl);
+        // Ensure it's using the production domain
+        if (!finalUrl.includes('mercadopago.cl')) {
+          finalUrl = finalUrl.replace(
+            /https?:\/\/[^\/]+/,
+            'https://www.mercadopago.cl'
+          );
+        }
+        
+        console.log('Converted to production URL:', finalUrl);
+        console.groupEnd();
         return finalUrl;
       }
       
-      // If we don't have init_point, try to construct it from the preference ID
+      // If no init_point, try to construct it from the preference ID
       if (result.id) {
+        console.log('Constructing production URL from preference ID');
         const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}`;
-        console.log('Constructed production URL from preference ID:', prodUrl);
+        console.log('Constructed production URL:', prodUrl);
+        console.groupEnd();
         return prodUrl;
       }
       
@@ -174,6 +202,9 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       console.error('sandbox_init_point is missing in development mode', result);
       throw new Error('Failed to get sandbox payment URL');
     }
+    
+    // Log the sandbox URL for debugging
+    console.log('Using sandbox URL:', result.sandbox_init_point);
     return result.sandbox_init_point;
   } catch (error) {
     console.error('Error creating preference:', error);
