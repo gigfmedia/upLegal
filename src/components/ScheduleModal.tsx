@@ -314,18 +314,18 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       
       localStorage.setItem('pendingAppointment', JSON.stringify(appointmentData));
       
-      // Redirect to MercadoPago checkout
-      const redirectUrl = responseData.init_point || 
-                         responseData.sandbox_init_point || 
-                         responseData.url;
-      
+      // Only use production URL
+      const redirectUrl = responseData.init_point || responseData.url;
       if (redirectUrl) {
-        console.log('Redirecting to payment URL:', redirectUrl);
-        window.location.href = redirectUrl;
-      } else {
-        console.error('No se pudo obtener el enlace de pago. Respuesta completa:', responseData);
-        throw new Error('No se pudo obtener el enlace de pago. Por favor, inténtalo de nuevo.');
+        const paymentUrl = new URL(redirectUrl);
+        // Force production domain
+        paymentUrl.hostname = 'www.mercadopago.cl';
+        paymentUrl.protocol = 'https:';
+        window.location.href = paymentUrl.toString();
+        return;
       }
+      
+      throw new Error('No se recibió una URL de pago válida');
       
     } catch (error) {
       clearTimeout(timeoutId);

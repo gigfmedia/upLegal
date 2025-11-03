@@ -340,10 +340,24 @@ export const createMercadoPagoPreference = async (req: Request) => {
     }
 
     // Return success response
+    // Always use production URL or construct it
+    const initPoint = responseData.init_point || 
+                     (responseData.id ? `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${responseData.id}` : null);
+    
+    if (!initPoint) {
+      throw new Error('No se pudo generar la URL de pago');
+    }
+    
+    // Ensure we're using the production domain
+    const paymentUrl = new URL(initPoint);
+    paymentUrl.hostname = 'www.mercadopago.cl';
+    paymentUrl.protocol = 'https:';
+    
     return new Response(JSON.stringify({
       success: true,
       id: responseData.id,
-      init_point: responseData.init_point || responseData.sandbox_init_point,
+      init_point: paymentUrl.toString(),
+      url: paymentUrl.toString(),
       request_id: requestId
     }), {
       status: 200,

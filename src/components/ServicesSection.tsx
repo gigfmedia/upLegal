@@ -262,9 +262,13 @@ export function ServicesSection({
       const responseData = await response.json();
       console.log('Payment response:', responseData);
 
-      // Redirect to MercadoPago checkout
-      if (responseData.init_point || responseData.sandbox_init_point || responseData.url) {
-        window.location.href = responseData.init_point || responseData.sandbox_init_point || responseData.url;
+      // Redirect to MercadoPago checkout - only use production URL
+      if (responseData.init_point || responseData.url) {
+        const paymentUrl = new URL(responseData.init_point || responseData.url);
+        // Force production domain
+        paymentUrl.hostname = 'www.mercadopago.cl';
+        paymentUrl.protocol = 'https:';
+        window.location.href = paymentUrl.toString();
       } else {
         throw new Error('No se recibió una URL de pago válida');
       }
