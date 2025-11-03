@@ -4,8 +4,16 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load environment variables
+  // Load all env variables
   const env = loadEnv(mode, process.cwd(), '');
+  
+  // Filter only VITE_* variables
+  const viteEnv = Object.entries(env).reduce((acc, [key, val]) => {
+    if (key.startsWith('VITE_')) {
+      acc[`import.meta.env.${key}`] = JSON.stringify(val);
+    }
+    return acc;
+  }, {} as Record<string, string>);
 
   return {
     base: '/',
@@ -15,6 +23,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
+      ...viteEnv,
+      'import.meta.env.MODE': JSON.stringify(mode),
       'process.env': {
         ...Object.entries(env).reduce((prev, [key, val]) => {
           if (key.startsWith('VITE_')) {

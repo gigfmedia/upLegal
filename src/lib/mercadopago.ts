@@ -1,13 +1,60 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-// Get environment variables
+// Define types for MercadoPago
+type PreferencePayer = {
+  name?: string;
+  surname?: string;
+  email: string;
+  phone?: {
+    area_code: string;
+    number: string;
+  };
+  identification?: {
+    type: string;
+    number: string;
+  };
+  address?: {
+    zip_code: string;
+    street_name: string;
+    street_number: string;
+  };
+};
+
+type PreferenceItem = {
+  id?: string;
+  title: string;
+  description?: string;
+  picture_url?: string;
+  category_id?: string;
+  quantity: number;
+  currency_id: 'CLP' | 'ARS' | 'BRL' | 'MXN' | 'COP' | 'CLF' | 'PEN' | 'UYU';
+  unit_price: number;
+};
+
+type CreatePreferenceData = {
+  items: PreferenceItem[];
+  payer: PreferencePayer;
+  back_urls?: {
+    success: string;
+    failure: string;
+    pending: string;
+  };
+  auto_return?: 'approved' | 'all';
+  binary_mode?: boolean;
+  notification_url?: string;
+  statement_descriptor?: string;
+  external_reference?: string;
+};
+
+// Determine environment and select appropriate token
 const isProduction = import.meta.env.VITE_MERCADOPAGO_ENV === 'production';
 const accessToken = isProduction 
   ? import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN
   : import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN_SANDBOX;
 
 if (!accessToken) {
-  throw new Error('MercadoPago access token is not defined');
+  console.error('MercadoPago access token is not defined');
+  throw new Error('MercadoPago access token is not configured');
 }
 
 // Initialize MercadoPago client
@@ -19,204 +66,80 @@ export const mercadopago = new MercadoPagoConfig({
   },
 });
 
-// Log environment for debugging
-console.log(`MercadoPago initialized in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
-
-// Types for MercadoPago preference
-interface PreferenceItem {
-  id: string;
-  title: string;
-  quantity: number;
-  unit_price: number;
-  description?: string;
-  currency_id?: 'CLP' | 'USD';
-}
-
-interface CreatePreferenceData {
-  items: PreferenceItem[];
-  payer?: {
-    name?: string;
-    surname?: string;
-    email?: string;
-    phone?: {
-      area_code: string;
-      number: string;
-    };
-    identification?: {
-      type: string;
-      number: string;
-    };
-    address?: {
-      zip_code: string;
-      street_name: string;
-      street_number: number;
-    };
-  };
-  payment_methods?: {
-    excluded_payment_methods?: { id: string }[];
-    excluded_payment_types?: { id: string }[];
-    installments?: number;
-    default_installments?: number;
-  };
-  back_urls?: {
-    success: string;
-    pending: string;
-    failure: string;
-  };
-  auto_return?: 'approved' | 'all';
-  external_reference?: string;
-  notification_url?: string;
-  statement_descriptor?: string;
-  binary_mode?: boolean;
-  expires?: boolean;
-  metadata?: Record<string, unknown>;
-}
-
-// Create a preference for payment
-export async function createPreference(data: CreatePreferenceData) {
+// Create a preference
+export const createPreference = async (items: PreferenceItem[], payer: PreferencePayer) => {
+  const preference = new Preference(mercadopago);
+  
   try {
-    const preference = new Preference(mercadopago);
-    
-    // Add default values
-    const preferenceData = {
-      ...data,
+    // Convert items to match SDK's expected format
+    const preferenceItems = items.map(item => ({
+      id: item.id || Math.random().toString(36).substring(2, 9),
+      title: item.title,
+      description: item.description || '',
+      quantity: item.quantity,
+      currency_id: item.currency_id,
+      unit_price: item.unit_price,
+      ...(item.picture_url && { picture_url: item.picture_url }),
+      ...(item.category_id && { category_id: item.category_id }),
+    }));
+
+    // Create preference data with proper typing
+    const preferenceData: any = {
       binary_mode: true,
-      auto_return: data.auto_return || 'approved',
+      auto_return: 'approved' as const, // Explicitly type as 'approved' literal
+      items: preferenceItems,
+      payer: {
+        ...payer,
+        email: payer.email, // Email is required in our type
+      },
+      back_urls: {
+        success: `${window.location.origin}/payment/success`,
+        failure: `${window.location.origin}/payment/failure`,
+        pending: `${window.location.origin}/payment/pending`,
+      },
+      ...(import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL && {
+        notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL,
+      }),
     };
 
-    const response = await preference.create({ body: preferenceData });
-    return response;
+    // Create preference
+    const result = await preference.create({ body: preferenceData });
+    
+    // Return the appropriate URL based on environment
+    return isProduction ? result.init_point : result.sandbox_init_point;
   } catch (error) {
-    console.error('Error creating MercadoPago preference:', error);
-    throw error;
+    console.error('Error creating preference:', error);
+    throw new Error('Failed to create payment preference');
   }
-}
+};
 
-// Verify payment status
-export async function getPaymentStatus(paymentId: string) {
+// Get payment status
+export const getPaymentStatus = async (paymentId: string) => {
   try {
-    const response = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      }
-    );
-
+    const response = await fetch(`/api/payments/${paymentId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+    });
+    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error getting payment status:', error);
-    throw error;
-  }
-}
-
-// Format amount to CLP (Chilean Peso)
-export function formatCLP(amount: number): string {
-  return new Intl.NumberFormat('es-CL', {
-    style: 'currency',
-    currency: 'CLP',
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-  }>;
-  payer?: {
-    name?: string;
-    surname?: string;
-    email: string;
-    phone?: {
-      area_code: string;
-      number: string;
-    };
-    address?: {
-      zip_code: string;
-      street_name: string;
-      street_number: string;
-    };
-  };
-  external_reference?: string;
-  notification_url?: string;
-  back_urls?: {
-    success: string;
-    pending: string;
-    failure: string;
-  };
-  auto_return?: 'approved' | 'all';
-}) {
-  try {
-    const preference = new Preference(mercadopago);
     
-    // Add default values
-    const preferenceData = {
-      ...data,
-      payment_methods: {
-        installments: 12, // Max installments
-        excluded_payment_methods: [
-          { id: 'amex' }, // Exclude AMEX which is not common in Chile
-        ],
-        excluded_payment_types: [],
-        // Only allow payment methods available in Chile
-        payment_methods: [
-          { id: 'webpay' },
-          { id: 'servipag' },
-          { id: 'khipu' },
-          { id: 'multicaja' },
-          { id: 'santander' },
-          { id: 'bancodigital' },
-          { id: 'bancodigital_inst' },
-          { id: 'bancodigital_webpay' },
-          { id: 'bancodigital_servipag' },
-          { id: 'bancodigital_khipu' },
-          { id: 'bancodigital_multicaja' },
-          { id: 'bancodigital_santander' },
-        ],
-      },
-      auto_return: 'approved',
-      binary_mode: true, // Only allow completed or failed payments
-      statement_descriptor: 'UPLEGAL',
-    };
-
-    const response = await preference.create({ body: preferenceData });
-    return response;
-  } catch (error) {
-    console.error('Error creating MercadoPago preference:', error);
-    throw error;
-  }
-}
-
-// Verify payment status
-export async function getPaymentStatus(paymentId: string) {
-  try {
-    const response = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Error fetching payment status');
-    }
-
     return await response.json();
   } catch (error) {
     console.error('Error getting payment status:', error);
-    throw error;
+    throw new Error('Failed to fetch payment status');
   }
-}
+};
 
-// Format amount to CLP (Chilean Peso)
-export function formatCLP(amount: number): string {
+// Format CLP currency
+export const formatCLP = (amount: number): string => {
   return new Intl.NumberFormat('es-CL', {
     style: 'currency',
     currency: 'CLP',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
   }).format(amount);
-}
+};

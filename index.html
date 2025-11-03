@@ -20,15 +20,16 @@
     
     <!-- MercadoPago SDK -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
-    <script>
-      // Initialize MercadoPago with the public key from environment variables
-      const mp = new MercadoPago(import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY, {
-        locale: 'es-CL'
-      });
+    <script type="module">
+      import { initializeMercadoPago } from '/src/lib/mercadoPagoInit.js';
       
-      // Log the environment for debugging
-      console.log('MercadoPago SDK initialized in', 
-        import.meta.env.VITE_MERCADOPAGO_ENV || 'development', 'mode');
+      // Initialize when the DOM is fully loaded
+      document.addEventListener('DOMContentLoaded', () => {
+        const mp = initializeMercadoPago();
+        if (mp) {
+          window.mp = mp; // Make it globally available
+        }
+      });
     </script>
   </head>
 
