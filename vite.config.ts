@@ -1,23 +1,22 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  base: '/',
-  server: {
-    host: '::',
-    port: 8080,
-    strictPort: true,
-    hmr: {
+export default defineConfig(({ mode }) => {
+  // Cargar variables de entorno
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+
+  return {
+    base: '/',
+    server: {
+      host: '::',
       port: 8080,
-      host: 'localhost',
-      protocol: 'ws',
-    },
-    // Permitir cualquier host, incluyendo ngrok
-    cors: true,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
+      strictPort: true,
+      hmr: {
+        port: 8080,
+        host: 'localhost',
+        protocol: 'ws',
     },
     // Permitir el host de ngrok
     allowedHosts: [
@@ -50,23 +49,19 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-window',
-      'react-virtualized-auto-sizer',
-    ],
-    esbuildOptions: {
-      // Node.js global to browser globalThis
-      define: {
-        global: 'globalThis',
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-window',
+        'react-virtualized-auto-sizer',
+      ],
+      esbuildOptions: {
+        // Node.js global to browser globalThis
+        define: {
+          global: 'globalThis',
+        },
       },
     },
-  },
-}));
+  };
+});
