@@ -105,8 +105,21 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     // Create preference
     const result = await preference.create({ body: preferenceData });
     
-    // Return the appropriate URL based on environment
-    return isProduction ? result.init_point : result.sandbox_init_point;
+    // Always use init_point in production, fallback to sandbox_init_point in development
+    if (isProduction) {
+      if (!result.init_point) {
+        console.error('init_point is missing in production mode', result);
+        throw new Error('Failed to get production payment URL');
+      }
+      return result.init_point;
+    }
+    
+    // In development/sandbox mode
+    if (!result.sandbox_init_point) {
+      console.error('sandbox_init_point is missing in development mode', result);
+      throw new Error('Failed to get sandbox payment URL');
+    }
+    return result.sandbox_init_point;
   } catch (error) {
     console.error('Error creating preference:', error);
     throw new Error('Failed to create payment preference');
