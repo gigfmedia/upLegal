@@ -138,13 +138,27 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     // In production, ensure we're using the production URL
     if (isProduction) {
       if (result.init_point) {
-        // Force production URL if it's not already
-        const productionUrl = result.init_point.replace('sandbox.', '');
-        console.log('Using production URL:', productionUrl);
-        return productionUrl;
+        // Force production URL by replacing sandbox domain and ensure protocol is https
+        const paymentUrl = new URL(result.init_point);
+        
+        // Ensure we're using the production domain
+        paymentUrl.hostname = paymentUrl.hostname.replace('sandbox.', '');
+        paymentUrl.protocol = 'https:';
+        
+        const finalUrl = paymentUrl.toString();
+        
+        if (finalUrl.includes('mercadopago.com') && !finalUrl.includes('sandbox')) {
+          console.log('Using production URL:', finalUrl);
+          return finalUrl;
+        }
       }
-      console.error('init_point is missing in production mode', result);
-      throw new Error('Failed to get production payment URL');
+      
+      // If we get here, something went wrong with the URL construction
+      console.error('Invalid payment URL in production mode', {
+        originalUrl: result.init_point,
+        preferenceId: result.id
+      });
+      throw new Error('Invalid payment URL in production mode');
     }
     
     // In development/sandbox mode

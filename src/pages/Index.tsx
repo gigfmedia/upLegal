@@ -167,7 +167,7 @@ const Index = () => {
     const fetchAllLawyers = async () => {
       try {
         setIsLoadingFeatured(true);
-        console.log('Iniciando búsqueda de abogados...');
+        //console.log('Iniciando búsqueda de abogados...');
         
         // Consulta directa a Supabase
         const { data: lawyers, error } = await supabase

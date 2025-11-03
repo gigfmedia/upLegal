@@ -39,13 +39,33 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
     return null;
   }
 
+  // Validate public key format for production
+  if (isProduction && publicKey.startsWith('TEST-')) {
+    console.error('ERROR: Using sandbox public key in production mode!');
+    return null;
+  }
+
   try {
+    console.log('Initializing MercadoPago with key:', publicKey.substring(0, 10) + '...');
+    
     const mp = new window.MercadoPago(publicKey, {
       locale: 'es-CL',
-      advancedFraudPrevention: true
+      advancedFraudPrevention: true,
+      // Force production mode if VITE_MERCADOPAGO_ENV is set to production
+      ...(isProduction && { environment: 'production' })
     });
 
     console.log(`MercadoPago SDK initialized in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
+    
+    // Add to window for debugging
+    if (isProduction) {
+      (window as any).__mp = {
+        env: 'production',
+        publicKey: publicKey.substring(0, 10) + '...',
+        timestamp: new Date().toISOString()
+      };
+    }
+    
     return mp;
   } catch (error) {
     console.error('Failed to initialize MercadoPago:', error);
