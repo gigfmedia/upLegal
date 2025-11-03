@@ -67,12 +67,13 @@ export const mercadopago = new MercadoPagoConfig({
 });
 
 // Log the environment being used
-console.log('MercadoPago Config:', {
-  environment: isProduction ? 'production' : 'sandbox',
-  accessTokenPrefix: accessToken?.substring(0, 10) + '...',
-  isProduction,
-  usingProductionCredentials: accessToken?.startsWith('APP_USR-')
-});
+console.group('MercadoPago Configuration');
+console.log('Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
+console.log('Access Token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NOT SET');
+console.log('Is Production:', isProduction);
+console.log('Using Production Credentials:', accessToken?.startsWith('APP_USR-'));
+console.log('Base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
+console.groupEnd();
 
 // Ensure we're using the correct environment
 if (isProduction && accessToken?.startsWith('TEST-')) {
@@ -137,28 +138,35 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     
     // In production, ensure we're using the production URL
     if (isProduction) {
+      // Always use init_point in production, never sandbox_init_point
       if (result.init_point) {
-        // Force production URL by replacing sandbox domain and ensure protocol is https
         const paymentUrl = new URL(result.init_point);
         
-        // Ensure we're using the production domain
-        paymentUrl.hostname = paymentUrl.hostname.replace('sandbox.', '');
+        // Force production domain and HTTPS
+        paymentUrl.hostname = 'www.mercadopago.cl';
         paymentUrl.protocol = 'https:';
         
-        const finalUrl = paymentUrl.toString();
+        // Ensure no sandbox in the URL
+        const finalUrl = paymentUrl.toString().replace('sandbox.', '');
         
-        if (finalUrl.includes('mercadopago.com') && !finalUrl.includes('sandbox')) {
-          console.log('Using production URL:', finalUrl);
-          return finalUrl;
-        }
+        console.log('Using production URL:', finalUrl);
+        return finalUrl;
       }
       
-      // If we get here, something went wrong with the URL construction
-      console.error('Invalid payment URL in production mode', {
-        originalUrl: result.init_point,
-        preferenceId: result.id
+      // If we don't have init_point, try to construct it from the preference ID
+      if (result.id) {
+        const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}`;
+        console.log('Constructed production URL from preference ID:', prodUrl);
+        return prodUrl;
+      }
+      
+      // If we get here, we couldn't create a valid URL
+      console.error('Failed to create valid production URL', {
+        preferenceId: result.id,
+        hasInitPoint: !!result.init_point,
+        hasSandboxInitPoint: !!result.sandbox_init_point
       });
-      throw new Error('Invalid payment URL in production mode');
+      throw new Error('Failed to create valid production payment URL');
     }
     
     // In development/sandbox mode
