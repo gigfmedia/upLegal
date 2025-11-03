@@ -18,24 +18,34 @@ export default defineConfig(({ mode }) => {
   return {
     base: '/',
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, './src'),
+      alias: [
+        {
+          find: '@',
+          replacement: path.resolve(__dirname, './src'),
+        },
+      ],
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        loader: {
+          '.js': 'jsx',
+          '.ts': 'tsx',
+        },
       },
     },
     define: {
       ...viteEnv,
       'import.meta.env.MODE': JSON.stringify(mode),
-      'process.env': {
-        ...Object.entries(env).reduce((prev, [key, val]) => {
-          if (key.startsWith('VITE_')) {
-            return {
-              ...prev,
-              [key]: val
-            };
-          }
-          return prev;
-        }, {}),
-      },
+      'process.env': Object.entries(env).reduce((prev, [key, val]) => {
+        if (key.startsWith('VITE_')) {
+          return {
+            ...prev,
+            [key]: val
+          };
+        }
+        return prev;
+      }, {}),
     },
     server: {
       host: '::',
