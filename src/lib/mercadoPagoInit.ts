@@ -29,6 +29,8 @@ interface MercadoPagoDebugInfo {
   environment?: 'production' | 'sandbox';
   sdkLoaded?: boolean;
   sdkVersion?: string;
+  sdkAvailable?: boolean;
+  sdkObject?: any;
 }
 
 declare global {
@@ -45,9 +47,29 @@ declare global {
   }
 }
 
+// Helper to safely get SDK version
+function getSDKVersion(): string {
+  try {
+    // Try different ways to get the SDK version
+    if (typeof window.MercadoPago?.VERSION === 'string') {
+      return window.MercadoPago.VERSION;
+    }
+    if (typeof window.MercadoPago?.version === 'string') {
+      return window.MercadoPago.version;
+    }
+    return 'unknown';
+  } catch (e) {
+    return 'error';
+  }
+}
+
 export function initializeMercadoPago(): MercadoPagoInstance | null {
   const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
   const isProduction = import.meta.env.VITE_MERCADOPAGO_ENV === 'production';
+  
+  // Check if MercadoPago is available
+  const sdkAvailable = typeof window !== 'undefined' && !!window.MercadoPago;
+  const sdkVersion = sdkAvailable ? getSDKVersion() : 'not-loaded';
   
   // Initialize debug object with proper typing
   const debugInfo: MercadoPagoDebugInfo = {
@@ -55,10 +77,12 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
     publicKey: publicKey ? `${publicKey.substring(0, 5)}...${publicKey.substring(publicKey.length - 3)}` : 'undefined',
     timestamp: new Date().toISOString(),
     initialized: false,
-    version: '2.0.0', // Our integration version
-    sdkVersion: window.MercadoPago?.VERSION || 'unknown',
+    version: '2.0.1', // Our integration version
+    sdkVersion,
     environment: isProduction ? 'production' : 'sandbox',
-    sdkLoaded: false
+    sdkLoaded: sdkAvailable,
+    sdkAvailable,
+    sdkObject: sdkAvailable ? { ...window.MercadoPago } : undefined
   };
 
   // Attach to window immediately
@@ -104,10 +128,18 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
 
     // Enhanced debug output
     console.group('MercadoPago Initialization');
-    console.log('SDK Version:', window.MercadoPago?.VERSION || 'unknown');
+    console.log('SDK Version:', sdkVersion);
+    console.log('SDK Available:', sdkAvailable);
     console.log('Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
     console.log('Public Key:', publicKey.substring(0, 5) + '...' + publicKey.substring(publicKey.length - 3));
-    console.log('Debug Info:', JSON.parse(JSON.stringify(window.__mp_debug))); // Clone to avoid live object reference
+    
+    // Create a safe debug info object without circular references
+    const safeDebugInfo = { ...debugInfo };
+    if (safeDebugInfo.sdkObject) {
+      safeDebugInfo.sdkObject = '[MercadoPago SDK Object]';
+    }
+    
+    console.log('Debug Info:', safeDebugInfo);
     console.groupEnd();
     
     return mp;
