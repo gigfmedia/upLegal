@@ -18,18 +18,62 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="" />
     
-    <!-- MercadoPago SDK -->
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <!-- MercadoPago SDK with proper loading -->
+    <script>
+      // Track SDK loading state
+      window.MercadoPagoSDK = {
+        loaded: false,
+        onLoadCallbacks: []
+      };
+
+      // Function to execute callbacks when SDK is loaded
+      function onMercadoPagoLoaded() {
+        window.MercadoPagoSDK.loaded = true;
+        window.MercadoPagoSDK.onLoadCallbacks.forEach(callback => callback());
+        window.MercadoPagoSDK.onLoadCallbacks = [];
+      }
+
+      // Load SDK with callback
+      (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = 'https://sdk.mercadopago.com/js/v2';
+        js.onload = onMercadoPagoLoaded;
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'mercado-pago-sdk'));
+    </script>
+    
     <script type="module">
       import { initializeMercadoPago } from './src/lib/mercadoPagoInit';
       
-      // Initialize when the DOM is fully loaded
-      document.addEventListener('DOMContentLoaded', () => {
+      function initMercadoPago() {
         const mp = initializeMercadoPago();
         if (mp) {
           window.mp = mp; // Make it globally available
+          console.log('MercadoPago initialized successfully');
+        } else {
+          console.error('Failed to initialize MercadoPago');
         }
-      });
+      }
+
+      // Wait for both DOM and SDK to be ready
+      function onReady() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initMercadoPago);
+        } else {
+          initMercadoPago();
+        }
+      }
+
+      // Check if SDK is already loaded
+      if (window.MercadoPago) {
+        console.log('MercadoPago SDK already loaded');
+        onReady();
+      } else {
+        // Wait for SDK to load
+        window.MercadoPagoSDK.onLoadCallbacks.push(onReady);
+      }
     </script>
   </head>
 
