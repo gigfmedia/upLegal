@@ -153,7 +153,11 @@ const AppContent = () => {
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<UserDashboard />} />
               <Route path="profile" element={<DashboardProfile />} />
-              <Route path="profile/setup" element={<ProfileSetupPage />} />
+              <Route path="profile/setup" element={
+                <RequireLawyer>
+                  <ProfileSetupPage />
+                </RequireLawyer>
+              } />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="consultations" element={<DashboardConsultations />} />
               <Route path="appointments" element={<DashboardAppointments />} />

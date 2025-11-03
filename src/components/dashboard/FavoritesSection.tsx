@@ -144,7 +144,7 @@ export function FavoritesSection() {
 
   if (authLoading || isFavoritesLoading) {
     return (
-      <div className="py-6 px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <Card key={i} className="h-48">
@@ -207,7 +207,7 @@ export function FavoritesSection() {
         cancelText="Cancelar"
         isDeleting={!!deletingId}
       />
-      <div className="space-y-6 p-6">
+      <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {favorites.map((lawyer) => (
             <Card key={lawyer.favorite_id} className="h-full flex flex-col">

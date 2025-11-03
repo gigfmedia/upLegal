@@ -26,7 +26,6 @@ type ProfileFormData = {
   display_name: string;
   first_name: string;
   last_name: string;
-  bio: string;
   phone: string;
   location: string;
   website: string;
@@ -60,12 +59,11 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
     display_name: user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
     first_name: user?.user_metadata?.first_name || '',
     last_name: user?.user_metadata?.last_name || '',
-    bio: user?.user_metadata?.bio || '',
     phone: user?.user_metadata?.phone || '',
     location: user?.user_metadata?.location || '',
     website: user?.user_metadata?.website || '',
     specialties: user?.user_metadata?.specialties || [],
-    hourly_rate_clp: user?.user_metadata?.hourly_rate_clp || 0,
+    hourly_rate_clx: user?.user_metadata?.hourly_rate_clp || 0,
     experience_years: user?.user_metadata?.experience_years || 0,
     languages: user?.user_metadata?.languages || []
   }));
@@ -85,7 +83,6 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
       const isSetupComplete = Boolean(
         formData.first_name && 
         formData.last_name && 
-        formData.bio && 
         formData.specialties?.length > 0 && 
         formData.hourly_rate_clp > 0
       );
@@ -94,7 +91,6 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
         display_name: formData.display_name || `${formData.first_name} ${formData.last_name}`.trim(),
         first_name: formData.first_name,
         last_name: formData.last_name,
-        bio: formData.bio || null,
         phone: formData.phone || null,
         location: formData.location || null,
         website: formData.website || null,
@@ -140,7 +136,6 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
       display_name: user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '',
       first_name: user?.user_metadata?.first_name || '',
       last_name: user?.user_metadata?.last_name || '',
-      bio: user?.user_metadata?.bio || '',
       phone: user?.user_metadata?.phone || '',
       location: user?.user_metadata?.location || '',
       website: user?.user_metadata?.website || '',
@@ -312,23 +307,6 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-medium">Biografía</Label>
-          {isEditing ? (
-            <Textarea
-              value={formData.bio}
-              onChange={(e) => handleInputChange('bio', e.target.value)}
-              className="min-h-[100px]"
-            />
-          ) : (
-            <div className="p-3 border rounded-md bg-gray-50 min-h-[80px]">
-              <p className="text-sm text-muted-foreground">
-                {formData.bio || 'No hay biografía disponible'}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
           <Label className="text-sm font-medium">Ubicación</Label>
           {isEditing ? (
             <Input
@@ -479,7 +457,7 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="container mx-auto px-8 py-6 space-y-6">
       {renderProfileHeader()}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         {renderProfilePicture()}

@@ -228,24 +228,29 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       setIsAuthModalOpen(true);
       setAuthAction(() => () => {
         // This will be called after successful login
-        if (action === 'contact' && service) {
-          // Handle contact after auth
+        if (action === 'contact') {
+          // Open contact modal after successful login
+          setIsContactModalOpen(true);
         } else if (action === 'schedule') {
           setIsScheduleModalOpen(true);
         } else if (action === 'book' && service) {
           handleBookService(service);
+        } else if (action === 'service' && service) {
+          setSelectedService(service);
         }
       });
       return;
     }
 
     // If user is already authenticated, perform the action directly
-    if (action === 'contact' && service) {
-      // Handle contact
+    if (action === 'contact') {
+      setIsContactModalOpen(true);
     } else if (action === 'schedule') {
       setIsScheduleModalOpen(true);
     } else if (action === 'book' && service) {
       handleBookService(service);
+    } else if (action === 'service' && service) {
+      setSelectedService(service);
     }
   };
 

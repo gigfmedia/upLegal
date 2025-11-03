@@ -176,7 +176,7 @@ export function ServicesSection({
 
       console.log('Sending payment request:', payload);
 
-      // Prepare the minimal required request body for MercadoPago
+      // Prepare the request body for MercadoPago
       const requestBody = {
         items: [{
           id: `servicio-${service.id}`,
@@ -188,29 +188,53 @@ export function ServicesSection({
         }],
         payer: {
           name: user.user_metadata?.full_name || '',
-          email: user.email || ''
+          email: user.email || '',
+          phone: {
+            area_code: '56',
+            number: '000000000'
+          }
         },
-        // Simplify back_urls to only include success URL
         back_urls: {
-          success: 'https://834703e13045.ngrok-free.app/payment/success',
-          failure: 'https://834703e13045.ngrok-free.app/payment/failure'
+          success: 'https://uplegal.netlify.app/payment/success',
+          failure: 'https://uplegal.netlify.app/payment/failure',
+          pending: 'https://uplegal.netlify.app/payment/pending'
         },
-        // Set auto_return to 'approved' as required
         auto_return: 'approved',
-        // Add success_url as a top-level parameter
-        success_url: 'https://834703e13045.ngrok-free.app/payment/success',
-        // Include required metadata
-        metadata: {
+        binary_mode: true,
+        notification_url: 'https://uplegal.netlify.app/api/mercadopago/webhook',
+        statement_descriptor: 'UPLEGAL',
+        external_reference: JSON.stringify({
           client_id: user.id,
           lawyer_id: lawyerId,
           service_id: service.id
+        }),
+        metadata: {
+          client_id: user.id,
+          lawyer_id: lawyerId,
+          service_id: service.id,
+          created_at: new Date().toISOString()
         },
-        // Add statement descriptor
-        statement_descriptor: 'UpLegal',
-        // Add purpose
+        payment_methods: {
+          excluded_payment_types: [
+            { id: 'ticket' },
+            { id: 'bank_transfer' },
+            { id: 'atm' }
+          ],
+          installments: 12,
+          default_installments: 1
+        },
         purpose: 'onboarding_credits',
-        // Set binary mode
-        binary_mode: true
+        additional_info: {
+          items: [{
+            id: `servicio-${service.id}`,
+            title: service.title,
+            description: service.description || 'Servicio legal',
+            quantity: 1,
+            unit_price: Number(service.price_clp),
+            currency_id: 'CLP',
+            category_id: 'services'
+          }]
+        }
       };
 
       console.log('Sending payment request:', requestBody);
@@ -265,15 +289,24 @@ export function ServicesSection({
     const formatDeliveryTime = () => {
       if (!service.delivery_time) return '';
       
-      const [time, unit] = service.delivery_time.split(' ');
-      if (unit === 'hours' || unit === 'hour') {
-        return `${time} ${time === '1' ? 'hora' : 'horas'}`;
-      } else if (unit === 'days' || unit === 'day') {
-        return `${time} ${time === '1' ? 'día' : 'días'}`;
-      } else if (unit === 'weeks' || unit === 'week') {
-        return `${time} ${time === '1' ? 'semana' : 'semanas'}`;
+      const raw = service.delivery_time.trim();
+      
+      // Check if it has the pipe format "horas|dias"
+      if (raw.includes('|')) {
+        const parts = raw.split('|');
+        const daysRaw = parts[1]?.trim() || parts[0]?.trim() || '';
+        // Don't add "días" if it's "variable" or already contains "día"
+        if (daysRaw.toLowerCase() === 'variable' || daysRaw.toLowerCase().includes('día')) {
+          return daysRaw;
+        }
+        return `${daysRaw} días`;
       }
-      return service.delivery_time;
+      
+      // Don't add "días" if it's "variable" or already contains "día"
+      if (raw.toLowerCase() === 'variable' || raw.toLowerCase().includes('día')) {
+        return raw;
+      }
+      return `${raw} días`;
     };
 
     // Get icon based on service type

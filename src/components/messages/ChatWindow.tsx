@@ -1,5 +1,5 @@
 import { useMessages } from '@/hooks/useMessages';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MessageInput } from '@/components/messages/MessageInput';

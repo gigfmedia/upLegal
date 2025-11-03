@@ -477,9 +477,9 @@ export default function DashboardAppointments() {
   });
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="container mx-auto px-8 py-6 space-y-6">
+      <div className="">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Mis Citas</h1>
             <p className="text-muted-foreground">

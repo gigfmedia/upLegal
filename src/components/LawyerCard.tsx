@@ -281,7 +281,7 @@ export function LawyerCard({
               disabled={isOwnProfile}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              {isOwnProfile ? 'No disponible' : 'Contactar'}
+              {isOwnProfile ? 'Contactar' : 'Contactar'}
             </Button>
             <Button
               variant="default"
@@ -294,7 +294,7 @@ export function LawyerCard({
               disabled={isOwnProfile}
             >
               <Calendar className="h-4 w-4 mr-2" />
-              {isOwnProfile ? 'No disponible' : 'Agendar'}
+              {isOwnProfile ? 'Agendar' : 'Agendar'}
             </Button>
           </div>
           {isOwnProfile && (

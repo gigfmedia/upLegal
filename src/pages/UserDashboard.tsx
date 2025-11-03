@@ -314,10 +314,10 @@ function ClientDashboardContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-8 py-6 space-y-6">
       <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hola, {user?.name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hola, {user?.display_name}</h1>
           <p className="text-muted-foreground">
             Aquí puedes ver el estado de tus casos y consultas.
           </p>
@@ -462,14 +462,11 @@ export default function UserDashboard() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
         <DashboardSkeleton />
-      </div>
     );
   }
 
   return (
-    <div className="p-6">
       <Suspense fallback={<DashboardSkeleton />}>
           {user?.role === 'lawyer' ? (
             <LawyerDashboardContent />
@@ -477,6 +474,5 @@ export default function UserDashboard() {
             <ClientDashboardContent />
           )}
       </Suspense>
-    </div>
   );
 }

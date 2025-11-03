@@ -1,340 +1,373 @@
+// @deno-types="https://deno.land/x/types/deno/deno.d.ts"
+/// <reference types="https://deno.land/x/types/deno/deno.d.ts" />
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
-// Get environment variables with proper Deno compatibility
-const getEnv = (key: string): string => {
-  const value = Deno.env.get(key);
-  if (!value) {
-    console.error(`FATAL: ${key} environment variable is not set`);
-    Deno.exit(1);
-  }
-  return value;
+// Declare Deno namespace for TypeScript
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined;
+  };
 };
-
-const mpAccessToken = getEnv('MERCADOPAGO_ACCESS_TOKEN');
-const supabaseUrl = getEnv('SUPABASE_URL');
-const supabaseKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
-
-// Initialize Supabase admin client
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-  auth: { autoRefreshToken: false, persistSession: false }
-});
-
-console.log('MercadoPago function initialized');
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 // CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS, GET'
 };
 
-// Interface for the request body
-interface MercadoPagoRequest {
-  items: Array<{
-    id: string;
-    title: string;
-    description: string;
-    quantity: number;
-    unit_price: number;
-    currency_id: string;
-  }>;
-  payer: {
-    name: string;
-    email: string;
-    phone?: {
-      area_code: string;
-      number: string;
-    };
-  };
-  back_urls: {
-    success: string;
-    failure: string;
-    pending: string;
-  };
-  binary_mode: boolean;
-  statement_descriptor: string;
-  metadata: {
-    client_id: string;
-    lawyer_id: string;
-    service_type: string;
-  };
+// Helper function to get environment variables with type safety
+function getEnv(key: string): string {
+  const value = Deno.env.get(key);
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
 }
 
-serve(async (req) => {
+// Interfaces
+export interface Item {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity?: number;
+  unit_price: number | string;
+  currency_id?: string;
+}
+
+export interface Phone {
+  area_code?: string;
+  number: string;
+}
+
+export interface Payer {
+  name: string;
+  email: string;
+  phone?: Phone;
+}
+
+export interface BackUrls {
+  success?: string;
+  failure?: string;
+  pending?: string;
+  [key: string]: string | undefined;
+}
+
+export interface MercadoPagoRequest {
+  items: Item[];
+  payer: Payer;
+  back_urls?: BackUrls;
+  success_url?: string;
+  failure_url?: string;
+  pending_url?: string;
+  auto_return?: string;
+  binary_mode?: boolean;
+  statement_descriptor?: string;
+  notification_url?: string;
+  external_reference?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+// Define a more specific type for the cause
+interface MercadoPagoErrorCause {
+  code?: string;
+  description?: string;
+  data?: Record<string, unknown>;
+}
+
+export interface MercadoPagoResponse {
+  id?: string;
+  init_point?: string;
+  sandbox_init_point?: string;
+  error?: string;
+  message?: string;
+  cause?: MercadoPagoErrorCause | MercadoPagoErrorCause[];
+  status?: number;
+  status_detail?: string;
+  details?: string;
+}
+
+// Error response interface
+interface ErrorResponse {
+  error: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+// Helper function to create an error response
+function createErrorResponse(status: number, message: string, details?: Record<string, unknown>): Response {
+  const errorResponse: ErrorResponse = {
+    error: 'Payment processing failed',
+    message,
+    ...(details && { details })
+  };
+
+  return new Response(JSON.stringify(errorResponse), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+}
+
+// Main function
+export const createMercadoPagoPreference = async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID();
+  
+  // Helper function to log messages with request ID
+  const log = (message: string, data: unknown = '') => {
+    console.log(`[${new Date().toISOString()}] [${requestId}] ${message}`, data);
+  };
+  
+  log('Received request', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   try {
-    // Log request headers for debugging
-    const headers = Object.fromEntries(req.headers.entries());
-    console.log('Request headers:', headers);
-    
-    // Get the raw body as text first
-    const rawBody = await req.text();
-    console.log('Raw request body:', rawBody);
-    
-    if (!rawBody) {
-      throw new Error('Empty request body');
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      return createErrorResponse(405, 'Method not allowed', { allowedMethods: ['POST'] });
     }
 
+    // Parse request body
     let requestData: MercadoPagoRequest;
     try {
-      requestData = JSON.parse(rawBody);
-    } catch (e) {
-      console.error('Failed to parse request body:', e);
-      return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      requestData = await req.json();
+      log('Parsed request data', requestData);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log('Failed to parse request body', { error: err.message });
+      return createErrorResponse(400, 'Invalid JSON payload');
     }
+
+    // Validate required fields
+    if (!requestData.items || !Array.isArray(requestData.items) || requestData.items.length === 0) {
+      return createErrorResponse(400, 'At least one item is required');
+    }
+
+    if (!requestData.payer || !requestData.payer.email) {
+      return createErrorResponse(400, 'Payer information is required');
+    }
+
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return createErrorResponse(401, 'Missing or invalid authorization header');
+    }
+
+    // Initialize Supabase client
+    const supabaseUrl = getEnv('SUPABASE_URL');
+    const supabaseKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    // Verify JWT token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
-    // Determine the base URL based on environment
-    const isProduction = Deno.env.get('ENVIRONMENT') === 'production';
+    if (userError || !user) {
+      log('Invalid or expired token', { 
+        error: userError ? String(userError) : 'No user data returned' 
+      });
+      return createErrorResponse(401, 'Invalid or expired token');
+    }
+
+    // Get MercadoPago access token
+    const mpAccessToken = getEnv('MERCADOPAGO_ACCESS_TOKEN');
+    log('Using MercadoPago access token');
+
+    // Determine environment and base URL
+    const isProduction = (Deno.env.get('ENVIRONMENT') || 'development') === 'production';
     const baseUrl = isProduction 
       ? 'https://uplegal.netlify.app' 
       : 'http://localhost:8080';
 
-    // Define URL paths
-    const urlPaths = {
-      success: '/payment/success',
-      failure: '/payment/failure',
-      pending: '/payment/pending',
-      notification: isProduction 
-        ? 'https://uplegal.netlify.app/api/mercadopago/webhook'
-        : 'http://localhost:8080/api/mercadopago/webhook'
-    };
-
-    // Build complete URLs
-    const urls = {
-      success: `${baseUrl}${urlPaths.success}`,
-      failure: `${baseUrl}${urlPaths.failure}`,
-      pending: `${baseUrl}${urlPaths.pending}`,
-      notification: urlPaths.notification
-    };
-    
-    // Log the URLs we're using
-    console.log('Using URLs:', JSON.stringify(urls, null, 2));
-    
-    // Validate all URLs
-    const validatedUrls: Record<string, string> = {};
-    for (const [key, url] of Object.entries(urls)) {
-      if (!url || typeof url !== 'string' || !url.startsWith('http')) {
-        throw new Error(`Invalid ${key} URL: ${url}`);
-      }
+    // Prepare back_urls with proper validation
+    const getValidUrl = (url: string | undefined, defaultPath: string): string => {
       try {
-        const urlObj = new URL(url);
-        validatedUrls[key] = urlObj.toString();
+        // If no URL is provided, use the default with the base URL
+        if (!url) {
+          const defaultUrl = `${baseUrl}${defaultPath}`;
+          log('Using default URL:', defaultUrl);
+          return defaultUrl;
+        }
+        
+        // Ensure the URL is absolute
+        let finalUrl = url;
+        if (!url.startsWith('http')) {
+          finalUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+        }
+        
+        // Ensure HTTPS in production
+        if (isProduction && finalUrl.startsWith('http:')) {
+          finalUrl = finalUrl.replace('http:', 'https:');
+        }
+        
+        log('Processed URL:', { original: url, final: finalUrl });
+        return finalUrl;
+        
       } catch (e) {
-        throw new Error(`Invalid URL format for ${key}: ${url}`);
-      }
-    }
-    
-    console.log('Validated URLs:', JSON.stringify(validatedUrls, null, 2));
-
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Verify the JWT token
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired token' }),
-        { 
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Prepare test user data
-    const testPayer = {
-      ...requestData.payer,
-      // Ensure test user data is used in sandbox
-      email: 'test_user_123456@testuser.com',
-      identification: {
-        type: 'DNI',
-        number: '12345678'
-      },
-      address: {
-        zip_code: '1234',
-        street_name: 'Calle Falsa',
-        street_number: '123',
-        neighborhood: 'Centro',
-        city: 'Santiago',
-        federal_unit: 'RM'
+        const fallback = `${baseUrl}${defaultPath}`;
+        log('Error processing URL, using fallback:', { url, error: e, fallback });
+        return fallback;
       }
     };
 
-    // Create the payment in MercadoPago
-    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+    // Log the incoming request data for debugging
+    log('Using base URL:', baseUrl);
+    log('Incoming request data:', {
+      hasBackUrls: !!requestData.back_urls,
+      backUrls: requestData.back_urls,
+      isProduction
+    });
+
+    // Prepare items with proper validation
+    const items = requestData.items.map((item, index) => ({
+      id: item.id || `item-${index + 1}`,
+      title: item.title,
+      description: item.description || '',
+      quantity: item.quantity || 1,
+      unit_price: typeof item.unit_price === 'string' ? parseFloat(item.unit_price) : item.unit_price,
+      currency_id: item.currency_id || 'CLP'
+    }));
+
+    // Prepare back URLs - MercadoPago requires HTTPS URLs for auto_return to work
+    // In development, we'll use a placeholder HTTPS URL or omit auto_return
+    const backUrls = isProduction ? {
+      success: 'https://uplegal.netlify.app/payment/success',
+      failure: 'https://uplegal.netlify.app/payment/failure',
+      pending: 'https://uplegal.netlify.app/payment/pending'
+    } : {
+      success: 'https://uplegal.netlify.app/payment/success',
+      failure: 'https://uplegal.netlify.app/payment/failure',
+      pending: 'https://uplegal.netlify.app/payment/pending'
+    };
+
+    log('Using back_urls:', backUrls);
+    log('Environment:', { isProduction });
+
+    // Create the MercadoPago payload
+    const mpPayload = {
+      items,
+      payer: {
+        name: requestData.payer.name,
+        email: requestData.payer.email,
+        ...(requestData.payer.phone && {
+          phone: {
+            area_code: requestData.payer.phone.area_code || '56',
+            number: requestData.payer.phone.number
+          }
+        })
+      },
+      back_urls: backUrls,
+      auto_return: 'approved',
+      ...(requestData.binary_mode !== undefined && { binary_mode: requestData.binary_mode }),
+      ...(requestData.statement_descriptor && { statement_descriptor: requestData.statement_descriptor }),
+      notification_url: requestData.notification_url || (
+        isProduction 
+          ? 'https://uplegal.netlify.app/api/webhooks/mercadopago'
+          : 'https://webhook.site/your-webhook-url'
+      ),
+      ...(requestData.external_reference && { external_reference: requestData.external_reference }),
+      metadata: {
+        ...requestData.metadata,
+        user_id: user.id,
+        request_id: requestId
+      }
+    };
+
+    // Log the final payload (without sensitive data)
+    const logPayload = {
+      ...mpPayload,
+      items: mpPayload.items.map(i => ({ ...i, unit_price: '***' })),
+      payer: { ...mpPayload.payer, email: '***@***.com' }
+    };
+    
+    log('Sending to MercadoPago:', JSON.stringify(logPayload, null, 2));
+
+    // Call MercadoPago API
+    const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${mpAccessToken}`,
         'Content-Type': 'application/json',
-        'X-Idempotency-Key': crypto.randomUUID()
+        'X-Idempotency-Key': requestId
       },
-      body: JSON.stringify({
-        items: requestData.items.map(item => ({
-          ...item,
-          id: item.id || `item-${Date.now()}`,
-          currency_id: 'CLP',
-          quantity: 1,
-          unit_price: Math.round(parseFloat(item.unit_price) || 0)
-        })),
-        payer: testPayer,
-        payment_methods: {
-          excluded_payment_types: [
-            { id: 'ticket' },
-            { id: 'bank_transfer' },
-            { id: 'atm' }
-          ],
-          installments: 1
-        },
-        // Main configuration with all required fields
-        items: requestData.items.map(item => ({
-          id: item.id || `item-${Date.now()}`,
-          title: item.title,
-          description: item.description || 'Servicio legal',
-          quantity: item.quantity || 1,
-          unit_price: parseFloat(item.unit_price) || 0,
-          currency_id: 'CLP'
-        })),
-        payer: testPayer,
-        back_urls: {
-          success: validatedUrls.success,
-          failure: validatedUrls.failure,
-          pending: validatedUrls.pending
-        },
-        auto_return: 'approved',
-        binary_mode: true,
-        statement_descriptor: 'UPLEGAL',
-        purpose: 'onboarding_credits',
-        external_reference: `ref-${Date.now()}`,
-        notification_url: validatedUrls.notification,
-        success_url: validatedUrls.success,
-        payment_methods: {
-          excluded_payment_types: [
-            { id: 'ticket' },
-            { id: 'bank_transfer' },
-            { id: 'atm' }
-          ],
-          installments: 12,
-          default_installments: 1
-        },
-        expires: false,
-        additional_info: {
-          items: requestData.items.map(item => ({
-            id: item.id,
-            title: item.title,
-            description: item.description || 'Servicio legal',
-            quantity: item.quantity || 1,
-            unit_price: parseFloat(item.unit_price) || 0,
-            currency_id: 'CLP',
-            category_id: 'services'
-          }))
-        },
-        metadata: {
-          ...requestData.metadata,
-          platform: 'upLegal',
-          version: '1.0.0',
-          environment: 'sandbox',
-          created_at: new Date().toISOString()
-        }
-      }),
+      body: JSON.stringify(mpPayload)
     });
 
-    const responseData = await mpResponse.json();
-    console.log('MercadoPago API response:', { status: mpResponse.status, data: responseData });
-
-    if (!mpResponse.ok) {
-      throw new Error(`MercadoPago API error: ${JSON.stringify(responseData)}`);
+    const responseText = await response.text();
+    let responseData: MercadoPagoResponse;
+    
+    try {
+      responseData = responseText ? JSON.parse(responseText) : {} as MercadoPagoResponse;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log('Failed to parse MercadoPago response', {
+        status: response.status,
+        statusText: response.statusText,
+        responseText: responseText.substring(0, 1000),
+        error: err.message
+      });
+      return createErrorResponse(502, 'Invalid response from payment processor');
     }
 
-    // Calculate amounts
-    const totalAmount = requestData.items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
-    const platformFee = Math.ceil(totalAmount * 0.1); // 10% platform fee
-    const lawyerAmount = totalAmount - platformFee;
+    log('MercadoPago API response', {
+      status: response.status,
+      statusText: response.statusText,
+      data: responseData
+    });
 
-    // Prepare payment data according to the existing schema
-    const paymentData = {
-      client_user_id: user.id,
-      lawyer_user_id: requestData.metadata?.lawyer_id || user.id, // Fallback to user.id if lawyer_id is not provided
-      stripe_session_id: responseData.id, // Store MercadoPago preference ID here
-      total_amount: totalAmount,
-      lawyer_amount: lawyerAmount,
-      platform_fee: platformFee,
-      currency: requestData.items[0]?.currency_id?.toLowerCase() || 'clp',
-      status: 'pending',
-      service_description: requestData.items[0]?.title || 'Consulta Legal',
-      // Store additional data in the service_description or other available fields
-      // as the metadata column doesn't exist in your schema
-    };
-
-    console.log('Saving payment record:', paymentData);
-
-    // Save the payment record to the database
-    const { data: payment, error: paymentError } = await supabaseAdmin
-      .from('payments')
-      .insert(paymentData)
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Error saving payment record:', paymentError);
-      // Continue with the payment flow even if saving to DB fails
-      // The payment can still be processed, we'll just log the error
-    } else {
-      console.log('Payment record saved successfully:', payment);
+    if (!response.ok) {
+      return createErrorResponse(
+        response.status,
+        responseData.message || 'Payment processing failed',
+        {
+          error: responseData.error,
+          status: response.status,
+          status_detail: responseData.status_detail,
+          request_id: requestId
+        }
+      );
     }
 
-    // Return the MercadoPago response to the client
-    return new Response(
-      JSON.stringify({
-        init_point: responseData.init_point,
-        sandbox_init_point: responseData.sandbox_init_point,
-        preference_id: responseData.id,
-        payment_id: payment?.id,
-        payment_status: 'pending'
-      }),
-      {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        },
-        status: 200
+    // Return success response
+    return new Response(JSON.stringify({
+      success: true,
+      id: responseData.id,
+      init_point: responseData.init_point || responseData.sandbox_init_point,
+      request_id: requestId
+    }), {
+      status: 200,
+      headers: { 
+        'Content-Type': 'application/json',
+        ...corsHeaders
       }
-    );
+    });
 
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      }),
-      {
-        status: 400,
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        },
-      }
-    );
+    const err = error as Error;
+    log('Unexpected error', {
+      error: err.message,
+      stack: err.stack,
+      request_id: requestId
+    });
+    
+    return createErrorResponse(500, 'Internal server error', {
+      error: 'An unexpected error occurred',
+      request_id: requestId
+    });
   }
-});
+};
+
+// Start the server
+console.log('MercadoPago preference function started');
+serve(createMercadoPagoPreference);

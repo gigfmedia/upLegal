@@ -5,25 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { DashboardContainer } from '@/components/dashboard/DashboardContainer';
 import { 
   CreditCard, 
   Search, 
   Calendar,
-  DollarSign,
   Download,
   Eye,
   Filter,
-  Menu,
-  PlusCircle,
   Receipt,
-  Settings,
   TrendingUp,
-  Wallet,
-  X
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Payment {
   id: string;
@@ -39,7 +43,98 @@ interface Payment {
   transactionId: string;
 }
 
-// Mock data para pagos
+interface StatCardProps {
+  title: string;
+  value: string;
+  icon: React.ReactNode;
+  className?: string;
+  spanFull?: boolean;
+}
+
+const StatCard = ({ title, value, icon, className = '', spanFull = false }: StatCardProps) => (
+  <Card className={`p-4 sm:p-6 bg-white ${spanFull ? 'col-span-full' : ''} ${className}`}>
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-xs sm:text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-lg sm:text-2xl font-semibold mt-1">{value}</p>
+      </div>
+      <div className="p-2 rounded-lg bg-opacity-20">
+        {icon}
+      </div>
+    </div>
+  </Card>
+);
+
+const formatPrice = (amount: number) => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};
+
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  return new Date(dateString).toLocaleDateString('es-CL', options);
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'completed': return 'bg-green-100 text-green-800';
+    case 'pending': return 'bg-yellow-100 text-yellow-800';
+    case 'failed': return 'bg-red-100 text-red-800';
+    case 'refunded': return 'bg-blue-100 text-blue-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getStatusText = (status: string) => {
+  switch (status) {
+    case 'completed': return 'Completado';
+    case 'pending': return 'Pendiente';
+    case 'failed': return 'Fallido';
+    case 'refunded': return 'Reembolsado';
+    default: return status;
+  }
+};
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'consultation': return 'bg-purple-100 text-purple-800';
+    case 'appointment': return 'bg-indigo-100 text-indigo-800';
+    case 'subscription': return 'bg-pink-100 text-pink-800';
+    case 'refund': return 'bg-amber-100 text-amber-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getTypeText = (type: string) => {
+  switch (type) {
+    case 'consultation': return 'Consulta';
+    case 'appointment': return 'Cita';
+    case 'subscription': return 'Suscripción';
+    case 'refund': return 'Reembolso';
+    default: return type;
+  }
+};
+
+const getMethodText = (method: string) => {
+  switch (method) {
+    case 'credit_card': return 'Tarjeta de Crédito';
+    case 'debit_card': return 'Tarjeta de Débito';
+    case 'bank_transfer': return 'Transferencia Bancaria';
+    case 'webpay': return 'Webpay';
+    default: return method;
+  }
+};
+
 const mockPayments: Payment[] = [
   {
     id: '1',
@@ -147,190 +242,70 @@ const mockPayments: Payment[] = [
 ];
 
 export default function DashboardPayments() {
-  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [payments, setPayments] = useState<Payment[]>(mockPayments);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const { user } = useAuth();
   
-  // Modal states
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-
-  const handleViewPayment = (paymentId: string) => {
-    const payment = payments.find(p => p.id === paymentId);
-    if (payment) {
-      setSelectedPayment(payment);
-      setIsViewModalOpen(true);
-    }
-  };
-
-  const handleDownloadInvoice = (payment: Payment) => {
-    toast({
-      title: "Descargando factura",
-      description: `Generando PDF de la factura ${payment.invoiceNumber}...`,
-    });
-    // Simular descarga
-    setTimeout(() => {
-      toast({
-        title: "Factura descargada",
-        description: "El archivo PDF ha sido guardado en tu dispositivo.",
-      });
-    }, 2000);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'refunded': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'completed': return 'Completado';
-      case 'pending': return 'Pendiente';
-      case 'failed': return 'Fallido';
-      case 'refunded': return 'Reembolsado';
-      default: return status;
-    }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'consultation': return 'bg-blue-100 text-blue-800';
-      case 'appointment': return 'bg-purple-100 text-purple-800';
-      case 'subscription': return 'bg-green-100 text-green-800';
-      case 'refund': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'consultation': return 'Consulta';
-      case 'appointment': return 'Cita';
-      case 'subscription': return 'Suscripción';
-      case 'refund': return 'Reembolso';
-      default: return type;
-    }
-  };
-
-  const getMethodText = (method: string) => {
-    switch (method) {
-      case 'credit_card': return 'Tarjeta de Crédito';
-      case 'debit_card': return 'Tarjeta de Débito';
-      case 'bank_transfer': return 'Transferencia Bancaria';
-      case 'webpay': return 'WebPay';
-      default: return method;
-    }
-  };
-
-  const filteredPayments = payments.filter(payment => {
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  
+  // Calcular totales
+  const totalPaid = mockPayments
+    .filter(payment => payment.status === 'completed' && payment.amount > 0)
+    .reduce((sum, payment) => sum + payment.amount, 0);
+    
+  const pendingAmount = mockPayments
+    .filter(payment => payment.status === 'pending')
+    .reduce((sum, payment) => sum + payment.amount, 0);
+    
+  const totalRefunded = mockPayments
+    .filter(payment => payment.status === 'refunded')
+    .reduce((sum, payment) => sum + Math.abs(payment.amount), 0);
+  
+  // Filtrar pagos
+  const filteredPayments = mockPayments.filter(payment => {
     const matchesSearch = payment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (payment.lawyerName && payment.lawyerName.toLowerCase().includes(searchTerm.toLowerCase()));
+                         payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
     const matchesType = typeFilter === 'all' || payment.type === typeFilter;
+    
     return matchesSearch && matchesStatus && matchesType;
   });
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-CL', {
-      style: 'currency',
-      currency: 'CLP'
-    }).format(price);
+  
+  const handleViewPayment = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setIsViewModalOpen(true);
   };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-CL', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  
+  const handleDownloadInvoice = (payment: Payment) => {
+    // Simular descarga de factura
+    toast({
+      title: 'Descarga de factura',
+      description: `Iniciando descarga de la factura ${payment.invoiceNumber}`,
+      variant: 'default',
     });
+    
+    // Aquí iría la lógica real de descarga
+    console.log('Descargando factura:', payment.invoiceNumber);
   };
-
-  // Calcular estadísticas
-  const totalPaid = payments
-    .filter(p => p.status === 'completed' && p.amount > 0)
-    .reduce((sum, p) => sum + p.amount, 0);
   
-  const totalRefunded = Math.abs(payments
-    .filter(p => p.status === 'completed' && p.amount < 0)
-    .reduce((sum, p) => sum + p.amount, 0));
-  
-  const pendingAmount = payments
-    .filter(p => p.status === 'pending')
-    .reduce((sum, p) => sum + p.amount, 0);
-
   return (
-    <div className="h-full flex flex-col max-w-full overflow-x-hidden">
-      <div className="px-0 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
-          <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">Pagos y Facturación</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">Gestiona tus pagos, facturas y suscripciones</p>
-          </div>
-          
-          {/* Desktop Menu - Removed unnecessary buttons */}
-          <div className="hidden sm:flex">
-            {/* Empty container to maintain layout */}
-          </div>
-        </div>
-
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0 sm:gap-4">
-          <Card className="hover:shadow-md transition-shadow rounded-none sm:rounded-lg border-x-0 sm:border-x border-t-0 sm:border-t">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Total Pagado</p>
-                  <p className="text-xl sm:text-2xl font-bold text-green-600">{formatPrice(totalPaid)}</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-green-100 rounded-full">
-                  <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow rounded-none sm:rounded-lg border-x-0 sm:border-x border-t-0 border-b sm:border-t">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Pagos Pendientes</p>
-                  <p className="text-xl sm:text-2xl font-bold text-yellow-600">{formatPrice(pendingAmount)}</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-yellow-100 rounded-full">
-                  <Wallet className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-md transition-shadow sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-600">Reembolsos</p>
-                  <p className="text-xl sm:text-2xl font-bold text-blue-600">{formatPrice(totalRefunded)}</p>
-                </div>
-                <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
-                  <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
+    <DashboardContainer
+      title="Pagos"
+      description="Revisa el historial de tus pagos y facturas"
+      className="bg-white"
+      headerAction={
+        <Button className="hidden sm:flex">
+          <Download className="h-4 w-4 mr-2" />
+          Exportar
+        </Button>
+      }
+    >
+      <div className="space-y-4 sm:space-y-6 bg-white">
         {/* Filtros */}
-        <Card className="mb-4 sm:mb-6 overflow-hidden rounded-none sm:rounded-lg">
-          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -343,243 +318,225 @@ export default function DashboardPayments() {
               </div>
               
               <div className="flex gap-3 w-full">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10 w-full min-w-0"
-                >
-                  <option value="all">Todos</option>
-                  <option value="completed">Completado</option>
-                  <option value="pending">Pendiente</option>
-                  <option value="failed">Fallido</option>
-                  <option value="refunded">Reembolsado</option>
-                </select>
+                <div className="w-full">
+                  <Select 
+                    value={statusFilter} 
+                    onValueChange={setStatusFilter}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="completed">Completado</SelectItem>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="failed">Fallido</SelectItem>
+                      <SelectItem value="refunded">Reembolsado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-3 py-2 text-xs sm:text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-10 w-full min-w-0"
-                >
-                  <option value="all">Todos los tipos</option>
-                  <option value="consultation">Consultas</option>
-                  <option value="appointment">Citas</option>
-                  <option value="subscription">Suscripciones</option>
-                  <option value="refund">Reembolsos</option>
-                </select>
+                <div className="w-full">
+                  <Select 
+                    value={typeFilter} 
+                    onValueChange={setTypeFilter}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los tipos</SelectItem>
+                      <SelectItem value="consultation">Consultas</SelectItem>
+                      <SelectItem value="appointment">Citas</SelectItem>
+                      <SelectItem value="subscription">Suscripciones</SelectItem>
+                      <SelectItem value="refund">Reembolsos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
+        
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard 
+            title="Total Pagado"
+            value={formatPrice(totalPaid)}
+            icon={<TrendingUp className="h-5 w-5 text-green-600" />}
+            className="bg-white border border-gray-200 shadow-sm"
+          />
+          
+          <StatCard 
+            title="Pagos Pendientes"
+            value={formatPrice(pendingAmount)}
+            icon={<Wallet className="h-5 w-5 text-yellow-600" />}
+            className="bg-white border border-gray-200 shadow-sm"
+          />
+          
+          <StatCard 
+            title="Reembolsos"
+            value={formatPrice(totalRefunded)}
+            icon={<Receipt className="h-5 w-5 text-blue-600" />}
+            className="bg-white border border-gray-200 shadow-sm"
+          />
+        </div>
+        
         {/* Lista de pagos */}
-      <div className="space-y-0 sm:space-y-4">
-        {filteredPayments.map((payment, index) => (
-          <Card 
-            key={payment.id} 
-            className={`border-t border-gray-200 hover:shadow-md transition-shadow rounded-none sm:rounded-lg ${index === filteredPayments.length - 1 ? 'border-b' : ''}`}
-          >
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col space-y-3 sm:space-y-4">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                  <div className="overflow-hidden">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
-                      {payment.description}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
-                      {payment.lawyerName || 'Pago de servicio'}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-1.5 sm:space-x-2">
-                    <Badge variant="outline" className={`${getTypeColor(payment.type)} text-xs sm:text-sm py-0.5 sm:py-1`}>
-                      {getTypeText(payment.type)}
-                    </Badge>
-                    <Badge className={`${getStatusColor(payment.status)} text-xs sm:text-sm py-0.5 sm:py-1`}>
-                      {getStatusText(payment.status)}
-                    </Badge>
-                  </div>
-                </div>
-
-                  {/* Detalles principales */}
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-1 sm:pt-2">
-                    <div className="flex items-start space-x-2">
-                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                      <div className="overflow-hidden">
-                        <p className="text-xs sm:text-sm font-medium text-gray-500">Fecha</p>
-                        <p className="text-xs sm:text-sm truncate">{formatDate(payment.date)}</p>
+        <Card className="border border-gray-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Historial de pagos</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {filteredPayments.length > 0 ? (
+              <div className="space-y-4">
+                {filteredPayments.map((payment) => (
+                  <div 
+                    key={payment.id} 
+                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${getTypeColor(payment.type)}`}>
+                            <CreditCard className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{payment.description}</h4>
+                            <p className="text-sm text-gray-500">
+                              {formatDate(payment.date)} • {payment.lawyerName || 'Sistema'}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500 flex-shrink-0 mt-0.5" />
-                      <div className="overflow-hidden">
-                        <p className="text-xs sm:text-sm font-medium text-gray-500">Método</p>
-                        <p className="text-xs sm:text-sm truncate">{getMethodText(payment.method)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <span className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-gray-500 mt-0.5">#</span>
-                      <div className="overflow-hidden">
-                        <p className="text-xs sm:text-sm font-medium text-gray-500">Factura</p>
-                        <p className="text-xs sm:text-sm font-mono truncate">{payment.invoiceNumber}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <span className="h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-gray-500 mt-0.5">$</span>
-                      <div className="overflow-hidden">
-                        <p className="text-xs sm:text-sm font-medium text-gray-500">Monto</p>
-                        <p className={`text-xs sm:text-sm font-medium truncate ${
+                      
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className={getStatusColor(payment.status)}>
+                          {getStatusText(payment.status)}
+                        </Badge>
+                        <p className={`text-right font-medium ${
                           payment.amount >= 0 ? 'text-gray-900' : 'text-red-600'
                         }`}>
                           {formatPrice(payment.amount)}
                         </p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleViewPayment(payment)}
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">Ver detalles</span>
+                        </Button>
                       </div>
                     </div>
                   </div>
-
-                {/* Acciones */}
-                <div className="border-t mt-3 sm:mt-4 pt-3 sm:pt-4">
-                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 w-full">
-                    {payment.status === 'completed' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full sm:w-auto text-xs sm:text-sm py-1 h-8 sm:h-9"
-                        onClick={() => handleDownloadInvoice(payment)}
-                      >
-                        <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                        Descargar
-                      </Button>
-                    )}
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full sm:w-auto text-xs sm:text-sm py-1 h-8 sm:h-9"
-                      onClick={() => handleViewPayment(payment.id)}
-                    >
-                      <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                      Ver detalles
-                    </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Receipt className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  No se encontraron pagos
+                </h3>
+                <p className="text-gray-500">
+                  {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                    ? 'Intenta con otros filtros de búsqueda.'
+                    : 'Aún no hay pagos registrados.'}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Modal de detalles de pago */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="sm:max-w-[500px] p-6">
+          {selectedPayment && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Detalles del pago</DialogTitle>
+                <DialogDescription>
+                  Información detallada del pago realizado el {formatDate(selectedPayment.date)}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">{selectedPayment.description}</h4>
+                  <p className="text-sm text-gray-500">{selectedPayment.lawyerName || 'Sistema'}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-gray-500">Tipo</Label>
+                    <Badge className={`${getTypeColor(selectedPayment.type)}`}>
+                      {getTypeText(selectedPayment.type)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Estado</Label>
+                    <Badge className={getStatusColor(selectedPayment.status)}>
+                      {getStatusText(selectedPayment.status)}
+                    </Badge>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredPayments.length === 0 && (
-        <div className="text-center py-8 sm:py-12">
-          <Receipt className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1 sm:mb-2">
-            No se encontraron pagos
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto px-4">
-            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
-              ? 'Intenta ajustar los filtros de búsqueda'
-              : 'Aún no tienes pagos registrados.'
-            }
-          </p>
-        </div>
-      )}
-
-      {/* Modal para ver detalles del pago */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] sm:w-full mx-auto my-4 sm:my-8 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-lg sm:text-xl text-gray-900">Detalles del Pago</DialogTitle>
-            <DialogDescription className="text-sm sm:text-base text-gray-500">
-              Información completa de la transacción
-            </DialogDescription>
-          </DialogHeader>
-          {selectedPayment && (
-            <div className="space-y-4 sm:space-y-5">
-              <div>
-                <Label className="text-xs sm:text-sm font-medium text-gray-500">Descripción</Label>
-                <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.description}</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500 block mb-1">Tipo</Label>
-                  <Badge className={`${getTypeColor(selectedPayment.type)} text-xs sm:text-sm py-1`}>
-                    {getTypeText(selectedPayment.type)}
-                  </Badge>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-gray-500">Monto</Label>
+                    <p className={`font-medium ${
+                      selectedPayment.amount >= 0 ? 'text-gray-900' : 'text-red-600'
+                    }`}>
+                      {formatPrice(selectedPayment.amount)}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Método de pago</Label>
+                    <p className="font-medium">{getMethodText(selectedPayment.method)}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500 block mb-1">Estado</Label>
-                  <Badge className={`${getStatusColor(selectedPayment.status)} text-xs sm:text-sm py-1`}>
-                    {getStatusText(selectedPayment.status)}
-                  </Badge>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-gray-500">N° de factura</Label>
+                    <p className="font-mono text-sm">{selectedPayment.invoiceNumber}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">ID de transacción</Label>
+                    <p className="font-mono text-xs text-gray-500 break-all">{selectedPayment.transactionId}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Número de Factura</Label>
-                  <p className="text-sm sm:text-base text-gray-900 font-mono mt-1">{selectedPayment.invoiceNumber}</p>
-                </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">ID de Transacción</Label>
-                  <p className="text-xs sm:text-sm text-gray-500 font-mono mt-1 break-all">{selectedPayment.transactionId}</p>
-                </div>
+                
+                {selectedPayment.relatedService && (
+                  <div>
+                    <Label className="text-xs text-gray-500">Servicio relacionado</Label>
+                    <p className="text-sm">{selectedPayment.relatedService}</p>
+                  </div>
+                )}
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Monto</Label>
-                  <p className={`text-base sm:text-lg font-semibold mt-1 ${
-                    selectedPayment.amount >= 0 ? 'text-gray-900' : 'text-red-600'
-                  }`}>
-                    {formatPrice(selectedPayment.amount)}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Método de Pago</Label>
-                  <p className="text-sm sm:text-base text-gray-900 mt-1">{getMethodText(selectedPayment.method)}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Fecha</Label>
-                  <p className="text-sm sm:text-base text-gray-900 mt-1">{formatDate(selectedPayment.date)}</p>
-                </div>
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Servicio</Label>
-                  <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.relatedService}</p>
-                </div>
-              </div>
-              
-              {selectedPayment.lawyerName && (
-                <div>
-                  <Label className="text-xs sm:text-sm font-medium text-gray-500">Abogado</Label>
-                  <p className="text-sm sm:text-base text-gray-900 mt-1">{selectedPayment.lawyerName}</p>
-                </div>
-              )}
-              
-              <div className="flex flex-col sm:flex-row gap-3 mt-6 justify-end">
+              <DialogFooter className="sm:justify-between">
                 <Button 
                   variant="outline" 
-                  className="w-full sm:w-auto"
                   onClick={() => setIsViewModalOpen(false)}
                 >
                   Cerrar
                 </Button>
-                {selectedPayment?.status === 'completed' && (
+                {selectedPayment.status === 'completed' && (
                   <Button 
-                    variant="default" 
-                    className="w-full sm:w-auto bg-black hover:bg-gray-800"
                     onClick={() => handleDownloadInvoice(selectedPayment)}
+                    className="gap-2"
                   >
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4" />
                     Descargar factura
                   </Button>
                 )}
-              </div>
-            </div>
+              </DialogFooter>
+            </>
           )}
-          <DialogFooter />
         </DialogContent>
       </Dialog>
-      </div>
-    </div>
+    </DashboardContainer>
   );
-}
+};

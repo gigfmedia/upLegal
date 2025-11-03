@@ -32,9 +32,10 @@ export async function createMercadoPagoPayment({
   // Generate a unique ID for this payment
   const paymentId = `upegal-${uuidv4()}`;
   
-  // Calculate platform fee (20%)
-  const platformFee = Math.round(amount * 0.2);
-  const lawyerAmount = amount - platformFee;
+  // Calculate amounts with 10% client surcharge
+  const clientAmount = Math.round(amount * 1.1); // Add 10% surcharge
+  const platformFee = Math.round(amount * 0.2); // 20% of original amount
+  const lawyerAmount = amount - platformFee; // Original amount minus platform fee
 
   try {
     // Create a payment record in the database
@@ -45,7 +46,9 @@ export async function createMercadoPagoPayment({
         user_id: userId,
         lawyer_id: lawyerId,
         service_id: serviceId,
-        amount,
+        amount: clientAmount, // Store the amount with surcharge
+        original_amount: amount, // Store the original amount without surcharge
+        client_surcharge: Math.round(amount * 0.1), // Store the 10% surcharge amount
         platform_fee: platformFee,
         lawyer_amount: lawyerAmount,
         currency: 'CLP',
@@ -67,7 +70,7 @@ export async function createMercadoPagoPayment({
           id: serviceId || 'legal-service',
           title: description.substring(0, 255) || 'Servicio Legal',
           quantity: 1,
-          unit_price: amount,
+          unit_price: clientAmount, // Use the amount with surcharge
           description: description.substring(0, 500),
           currency_id: 'CLP',
         },

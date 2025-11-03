@@ -94,7 +94,7 @@ function DashboardLayout() {
     { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
     { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
-    { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
+    // Temporarily hidden: { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
     { href: '/dashboard/profile', icon: User, label: 'Perfil' }
   ];
 
@@ -135,7 +135,14 @@ function DashboardLayout() {
 
   // Check if a navigation item is active
   const isActive = (href: string, exact: boolean = false): boolean => {
-    return exact ? currentPath === href : currentPath.startsWith(href);
+    if (exact) {
+      return currentPath === href;
+    }
+    // Special case for the dashboard/resumen to prevent it from being active on all routes
+    if (href === '/dashboard') {
+      return currentPath === href;
+    }
+    return currentPath.startsWith(href);
   };
 
   // Handle logout
@@ -265,11 +272,9 @@ function DashboardLayout() {
             )}
 
             {/* Main content */}
-            <main className="flex-1 w-full bg-white">
-              <div className="py-6">
-                <div>
-                  <Outlet />
-                </div>
+            <main className="flex-1 w-full">
+              <div className="min-h-screen">
+                <Outlet />
               </div>
             </main>
           </div>

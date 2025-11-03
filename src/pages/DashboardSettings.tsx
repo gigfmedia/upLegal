@@ -340,77 +340,75 @@ export default function DashboardSettings() {
             </CardContent>
           </Card>
 
-          {/* Privacy Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Eye className="h-5 w-5" />
-                <span>Privacidad</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Visibilidad del Perfil</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Hacer tu perfil visible a otros usuarios
-                  </p>
-                </div>
-                <Switch
-                  checked={privacy.profileVisible}
-                  onCheckedChange={(checked) => handlePrivacyChange('profileVisible', checked)}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Mostrar Estado en Línea</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Permitir que otros vean cuando estás en línea
-                  </p>
-                </div>
-                <Switch
-                  checked={privacy.showOnlineStatus}
-                  onCheckedChange={(checked) => handlePrivacyChange('showOnlineStatus', checked)}
-                />
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Permitir Mensajes Directos</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Permitir que otros usuarios te envíen mensajes directos
-                  </p>
-                </div>
-                <Switch
-                  checked={privacy.allowMessages}
-                  onCheckedChange={(checked) => handlePrivacyChange('allowMessages', checked)}
-                />
-              </div>
-
-              {user?.role === 'lawyer' && (
-                <>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Mostrar Calificación</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Mostrar tu calificación y reseñas públicamente
-                      </p>
-                    </div>
-                    <Switch
-                      checked={privacy.showRating}
-                      onCheckedChange={(checked) => handlePrivacyChange('showRating', checked)}
-                    />
+          {/* Privacy Settings - Only for Lawyers */}
+          {user?.role === 'lawyer' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Eye className="h-5 w-5" />
+                  <span>Privacidad</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Visibilidad del Perfil</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Hacer tu perfil visible a otros usuarios
+                    </p>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                  <Switch
+                    checked={privacy.profileVisible}
+                    onCheckedChange={(checked) => handlePrivacyChange('profileVisible', checked)}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Mostrar Estado en Línea</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Permitir que otros vean cuando estás en línea
+                    </p>
+                  </div>
+                  <Switch
+                    checked={privacy.showOnlineStatus}
+                    onCheckedChange={(checked) => handlePrivacyChange('showOnlineStatus', checked)}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Permitir Mensajes Directos</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Permitir que otros usuarios te envíen mensajes directos
+                    </p>
+                  </div>
+                  <Switch
+                    checked={privacy.allowMessages}
+                    onCheckedChange={(checked) => handlePrivacyChange('allowMessages', checked)}
+                  />
+                </div>
+
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Mostrar Calificación</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Mostrar tu calificación y reseñas públicamente
+                    </p>
+                  </div>
+                  <Switch
+                    checked={privacy.showRating}
+                    onCheckedChange={(checked) => handlePrivacyChange('showRating', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Security Settings */}
           <Card>
