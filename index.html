@@ -18,29 +18,83 @@
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="" />
     
-    <!-- MercadoPago SDK with proper loading -->
+    <!-- MercadoPago SDK with enhanced debugging -->
     <script>
+      // Store initial script state
+      window.__mp_debug = window.__mp_debug || {};
+      window.__mp_debug.initialScripts = Array.from(document.scripts).map(s => ({
+        src: s.src,
+        id: s.id,
+        async: s.async,
+        defer: s.defer,
+        type: s.type
+      }));
+
       // Track SDK loading state
       window.MercadoPagoSDK = {
         loaded: false,
-        onLoadCallbacks: []
+        onLoadCallbacks: [],
+        version: 'unknown',
+        loadTime: null,
+        sdkUrl: 'https://sdk.mercadopago.com/js/v2'
       };
 
       // Function to execute callbacks when SDK is loaded
       function onMercadoPagoLoaded() {
+        const loadTime = new Date();
         window.MercadoPagoSDK.loaded = true;
+        window.MercadoPagoSDK.loadTime = loadTime.toISOString();
+        
+        // Try to extract version from the script URL
+        const sdkScript = document.getElementById('mercado-pago-sdk');
+        if (sdkScript) {
+          const versionMatch = sdkScript.src.match(/v(\d+\.\d+\.\d+)/);
+          if (versionMatch) {
+            window.MercadoPagoSDK.version = versionMatch[1];
+          }
+        }
+        
+        // Log SDK info
+        console.group('MercadoPago SDK Loaded');
+        console.log('Load Time:', loadTime.toISOString());
+        console.log('SDK URL:', sdkScript?.src || 'unknown');
+        console.log('MercadoPago Object:', window.MercadoPago ? 'Available' : 'Not Available');
+        console.log('MercadoPago Version:', window.MercadoPagoSDK.version);
+        console.groupEnd();
+
+        // Execute callbacks
         window.MercadoPagoSDK.onLoadCallbacks.forEach(callback => callback());
         window.MercadoPagoSDK.onLoadCallbacks = [];
       }
 
       // Load SDK with callback
       (function(d, s, id) {
+        // Check if already loaded
+        if (window.MercadoPago) {
+          console.log('MercadoPago already loaded, skipping new load');
+          onMercadoPagoLoaded();
+          return;
+        }
+        
         var js, fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = 'https://sdk.mercadopago.com/js/v2';
+        
+        js = d.createElement(s);
+        js.id = id;
+        js.src = window.MercadoPagoSDK.sdkUrl;
+        js.async = true;
+        js.defer = true;
         js.onload = onMercadoPagoLoaded;
-        fjs.parentNode.insertBefore(js, fjs);
+        js.onerror = function(error) {
+          console.error('Failed to load MercadoPago SDK:', error);
+        };
+        
+        // Insert before the first script or at the end of head
+        if (fjs) {
+          fjs.parentNode.insertBefore(js, fjs);
+        } else {
+          d.head.appendChild(js);
+        }
       }(document, 'script', 'mercado-pago-sdk'));
     </script>
     
