@@ -1,6 +1,7 @@
 import { createPreference, getPaymentStatus } from '@/lib/mercadopago';
 import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import type { PreferenceItem, PreferencePayer } from '@/lib/mercadopago';
 
 export interface CreatePaymentParams {
   amount: number; // in CLP
@@ -63,36 +64,39 @@ export async function createMercadoPagoPayment({
 
     if (error) throw error;
 
+    // Prepare items for MercadoPago
+    const items: PreferenceItem[] = [{
+      id: serviceId,
+      title: description.substring(0, 255) || 'Servicio Legal',
+      description: description.substring(0, 500),
+      quantity: 1,
+      currency_id: 'CLP',
+      unit_price: clientAmount,
+    }];
+
+    // Prepare payer info
+    const payer: PreferencePayer = {
+      email: userEmail,
+      ...(userName && { name: userName }),
+    };
+
     // Create MercadoPago preference
-    const preference = await createPreference({
-      items: [
-        {
-          id: serviceId || 'legal-service',
-          title: description.substring(0, 255) || 'Servicio Legal',
-          quantity: 1,
-          unit_price: clientAmount, // Use the amount with surcharge
-          description: description.substring(0, 500),
-          currency_id: 'CLP',
-        },
-      ],
-      payer: {
-        email: userEmail,
-        name: userName,
-      },
-      external_reference: paymentId,
-      notification_url: notificationUrl || `${process.env.NEXT_PUBLIC_SITE_URL}/api/payments/mercadopago/webhook`,
-      back_urls: {
-        success: successUrl,
-        failure: failureUrl,
-        pending: pendingUrl,
-      },
-      auto_return: 'approved',
-    });
+    const preferenceUrl = await createPreference(items, payer);
+
+    // Update payment record with preference URL
+    const { error: updateError } = await supabase
+      .from('payments')
+      .update({ payment_link: preferenceUrl })
+      .eq('id', paymentId);
+
+    if (updateError) {
+      console.error('Error updating payment record:', updateError);
+      throw updateError;
+    }
 
     return {
       paymentId,
-      initPoint: preference.init_point || preference.sandbox_init_point,
-      preferenceId: preference.id,
+      paymentUrl: preferenceUrl,
     };
   } catch (error) {
     console.error('Error creating MercadoPago payment:', error);
