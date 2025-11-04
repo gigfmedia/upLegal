@@ -244,20 +244,27 @@ export const createMercadoPagoPreference = async (req: Request) => {
       currency_id: item.currency_id || 'CLP'
     }));
 
-    // Prepare back URLs - MercadoPago requires HTTPS URLs for auto_return to work
-    // In development, we'll use a placeholder HTTPS URL or omit auto_return
-    const backUrls = isProduction ? {
-      success: 'https://uplegal.netlify.app/payment/success',
-      failure: 'https://uplegal.netlify.app/payment/failure',
-      pending: 'https://uplegal.netlify.app/payment/pending'
-    } : {
+    // Always use production URLs - no sandbox fallback
+    const backUrls = {
       success: 'https://uplegal.netlify.app/payment/success',
       failure: 'https://uplegal.netlify.app/payment/failure',
       pending: 'https://uplegal.netlify.app/payment/pending'
     };
 
-    log('Using back_urls:', backUrls);
-    log('Environment:', { isProduction });
+    // Log the environment and URLs for debugging
+    log('MercadoPago Configuration:', {
+      environment: 'PRODUCTION (FORCED)',
+      apiUrl: 'https://api.mercadopago.com',
+      isProduction: true,
+      backUrls,
+      accessToken: mpAccessToken ? `${mpAccessToken.substring(0, 10)}...` : 'NOT SET',
+      isProductionToken: mpAccessToken?.startsWith('APP_USR-')
+    });
+    
+    // Log a warning if we detect sandbox credentials
+    if (mpAccessToken?.startsWith('TEST-')) {
+      log('WARNING: Using sandbox credentials in production mode!');
+    }
 
     // Create the MercadoPago payload
     const mpPayload = {
