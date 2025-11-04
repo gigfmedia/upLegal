@@ -95,11 +95,16 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
   console.log('Initializing MercadoPago in PRODUCTION mode with key:', publicKey.substring(0, 10) + '...');
   
   try {
+    console.log('Initializing MercadoPago with production settings');
+    
+    // Force production environment
     const mp = new window.MercadoPago(publicKey, {
       locale: 'es-CL',
       advancedFraudPrevention: true,
-      environment: 'production' // Force production environment
+      environment: 'production'
     });
+    
+    console.log('MercadoPago SDK initialized in PRODUCTION mode');
 
     console.log('MercadoPago SDK initialized in PRODUCTION mode');
     
@@ -108,8 +113,10 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
       env: 'production',
       publicKey: publicKey.substring(0, 10) + '...',
       timestamp: new Date().toISOString(),
-      version: window.MercadoPago?.VERSION || 'unknown'
+      version: window.MercadoPago?.VERSION || 'unknown',
+      isProduction: true
     };
+    console.log('MercadoPago debug info:', (window as any).__mp);
     // Create a safe debug info object without circular references
     const safeDebugInfo = { ...debugInfo };
     if (safeDebugInfo.sdkObject) {

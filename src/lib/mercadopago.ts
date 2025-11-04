@@ -1,5 +1,13 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
+// Debug environment variables
+console.log('=== MercadoPago Environment Check ===');
+console.log('VITE_MERCADOPAGO_ENV:', import.meta.env.VITE_MERCADOPAGO_ENV);
+console.log('Public Key:', import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY?.substring(0, 10) + '...');
+console.log('Access Token:', import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN?.substring(0, 10) + '...');
+console.log('Is Production Environment:', import.meta.env.VITE_MERCADOPAGO_ENV === 'production');
+console.log('==================================');
+
 // Define types for MercadoPago
 type PreferencePayer = {
   name?: string;
@@ -55,27 +63,45 @@ if (!accessToken) {
   throw new Error('MercadoPago access token is not configured');
 }
 
-// Initialize MercadoPago client
+// Initialize MercadoPago client with production enforcement
 export const mercadopago = new MercadoPagoConfig({
   accessToken,
   options: {
     timeout: 5000,
-    idempotencyKey: 'upegal-legal-services',
+    idempotencyKey: 'some-idempotency-key',
+    environment: 'production' // Force production environment
   },
 });
 
+// Test MercadoPago API connection
+async function testMercadoPagoAPI() {
+  try {
+    const response = await fetch('https://api.mercadopago.com/v1/payment_methods', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    const data = await response.json();
+    console.log('MercadoPago API Test Response:', data);
+  } catch (error) {
+    console.error('Error testing MercadoPago API:', error);
+  }
+}
+
+testMercadoPagoAPI();
+
 // Log the environment being used
 console.group('MercadoPago Configuration');
-console.log('Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
+console.log('Environment: PRODUCTION (Forced)');
 console.log('Access Token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NOT SET');
-console.log('Is Production:', isProduction);
 console.log('Using Production Credentials:', accessToken?.startsWith('APP_USR-'));
 console.log('Base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
 console.groupEnd();
 
-// Ensure we're using the correct environment
-if (isProduction && accessToken?.startsWith('TEST-')) {
+// Check for sandbox credentials in production
+if (accessToken?.startsWith('TEST-')) {
   console.error('WARNING: Using sandbox credentials in production mode!');
+  throw new Error('Sandbox credentials detected in production mode!');
 }
 
 // Create a preference
