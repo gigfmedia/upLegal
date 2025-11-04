@@ -302,51 +302,113 @@ export const createMercadoPagoPreference = async (req: Request) => {
 
     // Make request to MercadoPago API
     const mpApiUrl = 'https://api.mercadopago.com/checkout/preferences';
-    log('Calling MercadoPago API', { url: mpApiUrl });
     
-    const response = await fetch(mpApiUrl, {
+    // Log the request payload (with sensitive data masked)
+    log('Sending request to MercadoPago API', {
+      url: mpApiUrl,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${mpAccessToken}`,
+        'Authorization': `Bearer ${mpAccessToken.substring(0, 10)}...`,
         'X-Idempotency-Key': requestId,
         'X-Tracking-Id': `up-${requestId}`
       },
-      body: JSON.stringify(preference)
+      body: {
+        ...preference,
+        items: preference.items.map(item => ({
+          ...item,
+          title: item.title.substring(0, 20) + (item.title.length > 20 ? '...' : '')
+        })),
+        payer: {
+          ...preference.payer,
+          email: preference.payer?.email ? '***@***' : undefined
+        }
+      }
     });
     
-    log('MercadoPago API response status', response.status);
-    
+    let response;
     let responseData;
+    
     try {
-      responseData = await response.json();
+      // Make the API request
+      response = await fetch(mpApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${mpAccessToken}`,
+          'X-Idempotency-Key': requestId,
+          'X-Tracking-Id': `up-${requestId}`
+        },
+        body: JSON.stringify(preference)
+      });
       
-      log('MercadoPago API response', {
+      // Try to parse the response as JSON
+      try {
+        responseData = await response.json();
+      } catch (parseError) {
+        log('Failed to parse JSON response', { 
+          status: response.status,
+          statusText: response.statusText,
+          error: parseError.message
+        });
+        throw new Error('Invalid JSON response from MercadoPago API');
+      }
+      
+      log('MercadoPago API response received', {
         status: response.status,
         statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
         data: {
           ...responseData,
           init_point: responseData.init_point ? '***' : undefined,
-          sandbox_init_point: responseData.sandbox_init_point ? '***' : undefined
+          sandbox_init_point: responseData.sandbox_init_point ? '***' : undefined,
+          id: responseData.id,
+          status: responseData.status
         }
       });
       
       if (!response.ok) {
-        throw new Error(responseData.message || 'Payment processing failed');
-      }
-    } catch (error) {
-      log('Error processing MercadoPago response', {
-        error: error instanceof Error ? error.message : String(error),
-        status: response.status
-      });
-      return createErrorResponse(
-        response.status || 502, 
-        error instanceof Error ? error.message : 'Invalid response from payment processor',
-        {
-          error: responseData?.error,
+        const errorMessage = responseData.message || 'Payment processing failed';
+        log('MercadoPago API error response', {
           status: response.status,
+          error: responseData.error,
+          cause: responseData.cause,
+          status_detail: responseData.status_detail
+        });
+        throw new Error(errorMessage);
+      }
+      
+      return new Response(JSON.stringify({
+        id: responseData.id,
+        init_point: responseData.init_point,
+        sandbox_init_point: responseData.sandbox_init_point,
+        status: responseData.status
+      }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      log('Error in MercadoPago API request', {
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        responseStatus: response?.status,
+        responseData: responseData || 'No response data'
+      });
+      
+      return createErrorResponse(
+        response?.status || 500,
+        errorMessage,
+        {
+          error: responseData?.error || 'internal_error',
+          status: response?.status,
           status_detail: responseData?.status_detail,
-          request_id: requestId
+          request_id: requestId,
+          cause: responseData?.cause
         }
       );
     }
