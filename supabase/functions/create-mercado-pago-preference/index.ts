@@ -272,9 +272,10 @@ export const createMercadoPagoPreference = async (req: Request) => {
           }
         } : {})
       },
-      auto_return: requestData.auto_return || 'approved',
-      binary_mode: requestData.binary_mode || true,
-      statement_descriptor: requestData.statement_descriptor || 'Uplegal',
+      back_urls: backUrls,
+      auto_return: 'approved',
+      binary_mode: true,
+      statement_descriptor: 'Uplegal',
       notification_url: requestData.notification_url,
       external_reference: requestData.external_reference || null,
       metadata: {
