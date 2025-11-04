@@ -314,14 +314,14 @@ export const createMercadoPagoPreference = async (req: Request) => {
         'X-Tracking-Id': `up-${requestId}`
       },
       body: {
-        ...preference,
-        items: preference.items.map(item => ({
+        ...mpPayload,
+        items: mpPayload.items.map(item => ({
           ...item,
           title: item.title.substring(0, 20) + (item.title.length > 20 ? '...' : '')
         })),
         payer: {
-          ...preference.payer,
-          email: preference.payer?.email ? '***@***' : undefined
+          ...mpPayload.payer,
+          email: mpPayload.payer?.email ? '***@***' : undefined
         }
       }
     });
@@ -339,7 +339,7 @@ export const createMercadoPagoPreference = async (req: Request) => {
           'X-Idempotency-Key': requestId,
           'X-Tracking-Id': `up-${requestId}`
         },
-        body: JSON.stringify(preference)
+        body: JSON.stringify(mpPayload)
       });
       
       // Try to parse the response as JSON
