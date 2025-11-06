@@ -30,6 +30,7 @@ import LawyerDashboardPage from './pages/lawyer/DashboardPage';
 import AttorneyDashboard from './pages/AttorneyDashboard';
 import PublicProfile from './pages/PublicProfile';
 import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentFailure from './pages/PaymentFailure';
 import PaymentCanceled from './pages/PaymentCanceled';
 import NotFound from './pages/NotFound';
 import UserDashboard from './pages/UserDashboard';
@@ -169,6 +170,7 @@ const AppContent = () => {
             </Route>
             
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment/failure" element={<PaymentFailure />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
             <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/auth/confirm-email" element={<EmailVerification />} />
