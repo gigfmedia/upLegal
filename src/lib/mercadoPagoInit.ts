@@ -90,12 +90,8 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
     console.error('MercadoPago public key is not defined');
     return null;
   }
-
-  // Always enforce production mode
-  console.log('Initializing MercadoPago in PRODUCTION mode with key:', publicKey.substring(0, 10) + '...');
   
   try {
-    console.log('Initializing MercadoPago with production settings');
     
     // Force production environment
     const mp = new window.MercadoPago(publicKey, {
@@ -103,10 +99,6 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
       advancedFraudPrevention: true,
       environment: 'production'
     });
-    
-    console.log('MercadoPago SDK initialized in PRODUCTION mode');
-
-    console.log('MercadoPago SDK initialized in PRODUCTION mode');
     
     // Add to window for debugging
     (window as any).__mp = {
@@ -116,16 +108,11 @@ export function initializeMercadoPago(): MercadoPagoInstance | null {
       version: window.MercadoPago?.VERSION || 'unknown',
       isProduction: true
     };
-    console.log('MercadoPago debug info:', (window as any).__mp);
     // Create a safe debug info object without circular references
     const safeDebugInfo = { ...debugInfo };
     if (safeDebugInfo.sdkObject) {
       safeDebugInfo.sdkObject = '[MercadoPago SDK Object]';
     }
-    
-    console.log('Debug Info:', safeDebugInfo);
-    console.groupEnd();
-    
     return mp;
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);

@@ -78,26 +78,6 @@
             }
           }
         }
-        
-        // Log SDK info
-        console.group('MercadoPago SDK Loaded');
-        console.log('Load Time:', loadTime.toISOString());
-        console.log('SDK URL:', sdkScript?.src || 'unknown');
-        console.log('MercadoPago Object:', window.MercadoPago ? 'Available' : 'Not Available');
-        
-        // Log all properties of MercadoPago object for debugging
-        if (window.MercadoPago) {
-          console.log('MercadoPago Properties:', Object.keys(window.MercadoPago));
-          
-          // Check for version in prototype chain
-          const proto = Object.getPrototypeOf(window.MercadoPago);
-          if (proto) {
-            console.log('MercadoPago Prototype Properties:', Object.getOwnPropertyNames(proto));
-          }
-        }
-        
-        console.log('Detected Version:', window.MercadoPagoSDK.version);
-        console.groupEnd();
 
         // Execute callbacks
         window.MercadoPagoSDK.onLoadCallbacks.forEach(callback => callback());
@@ -142,9 +122,6 @@
         const mp = initializeMercadoPago();
         if (mp) {
           window.mp = mp; // Make it globally available
-          console.log('MercadoPago initialized successfully');
-        } else {
-          console.error('Failed to initialize MercadoPago');
         }
       }
 
