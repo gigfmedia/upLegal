@@ -105,16 +105,16 @@ export function SearchFilters({
               </div>
 
               {/* Specialty Filter */}
-              <div className="mb-6">
+              <div className="mb-6 relative z-[200]">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">Especialidad</h3>
                 <Select 
-                  value={selectedSpecialty} 
+                  value={selectedSpecialty}
                   onValueChange={onSpecialtyChange}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Seleccionar especialidad" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[200]">
                     <SelectItem value="all">Todas las especialidades</SelectItem>
                     {specialties.map((specialty) => (
                       <SelectItem key={specialty} value={specialty}>
@@ -125,19 +125,22 @@ export function SearchFilters({
                 </Select>
               </div>
             
-              <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Ordenar por</h3>
-              <Select value={sortBy} onValueChange={onSortByChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seleccionar orden" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rating">Mejor calificación</SelectItem>
-                  <SelectItem value="reviews">Más reseñas</SelectItem>
-                  <SelectItem value="price_asc">Precio: menor a mayor</SelectItem>
-                  <SelectItem value="price_desc">Precio: mayor a menor</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="mb-6 relative z-[200]">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Ordenar por</h3>
+                <Select 
+                  value={sortBy}
+                  onValueChange={onSortByChange}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar orden" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="rating">Mejor calificación</SelectItem>
+                    <SelectItem value="reviews">Más reseñas</SelectItem>
+                    <SelectItem value="price_asc">Precio: menor a mayor</SelectItem>
+                    <SelectItem value="price_desc">Precio: mayor a menor</SelectItem>
+                  </SelectContent>
+                </Select>
             </div>
 
               {/* Price Range */}
@@ -154,8 +157,8 @@ export function SearchFilters({
                     className="w-full"
                   />
                   <div className="flex justify-between text-sm text-gray-600">
-                    <span>${priceRange[0].toLocaleString()}</span>
-                    <span>${priceRange[1].toLocaleString()}</span>
+                    <span>${priceRange[0].toLocaleString('de-DE')}</span>
+                    <span>${priceRange[1].toLocaleString('de-DE')}</span>
                   </div>
                 </div>
               </div>

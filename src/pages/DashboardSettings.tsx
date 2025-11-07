@@ -64,7 +64,7 @@ export default function DashboardSettings() {
   });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  // Fetch user profile with Stripe info
+  // Fetch user profile
   const { profile, loading: profileLoading } = useProfile(user?.id);
 
   // Load existing settings when component mounts

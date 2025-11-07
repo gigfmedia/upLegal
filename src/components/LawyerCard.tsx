@@ -117,7 +117,7 @@ export function LawyerCard({
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
-        <div className="flex-1 flex flex-col p-6">
+        <div className="flex-1 flex flex-col p-6 min-h-[300px]">
           {/* Sección superior - Info básica */}
           <div className="flex justify-between items-start mb-4 w-full">
             <div className="flex space-x-4">
@@ -186,11 +186,11 @@ export function LawyerCard({
               </div>
             </div>
             
-            <div className="flex-shrink-0 ml-2 z-10">
+            <div className="flex-shrink-0 ml-2 z-10 mt-1">
               <Button
                 variant="outline"
                 size="sm"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 h-8 px-4 py-1.5 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/lawyer/${lawyer.id}`);
@@ -202,7 +202,7 @@ export function LawyerCard({
           </div>
 
           {/* Contenido con alineación fija */}
-          <div className="flex flex-col space-y-4 mt-auto">
+          <div className="flex flex-col space-y-4 mt-auto flex-grow">
             {/* Especialidades */}
             <div className="min-h-6">
               <div className="flex flex-wrap gap-2">
@@ -268,8 +268,8 @@ export function LawyerCard({
         </div>
 
         {/* Botones de acción - Fijos en la parte inferior */}
-        <div className="p-6 pt-0">
-          <div className="flex space-x-2">
+        <div className="p-6 pt-0 mt-auto">
+          <div className="flex space-x-2 w-full">
             <Button 
               variant="outline" 
               className={`flex-1 bg-white border-gray-300 ${

@@ -35,7 +35,6 @@ export function DocumentUpload({
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentDocumentUrl || null);
   const { toast } = useToast();
-  console.log('DocumentUpload fileName:', fileName);
   const getFileIcon = (fileType: string) => {
     if (fileType === 'application/pdf') return <FileText className="h-5 w-5" />;
     if (fileType.startsWith('image/')) return <ImageIcon className="h-5 w-5" />;

@@ -747,7 +747,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 </div>
               )}
             </div>
-            <Tooltip open={isPasswordFocused || undefined}>
+            <Tooltip open={mode === 'signup' && isPasswordFocused ? true : undefined}>
               <TooltipTrigger asChild>
                 <div className="relative">
                   <Input
@@ -881,7 +881,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             </>
           ) : (
             <>
-              ¿Ya tienes cuenta?{' '}
+              <span className="mr-1">¿Ya tienes cuenta?</span>
               <button
                 type="button"
                 onClick={() => onModeChange('login')}

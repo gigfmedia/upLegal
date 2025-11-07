@@ -418,15 +418,13 @@ export default function LawyerProfilePage() {
   // Sincronizar el porcentaje de completitud del perfil
   useEffect(() => {
     if (completionPercentage !== undefined) {
-      console.log('Profile completion updated from hook:', completionPercentage, '%');
+      //console.log('Profile completion updated from hook:', completionPercentage, '%');
     }
   }, [completionPercentage]);
 
   useEffect(() => {
     if (user) {
-      console.log('User metadata:', user.user_metadata);
       const initialData = initializeFormData(user.user_metadata);
-      console.log('Initializing form data:', initialData);
       setFormData({
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
@@ -513,7 +511,6 @@ export default function LawyerProfilePage() {
     try {
       setIsSaving(true);
       setError(null);
-      console.log('Saving form data:', formData);
       
       // Validar RUT si se está editando
       if (isEditing && formData.rut) {
@@ -548,8 +545,6 @@ export default function LawyerProfilePage() {
         zoom_link: formData.zoom_link.trim() || null,
         avatar_url: formData.avatar_url || null
       };
-      
-      console.log('Update data being sent to API:', updateData);
       
       await updateProfile(updateData);
       

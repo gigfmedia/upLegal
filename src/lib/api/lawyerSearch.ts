@@ -1,4 +1,8 @@
 import { supabase } from '@/lib/supabaseClient';
+import { mockLawyers } from '@/mockData/lawyers';
+
+// Check if we're in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 interface LawyerProfile {
   id: string;
@@ -57,6 +61,58 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     return cached.data;
   }
 
+  // In development, use mock data if available
+  if (isDevelopment) {
+    const filteredLawyers = mockLawyers.filter(lawyer => {
+      // Convertir especialidades a minúsculas para comparación sin distinción
+      const lawyerSpecialties = (lawyer.specialties || []).map(s => s.toLowerCase());
+      const searchSpecialty = params.specialty?.toLowerCase() || '';
+      
+      // Coincidencia de especialidad (busca coincidencia exacta o parcial)
+      const matchesSpecialty = !params.specialty || 
+        params.specialty === 'all' || 
+        lawyerSpecialties.some(s => s.includes(searchSpecialty) || searchSpecialty.includes(s));
+      
+      // Coincidencia de búsqueda general
+      const searchQuery = (params.query || '').toLowerCase();
+      const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.toLowerCase().trim();
+      
+      const matchesQuery = !params.query || 
+        lawyerName.includes(searchQuery) ||
+        lawyerSpecialties.some(s => s.includes(searchQuery));
+      
+      // Coincidencia de ubicación
+      const matchesLocation = !params.location || 
+        (lawyer.location && lawyer.location.toLowerCase().includes(params.location.toLowerCase()));
+      
+      // Coincidencia de calificación
+      const matchesRating = !params.minRating || (lawyer.rating >= (params.minRating || 0));
+      
+      return matchesSpecialty && matchesQuery && matchesLocation && matchesRating;
+    });
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedLawyers = filteredLawyers.slice(start, end);
+
+    const result = { 
+      lawyers: paginatedLawyers, 
+      total: filteredLawyers.length,
+      page,
+      pageSize,
+      hasMore: end < filteredLawyers.length
+    };
+
+    // Cache the result
+    searchCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+    
+    return result;
+  }
+
+  // In production, query the database
   try {
     // Only select the fields we need for the card view
     let query = supabase
@@ -79,7 +135,8 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     }
 
     if (params.specialty && params.specialty !== 'all') {
-      query = query.contains('specialties', [params.specialty.toLowerCase()]);
+      // Use contains operator to find the exact specialty in the array
+      query = query.contains('specialties', [params.specialty]);
     }
 
     if (params.location) {
@@ -119,6 +176,17 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     
     return result;
   } catch (error) {
+    console.error('Error searching lawyers:', error);
+    // In development, return mock data if there's an error
+    if (isDevelopment) {
+      return {
+        lawyers: mockLawyers.slice(0, pageSize),
+        total: mockLawyers.length,
+        page: 1,
+        pageSize,
+        hasMore: mockLawyers.length > pageSize
+      };
+    }
     throw error;
   }
 }

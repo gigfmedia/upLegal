@@ -387,93 +387,112 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const MIN_AMOUNT_CLP = 1000;
   const chargeAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
 
-  // Calculate minimum date (today if there are hours left, otherwise tomorrow, not Sunday)
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
-  const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  // Configuración de fechas - usar fecha local sin hora
+  const getLocalDate = (date = new Date()) => {
+    const localDate = new Date(date);
+    return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate());
+  };
   
-  // Check if there are still business hours left today (assuming business hours until 18:00)
-  const isBusinessDay = currentDay >= 1 && currentDay <= 5; // Monday to Friday
-  const isBusinessHours = currentHour < 18 || (currentHour === 18 && currentMinute < 30);
+  const today = getLocalDate();
   
-  let minDate: Date;
+  // Fecha mínima es hoy (sin importar la hora actual)
+  const minDate = new Date(today);
   
-  if (isBusinessDay && isBusinessHours) {
-    // If it's a business day and there are still business hours left, allow today
-    minDate = new Date(now);
-  } else {
-    // Otherwise, set minimum date to the next business day
-    minDate = new Date(now);
+  // Si hoy es domingo, comenzar desde mañana (lunes)
+  if (minDate.getDay() === 0) {
     minDate.setDate(minDate.getDate() + 1);
-    
-    // Skip weekends
-    if (minDate.getDay() === 0) { // Sunday
-      minDate.setDate(minDate.getDate() + 1);
-    } else if (minDate.getDay() === 6) { // Saturday
-      minDate.setDate(minDate.getDate() + 2);
-    }
   }
   
-  const minDateString = minDate.toISOString().split('T')[0];
+  // Formatear como YYYY-MM-DD para el input de fecha
+  const formatDateForInput = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const minDateString = formatDateForInput(minDate);
 
-  // Calculate maximum date (90 days from now, not Sunday)
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate() + 90);
+  // Fecha máxima: 90 días a partir de hoy
+  const maxDate = new Date(today);
+  maxDate.setDate(today.getDate() + 90);
+  
+  // Si la fecha máxima cae en domingo, retroceder al sábado
   if (maxDate.getDay() === 0) {
-    maxDate.setDate(maxDate.getDate() - 1); // Move to Saturday if it's Sunday
+    maxDate.setDate(maxDate.getDate() - 1);
   }
-  const maxDateString = maxDate.toISOString().split('T')[0];
+  
+  const maxDateString = formatDateForInput(maxDate);
 
   // Function to get the next valid day (not Sunday)
   const getNextValidDay = useCallback((date: Date): string => {
     const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    if (nextDay.getDay() === 0) { // If it's Sunday, skip to Monday
+    nextDay.setDate(nextDay.getDate() + 1); // Sumar 1 día
+    
+    // Si es domingo, sumar otro día para llegar al lunes
+    if (nextDay.getDay() === 0) {
       nextDay.setDate(nextDay.getDate() + 1);
     }
-    return nextDay.toISOString().split('T')[0];
+    
+    return formatDateForInput(nextDay);
   }, []);
 
   // Check if a date is a Sunday (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-  const isSunday = useCallback((dateString: string): boolean => {
-    // Crear la fecha en formato YYYY-MM-DDT00:00:00 para evitar problemas de zona horaria
+  const isSunday = (dateString: string): boolean => {
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
-    return date.getUTCDay() === 0; // 0 is Sunday (usando UTC para evitar problemas de zona horaria)
-  }, []);
+    return date.getUTCDay() === 0; // 0 is Sunday
+  };
 
   // Handle date change with validation
   const handleDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    let selectedDate = e.target.value;
+    const selectedDate = e.target.value;
     
-    if (isSunday(selectedDate)) {
-      // If Sunday is selected, find the next available day (Monday)
-      const nextValidDate = getNextValidDay(new Date(selectedDate));
+    // Verificar si la fecha seleccionada es domingo
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    
+    if (date.getUTCDay() === 0) { // Si es domingo
+      // Calcular la fecha del lunes siguiente
+      date.setDate(date.getDate() + 1);
+      const nextValidDate = formatDateForInput(date);
       
-      // Update the input value directly
-      const dateInput = e.target;
-      if (dateInput) {
-        dateInput.value = nextValidDate;
-        selectedDate = nextValidDate;
-      }
+      // Usar setTimeout para asegurar que la actualización del DOM se complete
+      setTimeout(() => {
+        const dateInput = document.getElementById('date') as HTMLInputElement;
+        if (dateInput) {
+          dateInput.value = nextValidDate;
+        }
+      }, 0);
       
+      // Actualizar el estado del formulario
+      setFormData(prev => ({
+        ...prev,
+        date: nextValidDate
+      }));
+      
+      // Mostrar notificación
       toast({
         title: "Domingo no disponible",
         description: `Hemos ajustado la fecha al lunes ${nextValidDate}.`,
         variant: "destructive"
       });
+    } else {
+      // Si no es domingo, actualizar normalmente
+      setFormData(prev => ({
+        ...prev,
+        date: selectedDate
+      }));
     }
-    
-    setFormData(prev => ({
-      ...prev,
-      date: selectedDate
-    }));
-  }, [isSunday, getNextValidDay, toast]);
+  }, [toast]);
 
   // Función para verificar si una fecha debe estar deshabilitada
   const isDateDisabled = useCallback((date: Date): boolean => {
-    return date.getUTCDay() === 0; // Solo deshabilitar domingos
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Establecer a inicio del día actual
+    
+    // Deshabilitar si es domingo o es una fecha pasada
+    return date < today || date.getDay() === 0;
   }, []);
 
   // Set initial date to next available day if not set
@@ -722,25 +741,33 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                     <SelectContent>
                       {timeSlots.map((time) => {
                         const [hours, minutes] = time.split(':').map(Number);
-                        const selectedDate = new Date(formData.date);
-                        const slotDateTime = new Date(selectedDate);
+                        const selectedDateObj = new Date(formData.date);
+                        const slotDateTime = new Date(selectedDateObj);
                         slotDateTime.setHours(hours, minutes, 0, 0);
                         
-                        // Only disable time slots for today that are in the past
+                        // Verificar si la fecha seleccionada es hoy
                         const today = new Date();
-                        const isToday = 
-                          selectedDate.getDate() === today.getDate() &&
-                          selectedDate.getMonth() === today.getMonth() &&
-                          selectedDate.getFullYear() === today.getFullYear();
+                        const selectedDateStr = formData.date;
+                        const [year, month, day] = selectedDateStr.split('-').map(Number);
                         
-                        // For today, disable past time slots
-                        // For future dates, all time slots are enabled (except booked ones)
+                        // Crear fecha de inicio del día seleccionado
+                        const selectedDate = new Date(year, month - 1, day);
+                        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                        
+                        // Comparar fechas (sin horas)
+                        const isToday = selectedDate.getTime() === todayStart.getTime();
+                        
                         let isDisabled = false;
+                        
+                        // Solo deshabilitar horarios pasados si es el día actual
                         if (isToday) {
-                          const currentHours = today.getHours();
-                          const currentMinutes = today.getMinutes();
+                          const now = new Date();
+                          const currentHours = now.getHours();
+                          const currentMinutes = now.getMinutes();
+                          
+                          // Deshabilitar solo si la hora ya pasó
                           isDisabled = hours < currentHours || 
-                                     (hours === currentHours && minutes <= currentMinutes);
+                                     (hours === currentHours && minutes < currentMinutes);
                         }
                         
                         // Check if the time slot is already booked

@@ -36,7 +36,7 @@ import { LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
 
 // Mock data for lawyers (reduced to 4)
-const mockLawyers: Lawyer[] = [
+export const mockLawyers: Lawyer[] = [
   {
     id: "1",
     name: "Gabriela Ignacia Gómez Fernández",
@@ -136,6 +136,7 @@ const Index = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [verifiedCount, setVerifiedCount] = useState<number | null>(null);
   const [completedCasesCount, setCompletedCasesCount] = useState<number | null>(null);
   const [isLoadingCount, setIsLoadingCount] = useState({
@@ -381,13 +382,26 @@ const Index = () => {
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
-      } finally {
         setIsLoadingFeatured(false);
       }
     };
 
     fetchFeaturedLawyers();
   }, []);
+
+  // Categories for the slider
+  const categories = [
+    "Derecho Laboral",
+    "Derecho de Familia",
+    "Derecho Penal",
+    "Derecho Civil",
+    "Derecho Comercial",
+    "Derecho Inmobiliario",
+    "Derecho de Seguros",
+    "Derecho Tributario",
+    "Derecho de Propiedad Intelectual",
+    "Derecho de Extranjería"
+  ] as const;
 
   const specialties = [
     "Derecho Corporativo",
@@ -461,12 +475,35 @@ const Index = () => {
     setShowAuthModal(true);
   };
 
-  const handleSearch = () => {
+  const handleSearch = (category?: string) => {
+    // If no search term, location, or category is provided, just navigate to /search
+    if (!searchTerm && !location && !category) {
+      navigate('/search');
+      return;
+    }
+
+    // Otherwise, include the provided parameters
     const params = new URLSearchParams();
     if (searchTerm) params.set('q', searchTerm);
     if (location) params.set('location', location);
+    if (category) {
+      params.set('category', category);
+      setSelectedCategory(category);
+    } else {
+      setSelectedCategory(null);
+    }
+    
     navigate(`/search?${params.toString()}`);
   };
+  
+  // Effect to handle initial category from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    if (category) {
+      setSelectedCategory(category);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -509,7 +546,7 @@ const Index = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
-              <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={handleSearch}>
+              <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={() => handleSearch()}>
                 <Search className="mr-2 h-5 w-5" />
                 Buscar
               </Button>
@@ -628,7 +665,7 @@ const Index = () => {
             {/* Derecho de Familia */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=familia')}
+              onClick={() => navigate('/search?category=Derecho de Familia')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">

@@ -1,36 +1,41 @@
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { XCircle, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { PaymentFailure as PaymentFailureComponent } from '@/components/payment/PaymentFailure';
 
 export default function PaymentFailure() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Extraer parámetros de la URL
+  const paymentId = searchParams.get('payment_id');
+  const status = searchParams.get('status');
+  const statusDetail = searchParams.get('status_detail');
+  const amount = searchParams.get('amount');
+  const currency = searchParams.get('currency');
+  const created = searchParams.get('created');
+
+  const handleBack = () => {
+    navigate('/');
+  };
+
+  const handleRetry = () => {
+    // Aquí podrías implementar la lógica para reintentar el pago
+    // Por ahora, simplemente recargamos la página
+    window.location.reload();
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-2">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-            <XCircle className="h-10 w-10 text-red-600" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Pago Fallido</CardTitle>
-          <p className="text-gray-600">
-            Lo sentimos, no pudimos procesar tu pago. Por favor, intenta nuevamente.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4 text-center">
-          <div className="flex items-center justify-center text-yellow-500">
-            <AlertTriangle className="mr-2 h-5 w-5" />
-            <span>El pago no pudo ser procesado</span>
-          </div>
-          <div className="pt-4">
-            <Button asChild className="w-full">
-              <Link to="/dashboard" className="flex items-center justify-center">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Volver al inicio
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <PaymentFailureComponent 
+        payment={{
+          id: paymentId || undefined,
+          amount: amount ? Number(amount) : undefined,
+          currency: currency || 'CLP',
+          status_detail: statusDetail || undefined,
+          created: created ? Math.floor(new Date(created).getTime() / 1000) : undefined,
+        }}
+        onRetry={handleRetry}
+        onBack={handleBack}
+      />
     </div>
   );
 }

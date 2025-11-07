@@ -222,7 +222,8 @@ const SearchResults = () => {
   
   // Get search parameters from URL
   const initialQuery = searchParams.get('q') || '';
-  const initialSpecialty = searchParams.get('specialty') || 'all';
+  const categoryFromUrl = searchParams.get('category');
+  const initialSpecialty = categoryFromUrl || searchParams.get('specialty') || 'all';
   const initialLocation = searchParams.get('location') || '';
   
   const [searchTerm, setSearchTerm] = useState(initialQuery);

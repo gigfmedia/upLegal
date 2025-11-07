@@ -1,8 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { createClient } from '@supabase/supabase-js';
+
+// Simple console logger as fallback
+const fallbackLogger = {
+  info: (msg, meta) => console.log(`[INFO] ${msg}`, meta || ''),
+  error: (msg, meta) => console.error(`[ERROR] ${msg}`, meta || ''),
+  debug: (msg, meta) => process.env.DEBUG && console.debug(`[DEBUG] ${msg}`, meta || ''),
+  warn: (msg, meta) => console.warn(`[WARN] ${msg}`, meta || '')
+};
+
+let logger = fallbackLogger;
+
+// Try to load the actual logger if available
+try {
+  // First try to load the compiled version
+  const loggerPath = path.resolve(__dirname, '../dist/utils/logger.js');
+  const loggerModule = await import(loggerPath);
+  logger = loggerModule.logger || fallbackLogger;
+  logger.debug('Using compiled logger from dist');
+} catch (error) {
+  console.warn('Failed to load compiled logger, using fallback console logger');
+  logger = fallbackLogger;
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,89 +34,160 @@ const envPath = path.resolve(__dirname, '../../.env');
 const env = dotenv.config({ path: envPath });
 
 if (env.error) {
-  console.error('Error loading .env file:', env.error);
+  logger.error('Error loading .env file', { error: env.error.message });
   process.exit(1);
 }
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-console.log('Environment variables loaded:');
-console.log('- VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? '***' : 'Not found');
-console.log('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '***' : 'Not found');
-console.log('- VITE_SUPABASE_ANON_KEY:', process.env.VITE_SUPABASE_ANON_KEY ? '***' : 'Not found');
-console.log('- NEXT_PUBLIC_SUPABASE_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '***' : 'Not found');
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Error: Missing Supabase URL or Anon Key');
-  console.log('Current working directory:', process.cwd());
-  console.log('Environment file path:', envPath);
-  process.exit(1);
+/**
+ * Safely gets an environment variable, exits if not found
+ * @param {string} varName - Name of the environment variable
+ * @returns {string} The environment variable value
+ */
+function getRequiredEnv(varName) {
+  const value = process.env[varName];
+  if (!value) {
+    logger.error(`Missing required environment variable: ${varName}`);
+    process.exit(1);
+  }
+  return value;
 }
 
-console.log('Connecting to Supabase URL:', supabaseUrl);
+// Get Supabase configuration from environment
+const supabaseUrl = getRequiredEnv('VITE_SUPABASE_URL');
+const supabaseKey = getRequiredEnv('VITE_SUPABASE_ANON_KEY');
+
+// Log environment status (without sensitive data)
+logger.info('Environment check', {
+  hasSupabaseUrl: !!supabaseUrl,
+  nodeEnv: process.env.NODE_ENV || 'development',
+  cwd: process.cwd()
+});
+
+// Initialize Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function checkProfiles() {
-  console.log('Checking profiles table...');
+/**
+ * Fetches a limited number of profiles from the database
+ * @param {number} limit - Maximum number of profiles to fetch
+ * @returns {Promise<Array>} Array of profile objects
+ */
+async function fetchProfiles(limit = 5) {
+  logger.info(`Fetching up to ${limit} profiles`);
   
-  // Get the first 5 profiles
-  const { data: profiles, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .limit(5);
+  try {
+    const { data: profiles, error } = await supabase
+      .from('profiles')
+      .select('id, created_at, updated_at, full_name, role')
+      .limit(limit);
+      
+    if (error) throw error;
     
-  if (error) {
-    console.error('Error fetching profiles:', error);
-    return;
+    logger.info(`Successfully fetched ${profiles.length} profiles`, { 
+      count: profiles.length 
+    });
+    
+    return profiles;
+  } catch (error) {
+    logger.error('Failed to fetch profiles', {
+      error: error.message,
+      code: error.code,
+      details: error.details
+    });
+    throw error;
   }
-  
-  if (!profiles || profiles.length === 0) {
-    console.log('No profiles found in the database');
-    return;
-  }
-  
-  console.log('\nFirst profile structure:');
-  console.log('----------------------');
-  
-  // Log all fields from the first profile
-  const firstProfile = profiles[0];
-  for (const [key, value] of Object.entries(firstProfile)) {
-    console.log(`${key}: ${JSON.stringify(value)} (${typeof value})`);
-  }
-  
-  console.log('\nAll fields in profiles table:');
-  console.log('--------------------------');
-  
-  // Get all unique fields across profiles
-  const allFields = new Set();
-  profiles.forEach(profile => {
-    Object.keys(profile).forEach(field => allFields.add(field));
-  });
-  
-  console.log(Array.from(allFields).sort().join('\n'));
-  
-  // Check for bio in different fields
-  console.log('\nChecking for bio in different fields:');
-  console.log('--------------------------------');
-  
+}
+
+/**
+ * Analyzes profile data for bio information
+ * @param {Array} profiles - Array of profile objects
+ */
+function analyzeProfiles(profiles) {
   const bioFields = ['bio', 'description', 'about', 'biography', 'biografia', 'descripcion'];
-  
-  profiles.forEach((profile, index) => {
-    console.log(`\nProfile ${index + 1}:`);
+  const bioStats = {
+    totalProfiles: profiles.length,
+    profilesWithBio: 0,
+    bioFieldUsage: {}
+  };
+
+  // Initialize counters for each bio field
+  bioFields.forEach(field => {
+    bioStats.bioFieldUsage[field] = 0;
+  });
+
+  profiles.forEach(profile => {
     let hasBio = false;
     
     for (const field of bioFields) {
       if (profile[field] && typeof profile[field] === 'string' && profile[field].trim() !== '') {
-        console.log(`  Found bio in '${field}': ${profile[field].substring(0, 50)}...`);
+        bioStats.bioFieldUsage[field]++;
         hasBio = true;
       }
     }
     
-    if (!hasBio) {
-      console.log('  No bio found in any known field');
-    }
+    if (hasBio) bioStats.profilesWithBio++;
   });
+
+  return bioStats;
 }
 
-checkProfiles().catch(console.error);
+/**
+ * Main function to check profiles
+ */
+async function checkProfiles() {
+  try {
+    const profiles = await fetchProfiles(5);
+    
+    if (!profiles || profiles.length === 0) {
+      logger.info('No profiles found in the database');
+      return [];
+    }
+    
+    // Log summary without sensitive data
+    const bioStats = analyzeProfiles(profiles);
+    logger.info('Profile analysis completed', {
+      totalProfiles: bioStats.totalProfiles,
+      profilesWithBio: bioStats.profilesWithBio,
+      bioFieldUsage: bioStats.bioFieldUsage,
+      sampleIds: profiles.slice(0, 3).map(p => p.id)
+    });
+    
+    // Log first profile structure (non-sensitive fields only)
+    const { id, created_at, updated_at, full_name, role } = profiles[0];
+    logger.debug('Sample profile structure', {
+      id,
+      created_at,
+      updated_at,
+      full_name,
+      role
+    });
+    
+    return profiles;
+  } catch (error) {
+    logger.error('Profile check failed', {
+      error: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
+    throw error;
+  }
+}
+
+// Main execution
+if (import.meta.url === `file://${process.argv[1]}`) {
+  checkProfiles()
+    .then(() => {
+      logger.info('Profile check completed successfully');
+      process.exit(0);
+    })
+    .catch(error => {
+      logger.error('Profile check failed with error', { 
+        error: error.message 
+      });
+      process.exit(1);
+    });
+}
+
+export {
+  checkProfiles,
+  fetchProfiles,
+  analyzeProfiles
+};
