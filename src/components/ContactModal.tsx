@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { Check, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+
+// Helper function to format CLP
+const formatCLP = (amount: number): string => {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
 
 interface Service {
   id: string;
@@ -22,19 +32,44 @@ interface ContactModalProps {
   lawyerName: string;
   lawyerId: string;
   service?: Service | null;
+  hasFreeConsultation?: boolean;
+  contactFeeClp?: number;
 }
 
-export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }: ContactModalProps) {
+export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, hasFreeConsultation = false, contactFeeClp = 0 }: ContactModalProps) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    subject: "",
-    message: ""
+    subject: hasFreeConsultation ? "Primera consulta" : "",
+    message: hasFreeConsultation ? "Me gustaría agendar una primera consulta gratuita" : ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [hasUsedFreeConsultation, setHasUsedFreeConsultation] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Check if user has already used their free consultation with this lawyer
+  useEffect(() => {
+    const checkFreeConsultation = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('consultations')
+        .select('id')
+        .eq('client_id', user.id)
+        .eq('lawyer_id', lawyerId)
+        .eq('is_free_consultation', true)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasUsedFreeConsultation(true);
+      }
+    };
+
+    checkFreeConsultation();
+  }, [user, lawyerId]);
 
   // Auto-fill user data when component mounts or user changes
   useEffect(() => {
@@ -50,7 +85,9 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
         ...prev,
         name: fullName,
         email: user.email || '',
-        phone: profile.phone || userData.phone || ''
+        phone: profile.phone || userData.phone || '',
+        subject: hasFreeConsultation ? "Primera consulta" : prev.subject,
+        message: hasFreeConsultation ? "Me gustaría agendar una primera consulta gratuita" : prev.message
       }));
     }
   }, [user]);
@@ -118,6 +155,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
     subject: string;
     message: string;
     serviceId?: string;
+    consultationId?: string;
   }) => {
     // Construir el mensaje según la estructura de la tabla
     const messageContent = `
@@ -147,6 +185,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
       receiver_id: lawyerUser.user_id,   // ID de usuario del abogado
       content: messageContent,
       service_id: messageData.serviceId || null,
+      consultation_id: messageData.consultationId || null,
       read: false,
       created_at: new Date().toISOString()
     };
@@ -166,6 +205,65 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
     }
   };
 
+  const createConsultation = async (isFree: boolean) => {
+    if (!user) throw new Error('Usuario no autenticado');
+    
+    try {
+      // First, get the lawyer's profile to ensure we have the latest contact_fee_clp
+      const { data: lawyerProfile, error: lawyerError } = await supabase
+        .from('profiles')
+        .select('contact_fee_clp')
+        .eq('id', lawyerId)
+        .single();
+
+      if (lawyerError || !lawyerProfile) {
+        console.error('Error fetching lawyer profile:', lawyerError);
+        throw new Error('No se pudo obtener la información del abogado');
+      }
+
+      // Use the contact_fee_clp from the profile, fallback to the prop if not available
+      const consultationPrice = lawyerProfile.contact_fee_clp || contactFeeClp || 0;
+      
+      console.log('Creating consultation with data:', {
+        client_id: user.id,
+        lawyer_id: lawyerId,
+        title: formData.subject || 'Nueva consulta',
+        description: formData.message,
+        status: 'pending',
+        is_free: isFree,
+        service_id: service?.id || null,
+        price: consultationPrice,
+        created_at: new Date().toISOString()
+      });
+      
+      const { data, error } = await supabase
+        .from('consultations')
+        .insert([{
+          client_id: user.id,
+          lawyer_id: lawyerId,
+          title: formData.subject || 'Nueva consulta',
+          description: formData.message,
+          status: 'pending',
+          is_free: isFree,
+          service_id: service?.id || null,
+          price: consultationPrice,
+          created_at: new Date().toISOString()
+        }])
+        .select('*');
+
+      if (error) {
+        console.error('Error details from Supabase:', error);
+        throw new Error(`No se pudo crear la consulta: ${error.message}`);
+      }
+
+      console.log('Consultation created successfully:', data);
+      return data?.[0];
+    } catch (error) {
+      console.error('Error in createConsultation:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -176,6 +274,125 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
         variant: "destructive",
       });
       return;
+    }
+
+    // For non-free consultations or if user has already used their free consultation with this lawyer
+    if ((!hasFreeConsultation || hasUsedFreeConsultation) && contactFeeClp > 0) {
+      try {
+        setIsLoading(true);
+        
+        // 1. First create the consultation record
+        const { data: consultation, error: consultationError } = await supabase
+          .from('consultations')
+          .insert([{
+            client_id: user.id,
+            lawyer_id: lawyerId,
+            title: formData.subject || 'Consulta legal',
+            description: formData.message,
+            status: 'pending_payment',
+            is_free: false,
+            price: contactFeeClp,
+            payment_status: 'pending'
+          }])
+          .select()
+          .single();
+
+        if (consultationError) throw consultationError;
+
+        console.log('=== CREANDO PREFERENCIA DE PAGO ===');
+        console.log('URL de la aplicación:', window.location.origin);
+        console.log('Entorno:', import.meta.env.MODE);
+        
+        // 2. Create Mercado Pago preference
+        const mpPayload = {
+          items: [{
+            id: `consulta-${consultation.id}`,
+            title: `Consulta con ${lawyerName}`.substring(0, 100),
+            quantity: 1,
+            currency_id: 'CLP',
+            unit_price: Number(contactFeeClp),
+            description: (formData.subject || 'Consulta legal').substring(0, 255),
+          }],
+          external_reference: `consulta-${consultation.id}`,
+          back_urls: {
+            success: `${window.location.origin}/payment/callback?status=success`,
+            failure: `${window.location.origin}/payment/callback?status=failure`,
+            pending: `${window.location.origin}/payment/callback?status=pending`
+          },
+          auto_return: 'approved',
+          binary_mode: true,
+          notification_url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mercado-pago-webhook`,
+          statement_descriptor: 'UPLEGAL',
+          metadata: {
+            type: 'legal_consultation',
+            consultation_id: consultation.id,
+            lawyer_id: lawyerId,
+            client_id: user.id
+          }
+        };
+
+        console.log('Enviando solicitud a Mercado Pago...');
+        
+        // 3. Send request to Mercado Pago
+        const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
+          },
+          body: JSON.stringify(mpPayload)
+        });
+
+        const preference = await response.json();
+        
+        if (!response.ok) {
+          console.error('Error de Mercado Pago:', preference);
+          throw new Error(preference.message || 'Error al crear la preferencia de pago');
+        }
+
+        // 4. Update consultation with payment preference ID
+        const { error: updateError } = await supabase
+          .from('consultations')
+          .update({ 
+            payment_preference_id: preference.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', consultation.id);
+
+        if (updateError) throw updateError;
+
+        // 5. Save consultation data for callback handling
+        const consultationData = {
+          ...formData,
+          paymentId: preference.id,
+          amount: contactFeeClp,
+          lawyerId,
+          lawyerName,
+          consultationId: consultation.id,
+          createdAt: new Date().toISOString()
+        };
+        
+        localStorage.setItem('pendingConsultation', JSON.stringify(consultationData));
+        
+        // 6. Close the modal
+        onClose();
+        
+        // 7. Redirect to Mercado Pago
+        const redirectUrl = preference.init_point || preference.sandbox_init_point || 
+          `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${preference.id}`;
+        
+        console.log('Redirigiendo a:', redirectUrl);
+        window.location.href = redirectUrl;
+      } catch (error) {
+        console.error('Error al procesar el pago:', error);
+        toast({
+          title: "Error",
+          description: "Hubo un error al procesar el pago. Por favor, inténtalo de nuevo.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
     }
 
     // Verificar que el token de autenticación esté presente
@@ -214,7 +431,11 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
       
       const fullMessage = `${formData.message}${messageDetails}`;
       
-      // 1. Enviar mensaje a la base de datos
+      // 1. Crear la consulta en la base de datos
+      const isFree = hasFreeConsultation && !hasUsedFreeConsultation;
+      const consultation = await createConsultation(isFree);
+      
+      // 2. Enviar mensaje a la base de datos
       const { data: messageData, error: messageError } = await sendMessage({
         lawyerId,
         senderId: user.id,
@@ -223,7 +444,8 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
         senderPhone: formData.phone,
         subject: formData.subject || (service ? `Consulta sobre servicio: ${service.title}` : "Nueva consulta"),
         message: fullMessage,
-        serviceId: service?.id
+        serviceId: service?.id,
+        consultationId: consultation.id
       });
 
       if (messageError) {
@@ -255,36 +477,8 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
       
       const lawyerEmail = emailData.email;
 
-      // 3. Enviar notificación por correo
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-message-notification', {
-          body: {
-            message: fullMessage,
-            lawyerEmail: lawyerEmail,
-            clientName: formData.name,
-            subject: formData.subject || `Nuevo mensaje de ${formData.name}`
-          }
-        });
-
-        if (emailError) {
-          console.error('Error al enviar notificación por correo:', emailError);
-          // No lanzamos error para no fallar el envío del mensaje
-          toast({
-            title: "Atención",
-            description: "El mensaje se envió correctamente, pero hubo un problema al notificar al abogado por correo.",
-            variant: "default",
-          });
-        }
-      } catch (emailError) {
-        console.error('Excepción al enviar notificación por correo:', emailError);
-        // Continuamos aunque falle el correo
-      }
-      
-      // Mostrar mensaje de éxito
-      toast({
-        title: "Mensaje enviado",
-        description: `Tu consulta ha sido enviada a ${lawyerName}. Te contactarán pronto.`,
-      });
+      // El email de notificación se enviará después del pago exitoso a través del webhook
+      // o del callback de pago exitoso
       
       // Reiniciar formulario
       setFormData({
@@ -330,26 +524,37 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {service ? `Solicitar servicio: ${service.title}` : `Contactar a ${lawyerName}`}
+            {hasFreeConsultation ? (
+              <span>Primera consulta con {lawyerName} <span className="text-green-600">¡Gratis!</span></span>
+            ) : (
+              `Contactar a ${lawyerName}`
+            )}
           </DialogTitle>
-        </DialogHeader>
-        
-        {service && (
-          <div className="bg-blue-50 p-4 rounded-lg mb-4">
-            <h4 className="font-medium text-blue-800 mb-1">Detalles del servicio</h4>
-            <p className="text-sm text-blue-700">{service.description}</p>
-            <p className="text-sm font-medium text-blue-900 mt-2">
-              Precio: {new Intl.NumberFormat('es-CL', {
-                style: 'currency',
-                currency: 'CLP',
-                minimumFractionDigits: 0,
-              }).format(service.price_clp)}
+          {hasFreeConsultation && (
+            <p className="text-sm text-muted-foreground">
+              Aprovecha tu primera consulta sin costo para discutir tu caso con {lawyerName.split(' ')[0]}.
             </p>
-          </div>
-        )}
+          )}
+        </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4 px-1">
+            {service && (
+              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                <h4 className="font-medium text-blue-800">{service.title}</h4>
+                <p className="text-sm text-blue-700 mt-1">{service.description}</p>
+                {!hasFreeConsultation && (
+                  <p className="text-sm font-medium text-blue-900 mt-2">
+                    Precio: {new Intl.NumberFormat('es-CL', {
+                      style: 'currency',
+                      currency: 'CLP',
+                      minimumFractionDigits: 0,
+                    }).format(service.price_clp)}
+                  </p>
+                )}
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderFieldWithCheck('name', 'Nombre completo')}
               {renderFieldWithCheck('phone', 'Teléfono', 'tel')}
@@ -357,16 +562,18 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
             {renderFieldWithCheck('email', 'Correo electrónico', 'email')}
             
             <div className="space-y-2">
-              <Label htmlFor="subject" className="text-sm font-medium text-gray-700">Asunto</Label>
+              <Label htmlFor="subject" className="text-sm font-medium text-gray-700">
+                {hasFreeConsultation ? 'Asunto (opcional)' : 'Asunto'}
+              </Label>
               <div className="relative">
                 <Input
                   id="subject"
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  placeholder="Ej: Consulta sobre servicio legal"
+                  placeholder={hasFreeConsultation ? 'Primera consulta' : 'Ej: Consulta sobre servicio legal'}
                   className={`w-full ${formData.subject && isFieldValid('subject') ? 'border-green-500 pr-10' : ''}`}
-                  required
+                  required={!hasFreeConsultation}
                 />
                 {formData.subject && isFieldValid('subject') && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -400,14 +607,22 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service }:
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className={`min-w-[180px] ${!hasFreeConsultation || hasUsedFreeConsultation ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    {hasFreeConsultation && !hasUsedFreeConsultation ? 'Enviando...' : 'Procesando...'}
                   </>
+                ) : hasFreeConsultation && !hasUsedFreeConsultation ? (
+                  'Enviar consulta gratuita'
                 ) : (
-                  'Enviar mensaje'
+                  <>
+                    Pagar {contactFeeClp > 0 ? formatCLP(contactFeeClp) : 'consulta'}
+                  </>
                 )}
               </Button>
             </div>

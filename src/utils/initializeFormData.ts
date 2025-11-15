@@ -11,6 +11,7 @@ interface UserMetadata {
   specialization?: string[] | string;
   experience_years?: number;
   hourly_rate_clp?: number;
+  contact_fee_clp?: number;
   languages?: string[];
   education?: any;
   university?: string;
@@ -48,6 +49,7 @@ export const initializeFormData = (userMetadata: UserMetadata) => {
     specialties,
     experience: userMetadata.experience_years || 0,
     hourly_rate: userMetadata.hourly_rate_clp || 0,
+    contact_fee_clp: userMetadata.contact_fee_clp || 0,
     languages: Array.isArray(userMetadata.languages) ? [...userMetadata.languages] : [],
     education: education || '',
     university: userMetadata.university || '',

@@ -59,7 +59,7 @@ export const validateAndRefreshSession = async (): Promise<boolean> => {
  */
 export const withAuth = async <T>(
   apiCall: () => Promise<T>,
-  options: { autoRefresh: boolean } = { autoRefresh: true }
+  options: { autoRefresh?: boolean } = { autoRefresh: true }
 ): Promise<T> => {
   try {
     if (options.autoRefresh) {

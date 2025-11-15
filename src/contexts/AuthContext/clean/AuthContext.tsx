@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useMemo } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
+import type { Session, User, SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { sendWelcomeEmail } from '@/lib/emails/welcomeEmail';
 import { clearAuthData } from '@/lib/authUtils';
 import { refreshSession } from '@/lib/sessionUtils';
@@ -67,6 +68,7 @@ export interface AuthContextType {
   isLoading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
+  supabase: SupabaseClient;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
   setIsLoading: (isLoading: boolean) => void;
@@ -360,13 +362,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      console.log('Starting profile update with data:', {
-        ...profile,
-        study_start_year_type: typeof profile.study_start_year,
-        study_end_year_type: typeof profile.study_end_year,
-        study_start_year_value: profile.study_start_year,
-        study_end_year_value: profile.study_end_year
-      });
       
       // Get current user data
       const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -376,12 +371,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let studyStartYear = null;
       let studyEndYear = null;
 
-      console.log('Raw study years from profile:', {
-        study_start_year: profile.study_start_year,
-        study_end_year: profile.study_end_year,
-        study_start_year_type: typeof profile.study_start_year,
-        study_end_year_type: typeof profile.study_end_year
-      });
 
       if (profile.study_start_year !== undefined && profile.study_start_year !== null && profile.study_start_year !== '') {
         studyStartYear = typeof profile.study_start_year === 'string' 
@@ -389,11 +378,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           : Number(profile.study_start_year);
         // Ensure it's a valid number
         studyStartYear = isNaN(studyStartYear) ? null : studyStartYear;
-        console.log('Processed study_start_year:', { 
-          from: profile.study_start_year, 
-          to: studyStartYear,
-          type: typeof studyStartYear
-        });
       } else {
         console.log('study_start_year is empty or null, setting to null');
       }
@@ -404,79 +388,200 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           : Number(profile.study_end_year);
         // Ensure it's a valid number
         studyEndYear = isNaN(studyEndYear) ? null : studyEndYear;
-        console.log('Processed study_end_year:', { 
-          from: profile.study_end_year, 
-          to: studyEndYear,
-          type: typeof studyEndYear
-        });
       } else {
         console.log('study_end_year is empty or null, setting to null');
       }
 
+      // Process hourly rate - ensure it's a number or null
+      const processHourlyRate = (rate: any): number | null => {
+        
+        if (rate === null || rate === undefined || rate === '') {
+          return null;
+        }
+        
+        try {
+          if (typeof rate === 'number') {
+            return rate;
+          }
+          
+          // Handle string input with thousand separators and decimal comma
+          let cleanRate = String(rate)
+            .replace(/\./g, '')  // Remove thousand separators
+            .replace(',', '.')    // Convert decimal comma to dot
+            .replace(/[^0-9.]/g, ''); // Remove any remaining non-numeric characters
+          
+          // Use Number() instead of parseFloat for more precise parsing
+          const num = Number(cleanRate);
+          
+          if (isNaN(num)) {
+            return null;
+          }
+          
+          // For whole numbers, avoid decimal places
+          if (Number.isInteger(num)) {
+            return num;
+          }
+          
+          // For decimal numbers, round to 2 decimal places to avoid floating point issues
+          const rounded = Math.round((num + Number.EPSILON) * 100) / 100;
+          return rounded;
+        } catch (error) {
+          console.error('Error processing hourly rate:', error);
+          return null;
+        }
+      };
+
+      // Process certifications - ensure it's a string with line breaks
+      const processCertifications = (certs: any): string | null => {
+        
+        if (certs === null || certs === undefined || certs === '') {
+          return undefined; // Return undefined to indicate no change
+        }
+        
+        try {
+          let result: string;
+          
+          if (Array.isArray(certs)) {
+            result = certs
+              .map(c => String(c).trim())
+              .filter(c => c !== '')
+              .join('\n');
+          } else if (typeof certs === 'string') {
+            result = certs
+              .split('\n')
+              .map(line => line.trim())
+              .filter(line => line !== '')
+              .join('\n');
+          } else if (typeof certs === 'object' && certs !== null) {
+            // Handle case where certs is an object
+            result = Object.values(certs)
+              .filter(v => v !== null && v !== undefined)
+              .map(v => String(v).trim())
+              .filter(v => v !== '')
+              .join('\n');
+          } else {
+            result = String(certs || '').trim();
+          }
+          return result || null;
+        } catch (error) {
+          console.error('Error processing certifications:', error);
+          return null;
+        }
+      };
+
+      // Process hourly rate
+      const hourlyRate = 'hourly_rate_clp' in profile 
+        ? processHourlyRate(profile.hourly_rate_clp)
+        : undefined;
+        
+      // Always process certifications to ensure proper formatting
+      // But only include in update if explicitly provided
+      const certifications = 'certifications' in profile
+        ? processCertifications(profile.certifications)
+        : undefined;
+      
       const updateData: Omit<Profile, 'id' | 'user_id' | 'created_at'> & { updated_at: string } = {
-        first_name: profile.first_name || null,
-        last_name: profile.last_name || null,
-        display_name: profile.display_name || null,
-        bio: profile.bio || null,
-        phone: profile.phone || null,
-        location: profile.location || null,
-        website: profile.website || null,
-        specialties: Array.isArray(profile.specialties) ? profile.specialties : [],
-        experience_years: typeof profile.experience_years === 'number' ? profile.experience_years : null,
-        hourly_rate_clp: typeof profile.hourly_rate_clp === 'number' ? profile.hourly_rate_clp : null,
-        languages: Array.isArray(profile.languages) ? profile.languages : [],
-        education: profile.education || null,
-        university: profile.university || null,
+        ...profile, // Spread all profile data first
+        first_name: profile.first_name?.trim() || null,
+        last_name: profile.last_name?.trim() || null,
+        display_name: profile.display_name?.trim() || null,
+        bio: profile.bio?.trim() || null,
+        phone: profile.phone?.trim() || null,
+        hourly_rate_clp: hourlyRate,
+        certifications: certifications,
+        location: profile.location?.trim() || null,
+        website: profile.website?.trim() || null,
+        specialties: Array.isArray(profile.specialties) 
+          ? profile.specialties.map(s => String(s).trim()).filter(s => s !== '')
+          : [],
+        experience_years: profile.experience_years !== undefined 
+          ? (typeof profile.experience_years === 'string' 
+              ? parseInt(profile.experience_years, 10) 
+              : profile.experience_years)
+          : null,
+        languages: Array.isArray(profile.languages) 
+          ? profile.languages.map(l => String(l).trim()).filter(l => l !== '')
+          : [],
+        education: profile.education?.trim() || null,
+        university: profile.university?.trim() || null,
         study_start_year: studyStartYear,
         study_end_year: studyEndYear,
-        certifications: profile.certifications || null,
-        bar_association_number: profile.bar_association_number || null,
-        rut: profile.rut || null,
+        bar_association_number: profile.bar_association_number?.trim() || null,
+        rut: profile.rut?.trim() || null,
         pjud_verified: Boolean(profile.pjud_verified),
-        zoom_link: profile.zoom_link || null,
-        avatar_url: profile.avatar_url || null,
+        zoom_link: profile.zoom_link?.trim() || null,
+        avatar_url: profile.avatar_url?.trim() || null,
         profile_setup_completed: true,
         updated_at: new Date().toISOString()
       };
 
-      // First update the profiles table
+      // Prepare the update payload for the database
       const updatePayload = {
         ...updateData,
-        study_start_year: studyStartYear,
-        study_end_year: studyEndYear,
         updated_at: new Date().toISOString()
       };
 
-      console.log('Updating profiles table with data:', {
-        ...updatePayload,
-        // Log the raw values being sent to the database
-        raw_study_start_year: profile.study_start_year,
-        raw_study_end_year: profile.study_end_year,
-        processed_study_start_year: studyStartYear,
-        processed_study_end_year: studyEndYear
-      });
-
       try {
-        // First, ensure we have all required fields for the update
+        // First, check if a profile exists for this user
+        // First, get the current profile data to preserve existing fields
+        const { data: currentProfile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        // Merge existing profile data with the new updates
         const updateData = {
-          user_id: user.id,
-          ...updatePayload
+          ...currentProfile, // Preserve all existing fields
+          ...updatePayload,  // Apply the new updates
+          // Only update certifications if they are being explicitly set in the payload
+          certifications: updatePayload.certifications !== undefined 
+            ? updatePayload.certifications 
+            : currentProfile?.certifications || null,
+          // Asegurarse de que los campos numéricos no se sobrescriban con null si no se proporcionan
+          hourly_rate_clp: updatePayload.hourly_rate_clp !== undefined
+            ? updatePayload.hourly_rate_clp
+            : currentProfile?.hourly_rate_clp || null,
+          experience_years: updatePayload.experience_years !== undefined
+            ? updatePayload.experience_years
+            : currentProfile?.experience_years || null,
+          user_id: user.id,  // Ensure user_id is always set
+          updated_at: new Date().toISOString()
         };
         
-        console.log('Sending update to database:', updateData);
-        
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .upsert(updateData, {
-            onConflict: 'user_id'
-          });
-
-        if (profileError) {
-          console.error('Error updating profile in database:', profileError);
-          throw profileError;
+        if (currentProfile) {
+          // Profile exists, perform update
+          const { data: updateResult, error: updateError } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('user_id', user.id);
+            
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+            throw updateError;
+          }
+        } else {
+          // No profile exists, perform insert with default values
+          const newProfileData = {
+            ...updateData,
+            created_at: new Date().toISOString(),
+            // Ensure required fields have default values
+            certifications: updateData.certifications || null,
+            hourly_rate_clp: updateData.hourly_rate_clp || null,
+            specialties: updateData.specialties || [],
+            languages: updateData.languages || []
+          };
+          
+          const { data: insertResult, error: insertError } = await supabase
+            .from('profiles')
+            .insert(newProfileData);
+            
+          if (insertError) {
+            console.error('Error inserting profile:', insertError);
+            throw insertError;
+          }
+          
         }
-
-        console.log('Profile update successful. Response data:', profileData);
       } catch (error) {
         console.error('Exception during profile update:', error);
         throw error;
@@ -492,12 +597,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (fetchError) {
         console.error('Error fetching updated profile:', fetchError);
       } else if (updatedProfile) {
-        console.log('Updated profile data from database:', {
-          study_start_year: updatedProfile.study_start_year,
-          study_end_year: updatedProfile.study_end_year,
-          study_start_year_type: typeof updatedProfile.study_start_year,
-          study_end_year_type: typeof updatedProfile.study_end_year
-        });
       }
 
       // Then update the auth user metadata with the same data
@@ -510,13 +609,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         location: updateData.location,
         website: updateData.website,
         specialties: updateData.specialties,
-        experience_years: updateData.experience_years,
-        hourly_rate_clp: updateData.hourly_rate_clp,
+        // Asegurarse de que los valores numéricos se guarden correctamente
+        experience_years: updateData.experience_years !== undefined 
+          ? updateData.experience_years 
+          : currentMetadata?.experience_years || null,
+        hourly_rate_clp: updateData.hourly_rate_clp !== undefined 
+          ? updateData.hourly_rate_clp 
+          : currentMetadata?.hourly_rate_clp || null,
         education: updateData.education,
         university: updateData.university,
         study_start_year: studyStartYear,
         study_end_year: studyEndYear,
-        certifications: updateData.certifications,
+        // Asegurarse de que las certificaciones no se sobrescriban con null
+        certifications: updateData.certifications !== undefined 
+          ? updateData.certifications 
+          : currentMetadata?.certifications || null,
         bar_association_number: updateData.bar_association_number,
         availability: updateData.availability,
         zoom_link: updateData.zoom_link,
@@ -524,7 +631,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile_setup_completed: true
       };
 
-      console.log('Updating user metadata with data:', userMetadata);
       const { data: updatedUser, error: updateError } = await supabase.auth.updateUser({
         data: userMetadata
       });
@@ -550,6 +656,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       error,
       isAuthenticated,
+      supabase: getSupabaseClient(),
       setUser: () => {
         console.warn('setUser should not be called directly. Use login/signup methods instead.');
       },
@@ -561,12 +668,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       signup,
       logout,
-      updateProfile,
       confirmEmail,
-      checkSession: async () => checkSession(),
-      refreshAuth: async () => {
-        await refreshAuth();
-      },
+      checkSession,
+      refreshAuth,
+      updateProfile,
     }),
     [
       user,
@@ -574,8 +679,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       error,
       isAuthenticated,
-      setLoadingState,
-      setErrorState,
       login,
       signup,
       logout,
@@ -583,6 +686,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       confirmEmail,
       checkSession,
       refreshAuth,
+      setLoadingState,
+      setErrorState,
     ]
   );
 
@@ -591,4 +696,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
+};
+
+export default AuthProvider;

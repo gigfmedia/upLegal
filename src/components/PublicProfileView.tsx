@@ -50,26 +50,7 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
     completionRate: "98%"
   };
 
-  const recentWork = [
-    {
-      title: "Corporate Merger Advisory",
-      description: "Successfully advised on $50M acquisition deal between two tech companies.",
-      date: "Completed 2 weeks ago",
-      rating: 5
-    },
-    {
-      title: "Employment Law Consultation",
-      description: "Provided comprehensive employment law guidance for startup company.",
-      date: "Completed 1 month ago", 
-      rating: 5
-    },
-    {
-      title: "Contract Negotiation",
-      description: "Negotiated complex software licensing agreement.",
-      date: "Completed 2 months ago",
-      rating: 4
-    }
-  ];
+  // Sección de trabajos recientes eliminada
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -221,35 +202,6 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
               </div>
             </CardContent>
           </Card>
-
-          {/* Recent Work & Reviews */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Trabajos Recientes y Comentarios de Clientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {recentWork.map((work, index) => (
-                  <div key={index}>
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold">{work.title}</h4>
-                      <div className="flex items-center">
-                        {[...Array(work.rating)].map((_, i) => (
-                          <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 mb-2">{work.description}</p>
-                    <p className="text-sm text-gray-500">{work.date}</p>
-                    {index < recentWork.length - 1 && <Separator className="mt-6" />}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Services Section */}
-          <ServicesSection />
 
           {/* Languages */}
           <Card>

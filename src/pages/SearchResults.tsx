@@ -320,7 +320,7 @@ const SearchResults = () => {
               specialties: lawyer.specialties || [],
               rating: lawyer.rating || 0,
               reviews: lawyer.review_count || 0,
-              location: lawyer.location || 'Ubicación no especificada',
+              location: lawyer.location || 'Sin ubicación',
               cases: 0,
               hourlyRate: lawyer.hourly_rate_clp || 0,
               consultationPrice: lawyer.hourly_rate_clp || 0,

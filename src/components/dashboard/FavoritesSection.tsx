@@ -237,7 +237,7 @@ export function FavoritesSection() {
               <CardContent className="flex-1 flex flex-col">
                 <div className="flex items-center text-sm text-gray-600 mb-3">
                   <MapPin className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
-                  <span className="truncate">{lawyer.location || 'Ubicación no especificada'}</span>
+                  <span className="truncate">{lawyer.location || 'Sin ubicación'}</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2 mb-4">

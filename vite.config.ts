@@ -27,10 +27,20 @@ export default defineConfig(({ mode }) => {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
     optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-window',
+        'react-virtualized-auto-sizer',
+      ],
       esbuildOptions: {
         loader: {
           '.js': 'jsx',
           '.ts': 'tsx',
+        },
+        // Node.js global to browser globalThis
+        define: {
+          global: 'globalThis',
         },
       },
     },
@@ -87,19 +97,5 @@ export default defineConfig(({ mode }) => {
     },
   },
   plugins: [react()],
-    optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'react-window',
-        'react-virtualized-auto-sizer',
-      ],
-      esbuildOptions: {
-        // Node.js global to browser globalThis
-        define: {
-          global: 'globalThis',
-        },
-      },
-    },
   };
 });

@@ -1,13 +1,5 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 
-// Debug environment variables
-console.log('=== MercadoPago Environment Check ===');
-console.log('VITE_MERCADOPAGO_ENV:', import.meta.env.VITE_MERCADOPAGO_ENV);
-console.log('Public Key:', import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY?.substring(0, 10) + '...');
-console.log('Access Token:', import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN?.substring(0, 10) + '...');
-console.log('Is Production Environment:', import.meta.env.VITE_MERCADOPAGO_ENV === 'production');
-console.log('==================================');
-
 // Define types for MercadoPago
 type PreferencePayer = {
   name?: string;
@@ -55,7 +47,6 @@ type CreatePreferenceData = {
 };
 
 // Force production mode
-console.log('MercadoPago: Forcing PRODUCTION mode');
 const accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
 
 if (!accessToken) {
@@ -90,14 +81,6 @@ async function testMercadoPagoAPI() {
 
 testMercadoPagoAPI();
 
-// Log the environment being used
-console.group('MercadoPago Configuration');
-console.log('Environment: PRODUCTION (Forced)');
-console.log('Access Token:', accessToken ? `${accessToken.substring(0, 10)}...` : 'NOT SET');
-console.log('Using Production Credentials:', accessToken?.startsWith('APP_USR-'));
-console.log('Base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
-console.groupEnd();
-
 // Check for sandbox credentials in production
 if (accessToken?.startsWith('TEST-')) {
   console.error('WARNING: Using sandbox credentials in production mode!');
@@ -120,10 +103,6 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       ...(item.picture_url && { picture_url: item.picture_url }),
       ...(item.category_id && { category_id: item.category_id }),
     }));
-
-    // Debug log environment and URLs
-    console.log('MercadoPago Environment:', isProduction ? 'PRODUCTION' : 'SANDBOX');
-    console.log('Using base URL:', import.meta.env.VITE_APP_URL || window.location.origin);
     
     // Force production URLs
     const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
@@ -166,13 +145,6 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     
     // Create preference
     const result = await preference.create({ body: preferenceData });
-    
-    // Debug log the response
-    console.log('MercadoPago response:', {
-      init_point: result.init_point ? '***init_point present***' : 'init_point missing',
-      sandbox_init_point: result.sandbox_init_point ? '***sandbox_init_point present***' : 'sandbox_init_point missing',
-      preference_id: result.id
-    });
     
     // Always use production URL
     console.group('MercadoPago Production Flow');

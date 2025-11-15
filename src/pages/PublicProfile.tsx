@@ -584,7 +584,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     return {
       hourlyRate: lawyerWithViews?.hourly_rate_clp || 0,
       specialties: lawyerWithViews?.specialties || [],
-      location: lawyerWithViews?.location || 'Ubicación no especificada',
+      location: lawyerWithViews?.location || 'Sin ubicación',
       bio: lawyerWithViews?.bio || 'Este abogado no ha proporcionado una biografía.',
       education: education,
       experience: [
@@ -1000,7 +1000,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       </div>
                       <div className="flex items-center w-full sm:w-auto pt-3 sm:border-t-0 sm:pt-0">
                         <MapPin className="h-4 w-4 mr-1 text-gray-600 flex-shrink-0" />
-                        <span className="truncate">{lawyer?.location || 'Ubicación no especificada'}</span>
+                        <span className="truncate">{lawyer?.location || 'Sin ubicación'}</span>
                       </div>
                     </div>
 
@@ -1074,7 +1074,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           }}
                           disabled={currentUser?.id === lawyer?.user_id}
                         >
-                          <MessageSquare className="h-4 w-4 mr-2" />
+                          <MessageCircle className="h-4 w-4 mr-2" />
                           Contactar
                         </Button>
                       </div>
@@ -1137,7 +1137,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       <h4 className="font-semibold mb-3">Idiomas</h4>
                       {lawyer?.languages && lawyer.languages.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {lawyer.languages.map((lang, index) => (
+{lawyer.languages.flatMap(lang => 
+                            typeof lang === 'string' 
+                              ? lang.split(',').map(l => l.trim()).filter(Boolean)
+                              : []
+                          ).map((lang, index) => (
                             <span 
                               key={index} 
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
@@ -1188,7 +1192,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               </CardContent>
             </Card>
 
-            {/* Recent Work & Reviews */}
+            {/* Recent Work & Reviews - Hidden as per request
             <Card>
               <CardHeader>
                 <CardTitle>Trabajos recientes y Comentarios de clientes</CardTitle>

@@ -192,7 +192,7 @@ const Index = () => {
             specialties: Array.isArray(lawyer.specialties) ? lawyer.specialties : [],
             rating: Number(lawyer.rating) || 0,
             reviews: Number(lawyer.review_count) || 0,
-            location: lawyer.location || 'Ubicación no especificada',
+            location: lawyer.location || 'Sin ubicación',
             cases: 0, // Valor por defecto ya que no viene de la API
             hourlyRate: Number(lawyer.hourly_rate_clp) || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(Number(lawyer.hourly_rate_clp) * 0.5) : 0,

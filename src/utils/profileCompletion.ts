@@ -56,6 +56,7 @@ export const calculateProfileCompletion = (profileData: ProfileCompletionData): 
     { name: 'specialties', value: !!profileData.specialties?.length },
     { name: 'experience', value: (profileData.experience_years || 0) > 0 },
     { name: 'hourly_rate', value: (profileData.hourly_rate_clp || 0) > 0 },
+    { name: 'contact_fee', value: (profileData.contact_fee_clp || 0) > 0 },
     { name: 'languages', value: !!profileData.languages?.length },
     { 
       name: 'education', 

@@ -1,6 +1,8 @@
-import { useState, useCallback, ReactNode, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, ReactNode, useEffect, useMemo, useRef, useContext } from 'react';
 import { useAuth } from './AuthContext/clean/useAuth';
 import { MessageContext } from './MessageContext';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabaseClient';
 import type { 
   Conversation, 
   Message, 
@@ -225,9 +227,79 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     await fetchMessages(conversationId);
   }, [conversations, fetchMessages, currentUser]);
 
+  // Check if it's the first message in a conversation
+  const isFirstMessageInConversation = useCallback(async (conversationId: string, userId: string): Promise<boolean> => {
+    try {
+      // Check if there are any previous messages from this user in this conversation
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('conversation_id', conversationId)
+        .eq('sender_id', userId);
+      
+      if (error) throw error;
+      
+      return messages.length === 0;
+    } catch (error) {
+      console.error('Error checking first message:', error);
+      return false;
+    }
+  }, []);
+
+  // Get lawyer's contact fee
+  const getLawyerContactFee = useCallback(async (lawyerId: string): Promise<number> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('contact_fee_clp')
+        .eq('id', lawyerId)
+        .single();
+      
+      if (error) throw error;
+      
+      return data?.contact_fee_clp || 0;
+    } catch (error) {
+      console.error('Error getting lawyer contact fee:', error);
+      return 0;
+    }
+  }, []);
+
   // Send a message
   const sendMessage = useCallback(async (payload: Omit<SendMessagePayload, 'senderId'>) => {
     if (!currentUser) throw new Error('User not authenticated');
+    
+    // Get the conversation to find the lawyer
+    const conversation = conversations.find(c => c.id === payload.conversationId);
+    if (!conversation) throw new Error('Conversation not found');
+    
+    // Find the lawyer in the conversation participants
+    const lawyer = conversation.participants.find(p => p.role === 'lawyer');
+    if (!lawyer) throw new Error('Lawyer not found in conversation');
+    
+    // Check if it's the first message from this user
+    const isFirstMessage = await isFirstMessageInConversation(payload.conversationId, currentUser.id);
+    
+    // If not the first message, check if payment is required
+    if (!isFirstMessage) {
+      const contactFee = await getLawyerContactFee(lawyer.id);
+      
+      if (contactFee > 0) {
+        // Check if payment is already made for this conversation
+        const { data: payment, error } = await supabase
+          .from('payments')
+          .select('id, status')
+          .eq('conversation_id', payload.conversationId)
+          .eq('user_id', currentUser.id)
+          .eq('type', 'contact_fee')
+          .single();
+        
+        if (error || !payment || payment.status !== 'succeeded') {
+          // Redirect to payment page
+          window.location.href = `/checkout?type=contact_fee&conversation_id=${payload.conversationId}&amount=${contactFee}&lawyer_id=${lawyer.id}`;
+          return;
+        }
+      }
+    }
     
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -260,13 +332,29 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     );
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call the API to send the message
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([
+          {
+            content: payload.content,
+            sender_id: currentUser.id,
+            conversation_id: payload.conversationId,
+            status: 'delivered',
+            attachments: payload.attachments
+          }
+        ])
+        .select()
+        .single();
       
-      // Update message status to delivered
+      if (error) throw error;
+      
+      // Update message with the server-generated ID
       const deliveredMessage: Message = {
         ...newMessage,
-        status: 'delivered'
+        id: data.id,
+        status: 'delivered',
+        timestamp: new Date(data.created_at)
       };
       
       setMessages(prev => 

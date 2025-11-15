@@ -1,41 +1,53 @@
-import { apiRequest } from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Verifies a RUT with the Poder Judicial (PJUD) API
  * @param rut The RUT to verify (formatted as XX.XXX.XXX-X)
  * @returns Promise with verification result
  */
-export const verifyRutWithPJUD = async (rut: string) => {
+export const verifyRutWithPJUD = async (rut: string): Promise<{ valid: boolean; message?: string }> => {
   try {
-    // The actual endpoint will be your Supabase Function that handles the PJUD API call
-    const response = await apiRequest<{
-      verified: boolean;
-      data?: {
-        nombre?: string;
-        rut?: string;
-        estado?: string;
-        // Add other fields you expect from the PJUD API
-      };
-      error?: string;
-    }>('verify-rut', {
-      method: 'POST',
-      body: { rut },
-      autoRefresh: true,
-    });
-
-    if (response.error) {
-      throw new Error(response.error);
+    if (!rut) {
+      return { valid: false, message: 'El RUT es requerido' };
     }
 
-    return {
-      verified: response.verified,
-      data: response.data,
-    };
+    // Clean and format RUT
+    const cleanRut = rut.replace(/[^0-9kK]/g, '').toUpperCase();
+    if (cleanRut.length < 2) {
+      return { valid: false, message: 'RUT inválido' };
+    }
+
+    try {
+      // Call Supabase Edge Function to verify RUT
+      const { data, error } = await supabase.functions.invoke('verify-rut', {
+        body: { rut: cleanRut }
+      });
+
+      if (error) {
+        console.error('Error al verificar RUT:', error);
+        return { 
+          valid: false, 
+          message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
+        };
+      }
+
+      return {
+        valid: data?.valid || false,
+        message: data?.message || (data?.valid ? 'RUT verificado exitosamente' : 'No se pudo verificar el RUT')
+      };
+    } catch (error) {
+      console.error('Error en la función de verificación:', error);
+      return { 
+        valid: false, 
+        message: 'Error al procesar la verificación del RUT' 
+      };
+    }
   } catch (error) {
-    console.error('Error verifying RUT with PJUD:', error);
-    throw new Error(
-      error instanceof Error ? error.message : 'Error al verificar el RUT con el Poder Judicial'
-    );
+    console.error('Error inesperado en verifyRutWithPJUD:', error);
+    return { 
+      valid: false, 
+      message: 'Error inesperado al verificar el RUT' 
+    };
   }
 };
 

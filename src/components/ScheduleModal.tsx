@@ -127,7 +127,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   const consultationTypes = [
     { value: "consultation", label: "Consulta inicial" },
-    { value: "legal-advice", label: "Asesoría legal" },
+    { value: "legal-advice", label: "Representación legal" },
     { value: "document-review", label: "Revisión de documentos" },
     { value: "contract-review", label: "Revisión de contratos" },
     { value: "other", label: "Otro" }
@@ -137,13 +137,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     e.preventDefault();
     
     if (!formData.name || !formData.email || !formData.date || !formData.time || 
-        !formData.consultationType || !formData.contactMethod || 
-        (formData.contactMethod === 'presencial' && !formData.address)) {
+        !formData.consultationType || !formData.contactMethod) {
       toast({
         title: "Error",
-        description: formData.contactMethod === 'presencial' && !formData.address 
-          ? "Por favor ingresa la dirección para la cita presencial."
-          : "Por favor completa todos los campos obligatorios.",
+        description: "Por favor completa todos los campos obligatorios.",
         variant: "destructive"
       });
       return;
@@ -604,7 +601,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Método de contacto *</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <input
                       type="radio"
@@ -649,58 +646,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                       <span className="text-sm font-medium">Videollamada</span>
                     </label>
                   </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="presencial"
-                      name="contactMethod"
-                      value="presencial"
-                      checked={formData.contactMethod === 'presencial'}
-                      onChange={() => setFormData({ ...formData, contactMethod: 'presencial' })}
-                      className="hidden peer"
-                    />
-                    <label 
-                      htmlFor="presencial"
-                      className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                        formData.contactMethod === 'presencial' 
-                          ? 'border-blue-500 bg-blue-50' 
-                          : 'border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 mb-2 text-gray-700">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                      </svg>
-                      <span className="text-sm font-medium">Presencial</span>
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {formData.contactMethod === 'presencial' && (
-            <div className="space-y-2">
-              <Label htmlFor="address">Dirección de la cita *</Label>
-              <div className="relative">
-                <Input
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Ingresa la dirección para la cita"
-                  className={cn(
-                    "w-full pr-8 border focus:ring-0 focus:ring-offset-0 focus:shadow-none",
-                    formData.address ? "border-green-500" : "border-gray-300"
-                  )}
-                  required
-                />
-                {formData.address && (
-                  <Check className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />
-                )}
-              </div>
-            </div>
-          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">

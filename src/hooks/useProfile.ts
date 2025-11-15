@@ -28,6 +28,7 @@ export interface Profile {
   role: 'client' | 'lawyer';
   specialties: string[] | null;
   hourly_rate_clp: number | null;
+  contact_fee_clp: number | null;
   
   // Payment fields
   payment_method: string | null;
@@ -103,6 +104,7 @@ interface DatabaseProfile {
   role: 'client' | 'lawyer';
   specialties: string[] | null;
   hourly_rate_clp: number | null;
+  contact_fee_clp: number | null;
   payment_method?: string | null;
   payment_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
   visibility_settings?: {
@@ -217,6 +219,7 @@ export function useProfile(userId?: string) {
         role: data.role || 'client',
         specialties: data.specialties || null,
         hourly_rate_clp: data.hourly_rate_clp || null,
+        contact_fee_clp: data.contact_fee_clp || null,
         
         // Payment fields
         
@@ -317,18 +320,18 @@ export function useProfile(userId?: string) {
         updated_at: data.updated_at || new Date().toISOString(),
         response_time: null,
         satisfaction_rate: null,
-        languages: null,
-        availability: null,
+        languages: data.languages || [],
+        availability: data.availability || null,
         verified: false,
         available_for_hire: false,
-        bar_number: null,
-        zoom_link: null,
-        education: null,
-        certifications: null,
-        experience_years: null,
-        rating: 0,
-        review_count: 0,
-        has_used_free_consultation: false
+        bar_number: data.bar_association_number || null,
+        zoom_link: data.zoom_link || null,
+        education: data.education || null,
+        certifications: data.certifications || null,
+        experience_years: data.experience_years || null,
+        rating: data.rating || 0,
+        review_count: data.review_count || 0,
+        has_used_free_consultation: data.has_used_free_consultation || false
       };
 
       setProfile(updatedProfile);

@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ConsultationModal } from "./ConsultationModal";
 import { AuthModal } from "./AuthModal";
+import { ContactModal } from "./ContactModal";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { LawyerRatings } from "./ratings/LawyerRatings";
 import {
@@ -19,7 +19,7 @@ import {
 
 export interface Lawyer {
   id: string;
-  user_id?: string; // Add this line
+  user_id?: string;
   name: string;
   specialties: string[];
   rating: number;
@@ -28,6 +28,7 @@ export interface Lawyer {
   cases: number;
   hourlyRate: number;
   consultationPrice: number;
+  contact_fee_clp?: number;
   image: string;
   bio: string;
   verified: boolean;
@@ -66,11 +67,26 @@ export function LawyerCard({
     (user.id === lawyer.user_id || user.id === lawyer.id)
   );
   
+  // Check if the lawyer is verified and has the required fields
+  const isVerifiedLawyer = Boolean(
+    lawyer.verified && 
+    lawyer.hourlyRate > 0 &&
+    lawyer.bio && 
+    lawyer.bio.trim() !== '' && 
+    lawyer.specialties && 
+    lawyer.specialties.length > 0 &&
+    lawyer.location && 
+    lawyer.location.trim() !== ''
+  );
+  
+  // Determine if buttons should be disabled
+  const buttonsDisabled = isOwnProfile || !isVerifiedLawyer;
+  
   // Debug logs - only log if we have a user to reduce noise
   if (user?.id) {
     console.debug('LawyerCard - User ID:', user.id);
     console.debug('LawyerCard - Lawyer ID:', lawyer.id, 'User ID:', lawyer.user_id);
-    console.debug('isOwnProfile:', isOwnProfile, 'User matches lawyer.user_id:', user.id === lawyer.user_id, 'User matches lawyer.id:', user.id === lawyer.id);
+    console.debug('isOwnProfile:', isOwnProfile, 'isVerifiedLawyer:', isVerifiedLawyer);
   }
 
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
@@ -110,9 +126,6 @@ export function LawyerCard({
     if (onScheduleClick) onScheduleClick();
     else if (onSchedule) onSchedule();
   };
-
-  // Debug log for bio
-  //console.log('LawyerCard - Bio:', lawyer.id, lawyer.name, 'Bio:', lawyer.bio);
   
   return (
     <>
@@ -190,11 +203,14 @@ export function LawyerCard({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white"
+                className={`${!isVerifiedLawyer ? 'opacity-50 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'} border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white`}
                 onClick={(e) => {
+                  if (!isVerifiedLawyer) return;
                   e.stopPropagation();
                   navigate(`/lawyer/${lawyer.id}`);
                 }}
+                disabled={!isVerifiedLawyer}
+                title={!isVerifiedLawyer ? 'Este perfil no está completo o verificado' : 'Ver perfil completo'}
               >
                 Ver perfil
               </Button>
@@ -202,7 +218,7 @@ export function LawyerCard({
           </div>
 
           {/* Contenido con alineación fija */}
-          <div className="flex flex-col space-y-4 mt-auto flex-grow">
+          <div className="flex flex-col space-y-4 mt-auto">
             {/* Especialidades */}
             <div className="min-h-6">
               <div className="flex flex-wrap gap-2">
@@ -215,15 +231,24 @@ export function LawyerCard({
                     : []
                 )
                 .filter(s => s) // Remove empty strings
+                .slice(0, 3) // Limit to 3 specialties
                 .map((specialty, index) => (
-                  <Badge key={`${specialty}-${index}`} variant="secondary" className="text-xs">
+                  <Badge 
+                    key={`${specialty}-${index}`} 
+                    variant="secondary" 
+                    className="text-xs font-normal bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  >
                     {specialty}
                   </Badge>
                 ))}
+                {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 || 
+                 (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
+                  <span className="text-xs text-gray-500 self-center">+{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más</span>
+                )}
               </div>
             </div>
 
-            {/* Sección media - Resumen */}
+            {/* Descripción */}
             <div className="max-w-full">
               {lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
                 <div className="text-gray-700 text-sm">
@@ -242,7 +267,7 @@ export function LawyerCard({
                   </p>
                 </div>
               ) : (
-                <p className="text-gray-500 italic text-sm" style={{
+                <p className="text-gray-700 text-sm" style={{
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
@@ -250,19 +275,21 @@ export function LawyerCard({
                   maxHeight: '2.8em',
                   lineHeight: '1.4em',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
                 }}>
-                  Este abogado no ha proporcionado una biografía.
+                  Este abogado no ha proporcionado una descripción.
                 </p>
               )}
             </div>
 
-            {/* Precio */}
-            <div className="h-8 flex items-center">
-              <span className="text-2xl font-bold text-gray-900">
-                ${formatCLP(lawyer.hourlyRate)}
-              </span>
-              <span className="text-gray-500 text-sm ml-1">/hora</span>
+            {/* Precio y rating */}
+            <div className="flex justify-between items-center pt-2">
+              <div>
+                <span className="text-2xl font-bold text-gray-900">
+                  ${formatCLP(lawyer.hourlyRate)}
+                </span>
+                <span className="text-gray-500 text-sm ml-1">/hora</span>
+              </div>
             </div>
           </div>
         </div>
@@ -273,33 +300,37 @@ export function LawyerCard({
             <Button 
               variant="outline" 
               className={`flex-1 bg-white border-gray-300 ${
-                isOwnProfile 
+                buttonsDisabled 
                   ? 'opacity-50 cursor-not-allowed' 
                   : 'hover:bg-gray-50'
               }`}
               onClick={handleContactClick}
-              disabled={isOwnProfile}
+              disabled={buttonsDisabled}
+              title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              {isOwnProfile ? 'Contactar' : 'Contactar'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Contactar'}
             </Button>
             <Button
               variant="default"
               className={`flex-1 bg-blue-600 ${
-                isOwnProfile 
+                buttonsDisabled 
                   ? 'opacity-50 cursor-not-allowed' 
                   : 'hover:bg-blue-700'
               }`}
               onClick={handleScheduleClick}
-              disabled={isOwnProfile}
+              disabled={buttonsDisabled}
+              title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
             >
               <Calendar className="h-4 w-4 mr-2" />
-              {isOwnProfile ? 'Agendar' : 'Agendar'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar'}
             </Button>
           </div>
-          {isOwnProfile && (
+          {buttonsDisabled && (
             <p className="text-xs text-gray-500 mt-2 text-center">
-              No puedes contactar o agendar contigo mismo
+              {isOwnProfile 
+                ? 'No puedes contactar o agendar contigo mismo' 
+                : 'Este abogado no está verificado o su perfil está incompleto'}
             </p>
           )}
         </div>
@@ -327,13 +358,20 @@ export function LawyerCard({
         </DialogContent>
       </Dialog>
 
-      {/* Consultation Modal */}
-      <ConsultationModal
+      {/* Contact Modal */}
+      <ContactModal
         isOpen={isConsultationOpen}
         onClose={() => setIsConsultationOpen(false)}
-        lawyer={lawyer}
+        lawyerName={lawyer.name}
+        lawyerId={lawyer.id}
         hasFreeConsultation={hasFreeConsultation}
-        consultationPrice={lawyer.consultationPrice}
+        contactFeeClp={lawyer.contact_fee_clp || 0}
+        service={{
+          id: 'consultation',
+          title: 'Consulta Legal',
+          description: 'Consulta inicial con el abogado',
+          price_clp: lawyer.contact_fee_clp || 0
+        }}
       />
 
       {/* Auth Modal */}

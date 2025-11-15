@@ -117,12 +117,19 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     // Only select the fields we need for the card view
     let query = supabase
       .from('profiles')
-      .select('id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified', 
+      .select('id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, contact_fee_clp', 
         { count: 'exact' })
       .eq('role', 'lawyer')
       .eq('verified', true)
       .eq('available_for_hire', true)
-      .order('rating', { ascending: false, nullsLast: true })
+      // Filter out incomplete profiles - must have all required fields
+      .not('bio', 'is', null)
+      .not('bio', 'eq', '')
+      .not('specialties', 'is', null)
+      .not('hourly_rate_clp', 'is', null)
+      .not('pjud_verified', 'is', null)
+      .not('location', 'is', null)
+      .order('rating', { ascending: false })
       .range((page - 1) * pageSize, (page * pageSize) - 1);
 
     // Apply filters with optimized queries

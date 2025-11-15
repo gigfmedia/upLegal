@@ -128,9 +128,9 @@ export function ServicesSection({
           }
         },
         back_urls: {
-          success: 'https://834703e13045.ngrok-free.app/payment/success',
-          failure: 'https://834703e13045.ngrok-free.app/payment/failure',
-          pending: 'https://834703e13045.ngrok-free.app/payment/pending'
+          success: 'https://uplegal.netlify.app/payment/success',
+          failure: 'https://uplegal.netlify.app/payment/failure',
+          pending: 'https://uplegal.netlify.app/payment/pending'
         },
         auto_return: 'approved',
         binary_mode: true,

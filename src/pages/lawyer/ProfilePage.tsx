@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import type { Profile } from '@/contexts/AuthContext/clean/AuthContext';
 import { calculateProfileCompletion } from '@/utils/profileCompletion';
+import { verifyLawyer } from '@/api/verifyLawyer';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,8 +42,9 @@ interface ProfileFormData {
   location: string;
   website: string;
   specialties: string[];
-  experience: number;
-  hourly_rate: number;
+  experience_years: number;
+  hourly_rate_clp: number;
+  contact_fee_clp: number;
   languages: string[];
   education: string;
   university: string;
@@ -81,13 +83,29 @@ export default function LawyerProfilePage() {
         [name]: value // Keep as string
       }));
     } else {
-      // For other number inputs, convert to number
-      const numValue = value === '' ? '' : Math.max(0, parseInt(value) || 0);
-      setFormData(prev => ({
-        ...prev,
-        [name]: numValue
-      }));
+      // For hourly_rate_clp, ensure it's always a number
+      if (name === 'hourly_rate_clp') {
+        // Remove any non-digit characters
+        const cleanValue = value.replace(/\D/g, '');
+        // Parse as number, default to 0 if empty or invalid
+        const numValue = cleanValue === '' ? 0 : parseInt(cleanValue, 10);
+        
+        setFormData(prev => ({
+          ...prev,
+          [name]: isNaN(numValue) ? 0 : numValue
+        }));
+      } else {
+        // For other number inputs, convert to number
+        const numValue = value === '' ? 0 : Math.max(0, parseInt(value, 10) || 0);
+        setFormData(prev => ({
+          ...prev,
+          [name]: numValue
+        }));
+      }
     }
+    
+    // Mark as dirty when value changes
+    setHasChanges(true);
     
     setHasChanges(true);
   };
@@ -116,6 +134,43 @@ export default function LawyerProfilePage() {
     setHasChanges(true);
   };
   
+  // Format RUT with dots and hyphen (e.g., 12.345.678-9)
+  const formatRUT = (rut: string): string => {
+    // Remove all non-digit and non-k/K characters
+    let cleanRut = rut.replace(/[^\dkK]/g, '');
+    
+    // If empty, return empty string
+    if (!cleanRut) return '';
+    
+    // If it's just one character, return it as is
+    if (cleanRut.length === 1) return cleanRut;
+    
+    // Extract the verification digit (last character)
+    const dv = cleanRut.slice(-1).toUpperCase();
+    
+    // Get the number part (everything except the last character)
+    let number = cleanRut.slice(0, -1);
+    
+    // If number is empty (case when input is just 'k' or 'K')
+    if (!number) return `-${dv}`;
+    
+    // Add dots as thousand separators from right to left
+    let formatted = '';
+    let counter = 0;
+    
+    for (let i = number.length - 1; i >= 0; i--) {
+      formatted = number[i] + formatted;
+      counter++;
+      if (counter === 3 && i > 0) {
+        formatted = '.' + formatted;
+        counter = 0;
+      }
+    }
+    
+    // Add the hyphen and verification digit
+    return `${formatted}-${dv}`;
+  };
+
   // RUT validation function (Chilean ID) with improved error messages
   const validateRUT = (rut: string): { isValid: boolean; error?: string } => {
     if (!rut || typeof rut !== 'string') {
@@ -225,51 +280,19 @@ export default function LawyerProfilePage() {
     }));
     
     try {
-      // Get the auth token for the request
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log('Iniciando verificación con PJUD para RUT:', rut);
       
-      if (sessionError || !sessionData.session) {
-        const errorMsg = 'No se pudo obtener la sesión del usuario. Por favor, inicia sesión nuevamente.';
-        throw new Error(errorMsg);
-      }
+      // Call the verifyLawyer function
+      const result = await verifyLawyer(rut, fullName);
       
-      const { session } = sessionData;
-      
-      // Call the verification API using our helper
-      const { data, error } = await invokeFunction<VerificationResponse>(
-        'verify-lawyer',
-        { 
-          rut, 
-          fullName: fullName.trim(),
-          timestamp: new Date().toISOString()
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-            'x-client-info': 'web-app/1.0'
-          }
-        }
-      );
-      
-      console.log('Verification response:', { data, error });
-      
-      if (error) {
-        console.error('Error from verification function:', error);
-        throw error;
-      }
-      
-      if (!data) {
-        throw new Error('No se recibió respuesta del servidor de verificación');
-      }
-      
-      if (!data.verified) {
+      if (!result.verified) {
+        const errorMsg = result.message || 'El RUT no está registrado como abogado en el sistema.';
         setVerificationStatus('error');
-        setRutError('El RUT no está registrado como abogado en el sistema.');
+        setRutError(errorMsg);
         return { 
           verified: false, 
-          message: 'RUT no verificado',
-          error: 'El RUT no está registrado como abogado en el sistema.'
+          message: errorMsg,
+          error: errorMsg
         };
       }
       
@@ -295,6 +318,8 @@ export default function LawyerProfilePage() {
         pjud_verified: true
       }));
       
+      // Mark the form as having changes that need to be saved
+      setHasChanges(true);
       setVerificationStatus('success');
       
       toast({
@@ -305,8 +330,7 @@ export default function LawyerProfilePage() {
       
       return {
         verified: true,
-        message: 'Verificación exitosa',
-        details: data.details
+        message: 'Verificación exitosa'
       };
       
     } catch (error) {
@@ -389,6 +413,8 @@ export default function LawyerProfilePage() {
     };
   };
 
+  // Use a ref to track if we've already initialized the form data
+  const initializedRef = React.useRef(false);
   const [formData, setFormData] = useState<ProfileFormData>({
     first_name: '',
     last_name: '',
@@ -397,8 +423,9 @@ export default function LawyerProfilePage() {
     location: '',
     website: '',
     specialties: [],
-    experience: 0,
-    hourly_rate: 0,
+    experience_years: 0,
+    hourly_rate_clp: 0,
+    contact_fee_clp: 0,
     languages: [],
     education: '',
     university: '',
@@ -418,35 +445,43 @@ export default function LawyerProfilePage() {
   // Sincronizar el porcentaje de completitud del perfil
   useEffect(() => {
     if (completionPercentage !== undefined) {
-      //console.log('Profile completion updated from hook:', completionPercentage, '%');
+      console.log('Profile completion updated from hook:', completionPercentage, '%');
     }
   }, [completionPercentage]);
 
+  // Initialize form data when userProfile is loaded
   useEffect(() => {
-    if (user) {
-      const initialData = initializeFormData(user.user_metadata);
+    if (userProfile && !initializedRef.current) {
       setFormData({
-        first_name: initialData.first_name || '',
-        last_name: initialData.last_name || '',
-        bio: initialData.bio || '',
-        phone: initialData.phone || '',
-        location: initialData.location || '',
-        website: initialData.website || '',
-        specialties: initialData.specialties || [],
-        experience: initialData.experience || 0,
-        hourly_rate: initialData.hourly_rate || 0,
-        languages: initialData.languages || [],
-        education: initialData.education || '',
-        university: initialData.university || '',
-        bar_association_number: initialData.bar_association_number || '',
-        rut: initialData.rut || '',
-        pjud_verified: initialData.pjud_verified || false,
-        zoom_link: initialData.zoom_link || '',
-        avatar_url: initialData.avatar_url || ''
+        first_name: userProfile.first_name || '',
+        last_name: userProfile.last_name || '',
+        bio: userProfile.bio || '',
+        phone: userProfile.phone || '',
+        location: userProfile.location || '',
+        website: userProfile.website || '',
+        specialties: userProfile.specialties || [],
+        experience_years: userProfile.experience_years || 0,
+        hourly_rate_clp: userProfile.hourly_rate_clp || 0,
+        contact_fee_clp: userProfile.contact_fee_clp || 0,
+        languages: userProfile.languages || [],
+        education: typeof userProfile.education === 'string' ? userProfile.education : '',
+        university: typeof userProfile.university === 'string' ? userProfile.university : '',
+        study_start_year: userProfile.study_start_year || '',
+        study_end_year: userProfile.study_end_year || '',
+        certifications: typeof userProfile.certifications === 'string' ? userProfile.certifications : '',
+        bar_association_number: userProfile.bar_association_number || '',
+        rut: userProfile.rut || '',
+        pjud_verified: userProfile.pjud_verified || false,
+        zoom_link: userProfile.zoom_link || '',
+        avatar_url: userProfile.avatar_url || ''
       });
-      setSelectedSpecializations(initialData.specialties || []);
+      
+      setSelectedSpecializations(userProfile.specialties || []);
+      initializedRef.current = true;
+      setIsEditing(false);
+      setError(null);
     }
-  }, [user]);
+  }, [userProfile]);
 
   // Handle cancel button click
   const handleCancel = () => {
@@ -460,11 +495,15 @@ export default function LawyerProfilePage() {
         location: initialData.location || '',
         website: initialData.website || '',
         specialties: initialData.specialties || [],
-        experience: initialData.experience || 0,
-        hourly_rate: initialData.hourly_rate || 0,
+        experience_years: initialData.experience_years || 0,
+        hourly_rate_clp: initialData.hourly_rate_clp || 0,
+        contact_fee_clp: initialData.contact_fee_clp || 0,
         languages: initialData.languages || [],
         education: initialData.education || '',
         university: initialData.university || '',
+        study_start_year: initialData.study_start_year || '',
+        study_end_year: initialData.study_end_year || '',
+        certifications: initialData.certifications || '',
         bar_association_number: initialData.bar_association_number || '',
         rut: initialData.rut || '',
         pjud_verified: initialData.pjud_verified || false,
@@ -477,29 +516,47 @@ export default function LawyerProfilePage() {
     setError(null);
   };
 
+  // Toggle specialization selection
+  const toggleSpecialization = (specialty: string) => {
+    setSelectedSpecializations(prev => {
+      if (prev.includes(specialty)) {
+        // If already selected, remove it
+        return prev.filter(s => s !== specialty);
+      } else {
+        // If not selected, add it
+        return [...prev, specialty];
+      }
+    });
+    setHasChanges(true);
+  };
+
   // Toggle edit mode
   const toggleEditMode = () => {
     if (isEditing) {
-      // If canceling edit, reset form to original values
-      if (user?.user_metadata) {
-        const initialData = initializeFormData(user.user_metadata);
+      // If canceling edit, reset form to original values from the profile
+      if (userProfile) {
         setFormData({
-          first_name: initialData.first_name || '',
-          last_name: initialData.last_name || '',
-          bio: initialData.bio || '',
-          phone: initialData.phone || '',
-          location: initialData.location || '',
-          website: initialData.website || '',
-          specialties: initialData.specialties || [],
-          experience: initialData.experience || 0,
-          hourly_rate: initialData.hourly_rate || 0,
-          languages: initialData.languages || [],
-          education: initialData.education || '',
-          bar_association_number: initialData.bar_association_number || '',
-          rut: initialData.rut || '',
-          pjud_verified: initialData.pjud_verified || false,
-          zoom_link: initialData.zoom_link || '',
-          avatar_url: initialData.avatar_url || ''
+          first_name: userProfile.first_name || '',
+          last_name: userProfile.last_name || '',
+          bio: userProfile.bio || '',
+          phone: userProfile.phone || '',
+          location: userProfile.location || '',
+          website: userProfile.website || '',
+          specialties: userProfile.specialties || [],
+          experience_years: userProfile.experience_years || 0,
+          hourly_rate_clp: userProfile.hourly_rate_clp || 0,
+          contact_fee_clp: userProfile.contact_fee_clp || 0,
+          languages: userProfile.languages || [],
+          education: typeof userProfile.education === 'string' ? userProfile.education : '',
+          university: typeof userProfile.university === 'string' ? userProfile.university : '',
+          study_start_year: userProfile.study_start_year || '',
+          study_end_year: userProfile.study_end_year || '',
+          certifications: typeof userProfile.certifications === 'string' ? userProfile.certifications : '',
+          bar_association_number: userProfile.bar_association_number || '',
+          rut: userProfile.rut || '',
+          pjud_verified: userProfile.pjud_verified || false,
+          zoom_link: userProfile.zoom_link || '',
+          avatar_url: userProfile.avatar_url || ''
         });
       }
     }
@@ -523,38 +580,65 @@ export default function LawyerProfilePage() {
       }
       
       // Prepare the update data with only fields that exist in the database
+      // Helper function to safely trim strings that might be null or undefined
+      const safeTrim = (str: string | null | undefined): string | null => {
+        return str ? str.trim() : null;
+      };
+
       const updateData = {
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
-        bio: formData.bio.trim(),
-        phone: formData.phone.trim(),
-        location: formData.location.trim(),
-        website: formData.website.trim(),
+        first_name: safeTrim(formData.first_name) || '',
+        last_name: safeTrim(formData.last_name) || '',
+        bio: safeTrim(formData.bio) || '',
+        phone: safeTrim(formData.phone) || null,
+        location: safeTrim(formData.location) || null,
+        website: safeTrim(formData.website) || null,
         specialties: selectedSpecializations,
-        experience_years: formData.experience ? Number(formData.experience) : null,
-        hourly_rate_clp: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+        experience_years: formData.experience_years ? Number(formData.experience_years) : null,
+        hourly_rate_clp: formData.hourly_rate_clp ? Number(formData.hourly_rate_clp) : null,
+        contact_fee_clp: formData.contact_fee_clp ? Number(formData.contact_fee_clp) : null,
         languages: formData.languages || [],
-        education: formData.education || '',
-        university: formData.university || null,
+        education: safeTrim(formData.education) || null,
+        university: safeTrim(formData.university) || null,
         study_start_year: formData.study_start_year ? Number(formData.study_start_year) : null,
         study_end_year: formData.study_end_year ? Number(formData.study_end_year) : null,
-        certifications: formData.certifications?.trim() || null,
-        bar_association_number: formData.bar_association_number.trim() || null,
-        rut: formData.rut.trim() || null,
+        certifications: safeTrim(formData.certifications) || null,
+        bar_association_number: safeTrim(formData.bar_association_number) || null,
+        rut: safeTrim(formData.rut) || null,
         pjud_verified: formData.pjud_verified || false,
-        zoom_link: formData.zoom_link.trim() || null,
+        zoom_link: safeTrim(formData.zoom_link) || null,
         avatar_url: formData.avatar_url || null
       };
       
-      await updateProfile(updateData);
+      console.log('Saving profile with data:', updateData);
       
-      // Update local state
-      setFormData(prev => ({
-        ...prev,
-        ...updateData,
-        experience: updateData.experience_years || 0,
-        hourly_rate: updateData.hourly_rate_clp || 0
-      }));
+      const updatedUser = await updateProfile(updateData);
+      
+      // Force a refresh of the user data
+      const { data: { user: refreshedUser } } = await supabase.auth.getUser();
+      
+      if (refreshedUser) {
+        
+        // Update local state with the saved data
+        setFormData(prev => ({
+          ...prev,
+          ...updateData,  // Use the data we just saved
+          rut: updateData.rut || prev.rut,  // Ensure RUT is updated
+          pjud_verified: updateData.pjud_verified || false
+        }));
+        
+        // Reset verification status
+        setVerificationStatus(updateData.pjud_verified ? 'success' : 'idle');
+        
+        // Reset hasChanges after successful save
+        setHasChanges(false);
+        
+        // Show success message
+        toast({
+          title: 'Perfil actualizado',
+          description: 'Tus cambios se han guardado correctamente.',
+          variant: 'default'
+        });
+      }
       
       setHasChanges(false);
       setIsEditing(false);
@@ -603,7 +687,7 @@ export default function LawyerProfilePage() {
   };
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
           {error}
@@ -831,18 +915,75 @@ export default function LawyerProfilePage() {
                               type="text"
                               value={formData.rut || ''}
                               onChange={(e) => {
+                                const inputValue = e.target?.value || '';
+                                
+                                // Get the clean value (only numbers and k/K)
+                                const cleanValue = inputValue.replace(/[^\dkK]/g, '');
+                                
+                                // Limit to 9 digits + 1 verification digit
+                                if (cleanValue.length > 10) {
+                                  return;
+                                }
+                                
+                                // Format the RUT
+                                let formattedRut = '';
+                                
+                                if (cleanValue.length > 1) {
+                                  // If we have at least 2 characters, format as RUT
+                                  formattedRut = formatRUT(cleanValue);
+                                } else {
+                                  // If it's just one character, just return it
+                                  formattedRut = cleanValue;
+                                }
+                                
+                                // Check if RUT has actually changed
+                                const rutChanged = formattedRut !== formData.rut;
+                                
+                                if (rutChanged) {
+                                  // Update the form data
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    rut: formattedRut,
+                                    pjud_verified: false
+                                  }));
+                                  
+                                  // Reset verification status
+                                  setVerificationStatus('idle');
+                                  setHasChanges(true);
+                                }
+                                
+                                // Reset any existing RUT errors
                                 if (rutError) setRutError(null);
-                                handleInputChange(e);
+                                
+                                // Adjust cursor position if we added formatting characters
+                                if (key && /^[0-9kK]$/.test(key)) {
+                                  // If we're adding a digit, move cursor forward if we added a dot or dash
+                                  if (formattedRut.length > inputValue.length) {
+                                    // Count how many formatting characters we've added before the cursor
+                                    const addedFormatting = formattedRut.slice(0, cursorPosition).match(/[.-]/g)?.length || 0;
+                                    newPosition = cursorPosition + addedFormatting;
+                                  }
+                                }
+                                
+                                // Ensure cursor stays within bounds
+                                newPosition = Math.min(Math.max(newPosition, 0), formattedRut.length);
+                                
+                                // Set the cursor position in the next tick
+                                setTimeout(() => {
+                                  input.setSelectionRange(newPosition, newPosition);
+                                }, 0);
                               }}
-                              disabled={!isEditing || formData.pjud_verified}
+                              onKeyDown={(e) => {
+                                // Allow only numbers, k, K, backspace, delete, and navigation keys
+                                if (!/^[0-9kK\b\-.]$/.test(e.key) && 
+                                    !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Tab', 'Delete', 'Backspace'].includes(e.key)) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              disabled={!isEditing}
                               placeholder="12.345.678-9"
-                              className={`w-full ${rutError ? 'border-red-500 pr-10' : ''}`}
+                              className={`w-full ${rutError ? 'border-red-500 pr-10' : ''} ${formData.pjud_verified ? 'opacity-80 bg-transparent' : ''}`}
                             />
-                            {verificationStatus === 'success' && (
-                              <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                              </div>
-                            )}
                             {verificationStatus === 'error' && (
                               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                 <XCircle className="h-4 w-4 text-red-500" />
@@ -853,7 +994,7 @@ export default function LawyerProfilePage() {
                               type="button"
                               variant="outline"
                               onClick={handleVerifyRUT}
-                            disabled={isVerifying || !formData.rut || formData.pjud_verified || !isEditing}
+                            disabled={isVerifying || !formData.rut || !isEditing}
                             className="whitespace-nowrap h-10 px-3"
                             >
                               {isVerifying ? (
@@ -867,23 +1008,29 @@ export default function LawyerProfilePage() {
                       </div>
                     </div>
                       
-                      {/* Error message */}
-                      {rutError && (
-                        <p className="text-xs text-red-500 flex items-start gap-1 mt-1">
-                          <XCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                          <span>{rutError}</span>
-                        </p>
-                      )}
-                      
-                      {/* Success message */}
-                      {formData.pjud_verified && (
-                        <p className="text-xs text-green-600 flex items-center gap-1.5 mt-1">
-                          <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="flex items-center gap-1">
+                      {/* Verification status */}
+                      <div className="mt-1">
+                        {verificationStatus === 'verifying' && (
+                          <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                            <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+                            <span>Verificando con el Poder Judicial...</span>
+                          </p>
+                        )}
+                        
+                        {rutError && (
+                          <p className="text-xs text-red-500 flex items-start gap-1">
+                            <XCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                            <span>{rutError}</span>
+                          </p>
+                        )}
+                        
+                        {verificationStatus === 'success' && formData.pjud_verified && (
+                          <p className="text-xs text-green-600 flex items-center gap-1.5">
+                            <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
                             <span>Verificado con el Poder Judicial de Chile</span>
-                          </span>
-                        </p>
-                      )}
+                          </p>
+                        )}
+                      </div>
                   </div>
                   
                   <div className="space-y-2">
@@ -944,13 +1091,14 @@ export default function LawyerProfilePage() {
                       variant={isSelected ? 'default' : 'outline'}
                       size="sm"
                       className={`text-xs whitespace-nowrap transition-colors ${
-                        isEditing ? 'cursor-pointer' : 'cursor-default'
+                        isEditing ? 'cursor-pointer' : 'cursor-default opacity-80'
                       } ${
                         isSelected 
-                          ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                          : 'bg-background hover:bg-accent hover:text-accent-foreground'
+                          ? `bg-primary text-primary-foreground ${isEditing ? 'hover:bg-primary/90' : ''}`
+                          : `bg-background ${isEditing ? 'hover:bg-accent hover:text-accent-foreground' : ''}`
                       }`}
                       onClick={() => isEditing && toggleSpecialization(spec)}
+                      disabled={!isEditing}
                     >
                       {spec}
                       {isSelected && (
@@ -967,32 +1115,51 @@ export default function LawyerProfilePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="experience">Años de Experiencia</Label>
                 <Input
                   id="experience"
-                  name="experience"
+                  name="experience_years"
                   type="number"
                   min="0"
-                  value={formData.experience || 0}
+                  value={formData.experience_years || 0}
                   onChange={handleNumberInput}
                   disabled={!isEditing}
                   placeholder="Ej: 5"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="hourly_rate">Tarifa por Hora (CLP)</Label>
+                <Label htmlFor="hourly_rate_clp">Tarifa por Hora (CLP)</Label>
                 <Input
-                  id="hourly_rate"
-                  name="hourly_rate"
-                  type="number"
-                  min="0"
-                  value={formData.hourly_rate || 0}
+                  id="hourly_rate_clp"
+                  name="hourly_rate_clp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={formData.hourly_rate_clp === 0 ? '' : formData.hourly_rate_clp.toString()}
                   onChange={handleNumberInput}
                   disabled={!isEditing}
-                  placeholder="0"
+                  placeholder="Ej: 50000"
+                  className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contact_fee_clp">Tarifa por Contactar (CLP)</Label>
+                <Input
+                  id="contact_fee_clp"
+                  name="contact_fee_clp"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={formData.contact_fee_clp === 0 ? '' : formData.contact_fee_clp.toString()}
+                  onChange={handleNumberInput}
+                  disabled={!isEditing}
+                  placeholder="Ej: 10000"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta tarifa se cobrará a los clientes al realizar el segundo "Contactar" contigo.
+                </p>
               </div>
             </div>
             
@@ -1045,8 +1212,7 @@ export default function LawyerProfilePage() {
                 />
                 </fieldset>
               </div>
-            
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="education">Título Profesional</Label>
                 {!isEditing ? (
@@ -1062,25 +1228,6 @@ export default function LawyerProfilePage() {
                     {(formData.study_start_year || formData.study_end_year) && (
                       <div className="text-muted-foreground text-sm">
                         {formData.study_start_year} - {formData.study_end_year || 'Presente'}
-                      </div>
-                    )}
-                    {formData.certifications && (
-                      <div className="mt-2 w-full">
-                        <Label htmlFor="certifications-display" className="text-sm font-medium text-muted-foreground">
-                          Certificaciones
-                        </Label>
-                        <div className="mt-1">
-                          <div 
-                            id="certifications-display"
-                            className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto"
-                          >
-                            {formData.certifications.split('\n').map((cert, index, array) => (
-                              <span key={index} className="block text-foreground text-sm">
-                                {cert.trim()}{index < array.length - 1 ? '\n' : ''}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     )}
                   </div>
@@ -1131,6 +1278,7 @@ export default function LawyerProfilePage() {
                   </select>
                 </div>
               )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -1174,9 +1322,9 @@ export default function LawyerProfilePage() {
                     type="number"
                     min="1950"
                     max={new Date().getFullYear() + 10}
-                    value={formData.study_end_year?.toString() || ''}
+                    value={formData.study_end_year || ''}
                     onChange={(e) => {
-                      const value = e.target.value ? parseInt(e.target.value, 10) : null;
+                      const value = e.target.value || '';
                       setFormData(prev => ({
                         ...prev,
                         study_end_year: value
@@ -1185,9 +1333,12 @@ export default function LawyerProfilePage() {
                     }}
                     onBlur={(e) => {
                       // Ensure the value is within valid range
-                      let value = e.target.value ? parseInt(e.target.value, 10) : null;
-                      if (value && (value < 1950 || value > new Date().getFullYear() + 10)) {
-                        value = null;
+                      let value = e.target.value || '';
+                      if (value) {
+                        const numValue = parseInt(value, 10);
+                        if (isNaN(numValue) || numValue < 1950 || numValue > new Date().getFullYear() + 10) {
+                          value = '';
+                        }
                       }
                       setFormData(prev => ({
                         ...prev,
@@ -1226,16 +1377,18 @@ export default function LawyerProfilePage() {
                       disabled={!isEditing}
                     />
                   ) : (
-                    <div 
-                      className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-auto"
-                    >
-                      {formData.certifications ? (
-                        <div className="whitespace-pre-wrap text-foreground text-sm">
-                          {formData.certifications}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">No hay certificaciones ingresadas</span>
-                      )}
+                    <div className="space-y-2">
+                      <div 
+                        className={`flex h-20 w-full rounded-md border ${!isEditing ? 'border-input/50' : 'border-input bg-background'} px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${!isEditing ? 'cursor-not-allowed opacity-70' : ''} overflow-auto`}
+                      >
+                        {formData.certifications ? (
+                          <div className={`whitespace-pre-wrap text-sm ${!isEditing ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {formData.certifications}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No hay certificaciones ingresadas</span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1247,15 +1400,17 @@ export default function LawyerProfilePage() {
                   <Input
                     value={formData.languages.join(', ')}
                     onChange={(e) => {
-                      const languages = e.target.value.split(',').map(lang => lang.trim());
+                      // Allow commas in the input by not splitting on them
+                      // The user can type commas, but we'll split on them when needed
+                      const value = e.target.value;
                       setFormData(prev => ({
                         ...prev,
-                        languages: languages.filter(lang => lang !== '')
+                        languages: value ? [value] : []
                       }));
                       setHasChanges(true);
                     }}
                     disabled={!isEditing}
-                    placeholder="Español, Inglés, Francés..."
+                    placeholder="Ej: Español, Inglés, Francés..."
                     className="rounded-r-none"
                   />
                 </div>

@@ -1,0 +1,2 @@
+[build]
+environment = { RESEND_API_KEY = "${re_cdnVB3ot_JTmYQaHjRAEohxsetY5HRA9C}" }

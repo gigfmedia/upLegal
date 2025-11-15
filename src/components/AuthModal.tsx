@@ -18,6 +18,8 @@ import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { Scale, Loader2, Eye, EyeOff, Key, Check, CheckCircle2, Info, XCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { verifyRutWithPJUD } from "@/services/pjudService";
+import { format } from 'date-fns';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
   const { login, signup, user } = useAuth();
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -234,6 +237,12 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     setSubmitting(true);
     
     try {
+      // Verificar si el correo está verificado
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setIsEmailVerified(user.email_confirmed_at !== null);
+      }
+      
       // Store the current path before login for redirecting back
       const redirectTo = new URLSearchParams(window.location.search).get('redirectTo');
       
@@ -338,7 +347,14 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           if (loginError.message.includes('Invalid login credentials')) {
             throw new Error('Correo o contraseña incorrectos');
           } else if (loginError.message.includes('Email not confirmed')) {
-            throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
+            setIsEmailVerified(false);
+            // No lanzamos un error aquí, en su lugar mostramos el mensaje y permitimos al usuario reenviar el correo
+            toast({
+              title: 'Correo no verificado',
+              description: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
+              variant: 'destructive',
+            });
+            return; // Salimos temprano para evitar el flujo de éxito
           } else if (loginError.message.includes('Too many requests')) {
             throw new Error('Demasiados intentos. Por favor intente más tarde');
           }
@@ -671,12 +687,36 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   type="button"
                   variant="outline"
                   onClick={async () => {
-                    const isValid = await verifyRutWithPJUD(formData.rut);
-                    if (isValid) {
+                    try {
+                      setRutVerificationStatus('verifying');
+                      setRutError('');
+                      
+                      const { valid, message } = await verifyRutWithPJUD(formData.rut);
+                      
+                      if (valid) {
+                        setRutVerificationStatus('verified');
+                        toast({
+                          title: 'RUT verificado',
+                          description: message || 'El RUT ha sido verificado exitosamente como abogado.',
+                          variant: 'default'
+                        });
+                      } else {
+                        setRutVerificationStatus('error');
+                        setRutError(message || 'No se pudo verificar el RUT como abogado');
+                        toast({
+                          title: 'Error de verificación',
+                          description: message || 'No se pudo verificar el RUT',
+                          variant: 'destructive'
+                        });
+                      }
+                    } catch (error) {
+                      console.error('Error al verificar RUT:', error);
+                      setRutVerificationStatus('error');
+                      setRutError('Error al conectar con el servicio de verificación');
                       toast({
-                        title: 'RUT verificado',
-                        description: 'El RUT ha sido verificado exitosamente como abogado.',
-                        variant: 'default'
+                        title: 'Error',
+                        description: 'No se pudo completar la verificación del RUT. Intente nuevamente.',
+                        variant: 'destructive'
                       });
                     }
                   }}
@@ -686,10 +726,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   {rutVerificationStatus === 'verifying' ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Verificando
+                      Verificando...
+                    </>
+                  ) : rutVerificationStatus === 'verified' ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                      Verificado
                     </>
                   ) : (
-                    rutVerificationStatus === 'verified' ? 'Verificado' : 'Verificar'
+                    'Verificar RUT'
                   )}
                 </Button>
               </div>
@@ -747,7 +792,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 </div>
               )}
             </div>
-            <Tooltip open={mode === 'signup' && isPasswordFocused ? true : undefined}>
+            <Tooltip open={mode === 'signup' && isPasswordFocused}>
               <TooltipTrigger asChild>
                 <div className="relative">
                   <Input
@@ -759,7 +804,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     onBlur={() => setIsPasswordFocused(false)}
                     onClick={() => setIsPasswordFocused(true)}
                     required
-                    placeholder="Crea una contraseña segura"
+                    placeholder={mode === 'login' ? 'Ingresa tu contraseña' : 'Crea una contraseña segura'}
                     className="pr-10"
                   />
                   <button
@@ -841,18 +886,60 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             </div>
           )}
 
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {mode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...'}
-              </>
-            ) : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              type="submit" 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {mode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...'}
+                </>
+              ) : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+            </Button>
+            
+            {mode === 'login' && !isEmailVerified && formData.email && (
+              <div className="text-center">
+                <p className="text-sm text-amber-600">
+                  ¿No recibiste el correo de verificación?{' '}
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const { error } = await supabase.auth.signInWithOtp({
+                          email: formData.email,
+                          options: {
+                            emailRedirectTo: `${window.location.origin}/auth/verify`,
+                            shouldCreateUser: false
+                          }
+                        });
+
+                        if (error) throw error;
+                        
+                        toast({ 
+                          title: 'Correo de verificación enviado', 
+                          description: 'Por favor revisa tu bandeja de entrada y haz clic en el enlace para verificar tu correo.' 
+                        });
+                      } catch (error) {
+                        console.error('Error al enviar correo de verificación:', error);
+                        toast({
+                          title: 'No se pudo enviar el correo',
+                          description: 'Por favor intenta nuevamente o verifica tu configuración de correo en Supabase.',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Reenviar correo de verificación
+                  </button>
+                </p>
+              </div>
+            )}
+          </div>
           
           {mode === 'login' && (
             <div className="text-center">

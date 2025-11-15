@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +12,32 @@ import {
   TrendingUp,
   Clock,
   Star,
-  MessageSquare,
+  MessageCircle,
   Search
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { format, formatDistanceToNow, isAfter, isToday, isTomorrow, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+// Helper function to format dates in Spanish
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  
+  if (isToday(date)) {
+    return 'Hoy';
+  }
+  
+  if (isTomorrow(date)) {
+    return 'Mañana';
+  }
+  
+  return format(date, 'd MMMM yyyy', { locale: es });
+};
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  return format(new Date(dateString), 'h:mm a', { locale: es });
+};
 
 function DashboardSkeleton() {
   return (
@@ -59,7 +81,7 @@ function LawyerDashboardContent() {
       title: "Consultas",
       value: "18",
       change: "+12% desde el mes pasado",
-      icon: MessageSquare,
+      icon: MessageCircle,
       iconColor: "text-purple-500",
     },
     {
@@ -120,7 +142,7 @@ function LawyerDashboardContent() {
           </p>
         </div>
         <Button onClick={() => navigate('/dashboard/consultations/new')}>
-          <MessageSquare className="mr-2 h-4 w-4" />
+          <MessageCircle className="mr-2 h-4 w-4" />
           Nueva Consulta
         </Button>
       </div>
@@ -185,7 +207,7 @@ function LawyerDashboardContent() {
                 ))
               ) : (
                 <div className="text-center py-8">
-                  <MessageSquare className="mx-auto h-8 w-8 text-gray-400" />
+                  <MessageCircle className="mx-auto h-8 w-8 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No hay consultas recientes</h3>
                   <p className="mt-1 text-sm text-gray-500">
                     Comienza una nueva consulta para verla aquí.
@@ -195,7 +217,7 @@ function LawyerDashboardContent() {
                       onClick={() => navigate('/dashboard/consultations/new')}
                       className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      <MessageSquare className="-ml-1 mr-2 h-4 w-4" />
+                      <MessageCircle className="-ml-1 mr-2 h-4 w-4" />
                       Nueva Consulta
                     </Button>
                   </div>
@@ -248,66 +270,239 @@ function LawyerDashboardContent() {
 }
 
 function ClientDashboardContent() {
-  const { user } = useAuth();
+  const { user, supabase } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [consultations, setConsultations] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [stats, setStats] = useState([
+    { title: "Casos Activos", value: "0", change: "0 en progreso", icon: FileText, iconColor: "text-blue-500" },
+    { title: "Consultas", value: "0", change: "Este mes", icon: MessageCircle, iconColor: "text-purple-500" },
+    { title: "Total Gastado", value: "$0", change: "Histórico", icon: DollarSign, iconColor: "text-green-500" },
+    { title: "Próxima Cita", value: "Sin citas", change: "No programadas", icon: Clock, iconColor: "text-yellow-500" }
+  ]);
 
-  const stats = [
-    {
-      title: "Casos Activos",
-      value: "3",
-      change: "2 en progreso",
-      icon: FileText,
-      iconColor: "text-blue-500",
-    },
-    {
-      title: "Consultas",
-      value: "8",
-      change: "Este mes",
-      icon: MessageSquare,
-      iconColor: "text-purple-500",
-    },
-    {
-      title: "Total Gastado",
-      value: "$2.340.000",
-      change: "Histórico",
-      icon: DollarSign,
-      iconColor: "text-green-500",
-    },
-    {
-      title: "Próxima Cita",
-      value: "Mañana",
-      change: "10:00 AM",
-      icon: Clock,
-      iconColor: "text-yellow-500",
-    },
-  ];
+  // Get the best available name from user object
+  const displayName = user?.user_metadata?.full_name || 
+                     user?.user_metadata?.name ||
+                     user?.email?.split('@')[0] || 
+                     'Usuario';
 
-  const myConsultations = [
-    {
-      id: '1',
-      title: 'Revisión de contrato de arriendo',
-      status: 'En revisión',
-      date: 'Hace 2 días',
-      lawyer: 'María González',
-    },
-    {
-      id: '2',
-      title: 'Consulta sobre herencia',
-      status: 'Completado',
-      date: '15 de Mayo, 2023',
-      lawyer: 'Carlos Rodríguez',
-    },
-  ];
+  // Fetch consultations and appointments data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?.id) return;
+      
+      setIsLoading(true);
+      
+      try {
+        // Fetch consultations
+        const { data: consultationsData, error: consultationsError } = await supabase
+          .from('consultations')
+          .select(`
+            id,
+            title,
+            status,
+            created_at,
+            lawyer:lawyer_id (
+              id,
+              full_name,
+              email
+            )
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-  const upcomingAppointments = [
-    {
-      id: '1',
-      title: 'Consulta Inicial',
-      date: 'Mañana',
-      time: '10:00 AM',
-      lawyer: 'María González',
-    },
-  ];
+        if (consultationsError) throw consultationsError;
+        setConsultations(consultationsData || []);
+
+        // Fetch upcoming appointments
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            title,
+            scheduled_time,
+            status,
+            lawyer:lawyer_id (
+              id,
+              full_name,
+              email
+            )
+          `)
+          .eq('user_id', user.id)
+          .gte('scheduled_time', new Date().toISOString())
+          .order('scheduled_time', { ascending: true });
+
+        if (appointmentsError) throw appointmentsError;
+        setAppointments(appointmentsData || []);
+
+        // Update stats
+        const activeCases = consultationsData?.filter(c => c.status === 'active').length || 0;
+        const thisMonthsConsultations = consultationsData?.filter(c => {
+          const consultationDate = new Date(c.created_at);
+          const now = new Date();
+          return consultationDate.getMonth() === now.getMonth() && 
+                 consultationDate.getFullYear() === now.getFullYear();
+        }).length || 0;
+
+        setStats([
+          { 
+            title: "Casos Activos", 
+            value: activeCases.toString(), 
+            change: `${activeCases} en progreso`, 
+            icon: FileText, 
+            iconColor: "text-blue-500" 
+          },
+          { 
+            title: "Consultas", 
+            value: thisMonthsConsultations.toString(), 
+            change: "Este mes", 
+            icon: MessageCircle, 
+            iconColor: "text-purple-500" 
+          },
+          { 
+            title: "Total Gastado", 
+            value: "$" + (consultationsData?.length * 50 || 0), // Assuming $50 per consultation
+            change: "Histórico", 
+            icon: DollarSign, 
+            iconColor: "text-green-500" 
+          },
+          { 
+            title: "Próxima Cita", 
+            value: appointmentsData?.[0]?.title || "Sin citas", 
+            change: appointmentsData?.[0] 
+              ? formatDate(appointmentsData[0].scheduled_time) + ' a las ' + formatTime(appointmentsData[0].scheduled_time)
+              : "No programadas", 
+            icon: Clock, 
+            iconColor: "text-yellow-500" 
+          }
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user?.id, supabase]);
+
+  // Fetch real data from Supabase
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 1. Fetch active cases
+        const { count: activeCases } = await supabase
+          .from('cases')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user?.id)
+          .eq('status', 'active');
+
+        // 2. Fetch consultations this month
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
+        const { count: consultationsThisMonth } = await supabase
+          .from('consultations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user?.id)
+          .gte('created_at', startOfMonth.toISOString());
+
+        // 3. Fetch total spent
+        const { data: payments, error: paymentsError } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('user_id', user?.id)
+          .eq('status', 'succeeded');
+
+        const totalSpent = payments?.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0) || 0;
+
+        // 4. Fetch next appointment
+        const { data: nextAppointment } = await supabase
+          .from('appointments')
+          .select('scheduled_time')
+          .eq('user_id', user?.id)
+          .gte('scheduled_time', new Date().toISOString())
+          .order('scheduled_time', { ascending: true })
+          .limit(1)
+          .single();
+
+        // Update stats with real data
+        setStats([
+          {
+            title: "Casos Activos",
+            value: activeCases?.toString() || "0",
+            change: `${activeCases || 0} en progreso`,
+            icon: FileText,
+            iconColor: "text-blue-500"
+          },
+          {
+            title: "Consultas",
+            value: consultationsThisMonth?.toString() || "0",
+            change: "Este mes",
+            icon: MessageCircle,
+            iconColor: "text-purple-500"
+          },
+          {
+            title: "Total Gastado",
+            value: `$${totalSpent.toLocaleString()}`,
+            change: "Histórico",
+            icon: DollarSign,
+            iconColor: "text-green-500"
+          },
+          {
+            title: "Próxima Cita",
+            value: nextAppointment 
+              ? new Date(nextAppointment.scheduled_time).toLocaleDateString() 
+              : "Sin citas",
+            change: nextAppointment 
+              ? new Date(nextAppointment.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : "No programadas",
+            icon: Clock,
+            iconColor: "text-yellow-500"
+          }
+        ]);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchDashboardData();
+    }
+  }, [user?.id]);
+
+  // Format consultations data for display
+  const myConsultations = consultations.map(consultation => ({
+    id: consultation.id,
+    title: consultation.title,
+    status: consultation.status,
+    date: formatDistanceToNow(new Date(consultation.created_at), { 
+      addSuffix: true, 
+      locale: es 
+    }),
+    lawyer: consultation.lawyer?.full_name || 
+             consultation.lawyer?.email?.split('@')[0] || 
+             'Abogado',
+  }));
+
+  // Format upcoming appointments
+  const upcomingAppointments = appointments.map(appointment => ({
+    id: appointment.id,
+    title: appointment.title,
+    date: formatDate(appointment.scheduled_time),
+    time: formatTime(appointment.scheduled_time),
+    lawyer: appointment.lawyer?.full_name || 
+             appointment.lawyer?.email?.split('@')[0] || 
+             'Abogado',
+  }));
 
   const handleFindLawyer = () => {
     navigate('/search');
@@ -317,7 +512,7 @@ function ClientDashboardContent() {
     <div className="container mx-auto px-8 py-6 space-y-6">
       <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Hola, {user?.display_name}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Hola, {displayName}</h1>
           <p className="text-muted-foreground">
             Aquí puedes ver el estado de tus casos y consultas.
           </p>
@@ -351,7 +546,7 @@ function ClientDashboardContent() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
+          <CardHeader className="pb-2">
             <CardTitle>Mis Consultas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -369,18 +564,19 @@ function ClientDashboardContent() {
               ))
             ) : (
               <div className="text-center py-8">
-                <MessageSquare className="mx-auto h-8 w-8 text-gray-400" />
+                <MessageCircle className="mx-auto h-8 w-8 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes consultas</h3>
                 <p className="mt-1 text-sm text-gray-500">
                   Comienza una nueva consulta para verla aquí.
                 </p>
                 <div className="mt-6">
                   <Button
-                    onClick={() => navigate('/dashboard/consultations/new')}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    variant="outline"
+                    onClick={() => navigate('/search')}
+                    className="inline-flex items-center"
                   >
-                    <MessageSquare className="-ml-1 mr-2 h-4 w-4" />
-                    Nueva Consulta
+                    <Search className="-ml-1 mr-2 h-4 w-4" />
+                    Buscar Abogado
                   </Button>
                 </div>
               </div>
@@ -392,17 +588,19 @@ function ClientDashboardContent() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle>Próximas Citas</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-sm text-muted-foreground hover:bg-transparent hover:underline p-0 h-auto" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate('/dashboard/appointments');
-                }}
-              >
-                Ver todas
-              </Button>
+              {upcomingAppointments.length > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-sm text-muted-foreground hover:bg-transparent hover:underline p-0 h-auto" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate('/dashboard/appointments');
+                  }}
+                >
+                  Ver todas
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>

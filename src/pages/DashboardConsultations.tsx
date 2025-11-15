@@ -346,10 +346,10 @@ export default function DashboardConsultations() {
                         : consultation.description}
                     </p>
                     <div className="flex items-center gap-4 mt-2 text-sm">
-                      <div className="flex items-center text-muted-foreground">
+                      {/* <div className="flex items-center text-muted-foreground">
                         <MessageCircle className="h-4 w-4 mr-1" />
                         {consultation.messages} mensajes
-                      </div>
+                      </div> */}
                       <div className="flex items-center text-muted-foreground">
                         <Clock className="h-4 w-4 mr-1" />
                         {formatDate(consultation.updatedAt)}
@@ -400,6 +400,7 @@ export default function DashboardConsultations() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Nueva Consulta Legal</DialogTitle>
+            <p className="text-sm text-muted-foreground">¡Primera consulta gratuita con abogados verificados!</p>
           </DialogHeader>
           
           <div className="space-y-4 py-4">
@@ -595,14 +596,14 @@ export default function DashboardConsultations() {
                         <span className="text-muted-foreground">Creada:</span>
                         <span>{formatDate(selectedConsultation.createdAt)}</span>
                       </div>
-                      <div className="flex justify-between">
+                      {/* <div className="flex justify-between">
                         <span className="text-muted-foreground">Última actualización:</span>
                         <span>{formatDate(selectedConsultation.updatedAt)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Mensajes:</span>
                         <span>{selectedConsultation.messages}</span>
-                      </div>
+                      </div> */}
                       {selectedConsultation.price !== null && (
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Precio:</span>
@@ -613,7 +614,7 @@ export default function DashboardConsultations() {
                   </div>
                 </div>
                 
-                <div className="border-t pt-4">
+                {/* <div className="border-t pt-4">
                   <h4 className="font-medium mb-2">Mensajes</h4>
                   <div className="space-y-4">
                     {selectedConsultation.messages > 0 ? (
@@ -637,16 +638,16 @@ export default function DashboardConsultations() {
                       </Button>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsViewModalOpen(false)}>
                   Cerrar
                 </Button>
-                <Button>
+                {/* <Button>
                   <MessageSquare className="h-4 w-4 mr-2" /> Enviar mensaje
-                </Button>
+                </Button> */}
               </DialogFooter>
             </>
           )}

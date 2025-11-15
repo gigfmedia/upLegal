@@ -13,7 +13,7 @@ import LegalAgent from '@/components/LegalAgent';
 
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
-import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
@@ -173,6 +173,7 @@ const AppContent = () => {
             <Route path="/payment/failure" element={<PaymentFailure />} />
             <Route path="/payment-canceled" element={<PaymentCanceled />} />
             <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/auth/verify" element={<EmailVerification />} />
             <Route path="/auth/confirm-email" element={<EmailVerification />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFound />} />

@@ -20,6 +20,7 @@ interface AppointmentData {
   serviceType: string;
   duration: string;
   description: string;
+  contactMethod?: 'videollamada' | 'llamada';
 }
 
 export default function PaymentSuccess() {
@@ -55,18 +56,27 @@ export default function PaymentSuccess() {
 
         if (data.status === 'paid' && appointmentData) {
           try {
+            // First, get the lawyer's email
+            const { data: lawyerData } = await supabase
+              .from('profiles')
+              .select('email')
+              .ilike('full_name', `%${appointmentData.lawyerName}%`)
+              .single();
+
+            // Send confirmation email
             await supabase.functions.invoke('send-appointment-email', {
               body: {
                 clientEmail: appointmentData.clientEmail,
                 clientName: appointmentData.clientName,
                 lawyerName: appointmentData.lawyerName,
-                lawyerEmail: '', // Will be filled in the server function
+                lawyerEmail: lawyerData?.email || '',
                 appointmentDate: appointmentData.appointmentDate,
                 appointmentTime: appointmentData.appointmentTime,
                 serviceType: appointmentData.serviceType,
                 status: 'scheduled',
                 meetingDetails: `Duración: ${appointmentData.duration} minutos`,
                 notes: appointmentData.description,
+                contactMethod: appointmentData.contactMethod || 'videollamada',
                 sendToLawyer: true // Send to both client and lawyer
               }
             });

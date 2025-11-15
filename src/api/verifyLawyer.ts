@@ -31,67 +31,125 @@ const validateRUT = (rut: string): boolean => {
   return expectedCheckDigit === checkDigit;
 };
 
-export const verifyLawyer = async (rut: string, fullName: string) => {
+interface VerificationResult {
+  verified: boolean;
+  message: string;
+  error?: string;
+  details?: Record<string, unknown>;
+}
+
+export const verifyLawyer = async (rut: string, fullName: string): Promise<VerificationResult> => {
+  console.log(`Iniciando verificación de abogado - RUT: ${rut}, Nombre: ${fullName}`);
+  
   try {
     // First validate RUT format
     if (!validateRUT(rut)) {
-      throw new Error('Formato de RUT inválido');
+      const errorMsg = 'Formato de RUT inválido. Use el formato 12.345.678-9';
+      console.error(errorMsg);
+      return {
+        verified: false,
+        message: errorMsg,
+        error: errorMsg
+      };
     }
 
     // In a real implementation, you would call the PJUD API here
-    // For now, we'll simulate a successful verification
+    console.log('Realizando verificación con el Poder Judicial...');
     const isVerified = await simulatePJUDVerification(rut, fullName);
 
     if (isVerified) {
-      // Update the user's verification status in the database
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Verificación exitosa - Abogado encontrado en los registros');
       
-      if (user) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ pjud_verified: true })
-          .eq('id', user.id);
-          
-        if (error) throw error;
+      // Get the current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error al obtener el usuario:', userError);
+        throw userError;
       }
       
-      return { verified: true };
+      if (user) {
+        // Update the user's verification status in the database
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ 
+            pjud_verified: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+          
+        if (updateError) {
+          console.error('Error al actualizar el perfil:', updateError);
+          throw updateError;
+        }
+        
+        console.log('Perfil actualizado con éxito');
+      }
+      
+      return { 
+        verified: true,
+        message: 'Abogado verificado exitosamente en el Poder Judicial'
+      };
     } else {
+      const errorMsg = 'El RUT no está registrado como abogado en el Poder Judicial';
+      console.log(errorMsg);
       return { 
         verified: false,
-        message: 'No se pudo verificar el abogado en los registros del Poder Judicial'
+        message: errorMsg,
+        error: errorMsg
       };
     }
   } catch (error) {
-    console.error('Error verifying lawyer:', error);
-    throw new Error('Error al verificar con el Poder Judicial');
+    const errorMsg = error instanceof Error ? error.message : 'Error desconocido al verificar con el Poder Judicial';
+    console.error('Error en verifyLawyer:', error);
+    return {
+      verified: false,
+      message: errorMsg,
+      error: errorMsg
+    };
   }
 };
 
 // Simulate PJUD verification (replace with actual API call)
 const simulatePJUDVerification = async (rut: string, fullName: string): Promise<boolean> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  console.log(`Simulando verificación PJUD para RUT: ${rut}, Nombre: ${fullName}`);
+  
+  // Simulate API call delay (1-2 seconds)
+  const delay = 1000 + Math.random() * 1000;
+  await new Promise(resolve => setTimeout(resolve, delay));
   
   // In a real implementation, you would make an actual API call here:
   /*
-  const response = await fetch('https://api.pjud.cl/consulta-abogados', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_PJUD_API_KEY}`
-    },
-    body: JSON.stringify({
-      rut: rut.replace(/\./g, '').replace(/-/g, '').slice(0, -1),
-      dv: rut.slice(-1).toUpperCase(),
-      nombre: fullName
-    })
-  });
-  
-  const data = await response.json();
-  return data.verificado === true;
+  try {
+    console.log('Realizando petición al Poder Judicial...');
+    const response = await fetch('https://api.pjud.cl/consulta-abogados', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_PJUD_API_KEY}`
+      },
+      body: JSON.stringify({
+        rut: rut.replace(/\./g, '').replace(/-/g, '').slice(0, -1),
+        dv: rut.slice(-1).toUpperCase(),
+        nombre: fullName
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error en la respuesta del servidor: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Respuesta del Poder Judicial:', data);
+    return data.verificado === true;
+  } catch (error) {
+    console.error('Error al contactar al Poder Judicial:', error);
+    throw error;
+  }
   */
   
-  // For now, simulate 80% success rate
-  return Math.random() < 0.8;
+  // For now, simulate 80% success rate for testing
+  const isVerified = Math.random() < 0.8;
+  console.log(`Simulación completada: ${isVerified ? 'VERIFICADO' : 'NO VERIFICADO'}`);
+  return isVerified;
 };
