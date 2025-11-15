@@ -195,6 +195,59 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
       console.log('Using back URLs:', backUrls);
 
+      // Calculate fees: 20% platform fee, 10% client surcharge
+      // Calculate estimated cost first
+      const estimatedCost = (parseInt(formData.duration || "60") / 60) * hourlyRate;
+      const MIN_AMOUNT_CLP = 1000;
+      const originalAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
+      const platformFee = Math.round(originalAmount * 0.2); // 20% of original amount
+      const clientSurcharge = Math.round(originalAmount * 0.1); // 10% surcharge to client
+      const clientAmount = Math.round(originalAmount * 1.1); // Amount client pays (original + 10%)
+      const lawyerAmount = originalAmount - platformFee; // Amount lawyer receives (original - 20%)
+
+      // Get lawyer's user_id from profile
+      const { data: lawyerProfile, error: lawyerProfileError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('id', lawyerId)
+        .single();
+
+      if (lawyerProfileError || !lawyerProfile) {
+        throw new Error('No se pudo obtener el ID de usuario del abogado');
+      }
+
+      // Create payment record with fees
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user?.id || '',
+          lawyer_id: lawyerProfile.user_id,
+          amount: clientAmount, // Amount with surcharge
+          platform_fee: platformFee,
+          lawyer_amount: lawyerAmount,
+          currency: 'CLP',
+          status: 'pending',
+          metadata: {
+            type: 'appointment',
+            original_amount: originalAmount,
+            client_surcharge: clientSurcharge,
+            appointment_info: {
+              date: formatDate(formData.date),
+              time: formData.time || '',
+              duration: formData.duration || 60,
+              description: formData.description || '',
+              contact_method: formData.contactMethod || 'videollamada'
+            }
+          }
+        })
+        .select()
+        .single();
+
+      if (paymentError) {
+        console.error('Error creating payment record:', paymentError);
+        // Continue anyway, but log the error
+      }
+
       // Prepare the request payload
       const payload = {
         items: [{
@@ -202,7 +255,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           title: `Consulta con ${lawyerName}`,
           description: formData.consultationType || 'Consulta legal',
           quantity: 1,
-          unit_price: chargeAmount,
+          unit_price: clientAmount, // Client pays amount with surcharge
           currency_id: 'CLP',
           category_id: 'services'
         }],
@@ -224,6 +277,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           service_type: formData.consultationType || 'general',
           contact_method: formData.contactMethod || 'videollamada',
           created_at: new Date().toISOString(),
+          payment_id: payment?.id || null,
+          original_amount: originalAmount,
+          platform_fee: platformFee,
+          client_surcharge: clientSurcharge,
+          lawyer_amount: lawyerAmount,
           appointment_info: {
             date: formatDate(formData.date),
             time: formData.time || '',
@@ -231,8 +289,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             description: formData.description || '',
             contact_method: formData.contactMethod || 'videollamada'
           },
-          amount: chargeAmount
-        }
+          amount: clientAmount
+        },
+        external_reference: payment?.id || `appointment-${Date.now()}`
       };
 
       // Log the request payload (without sensitive data)
@@ -299,11 +358,28 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         throw new Error(errorMessage);
       }
 
+      // Update payment record with MercadoPago preference ID if payment was created
+      if (payment?.id && responseData.id) {
+        await supabase
+          .from('payments')
+          .update({
+            metadata: {
+              ...payment.metadata,
+              mercadopago_preference_id: responseData.id
+            }
+          })
+          .eq('id', payment.id);
+      }
+
       // Save appointment data to local storage before redirect
       const appointmentData = {
         ...formData,
-        paymentId: responseData.id || '',
-        amount: chargeAmount,
+        paymentId: payment?.id || responseData.id || '',
+        preferenceId: responseData.id || '',
+        amount: originalAmount,
+        clientAmount: clientAmount,
+        platformFee: platformFee,
+        lawyerAmount: lawyerAmount,
         lawyerId,
         lawyerName,
         createdAt: new Date().toISOString()
@@ -382,7 +458,8 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Calculate estimated cost
   const estimatedCost = (parseInt(formData.duration || "60") / 60) * hourlyRate;
   const MIN_AMOUNT_CLP = 1000;
-  const chargeAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
+  const originalAmount = Math.max(Math.round(estimatedCost), MIN_AMOUNT_CLP);
+  const clientAmount = Math.round(originalAmount * 1.1); // Amount with 10% surcharge
 
   // Configuración de fechas - usar fecha local sin hora
   const getLocalDate = (date = new Date()) => {
@@ -840,16 +917,24 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           
           {/* Cost Estimate */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="font-medium">Costo estimado:</span>
-              <span className="text-xl font-bold text-black-600">
-                ${formatNumber(chargeAmount)}
-              </span>
+            <div className="flex justify-between items-start">
+              <span className="font-medium pt-1">Costo estimado:</span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-black-600 block">
+                  ${formatNumber(clientAmount)}
+                </span>
+                <span className="text-sm text-gray-600 line-through">
+                  ${formatNumber(originalAmount)}
+                </span>
+              </div>
             </div>
               <p className="text-sm text-gray-600 mt-1">
                 {formData.duration} min × ${formatNumber(hourlyRate)} / hora
               </p>
-              {chargeAmount > estimatedCost && (
+              <p className="text-xs text-amber-600 mt-1">
+                Incluye 10% de recargo por procesamiento de pago
+              </p>
+              {originalAmount > estimatedCost && (
                 <p className="text-xs text-yellow-600 mt-1">
                   Se aplica monto mínimo de $1.000 CLP para pagos con tarjeta.
                 </p>
@@ -865,7 +950,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 disabled={isProcessing}
                 className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
               >
-                {isProcessing ? "Procesando..." : `Pagar $${formatNumber(chargeAmount)}`}
+                {isProcessing ? "Procesando..." : `Pagar $${formatNumber(clientAmount)}`}
               </Button>
             </div>
         </form>

@@ -47,14 +47,16 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasUsedFreeConsultation, setHasUsedFreeConsultation] = useState(false);
+  const [actualContactFee, setActualContactFee] = useState(contactFeeClp);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if user has already used their free consultation with this lawyer
+  // Check if user has already used their free consultation with this lawyer and get contact fee
   useEffect(() => {
-    const checkFreeConsultation = async () => {
+    const checkFreeConsultationAndFee = async () => {
       if (!user) return;
       
+      // Check free consultation usage
       const { data, error } = await supabase
         .from('consultations')
         .select('id')
@@ -66,10 +68,21 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
       if (!error && data && data.length > 0) {
         setHasUsedFreeConsultation(true);
       }
+
+      // Get the actual contact fee from the lawyer's profile
+      const { data: lawyerProfile, error: lawyerError } = await supabase
+        .from('profiles')
+        .select('contact_fee_clp')
+        .eq('id', lawyerId)
+        .single();
+
+      if (!lawyerError && lawyerProfile) {
+        setActualContactFee(lawyerProfile.contact_fee_clp || contactFeeClp || 0);
+      }
     };
 
-    checkFreeConsultation();
-  }, [user, lawyerId]);
+    checkFreeConsultationAndFee();
+  }, [user, lawyerId, contactFeeClp]);
 
   // Auto-fill user data when component mounts or user changes
   useEffect(() => {
@@ -231,9 +244,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
         description: formData.message,
         status: 'pending',
         is_free: isFree,
-        service_id: service?.id || null,
-        price: consultationPrice,
-        created_at: new Date().toISOString()
+        price: consultationPrice
       });
       
       const { data, error } = await supabase
@@ -245,9 +256,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
           description: formData.message,
           status: 'pending',
           is_free: isFree,
-          service_id: service?.id || null,
-          price: consultationPrice,
-          created_at: new Date().toISOString()
+          price: consultationPrice
         }])
         .select('*');
 
@@ -277,63 +286,173 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
     }
 
     // For non-free consultations or if user has already used their free consultation with this lawyer
-    if ((!hasFreeConsultation || hasUsedFreeConsultation) && contactFeeClp > 0) {
+    const needsPayment = (!hasFreeConsultation || hasUsedFreeConsultation) && actualContactFee > 0;
+    
+    if (needsPayment) {
       try {
         setIsLoading(true);
         
+        // Get the latest contact fee from the profile
+        const { data: lawyerProfile, error: lawyerError } = await supabase
+          .from('profiles')
+          .select('contact_fee_clp')
+          .eq('id', lawyerId)
+          .single();
+
+        if (lawyerError || !lawyerProfile) {
+          throw new Error('No se pudo obtener la información del abogado');
+        }
+
+        const originalAmount = lawyerProfile.contact_fee_clp || actualContactFee || contactFeeClp || 0;
+        
+        // Calculate fees: 20% platform fee, 10% client surcharge
+        const platformFee = Math.round(originalAmount * 0.2); // 20% of original amount
+        const clientSurcharge = Math.round(originalAmount * 0.1); // 10% surcharge to client
+        const clientAmount = Math.round(originalAmount * 1.1); // Amount client pays (original + 10%)
+        const lawyerAmount = originalAmount - platformFee; // Amount lawyer receives (original - 20%)
+        
         // 1. First create the consultation record
+        const consultationTitle = service 
+          ? `Consulta: ${service.title}`
+          : formData.subject || 'Consulta legal';
+        
+        const consultationDescription = service
+          ? `[Servicio: ${service.title}]\n\n${formData.message}`
+          : formData.message;
+        
         const { data: consultation, error: consultationError } = await supabase
           .from('consultations')
           .insert([{
             client_id: user.id,
             lawyer_id: lawyerId,
-            title: formData.subject || 'Consulta legal',
-            description: formData.message,
-            status: 'pending_payment',
+            title: consultationTitle,
+            description: consultationDescription,
+            status: 'pending',
             is_free: false,
-            price: contactFeeClp,
-            payment_status: 'pending'
+            price: originalAmount
           }])
           .select()
           .single();
 
         if (consultationError) throw consultationError;
 
-        console.log('=== CREANDO PREFERENCIA DE PAGO ===');
-        console.log('URL de la aplicación:', window.location.origin);
-        console.log('Entorno:', import.meta.env.MODE);
+        // 2. Create payment record with fees
+        // Get lawyer's user_id from profile
+        const { data: lawyerProfileFull, error: lawyerProfileError } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('id', lawyerId)
+          .single();
+
+        if (lawyerProfileError || !lawyerProfileFull) {
+          throw new Error('No se pudo obtener el ID de usuario del abogado');
+        }
+
+        const { data: payment, error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            user_id: user.id,
+            lawyer_id: lawyerProfileFull.user_id,
+            amount: clientAmount, // Amount with surcharge
+            platform_fee: platformFee,
+            lawyer_amount: lawyerAmount,
+            currency: 'CLP',
+            status: 'pending',
+            metadata: {
+              type: 'contact_fee',
+              consultation_id: consultation.id,
+              original_amount: originalAmount,
+              client_surcharge: clientSurcharge,
+              service_id: service?.id || null
+            }
+          })
+          .select()
+          .single();
+
+        if (paymentError) {
+          console.error('Error creating payment record:', paymentError);
+          // Continue anyway, but log the error
+        }
+
+        // 3. Create Mercado Pago preference
+        // Use production URL for back_urls (MercadoPago requires accessible URLs)
+        // For localhost, use a public URL or remove auto_return
+        const baseUrl = window.location.origin;
+        const isLocalhost = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
         
-        // 2. Create Mercado Pago preference
-        const mpPayload = {
+        // Use production URL if available, otherwise use localhost (but remove auto_return for localhost)
+        const productionUrl = import.meta.env.VITE_APP_URL || 'https://uplegal.netlify.app';
+        const finalBaseUrl = isLocalhost ? productionUrl : baseUrl;
+        
+        const successUrl = `${finalBaseUrl}/payment-success?consultation_id=${consultation.id}`;
+        const failureUrl = `${finalBaseUrl}/payment/failure?consultation_id=${consultation.id}`;
+        const pendingUrl = `${finalBaseUrl}/payment-canceled?consultation_id=${consultation.id}`;
+        
+        const mpPayload: {
+          items: Array<{
+            id: string;
+            title: string;
+            quantity: number;
+            currency_id: string;
+            unit_price: number;
+            description: string;
+          }>;
+          external_reference: string;
+          back_urls: {
+            success: string;
+            failure: string;
+            pending: string;
+          };
+          auto_return?: string;
+          binary_mode: boolean;
+          statement_descriptor: string;
+          metadata: Record<string, unknown>;
+          notification_url?: string;
+        } = {
           items: [{
             id: `consulta-${consultation.id}`,
-            title: `Consulta con ${lawyerName}`.substring(0, 100),
+            title: service 
+              ? `Consulta: ${service.title}`.substring(0, 100)
+              : `Consulta con ${lawyerName}`.substring(0, 100),
             quantity: 1,
             currency_id: 'CLP',
-            unit_price: Number(contactFeeClp),
+            unit_price: clientAmount, // Client pays amount with surcharge
             description: (formData.subject || 'Consulta legal').substring(0, 255),
           }],
-          external_reference: `consulta-${consultation.id}`,
+          external_reference: payment?.id || `consulta-${consultation.id}`,
           back_urls: {
-            success: `${window.location.origin}/payment/callback?status=success`,
-            failure: `${window.location.origin}/payment/callback?status=failure`,
-            pending: `${window.location.origin}/payment/callback?status=pending`
+            success: successUrl,
+            failure: failureUrl,
+            pending: pendingUrl
           },
-          auto_return: 'approved',
+          // Only use auto_return if URLs are accessible (not localhost)
+          ...(!isLocalhost && { auto_return: 'approved' }),
           binary_mode: true,
-          notification_url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mercado-pago-webhook`,
           statement_descriptor: 'UPLEGAL',
           metadata: {
             type: 'legal_consultation',
             consultation_id: consultation.id,
             lawyer_id: lawyerId,
-            client_id: user.id
+            client_id: user.id,
+            service_id: service?.id || null,
+            payment_id: payment?.id || null,
+            original_amount: originalAmount,
+            platform_fee: platformFee,
+            client_surcharge: clientSurcharge,
+            lawyer_amount: lawyerAmount
           }
         };
 
-        console.log('Enviando solicitud a Mercado Pago...');
+        // Add notification_url only if it's defined
+        if (import.meta.env.VITE_SUPABASE_URL) {
+          mpPayload.notification_url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mercado-pago-webhook`;
+        }
         
         // 3. Send request to Mercado Pago
+        if (!import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN) {
+          throw new Error('Token de acceso de MercadoPago no configurado');
+        }
+
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
           method: 'POST',
           headers: {
@@ -342,47 +461,87 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
           },
           body: JSON.stringify(mpPayload)
         });
-
+        
         const preference = await response.json();
         
         if (!response.ok) {
-          console.error('Error de Mercado Pago:', preference);
-          throw new Error(preference.message || 'Error al crear la preferencia de pago');
+          console.error('Error de MercadoPago:', {
+            status: response.status,
+            error: preference.error,
+            message: preference.message,
+            cause: preference.cause
+          });
+          throw new Error(preference.message || preference.error || 'Error al crear la preferencia de pago');
+        }
+        
+        if (!preference.id) {
+          console.error('Respuesta inválida de MercadoPago:', preference);
+          throw new Error('La respuesta de MercadoPago no incluye un ID de preferencia');
         }
 
-        // 4. Update consultation with payment preference ID
-        const { error: updateError } = await supabase
-          .from('consultations')
-          .update({ 
-            payment_preference_id: preference.id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', consultation.id);
-
-        if (updateError) throw updateError;
+        // 4. Update payment record with MercadoPago preference ID if payment was created
+        if (payment?.id) {
+          await supabase
+            .from('payments')
+            .update({
+              metadata: {
+                ...payment.metadata,
+                mercadopago_preference_id: preference.id
+              }
+            })
+            .eq('id', payment.id);
+        }
 
         // 5. Save consultation data for callback handling
         const consultationData = {
           ...formData,
-          paymentId: preference.id,
-          amount: contactFeeClp,
+          paymentId: payment?.id || preference.id,
+          preferenceId: preference.id,
+          amount: originalAmount,
+          clientAmount: clientAmount,
+          platformFee: platformFee,
+          lawyerAmount: lawyerAmount,
           lawyerId,
           lawyerName,
           consultationId: consultation.id,
+          clientId: user.id,
+          clientName: formData.name,
+          clientEmail: formData.email,
+          subject: formData.subject,
+          message: formData.message,
           createdAt: new Date().toISOString()
         };
         
+        // 6. Get redirect URL from preference response
+        // MercadoPago returns init_point (production) or sandbox_init_point (sandbox)
+        let redirectUrl = preference.init_point || preference.sandbox_init_point;
+        
+        // If no init_point, construct the URL manually
+        if (!redirectUrl && preference.id) {
+          // Determine if we're in production or sandbox based on token
+          const accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+          const isProduction = !accessToken.startsWith('TEST-');
+          
+          if (isProduction) {
+            redirectUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${preference.id}`;
+          }
+        }
+        
+        if (!redirectUrl) {
+          console.error('No se pudo obtener URL de redirección');
+          throw new Error('No se pudo obtener la URL de redirección de MercadoPago');
+        }
+        
+        // 7. Save data to localStorage for callback handling
         localStorage.setItem('pendingConsultation', JSON.stringify(consultationData));
         
-        // 6. Close the modal
+        // 8. Close the modal
         onClose();
         
-        // 7. Redirect to Mercado Pago
-        const redirectUrl = preference.init_point || preference.sandbox_init_point || 
-          `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${preference.id}`;
-        
-        console.log('Redirigiendo a:', redirectUrl);
-        window.location.href = redirectUrl;
+        // 9. Redirect to MercadoPago (use setTimeout to ensure modal closes first)
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 150);
       } catch (error) {
         console.error('Error al procesar el pago:', error);
         toast({
@@ -554,6 +713,26 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
                 )}
               </div>
             )}
+
+            {/* Mostrar precio de consulta cuando hay servicio pero también hay tarifa de contacto */}
+            {service && (!hasFreeConsultation || hasUsedFreeConsultation) && actualContactFee > 0 && (
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">Tarifa por contactar</p>
+                    <p className="text-xs text-amber-600 mt-1">Incluye 10% de recargo por procesamiento</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-base font-semibold text-amber-900">
+                      {formatCLP(Math.round(actualContactFee * 1.1))}
+                    </p>
+                    <p className="text-xs text-amber-700 line-through">
+                      {formatCLP(actualContactFee)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {renderFieldWithCheck('name', 'Nombre completo')}
@@ -592,7 +771,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
                   value={formData.message}
                   onChange={handleChange}
                   placeholder="Escribe tu mensaje aquí..."
-                  className={`min-h-[120px] w-full ${formData.message && isFieldValid('message') ? 'border-green-500 pr-10' : ''}`}
+                  className={`min-h-[120px] w-full mb-4 ${formData.message && isFieldValid('message') ? 'border-green-500 pr-10' : ''}`}
                   required
                 />
                 {formData.message && isFieldValid('message') && (
@@ -601,6 +780,27 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
                   </div>
                 )}
               </div>
+
+              {/* Mostrar precio de consulta cuando no es gratuita */}
+              {(!hasFreeConsultation || hasUsedFreeConsultation) && actualContactFee > 0 && !service && (
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium pt-1">Costo estimado:</span>
+                      <p className="text-xs text-amber-700 mt-1">Se te redirigirá a MercadoPago para completar el pago</p>
+                      <p className="text-xs text-amber-600 mt-1">Incluye 10% de recargo por procesamiento</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-black-600 block">
+                        {formatCLP(Math.round(actualContactFee * 1.1))}
+                      </p>
+                      <p className="text-sm text-gray-600 line-through">
+                        {formatCLP(actualContactFee)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex justify-end space-x-2 pt-2">
@@ -621,7 +821,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
                   'Enviar consulta gratuita'
                 ) : (
                   <>
-                    Pagar {contactFeeClp > 0 ? formatCLP(contactFeeClp) : 'consulta'}
+                    Pagar {actualContactFee > 0 ? formatCLP(Math.round(actualContactFee * 1.1)) : 'consulta'}
                   </>
                 )}
               </Button>
