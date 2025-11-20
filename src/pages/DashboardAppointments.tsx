@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { ScheduleModal } from '@/components/ScheduleModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { incrementCaseCount } from '@/lib/caseCounter';
@@ -51,41 +52,24 @@ const mapApiToUiAppointment = (apiAppt: AppointmentData, userRole: 'client' | 'l
   };
 };
 
-// Mock data para citas
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    title: 'Consulta Inicial - Contrato Laboral',
-    description: 'Revisión de contrato de trabajo y análisis de cláusulas específicas.',
-    status: 'confirmed',
-    type: 'video',
-    lawyerName: 'María González',
-    lawyerSpecialty: 'Derecho Laboral',
-    date: '2024-01-22',
-    time: '10:00',
-    duration: 60,
-    meetingLink: 'https://zoom.us/j/123456789',
-    price: 45000,
-    notes: 'Traer copia del contrato firmado',
-    createdAt: '2024-01-15'
-  },
-  // ... other mock appointments ...
-];
 
 export default function DashboardAppointments() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [isNewAppointmentModalOpen, setIsNewAppointmentModalOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedLawyer, setSelectedLawyer] = useState<{id: string, name: string, rate: number} | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [rescheduleNotes, setRescheduleNotes] = useState('');
@@ -104,39 +88,126 @@ export default function DashboardAppointments() {
 
   // Load appointments on component mount
   useEffect(() => {
+    let isMounted = true;
+    let loadingToastId: string | undefined;
+    
     const loadAppointments = async () => {
-      if (!user) return;
+      if (!isMounted) return;
       
       setIsLoading(true);
+      loadingToastId = toast({
+        title: 'Cargando citas...',
+        description: 'Por favor espera mientras cargamos tus citas.',
+        variant: 'default',
+        duration: 2000,
+      }).id;
+      
       try {
-        const userRole = user.role as 'client' | 'lawyer' || 'client'; // Default to 'client' if role is not set
-        const response = await appointmentsApi.list({ status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus });
+        const userRole = user.role as 'client' | 'lawyer' || 'client';
         
-        // Filter appointments based on user role
-        const filteredAppointments = response.filter(appt => 
-          userRole === 'lawyer' ? appt.lawyer_id === user.id : appt.client_id === user.id
-        );
+        // Add a small delay to prevent rapid successive requests
+        await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Map API appointments to UI appointments
-        const uiAppointments = filteredAppointments.map(appt => 
-          mapApiToUiAppointment(appt, userRole)
-        );
-        
-        setAppointments(uiAppointments);
-      } catch (error) {
-        console.error('Error loading appointments:', error);
-        toast({
-          title: 'Error',
-          description: 'No se pudieron cargar las citas. Por favor, inténtalo de nuevo.',
-          variant: 'destructive',
+        const response = await appointmentsApi.list({ 
+          status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus 
         });
+        
+        if (!isMounted) return;
+
+        // Filter appointments based on user role
+        const filteredAppointments = response.filter(appt => {
+          try {
+            return userRole === 'lawyer' 
+              ? appt.lawyer_id === user.id 
+              : appt.client_id === user.id;
+          } catch (error) {
+            console.error('Error filtering appointments:', error);
+            return false;
+          }
+        });
+        
+        // Map API appointments to UI appointments with error handling
+        const uiAppointments = filteredAppointments
+          .map(appt => {
+            try {
+              return mapApiToUiAppointment(appt, userRole);
+            } catch (error) {
+              console.error('Error mapping appointment:', { appt, error });
+              return null;
+            }
+          })
+          .filter(Boolean) as Appointment[]; // Filter out any null values from failed mappings
+        
+        if (!isMounted) return;
+        
+        // Only update if we have appointments
+        if (uiAppointments.length > 0) {
+          setAppointments(uiAppointments);
+          if (loadingToastId) {
+            toast.dismiss(loadingToastId);
+          }
+        } else {
+          // If no appointments, set empty array and show message
+          setAppointments([]);
+          if (hasLoadedInitialData) {
+            toast({
+              title: 'Sin citas',
+              description: 'No se encontraron citas con los filtros actuales.',
+              variant: 'default',
+              duration: 3000,
+            });
+          }
+        }
+        
+        if (!hasLoadedInitialData) {
+          setHasLoadedInitialData(true);
+        }
+        
+      } catch (error) {
+        console.error('Error loading appointments:', {
+          error,
+          userRole: user?.role,
+          statusFilter,
+          isMounted
+        });
+        
+        if (!isMounted) return;
+        
+        // Dismiss any loading toasts
+        if (loadingToastId) {
+          dismiss(loadingToastId);
+        }
+        
+        // Only show network errors, not for empty results
+        if (error instanceof Error && error.message.includes('Network')) {
+          toast({
+            title: 'Error de conexión',
+            description: 'No se pudo conectar al servidor. Verifica tu conexión a internet.',
+            variant: 'destructive',
+            duration: 5000,
+          });
+        }
+        
+        // Always set empty array on error to prevent any mock data from showing
+        setAppointments([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
-    loadAppointments();
-  }, [user, statusFilter, toast]);
+    // Add a small delay before loading to prevent rapid successive requests
+    const timer = setTimeout(() => {
+      loadAppointments();
+    }, 300);
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [user, statusFilter, toast, hasLoadedInitialData]);
 
   const handleJoinMeeting = (appointment: Appointment) => {
     if (appointment.meetingLink) {
@@ -174,7 +245,7 @@ export default function DashboardAppointments() {
     if (!appointment) return;
     
     setSelectedAppointment(appointment);
-    setIsCancelModalOpen(true);
+    setIsCancelDialogOpen(true);
   };
 
   const handleConfirmCancel = async () => {
@@ -183,6 +254,13 @@ export default function DashboardAppointments() {
     setIsSubmitting(true);
     
     try {
+      // Show loading state
+      const toastId = toast({
+        title: 'Procesando...',
+        description: 'Cancelando la cita...',
+        variant: 'default',
+      });
+      
       // Update the appointment status to 'cancelled' via API
       await appointmentsApi.update(selectedAppointment.id, {
         status: 'cancelled',
@@ -197,18 +275,38 @@ export default function DashboardAppointments() {
         )
       );
       
+      // Dismiss loading toast and show success
+      toast.dismiss(toastId);
       toast({
-        title: "Cita cancelada",
+        title: "✅ Cita cancelada",
         description: "La cita ha sido cancelada exitosamente.",
+        duration: 5000,
       });
       
-      setIsCancelModalOpen(false);
+      setIsCancelDialogOpen(false);
     } catch (error) {
       console.error('Error cancelling appointment:', error);
+      
+      // Determine error message based on error type
+      let errorMessage = 'No se pudo cancelar la cita. ';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('404')) {
+          errorMessage += 'La cita no fue encontrada.';
+        } else if (error.message.includes('403')) {
+          errorMessage += 'No tienes permiso para realizar esta acción.';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
+        } else {
+          errorMessage += 'Por favor, inténtalo de nuevo más tarde.';
+        }
+      }
+      
       toast({
-        title: 'Error',
-        description: 'No se pudo cancelar la cita. Por favor, inténtalo de nuevo.',
+        title: '❌ Error al cancelar',
+        description: errorMessage,
         variant: 'destructive',
+        duration: 7000,
       });
     } finally {
       setIsSubmitting(false);
@@ -216,11 +314,38 @@ export default function DashboardAppointments() {
   };
 
   const handleConfirmReschedule = async () => {
-    if (!rescheduleDate || !rescheduleTime || !selectedAppointment) return;
+    if (!rescheduleDate || !rescheduleTime || !selectedAppointment) {
+      toast({
+        title: 'Datos incompletos',
+        description: 'Por favor, selecciona una fecha y hora para reagendar.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Validate if the selected date is in the future
+    const selectedDateTime = new Date(`${rescheduleDate}T${rescheduleTime}`);
+    const now = new Date();
+    
+    if (selectedDateTime <= now) {
+      toast({
+        title: 'Fecha inválida',
+        description: 'Por favor, selecciona una fecha y hora futuras.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     
     try {
+      // Show loading state
+      const toastId = toast({
+        title: 'Procesando...',
+        description: 'Reagendando la cita...',
+        variant: 'default',
+      });
+      
       // Update the appointment via API
       await appointmentsApi.update(selectedAppointment.id, {
         date: rescheduleDate,
@@ -265,17 +390,8 @@ export default function DashboardAppointments() {
   // handleConfirmCancel implementation is already defined above
 
   const handleNewAppointment = () => {
-    setNewAppointment({
-      title: '',
-      description: '',
-      type: 'video',
-      date: '',
-      time: '',
-      lawyerName: '',
-      lawyerSpecialty: '',
-      notes: ''
-    });
-    setIsNewAppointmentModalOpen(true);
+    // This function is kept for backward compatibility
+    setIsScheduleModalOpen(true);
   };
 
   const handleCreateAppointment = async () => {
@@ -309,11 +425,9 @@ export default function DashboardAppointments() {
       let meetingLink: string | null = null;
       let location: string | null = null;
       
-      // Use type predicates to help TypeScript understand the type narrowing
+      // Generate meeting link for video calls
       if (newAppointment.type === 'video') {
         meetingLink = `https://meet.google.com/meet-${Date.now()}`;
-      } else if (newAppointment.type === 'in-person') {
-        location = 'Oficina Central - Santiago Centro';
       }
       
       const appointmentData: Omit<AppointmentData, 'id'> = {
@@ -367,7 +481,7 @@ export default function DashboardAppointments() {
         description: `Tu cita ha sido agendada para el ${newAppointment.date} a las ${newAppointment.time}.`,
       });
       
-      setIsNewAppointmentModalOpen(false);
+      setIsScheduleModalOpen(false);
     } catch (error) {
       console.error('Error creating appointment:', error);
       toast({
@@ -406,7 +520,6 @@ export default function DashboardAppointments() {
     switch (type) {
       case 'video': return <Video className="h-4 w-4" />;
       case 'phone': return <Phone className="h-4 w-4" />;
-      case 'in-person': return <MapPin className="h-4 w-4" />;
       default: return <Calendar className="h-4 w-4" />;
     }
   };
@@ -414,8 +527,7 @@ export default function DashboardAppointments() {
   const getTypeText = (type: string) => {
     switch (type) {
       case 'video': return 'Videollamada';
-      case 'phone': return 'Teléfono';
-      case 'in-person': return 'Presencial';
+      case 'phone': return 'Llamada telefónica';
       default: return type;
     }
   };
@@ -424,7 +536,6 @@ export default function DashboardAppointments() {
     switch (type) {
       case 'video': return 'bg-blue-100 text-blue-800';
       case 'phone': return 'bg-green-100 text-green-800';
-      case 'in-person': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -486,7 +597,7 @@ export default function DashboardAppointments() {
               Gestiona tus citas programadas y consultas
             </p>
           </div>
-          {appointments.length > 0 && (
+          {sortedAppointments.length > 0 && (
             <Button 
               onClick={handleNewAppointment}
               className="bg-black hover:bg-gray-800"
@@ -498,7 +609,7 @@ export default function DashboardAppointments() {
         </div>
 
         {/* Filtros y búsqueda */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
@@ -529,7 +640,6 @@ export default function DashboardAppointments() {
               <SelectItem value="all">Todos los tipos</SelectItem>
               <SelectItem value="video">Videollamada</SelectItem>
               <SelectItem value="phone">Llamada telefónica</SelectItem>
-              <SelectItem value="in-person">Presencial</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -649,10 +759,10 @@ export default function DashboardAppointments() {
                       <Button 
                         size="sm" 
                         onClick={() => handleJoinMeeting(appointment)}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-[#00897B] hover:bg-[#00796B] text-white"
                       >
                         <Video className="h-4 w-4 mr-1" />
-                        Unirse a la reunión
+                        Unirse a Google Meet
                       </Button>
                     )}
                   </div>
@@ -668,144 +778,21 @@ export default function DashboardAppointments() {
             </h3>
             <p className="text-gray-600 mb-4">
               {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
+                ? 'Intenta ajustar los filtros de búsqueda o agendar una nueva cita.'
                 : 'Aún no tienes citas agendadas.'
               }
             </p>
-            {appointments.length === 0 && !searchTerm && statusFilter === 'all' && typeFilter === 'all' && (
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={handleNewAppointment}
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Agendar cita
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Modal de nueva cita */}
-      <Dialog open={isNewAppointmentModalOpen} onOpenChange={setIsNewAppointmentModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Nueva Cita</DialogTitle>
-            <DialogDescription>
-              Completa los detalles para agendar una nueva cita con un abogado.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título</Label>
-              <Input 
-                id="title" 
-                placeholder="Ej: Consulta sobre contrato laboral" 
-                value={newAppointment.title}
-                onChange={(e) => setNewAppointment({...newAppointment, title: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Describe el motivo de tu consulta" 
-                rows={3}
-                value={newAppointment.description}
-                onChange={(e) => setNewAppointment({...newAppointment, description: e.target.value})}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Fecha</Label>
-                <Input 
-                  id="date" 
-                  type="date" 
-                  value={newAppointment.date}
-                  onChange={(e) => setNewAppointment({...newAppointment, date: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Hora</Label>
-                <Input 
-                  id="time" 
-                  type="time" 
-                  value={newAppointment.time}
-                  onChange={(e) => setNewAppointment({...newAppointment, time: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo de consulta</Label>
-              <Select 
-                value={newAppointment.type}
-                onValueChange={(value) => 
-                  setNewAppointment(prev => ({
-                    ...prev,
-                    type: value as AppointmentType
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tipo de cita" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="video">Videollamada</SelectItem>
-                  <SelectItem value="phone">Llamada telefónica</SelectItem>
-                  <SelectItem value="in-person">Presencial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lawyer">Abogado</Label>
-                <Input 
-                  id="lawyer" 
-                  placeholder="Nombre del abogado" 
-                  value={newAppointment.lawyerName}
-                  onChange={(e) => setNewAppointment({...newAppointment, lawyerName: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="specialty">Especialidad</Label>
-                <Input 
-                  id="specialty" 
-                  placeholder="Ej: Derecho Laboral" 
-                  value={newAppointment.lawyerSpecialty}
-                  onChange={(e) => setNewAppointment({...newAppointment, lawyerSpecialty: e.target.value})}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notas adicionales</Label>
-              <Textarea 
-                id="notes" 
-                placeholder="Información adicional que quieras compartir" 
-                rows={2}
-                value={newAppointment.notes}
-                onChange={(e) => setNewAppointment({...newAppointment, notes: e.target.value})}
-              />
-            </div>
-          </div>
-          <DialogFooter>
             <Button 
-              variant="outline" 
-              onClick={() => setIsNewAppointmentModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleCreateAppointment}
-              disabled={!newAppointment.title || !newAppointment.description || 
-                       !newAppointment.date || !newAppointment.time || 
-                       !newAppointment.lawyerName || !newAppointment.lawyerSpecialty}
               className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setIsScheduleModalOpen(true)}
             >
               <Calendar className="h-4 w-4 mr-2" />
               Agendar cita
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        )}
+      </div>
+
 
       {/* Modal de detalles de la cita */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
@@ -858,19 +845,19 @@ export default function DashboardAppointments() {
                 )}
                 {selectedAppointment.meetingLink && (
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Enlace de la reunión</Label>
+                    <Label className="text-sm font-medium text-gray-500 block">Enlace de la reunión</Label>
                     <a 
                       href={selectedAppointment.meetingLink} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-blue-600 hover:underline flex space-x-2"
                     >
                       {selectedAppointment.meetingLink}
                     </a>
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Estado</Label>
+                  <Label className="text-sm font-medium text-gray-500 block">Estado</Label>
                   <Badge className={getStatusColor(selectedAppointment.status)}>
                     {getStatusText(selectedAppointment.status)}
                   </Badge>
@@ -996,7 +983,7 @@ export default function DashboardAppointments() {
       </Dialog>
 
       {/* Modal de confirmación de cancelación */}
-      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Confirmar cancelación</DialogTitle>
@@ -1020,7 +1007,7 @@ export default function DashboardAppointments() {
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setIsCancelModalOpen(false)}
+              onClick={() => setIsCancelDialogOpen(false)}
             >
               Volver
             </Button>
@@ -1034,6 +1021,18 @@ export default function DashboardAppointments() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Schedule Modal */}
+      <ScheduleModal
+        isOpen={isScheduleModalOpen}
+        onClose={() => {
+          setIsScheduleModalOpen(false);
+          setSelectedLawyer(null);
+        }}
+        lawyerName={selectedLawyer?.name || ''}
+        hourlyRate={selectedLawyer?.rate || 0}
+        lawyerId={selectedLawyer?.id || ''}
+      />
       </div>
     </div>
   );

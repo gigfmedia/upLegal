@@ -24,10 +24,10 @@ export function EmailTestComponent() {
           appointmentTime: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Santiago'), 'HH:mm'),
           serviceType: "Consulta inicial",
           status: "scheduled",
-          meetingDetails: "Reunión vía Zoom - Link incluido abajo",
+          meetingDetails: "Reunión vía Google Meet - Link incluido abajo",
           notes: "Este es un email de prueba del sistema de notificaciones",
           sendToLawyer: false,
-          zoomLink: "https://us04web.zoom.us/j/123456789?pwd=abcdefgh"
+          meetLink: "https://meet.google.com/meet-1234-abcd"
         }
       });
 

@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ManageAvailability  from '@/components/availability/ManageAvailability';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Edit, X, Mail, Phone, MapPin, Globe, Briefcase, Clock, Award, Languages, Eye, CheckCircle, XCircle, Search, AlertCircle, Heart, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -445,7 +447,7 @@ export default function LawyerProfilePage() {
   // Sincronizar el porcentaje de completitud del perfil
   useEffect(() => {
     if (completionPercentage !== undefined) {
-      console.log('Profile completion updated from hook:', completionPercentage, '%');
+      //console.log('Profile completion updated from hook:', completionPercentage, '%');
     }
   }, [completionPercentage]);
 
@@ -561,6 +563,11 @@ export default function LawyerProfilePage() {
       }
     }
     setIsEditing(!isEditing);
+  };
+
+  // Handle availability changes from the ManageAvailability component
+  const handleAvailabilityChange = () => {
+    setHasChanges(true);
   };
 
   // Handle save button click
@@ -1152,7 +1159,7 @@ export default function LawyerProfilePage() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  value={formData.contact_fee_clp === 0 ? '' : formData.contact_fee_clp.toString()}
+                  value={formData.contact_fee_clp === 0 ? '' : (formData.contact_fee_clp || 0).toString()}
                   onChange={handleNumberInput}
                   disabled={!isEditing}
                   placeholder="Ej: 10000"
@@ -1350,6 +1357,7 @@ export default function LawyerProfilePage() {
                     className="w-full"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="certifications">Certificaciones</Label>
                   {isEditing ? (
@@ -1392,7 +1400,6 @@ export default function LawyerProfilePage() {
                     </div>
                   )}
                 </div>
-              </div>
 
               <div className="space-y-2">
                 <Label>Idiomas</Label>
@@ -1411,17 +1418,39 @@ export default function LawyerProfilePage() {
                     }}
                     disabled={!isEditing}
                     placeholder="Ej: Español, Inglés, Francés..."
-                    className="rounded-r-none"
+                    className="rounded"
                   />
                 </div>
-              <p className="text-xs text-muted-foreground">
-                Separa los idiomas con comas
-              </p>
+                <p className="text-xs text-muted-foreground">
+                  Separa los idiomas con comas
+                </p>
               </div>
+            </div>
             
+            {/* Availability Management Section */}
+            <div className="pt-6 border-t mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="font-medium">Disponibilidad</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Configura tus horarios disponibles para citas
+                  </p>
+                </div>
+              </div>
+              
+              {user?.id && (
+                <div className="rounded-lg">
+                  <ManageAvailability 
+                    lawyerId={user.id} 
+                    isEditing={isEditing} 
+                    onAvailabilityChange={handleAvailabilityChange}
+                  />
+                </div>
+              )}
+            </div>
 
-          <div className="space-y-2">
-              <Label htmlFor="zoom_link">Enlace de Zoom para Consultas</Label>
+            <div className="space-y-2">
+              <Label htmlFor="zoom_link">Enlace de Google Meet para tus Citas</Label>
               <div className="relative">
                 <Input
                   id="zoom_link"
@@ -1430,7 +1459,7 @@ export default function LawyerProfilePage() {
                   value={formData.zoom_link || ''}
                   onChange={handleInputChange}
                   disabled={!isEditing}
-                  placeholder="https://zoom.us/j/tu-enlace"
+                  placeholder="https://meet.google.com/tu-codigo"
                   className="pr-8"
                 />
                 {formData.zoom_link && (
@@ -1439,7 +1468,7 @@ export default function LawyerProfilePage() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"
-                    title="Abrir enlace de Zoom"
+                    title="Abrir enlace de Google Meet"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>

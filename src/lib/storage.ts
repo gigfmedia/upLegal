@@ -1,41 +1,137 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
 
-// Use environment variables with fallbacks for development
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://lgxsfmvyjctxehwslvyw.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxneHNmbXZ5amN0eGVod3Nsdnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3OTkyMTAsImV4cCI6MjA2ODM3NTIxMH0.s2DoNuKigl_G3erwGeC4oLCC_3UiMQu5KJd0gnnYDeU';
+// Validar variables de entorno al cargar el módulo
+const validateEnvVars = (): { url: string; anonKey: string } => {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-  console.log('Current env:', {
-    VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-    VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY
-  });
-  throw new Error('Missing Supabase environment variables');
+  if (!url || !anonKey) {
+    const errorMessage = '❌ Missing required Supabase environment variables';
+    console.error(errorMessage, {
+      VITE_SUPABASE_URL: url ? '✅ Presente' : '❌ Faltante',
+      VITE_SUPABASE_ANON_KEY: anonKey ? '✅ Presente' : '❌ Faltante',
+      NODE_ENV: import.meta.env.MODE,
+    });
+    throw new Error(errorMessage);
+  }
+
+  // Validar formato de la URL y la clave
+  if (!url.startsWith('https://')) {
+    throw new Error('❌ URL de Supabase inválida: debe comenzar con https://');
+  }
+
+  if (!anonKey.startsWith('eyJ')) {
+    console.warn('⚠️  La clave anónima no parece tener un formato JWT estándar');
+  }
+
+  return { url, anonKey };
+};
+
+// Inicializar cliente de Supabase con configuración segura
+let supabaseInstance: SupabaseClient<Database> | null = null;
+
+export const getSupabaseClient = (): SupabaseClient<Database> => {
+  if (supabaseInstance) return supabaseInstance;
+
+  try {
+    const { url, anonKey } = validateEnvVars();
+    
+    supabaseInstance = createClient<Database>(url, anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'uplegal-web/1.0.0',
+        },
+      },
+    });
+
+    return supabaseInstance;
+  } catch (error) {
+    console.error('❌ Error al inicializar Supabase:', error);
+    throw new Error('No se pudo inicializar el cliente de Supabase');
+  }
+};
+
+export const supabase = getSupabaseClient();
+
+// Constantes para buckets
+export const BUCKETS = {
+  AVATARS: 'avatars',
+  DOCUMENTS: 'documents',
+} as const;
+
+type BucketType = typeof BUCKETS[keyof typeof BUCKETS];
+
+// Validar nombre del bucket
+const validateBucket = (bucket: string): asserts bucket is BucketType => {
+  if (!Object.values(BUCKETS).includes(bucket as BucketType)) {
+    throw new Error(`Bucket no válido: ${bucket}. Buckets permitidos: ${Object.values(BUCKETS).join(', ')}`);
+  }
+};
+
+// Validar ruta del archivo
+const validatePath = (path: string): void => {
+  if (!path || typeof path !== 'string' || path.trim() === '') {
+    throw new Error('La ruta del archivo es inválida');
+  }
+  // Prevenir directory traversal
+  if (path.includes('../') || path.includes('..\\')) {
+    throw new Error('La ruta del archivo contiene caracteres no permitidos');
+  }
+};
+
+interface UploadOptions {
+  cacheControl?: string;
+  upsert?: boolean;
+  contentType?: string;
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-
-export const AVATAR_BUCKET = 'avatars';
-
-export async function uploadFile(bucket: string, path: string, file: File) {
+export async function uploadFile(
+  bucket: string,
+  path: string,
+  file: File,
+  options: UploadOptions = {}
+) {
   try {
+    validateBucket(bucket);
+    validatePath(path);
+
+    if (!(file instanceof File)) {
+      throw new Error('El archivo proporcionado no es una instancia de File');
+    }
+
+    const { cacheControl = '3600', upsert = false, contentType } = options;
+
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        cacheControl: '3600',
-        upsert: true
+        cacheControl: `public, max-age=${cacheControl}`,
+        upsert,
+        contentType: contentType || file.type,
       });
 
-    if (error) throw error;
+    if (error) {
+      console.error(`Error al subir archivo a ${bucket}/${path}:`, error);
+      throw new Error(`Error al subir el archivo: ${error.message}`);
+    }
+
     return data;
   } catch (error) {
+    console.error('Error en uploadFile:', error);
     throw error;
   }
 }
 
-export async function getPublicUrl(bucket: string, path: string) {
+export async function getPublicUrl(bucket: string, path: string): Promise<string> {
   try {
+    validateBucket(bucket);
+    validatePath(path);
+
     const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(path);

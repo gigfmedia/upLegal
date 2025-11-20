@@ -53,6 +53,7 @@ import AboutPage from './pages/AboutPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import PaymentSettings from './pages/PaymentSettings';
 import DashboardFavorites from './pages/DashboardFavorites';
+import ContactPage from './pages/ContactPage';
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -122,6 +123,7 @@ const AppContent = () => {
             <Route path="/" element={<Index />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/contacto" element={<ContactPage />} />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
             {/* New lawyer dashboard routes */}
             <Route path="/lawyer" element={

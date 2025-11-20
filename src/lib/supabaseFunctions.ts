@@ -1,110 +1,188 @@
 import { getSupabaseClient } from './supabaseClient';
+import { z } from 'zod';
 
-// Use the singleton client from supabaseClient.ts
-export const functionsClient = getSupabaseClient();
-
-// Get environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing required environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set');
-}
-
-// Helper function to get the functions URL
-const getFunctionsUrl = () => {
-  // Always use the direct Supabase URL since CORS is now configured
-  const baseUrl = supabaseUrl.endsWith('/') ? supabaseUrl.slice(0, -1) : supabaseUrl;
-  return baseUrl.replace('/rest/v1', '/functions/v1');
+// Types
+type FunctionResponse<T = unknown> = {
+  data?: T;
+  error?: Error;
+  status?: number;
 };
 
+type InvokeFunctionOptions = {
+  headers?: Record<string, string>;
+  timeout?: number;
+  schema?: z.ZodSchema<T>;
+};
+
+// Constants
+const DEFAULT_TIMEOUT = 15000; // 15 seconds
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
+// Get and validate Supabase URL
+const getFunctionsBaseUrl = (): string => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  
+  if (!supabaseUrl) {
+    throw new Error('VITE_SUPABASE_URL is not defined in environment variables');
+  }
+
+  try {
+    const url = new URL(supabaseUrl);
+    // Handle local development ports
+    const port = url.port === '54321' ? '5433' : url.port;
+    const baseUrl = `${url.protocol}//${url.hostname}${port ? `:${port}` : ''}`;
+    return `${baseUrl}/functions/v1`;
+  } catch (error) {
+    console.error('Error parsing Supabase URL:', error);
+    throw new Error('Invalid Supabase URL format');
+  }
+};
+
+// Cache the base URL
+const FUNCTIONS_BASE_URL = getFunctionsBaseUrl();
+
 /**
- * Helper function to invoke a Supabase Edge Function with proper error handling
+ * Invoke a Supabase Edge Function with improved error handling and TypeScript support
  */
-export const invokeFunction = async <T = any>(
+export const invokeFunction = async <T = unknown>(
   functionName: string,
   body?: Record<string, unknown>,
-  options?: {
-    headers?: Record<string, string>;
+  options: InvokeFunctionOptions = {}
+): Promise<FunctionResponse<T>> => {
+  // Input validation
+  if (!functionName || typeof functionName !== 'string' || functionName.trim() === '') {
+    throw new Error('Function name is required');
   }
-): Promise<{ data?: T; error?: Error }> => {
-  try {
-    // Get the function URL
-    const functionUrl = `${getFunctionsUrl()}/${functionName}`;
-    
-    // Prepare headers
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      'apikey': supabaseAnonKey,
-      ...options?.headers
-    });
 
-    console.log('Calling function:', functionUrl);
-    
-    let response;
+  // Clean and validate function name
+  const cleanFunctionName = functionName.replace(/^\/+|\/+$/g, '');
+  
+  // Prepare headers
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'X-Client': 'uplegal-web',
+    ...options?.headers,
+  });
+
+  const functionUrl = `${FUNCTIONS_BASE_URL}/${cleanFunctionName}`;
+  const timeout = options.timeout || DEFAULT_TIMEOUT;
+
+  // Add retry logic
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Make the fetch request with a timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds timeout
-      
-      // Usar modo 'cors' y credenciales 'include' para manejar CORS
-      response = await fetch(functionUrl, {
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const response = await fetch(functionUrl, {
         method: 'POST',
         headers,
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
-        mode: 'cors',
-        credentials: 'include'
       });
-      
+
       clearTimeout(timeoutId);
-    } catch (error) {
-      console.error('Network error when calling function:', error);
-      if (error.name === 'AbortError') {
-        return { error: new Error('La solicitud ha excedido el tiempo de espera. Por favor, intenta nuevamente.') };
-      }
-      return { error: new Error(`Error de red: ${error.message}. Por favor, verifica tu conexión e inténtalo de nuevo.`) };
-    }
-    
-    console.log('Function response status:', response.status);
 
-    // Handle non-OK responses
-    if (!response.ok) {
-      let errorMessage = `Error HTTP ${response.status}: ${response.statusText || 'Error desconocido'}`;
-      
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorData.message || errorMessage;
+      // Handle non-OK responses
+      if (!response.ok) {
+        const errorData = await parseErrorResponse(response);
+        lastError = new Error(
+          errorData?.message || `HTTP ${response.status}: ${response.statusText}`
+        );
         
-        // Log additional error details for debugging
-        console.error('Error response details:', {
+        // Don't retry on client errors (4xx) except 429 (Too Many Requests)
+        if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+          break;
+        }
+        
+        // Exponential backoff for retries
+        if (attempt < MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+          continue;
+        }
+        
+        return {
+          error: lastError,
           status: response.status,
-          statusText: response.statusText,
-          errorData
-        });
-        
-      } catch (e) {
-        // If we can't parse the error as JSON, use the status text
-        console.error('Failed to parse error response:', e);
+        };
+      }
+
+      // Parse successful response
+      const responseData = await response.json();
+      
+      // Validate response against schema if provided
+      if (options.schema) {
+        const validation = options.schema.safeParse(responseData);
+        if (!validation.success) {
+          throw new Error(`Response validation failed: ${validation.error.message}`);
+        }
+        return { data: validation.data, status: response.status };
       }
       
-      console.error(`Error invoking function ${functionName}:`, errorMessage);
-      return { 
-        error: new Error(errorMessage || 'Ocurrió un error al procesar la solicitud. Por favor, inténtalo de nuevo más tarde.') 
-      };
-    }
+      return { data: responseData, status: response.status };
 
-    // Parse the successful response
-    const data = await response.json();
-    return { data };
-    
-  } catch (error) {
-    console.error(`Unexpected error invoking function ${functionName}:`, error);
-    return { 
-      error: error instanceof Error 
-        ? error 
-        : new Error('An unexpected error occurred')
-    };
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Don't retry on abort errors
+      if (error.name === 'AbortError') {
+        lastError = new Error(`Request timed out after ${timeout}ms`);
+        break;
+      }
+      
+      // Log error and retry if possible
+      console.error(`Attempt ${attempt} failed:`, error);
+      
+      if (attempt < MAX_RETRIES) {
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+      }
+    }
   }
+
+  return {
+    error: lastError || new Error('Unknown error occurred'),
+    status: 500,
+  };
 };
+
+// Helper to parse error responses
+async function parseErrorResponse(response: Response) {
+  try {
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      return await response.json();
+    }
+    return { message: await response.text() };
+  } catch {
+    return { message: 'Failed to parse error response' };
+  }
+}
+
+// Utility functions for common operations
+export const functions = {
+  // Example: Send email
+  async sendEmail(params: { to: string; subject: string; template: string; data: Record<string, unknown> }) {
+    return invokeFunction('send-email', params);
+  },
+  
+  // Example: Get user profile
+  async getUserProfile(userId: string, accessToken: string) {
+    return invokeFunction<{ profile: unknown }>('get-profile', { userId }, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      schema: z.object({
+        profile: z.object({
+          id: z.string(),
+          email: z.string().email(),
+          // Add more profile fields as needed
+        })
+      })
+    });
+  },
+  
+  // Add more utility functions as needed
+};
+
+// Export the Supabase client for direct use if needed
+export const functionsClient = getSupabaseClient();

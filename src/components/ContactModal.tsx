@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -568,6 +568,13 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
     setIsLoading(true);
     
     try {
+      // Validate lawyerId is present
+      if (!lawyerId) {
+        setError('No se pudo identificar al abogado. Por favor, recarga la página e intenta nuevamente.');
+        setIsLoading(false);
+        return;
+      }
+
       // Verificar que el ID del abogado existe
       const { data: lawyerData, error: lawyerError } = await supabase
         .from('profiles')
@@ -576,6 +583,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
         .single();
 
       if (lawyerError || !lawyerData) {
+        console.error('Error fetching lawyer profile:', lawyerError);
         throw new Error('No se pudo encontrar el perfil del abogado. Por favor, inténtalo de nuevo.');
       }
 
@@ -689,6 +697,11 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
               `Contactar a ${lawyerName}`
             )}
           </DialogTitle>
+          <DialogDescription>
+            {hasFreeConsultation 
+              ? `Estás a punto de enviar una consulta gratuita a ${lawyerName}.`
+              : `El costo de esta consulta es de $${actualContactFee.toLocaleString('es-CL')}`}
+          </DialogDescription>
           {hasFreeConsultation && (
             <p className="text-sm text-muted-foreground">
               Aprovecha tu primera consulta sin costo para discutir tu caso con {lawyerName.split(' ')[0]}.
@@ -753,6 +766,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
                   placeholder={hasFreeConsultation ? 'Primera consulta' : 'Ej: Consulta sobre servicio legal'}
                   className={`w-full ${formData.subject && isFieldValid('subject') ? 'border-green-500 pr-10' : ''}`}
                   required={!hasFreeConsultation}
+                  autoFocus
                 />
                 {formData.subject && isFieldValid('subject') && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

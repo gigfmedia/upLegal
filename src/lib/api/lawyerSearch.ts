@@ -27,6 +27,7 @@ export interface LawyerSearchParams {
   minRating?: number;
   minExperience?: number;
   availableNow?: boolean;
+  select?: string; // Add select parameter to specify which columns to return
 }
 
 // Cache for search results
@@ -115,10 +116,20 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
   // In production, query the database
   try {
     // Only select the fields we need for the card view
+    const defaultSelect = 'id, user_id, first_name, last_name, specialties, specialty_id, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, contact_fee_clp';
+    
+    // Make sure we always include hourly_rate_clp in the select
+    const selectColumns = params.select || defaultSelect;
+    const finalSelect = selectColumns.includes('hourly_rate_clp') ? selectColumns : `${selectColumns},hourly_rate_clp`;
+    
+    // Ensure we're not including hourly_rate in the select
+    const cleanSelect = finalSelect.replace(/hourly_rate(,|$)/g, 'hourly_rate_clp$1');
+    
+    console.log('Final select statement:', cleanSelect);
+    
     let query = supabase
       .from('profiles')
-      .select('id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, contact_fee_clp', 
-        { count: 'exact' })
+      .select(cleanSelect, { count: 'exact' })
       .eq('role', 'lawyer')
       .eq('verified', true)
       .eq('available_for_hire', true)
@@ -142,8 +153,22 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     }
 
     if (params.specialty && params.specialty !== 'all') {
-      // Use contains operator to find the exact specialty in the array
-      query = query.contains('specialties', [params.specialty]);
+      console.log('Searching for specialty:', params.specialty);
+      
+      // First, try to find by specialty_id (exact match)
+      query = query.or(`specialty_id.eq.${params.specialty}`);
+      
+      // Then try to find in the specialties array (exact match)
+      query = query.or(`specialties.cs.{"${params.specialty}"}`);
+      
+      // Also try to find by specialty name in the array (case insensitive)
+      query = query.or(`specialties.cs.{"${params.specialty.toLowerCase()}"}`);
+      
+      // Add debug logging
+      console.log('Searching for specialty with filters:', {
+        specialty_id: params.specialty,
+        specialties_array: params.specialty
+      });
     }
 
     if (params.location) {
@@ -162,7 +187,18 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
       query = query.gte('experience_years', params.minExperience);
     }
 
+    // Add debug logging
+    console.log('Executing query with params:', {
+      select: params.select || 'default',
+      specialty: params.specialty,
+      minRating: params.minRating,
+      location: params.location
+    });
+    
     const { data, error, count } = await query;
+    
+    // Debug the response
+    console.log('Query response:', { data, error, count });
 
     if (error) {
       throw error;

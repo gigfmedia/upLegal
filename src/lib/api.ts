@@ -122,7 +122,7 @@ export async function apiRequest<T = any>(
 
 // Appointment API
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled';
-export type AppointmentType = 'video' | 'phone' | 'in-person';
+export type AppointmentType = 'video' | 'phone';
 
 export interface AppointmentData {
   id: string;

@@ -116,6 +116,11 @@ export function ConsultationModal({
             {hasFreeConsultation 
               ? `Estás a punto de enviar una consulta gratuita a ${lawyerName}.`
               : `El costo de esta consulta es de $${consultationPrice.toLocaleString()}.`}
+            {!hasFreeConsultation && consultationPrice > 0 && (
+              <div className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                Al hacer clic en "Pagar", serás redirigido a la pasarela de pago segura.
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         
@@ -129,6 +134,8 @@ export function ConsultationModal({
               placeholder="Describe tu consulta aquí..."
               required
               rows={5}
+              autoFocus
+              className="min-h-[120px]"
             />
           </div>
           

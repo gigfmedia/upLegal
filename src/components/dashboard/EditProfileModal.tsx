@@ -459,15 +459,15 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
                     name="zoomLink"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Enlace personal de Zoom</FormLabel>
+                        <FormLabel>Enlace de Google Meet</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="https://us04web.zoom.us/j/123456789?pwd=..." 
+                            placeholder="https://meet.google.com/tu-codigo" 
                             {...field} 
                           />
                         </FormControl>
                         <div className="text-sm text-muted-foreground">
-                          Configura tu enlace personal de Zoom para las videollamadas con clientes
+                          Configura tu enlace personal de Google Meet para las videollamadas con clientes
                         </div>
                         <FormMessage />
                       </FormItem>
