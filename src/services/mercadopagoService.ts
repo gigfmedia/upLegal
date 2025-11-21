@@ -3,6 +3,18 @@ import { supabase } from '@/lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import type { PreferenceItem, PreferencePayer } from '@/lib/mercadopago';
 
+// Define types for database columns
+interface TableColumn {
+  column_name: string;
+  data_type: string;
+  is_nullable: string;
+  column_default: string | null;
+}
+
+interface TableInfo {
+  columns: TableColumn[];
+}
+
 export interface CreatePaymentParams {
   amount: number; // in CLP
   userId: string;
@@ -17,92 +29,66 @@ export interface CreatePaymentParams {
   userName?: string;
 }
 
-export async function createMercadoPagoPayment({
-  amount,
-  userId,
-  lawyerId,
-  serviceId,
-  description,
-  successUrl,
-  failureUrl,
-  pendingUrl,
-  notificationUrl,
-  userEmail,
-  userName,
-}: CreatePaymentParams) {
-  // Generate a unique ID for this payment
-  const paymentId = `upegal-${uuidv4()}`;
-  
-  // Calculate amounts with 10% client surcharge
-  const clientAmount = Math.round(amount * 1.1); // Add 10% surcharge
-  const platformFee = Math.round(amount * 0.2); // 20% of original amount
-  const lawyerAmount = amount - platformFee; // Original amount minus platform fee
+const API_BASE_URL = 'https://uplegal.netlify.app'; // Production URL
 
+export const createMercadoPagoPayment = async (params: CreatePaymentParams & { appointmentId: string }) => {
   try {
-    // Create a payment record in the database
-    const { data: payment, error } = await supabase
-      .from('payments')
-      .insert({
-        id: paymentId,
-        user_id: userId,
-        lawyer_id: lawyerId,
-        service_id: serviceId,
-        amount: clientAmount, // Store the amount with surcharge
-        original_amount: amount, // Store the original amount without surcharge
-        client_surcharge: Math.round(amount * 0.1), // Store the 10% surcharge amount
-        platform_fee: platformFee,
-        lawyer_amount: lawyerAmount,
-        currency: 'CLP',
-        status: 'pending',
-        payment_provider: 'mercadopago',
-        metadata: {
-          description,
-        },
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Prepare items for MercadoPago
-    const items: PreferenceItem[] = [{
-      id: serviceId,
-      title: description.substring(0, 255) || 'Servicio Legal',
-      description: description.substring(0, 500),
-      quantity: 1,
-      currency_id: 'CLP',
-      unit_price: clientAmount,
-    }];
-
-    // Prepare payer info
-    const payer: PreferencePayer = {
-      email: userEmail,
-      ...(userName && { name: userName }),
+    const paymentData = {
+      amount: params.amount,
+      description: params.description,
+      user_id: params.userId,
+      lawyer_id: params.lawyerId,
+      appointment_id: params.appointmentId,
+      success_url: params.successUrl,
+      failure_url: params.failureUrl,
+      pending_url: params.pendingUrl,
+      user_email: params.userEmail,
+      user_name: params.userName || ''
     };
 
-    // Create MercadoPago preference
-    const preferenceUrl = await createPreference(items, payer);
+    console.log('Sending payment data to production:', paymentData);
 
-    // Update payment record with preference URL
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({ payment_link: preferenceUrl })
-      .eq('id', paymentId);
+    const response = await fetch(`${API_BASE_URL}/create-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors',
+      body: JSON.stringify(paymentData)
+    });
 
-    if (updateError) {
-      console.error('Error updating payment record:', updateError);
-      throw updateError;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Payment API error:', errorData);
+      throw new Error(errorData.error || 'Failed to create payment');
     }
 
-    return {
-      paymentId,
-      paymentUrl: preferenceUrl,
-    };
+    return await response.json();
   } catch (error) {
-    console.error('Error creating MercadoPago payment:', error);
-    throw error;
+    console.error('Error in createMercadoPagoPayment:', error);
+    
+    // Log to error tracking in production
+    if (process.env.NODE_ENV === 'production') {
+      // Example with Sentry (uncomment and configure if using Sentry)
+      // Sentry.captureException(error);
+      
+      // Or log to a service
+      console.error('Payment Error:', {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        // Add any relevant context
+        ...(error.response && { 
+          status: error.response.status,
+          statusText: error.response.statusText 
+        })
+      });
+    }
+    
+    throw new Error(error.message || 'Error creating payment');
   }
-}
+};
 
 interface MercadoPagoWebhookData {
   type: string;

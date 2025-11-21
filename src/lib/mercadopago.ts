@@ -67,15 +67,49 @@ export const mercadopago = new MercadoPagoConfig({
 // Test MercadoPago API connection
 async function testMercadoPagoAPI() {
   try {
-    const response = await fetch('https://api.mercadopago.com/v1/payment_methods', {
+    const baseUrl = 'https://uplegal.netlify.app'; // Production URL
+    console.log(`Fetching payment methods from: ${baseUrl}/api/payment-methods`);
+    
+    const response = await fetch(`${baseUrl}/api/payment-methods`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      mode: 'cors' // Ensure CORS mode is enabled
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
-    console.log('MercadoPago API Test Response:', data);
+    console.log('MercadoPago API Response:', data);
+    return data;
   } catch (error) {
-    console.error('Error testing MercadoPago API:', error);
+    console.error('Error in testMercadoPagoAPI:', error);
+    
+    // Log to error tracking in production
+    if (process.env.NODE_ENV === 'production') {
+      // Example with Sentry (uncomment and configure if using Sentry)
+      // Sentry.captureException(error);
+      
+      // Or log to a service
+      console.error('MercadoPago API Error:', {
+        message: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        // Add any relevant context
+        ...(error.response && { 
+          status: error.response.status,
+          statusText: error.response.statusText 
+        })
+      });
+    }
+    
+    throw new Error(`Failed to fetch payment methods: ${error.message}`);
   }
 }
 

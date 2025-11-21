@@ -486,7 +486,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, h
             .update({
               metadata: {
                 ...payment.metadata,
-                mercadopago_preference_id: preference.id
+                payment_gateway_id: preference.id
               }
             })
             .eq('id', payment.id);

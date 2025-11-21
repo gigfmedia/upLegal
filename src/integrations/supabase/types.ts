@@ -134,7 +134,7 @@ export type Database = {
           platform_fee: number | null
           service_description: string | null
           status: string | null
-          stripe_session_id: string | null
+          payment_gateway_id: string | null
           total_amount: number | null
           updated_at: string
         }
@@ -148,7 +148,7 @@ export type Database = {
           platform_fee?: number | null
           service_description?: string | null
           status?: string | null
-          stripe_session_id?: string | null
+          payment_gateway_id?: string | null
           total_amount?: number | null
           updated_at?: string
         }
@@ -162,7 +162,7 @@ export type Database = {
           platform_fee?: number | null
           service_description?: string | null
           status?: string | null
-          stripe_session_id?: string | null
+          payment_gateway_id?: string | null
           total_amount?: number | null
           updated_at?: string
         }

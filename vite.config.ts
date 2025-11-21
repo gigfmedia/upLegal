@@ -27,6 +27,7 @@ export default defineConfig(({ mode }) => {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     },
     optimizeDeps: {
+      exclude: ['email-cita-agendada.html', 'email-preview.html'],
       include: [
         'react',
         'react-dom',
@@ -59,12 +60,19 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '::',
-      port: 8080,
+      port: 3001,
       strictPort: true,
       hmr: {
-        port: 8080,
+        port: 3002,
         host: 'localhost',
         protocol: 'ws',
+      },
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000', // Your backend server URL
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+        },
       },
       // Allow ngrok host
       allowedHosts: [
