@@ -398,6 +398,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             return;
           }
           
+          // Redirect to home page after successful login
+          navigate('/');
+          
           // Otherwise, redirect based on user role
           navigate(userRole === 'lawyer' ? '/lawyer/dashboard' : '/dashboard');
         }

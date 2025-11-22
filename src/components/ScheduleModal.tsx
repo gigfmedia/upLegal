@@ -659,132 +659,172 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     return { valid: true };
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  // Validate form data
+  const validation = validateForm(formData);
+  if (!validation.valid) {
+    toast({
+      title: "Error de validación",
+      description: validation.message || 'Por favor completa todos los campos obligatorios.',
+      variant: "destructive"
+    });
+    return;
+  }
+
+  setIsProcessing(true);
+  setError(null);
+
+  try {
+    // Get the final lawyer ID (either from selection or props)
+    const finalLawyerId = selectedLawyer || lawyerId;
     
-    // Validate form data
-    const validation = validateForm(formData);
-    if (!validation.valid) {
-      toast({
-        title: "Error de validación",
-        description: validation.message || 'Por favor completa todos los campos obligatorios.',
-        variant: "destructive"
-      });
-      return;
+    if (!finalLawyerId) {
+      throw new Error('No se ha seleccionado un abogado');
     }
 
-    setIsProcessing(true);
-    setError(null);
+    console.log('Creating appointment with data:', {
+      ...formData,
+      lawyer_id: finalLawyerId,
+      user_id: user?.id,
+      amount: clientAmount
+    });
 
+    // Create appointment data
+    const appointmentData = {
+      name: formData.name || 'Cliente',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      user_id: user?.id || '',
+      lawyer_id: finalLawyerId,
+      status: 'pending_payment',
+      appointment_date: formData.date,
+      appointment_time: formData.time,
+      duration: parseInt(formData.duration) || 60,
+      consultation_type: formData.consultationType || 'consultation',
+      contact_method: formData.contactMethod,
+      price: clientAmount,
+      notes: formData.description || '',
+      amount: clientAmount,
+      currency: 'CLP',
+      meeting_link: formData.contactMethod === 'videollamada' ? 'https://meet.google.com/new' : null,
+      address: formData.contactMethod === 'presencial' ? formData.address : null
+    };
+
+    console.log('Sending appointment data to database:', appointmentData);
+
+    // Insert the appointment into the database
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointments')
+      .insert(appointmentData)
+      .select()
+      .single();
+
+    if (appointmentError) {
+      console.error('Database error:', appointmentError);
+      throw new Error(`Error al crear la cita: ${appointmentError.message}`);
+    }
+
+    console.log('Appointment created successfully:', appointment);
+    
+    // Create payment with MercadoPago
     try {
-      // Get the final lawyer ID (either from selection or props)
-      const finalLawyerId = selectedLawyer || lawyerId;
+      console.log('Creating payment with lawyer ID:', finalLawyerId);
+      console.log('Current user ID:', user?.id);
       
-      if (!finalLawyerId) {
-        throw new Error('No se ha seleccionado un abogado');
-      }
-
-      console.log('Creating appointment with data:', {
-        ...formData,
-        lawyer_id: finalLawyerId,
-        user_id: user?.id,
-        amount: clientAmount
-      });
-
-      // Create appointment data
-      const appointmentData = {
-        name: formData.name || 'Cliente',
-        email: formData.email || '',
-        phone: formData.phone || '',
-        user_id: user?.id || '',
-        lawyer_id: finalLawyerId,
-        status: 'pending_payment', // Changed from 'scheduled' to 'pending_payment'
-        appointment_date: formData.date,
-        appointment_time: formData.time,
-        duration: parseInt(formData.duration) || 60,
-        consultation_type: formData.consultationType || 'consultation',
-        contact_method: formData.contactMethod,
-        price: clientAmount,
-        notes: formData.description || '',
+      const paymentParams = {
         amount: clientAmount,
-        currency: 'CLP',
-        meeting_link: formData.contactMethod === 'videollamada' ? 'https://meet.google.com/new' : null,
-        address: formData.contactMethod === 'presencial' ? formData.address : null
+        userId: user?.id || '',
+        lawyerId: finalLawyerId,
+        appointmentId: appointment.id,
+        description: `Consulta legal con ${selectedLawyerData?.name || lawyerName}`,
+        successUrl: `${window.location.origin}/payment/success?appointmentId=${appointment.id}`,
+        failureUrl: `${window.location.origin}/payment/failure?appointmentId=${appointment.id}`,
+        pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${appointment.id}`,
+        userEmail: user?.email || formData.email,
+        userName: user?.user_metadata?.full_name || formData.name
       };
 
-      console.log('Sending appointment data to database:', appointmentData);
-
-      // Insert the appointment into the database
-      const { data: appointment, error: appointmentError } = await supabase
-        .from('appointments')
-        .insert(appointmentData)
-        .select()
-        .single();
-
-      if (appointmentError) {
-        console.error('Database error:', {
-          code: appointmentError.code,
-          message: appointmentError.message,
-          details: appointmentError.details,
-          hint: appointmentError.hint
-        });
-        throw new Error(`Error al crear la cita: ${appointmentError.message}`);
-      }
-
-      console.log('Appointment created successfully:', appointment);
+      console.log('Payment params:', paymentParams);
       
-      // 2. Create payment with MercadoPago
-      try {
-        console.log('Creating payment with lawyer ID:', finalLawyerId);
-        console.log('Current user ID:', user?.id);
-        
-        const paymentParams = {
-          amount: clientAmount,
-          userId: user?.id || '',
-          lawyerId: finalLawyerId,
-          appointmentId: appointment.id,
-          description: `Consulta legal con ${lawyerName}`,
-          successUrl: `${window.location.origin}/payment/success?appointmentId=${appointment.id}`,
-          failureUrl: `${window.location.origin}/payment/failure?appointmentId=${appointment.id}`,
-          pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${appointment.id}`,
-          userEmail: user?.email || formData.email,
-          userName: user?.user_metadata?.full_name || formData.name
-        };
-
-        console.log('Payment params:', paymentParams);
-        
-        const payment = await createMercadoPagoPayment(paymentParams);
-        
-        // 3. Redirect to payment URL
-        if (payment.payment_link) {
-          window.location.href = payment.payment_link;
-        } else {
-          throw new Error('No se pudo obtener el enlace de pago');
-        }
-      } catch (paymentError) {
-        console.error('Error creating payment:', paymentError);
-        throw new Error('Error al crear el pago con MercadoPago');
-      }
+      // CORRECCIÓN: Usar fetch con mejor manejo de errores
+      const API_BASE_URL = 'https://uplegal.netlify.app';
       
-    } catch (error) {
-      let errorMessage = 'Error al procesar la cita. Por favor, inténtalo de nuevo.';
-      
-      if (error instanceof Error) {
-        console.error('Error al procesar la cita:', error);
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
-      
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
+      // Primero probar si el endpoint está disponible
+      console.log('Testing connection to backend...');
+      const testResponse = await fetch(`${API_BASE_URL}/test-cors`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors'
       });
-    } finally {
-      setIsProcessing(false);
+
+      if (!testResponse.ok) {
+        throw new Error(`Backend not available: ${testResponse.status}`);
+      }
+
+      console.log('Backend connection successful, creating payment...');
+      
+      // Crear el pago
+      const response = await fetch(`${API_BASE_URL}/create-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        mode: 'cors',
+        body: JSON.stringify(paymentParams)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Payment API error response:', errorText);
+        
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const paymentResult = await response.json();
+      console.log('Payment created successfully:', paymentResult);
+      
+      // 3. Redirect to payment URL
+      if (paymentResult.payment_link) {
+        console.log('Redirecting to payment URL:', paymentResult.payment_link);
+        window.location.href = paymentResult.payment_link;
+      } else {
+        throw new Error('No se pudo obtener el enlace de pago');
+      }
+    } catch (paymentError) {
+      console.error('Error creating payment:', paymentError);
+      throw new Error(`Error al crear el pago: ${paymentError.message}`);
     }
-  };
+    
+  } catch (error) {
+    let errorMessage = 'Error al procesar la cita. Por favor, inténtalo de nuevo.';
+    
+    if (error instanceof Error) {
+      console.error('Error al procesar la cita:', error);
+      errorMessage = error.message;
+    }
+    
+    setError(errorMessage);
+    
+    toast({
+      title: "Error",
+      description: errorMessage,
+      variant: "destructive",
+    });
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
