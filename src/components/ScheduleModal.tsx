@@ -753,12 +753,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       
       // Primero probar si el endpoint está disponible
       console.log('Testing connection to backend...');
-      const testResponse = await fetch(`${API_BASE_URL}/test-cors`, {
-        method: 'GET',
+      const testResponse = await fetch(`${API_BASE_URL}/.netlify/functions/create-payment`, {
+        method: 'OPTIONS',
         headers: {
           'Content-Type': 'application/json',
-        },
-        mode: 'cors'
+        }
       });
 
       if (!testResponse.ok) {
@@ -768,12 +767,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       console.log('Backend connection successful, creating payment...');
       
       // Crear el pago
-      const response = await fetch(`${API_BASE_URL}/create-payment`, {
+      const response = await fetch(`${API_BASE_URL}/.netlify/functions/create-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        mode: 'cors',
         body: JSON.stringify(paymentParams)
       });
 
