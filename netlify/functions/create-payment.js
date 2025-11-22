@@ -1,15 +1,22 @@
+// netlify/functions/create-payment.js
 const { createClient } = require('@supabase/supabase-js');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
-const { v4: uuidv4 } = require('uuid');
+
+// Usar crypto para generar UUIDs en lugar del paquete uuid
+const { randomUUID } = require('crypto');
 
 exports.handler = async (event) => {
-  // Handle CORS
+  console.log('Function invoked with method:', event.httpMethod);
+  
+  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
+    'Content-Type': 'application/json'
   };
 
+  // Handle preflight OPTIONS request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -18,15 +25,29 @@ exports.handler = async (event) => {
     };
   }
 
+  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
+      body: JSON.stringify({ 
+        error: 'Method not allowed',
+        allowed: ['POST']
+      })
     };
   }
 
   try {
+    console.log('Processing payment request...');
+    
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'No body provided' })
+      };
+    }
+
     const { 
       amount, 
       description, 
@@ -40,7 +61,13 @@ exports.handler = async (event) => {
       userName 
     } = JSON.parse(event.body);
 
-    console.log('Payment request:', { amount, userId, lawyerId, appointmentId });
+    console.log('Payment request data:', { 
+      amount, 
+      userId: userId?.substring(0, 8) + '...',
+      lawyerId: lawyerId?.substring(0, 8) + '...',
+      appointmentId: appointmentId?.substring(0, 8) + '...',
+      userEmail: userEmail?.substring(0, 8) + '...'
+    });
 
     // Validations
     if (!amount || !userId || !lawyerId || !appointmentId) {
@@ -49,31 +76,50 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
-          required: ['amount', 'userId', 'lawyerId', 'appointmentId']
+          required: ['amount', 'userId', 'lawyerId', 'appointmentId'],
+          received: { amount, userId: !!userId, lawyerId: !!lawyerId, appointmentId: !!appointmentId }
         })
       };
     }
 
+    if (amount < 1000) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Amount must be at least 1000 CLP' })
+      };
+    }
+
+    // Check environment variables
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+    const mpToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
+
+    if (!supabaseUrl || !supabaseKey || !mpToken) {
+      console.error('Missing environment variables');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server configuration error' })
+      };
+    }
+
     // Initialize Supabase
-    const supabase = createClient(
-      process.env.VITE_SUPABASE_URL,
-      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
       }
-    );
+    });
 
     // Initialize MercadoPago
     const mercadopago = new MercadoPagoConfig({
-      accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
+      accessToken: mpToken,
       options: { timeout: 5000 }
     });
 
-    // Create payment record
-    const paymentId = uuidv4();
+    // Create payment record - usar randomUUID en lugar de uuidv4
+    const paymentId = randomUUID();
     const paymentData = {
       id: paymentId,
       total_amount: Math.round(Number(amount) * 100),
@@ -89,6 +135,8 @@ exports.handler = async (event) => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    console.log('Inserting payment into database...');
 
     // Insert payment into database
     const { data: payment, error: paymentError } = await supabase
@@ -108,6 +156,8 @@ exports.handler = async (event) => {
         })
       };
     }
+
+    console.log('Payment record created, creating MercadoPago preference...');
 
     // Create MercadoPago preference
     const preference = new Preference(mercadopago);
@@ -155,6 +205,8 @@ exports.handler = async (event) => {
       throw new Error('No payment link received from MercadoPago');
     }
 
+    console.log('Payment created successfully, returning payment link');
+
     return {
       statusCode: 200,
       headers,
@@ -167,7 +219,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in create-payment function:', error);
     return {
       statusCode: 500,
       headers,
