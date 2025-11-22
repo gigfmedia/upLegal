@@ -1,8 +1,6 @@
 // netlify/functions/create-payment.js
 const { createClient } = require('@supabase/supabase-js');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
-
-// Usar crypto para generar UUIDs en lugar del paquete uuid
 const { randomUUID } = require('crypto');
 
 exports.handler = async (event) => {
@@ -90,17 +88,37 @@ exports.handler = async (event) => {
       };
     }
 
-    // Check environment variables
-    const supabaseUrl = process.env.VITE_SUPABASE_URL;
-    const supabaseKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-    const mpToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
+    // Check environment variables - USAR NOMBRES SIN VITE_
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+    const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
+
+    console.log('Environment variables check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey,
+      hasMpToken: !!mpToken,
+      supabaseUrlLength: supabaseUrl?.length,
+      supabaseKeyLength: supabaseKey?.length,
+      mpTokenLength: mpToken?.length
+    });
 
     if (!supabaseUrl || !supabaseKey || !mpToken) {
-      console.error('Missing environment variables');
+      console.error('Missing environment variables:', {
+        supabaseUrl: !!supabaseUrl,
+        supabaseKey: !!supabaseKey,
+        mpToken: !!mpToken
+      });
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'Server configuration error' })
+        body: JSON.stringify({ 
+          error: 'Server configuration error - Missing environment variables',
+          details: {
+            supabaseUrl: !!supabaseUrl,
+            supabaseKey: !!supabaseKey, 
+            mpToken: !!mpToken
+          }
+        })
       };
     }
 
@@ -118,7 +136,7 @@ exports.handler = async (event) => {
       options: { timeout: 5000 }
     });
 
-    // Create payment record - usar randomUUID en lugar de uuidv4
+    // Create payment record
     const paymentId = randomUUID();
     const paymentData = {
       id: paymentId,
@@ -188,6 +206,12 @@ exports.handler = async (event) => {
 
     const mpResponse = await preference.create({ body: preferenceData });
 
+    console.log('MercadoPago response received:', {
+      id: mpResponse.id,
+      hasInitPoint: !!mpResponse.init_point,
+      hasSandboxInitPoint: !!mpResponse.sandbox_init_point
+    });
+
     // Update payment with MercadoPago preference ID
     if (mpResponse.id) {
       await supabase
@@ -202,6 +226,7 @@ exports.handler = async (event) => {
     const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
     
     if (!paymentLink) {
+      console.error('No payment link received from MercadoPago:', mpResponse);
       throw new Error('No payment link received from MercadoPago');
     }
 
