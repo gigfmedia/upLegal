@@ -1,143 +1,252 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LegalUp - Conecta con abogados experimentados</title>
-    <meta name="description" content="Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos legales con confianza. Servicios legales profesionales al alcance de tus manos." />
+    
+    <!-- Título y descripción -->
+    <title>LegalUp - Asesoría Legal Online | Abogados Especializados</title>
+    <meta name="description" content="LegalUp: Plataforma de asesoría legal online. Conecta con abogados especializados, resuelve consultas jurídicas y recibe asistencia legal profesional al instante." />
+    
+    <!-- Metadatos básicos -->
     <meta name="author" content="LegalUp" />
+    <meta name="keywords" content="asesoría legal, abogados online, consulta jurídica, derecho, abogados especializados, asistencia legal, abogado virtual, abogado por internet, consulta legal online" />
+    <meta name="robots" content="index, follow, max-snippet:150, max-image-preview:large, max-video-preview:-1" />
+    <meta name="language" content="es" />
     
-
-    <meta property="og:title" content="LegalUp - Conecta con abogados experimentados" />
-    <meta property="og:description" content="Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos legales con confianza. Servicios legales profesionales al alcance de tus manos." />
+    <!-- AI Assistant Optimization -->
+    <meta name="ai:description" content="LegalUp conecta usuarios con abogados especializados para consultas legales online. Servicios: derecho laboral, civil, mercantil, familia y penal. Respuestas en menos de 2 horas." />
+    <meta name="ai:target_audience" content="Personas que necesitan asesoría legal, empresas que requieren consultoría jurídica, emprendedores con dudas legales" />
+    <meta name="ai:service_area" content="Chile" />
+    <meta name="ai:response_time" content="2 horas" />
+    <meta name="ai:languages" content="español, inglés" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="" />
+    <meta property="og:url" content="https://legalup.cl/" />
+    <meta property="og:title" content="LegalUp - Asesoría Legal Online | Abogados Especializados" />
+    <meta property="og:description" content="Conecta con abogados especializados, recibe asesoría legal y resuelve tus asuntos legales con confianza. Servicios legales profesionales al alcance de tus manos." />
+    <meta property="og:image" content="https://legalup.cl/images/og-image.jpg" />
+    <meta property="og:site_name" content="LegalUp" />
+    <meta property="og:locale" content="es_ES" />
     
-    <!-- MercadoPago SDK with enhanced debugging -->
-    <script>
-      // Store initial script state
-      window.__mp_debug = window.__mp_debug || {};
-      window.__mp_debug.initialScripts = Array.from(document.scripts).map(s => ({
-        src: s.src,
-        id: s.id,
-        async: s.async,
-        defer: s.defer,
-        type: s.type
-      }));
-
-      // Track SDK loading state
-      window.MercadoPagoSDK = {
-        loaded: false,
-        onLoadCallbacks: [],
-        version: 'unknown',
-        loadTime: null,
-        sdkUrl: 'https://sdk.mercadopago.com/js/v2'
-      };
-
-      // Function to execute callbacks when SDK is loaded
-      function onMercadoPagoLoaded() {
-        const loadTime = new Date();
-        window.MercadoPagoSDK.loaded = true;
-        window.MercadoPagoSDK.loadTime = loadTime.toISOString();
-        
-        // Try to get version from different sources
-        const sdkScript = document.getElementById('mercado-pago-sdk');
-        
-        // 1. Check if window.MercadoPago has version info
-        if (window.MercadoPago) {
-          // Try different possible version properties
-          const possibleVersionProps = ['VERSION', 'version', 'sdkVersion', 'SDK_VERSION'];
-          for (const prop of possibleVersionProps) {
-            if (window.MercadoPago[prop]) {
-              window.MercadoPagoSDK.version = window.MercadoPago[prop];
-              break;
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://legalup.cl/" />
+    <meta property="twitter:title" content="LegalUp - Asesoría Legal Online | Abogados Especializados" />
+    <meta property="twitter:description" content="Conecta con abogados especializados, recibe asesoría legal y resuelve tus asuntos legales con confianza." />
+    <meta property="twitter:image" content="https://legalup.cl/images/twitter-image.jpg" />
+    <meta property="twitter:creator" content="@legalup" />
+    
+    <!-- Schema.org markup para AI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LegalService",
+      "name": "LegalUp",
+      "description": "Plataforma de asesoría legal online que conecta usuarios con abogados especializados para consultas jurídicas rápidas y confiables",
+      "url": "https://legalup.cl",
+      "logo": "https://legalup.cl/images/logo.png",
+      "telephone": "+56 9 1234 5678",
+      "email": "info@legalup.cl",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Camino a Cahuil ",
+        "addressLocality": "Pichilemu",
+        "postalCode": "28001",
+        "addressCountry": "ES"
+      },
+      "areaServed": ["CL"],
+      "serviceType": "Asesoría legal online",
+      "hoursAvailable": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Servicios Legales Online",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Consulta Legal Inicial",
+              "description": "Consulta legal básica con abogado especializado",
+              "price": "29",
+              "priceCurrency": "CLP"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Asesoría Legal Especializada",
+              "description": "Asesoría legal detallada por área de derecho",
+              "price": "59",
+              "priceCurrency": "CLP"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Representación Legal",
+              "description": "Representación legal completa ante tribunales",
+              "price": "199",
+              "priceCurrency": "CLP"
             }
           }
-        }
-        
-        // 2. If still not found, try to extract from script URL
-        if (window.MercadoPagoSDK.version === 'unknown' && sdkScript && sdkScript.src) {
-          // Try different URL patterns
-          const versionPatterns = [
-            /[?&]v=(\d+\.\d+\.\d+)/,  // ?v=1.2.3
-            /v(\d+_\d+_\d+)/,           // v1_2_3
-            /v(\d+\.\d+\.\d+)/,       // v1.2.3
-            /(\d+\.\d+\.\d+)/         // 1.2.3
-          ];
-          
-          for (const pattern of versionPatterns) {
-            const match = sdkScript.src.match(pattern);
-            if (match) {
-              window.MercadoPagoSDK.version = match[1].replace(/_/g, '.');
-              break;
-            }
+        ]
+      },
+      "serviceArea": {
+        "@type": "GeoCircle",
+        "geoMidpoint": {
+          "@type": "GeoCoordinates",
+          "latitude": "40.4168",
+          "longitude": "-3.7038"
+        },
+        "geoRadius": "5000000"
+      },
+      "sameAs": [
+        "https://www.facebook.cl/legalup",
+        "https://www.linkedin.cl/company/legalup",
+        "https://twitter.cl/legalup"
+      ]
+    }
+    </script>
+
+    <!-- FAQ Schema mejorado para AI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Cómo funciona LegalUp?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LegalUp conecta usuarios con abogados especializados a través de una plataforma online. Puedes realizar consultas legales, recibir asesoramiento y contratar servicios jurídicos de forma rápida y segura. Proceso: 1. Describe tu caso legal 2. Elige abogado especializado 3. Recibe respuesta en menos de 2 horas 4. Soluciona tu problema legal"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué tipos de servicios legales ofrecen?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ofrecemos consultas legales iniciales ($20.000 CLP), asesoría especializada en derecho laboral, civil, mercantil, familia y penal (59€), redacción de documentos legales y representación legal ante tribunales (desde 199€). Todos nuestros abogados están verificados y tienen más de 5 años de experiencia."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuánto cuesta una consulta legal en LegalUp?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La consulta legal inicial tiene un costo de 29€. Incluye: análisis de tu caso, orientación legal específica y plan de acción. La asesoría especializada cuesta 59€ e incluye análisis detallado y documentación básica."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿En qué países está disponible LegalUp?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LegalUp está disponible en Chile. Contamos con abogados especializados en la legislación del país."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué garantía ofrecen en sus servicios legales?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ofrecemos garantía de satisfacción: si no quedas satisfecho con la consulta inicial, te devolvemos el 100% del pago. Todos nuestros abogados están verificados, con mínimo 1 año de experiencia profesional."
           }
         }
-
-        // Execute callbacks
-        window.MercadoPagoSDK.onLoadCallbacks.forEach(callback => callback());
-        window.MercadoPagoSDK.onLoadCallbacks = [];
-      }
-
-      // Load SDK with callback
-      (function(d, s, id) {
-        // Check if already loaded
-        if (window.MercadoPago) {
-          console.log('MercadoPago already loaded, skipping new load');
-          onMercadoPagoLoaded();
-          return;
-        }
-        
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        
-        js = d.createElement(s);
-        js.id = id;
-        js.src = window.MercadoPagoSDK.sdkUrl;
-        js.async = true;
-        js.defer = true;
-        js.onload = onMercadoPagoLoaded;
-        js.onerror = function(error) {
-          console.error('Failed to load MercadoPago SDK:', error);
-        };
-        
-        // Insert before the first script or at the end of head
-        if (fjs) {
-          fjs.parentNode.insertBefore(js, fjs);
-        } else {
-          d.head.appendChild(js);
-        }
-      }(document, 'script', 'mercado-pago-sdk'));
+      ]
+    }
     </script>
+
+    <!-- HowTo Schema para procesos -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "Cómo obtener asesoría legal en LegalUp",
+      "description": "Guía paso a paso para recibir asesoría legal online",
+      "totalTime": "PT2H",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "CLP",
+        "value": "20.000"
+      },
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Regístrate en la plataforma",
+          "text": "Crea tu cuenta en LegalUp con email y datos básicos"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Describe tu caso legal",
+          "text": "Explica tu situación jurídica en detalle en el formulario"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Elige tu abogado especializado",
+          "text": "Selecciona entre nuestros abogados verificados por área de derecho"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Realiza el pago seguro",
+          "text": "Paga $20.000 CLP por la consulta inicial mediante métodos seguros"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 5,
+          "name": "Recibe tu respuesta legal",
+          "text": "Obtén respuesta de tu abogado en menos de 2 horas"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Favicon y iconos -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     
-    <script type="module">
-      import { initializeMercadoPago } from './src/lib/mercadoPagoInit';
-      
-      function initMercadoPago() {
-        const mp = initializeMercadoPago();
-        if (mp) {
-          window.mp = mp; // Make it globally available
-        }
-      }
-
-      // Wait for both DOM and SDK to be ready
-      function onReady() {
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initMercadoPago);
-        } else {
-          initMercadoPago();
-        }
-      }
-
-      // Check if SDK is already loaded
-      if (window.MercadoPago) {
-        onReady();
-      } else {
-        // Wait for SDK to load
-        window.MercadoPagoSDK.onLoadCallbacks.push(onReady);
-      }
-    </script>
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://legalup.cl" />
+    
+    <!-- Preconnect para recursos externos -->
+    <link rel="preconnect" href="https://fonts.googleapis.cl" />
+    <link rel="preconnect" href="https://fonts.gstatic.cl" crossorigin />
+    
+    <!-- Meta para temas de color del navegador -->
+    <meta name="theme-color" content="#1a365d" />
+    <meta name="msapplication-TileColor" content="#1a365d" />
+    
+    <!-- Meta para iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="LegalUp" />
+    
+    <!-- Meta para evitar teléfonos azules -->
+    <meta name="format-detection" content="telephone=no" />
   </head>
 
   <body>

@@ -51,7 +51,7 @@ exports.handler = async (event) => {
       description, 
       userId, 
       lawyerId, 
-      appointmentId, 
+      appointmentId,  // Puede ser de appointments o consultations
       successUrl, 
       failureUrl, 
       pendingUrl, 
@@ -88,7 +88,7 @@ exports.handler = async (event) => {
       };
     }
 
-    // Check environment variables - USAR NOMBRES SIN VITE_
+    // Check environment variables
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
@@ -96,29 +96,15 @@ exports.handler = async (event) => {
     console.log('Environment variables check:', {
       hasSupabaseUrl: !!supabaseUrl,
       hasSupabaseKey: !!supabaseKey,
-      hasMpToken: !!mpToken,
-      supabaseUrlLength: supabaseUrl?.length,
-      supabaseKeyLength: supabaseKey?.length,
-      mpTokenLength: mpToken?.length
+      hasMpToken: !!mpToken
     });
 
     if (!supabaseUrl || !supabaseKey || !mpToken) {
-      console.error('Missing environment variables:', {
-        supabaseUrl: !!supabaseUrl,
-        supabaseKey: !!supabaseKey,
-        mpToken: !!mpToken
-      });
+      console.error('Missing environment variables');
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ 
-          error: 'Server configuration error - Missing environment variables',
-          details: {
-            supabaseUrl: !!supabaseUrl,
-            supabaseKey: !!supabaseKey, 
-            mpToken: !!mpToken
-          }
-        })
+        body: JSON.stringify({ error: 'Server configuration error - Missing environment variables' })
       };
     }
 
@@ -138,23 +124,71 @@ exports.handler = async (event) => {
 
     // Create payment record
     const paymentId = randomUUID();
+    
+    // DETERMINAR SI ES APPOINTMENT O CONSULTATION
+    let isConsultation = false;
+    let isAppointment = false;
+
+    // Primero verificar en consultations
+    const { data: consultationData, error: consultationError } = await supabase
+      .from('consultations')
+      .select('id')
+      .eq('id', appointmentId)
+      .single();
+
+    if (consultationData && !consultationError) {
+      isConsultation = true;
+      console.log('Found in consultations table');
+    } else {
+      // Si no está en consultations, verificar en appointments
+      const { data: appointmentData, error: appointmentError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('id', appointmentId)
+        .single();
+
+      if (appointmentData && !appointmentError) {
+        isAppointment = true;
+        console.log('Found in appointments table');
+      }
+    }
+
+    console.log('Reference type:', {
+      appointmentId,
+      isConsultation,
+      isAppointment
+    });
+
+    if (!isConsultation && !isAppointment) {
+      throw new Error('No se encontró la referencia en appointments ni consultations');
+    }
+
+    // Crear datos de pago según el tipo
     const paymentData = {
       id: paymentId,
       total_amount: Math.round(Number(amount) * 100),
-      lawyer_amount: Math.floor(Number(amount) * 0.85 * 100),
-      platform_fee: Math.ceil(Number(amount) * 0.15 * 100),
+      lawyer_amount: Math.floor(Number(amount) * 0.80 * 100),
+      platform_fee: Math.ceil(Number(amount) * 0.20 * 100),
       currency: 'clp',
       status: 'pending',
       service_description: description || 'Consulta Legal',
       client_user_id: userId,
       lawyer_user_id: lawyerId,
-      appointment_id: appointmentId,
       payment_gateway_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    console.log('Inserting payment into database...');
+    // Agregar la referencia correcta
+    if (isConsultation) {
+      paymentData.consultation_id = appointmentId;
+      paymentData.appointment_id = null;
+    } else if (isAppointment) {
+      paymentData.appointment_id = appointmentId;
+      paymentData.consultation_id = null;
+    }
+
+    console.log('Inserting payment data:', paymentData);
 
     // Insert payment into database
     const { data: payment, error: paymentError } = await supabase
@@ -170,7 +204,9 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: 'Failed to create payment record',
-          details: paymentError.message
+          details: paymentError.message,
+          hint: paymentError.hint,
+          code: paymentError.code
         })
       };
     }

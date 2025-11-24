@@ -127,8 +127,8 @@ app.post('/create-payment', async (req, res) => {
     const paymentData = {
       id: paymentId,
       total_amount: Math.round(Number(amount) * 100), // Convert to cents
-      lawyer_amount: Math.floor(Number(amount) * 0.85 * 100), // 85% for lawyer
-      platform_fee: Math.ceil(Number(amount) * 0.15 * 100),   // 15% platform fee
+      lawyer_amount: Math.floor(Number(amount) * 0.80 * 100), // 80% for lawyer
+      platform_fee: Math.ceil(Number(amount) * 0.20 * 100),   // 20% platform fee
       currency: 'clp',
       status: 'pending',
       service_description: description || 'Consulta Legal',

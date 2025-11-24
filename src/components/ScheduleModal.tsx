@@ -892,16 +892,16 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           <Button
             type="button"
             variant="ghost"
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            className="absolute right-4 top-4 px-2 h-8 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
             onClick={handleClose}
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Cerrar</span>
           </Button>
-          <DialogTitle>
-            Solicitar asesoría con {selectedLawyerData?.name || lawyerName}
+          <DialogTitle className="text-left">
+            Solicita asesoría con {selectedLawyerData?.name || lawyerName}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-left">
             Completa el formulario para agendar tu asesoría. Los campos con * son obligatorios.
           </DialogDescription>
         </DialogHeader>
@@ -1294,7 +1294,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center">
-                  <span className="text-gray-600">Tarifa de servicio</span>
+                  <span className="text-gray-600">Tarifa por servicio</span>
                   <span className="ml-1 text-xs text-gray-500">*</span>
                 </div>
                 <span className="text-gray-600">
@@ -1314,12 +1314,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               <p className="text-xs text-gray-500 mt-2">
                 * Incluye 10% de recargo por servicio app.
               </p>
-
-              {clientAmount < 1000 && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Se aplica un monto mínimo de $1.000 CLP para pagos con tarjeta.
-                </p>
-              )}
+              
             </div>
           </div>
             
