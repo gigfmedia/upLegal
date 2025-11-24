@@ -882,7 +882,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
-        className="sm:max-w-[425px] md:max-w-2xl max-h-[90vh] overflow-y-auto p-0"
+        className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg"
         overlayStyle={{
           '--tw-bg-opacity': 0.5,
           '--tw-backdrop-blur': 'blur(4px)',

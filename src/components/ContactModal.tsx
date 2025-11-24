@@ -50,41 +50,72 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if user has already used their first consultation discount with this lawyer and get contact fee
-  useEffect(() => {
-    const checkFirstConsultationAndFee = async () => {
-      if (!user) return;
-      
-      // Check first consultation usage
-      const { data, error } = await supabase
-        .from('consultations')
-        .select('id')
-        .eq('client_id', user.id)
-        .eq('lawyer_id', lawyerId)
-        .limit(1);
+  // Función para verificar el estado de la primera consulta
+  const checkFirstConsultationStatus = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('consultations')
+      .select('id')
+      .eq('client_id', user.id)
+      .eq('lawyer_id', lawyerId)
+      .limit(1);
 
-      if (!error && data && data.length > 0) {
-        setHasUsedFirstConsultation(true);
-      }
+    if (!error && data && data.length > 0) {
+      setHasUsedFirstConsultation(true);
+    }
+  };
 
-      // Get the actual contact fee from the lawyer's profile
+  // Función para obtener la tarifa de contacto actualizada
+  const getUpdatedContactFee = async () => {
+    // SIEMPRE usar el contactFeeClp de las props primero
+    if (contactFeeClp && contactFeeClp > 0) {
+      setActualContactFee(contactFeeClp);
+    } else {
+      // Solo hacer fetch si no tenemos un precio válido de las props
       const { data: lawyerProfile, error: lawyerError } = await supabase
         .from('profiles')
         .select('contact_fee_clp')
         .eq('id', lawyerId)
         .single();
 
-      if (!lawyerError && lawyerProfile) {
-        setActualContactFee(lawyerProfile.contact_fee_clp || contactFeeClp || 0);
+      if (!lawyerError && lawyerProfile?.contact_fee_clp) {
+        setActualContactFee(lawyerProfile.contact_fee_clp);
       }
-    };
+    }
+  };
 
-    checkFirstConsultationAndFee();
-  }, [user, lawyerId, contactFeeClp]);
-
-  // Auto-fill user data when component mounts or user changes
+  // SOLUCIÓN 2: Resetear estados cuando se abre el modal
   useEffect(() => {
-    if (user) {
+    if (isOpen) {
+      // Resetear y actualizar cuando el modal se abre
+      setActualContactFee(contactFeeClp);
+      setHasUsedFirstConsultation(false);
+      
+      // Volver a verificar todo
+      const checkEverything = async () => {
+        await checkFirstConsultationStatus();
+        await getUpdatedContactFee();
+      };
+      
+      if (user) {
+        checkEverything();
+      }
+    }
+  }, [isOpen, contactFeeClp, user, lawyerId]);
+
+  // SOLUCIÓN 1: Sincronización adicional cuando cambian las props o el usuario
+  useEffect(() => {
+    if (user && isOpen) {
+      // Verificar periódicamente si hay cambios
+      checkFirstConsultationStatus();
+      getUpdatedContactFee();
+    }
+  }, [user, lawyerId, contactFeeClp, isOpen]);
+
+  // Auto-fill user data cuando el componente monta o el usuario cambia
+  useEffect(() => {
+    if (user && isOpen) {
       const userData = user.user_metadata || {};
       const profile = userData.profile || {};
       const fullName = [
@@ -99,7 +130,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
         phone: profile.phone || userData.phone || '',
       }));
     }
-  }, [user]);
+  }, [user, isOpen]);
 
   // Calculate pricing details
   const calculatePricing = () => {
@@ -179,6 +210,8 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       </div>
     );
   };
+
+  // FUNCIONES QUE FALTABAN:
 
   const sendMessage = async (messageData: {
     lawyerId: string;
@@ -270,7 +303,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
           lawyer_id: lawyerId,
           title: formData.subject || 'Nueva consulta',
           description: formData.message,
-          status: 'pending_payment', // Cambiado a pending_payment para consistencia
+          status: 'pending_payment',
           price: consultationPrice
         }])
         .select('*');
@@ -288,10 +321,8 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     }
   };
 
-  // CORRECCIÓN: Función para crear pago usando fetch directo al backend
   const createPayment = async (paymentParams: any) => {
     try {
-      // Usar Netlify Functions o tu backend desplegado
       const BACKEND_URL = 'https://uplegal.netlify.app/.netlify/functions/create-payment';
       
       console.log('Creating payment with params:', paymentParams);
@@ -356,12 +387,12 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       // Create consultation first
       const consultation = await createConsultation();
       
-      // Create payment with MercadoPago - USANDO FUNCIÓN CORREGIDA
+      // Create payment with MercadoPago
       const paymentParams = {
         amount: pricing.total,
         userId: user.id,
         lawyerId: lawyerId,
-        appointmentId: consultation.id, // Usar appointmentId para consistencia con el backend
+        appointmentId: consultation.id,
         description: service 
           ? `Consulta: ${service.title} con ${lawyerName}`
           : `Consulta legal con ${lawyerName}`,
@@ -417,12 +448,20 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
   };
 
   const handleClose = () => {
+    // Resetear el form cuando se cierra
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      subject: "",
+      message: ""
+    });
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-[500px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg">
         <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
           <Button
             type="button"
@@ -577,7 +616,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
             </div>
             
             <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose} className="min-w-[100px]">
+              <Button type="button" variant="outline" onClick={handleClose} className="min-w-[100px]">
                 Cancelar
               </Button>
               <Button 
