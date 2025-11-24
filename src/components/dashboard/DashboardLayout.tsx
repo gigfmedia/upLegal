@@ -168,21 +168,14 @@ function DashboardLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header onAuthClick={() => {}} />
-      
-      <div className="flex-1 pt-16">
-        {/* Mobile header */}
-        <div className="lg:hidden flex items-center justify-between bg-white border-b border-gray-200 p-4 fixed top-16 left-0 right-0 z-40">
-          <div className="flex items-center">
-            <span className="font-medium">
-              {userRole === 'lawyer' ? 'Panel de Abogado' : 'Panel de Cliente'}
-            </span>
-          </div>
+      <Header
+        onAuthClick={() => {}}
+        centerLogoOnMobile
+        mobileMenuButton={
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="lg:hidden"
             aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {isSidebarOpen ? (
@@ -191,13 +184,15 @@ function DashboardLayout() {
               <Menu className="h-5 w-5" />
             )}
           </Button>
-        </div>
-
+        }
+      />
+      
+      <div className="flex-1 pt-16">
         <div className="max-w-7xl mx-auto">
           <div className="flex">
             {/* Sidebar */}
             <aside
-              className={`fixed lg:sticky top-16 h-[calc(100vh-64px)] z-30 w-64 bg-white border-r border-gray-200 flex flex-col ${
+              className={`fixed lg:sticky top-16 h-[calc(100vh-64px)] z-50 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
               } lg:translate-x-0 transition-transform duration-200 ease-in-out`}
             >
@@ -265,7 +260,7 @@ function DashboardLayout() {
             {/* Mobile overlay */}
             {isSidebarOpen && (
               <div
-                className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+                className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
                 onClick={() => setIsSidebarOpen(false)}
                 aria-hidden="true"
               />

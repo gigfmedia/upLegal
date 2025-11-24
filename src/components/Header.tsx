@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -13,9 +13,11 @@ import { AuthModal } from "./AuthModal";
 
 interface HeaderProps {
   onAuthClick?: (mode: 'login' | 'signup') => void;
+  centerLogoOnMobile?: boolean;
+  mobileMenuButton?: ReactNode;
 }
 
-export default function Header({ onAuthClick }: HeaderProps) {
+export default function Header({ onAuthClick, centerLogoOnMobile = false, mobileMenuButton }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,15 +66,27 @@ export default function Header({ onAuthClick }: HeaderProps) {
   return (
     <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
-        <div className="flex justify-between items-center h-full">
+        <div className="relative flex items-center h-full w-full gap-4">
+          {mobileMenuButton && (
+            <div className="md:hidden flex items-center">{mobileMenuButton}</div>
+          )}
+
           {/* Logo */}
-          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => handleNavigation('/')}>
+          <div
+            className={cn(
+              "flex items-center space-x-2 cursor-pointer transition-colors",
+              centerLogoOnMobile
+                ? "absolute left-1/2 -translate-x-1/2 md:relative md:left-auto md:translate-x-0"
+                : ""
+            )}
+            onClick={() => handleNavigation('/')}
+          >
             <Scale className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold text-gray-900">LegalUp</span>
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-8 mx-auto">
             <button 
               onClick={() => handleNavigation('/search')} 
               className={cn(
@@ -103,7 +117,7 @@ export default function Header({ onAuthClick }: HeaderProps) {
           </nav>
 
           {/* Auth Section */}
-          <div className="flex items-center gap-2 h-full">
+          <div className="flex items-center gap-2 h-full ml-auto">
             {/* Notifications temporarily hidden
             {user && (
               <div className="flex items-center h-full px-1">
@@ -165,7 +179,7 @@ export default function Header({ onAuthClick }: HeaderProps) {
                         }}
                       >
                         <User className="mr-2 h-4 w-4" />
-                        <span>{userRole === 'lawyer' ? 'Panel de Abogado' : 'Panel de Cliente'}</span>
+                        <span>Ir al Panel</span>
                       </DropdownMenuItem>
 
                       {userRole === 'lawyer' && (

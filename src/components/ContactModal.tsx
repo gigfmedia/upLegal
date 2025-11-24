@@ -484,11 +484,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
               ? `Aprovecha tu primera consulta con un 40% de descuento.`
               : `Completa el formulario para contactar al Abogado`}
           </DialogDescription>
-          {pricing.isFirstConsultation && (
-            <p className="text-sm text-muted-foreground">
-              Descuento especial aplicado a tu primera consulta con {lawyerName.split(' ')[0]}.
-            </p>
-          )}
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6 p-6 pt-4">
