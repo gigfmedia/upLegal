@@ -131,6 +131,50 @@ export type Database = {
           },
         ]
       }
+      payout_logs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          lawyer_user_id: string
+          metadata: Json | null
+          payment_ids: string[]
+          reference: string | null
+          status: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          lawyer_user_id: string
+          metadata?: Json | null
+          payment_ids: string[]
+          reference?: string | null
+          status: string
+          total_amount: number
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          lawyer_user_id?: string
+          metadata?: Json | null
+          payment_ids?: string[]
+          reference?: string | null
+          status?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_logs_lawyer_user_id_fkey"
+            columns: ["lawyer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       favorites: {
         Row: {
           created_at: string | null
@@ -358,12 +402,20 @@ export type Database = {
       payments: {
         Row: {
           client_user_id: string | null
+          client_surcharge: number | null
+          client_surcharge_percent: number | null
           created_at: string
           currency: string | null
           id: string
           lawyer_amount: number | null
           lawyer_user_id: string | null
+          original_amount: number | null
+          payout_date: string | null
+          payout_error: string | null
+          payout_reference: string | null
+          payout_status: string | null
           platform_fee: number | null
+          platform_fee_percent: number | null
           service_description: string | null
           status: string | null
           payment_gateway_id: string | null
@@ -372,12 +424,20 @@ export type Database = {
         }
         Insert: {
           client_user_id?: string | null
+          client_surcharge?: number | null
+          client_surcharge_percent?: number | null
           created_at?: string
           currency?: string | null
           id?: string
           lawyer_amount?: number | null
           lawyer_user_id?: string | null
+          original_amount?: number | null
+          payout_date?: string | null
+          payout_error?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
           platform_fee?: number | null
+          platform_fee_percent?: number | null
           service_description?: string | null
           status?: string | null
           payment_gateway_id?: string | null
@@ -386,12 +446,20 @@ export type Database = {
         }
         Update: {
           client_user_id?: string | null
+          client_surcharge?: number | null
+          client_surcharge_percent?: number | null
           created_at?: string
           currency?: string | null
           id?: string
           lawyer_amount?: number | null
           lawyer_user_id?: string | null
+          original_amount?: number | null
+          payout_date?: string | null
+          payout_error?: string | null
+          payout_reference?: string | null
+          payout_status?: string | null
           platform_fee?: number | null
+          platform_fee_percent?: number | null
           service_description?: string | null
           status?: string | null
           payment_gateway_id?: string | null
@@ -399,6 +467,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          client_surcharge_percent: number
+          created_at: string
+          currency: string
+          id: string
+          platform_fee_percent: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          client_surcharge_percent: number
+          created_at?: string
+          currency?: string
+          id?: string
+          platform_fee_percent: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          client_surcharge_percent?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          platform_fee_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {

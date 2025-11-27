@@ -353,7 +353,7 @@ const Index = () => {
       try {
         setIsLoadingFeatured(true);
         const { searchLawyers } = await import('@/lib/api/lawyerSearch');
-        const { data: lawyers, total } = await searchLawyers({}, 1, 4); // Get first 4 verified lawyers
+        const { data: lawyers, total } = await searchLawyers({}, 1, 20); // Get more lawyers to ensure we have enough complete profiles
         
         if (lawyers && lawyers.length > 0) {
           const formattedLawyers = lawyers.map(lawyer => ({
@@ -378,7 +378,31 @@ const Index = () => {
             }
           }));
           
-          setFeaturedLawyers(formattedLawyers);
+          // Sort lawyers with complete and verified profiles first, then by rating
+          const sortedLawyers = [...formattedLawyers].sort((a, b) => {
+            // Check if profile is verified and complete
+            const aIsVerifiedComplete = a.verified && 
+                                     a.bio?.trim() && 
+                                     a.specialties?.length > 0 && 
+                                     a.location?.trim() && 
+                                     a.hourlyRate > 0;
+            
+            const bIsVerifiedComplete = b.verified && 
+                                     b.bio?.trim() && 
+                                     b.specialties?.length > 0 && 
+                                     b.location?.trim() && 
+                                     b.hourlyRate > 0;
+            
+            // Unverified or incomplete profiles go to the end
+            if (aIsVerifiedComplete && !bIsVerifiedComplete) return -1;
+            if (!aIsVerifiedComplete && bIsVerifiedComplete) return 1;
+            
+            // If both are in the same category (both complete or both incomplete), sort by rating
+            return (b.rating || 0) - (a.rating || 0);
+          });
+          
+          // Take only the first 4 lawyers
+          setFeaturedLawyers(sortedLawyers.slice(0, 4));
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);

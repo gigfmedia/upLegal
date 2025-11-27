@@ -23,7 +23,7 @@ const Footer = () => {
               Política de Privacidad
             </a>
             <a 
-              href="#" 
+              href="/contacto" 
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               Contacto

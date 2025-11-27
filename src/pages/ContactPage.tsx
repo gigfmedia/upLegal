@@ -227,7 +227,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-medium">Correo electrónico</h3>
-                  <p className="text-sm text-gray-600">contacto@uplexa.cl</p>
+                  <p className="text-sm text-gray-600">contacto@legalup.cl</p>
                 </div>
               </div>
 
@@ -237,7 +237,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-medium">Teléfono</h3>
-                  <p className="text-sm text-gray-600">+56 9 1234 5678</p>
+                  <p className="text-sm text-gray-600">+56 9 5091 3358</p>
                 </div>
               </div>
 

@@ -20,6 +20,7 @@ import { NotificationProvider } from '@/contexts/NotificationContext';
 // Layouts
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import RequireLawyer from '@/components/auth/RequireLawyer';
+import RequireAdmin from '@/components/auth/RequireAdmin';
 import Footer from '@/components/Footer';
 
 // Pages
@@ -41,6 +42,7 @@ import DashboardAppointments from './pages/DashboardAppointments';
 import DashboardPayments from './pages/DashboardPayments';
 import DashboardMessages from './pages/DashboardMessages';
 import NotificationSettingsPage from './pages/NotificationSettingsPage';
+import AdminDashboard from './pages/AdminDashboard';
 import EmailVerification from './pages/auth/EmailVerification';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
@@ -142,6 +144,15 @@ const AppContent = () => {
               <Route path="earnings" element={<EarningsPage />} />
               <Route path="favorites" element={<DashboardFavorites />} />
             </Route>
+
+            <Route
+              path="/admin"
+              element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              }
+            />
             
             {/* Legacy route for backward compatibility */}
             <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
@@ -187,6 +198,8 @@ const AppContent = () => {
   );
 };
 
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+
 const App = () => (
   <BrowserRouter
     future={{
@@ -194,6 +207,7 @@ const App = () => (
       v7_relativeSplatPath: true,
     }}
   >
+    <GoogleAnalytics />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <NotificationProvider>

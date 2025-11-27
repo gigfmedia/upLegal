@@ -3,11 +3,13 @@ export interface Payment {
   user_id: string;
   lawyer_id: string;
   service_id?: string;
-  amount: number; // in cents (with client surcharge)
-  original_amount: number; // in cents (without surcharge)
-  client_surcharge: number; // in cents (10% of original amount)
-  platform_fee: number; // in cents (20% of original amount)
-  lawyer_amount: number; // in cents (80% of original amount)
+  amount: number; // in cents (final total client paid)
+  original_amount: number; // in cents (lawyer list price)
+  client_surcharge: number; // in cents (platform surcharge to the client)
+  client_surcharge_percent: number; // decimal representation (e.g., 0.1)
+  platform_fee: number; // in cents (platform retention from original amount)
+  platform_fee_percent: number; // decimal representation (e.g., 0.2)
+  lawyer_amount: number; // in cents (amount to pay lawyer before payout)
   currency: string;
   status: 'pending' | 'succeeded' | 'failed' | 'refunded' | 'disputed';
   metadata?: Record<string, unknown>;
@@ -21,9 +23,11 @@ export interface CreatePaymentInput {
   serviceId?: string;
   amount: number; // in cents (with client surcharge)
   originalAmount: number; // in cents (without surcharge)
-  clientSurcharge: number; // in cents (10% of original amount)
-  platformFee: number; // in cents (20% of original amount)
-  lawyerAmount: number; // in cents (80% of original amount)
+  clientSurcharge: number; // in cents (surcharge portion)
+  clientSurchargePercent: number;
+  platformFee: number; // in cents (platform fee portion)
+  platformFeePercent: number;
+  lawyerAmount: number; // in cents (originalAmount - platformFee)
   currency?: string;
   metadata?: Record<string, unknown>;
 }

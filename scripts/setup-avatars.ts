@@ -28,8 +28,6 @@ async function setupAvatarsBucket() {
     if (bucketError && bucketError.message !== 'Bucket already exists') {
       throw bucketError;
     }
-
-    console.log('✅ Avatars bucket is ready');
     
     // Set bucket policies
     await supabase.rpc('storage_set_bucket_policies', {
@@ -37,8 +35,6 @@ async function setupAvatarsBucket() {
       public: true,
       allowed_ops: ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
     });
-
-    console.log('✅ Storage policies updated');
     
   } catch (error) {
     console.error('Error setting up avatars bucket:', error);
