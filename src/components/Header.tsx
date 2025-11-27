@@ -86,7 +86,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8 mx-auto">
+          <nav className="hidden md:flex items-center justify-center flex-1 space-x-8 mx-auto">
             <button 
               onClick={() => handleNavigation('/search')} 
               className={cn(

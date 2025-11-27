@@ -2,11 +2,16 @@ import { json } from '@sveltejs/kit';
 import { createPreference } from '$lib/mercadopago';
 import { supabase } from '$lib/supabaseClient';
 
+const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
+const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
+const DEFAULT_CURRENCY = 'CLP';
+
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
   try {
     const {
       amount,
+      originalAmount,
       userId,
       lawyerId,
       description,
@@ -18,13 +23,48 @@ export async function POST({ request }) {
       serviceId = 'default-service'
     } = await request.json();
 
-    // Generate a unique ID for this payment
+    if ((!amount && !originalAmount) || !userId || !lawyerId) {
+      return json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const numericAmount = Number(amount ?? originalAmount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount < 1000) {
+      return json({ error: 'Amount must be at least 1000 CLP' }, { status: 400 });
+    }
+
+    // Load platform settings with fallback
+    let clientSurchargePercent = DEFAULT_CLIENT_SURCHARGE_PERCENT;
+    let platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT;
+    let currency = DEFAULT_CURRENCY;
+
+    const { data: settingsData } = await supabase
+      .from('platform_settings')
+      .select('client_surcharge_percent, platform_fee_percent, currency')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (settingsData) {
+      clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+      platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+      currency = settingsData.currency ?? currency;
+    }
+
     const paymentId = crypto.randomUUID();
-    
-    // Calculate amounts
-    const clientAmount = Math.round(amount * 1.1); // 10% surcharge
-    const platformFee = Math.round(amount * 0.2); // 20% platform fee
-    const lawyerAmount = amount - platformFee;
+
+    const hasOriginalAmount = typeof originalAmount === 'number' && Number.isFinite(originalAmount) && originalAmount > 0;
+    const derivedOriginalAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount))
+      : Math.round(numericAmount / (1 + clientSurchargePercent));
+
+    const clientAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount) * (1 + clientSurchargePercent))
+      : Math.round(numericAmount);
+
+    const clientSurcharge = Math.max(clientAmount - derivedOriginalAmount, 0);
+    const platformFee = Math.round(derivedOriginalAmount * platformFeePercent);
+    const lawyerAmount = Math.max(derivedOriginalAmount - platformFee, 0);
 
     // Create payment record in database
     const { data: payment, error: paymentError } = await supabase
@@ -34,14 +74,18 @@ export async function POST({ request }) {
         client_user_id: userId,
         lawyer_user_id: lawyerId,
         total_amount: clientAmount,
+        original_amount: derivedOriginalAmount,
+        client_surcharge: clientSurcharge,
+        client_surcharge_percent: clientSurchargePercent,
+        platform_fee_percent: platformFeePercent,
         lawyer_amount: lawyerAmount,
         platform_fee: platformFee,
         status: 'pending',
-        currency: 'CLP',
+        currency,
         service_description: JSON.stringify({
           service_id: serviceId,
           description: description,
-          client_surcharge: Math.round(amount * 0.1),
+          client_surcharge: clientSurcharge,
           payment_provider: 'mercadopago',
           created_at: new Date().toISOString(),
           success_url: successUrl,
@@ -65,7 +109,7 @@ export async function POST({ request }) {
       title: description.substring(0, 255) || 'Servicio Legal',
       description: description.substring(0, 500),
       quantity: 1,
-      currency_id: 'CLP',
+      currency_id: currency,
       unit_price: clientAmount,
     }];
 
