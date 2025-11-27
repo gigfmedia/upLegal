@@ -66,7 +66,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   return (
     <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
-        <div className="relative flex items-center h-full w-full gap-4">
+        <div className="relative flex items-center justify-between h-full w-full">
           {mobileMenuButton && (
             <div className="md:hidden flex items-center">{mobileMenuButton}</div>
           )}
@@ -85,8 +85,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <span className="text-xl font-bold text-gray-900">LegalUp</span>
           </div>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-8 mx-auto">
+          {/* Navigation - Centered */}
+          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <button 
               onClick={() => handleNavigation('/search')} 
               className={cn(
@@ -117,7 +117,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
           </nav>
 
           {/* Auth Section */}
-          <div className="flex items-center gap-2 h-full ml-auto">
+          <div className="flex items-center gap-2 h-full">
             {/* Notifications temporarily hidden
             {user && (
               <div className="flex items-center h-full px-1">

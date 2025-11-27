@@ -185,7 +185,13 @@ const Index = () => {
         //console.log('Abogados encontrados:', lawyers);
         
         if (lawyers && lawyers.length > 0) {
-          const formattedLawyers = lawyers.map(lawyer => ({
+          const formattedLawyers = lawyers
+            .filter(lawyer => {
+              const firstName = lawyer.first_name?.toLowerCase() || '';
+              const lastName = lawyer.last_name?.toLowerCase() || '';
+              return !firstName.includes('admin') && !lastName.includes('admin');
+            })
+            .map(lawyer => ({
             id: lawyer.id || '',
             user_id: lawyer.user_id || '',
             name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Nombre no disponible',
@@ -356,7 +362,13 @@ const Index = () => {
         const { data: lawyers, total } = await searchLawyers({}, 1, 4); // Get first 4 verified lawyers
         
         if (lawyers && lawyers.length > 0) {
-          const formattedLawyers = lawyers.map(lawyer => ({
+          const formattedLawyers = lawyers
+            .filter(lawyer => {
+              const firstName = lawyer.first_name?.toLowerCase() || '';
+              const lastName = lawyer.last_name?.toLowerCase() || '';
+              return !firstName.includes('admin') && !lastName.includes('admin');
+            })
+            .map(lawyer => ({
             id: lawyer.id || '',
             user_id: lawyer.user_id || '',
             name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim(),
@@ -835,50 +847,7 @@ const Index = () => {
                 />
               ))}
               
-              {/* Mostrar abogados mock en todo caso */}
-              {mockLawyers.map((lawyer) => {
-                const mockLawyer = {
-                  ...lawyer,
-                  id: `mock-${lawyer.id}`,
-                  user_id: `mock-${lawyer.id}`,
-                  cases: lawyer.cases || 0,
-                  location: lawyer.location || 'Santiago, Chile',
-                  reviews: lawyer.reviews || 0,
-                  verified: true,
-                  availability: {
-                    availableToday: true,
-                    availableThisWeek: true,
-                    quickResponse: true,
-                    emergencyConsultations: true
-                  }
-                };
-                
-                return (
-                  <LawyerCard
-                    key={`mock-${lawyer.id}`}
-                    lawyer={mockLawyer as unknown as Lawyer}
-                    user={user}
-                    onContactClick={() => {
-                      if (!user) {
-                        setAuthMode('login');
-                        setShowAuthModal(true);
-                        return;
-                      }
-                      setSelectedLawyer(mockLawyer as unknown as Lawyer);
-                      setShowContactModal(true);
-                    }}
-                    onScheduleClick={() => {
-                      if (!user) {
-                        setAuthMode('login');
-                        setShowAuthModal(true);
-                        return;
-                      }
-                      setSelectedLawyer(mockLawyer as unknown as Lawyer);
-                      setShowScheduleModal(true);
-                    }}
-                  />
-                );
-              })}
+              {/* Mock lawyers removed to show only real data */}
             </div>
           )}
         </div>

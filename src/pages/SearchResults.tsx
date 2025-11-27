@@ -277,6 +277,19 @@ const SearchResults = () => {
     availableNow
   }), [searchTerm, selectedSpecialty, location, minRating, minExperience, availableNow]);
 
+  // Handle initial search term and set specialty if needed
+  useEffect(() => {
+    // Check if search term contains 'familia' and set the corresponding specialty
+    if (initialQuery.toLowerCase().includes('familia') && selectedSpecialty !== 'Derecho de Familia') {
+      setSelectedSpecialty('Derecho de Familia');
+      
+      // Update URL with the selected specialty
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('specialty', 'Derecho de Familia');
+      setSearchParams(params);
+    }
+  }, [initialQuery, searchParams, selectedSpecialty, setSearchParams]);
+
   // Create a ref to store the debounced search function
   const debouncedSearchRef = useRef(
     debounce(async (params: {
@@ -396,8 +409,17 @@ const SearchResults = () => {
   // Handle search
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
+    
+    // Check if search term contains 'familia' and set the corresponding specialty
+    const searchTermLower = searchTerm.toLowerCase();
+    if (searchTermLower.includes('familia') && selectedSpecialty !== 'Derecho de Familia') {
+      setSelectedSpecialty('Derecho de Familia');
+      params.set('specialty', 'Derecho de Familia');
+    } else if (selectedSpecialty !== 'all') {
+      params.set('specialty', selectedSpecialty);
+    }
+    
     if (searchTerm) params.set('q', searchTerm);
-    if (selectedSpecialty !== 'all') params.set('specialty', selectedSpecialty);
     if (location) params.set('location', location);
     setSearchParams(params);
     

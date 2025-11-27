@@ -130,10 +130,10 @@ export function LawyerCard({
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
-        <div className="flex-1 flex flex-col p-6 min-h-[300px]">
+        <div className="flex-1 flex flex-col p-6 min-h-[300px] relative">
           {/* Sección superior - Info básica */}
           <div className="flex justify-between items-start mb-4 w-full">
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 flex-1">
               <div className="relative">
                 <div className="relative">
                   <Avatar className="h-16 w-16">
@@ -150,71 +150,65 @@ export function LawyerCard({
               </div>
               
               <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start w-full">
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <div className="flex justify-between items-start w-full">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" title={lawyer.name}>
-                        {lawyer.name}
-                      </h3>
-                      {/* Favorite button removed as per request */}
-                    </div>
-                    {lawyer.verified && (
-                      <Badge variant="secondary" className="w-fit mt-1 flex items-center gap-1 bg-green-50 text-green-700">
-                        <ShieldCheck className="h-3 w-3" />
-                        Verificado en PJUD
-                      </Badge>
-                    )}
-                  </div>
-                </div> {/* Close flex-col div */}
+                <div className="flex items-start justify-between w-full mb-1">
+                  <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" title={lawyer.name}>
+                    {lawyer.name}
+                  </h3>
+                </div>
                 
-                <div className="mt-1 w-full">
-                  <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden">
-                    <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <span 
-                      className="truncate block w-full max-w-[180px]" 
-                      title={lawyer.location || 'Ubicación no disponible'}
-                    >
-                      {lawyer.location || 'Ubicación no disponible'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-4 text-sm mt-1">
-                    <button 
-                      className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowRatingsDialog(true);
-                      }}
-                    >
-                      <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
-                      <span className="font-medium">{currentRating.toFixed(1)}</span>
-                      <span className="text-gray-400">({currentReviewCount})</span>
-                    </button>
-                    <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
-                    <span className="text-blue-600 font-medium">
-                      {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
-                    </span>
-                  </div>
+                {lawyer.verified && (
+                  <Badge variant="secondary" className="w-fit mb-2 flex items-center gap-1 bg-green-50 text-green-700">
+                    <ShieldCheck className="h-3 w-3" />
+                    Verificado en PJUD
+                  </Badge>
+                )}
+                
+                <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden mb-1">
+                  <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <span 
+                    className="truncate block w-full max-w-[180px]" 
+                    title={lawyer.location || 'Ubicación no disponible'}
+                  >
+                    {lawyer.location || 'Ubicación no disponible'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center space-x-4 text-sm">
+                  <button 
+                    className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/lawyer/${lawyer.id}#reviews-section`);
+                    }}
+                  >
+                    <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
+                    <span className="font-medium">{currentRating.toFixed(1)}</span>
+                    <span className="text-gray-400">({currentReviewCount})</span>
+                  </button>
+                  <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
+                  <span className="text-blue-600 font-medium">
+                    {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
+                  </span>
                 </div>
               </div>
             </div>
+          </div>
             
-            <div className="flex-shrink-0 ml-2 z-10 mt-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className={`${!isVerifiedLawyer ? 'opacity-50 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'} border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white`}
-                onClick={(e) => {
-                  if (!isVerifiedLawyer) return;
-                  e.stopPropagation();
-                  navigate(`/lawyer/${lawyer.id}`);
-                }}
-                disabled={!isVerifiedLawyer}
-                title={!isVerifiedLawyer ? 'Este perfil no está completo o verificado' : 'Ver perfil completo'}
-              >
-                Ver perfil
-              </Button>
-            </div>
+          <div className="absolute top-6 right-6">
+            <Button
+              variant="outline"
+              size="sm"
+              className={`${!isVerifiedLawyer ? 'opacity-50 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'} border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white`}
+              onClick={(e) => {
+                if (!isVerifiedLawyer) return;
+                e.stopPropagation();
+                navigate(`/lawyer/${lawyer.id}`);
+              }}
+              disabled={!isVerifiedLawyer}
+              title={!isVerifiedLawyer ? 'Este perfil no está completo o verificado' : 'Ver perfil completo'}
+            >
+              Ver perfil
+            </Button>
           </div>
 
           {/* Contenido con alineación fija */}
