@@ -324,38 +324,52 @@ const SearchResults = () => {
         if (response) {
           //console.log('Raw API response:', response);
           
-          const formattedLawyers = response.lawyers.map(lawyer => {
-            //console.log('Lawyer bio:', lawyer.id, lawyer.first_name, lawyer.last_name, 'Bio:', lawyer.bio);
-            return {
-              id: lawyer.id,
-              user_id: lawyer.user_id, // Include the user_id
-              name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
-              specialties: lawyer.specialties || [],
-              rating: lawyer.rating || 0,
-              reviews: lawyer.review_count || 0,
-              location: lawyer.location || 'Sin ubicación',
-              cases: 0,
-              hourlyRate: lawyer.hourly_rate_clp || 0,
-              consultationPrice: lawyer.hourly_rate_clp || 0,
-              image: lawyer.avatar_url || '',
-              bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
-              verified: lawyer.verified || false,
-              availability: {
-                availableToday: true,
-                availableThisWeek: true,
-                quickResponse: true,
-                emergencyConsultations: true
-              },
+          // First, format all lawyers
+          const formattedLawyers = response.lawyers.map(lawyer => ({
+            id: lawyer.id,
+            user_id: lawyer.user_id,
+            name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
+            specialties: lawyer.specialties || [],
+            rating: lawyer.rating || 0,
+            reviews: lawyer.review_count || 0,
+            location: lawyer.location || 'Sin ubicación',
+            cases: 0,
+            hourlyRate: lawyer.hourly_rate_clp || 0,
+            consultationPrice: lawyer.hourly_rate_clp || 0,
+            image: lawyer.avatar_url || '',
+            bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
+            verified: lawyer.verified || false,
+            availability: {
               availableToday: true,
               availableThisWeek: true,
               quickResponse: true,
-              emergencyConsultations: true,
-              experienceYears: lawyer.experience_years || 0
-            };
+              emergencyConsultations: true
+            },
+            availableToday: true,
+            availableThisWeek: true,
+            quickResponse: true,
+            emergencyConsultations: true,
+            experienceYears: lawyer.experience_years || 0
+          }));
+
+          // Then sort them by profile completeness and rating
+          const sortedLawyers = [...formattedLawyers].sort((a, b) => {
+            // Check if profile is complete (has all required fields)
+            const isAComplete = a.verified && a.bio?.trim() && a.specialties?.length > 0 && 
+                              a.location?.trim() && a.hourlyRate > 0;
+            const isBComplete = b.verified && b.bio?.trim() && b.specialties?.length > 0 && 
+                              b.location?.trim() && b.hourlyRate > 0;
+            
+            // Sort complete profiles first
+            if (isAComplete && !isBComplete) return -1;
+            if (!isAComplete && isBComplete) return 1;
+            
+            // If both have same completeness, sort by rating (highest first)
+            return (b.rating || 0) - (a.rating || 0);
           });
 
           setSearchResult(prev => ({
-            lawyers: page === 1 ? formattedLawyers : [...prev.lawyers, ...formattedLawyers],
+            lawyers: page === 1 ? sortedLawyers : [...prev.lawyers, ...sortedLawyers],
             total: response.total || 0,
             page,
             pageSize: response.pageSize || 10,

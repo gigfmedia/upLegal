@@ -534,7 +534,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       if (!open) onClose();
     }}>
       <DialogContent 
-        className="sm:max-w-[425px]"
+        className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto"
         aria-describedby="auth-dialog-description"
       >
         <DialogDescription id="auth-dialog-description" className="sr-only">

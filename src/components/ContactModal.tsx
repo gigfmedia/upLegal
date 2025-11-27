@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { Check, Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { fetchPlatformSettings, getDefaultPlatformSettings } from "@/services/platformSettings";
 
 // Helper function to format CLP
 const formatCLP = (amount: number): string => {
@@ -47,11 +48,12 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
   const [isLoading, setIsLoading] = useState(false);
   const [hasUsedFirstConsultation, setHasUsedFirstConsultation] = useState(false);
   const [actualContactFee, setActualContactFee] = useState(contactFeeClp);
+  const [platformSettings, setPlatformSettings] = useState(getDefaultPlatformSettings());
   const { toast } = useToast();
   const navigate = useNavigate();
 
   // Función para verificar el estado de la primera consulta
-  const checkFirstConsultationStatus = async () => {
+  const checkFirstConsultationStatus = useCallback(async () => {
     if (!user) return;
     
     const { data, error } = await supabase
@@ -64,10 +66,10 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     if (!error && data && data.length > 0) {
       setHasUsedFirstConsultation(true);
     }
-  };
+  }, [user, lawyerId]);
 
   // Función para obtener la tarifa de contacto actualizada
-  const getUpdatedContactFee = async () => {
+  const getUpdatedContactFee = useCallback(async () => {
     // SIEMPRE usar el contactFeeClp de las props primero
     if (contactFeeClp && contactFeeClp > 0) {
       setActualContactFee(contactFeeClp);
@@ -83,7 +85,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
         setActualContactFee(lawyerProfile.contact_fee_clp);
       }
     }
-  };
+  }, [contactFeeClp, lawyerId]);
 
   // SOLUCIÓN 2: Resetear estados cuando se abre el modal
   useEffect(() => {
@@ -102,7 +104,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
         checkEverything();
       }
     }
-  }, [isOpen, contactFeeClp, user, lawyerId]);
+  }, [isOpen, contactFeeClp, user, lawyerId, checkFirstConsultationStatus, getUpdatedContactFee]);
 
   // SOLUCIÓN 1: Sincronización adicional cuando cambian las props o el usuario
   useEffect(() => {
@@ -111,7 +113,25 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       checkFirstConsultationStatus();
       getUpdatedContactFee();
     }
-  }, [user, lawyerId, contactFeeClp, isOpen]);
+  }, [user, lawyerId, contactFeeClp, isOpen, checkFirstConsultationStatus, getUpdatedContactFee]);
+
+  // Load platform fee settings (public read policy allows this)
+  useEffect(() => {
+    let isMounted = true;
+    fetchPlatformSettings()
+      .then(settings => {
+        if (isMounted) {
+          setPlatformSettings(settings);
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load platform settings for ContactModal:', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Auto-fill user data cuando el componente monta o el usuario cambia
   useEffect(() => {
@@ -133,14 +153,14 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
   }, [user, isOpen]);
 
   // Calculate pricing details
-  const calculatePricing = () => {
+  const pricing = useMemo(() => {
     const basePrice = actualContactFee;
     const isFirstConsultation = !hasUsedFirstConsultation;
     const discountRate = isFirstConsultation ? 0.4 : 0;
-    const serviceFeeRate = 0.1;
-    
+    const serviceFeeRate = platformSettings.client_surcharge_percent;
+
     const discountAmount = Math.round(basePrice * discountRate);
-    const subtotal = basePrice - discountAmount;
+    const subtotal = Math.max(basePrice - discountAmount, 0);
     const serviceFee = Math.round(subtotal * serviceFeeRate);
     const total = subtotal + serviceFee;
 
@@ -151,11 +171,10 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       discountAmount,
       subtotal,
       serviceFee,
+      serviceFeeRate,
       total
     };
-  };
-
-  const pricing = calculatePricing();
+  }, [actualContactFee, hasUsedFirstConsultation, platformSettings.client_surcharge_percent]);
 
   // Check if field is valid
   const isFieldValid = (field: string) => {
@@ -321,7 +340,21 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     }
   };
 
-  const createPayment = async (paymentParams: any) => {
+  interface CreatePaymentParams {
+    amount: number;
+    originalAmount: number;
+    userId: string;
+    lawyerId: string;
+    appointmentId: string;
+    description: string;
+    successUrl: string;
+    failureUrl: string;
+    pendingUrl: string;
+    userEmail: string;
+    userName: string;
+  }
+
+  const createPayment = async (paymentParams: CreatePaymentParams) => {
     try {
       const BACKEND_URL = 'https://uplegal.netlify.app/.netlify/functions/create-payment';
       
@@ -390,18 +423,25 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       // Create payment with MercadoPago
       const paymentParams = {
         amount: pricing.total,
+        originalAmount: pricing.subtotal,
         userId: user.id,
         lawyerId: lawyerId,
         appointmentId: consultation.id,
         description: service 
           ? `Consulta: ${service.title} con ${lawyerName}`
           : `Consulta legal con ${lawyerName}`,
-        successUrl: `${window.location.origin}/payment/success?appointmentId=${consultation.id}`,
-        failureUrl: `${window.location.origin}/payment/failure?appointmentId=${consultation.id}`,
-        pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${consultation.id}`,
+        // Use fallback base URL if window.location.origin is empty
+        successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${consultation.id}`,
+        failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${consultation.id}`,
+        pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${consultation.id}`,
         userEmail: user.email || formData.email,
         userName: formData.name
       };
+
+      // Validate URLs before sending
+      if (!paymentParams.successUrl || !paymentParams.failureUrl || !paymentParams.pendingUrl) {
+        throw new Error('Error al generar las URLs de retorno del pago');
+      }
 
       console.log('Creating payment with params:', paymentParams);
       

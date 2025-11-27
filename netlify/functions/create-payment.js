@@ -3,6 +3,10 @@ const { createClient } = require('@supabase/supabase-js');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 const { randomUUID } = require('crypto');
 
+const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
+const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
+const DEFAULT_CURRENCY = 'CLP';
+
 exports.handler = async (event) => {
   console.log('Function invoked with method:', event.httpMethod);
   
@@ -48,6 +52,7 @@ exports.handler = async (event) => {
 
     const { 
       amount, 
+      originalAmount,
       description, 
       userId, 
       lawyerId, 
@@ -59,6 +64,68 @@ exports.handler = async (event) => {
       userName 
     } = JSON.parse(event.body);
 
+    const siteUrlString = (process.env.PUBLIC_SITE_URL || process.env.URL || 'https://uplegal.netlify.app').replace(/\/$/, '');
+    const siteUrl = new URL(siteUrlString.startsWith('http') ? siteUrlString : `https://${siteUrlString}`);
+
+    const normalizeBackUrl = (requestedUrl, fallbackPath) => {
+      try {
+        const targetUrl = requestedUrl ? new URL(requestedUrl, siteUrl) : new URL(`${siteUrl.origin}${fallbackPath}`);
+        targetUrl.protocol = 'https:';
+        targetUrl.host = siteUrl.host;
+        targetUrl.port = '';
+        return targetUrl.toString();
+      } catch (error) {
+        return `${siteUrl.origin}${fallbackPath}`;
+      }
+    };
+
+    const resolvedSuccessUrl = normalizeBackUrl(successUrl, '/payment/success');
+    const resolvedFailureUrl = normalizeBackUrl(failureUrl, '/payment/failure');
+    const resolvedPendingUrl = normalizeBackUrl(pendingUrl, '/payment/pending');
+
+    // Validate that all URLs are non-empty strings
+    if (!resolvedSuccessUrl || typeof resolvedSuccessUrl !== 'string' || resolvedSuccessUrl.trim() === '') {
+      console.error('Invalid success URL:', { successUrl, resolvedSuccessUrl });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid success URL',
+          details: 'Success URL must be a valid non-empty string'
+        })
+      };
+    }
+
+    if (!resolvedFailureUrl || typeof resolvedFailureUrl !== 'string' || resolvedFailureUrl.trim() === '') {
+      console.error('Invalid failure URL:', { failureUrl, resolvedFailureUrl });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid failure URL',
+          details: 'Failure URL must be a valid non-empty string'
+        })
+      };
+    }
+
+    if (!resolvedPendingUrl || typeof resolvedPendingUrl !== 'string' || resolvedPendingUrl.trim() === '') {
+      console.error('Invalid pending URL:', { pendingUrl, resolvedPendingUrl });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Invalid pending URL',
+          details: 'Pending URL must be a valid non-empty string'
+        })
+      };
+    }
+
+    console.log('Resolved back URLs:', {
+      success: resolvedSuccessUrl,
+      failure: resolvedFailureUrl,
+      pending: resolvedPendingUrl
+    });
+
     console.log('Payment request data:', { 
       amount, 
       userId: userId?.substring(0, 8) + '...',
@@ -68,19 +135,21 @@ exports.handler = async (event) => {
     });
 
     // Validations
-    if (!amount || !userId || !lawyerId || !appointmentId) {
+    if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({ 
           error: 'Missing required fields',
-          required: ['amount', 'userId', 'lawyerId', 'appointmentId'],
-          received: { amount, userId: !!userId, lawyerId: !!lawyerId, appointmentId: !!appointmentId }
+          required: ['amount or originalAmount', 'userId', 'lawyerId', 'appointmentId'],
+          received: { amount: !!amount, originalAmount: !!originalAmount, userId: !!userId, lawyerId: !!lawyerId, appointmentId: !!appointmentId }
         })
       };
     }
 
-    if (amount < 1000) {
+    const numericAmount = Number(amount ?? originalAmount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount < 1000) {
       return {
         statusCode: 400,
         headers,
@@ -122,9 +191,44 @@ exports.handler = async (event) => {
       options: { timeout: 5000 }
     });
 
+    // Fetch platform fee configuration (fallback to defaults)
+    let clientSurchargePercent = DEFAULT_CLIENT_SURCHARGE_PERCENT;
+    let platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT;
+    let currency = DEFAULT_CURRENCY;
+
+    try {
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('client_surcharge_percent, platform_fee_percent, currency')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (settingsData) {
+        clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+        platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+        currency = settingsData.currency ?? currency;
+      }
+    } catch (settingsError) {
+      console.warn('Falling back to default platform settings:', settingsError);
+    }
+
     // Create payment record
     const paymentId = randomUUID();
-    
+
+    const hasOriginalAmount = typeof originalAmount === 'number' && Number.isFinite(originalAmount) && originalAmount > 0;
+    const derivedOriginalAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount))
+      : Math.round(numericAmount / (1 + clientSurchargePercent));
+
+    const clientAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount) * (1 + clientSurchargePercent))
+      : Math.round(numericAmount);
+
+    const clientSurcharge = Math.max(clientAmount - derivedOriginalAmount, 0);
+    const platformFee = Math.round(derivedOriginalAmount * platformFeePercent);
+    const lawyerAmount = Math.max(derivedOriginalAmount - platformFee, 0);
+
     // DETERMINAR SI ES APPOINTMENT O CONSULTATION
     let isConsultation = false;
     let isAppointment = false;
@@ -166,10 +270,14 @@ exports.handler = async (event) => {
     // Crear datos de pago según el tipo
     const paymentData = {
       id: paymentId,
-      total_amount: Math.round(Number(amount) * 100),
-      lawyer_amount: Math.floor(Number(amount) * 0.80 * 100),
-      platform_fee: Math.ceil(Number(amount) * 0.20 * 100),
-      currency: 'clp',
+      total_amount: clientAmount,
+      original_amount: derivedOriginalAmount,
+      client_surcharge: clientSurcharge,
+      client_surcharge_percent: clientSurchargePercent,
+      platform_fee_percent: platformFeePercent,
+      lawyer_amount: lawyerAmount,
+      platform_fee: platformFee,
+      currency,
       status: 'pending',
       service_description: description || 'Consulta Legal',
       client_user_id: userId,
@@ -223,16 +331,16 @@ exports.handler = async (event) => {
         description: `Consulta con abogado especializado`,
         quantity: 1,
         currency_id: 'CLP',
-        unit_price: Number(amount)
+        unit_price: clientAmount
       }],
       payer: {
         email: userEmail,
         name: userName || 'Cliente UpLegal'
       },
       back_urls: {
-        success: successUrl,
-        failure: failureUrl,
-        pending: pendingUrl
+        success: resolvedSuccessUrl,
+        failure: resolvedFailureUrl,
+        pending: resolvedPendingUrl
       },
       auto_return: 'approved',
       binary_mode: true,

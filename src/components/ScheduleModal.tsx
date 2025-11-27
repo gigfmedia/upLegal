@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format, parseISO, startOfDay, isSameDay, addDays, isBefore, isPast, isToday, isValid } from 'date-fns';
 import { es } from "date-fns/locale";
 import { createMercadoPagoPayment } from '@/services/mercadopagoService';
+import { fetchPlatformSettings, getDefaultPlatformSettings } from '@/services/platformSettings';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -41,6 +42,8 @@ const formatCurrency = (amount: number) => {
     maximumFractionDigits: 0
   }).format(amount);
 };
+
+type LawyerAvailabilityMap = Record<string, boolean[]>;
 
 // Using the same specialties as in SearchResults.tsx
 const SPECIALTIES = [
@@ -75,10 +78,23 @@ interface Lawyer {
 }
 
 // CalendarField component integrated directly
+interface AppointmentFormData {
+  name: string;
+  email: string;
+  phone: string;
+  date: string;
+  time: string;
+  duration: string;
+  consultationType: string;
+  contactMethod: string;
+  description: string;
+  address: string;
+}
+
 interface CalendarFieldProps {
-  formData: any;
+  formData: AppointmentFormData;
   onDateSelect: (date: string) => void;
-  lawyerAvailability: Record<string, any>;
+  lawyerAvailability: LawyerAvailabilityMap | null;
   selectedLawyerId: string;
 }
 
@@ -200,14 +216,14 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('');
-  const [selectedLawyer, setSelectedLawyer] = useState<string>(lawyerId || '');
+  const [selectedLawyer, setSelectedLawyer] = useState<string | null>(lawyerId || null);
   const [selectedLawyerData, setSelectedLawyerData] = useState<Lawyer | null>(null);
   const [isLoadingLawyers, setIsLoadingLawyers] = useState(false);
   const [specialties, setSpecialties] = useState<string[]>(SPECIALTIES);
-  const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, any> | null>(null);
+  const [lawyerAvailability, setLawyerAvailability] = useState<LawyerAvailabilityMap | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [platformSettings, setPlatformSettings] = useState(getDefaultPlatformSettings());
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
-  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   
   // CORRECCIÓN: Mover el hook useToast antes de cualquier condicional
@@ -219,6 +235,24 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Refs for focus management
   const specialtySelectRef = useRef<HTMLButtonElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+
+  // Load platform fee settings once modal mounts
+  useEffect(() => {
+    let isMounted = true;
+    fetchPlatformSettings()
+      .then(settings => {
+        if (isMounted) {
+          setPlatformSettings(settings);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load platform settings in ScheduleModal:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Initialize form data with user information if available
   const [formData, setFormData] = useState(() => {
@@ -618,10 +652,12 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Calculate final amounts
   const originalAmount = useMemo(() => estimatedCost, [estimatedCost]);
   
-  const clientAmount = useMemo(() => 
-    Math.round(originalAmount * 1.1),
-    [originalAmount]
+  const clientAmount = useMemo(() =>
+    Math.round(originalAmount * (1 + platformSettings.client_surcharge_percent)),
+    [originalAmount, platformSettings.client_surcharge_percent]
   );
+
+  const clientSurcharge = useMemo(() => Math.max(clientAmount - originalAmount, 0), [clientAmount, originalAmount]);
 
   const consultationTypes = [
     { value: "consultation", label: "Consulta inicial" },
@@ -630,20 +666,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     { value: "contract-review", label: "Revisión de contratos" },
     { value: "other", label: "Otro" }
   ];
-
-  // Define interface for form data
-  interface AppointmentFormData {
-    name: string;
-    email: string;
-    phone: string;
-    date: string;
-    time: string;
-    duration: string;
-    consultationType: string;
-    contactMethod: string;
-    description: string;
-    address: string;
-  }
 
   const validateForm = (data: AppointmentFormData): { valid: boolean; message?: string } => {
     if (!data.name?.trim()) return { valid: false, message: 'El nombre es obligatorio' };
@@ -735,16 +757,23 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         
         const paymentParams = {
           amount: clientAmount,
+          originalAmount,
           userId: user?.id || '',
           lawyerId: finalLawyerId,
           appointmentId: appointment.id,
           description: `Consulta legal con ${selectedLawyerData?.name || lawyerName}`,
-          successUrl: `${window.location.origin}/payment/success?appointmentId=${appointment.id}`,
-          failureUrl: `${window.location.origin}/payment/failure?appointmentId=${appointment.id}`,
-          pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${appointment.id}`,
+          // Use fallback base URL if window.location.origin is empty
+          successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${appointment.id}`,
+          failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${appointment.id}`,
+          pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${appointment.id}`,
           userEmail: user?.email || formData.email,
           userName: user?.user_metadata?.full_name || formData.name
         };
+
+        // Validate URLs before sending
+        if (!paymentParams.successUrl || !paymentParams.failureUrl || !paymentParams.pendingUrl) {
+          throw new Error('Error al generar las URLs de retorno del pago');
+        }
 
         console.log('Payment params:', paymentParams);
         
@@ -1298,7 +1327,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                   <span className="ml-1 text-xs text-gray-500">*</span>
                 </div>
                 <span className="text-gray-600">
-                  +{formatCurrency(Math.ceil(estimatedCost * 0.1))}
+                  +{formatCurrency(clientSurcharge)}
                 </span>
               </div>
 

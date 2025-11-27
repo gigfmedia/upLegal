@@ -38,6 +38,10 @@ const mercadopago = new MercadoPagoConfig({
   options: { timeout: 5000 }
 });
 
+const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
+const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
+const DEFAULT_CURRENCY = 'CLP';
+
 const app = express();
 
 // CORS configuration - CORREGIDO
@@ -91,6 +95,7 @@ app.post('/create-payment', async (req, res) => {
     
     const { 
       amount, 
+      originalAmount,
       description, 
       userId, 
       lawyerId, 
@@ -107,29 +112,64 @@ app.post('/create-payment', async (req, res) => {
     });
 
     // Validations
-    if (!amount || !userId || !lawyerId || !appointmentId) {
+    if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
       return res.status(400).json({ 
         error: 'Missing required fields',
-        required: ['amount', 'userId', 'lawyerId', 'appointmentId'],
-        received: { amount, userId, lawyerId, appointmentId }
+        required: ['amount or originalAmount', 'userId', 'lawyerId', 'appointmentId'],
+        received: { amount, originalAmount, userId, lawyerId, appointmentId }
       });
     }
 
-    // Validate amount
-    if (amount < 1000) {
+    const numericAmount = Number(amount ?? originalAmount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount < 1000) {
       return res.status(400).json({
         error: 'Amount must be at least 1000 CLP'
       });
     }
 
-    // Create payment record in database
+    let clientSurchargePercent = DEFAULT_CLIENT_SURCHARGE_PERCENT;
+    let platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT;
+    let currency = DEFAULT_CURRENCY;
+
+    const { data: settingsData } = await supabase
+      .from('platform_settings')
+      .select('client_surcharge_percent, platform_fee_percent, currency')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (settingsData) {
+      clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+      platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+      currency = settingsData.currency ?? currency;
+    }
+
     const paymentId = uuidv4();
+
+    const hasOriginalAmount = typeof originalAmount === 'number' && Number.isFinite(originalAmount) && originalAmount > 0;
+    const derivedOriginalAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount))
+      : Math.round(numericAmount / (1 + clientSurchargePercent));
+
+    const clientAmount = hasOriginalAmount
+      ? Math.round(Number(originalAmount) * (1 + clientSurchargePercent))
+      : Math.round(numericAmount);
+
+    const clientSurcharge = Math.max(clientAmount - derivedOriginalAmount, 0);
+    const platformFee = Math.round(derivedOriginalAmount * platformFeePercent);
+    const lawyerAmount = Math.max(derivedOriginalAmount - platformFee, 0);
+
     const paymentData = {
       id: paymentId,
-      total_amount: Math.round(Number(amount) * 100), // Convert to cents
-      lawyer_amount: Math.floor(Number(amount) * 0.80 * 100), // 80% for lawyer
-      platform_fee: Math.ceil(Number(amount) * 0.20 * 100),   // 20% platform fee
-      currency: 'clp',
+      total_amount: clientAmount,
+      original_amount: derivedOriginalAmount,
+      client_surcharge: clientSurcharge,
+      client_surcharge_percent: clientSurchargePercent,
+      platform_fee_percent: platformFeePercent,
+      lawyer_amount: lawyerAmount,
+      platform_fee: platformFee,
+      currency,
       status: 'pending',
       service_description: description || 'Consulta Legal',
       client_user_id: userId,
@@ -166,15 +206,15 @@ app.post('/create-payment', async (req, res) => {
     const preferenceData = {
       items: [{
         id: paymentId,
-        title: description || 'Consulta Legal - UpLegal',
+        title: description || 'Consulta Legal - LegalUp',
         description: `Consulta con abogado especializado - ${description}`,
         quantity: 1,
-        currency_id: 'CLP',
-        unit_price: Number(amount)
+        currency_id: currency,
+        unit_price: clientAmount
       }],
       payer: {
         email: userEmail,
-        name: userName || 'Cliente UpLegal'
+        name: userName || 'Cliente LegalUp'
       },
       back_urls: {
         success: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
@@ -184,7 +224,7 @@ app.post('/create-payment', async (req, res) => {
       auto_return: 'approved',
       binary_mode: true,
       external_reference: paymentId,
-      statement_descriptor: 'UPLEGAL',
+      statement_descriptor: 'LEGALUP',
       notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
     };
 
