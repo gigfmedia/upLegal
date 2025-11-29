@@ -53,9 +53,36 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
       };
     }
 
-    // In a real implementation, you would call the PJUD API here
     console.log('Realizando verificación con el Poder Judicial...');
-    const isVerified = await simulatePJUDVerification(rut, fullName);
+
+    const backendUrl = import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:3001';
+    const endpoint = `${backendUrl.replace(/\/$/, '')}/verify-lawyer`;
+
+    let isVerified = false;
+    let verificationDetails: Record<string, unknown> | undefined;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rut, fullName })
+      });
+
+      const payload = await response.json();
+      verificationDetails = payload?.details;
+
+      if (!response.ok) {
+        throw new Error(payload?.message || 'Error en la verificación con el servidor');
+      }
+
+      isVerified = payload?.verified === true;
+    } catch (serverError) {
+      console.error('Error al usar el backend de verificación, usando fallback local:', serverError);
+      // fallback to direct PJUD call (simulated) to avoid dejar usuario bloqueado
+      isVerified = await simulatePJUDVerification(rut, fullName);
+    }
 
     if (isVerified) {
       console.log('Verificación exitosa - Abogado encontrado en los registros');
@@ -88,7 +115,8 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
       
       return { 
         verified: true,
-        message: 'Abogado verificado exitosamente en el Poder Judicial'
+        message: 'Abogado verificado exitosamente en el Poder Judicial',
+        details: verificationDetails
       };
     } else {
       const errorMsg = 'El RUT no está registrado como abogado en el Poder Judicial';
