@@ -14,7 +14,75 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+dotenv.config();
 
+// Get environment variables
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceRoleKey) {
+  console.error('Missing required environment variables');
+  process.exit(1);
+}
+
+// Create Supabase client
+const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+// Initialize MercadoPago client
+const mercadopago = new MercadoPagoConfig({
+  accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
+  options: { timeout: 5000 }
+});
+
+const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
+const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
+const DEFAULT_CURRENCY = 'CLP';
+const PJUD_API_URL = process.env.PJUD_API_URL || 'https://api.pjud.cl/consulta-abogados';
+
+const app = express();
+
+// CORS configuration - CORREGIDO
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://uplegal.netlify.app',
+      'http://localhost:3000', 
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
+app.use(express.json());
+
+const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+// Verify lawyer endpoint
 app.post('/verify-lawyer', async (req, res) => {
   const { rut, fullName } = req.body || {};
 
@@ -84,73 +152,6 @@ app.post('/verify-lawyer', async (req, res) => {
     });
   }
 });
-dotenv.config();
-
-// Get environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !serviceRoleKey) {
-  console.error('Missing required environment variables');
-  process.exit(1);
-}
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
-
-// Initialize MercadoPago client
-const mercadopago = new MercadoPagoConfig({
-  accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
-  options: { timeout: 5000 }
-});
-
-const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
-const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
-const DEFAULT_CURRENCY = 'CLP';
-const PJUD_API_URL = process.env.PJUD_API_URL || 'https://api.pjud.cl/consulta-abogados';
-
-const app = express();
-
-// CORS configuration - CORREGIDO
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://uplegal.netlify.app',
-      'http://localhost:3000', 
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001'
-    ];
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-};
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('*', cors(corsOptions));
-
-app.use(express.json());
-
-const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
 
 // Health check endpoint
 app.get('/', (req, res) => {
