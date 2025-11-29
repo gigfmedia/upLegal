@@ -7,12 +7,12 @@ export default function HowItWorksPage() {
     {
       icon: <Search className="h-6 w-6 text-blue-600" />,
       title: "1. Encuentra a tu abogado",
-      description: "Busca entre nuestra red de abogados verificados y encuentra al profesional que mejor se adapte a tus necesidades legales."
+      description: "Busca entre nuestra red de abogados verificados y encuentra al profesional que mejor se adapte a tus necesidades."
     },
     {
       icon: <MessageCircle className="h-6 w-6 text-blue-600" />,
       title: "2. Contacta directamente",
-      description: "Envía tu consulta inicial y programa una asesoría sin compromiso con el abogado de tu elección."
+      description: "Envía tu consulta inicial y programa una asesoría con el abogado de tu elección."
     },
     {
       icon: <FileText className="h-6 w-6 text-blue-600" />,
@@ -104,7 +104,7 @@ export default function HowItWorksPage() {
             ¿Listo para comenzar?
           </h2>
           <p className="text-xl mb-8 text-blue-100">
-            Encuentra al abogado ideal para tus necesidades y resuelve tus consultas legales de manera rápida y segura.
+            Encuentra al abogado ideal para tus necesidades y resuelve tus consultas de manera rápida y segura.
           </p>
           <Link 
             to="/search"

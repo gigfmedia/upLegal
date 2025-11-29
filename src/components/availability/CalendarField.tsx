@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { format, parseISO, startOfDay, isPast, isToday, addDays } from 'date-fns';
-import { es } from "date-fns/locale";
+import { es, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const DAYS_SPANISH = [
@@ -14,9 +14,26 @@ const DAYS_SPANISH = [
   "Martes",
   "Miércoles",
   "Jueves",
-  "Viercoles",
+  "Viernes",
   "Sábado"
 ];
+
+const DAYS_ENGLISH = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+
+const normalizeDayKey = (value?: string) =>
+  (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z]/g, "");
 
 interface CalendarFieldProps {
   formData: {
@@ -34,16 +51,35 @@ interface CalendarFieldProps {
 
 export default function CalendarField({ formData, setFormData, lawyerAvailability }: CalendarFieldProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const normalizedAvailability = useMemo(() => {
+    if (!lawyerAvailability) return null;
+    return Object.entries(lawyerAvailability).reduce<Record<string, boolean[]>>(
+      (acc, [key, value]) => {
+        if (!Array.isArray(value)) return acc;
+        acc[normalizeDayKey(key)] = value;
+        return acc;
+      },
+      {}
+    );
+  }, [lawyerAvailability]);
 
-  const getDayKey = (date: Date): string => DAYS_SPANISH[date.getDay()];
+  const getDayAvailability = (date: Date): boolean[] | null => {
+    if (!normalizedAvailability) return null;
+    const dayIndex = date.getDay();
+    const candidates = [DAYS_SPANISH[dayIndex], DAYS_ENGLISH[dayIndex]]
+      .filter(Boolean)
+      .map((key) => normalizedAvailability[normalizeDayKey(key as string)])
+      .filter((value): value is boolean[] => Array.isArray(value));
+
+    return candidates[0] || null;
+  };
 
   const isDisabled = (date: Date): boolean => {
     if (isPast(date) && !isToday(date)) return true;
 
     if (!lawyerAvailability) return false;
 
-    const dayKey = getDayKey(date);
-    const dayAvailability = lawyerAvailability[dayKey];
+    const dayAvailability = getDayAvailability(date);
 
     if (!dayAvailability || !Array.isArray(dayAvailability)) return true;
 
@@ -96,26 +132,27 @@ export default function CalendarField({ formData, setFormData, lawyerAvailabilit
             disabled={isDisabled}
             fromDate={startOfDay(new Date())}
             toDate={addDays(new Date(), 60)}
-            locale={es}
+            locale={enUS}
             className="p-3"
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4",
-              caption: "flex justify-center pt-1 relative items-center",
+              month: "space-y-4 w-full",
+              caption: "flex items-center justify-center pt-1 mb-4 relative",
               caption_label: "text-sm font-medium",
-              nav: "space-x-1 flex items-center",
+              nav: "flex items-center gap-1",
               nav_button: cn(
-                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-md"
               ),
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              table: "w-full border-collapse space-y-1",
-              head_row: "flex",
-              head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-              row: "flex w-full mt-2",
-              cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+              nav_button_previous: "absolute left-0",
+              nav_button_next: "absolute right-0",
+              table: "w-full border-collapse",
+              head_row: "grid grid-cols-7 gap-0 mb-1",
+              head_cell:
+                "text-muted-foreground font-normal text-[0.8rem] flex items-center justify-center h-9 capitalize",
+              row: "grid grid-cols-7 gap-0 mt-0.5",
+              cell: "h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
               day: cn(
-                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-md",
+                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-md flex items-center justify-center",
                 "hover:bg-blue-100 hover:text-blue-900 transition-colors duration-200"
               ),
               day_selected: "bg-blue-500 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-500 focus:text-white",
@@ -124,18 +161,6 @@ export default function CalendarField({ formData, setFormData, lawyerAvailabilit
               day_disabled: "text-muted-foreground opacity-50",
               day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
-            }}
-            components={{
-              IconLeft: ({ ...props }) => (
-                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
-                  ←
-                </Button>
-              ),
-              IconRight: ({ ...props }) => (
-                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
-                  →
-                </Button>
-              ),
             }}
           />
         </PopoverContent>

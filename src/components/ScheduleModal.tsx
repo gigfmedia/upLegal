@@ -15,7 +15,7 @@ import { generateGoogleMeetLink, formatMeetLink, isValidMeetUrl } from "@/lib/go
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO, startOfDay, isSameDay, addDays, isBefore, isPast, isToday, isValid } from 'date-fns';
-import { es } from "date-fns/locale";
+import { es, enUS } from "date-fns/locale";
 import { createMercadoPagoPayment } from '@/services/mercadopagoService';
 import { fetchPlatformSettings, getDefaultPlatformSettings } from '@/services/platformSettings';
 
@@ -33,6 +33,27 @@ const formatDate = (dateString: string) => {
   return date.toISOString().split('T')[0];
 };
 
+const parseLocalDateString = (dateString?: string) => {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split("-").map(Number);
+
+  if ([year, month, day].some((value) => Number.isNaN(value))) {
+    return null;
+  }
+
+  return new Date(year, (month || 1) - 1, day || 1);
+};
+
+const getNextBookableDate = (referenceDate = new Date()) => {
+  const date = startOfDay(referenceDate);
+
+  while (date.getDay() === 0) {
+    date.setDate(date.getDate() + 1);
+  }
+
+  return date;
+};
+
 // Format currency helper function
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('es-CL', {
@@ -44,6 +65,114 @@ const formatCurrency = (amount: number) => {
 };
 
 type LawyerAvailabilityMap = Record<string, boolean[]>;
+
+const DAYS_SPANISH = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado"
+];
+
+const DAYS_ENGLISH = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+
+const AVAILABILITY_START_HOUR = 9;
+const DEFAULT_SLOT_DURATION_MINUTES = 60;
+
+const normalizeDayKey = (value?: string) =>
+  (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z]/g, "");
+
+const normalizeAvailabilityMap = (
+  availability: LawyerAvailabilityMap | null
+): Record<string, boolean[]> | null => {
+  if (!availability) return null;
+
+  const normalizedEntries = Object.entries(availability).reduce<Record<string, boolean[]>>(
+    (acc, [key, value]) => {
+      if (!Array.isArray(value)) return acc;
+      acc[normalizeDayKey(key)] = value;
+      return acc;
+    },
+    {}
+  );
+
+  return Object.keys(normalizedEntries).length ? normalizedEntries : null;
+};
+
+const findAvailabilityForDate = (
+  normalizedMap: Record<string, boolean[]> | null,
+  date: Date
+): boolean[] | null => {
+  if (!normalizedMap || Number.isNaN(date.getTime())) return null;
+
+  const dayIndex = date.getDay();
+  const candidates = [
+    DAYS_SPANISH[dayIndex],
+    DAYS_ENGLISH[dayIndex],
+    format(date, "EEEE", { locale: es }),
+    format(date, "EEEE", { locale: enUS })
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    const key = normalizeDayKey(candidate as string);
+    if (normalizedMap[key]) {
+      return normalizedMap[key];
+    }
+  }
+
+  return null;
+};
+
+const buildSlotsFromAvailability = (
+  dayAvailability: boolean[],
+  bookedTimes: string[] = [],
+  slotDurationMinutes = DEFAULT_SLOT_DURATION_MINUTES
+) => {
+  const bookedSet = new Set(bookedTimes.filter(Boolean));
+
+  return dayAvailability.reduce<Array<{ value: string; label: string }>>(
+    (acc, isAvailable, index) => {
+      if (!isAvailable) return acc;
+
+      const startHour = AVAILABILITY_START_HOUR + index;
+      const slotStart = `${String(startHour).padStart(2, "0")}:00`;
+
+      if (bookedSet.has(slotStart)) return acc;
+
+      let endHour = startHour;
+      let remainingMinutes = slotDurationMinutes;
+
+      while (remainingMinutes >= 60) {
+        endHour += 1;
+        remainingMinutes -= 60;
+      }
+
+      const slotEnd = `${String(endHour).padStart(2, "0")}:${String(remainingMinutes).padStart(2, "0")}`;
+
+      acc.push({
+        value: slotStart,
+        label: `${slotStart} - ${slotEnd}`,
+      });
+
+      return acc;
+    },
+    []
+  );
+};
 
 // Using the same specialties as in SearchResults.tsx
 const SPECIALTIES = [
@@ -98,50 +227,43 @@ interface CalendarFieldProps {
   selectedLawyerId: string;
 }
 
-const CalendarField = ({ formData, onDateSelect, lawyerAvailability, selectedLawyerId }: CalendarFieldProps) => {
+const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarFieldProps) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  
-  // Función para crear una fecha sin problemas de zona horaria
-  const createLocalDate = (dateString: string) => {
-    if (!dateString) return new Date();
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    formData.date ? createLocalDate(formData.date) : new Date()
+  const normalizedAvailability = useMemo(
+    () => normalizeAvailabilityMap(lawyerAvailability),
+    [lawyerAvailability]
   );
 
-  // Function to check if a date is disabled
+  const getDayAvailability = useCallback(
+    (date: Date) => findAvailabilityForDate(normalizedAvailability, date),
+    [normalizedAvailability]
+  );
+  
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    formData.date ? parseLocalDateString(formData.date) ?? new Date() : new Date()
+  );
+
+  // Function to check if a date is disabled based on lawyer availability
   const isDateDisabled = useCallback((date: Date): boolean => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Only disable dates before today (not including today)
-    if (date < today && !isSameDay(date, today)) return true;
-    
-    // If no availability data, enable all future dates by default
-    if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) return false;
-    
-    const dayOfWeek = date.getDay();
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const dayKey = days[dayOfWeek];
-    const dayAvailability = lawyerAvailability[dayKey];
-    
-    console.log(`Checking availability for ${dayKey}:`, dayAvailability);
-    
-    // If day has no availability array or all values are false, disable it
-    if (!dayAvailability || !Array.isArray(dayAvailability)) {
-      console.log(`No availability data for ${dayKey}, disabling date`);
+    // First, check if the date is in the past
+    const today = startOfDay(new Date());
+    const dateToCheck = startOfDay(date);
+
+    if (isBefore(dateToCheck, today)) {
+      return true; // Disable past dates
+    }
+
+    // Disable Sundays explicitly
+    if (dateToCheck.getDay() === 0) {
       return true;
     }
-    
-    // Check if there's at least one available hour
-    const hasAvailableHours = dayAvailability.some(hour => hour === true);
-    console.log(`Has available hours for ${dayKey}:`, hasAvailableHours);
-    
-    return !hasAvailableHours;
-  }, [lawyerAvailability]);
+
+    const dayAvailability = getDayAvailability(date);
+
+    if (!dayAvailability) return false;
+
+    return !dayAvailability.some((hour) => hour === true);
+  }, [getDayAvailability]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -166,7 +288,7 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability, selectedLaw
   };
 
   // Formatear la fecha para mostrar sin problemas de zona horaria
-  const displayDate = formData.date ? createLocalDate(formData.date) : null;
+  const displayDate = formData.date ? parseLocalDateString(formData.date) : null;
 
   return (
     <div className="space-y-2">
@@ -226,6 +348,23 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   
+  // Normalized availability for the selected lawyer
+  const normalizedAvailability = useMemo(
+    () => normalizeAvailabilityMap(lawyerAvailability),
+    [lawyerAvailability]
+  );
+
+  // Get availability for a specific date string
+  const getDayAvailabilityForDateString = useCallback(
+    (dateString: string) => {
+      if (!normalizedAvailability) return null;
+      const date = parseLocalDateString(dateString);
+      if (!date) return null;
+      return findAvailabilityForDate(normalizedAvailability, date);
+    },
+    [normalizedAvailability]
+  );
+  
   // CORRECCIÓN: Mover el hook useToast antes de cualquier condicional
   const { toast } = useToast();
   
@@ -270,11 +409,13 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     // Get email from user object
     const email = user?.email || '';
     
+    const initialDate = getNextBookableDate();
+
     return {
       name: fullName,
       email: email,
       phone: phone,
-      date: format(new Date(), 'yyyy-MM-dd'), // Set today's date as default
+      date: format(initialDate, 'yyyy-MM-dd'), // Skip Sundays by default
       time: "",
       duration: "60",
       consultationType: "consultation",
@@ -554,7 +695,18 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       setAvailableSlots([]);
       
       // Parse the date string to get day of week in Spanish
-      const date = new Date(dateString);
+      const date = parseLocalDateString(dateString);
+      if (!date) {
+        console.warn('Fecha inválida para disponibilidad:', dateString);
+        setAvailableSlots([]);
+        return;
+      }
+
+      if (date.getDay() === 0) {
+        console.log('Domingo no disponible para agendamiento.');
+        setAvailableSlots([]);
+        return;
+      }
       const spanishDayOfWeek = format(date, 'EEEE', { locale: es });
       
       console.log('Fetching availability for:', {
@@ -563,7 +715,28 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         lawyerId
       });
 
-      // Try to get availability from lawyer_availability table first
+      const { data: bookedData, error: bookedError } = await supabase
+        .from('consultations')
+        .select('start_time')
+        .eq('lawyer_id', lawyerId)
+        .eq('appointment_date', dateString);
+
+      if (bookedError) {
+        console.error('Error fetching booked slots:', bookedError);
+      }
+
+      const bookedTimes = bookedData
+        ?.map((slot) => slot.start_time)
+        .filter((time): time is string => Boolean(time)) || [];
+
+      const availabilityFromProfile = getDayAvailabilityForDateString(dateString);
+      if (availabilityFromProfile && availabilityFromProfile.some(Boolean)) {
+        const slots = buildSlotsFromAvailability(availabilityFromProfile, bookedTimes);
+        setAvailableSlots(slots);
+        return;
+      }
+
+      // Try to get availability from lawyer_availability table
       const { data: availability, error: availabilityError } = await supabase
         .from('lawyer_availability')
         .select('*')
@@ -573,36 +746,17 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
       if (availabilityError || !availability) {
         console.log('No specific availability found, using default hours');
-        
-        // Get booked slots for the selected date
-        const { data: bookedSlots, error: bookedError } = await supabase
-          .from('consultations')
-          .select('start_time')
-          .eq('lawyer_id', lawyerId)
-          .eq('appointment_date', dateString);
 
-        if (bookedError) {
-          console.error('Error fetching booked slots:', bookedError);
-        }
-
-        // Generate default time slots (9am to 6pm, 1-hour slots)
-        const slots = generateTimeSlots(
-          '09:00',
-          '18:00',
-          60,
-          bookedSlots?.map(s => s.start_time) || []
-        );
-        
+        const slots = generateTimeSlots('09:00', '18:00', 60, bookedTimes);
         setAvailableSlots(slots);
         return;
       }
       
-      // If we have specific availability, use it
       const slots = generateTimeSlots(
         availability.start_time || '09:00',
         availability.end_time || '18:00',
         availability.slot_duration || 60,
-        [] // We'll handle booked slots separately
+        bookedTimes
       );
       
       setAvailableSlots(slots);
@@ -612,7 +766,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     } finally {
       setIsLoadingSlots(false);
     }
-  }, [generateTimeSlots]);
+  }, [generateTimeSlots, getDayAvailabilityForDateString]);
 
   // Fetch available slots when date or lawyer changes
   useEffect(() => {
@@ -1175,8 +1329,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                       ) : (
                         availableSlots.map((slot) => {
                           const [hours, minutes] = slot.value.split(':').map(Number);
-                          const selectedDateObj = new Date(formData.date);
-                          const isToday = selectedDateObj.toDateString() === new Date().toDateString();
+                          const selectedDateObj = parseLocalDateString(formData.date);
+                          const isToday = selectedDateObj
+                            ? selectedDateObj.toDateString() === new Date().toDateString()
+                            : false;
                           
                           let isDisabled = false;
                           if (isToday) {

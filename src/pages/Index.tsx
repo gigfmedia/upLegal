@@ -555,8 +555,8 @@ const Index = () => {
             ideal
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Conecta con abogados experimentados, recibe asesoría legal y resuelve tus asuntos 
-            legales con confianza. Servicios legales profesionales al alcance de tus manos.
+            Conecta con abogados experimentados, recibe asesoría y resuelve tus asuntos legales
+            con confianza. Servicios profesionales al alcance de tus manos.
           </p>
           
           {/* Search Section */}
@@ -680,7 +680,7 @@ const Index = () => {
             Busca abogados por área de práctica
           </h2>
           <p className="text-left text-gray-600 mb-12">
-          Al buscar asistencia legal, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades legales.
+          Al buscar asistencia, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -885,7 +885,7 @@ const Index = () => {
           </h2>
           <p className="text-xl mb-8 text-white">
             Únete a nuestra plataforma y conecta con clientes que buscan tu experiencia.
-            Impulsa el crecimiento de tu estudio y potencia tu carrera legal.
+            Impulsa el crecimiento de tu estudio y potencia tu carrera.
           </p>
           <Button 
             size="lg" 

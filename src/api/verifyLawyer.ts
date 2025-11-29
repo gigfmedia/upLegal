@@ -119,7 +119,7 @@ const simulatePJUDVerification = async (rut: string, fullName: string): Promise<
   await new Promise(resolve => setTimeout(resolve, delay));
   
   // In a real implementation, you would make an actual API call here:
-  /*
+  
   try {
     console.log('Realizando petición al Poder Judicial...');
     const response = await fetch('https://api.pjud.cl/consulta-abogados', {
@@ -146,10 +146,4 @@ const simulatePJUDVerification = async (rut: string, fullName: string): Promise<
     console.error('Error al contactar al Poder Judicial:', error);
     throw error;
   }
-  */
-  
-  // For now, simulate 80% success rate for testing
-  const isVerified = Math.random() < 0.8;
-  console.log(`Simulación completada: ${isVerified ? 'VERIFICADO' : 'NO VERIFICADO'}`);
-  return isVerified;
 };
