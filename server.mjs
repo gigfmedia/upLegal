@@ -5,8 +5,14 @@ import express from 'express';
 import cors from 'cors';
 import fetch from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { v4 as uuidv4 } from 'uuid';
+import { load } from 'cheerio';
+import axios from 'axios';
+import { CookieJar } from 'tough-cookie';
+import { wrapper } from 'axios-cookie-jar-support';
+
+// ... (imports)
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -33,16 +39,18 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
-// Initialize MercadoPago client
-const mercadopago = new MercadoPagoConfig({
+// Configure MercadoPago
+const mpClient = new MercadoPagoConfig({
   accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
   options: { timeout: 5000 }
 });
 
+// Create API client instance
+const mp = new Payment({ client: mpClient });
+
 const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
 const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
 const DEFAULT_CURRENCY = 'CLP';
-const PJUD_API_URL = process.env.PJUD_API_URL || 'https://api.pjud.cl/consulta-abogados';
 
 const app = express();
 
@@ -76,7 +84,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle preflight requests
-app.options('*', cors(corsOptions));
+//app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
@@ -93,62 +102,141 @@ app.post('/verify-lawyer', async (req, res) => {
     });
   }
 
-  const apiKey = process.env.PJUD_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({
-      verified: false,
-      message: 'PJUD_API_KEY no está configurado en el servidor.'
-    });
-  }
-
   try {
+    console.log(`Iniciando verificación para RUT: ${rut}, Nombre: ${fullName}`);
+
+    // Format RUT (remove dots and dash, keep only numbers and K)
     const cleanRut = normalizeRut(rut);
-    const dv = cleanRut.slice(-1);
-    const body = {
-      rut: cleanRut.slice(0, -1),
-      dv,
-      nombre: fullName
-    };
 
-    console.log('Enviando verificación PJUD desde el servidor...', body);
-
-    const response = await fetch(PJUD_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify(body)
-    });
-
-    const rawText = await response.text();
-    let data = null;
-    try {
-      data = rawText ? JSON.parse(rawText) : null;
-    } catch (parseError) {
-      console.error('No se pudo parsear la respuesta del PJUD:', parseError, rawText);
-    }
-
-    if (!response.ok) {
-      console.error('Error en respuesta del PJUD:', response.status, data);
-      return res.status(response.status).json({
+    // Validate RUT format
+    if (!/^\d{7,8}[0-9K]$/i.test(cleanRut)) {
+      return res.status(400).json({
         verified: false,
-        message: data?.message || 'Error en la verificación con el Poder Judicial',
-        details: data || rawText
+        message: 'Formato de RUT inválido. Use el formato 12345678-9'
       });
     }
 
-    const verified = data?.verificado === true;
-    return res.json({
-      verified,
-      details: data
+    // Split RUT into body and verifier
+    const rutBody = cleanRut.slice(0, -1);
+    const rutVerifier = cleanRut.slice(-1);
+
+    // URL of the Poder Judicial AJAX search endpoint
+    const searchUrl = 'https://www.pjud.cl/ajax/Lawyers/search';
+    
+    // Configure axios
+    const jar = new CookieJar();
+    const client = wrapper(axios.create({
+      jar,
+      withCredentials: true,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html, */*; q=0.01',
+        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://www.pjud.cl',
+        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
+      }
+    }));
+
+    // Prepare form data for the search
+    const formData = new URLSearchParams();
+    formData.append('dni', rutBody);
+    formData.append('digit', rutVerifier);
+
+    // Submit the search form
+    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
+    const searchResponse = await client.post(searchUrl, formData);
+
+    // Parse the results
+    const $ = load(searchResponse.data);
+    
+    // Check for "No results" alert
+    if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
+      return res.json({
+        verified: false,
+        message: 'No se encontró el abogado en los registros',
+        details: {
+          rut: cleanRut,
+          nombre: fullName,
+          reason: 'No se encontró en los registros del Poder Judicial'
+        }
+      });
+    }
+
+    // Check for success table
+    const resultTable = $('table');
+    
+    if (resultTable.length === 0) {
+      console.warn('PJUD Response unexpected:', searchResponse.data.substring(0, 200));
+      return res.status(500).json({
+        verified: false,
+        message: 'Error al interpretar la respuesta del Poder Judicial',
+        details: { requiresHumanVerification: true }
+      });
+    }
+
+    // Extract data from the result table
+    const rows = resultTable.find('tbody tr');
+    let foundMatch = false;
+    let matchData = null;
+
+    rows.each((i, row) => {
+      const cols = $(row).find('td');
+      
+      if (cols.length >= 1) {
+        const nombre = $(cols[0]).text().trim();
+        const region = cols.length > 2 ? $(cols[2]).text().trim() : '';
+        
+        // Check name match
+        const normalizedInputName = fullName.toLowerCase().replace(/\s+/g, ' ').trim();
+        const normalizedResultName = nombre.toLowerCase().replace(/\s+/g, ' ').trim();
+        
+        const inputParts = normalizedInputName.split(' ');
+        const resultParts = normalizedResultName.split(' ');
+        
+        const allPartsMatch = inputParts.every(part => 
+          resultParts.some(resPart => resPart.includes(part) || part.includes(resPart))
+        );
+
+        if (allPartsMatch) {
+          foundMatch = true;
+          matchData = {
+            rut: cleanRut,
+            nombre: nombre,
+            region: region,
+            source: 'Poder Judicial de Chile',
+            verifiedAt: new Date().toISOString()
+          };
+          return false; // break loop
+        }
+      }
     });
+
+    if (foundMatch) {
+      return res.json({
+        verified: true,
+        message: 'Abogado verificado exitosamente',
+        details: matchData
+      });
+    } else {
+      return res.json({
+        verified: false,
+        message: 'Los datos no coinciden con los registros del Poder Judicial',
+        details: {
+          rut: cleanRut,
+          nombre: fullName,
+          reason: 'Nombre no coincide con el registro asociado al RUT'
+        }
+      });
+    }
+
   } catch (error) {
-    console.error('Error al contactar al Poder Judicial:', error);
+    console.error('Error en verificación:', error);
     return res.status(500).json({
       verified: false,
-      message: 'No se pudo contactar al Poder Judicial',
-      error: error instanceof Error ? error.message : 'Error desconocido'
+      message: 'Error al realizar la verificación',
+      error: error.message
     });
   }
 });
@@ -275,9 +363,7 @@ app.post('/create-payment', async (req, res) => {
 
     console.log('Payment record created successfully');
 
-    // Create MercadoPago preference
-    const preference = new Preference(mercadopago);
-    
+    // Create MercadoPago preference data
     const preferenceData = {
       items: [{
         id: paymentId,
@@ -304,8 +390,9 @@ app.post('/create-payment', async (req, res) => {
     };
 
     console.log('Creating MercadoPago preference...');
-
-    const mpResponse = await preference.create({ body: preferenceData });
+    
+    // Create preference using the mp client
+    const mpResponse = await mp.create({ body: preferenceData });
 
     console.log('MercadoPago response received');
 
@@ -413,3 +500,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`- http://127.0.0.1:3000`);
   console.log(`- http://127.0.0.1:3001`);
 });
+
+export default app;

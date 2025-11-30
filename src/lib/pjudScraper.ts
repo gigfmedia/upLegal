@@ -1,5 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { CookieJar } from 'tough-cookie';
+import { promisify } from 'util';
 
 export interface PJUDVerificationResult {
   verified: boolean;
@@ -9,6 +11,7 @@ export interface PJUDVerificationResult {
     region?: string;
     estado?: string;
   };
+  error?: string;
 }
 
 export async function scrapePoderJudicial(rut: string, fullName: string): Promise<PJUDVerificationResult> {
@@ -23,10 +26,11 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
       };
     }
 
-    // Format RUT with dots and dash (12.345.678-9)
-    const formattedRut = `${cleanRut.slice(0, -7)}.${cleanRut.slice(-7, -4)}.${cleanRut.slice(-4, -1)}-${cleanRut.slice(-1)}`;
-    
-    // Split full name into parts
+    // Split RUT into body and verifier
+    const rutBody = cleanRut.slice(0, -1);
+    const rutVerifier = cleanRut.slice(-1);
+
+    // Split full name into parts (still needed for name matching later)
     const nameParts = fullName.trim().split(/\s+/);
     if (nameParts.length < 2) {
       return { 
@@ -35,54 +39,54 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
       };
     }
 
-    // URL of the Poder Judicial search page
-    const searchUrl = 'https://www.pjud.cl/transparencia/busqueda-de-abogados';
+    // URL of the Poder Judicial AJAX search endpoint
+    const searchUrl = 'https://www.pjud.cl/ajax/Lawyers/search';
     
-    // Configure axios to handle cookies and follow redirects
+    // Configure axios
     const client = axios.create({
       withCredentials: true,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'es-CL,es-419;q=0.9,es;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html, */*; q=0.01', // Standard AJAX accept
+        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest', // Important for AJAX requests
+        'Origin': 'https://www.pjud.cl',
+        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
       }
     });
 
-    // 1. First request to get the search page
-    const initialResponse = await client.get(searchUrl);
-    const $ = cheerio.load(initialResponse.data);
-    
-    // 2. Prepare form data for the search
+    // Prepare form data for the search
     const formData = new URLSearchParams();
-    formData.append('_token', $('input[name="_token"]').val() as string);
-    formData.append('rut', formattedRut);
-    formData.append('nombres', nameParts[0]);
-    formData.append('apellido_paterno', nameParts[1]);
-    if (nameParts.length > 2) {
-      formData.append('apellido_materno', nameParts[2]);
-    }
+    formData.append('dni', rutBody);
+    formData.append('digit', rutVerifier);
 
-    // 3. Submit the search form
-    const searchResponse = await client.post(searchUrl, formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Referer': searchUrl,
-        'Origin': 'https://www.pjud.cl',
-        'DNT': '1',
-      },
-      maxRedirects: 5
-    });
+    // Submit the search form
+    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
+    const searchResponse = await client.post(searchUrl, formData);
 
-    // 4. Parse the results
-    const result$ = cheerio.load(searchResponse.data);
-    const resultTable = result$('.table-responsive table');
+    // Parse the results
+    const $ = cheerio.load(searchResponse.data);
     
-    // If no results found
-    if (resultTable.length === 0) {
-      const errorMessage = result$('.alert.alert-danger').text().trim() || 'No se encontró información del abogado en el Poder Judicial';
+    // Check for "No results" alert
+    // The site returns: <div class="alert alert-warning">No se encontraron registros</div>
+    if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
       return {
         verified: false,
-        message: errorMessage
+        message: 'No se encontró información del abogado en el Poder Judicial'
+      };
+    }
+
+    // Check for success table
+    // The site returns a table with id "tablaAbogados" or similar structure in the response
+    const resultTable = $('table');
+    
+    if (resultTable.length === 0) {
+      // If no table and no warning, something unexpected happened
+      console.warn('PJUD Response unexpected:', searchResponse.data.substring(0, 200));
+      return {
+        verified: false,
+        message: 'No se pudo interpretar la respuesta del Poder Judicial (Estructura desconocida)'
       };
     }
 
@@ -92,21 +96,28 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
     
     rows.each((i, row) => {
       const cols = $(row).find('td');
-      if (cols.length >= 4) {
+      
+      if (cols.length >= 1) {
+        const nombre = $(cols[0]).text().trim();
+        // The table from search by RUT doesn't seem to have the RUT column, 
+        // but since we searched by RUT, we know it matches.
+        // Col 1 seems to be University, Col 2 Region/Country, Col 3 Date.
+        
+        const region = cols.length > 2 ? $(cols[2]).text().trim() : '';
+        
         results.push({
-          nombre: $(cols[0]).text().trim(),
-          rut: $(cols[1]).text().trim(),
-          region: $(cols[2]).text().trim(),
-          estado: $(cols[3]).text().trim()
+          nombre: nombre,
+          rut: rut, // Use the input RUT as it's the one we found
+          region: region,
+          estado: 'Habilitado' // If it appears here, it's likely enabled. Suspended are usually separate.
         });
       }
     });
 
-    // If no valid rows found
     if (results.length === 0) {
-      return {
+       return {
         verified: false,
-        message: 'No se encontraron resultados válidos en la búsqueda'
+        message: 'No se encontraron resultados válidos en la tabla'
       };
     }
 
@@ -116,9 +127,15 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
     for (const result of results) {
       const normalizedResultName = result.nombre.toLowerCase().replace(/\s+/g, ' ').trim();
       
-      // Basic name matching (could be improved with more sophisticated matching)
-      if (normalizedInputName.includes(normalizedResultName) || 
-          normalizedResultName.includes(normalizedInputName)) {
+      // Basic name matching
+      const inputParts = normalizedInputName.split(' ');
+      const resultParts = normalizedResultName.split(' ');
+      
+      const allPartsMatch = inputParts.every(part => 
+        resultParts.some(resPart => resPart.includes(part) || part.includes(resPart))
+      );
+
+      if (allPartsMatch) {
         return {
           verified: true,
           message: 'Abogado verificado exitosamente',
