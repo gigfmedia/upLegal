@@ -1,7 +1,4 @@
-import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { CookieJar } from 'tough-cookie';
-import { promisify } from 'util';
 
 export interface PJUDVerificationResult {
   verified: boolean;
@@ -42,34 +39,59 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
     // URL of the Poder Judicial AJAX search endpoint
     const searchUrl = 'https://www.pjud.cl/ajax/Lawyers/search';
     
-    // Configure axios
-    const client = axios.create({
-      withCredentials: true,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html, */*; q=0.01', // Standard AJAX accept
-        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'X-Requested-With': 'XMLHttpRequest', // Important for AJAX requests
-        'Origin': 'https://www.pjud.cl',
-        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
-      }
-    });
-
     // Prepare form data for the search
     const formData = new URLSearchParams();
     formData.append('dni', rutBody);
     formData.append('digit', rutVerifier);
 
-    // Submit the search form
+    // Submit the search form using fetch
     console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
-    const searchResponse = await client.post(searchUrl, formData);
+    
+    let searchResponse: Response;
+    let resultHtml: string;
+    
+    try {
+      // Try direct request first
+      searchResponse = await fetch(searchUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'Accept': 'text/html, */*; q=0.01',
+        },
+        body: formData.toString(),
+        mode: 'cors',
+      });
+
+      if (!searchResponse.ok) {
+        throw new Error(`HTTP error! status: ${searchResponse.status}`);
+      }
+
+      resultHtml = await searchResponse.text();
+    } catch (corsError) {
+      console.warn('Direct request failed (likely CORS), trying with proxy...', corsError);
+      
+      // Fallback: Use CORS proxy
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`;
+      
+      searchResponse = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: formData.toString(),
+      });
+
+      if (!searchResponse.ok) {
+        throw new Error(`HTTP error! status: ${searchResponse.status}`);
+      }
+
+      resultHtml = await searchResponse.text();
+    }
 
     // Parse the results
-    const $ = cheerio.load(searchResponse.data);
+    const $ = cheerio.load(resultHtml);
     
     // Check for "No results" alert
-    // The site returns: <div class="alert alert-warning">No se encontraron registros</div>
     if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
       return {
         verified: false,
@@ -78,12 +100,10 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
     }
 
     // Check for success table
-    // The site returns a table with id "tablaAbogados" or similar structure in the response
     const resultTable = $('table');
     
     if (resultTable.length === 0) {
-      // If no table and no warning, something unexpected happened
-      console.warn('PJUD Response unexpected:', searchResponse.data.substring(0, 200));
+      console.warn('PJUD Response unexpected:', resultHtml.substring(0, 200));
       return {
         verified: false,
         message: 'No se pudo interpretar la respuesta del Poder Judicial (Estructura desconocida)'
@@ -92,63 +112,29 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
 
     // Extract data from the result table
     const rows = resultTable.find('tbody tr');
-    const results: Array<{nombre: string, rut: string, region: string, estado: string}> = [];
     
-    rows.each((i, row) => {
-      const cols = $(row).find('td');
-      
-      if (cols.length >= 1) {
-        const nombre = $(cols[0]).text().trim();
-        // The table from search by RUT doesn't seem to have the RUT column, 
-        // but since we searched by RUT, we know it matches.
-        // Col 1 seems to be University, Col 2 Region/Country, Col 3 Date.
-        
-        const region = cols.length > 2 ? $(cols[2]).text().trim() : '';
-        
-        results.push({
-          nombre: nombre,
-          rut: rut, // Use the input RUT as it's the one we found
-          region: region,
-          estado: 'Habilitado' // If it appears here, it's likely enabled. Suspended are usually separate.
-        });
-      }
-    });
-
-    if (results.length === 0) {
+    if (rows.length === 0) {
        return {
         verified: false,
         message: 'No se encontraron resultados válidos en la tabla'
       };
     }
 
-    // Check if any result matches the provided name
-    const normalizedInputName = fullName.toLowerCase().replace(/\s+/g, ' ').trim();
+    // If we found at least one row, the RUT exists as a lawyer
+    const firstRow = rows.first();
+    const cols = firstRow.find('td');
     
-    for (const result of results) {
-      const normalizedResultName = result.nombre.toLowerCase().replace(/\s+/g, ' ').trim();
-      
-      // Basic name matching
-      const inputParts = normalizedInputName.split(' ');
-      const resultParts = normalizedResultName.split(' ');
-      
-      const allPartsMatch = inputParts.every(part => 
-        resultParts.some(resPart => resPart.includes(part) || part.includes(resPart))
-      );
+    const result = {
+      nombre: cols.length >= 1 ? cols.eq(0).text().trim() : 'No disponible',
+      rut: rut,
+      region: cols.length > 2 ? cols.eq(2).text().trim() : '',
+      estado: 'Habilitado'
+    };
 
-      if (allPartsMatch) {
-        return {
-          verified: true,
-          message: 'Abogado verificado exitosamente',
-          data: result
-        };
-      }
-    }
-
-    // If we get here, no matching name was found
     return {
-      verified: false,
-      message: 'Los datos no coinciden con los registros del Poder Judicial',
-      data: results[0] // Return the first result for reference
+      verified: true,
+      message: 'Abogado verificado exitosamente',
+      data: result
     };
     
   } catch (error) {

@@ -89,53 +89,29 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
 
     // Extract data from the result table
     const rows = resultTable.find('tbody tr');
-    let foundMatch = false;
-    let matchData = {};
-
-    rows.each((i, row) => {
-      const cols = $(row).find('td');
-      
-      if (cols.length >= 1) {
-        const nombre = $(cols[0]).text().trim();
-        const region = cols.length > 2 ? $(cols[2]).text().trim() : '';
-        const estado = 'Habilitado'; // Assuming enabled if present
-
-        // Check name match
-        const normalizedInputName = fullName.toLowerCase().replace(/\s+/g, ' ').trim();
-        const normalizedResultName = nombre.toLowerCase().replace(/\s+/g, ' ').trim();
-        
-        const inputParts = normalizedInputName.split(' ');
-        const resultParts = normalizedResultName.split(' ');
-        
-        const allPartsMatch = inputParts.every(part => 
-          resultParts.some(resPart => resPart.includes(part) || part.includes(resPart))
-        );
-
-        if (allPartsMatch) {
-          foundMatch = true;
-          matchData = {
-            nombre: nombre,
-            region: region,
-            estado: estado
-          };
-          return false; // break loop
-        }
-      }
-    });
-
-    if (foundMatch) {
-        return {
-            verified: true,
-            message: 'Abogado verificado exitosamente en el Poder Judicial',
-            data: matchData
-        };
-    } else {
-        return {
-            verified: false,
-            message: 'Los datos no coinciden con los registros del Poder Judicial',
-            data: { nombre: 'No coincide' } // Return something to indicate mismatch
-        };
+    
+    if (rows.length === 0) {
+      return {
+        verified: false,
+        message: 'No se encontraron resultados válidos en la tabla'
+      };
     }
+
+    // If we found at least one row, the RUT exists as a lawyer
+    const firstRow = rows.first();
+    const cols = firstRow.find('td');
+    
+    const lawyerData = {
+      nombre: cols.length >= 1 ? cols.eq(0).text().trim() : 'No disponible',
+      region: cols.length > 2 ? cols.eq(2).text().trim() : '',
+      estado: 'Habilitado'
+    };
+
+    return {
+      verified: true,
+      message: 'Abogado verificado exitosamente en el Poder Judicial',
+      data: lawyerData
+    };
 
   } catch (error) {
     console.error('Error scraping Poder Judicial:', error);

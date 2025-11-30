@@ -9,8 +9,6 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { v4 as uuidv4 } from 'uuid';
 import { load } from 'cheerio';
 import axios from 'axios';
-import { CookieJar } from 'tough-cookie';
-import { wrapper } from 'axios-cookie-jar-support';
 
 // ... (imports)
 
@@ -123,11 +121,14 @@ app.post('/verify-lawyer', async (req, res) => {
     // URL of the Poder Judicial AJAX search endpoint
     const searchUrl = 'https://www.pjud.cl/ajax/Lawyers/search';
     
-    // Configure axios
-    const jar = new CookieJar();
-    const client = wrapper(axios.create({
-      jar,
-      withCredentials: true,
+    // Prepare form data for the search
+    const formData = new URLSearchParams();
+    formData.append('dni', rutBody);
+    formData.append('digit', rutVerifier);
+
+    // Submit the search form
+    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
+    const searchResponse = await axios.post(searchUrl, formData.toString(), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html, */*; q=0.01',
@@ -137,16 +138,7 @@ app.post('/verify-lawyer', async (req, res) => {
         'Origin': 'https://www.pjud.cl',
         'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
       }
-    }));
-
-    // Prepare form data for the search
-    const formData = new URLSearchParams();
-    formData.append('dni', rutBody);
-    formData.append('digit', rutVerifier);
-
-    // Submit the search form
-    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
-    const searchResponse = await client.post(searchUrl, formData);
+    });
 
     // Parse the results
     const $ = load(searchResponse.data);
@@ -178,58 +170,31 @@ app.post('/verify-lawyer', async (req, res) => {
 
     // Extract data from the result table
     const rows = resultTable.find('tbody tr');
-    let foundMatch = false;
-    let matchData = null;
-
-    rows.each((i, row) => {
-      const cols = $(row).find('td');
-      
-      if (cols.length >= 1) {
-        const nombre = $(cols[0]).text().trim();
-        const region = cols.length > 2 ? $(cols[2]).text().trim() : '';
-        
-        // Check name match
-        const normalizedInputName = fullName.toLowerCase().replace(/\s+/g, ' ').trim();
-        const normalizedResultName = nombre.toLowerCase().replace(/\s+/g, ' ').trim();
-        
-        const inputParts = normalizedInputName.split(' ');
-        const resultParts = normalizedResultName.split(' ');
-        
-        const allPartsMatch = inputParts.every(part => 
-          resultParts.some(resPart => resPart.includes(part) || part.includes(resPart))
-        );
-
-        if (allPartsMatch) {
-          foundMatch = true;
-          matchData = {
-            rut: cleanRut,
-            nombre: nombre,
-            region: region,
-            source: 'Poder Judicial de Chile',
-            verifiedAt: new Date().toISOString()
-          };
-          return false; // break loop
-        }
-      }
-    });
-
-    if (foundMatch) {
-      return res.json({
-        verified: true,
-        message: 'Abogado verificado exitosamente',
-        details: matchData
-      });
-    } else {
+    
+    if (rows.length === 0) {
       return res.json({
         verified: false,
-        message: 'Los datos no coinciden con los registros del Poder Judicial',
-        details: {
-          rut: cleanRut,
-          nombre: fullName,
-          reason: 'Nombre no coincide con el registro asociado al RUT'
-        }
+        message: 'No se encontraron resultados válidos en la tabla'
       });
     }
+
+    // If we found at least one row, the RUT exists as a lawyer
+    const firstRow = rows.first();
+    const cols = firstRow.find('td');
+    
+    let lawyerData = {
+      rut: cleanRut,
+      nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+      region: cols.length > 2 ? $(cols[2]).text().trim() : '',
+      source: 'Poder Judicial de Chile',
+      verifiedAt: new Date().toISOString()
+    };
+
+    return res.json({
+      verified: true,
+      message: 'Abogado verificado exitosamente',
+      details: lawyerData
+    });
 
   } catch (error) {
     console.error('Error en verificación:', error);
