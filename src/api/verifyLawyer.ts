@@ -56,7 +56,7 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
     console.log('Realizando verificación con el Poder Judicial...');
 
     // Use backend server (more reliable than Edge Functions for external requests)
-    const backendUrl = import.meta.env.VITE_PAYMENT_SERVICE_URL || 'http://localhost:3000';
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
     const endpoint = `${backendUrl.replace(/\/$/, '')}/verify-lawyer`;
 
     const response = await fetch(endpoint, {
