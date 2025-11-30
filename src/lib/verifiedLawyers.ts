@@ -8,24 +8,29 @@ let cachedCount: number | null = null;
  * Utiliza caché en memoria para evitar consultas innecesarias
  */
 export const getVerifiedLawyersCount = async (): Promise<number> => {
-  // Si ya tenemos un valor en caché, lo devolvemos
-  if (cachedCount !== null) {
-    return cachedCount;
-  }
-
+  // Forzar siempre una nueva consulta para obtener los datos más recientes
+  // console.log('Obteniendo conteo de abogados verificados...');
+  
   try {
-    // Solo solicitamos el campo 'id' para minimizar los datos transferidos
-    const { count, error } = await supabase
+    // Primero, obtener todos los abogados
+    const { data: lawyers, error, count } = await supabase
       .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('role', 'lawyer')
-      .eq('pjud_verified', true);
+      .select('*', { count: 'exact' })
+      .eq('role', 'lawyer');
 
     if (error) throw error;
     
-    // Actualizamos la caché
-    cachedCount = count || 0;
-    return cachedCount;
+    // Filtrar abogados verificados (consideramos verificado si tiene pjud_verified O verified en true)
+    const verifiedLawyers = lawyers?.filter(lawyer => 
+      (lawyer.pjud_verified === true || lawyer.verified === true) &&
+      !lawyer.first_name?.toLowerCase().includes('admin')
+    ) || [];
+    
+    const verifiedCount = verifiedLawyers.length;
+    
+    // Actualizar la caché con el nuevo valor
+    cachedCount = verifiedCount;
+    return verifiedCount;
   } catch (error) {
     console.error('Error fetching verified lawyers count:', error);
     return 0;
@@ -66,9 +71,9 @@ export const subscribeToVerifiedLawyers = (callback: (count: number) => void) =>
       updateCount
     )
     .subscribe(
-      (status) => {
-        if (status === 'CHANNEL_ERROR') {
-          console.error('Error en la suscripción a cambios de abogados verificados');
+      (status, err) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          console.error('Error en la suscripción a cambios de perfiles:', status, err);
         }
       }
     );

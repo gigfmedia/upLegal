@@ -131,15 +131,15 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
       .from('profiles')
       .select(cleanSelect, { count: 'exact' })
       .eq('role', 'lawyer')
-      .eq('verified', true)
-      .eq('available_for_hire', true)
-      // Filter out incomplete profiles - must have all required fields
+      // Incluir perfiles verificados o con pjud_verified
+      .or('verified.eq.true,pjud_verified.eq.true')
+      // Hacer available_for_hire opcional temporalmente
+      // .eq('available_for_hire', true)
+      // Relajar los filtros de perfil obligatorios
       .not('bio', 'is', null)
       .not('bio', 'eq', '')
-      .not('specialties', 'is', null)
-      .not('hourly_rate_clp', 'is', null)
-      .not('pjud_verified', 'is', null)
-      .not('location', 'is', null)
+      // Hacer location opcional temporalmente
+      // .not('location', 'is', null)
       .order('rating', { ascending: false })
       .range((page - 1) * pageSize, (page * pageSize) - 1);
 
@@ -155,19 +155,37 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     if (params.specialty && params.specialty !== 'all') {
       console.log('Searching for specialty:', params.specialty);
       
-      // First, try to find by specialty_id (exact match)
-      query = query.or(`specialty_id.eq.${params.specialty}`);
+      // Normalizar el término de búsqueda
+      const searchTerm = params.specialty.toLowerCase().trim();
       
-      // Then try to find in the specialties array (exact match)
-      query = query.or(`specialties.cs.{"${params.specialty}"}`);
+      // Crear una subconsulta para manejar las condiciones OR correctamente
+      const specialtyConditions = [
+        // Coincidencia exacta en el array de especialidades
+        `specialties.cs.{"${searchTerm}"}`,
+        // Coincidencia parcial en el ID de especialidad
+        `specialty_id.ilike.%${searchTerm}%`,
+        // Coincidencia con diferentes casos
+        `specialty_id.eq.${searchTerm}`,
+        `specialty_id.eq.${searchTerm.toLowerCase()}`,
+        `specialty_id.eq.${searchTerm.toUpperCase()}`,
+        `specialty_id.eq.${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)}`
+      ];
       
-      // Also try to find by specialty name in the array (case insensitive)
-      query = query.or(`specialties.cs.{"${params.specialty.toLowerCase()}"}`);
+      // Para especialidades con múltiples palabras como "Derecho de Familia"
+      if (searchTerm.includes(' ')) {
+        const searchWords = searchTerm.split(' ').filter(w => w.length > 2);
+        searchWords.forEach(word => {
+          specialtyConditions.push(`specialty_id.ilike.%${word}%`);
+          specialtyConditions.push(`specialties.cs.{"${word}"}`);
+        });
+      }
       
-      // Add debug logging
-      console.log('Searching for specialty with filters:', {
-        specialty_id: params.specialty,
-        specialties_array: params.specialty
+      // Unir todas las condiciones con OR
+      query = query.or(specialtyConditions.join(','));
+      
+      console.log('Búsqueda de especialidad con términos:', {
+        searchTerm,
+        conditions: specialtyConditions
       });
     }
 

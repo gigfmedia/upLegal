@@ -271,6 +271,21 @@ const Index = () => {
     fetchRegisteredLawyer();
   }, []);
 
+  // Función para forzar la actualización del contador
+  const refreshCounters = async () => {
+    try {
+      setIsLoadingCount(prev => ({ ...prev, verified: true }));
+      // Limpiar la caché forzando una nueva consulta
+      const { getVerifiedLawyersCount } = await import('@/lib/verifiedLawyers');
+      const count = await getVerifiedLawyersCount();
+      setVerifiedCount(count);
+    } catch (error) {
+      console.error('Error al actualizar el contador:', error);
+    } finally {
+      setIsLoadingCount(prev => ({ ...prev, verified: false }));
+    }
+  };
+
   // Efecto para cargar los contadores y suscribirse a cambios
   useEffect(() => {
     let isMounted = true;
@@ -592,12 +607,14 @@ const Index = () => {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {isLoadingCount.verified ? (
-                  <div className="h-8 w-20 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
-                ) : (
-                  <>{verifiedCount !== null ? `${verifiedCount}+` : '500+'}</>
-                )}
+              <div className="flex flex-col items-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">
+                  {isLoadingCount.verified ? (
+                    <div className="h-8 w-20 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
+                  ) : (
+                    <>{verifiedCount !== null ? `${verifiedCount}+` : '500+'}</>
+                  )}
+                </div>
               </div>
               <div className="text-gray-600">Abogados Verificados</div>
             </div>
