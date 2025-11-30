@@ -424,13 +424,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       if (servicesError) {
         throw servicesError;
       }
-      
-      // If no services, set empty array
-      if (!servicesData || servicesData.length === 0) {
-        setServices([]);
-        return;
-      }
-      
+
       // Define service order for sorting
       const serviceOrder = [
         'consulta',
@@ -458,7 +452,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       }
 
       // Map and sort services
-      const formattedServices = servicesData
+      const formattedServices = (servicesData || [])
         .filter((service: unknown): service is ServiceData => 
           typeof service === 'object' && 
           service !== null && 
@@ -540,9 +534,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         });
       
       setServices(formattedServices);
-      setLoading(false);
     } catch (error) {
       setError('Error al cargar el perfil');
+    } finally {
       setLoading(false);
     }
   }, [id, updateLawyerState]);

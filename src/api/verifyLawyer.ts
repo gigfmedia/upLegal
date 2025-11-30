@@ -86,6 +86,7 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
             .from('profiles')
             .update({
               pjud_verified: true,
+              verified: true,
               rut: rut.replace(/\./g, '').toUpperCase(),
               updated_at: new Date().toISOString()
             })
