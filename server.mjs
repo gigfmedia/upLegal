@@ -46,46 +46,33 @@ const mpClient = new MercadoPagoConfig({
 // Create API client instance
 const mp = new Payment({ client: mpClient });
 
+// Initialize Express app
+const app = express();
+
+// Configure CORS
+const corsOptions = {
+  origin: [
+    'https://legalup.cl',
+    'https://www.legalup.cl',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'https://uplegal.netlify.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+};
+
+// Apply middleware
+app.use(cors(corsOptions));
+app.use(express.json());
+
+// Constants
 const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
 const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
 const DEFAULT_CURRENCY = 'CLP';
-
-const app = express();
-
-// CORS configuration - CORREGIDO
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      'https://uplegal.netlify.app',
-      'http://localhost:3000', 
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001'
-    ];
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-};
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-//app.options('*', cors(corsOptions));
-app.use(cors(corsOptions));
-
-app.use(express.json());
 
 const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
 
