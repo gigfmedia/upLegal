@@ -33,6 +33,11 @@ const formatDate = (dateString: string) => {
   return date.toISOString().split('T')[0];
 };
 
+function normalizeCalendarDate(date?: Date | null) {
+  if (!date || Number.isNaN(date.getTime())) return null;
+  return startOfDay(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
+}
+
 const parseLocalDateString = (dateString?: string) => {
   if (!dateString) return null;
   const [year, month, day] = dateString.split("-").map(Number);
@@ -41,7 +46,7 @@ const parseLocalDateString = (dateString?: string) => {
     return null;
   }
 
-  return new Date(year, (month || 1) - 1, day || 1);
+  return normalizeCalendarDate(new Date(year, (month || 1) - 1, day || 1));
 };
 
 const getNextBookableDate = (referenceDate = new Date()) => {
@@ -51,7 +56,7 @@ const getNextBookableDate = (referenceDate = new Date()) => {
     date.setDate(date.getDate() + 1);
   }
 
-  return date;
+  return normalizeCalendarDate(date) ?? date;
 };
 
 // Format currency helper function
@@ -239,15 +244,27 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
     [normalizedAvailability]
   );
   
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    formData.date ? parseLocalDateString(formData.date) ?? new Date() : new Date()
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+    const initialParsed = formData.date ? parseLocalDateString(formData.date) : null;
+    return normalizeCalendarDate(initialParsed ?? new Date()) ?? new Date();
+  });
+
+  useEffect(() => {
+    const parsed = formData.date ? parseLocalDateString(formData.date) : null;
+    const normalized = normalizeCalendarDate(parsed);
+    if (normalized) {
+      setSelectedDate(normalized);
+    }
+  }, [formData.date]);
 
   // Function to check if a date is disabled based on lawyer availability
   const isDateDisabled = useCallback((date: Date): boolean => {
+    const normalizedDate = normalizeCalendarDate(date);
+    if (!normalizedDate) return true;
+
     // First, check if the date is in the past
     const today = startOfDay(new Date());
-    const dateToCheck = startOfDay(date);
+    const dateToCheck = startOfDay(normalizedDate);
 
     if (isBefore(dateToCheck, today)) {
       return true; // Disable past dates
@@ -258,7 +275,7 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
       return true;
     }
 
-    const dayAvailability = getDayAvailability(date);
+    const dayAvailability = getDayAvailability(normalizedDate);
 
     if (!dayAvailability) return false;
 
@@ -266,29 +283,28 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
   }, [getDayAvailability]);
 
   const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-      
-      // Crear la fecha en formato YYYY-MM-DD sin problemas de zona horaria
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      
-      console.log('Date selected:', {
-        original: date,
-        formatted: formattedDate,
-        local: format(date, 'yyyy-MM-dd'),
-        utc: date.toISOString().split('T')[0]
-      });
-      
-      onDateSelect(formattedDate);
-      setIsCalendarOpen(false);
-    }
+    if (!date) return;
+
+    const normalizedDate = normalizeCalendarDate(date);
+    if (!normalizedDate) return;
+
+    setSelectedDate(normalizedDate);
+    
+    const formattedDate = format(normalizedDate, 'yyyy-MM-dd');
+    
+    console.log('Date selected:', {
+      original: date,
+      normalized: normalizedDate,
+      formatted: formattedDate,
+      utc: date.toISOString().split('T')[0]
+    });
+    
+    onDateSelect(formattedDate);
+    setIsCalendarOpen(false);
   };
 
   // Formatear la fecha para mostrar sin problemas de zona horaria
-  const displayDate = formData.date ? parseLocalDateString(formData.date) : null;
+  const displayDate = formData.date ? normalizeCalendarDate(parseLocalDateString(formData.date)) : null;
 
   return (
     <div className="space-y-2">

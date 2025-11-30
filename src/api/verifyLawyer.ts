@@ -75,6 +75,29 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
 
     if (payload.verified) {
       console.log('Verificación exitosa - Abogado encontrado en los registros');
+
+      // Update current user's profile to reflect verification
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.error('No se pudo obtener el usuario para actualizar verificación:', authError);
+        } else if (user?.id) {
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              pjud_verified: true,
+              rut: rut.replace(/\./g, '').toUpperCase(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+          
+          if (updateError) {
+            console.error('Error al actualizar pjud_verified en el perfil:', updateError);
+          }
+        }
+      } catch (profileError) {
+        console.error('Fallo al actualizar el perfil tras verificación PJUD:', profileError);
+      }
       
       return { 
         verified: true,
@@ -84,6 +107,22 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
     } else {
       const errorMsg = payload.message || 'El RUT no está registrado como abogado en el Poder Judicial';
       console.log(errorMsg);
+
+      // Explicitly flag the profile as not verified to keep state consistent
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (!authError && user?.id) {
+          await supabase
+            .from('profiles')
+            .update({
+              pjud_verified: false,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        }
+      } catch (profileError) {
+        console.error('Fallo al limpiar estado de verificación PJUD:', profileError);
+      }
       return { 
         verified: false,
         message: errorMsg,

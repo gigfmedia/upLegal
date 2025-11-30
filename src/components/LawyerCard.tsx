@@ -32,6 +32,7 @@ export interface Lawyer {
   image: string;
   bio: string;
   verified: boolean;
+  pjud_verified?: boolean;
   availability: {
     availableToday: boolean;
     availableThisWeek: boolean;
@@ -68,8 +69,9 @@ export function LawyerCard({
   );
   
   // Check if the lawyer is verified and has the required fields
+  const hasVerificationFlag = Boolean(lawyer.verified || lawyer.pjud_verified);
   const isVerifiedLawyer = Boolean(
-    lawyer.verified && 
+    hasVerificationFlag &&
     lawyer.hourlyRate > 0 &&
     lawyer.bio && 
     lawyer.bio.trim() !== '' && 
@@ -156,10 +158,10 @@ export function LawyerCard({
                   </h3>
                 </div>
                 
-                {lawyer.verified && (
+                {hasVerificationFlag && (
                   <Badge variant="secondary" className="w-fit mb-2 flex items-center gap-1 bg-green-50 text-green-700">
                     <ShieldCheck className="h-3 w-3" />
-                    Verificado en PJUD
+                    {lawyer.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
                   </Badge>
                 )}
                 
