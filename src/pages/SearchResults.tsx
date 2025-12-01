@@ -24,28 +24,6 @@ import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-// Define the Lawyer interface if not already defined in LawyerCard
-export interface Lawyer {
-  id: string;
-  name: string;
-  specialties: string[];
-  rating: number;
-  reviews: number;
-  location: string;
-  cases: number;
-  hourlyRate: number;
-  consultationPrice: number;
-  image: string;
-  bio: string;
-  verified: boolean;
-  availability: {
-    availableToday: boolean;
-    availableThisWeek: boolean;
-    quickResponse: boolean;
-    emergencyConsultations: boolean;
-  };
-}
-
 const specialties = [
   "Derecho Civil",
   "Derecho Penal",
@@ -223,11 +201,23 @@ const SearchResults = () => {
   // Get search parameters from URL
   const initialQuery = searchParams.get('q') || '';
   const categoryFromUrl = searchParams.get('category');
-  const initialSpecialty = categoryFromUrl || searchParams.get('specialty') || 'all';
+  
+  // Handle multiple specialty params
+  const specialtyParams = searchParams.getAll('specialty');
+  let initialSpecialties: string[] = [];
+  
+  if (categoryFromUrl) {
+    initialSpecialties = [categoryFromUrl];
+  } else if (specialtyParams.length > 0) {
+    initialSpecialties = specialtyParams;
+  } else {
+    initialSpecialties = ['all'];
+  }
+
   const initialLocation = searchParams.get('location') || '';
   
   const [searchTerm, setSearchTerm] = useState(initialQuery);
-  const [selectedSpecialty, setSelectedSpecialty] = useState(initialSpecialty);
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string[]>(initialSpecialties);
   const [location, setLocation] = useState(initialLocation);
   const [sortBy, setSortBy] = useState('rating');
   const [showFilters, setShowFilters] = useState(false);
@@ -277,18 +267,41 @@ const SearchResults = () => {
     availableNow
   }), [searchTerm, selectedSpecialty, location, minRating, minExperience, availableNow]);
 
-  // Handle initial search term and set specialty if needed
+  // Sync local state with URL parameters when they change
+  // Sync local state with URL parameters when they change
   useEffect(() => {
-    // Check if search term contains 'familia' and set the corresponding specialty
-    if (initialQuery.toLowerCase().includes('familia') && selectedSpecialty !== 'Derecho de Familia') {
-      setSelectedSpecialty('Derecho de Familia');
-      
-      // Update URL with the selected specialty
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('specialty', 'Derecho de Familia');
-      setSearchParams(params);
+    const urlQuery = searchParams.get('q') || '';
+    const urlCategory = searchParams.get('category');
+    const urlSpecialties = searchParams.getAll('specialty');
+    const urlLocation = searchParams.get('location') || '';
+    
+    // Determine specialties from URL
+    let newSpecialties: string[] = ['all'];
+    if (urlCategory) {
+      newSpecialties = [urlCategory];
+    } else if (urlSpecialties.length > 0) {
+      newSpecialties = urlSpecialties;
     }
-  }, [initialQuery, searchParams, selectedSpecialty, setSearchParams]);
+
+    // Only update if values are different to avoid infinite loops
+    if (urlQuery !== searchTerm) {
+      setSearchTerm(urlQuery);
+    }
+    
+    // Compare arrays
+    const isSameSpecialties = selectedSpecialty.length === newSpecialties.length && 
+      selectedSpecialty.every((val, index) => val === newSpecialties[index]);
+      
+    if (!isSameSpecialties) {
+      setSelectedSpecialty(newSpecialties);
+    }
+    
+    if (urlLocation !== location) {
+      setLocation(urlLocation);
+    }
+  }, [searchParams]); // Only depend on searchParams, not the state variables
+
+
 
   // Create a ref to store the debounced search function
   const debouncedSearchRef = useRef(
@@ -426,11 +439,18 @@ const SearchResults = () => {
     
     // Check if search term contains 'familia' and set the corresponding specialty
     const searchTermLower = searchTerm.toLowerCase();
-    if (searchTermLower.includes('familia') && selectedSpecialty !== 'Derecho de Familia') {
-      setSelectedSpecialty('Derecho de Familia');
-      params.set('specialty', 'Derecho de Familia');
-    } else if (selectedSpecialty !== 'all') {
-      params.set('specialty', selectedSpecialty);
+    
+    // Handle specialty logic
+    if (searchTermLower.includes('familia') && !selectedSpecialty.includes('Derecho de Familia')) {
+      // If searching for familia, ensure it's selected (replacing 'all' if present)
+      const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
+      if (!newSpecialties.includes('Derecho de Familia')) {
+        newSpecialties.push('Derecho de Familia');
+      }
+      setSelectedSpecialty(newSpecialties);
+      newSpecialties.forEach(s => params.append('specialty', s));
+    } else if (selectedSpecialty.length > 0 && selectedSpecialty[0] !== 'all') {
+      selectedSpecialty.forEach(s => params.append('specialty', s));
     }
     
     if (searchTerm) params.set('q', searchTerm);
@@ -494,16 +514,35 @@ const SearchResults = () => {
     setAvailableNow(filters.availableNow);
   }, []);
 
+  // Handle specialty change from filters
+  const handleSpecialtyChange = useCallback((specialties: string[]) => {
+    setSelectedSpecialty(specialties);
+    
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      params.delete('specialty');
+      params.delete('category'); // Clear category if specialty changes
+      
+      specialties.forEach(s => {
+        if (s !== 'all') params.append('specialty', s);
+      });
+      
+      return params;
+    });
+  }, [setSearchParams]);
+
   // Clear all filters
-  const clearFilters = () => {
-  setSearchTerm('');
-  setSelectedSpecialty('all');
-  setLocation('');
-  setPriceRange([0, 1000000]);
-  setMinRating(0);
-  setMinExperience(0);
-  setAvailableNow(false);
-};
+  const clearFilters = useCallback(() => {
+    console.log('clearFilters called');
+    // Only clear URL params - let the useEffect sync the state
+    setSearchParams(new URLSearchParams());
+    
+    // Also reset filter-specific states that aren't in URL
+    setPriceRange([0, 1000000]);
+    setMinRating(0);
+    setMinExperience(0);
+    setAvailableNow(false);
+  }, [setSearchParams]);
 
   const handleContactClick = (lawyer: Lawyer) => {
     if (!user) {
@@ -584,9 +623,29 @@ const SearchResults = () => {
                 ].map((specialty) => (
                   <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
                     <button
-                      onClick={() => setSelectedSpecialty(specialty === 'Todas' ? 'all' : specialty === selectedSpecialty ? 'all' : specialty)}
+                      onClick={() => {
+                        const value = specialty === 'Todas' ? 'all' : specialty;
+                        let newSpecialties = [...selectedSpecialty];
+                        
+                        if (value === 'all') {
+                          newSpecialties = ['all'];
+                        } else {
+                          // Remove 'all' if present
+                          newSpecialties = newSpecialties.filter(s => s !== 'all');
+                          
+                          if (newSpecialties.includes(value)) {
+                            newSpecialties = newSpecialties.filter(s => s !== value);
+                          } else {
+                            newSpecialties.push(value);
+                          }
+                          
+                          if (newSpecialties.length === 0) newSpecialties = ['all'];
+                        }
+                        
+                        handleSpecialtyChange(newSpecialties);
+                      }}
                       className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                        selectedSpecialty === specialty || (specialty === 'Todas' && selectedSpecialty === 'all')
+                        selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
                       }`}
@@ -618,7 +677,7 @@ const SearchResults = () => {
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
         selectedSpecialty={selectedSpecialty}
-        onSpecialtyChange={setSelectedSpecialty}
+        onSpecialtyChange={handleSpecialtyChange}
         sortBy={sortBy}
         onSortByChange={setSortBy}
         specialties={specialties}
@@ -630,67 +689,123 @@ const SearchResults = () => {
       <div className="bg-muted min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Filtros y ordenamiento */}
-          <div className="flex justify-end items-center gap-4 mb-6">
-            <div className="flex items-center">
-              <label htmlFor="sort" className="text-sm text-gray-600 mr-2">Ordenar por:</label>
-              <select
-                id="sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="h-10 w-48 pl-3 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value="relevance">Relevancia</option>
-                <option value="rating-desc">Mejor valorados</option>
-                <option value="price-asc">Precio más bajo</option>
-                <option value="price-desc">Precio más alto</option>
-                <option value="reviews-desc">Más reseñas</option>
-              </select>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            {/* Active Filters (Left Side) */}
+            <div className="w-full md:flex-1">
+              {(selectedSpecialty.some(s => s !== 'all') || location) ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-gray-500">Filtros activos:</span>
+                  {selectedSpecialty.filter(s => s !== 'all').map((specialty) => (
+                    <div key={specialty} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full text-sm font-medium">
+                      {specialty}
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Removing specialty filter:', specialty);
+                          // Use functional form to get latest params and avoid race conditions
+                          setSearchParams((prevParams) => {
+                            const params = new URLSearchParams(prevParams.toString());
+                            const currentSpecialties = params.getAll('specialty');
+                            
+                            // Clear existing specialties
+                            params.delete('specialty');
+                            
+                            // Add back all except the one being removed
+                            currentSpecialties
+                              .filter(s => s !== specialty)
+                              .forEach(s => params.append('specialty', s));
+                            
+                            // Also remove category if it matches
+                            if (params.get('category') === specialty) {
+                              params.delete('category');
+                            }
+                            
+                            return params;
+                          });
+                        }}
+                        className="ml-1 text-blue-500 hover:text-blue-700 rounded-full focus:outline-none hover:bg-blue-200 p-0.5 transition-colors"
+                        type="button"
+                        aria-label={`Remover filtro ${specialty}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {location && (
+                    <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full text-sm font-medium">
+                      {location}
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('Removing location filter');
+                          // Use functional form to get latest params
+                          setSearchParams((prevParams) => {
+                            const params = new URLSearchParams(prevParams.toString());
+                            params.delete('location');
+                            return params;
+                          });
+                          // Don't manually update state - let the useEffect handle it
+                        }}
+                        className="ml-1 text-blue-500 hover:text-blue-700 rounded-full focus:outline-none hover:bg-blue-200 p-0.5 transition-colors"
+                        type="button"
+                        aria-label="Remover filtro de ubicación"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {(selectedSpecialty !== 'all' || location) && (
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Clearing all filters');
+                        clearFilters();
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline ml-1 focus:outline-none font-medium"
+                      type="button"
+                    >
+                      Limpiar todo
+                    </button>
+                  )}
+                </div>
+              ) : (
+                /* Empty div to maintain spacing if needed, or just empty */
+                <div />
+              )}
             </div>
-            
-            <Button 
-              variant="outline" 
-              className="border-gray-300 bg-white hover:bg-gray-50 flex items-center gap-2"
-              onClick={() => setShowFilters(true)}
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              <span>Filtros</span>
-            </Button>
-          </div>
-          {(selectedSpecialty !== 'all' || location) && (
-            <div className="flex flex-wrap items-center gap-2 mb-6">
-              <span className="text-sm text-gray-500">Filtros activos:</span>
-              {selectedSpecialty !== 'all' && (
-                <Badge className="flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full">
-                  {selectedSpecialty}
-                  <button 
-                    onClick={() => setSelectedSpecialty('all')}
-                    className="ml-1 text-blue-500 hover:text-blue-700 rounded-full"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </Badge>
-              )}
-              {location && (
-                <Badge className="flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full">
-                  {location}
-                  <button 
-                    onClick={() => setLocation('')}
-                    className="ml-1 text-blue-500 hover:text-blue-700 rounded-full"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </Badge>
-              )}
-              {(selectedSpecialty !== 'all' || location) && (
-                <button 
-                  onClick={clearFilters}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline ml-1"
+
+            {/* Sort and Filter Controls (Right Side) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+              <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
+                <label htmlFor="sort" className="text-sm text-gray-600 mr-2 whitespace-nowrap">Ordenar por:</label>
+                <select
+                  id="sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="h-10 w-full sm:w-48 pl-3 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  Limpiar todo
-                </button>
-              )}
+                  <option value="relevance">Relevancia</option>
+                  <option value="rating-desc">Mejor valorados</option>
+                  <option value="price-asc">Precio más bajo</option>
+                  <option value="price-desc">Precio más alto</option>
+                  <option value="reviews-desc">Más reseñas</option>
+                </select>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                className="w-full sm:w-auto border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center gap-2"
+                onClick={() => setShowFilters(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filtros</span>
+              </Button>
             </div>
-          )}
+          </div>
+
           
           {/* Results Grid with Virtualization */}
           {loading && !searchResult.lawyers.length ? (
@@ -768,6 +883,7 @@ const SearchResults = () => {
             isOpen={showContactModal}
             onClose={() => setShowContactModal(false)}
             lawyerName={selectedLawyer.name}
+            lawyerId={selectedLawyer.id}
           />
           
           <ScheduleModal

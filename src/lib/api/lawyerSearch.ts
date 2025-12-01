@@ -146,48 +146,75 @@ export async function searchLawyers(params: LawyerSearchParams = {}, page: numbe
     // Apply filters with optimized queries
     if (params.query) {
       const searchTerm = params.query.toLowerCase().trim();
-      // Use full text search if available, otherwise fall back to ILIKE
-      query = query.or(
-        `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%`
-      );
+      // Search in names and specialties
+      // Use cs (contains) for array search and ilike for text search
+      const searchConditions = [
+        `first_name.ilike.%${searchTerm}%`,
+        `last_name.ilike.%${searchTerm}%`,
+        `specialties.cs.{"${searchTerm}"}`,
+        `specialty_id.ilike.%${searchTerm}%`
+      ];
+      
+      // Add partial matches for common specialty terms
+      if (searchTerm.includes('familia')) {
+        searchConditions.push(`specialties.cs.{"Derecho de Familia"}`);
+        searchConditions.push(`specialty_id.ilike.%familia%`);
+      }
+      if (searchTerm.includes('laboral')) {
+        searchConditions.push(`specialties.cs.{"Derecho Laboral"}`);
+        searchConditions.push(`specialty_id.ilike.%laboral%`);
+      }
+      if (searchTerm.includes('penal')) {
+        searchConditions.push(`specialties.cs.{"Derecho Penal"}`);
+        searchConditions.push(`specialty_id.ilike.%penal%`);
+      }
+      if (searchTerm.includes('civil')) {
+        searchConditions.push(`specialties.cs.{"Derecho Civil"}`);
+        searchConditions.push(`specialty_id.ilike.%civil%`);
+      }
+      
+      query = query.or(searchConditions.join(','));
     }
 
     if (params.specialty && params.specialty !== 'all') {
-      console.log('Searching for specialty:', params.specialty);
+      const specialties = Array.isArray(params.specialty) 
+        ? params.specialty 
+        : [params.specialty];
       
-      // Normalizar el término de búsqueda
-      const searchTerm = params.specialty.toLowerCase().trim();
-      
-      // Crear una subconsulta para manejar las condiciones OR correctamente
-      const specialtyConditions = [
-        // Coincidencia exacta en el array de especialidades
-        `specialties.cs.{"${searchTerm}"}`,
-        // Coincidencia parcial en el ID de especialidad
-        `specialty_id.ilike.%${searchTerm}%`,
-        // Coincidencia con diferentes casos
-        `specialty_id.eq.${searchTerm}`,
-        `specialty_id.eq.${searchTerm.toLowerCase()}`,
-        `specialty_id.eq.${searchTerm.toUpperCase()}`,
-        `specialty_id.eq.${searchTerm.charAt(0).toUpperCase() + searchTerm.slice(1)}`
-      ];
-      
-      // Para especialidades con múltiples palabras como "Derecho de Familia"
-      if (searchTerm.includes(' ')) {
-        const searchWords = searchTerm.split(' ').filter(w => w.length > 2);
-        searchWords.forEach(word => {
-          specialtyConditions.push(`specialty_id.ilike.%${word}%`);
-          specialtyConditions.push(`specialties.cs.{"${word}"}`);
+      if (specialties.length > 0 && specialties[0] !== 'all') {
+        console.log('Searching for specialties:', specialties);
+        
+        const orConditions: string[] = [];
+        
+        specialties.forEach(specialty => {
+          const term = specialty.toLowerCase().trim();
+          
+          // Exact match in specialties array
+          orConditions.push(`specialties.cs.{"${term}"}`);
+          // Partial match in specialty_id
+          orConditions.push(`specialty_id.ilike.%${term}%`);
+          // Case variations
+          orConditions.push(`specialty_id.eq.${term}`);
+          orConditions.push(`specialty_id.eq.${term.toLowerCase()}`);
+          orConditions.push(`specialty_id.eq.${term.toUpperCase()}`);
+          orConditions.push(`specialty_id.eq.${term.charAt(0).toUpperCase() + term.slice(1)}`);
+          
+          // Handle multi-word specialties
+          if (term.includes(' ')) {
+            const searchWords = term.split(' ').filter(w => w.length > 2);
+            if (searchWords.length > 0) {
+               orConditions.push(`specialty_id.ilike.%${searchWords.join('%')}%`);
+            }
+          }
         });
+        if (orConditions.length > 0) {
+          query = query.or(orConditions.join(','));
+        }
+        
+        console.log('Searching with OR conditions:', orConditions);
       }
-      
-      // Unir todas las condiciones con OR
-      query = query.or(specialtyConditions.join(','));
-      
-      console.log('Búsqueda de especialidad con términos:', {
-        searchTerm,
-        conditions: specialtyConditions
-      });
     }
+
 
     if (params.location) {
       // Use a GIN index on location for better performance

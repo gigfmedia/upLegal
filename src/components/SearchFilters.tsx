@@ -9,8 +9,8 @@ import { useState } from "react";
 interface SearchFiltersProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedSpecialty: string;
-  onSpecialtyChange: (value: string) => void;
+  selectedSpecialty: string[];
+  onSpecialtyChange: (value: string[]) => void;
   sortBy: string;
   onSortByChange: (value: string) => void;
   specialties: string[];
@@ -50,6 +50,33 @@ export function SearchFilters({
       ...prev,
       [filter]: !prev[filter]
     }));
+  };
+
+  const handleSpecialtyToggle = (specialty: string) => {
+    if (specialty === 'all') {
+      onSpecialtyChange(['all']);
+      return;
+    }
+
+    let newSpecialties = [...selectedSpecialty];
+    
+    // Remove 'all' if present
+    if (newSpecialties.includes('all')) {
+      newSpecialties = newSpecialties.filter(s => s !== 'all');
+    }
+
+    if (newSpecialties.includes(specialty)) {
+      newSpecialties = newSpecialties.filter(s => s !== specialty);
+    } else {
+      newSpecialties.push(specialty);
+    }
+
+    // If empty, revert to 'all'
+    if (newSpecialties.length === 0) {
+      newSpecialties = ['all'];
+    }
+
+    onSpecialtyChange(newSpecialties);
   };
 
   const handleApplyFilters = () => {
@@ -106,23 +133,34 @@ export function SearchFilters({
 
               {/* Specialty Filter */}
               <div className="mb-6 relative z-[200]">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Especialidad</h3>
-                <Select 
-                  value={selectedSpecialty}
-                  onValueChange={onSpecialtyChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar especialidad" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[200]">
-                    <SelectItem value="all">Todas las especialidades</SelectItem>
-                    {specialties.map((specialty) => (
-                      <SelectItem key={specialty} value={specialty}>
-                        {specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Especialidad</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSpecialtyToggle('all')}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedSpecialty.includes('all')
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    Todas
+                  </button>
+                  {specialties.map((specialty) => (
+                    <button
+                      key={specialty}
+                      type="button"
+                      onClick={() => handleSpecialtyToggle(specialty)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        selectedSpecialty.includes(specialty)
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {specialty}
+                    </button>
+                  ))}
+                </div>
               </div>
             
               <div className="mb-6 relative z-[200]">

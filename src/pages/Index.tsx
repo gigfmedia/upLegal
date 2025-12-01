@@ -535,9 +535,38 @@ const Index = () => {
 
     // Otherwise, include the provided parameters
     const params = new URLSearchParams();
+    
+    // Check if search term contains specialty keywords
+    const searchTermLower = searchTerm.toLowerCase();
+    let detectedSpecialty = '';
+    
+    if (searchTermLower.includes('familia')) {
+      detectedSpecialty = 'Derecho de Familia';
+    } else if (searchTermLower.includes('laboral')) {
+      detectedSpecialty = 'Derecho Laboral';
+    } else if (searchTermLower.includes('penal')) {
+      detectedSpecialty = 'Derecho Penal';
+    } else if (searchTermLower.includes('civil')) {
+      detectedSpecialty = 'Derecho Civil';
+    } else if (searchTermLower.includes('comercial')) {
+      detectedSpecialty = 'Derecho Comercial';
+    } else if (searchTermLower.includes('inmobiliario')) {
+      detectedSpecialty = 'Derecho Inmobiliario';
+    } else if (searchTermLower.includes('tributario')) {
+      detectedSpecialty = 'Derecho Tributario';
+    }
+    
+    // Set search term parameter
     if (searchTerm) params.set('q', searchTerm);
+    
+    // Set location parameter
     if (location) params.set('location', location);
-    if (category) {
+    
+    // Set specialty parameter (either from detected keyword or category)
+    if (detectedSpecialty) {
+      params.set('specialty', detectedSpecialty);
+      setSelectedCategory(detectedSpecialty);
+    } else if (category) {
       params.set('category', category);
       setSelectedCategory(category);
     } else {
