@@ -183,7 +183,13 @@ export function UpdatedFavoritesSection() {
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => navigate(`/lawyer/${lawyer.id}`)}
+                    onClick={() => {
+                      const name = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'abogado';
+                      const nameSlug = name.toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                      navigate(`/abogado/${nameSlug}-${lawyer.id}`);
+                    }}
                   >
                     Ver perfil
                   </Button>

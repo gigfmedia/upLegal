@@ -537,7 +537,24 @@ const SearchResults = () => {
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
     
-    // Check if search term contains 'familia' and set the corresponding specialty
+    // If search term is empty, clear the search and show all lawyers
+    if (!searchTerm.trim()) {
+      setSearchTerm('');
+      setSelectedSpecialty(['all']);
+      setLocation('');
+      setSearchParams(new URLSearchParams());
+      
+      setSearchResult(prev => ({
+        ...prev,
+        page: 1,
+        lawyers: [],
+        hasMore: true
+      }));
+      
+      debouncedSearch(1, true);
+      return;
+    }
+    
     const searchTermLower = searchTerm.toLowerCase();
     
     // Handle specialty logic
@@ -553,7 +570,11 @@ const SearchResults = () => {
       selectedSpecialty.forEach(s => params.append('specialty', s));
     }
     
-    if (searchTerm) params.set('q', searchTerm);
+    // Only add search term if it's not empty
+    if (searchTerm.trim()) {
+      params.set('q', searchTerm.trim());
+    }
+    
     if (location) params.set('location', location);
     setSearchParams(params);
     

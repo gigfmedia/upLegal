@@ -255,7 +255,12 @@ export function FavoritesSection() {
                   <Button 
                     variant="outline" 
                     className="flex-1 flex items-center gap-2"
-                    onClick={() => navigate(`/lawyer/${lawyer.id}`)}
+                    onClick={() => {
+                      const nameSlug = (lawyer.name || 'abogado').toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                      navigate(`/abogado/${nameSlug}-${lawyer.id}`);
+                    }}
                   >
                     <Eye className="h-4 w-4" />
                     <span>Ver perfil</span>

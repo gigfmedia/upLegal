@@ -10,12 +10,16 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import LegalAgent from '@/components/LegalAgent';
+import RouteHandler from '@/components/RouteHandler';
 
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+
+// Pages
+import NotFound from '@/pages/NotFound';
 
 // Layouts
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -33,7 +37,8 @@ import PublicProfile from './pages/PublicProfile';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
 import PaymentCanceled from './pages/PaymentCanceled';
-import NotFound from './pages/NotFound';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import UserDashboard from './pages/UserDashboard';
 import DashboardProfile from './pages/DashboardProfile';
 import DashboardSettings from './pages/DashboardSettings';
@@ -127,6 +132,8 @@ const AppContent = () => {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contacto" element={<ContactPage />} />
             <Route path="/como-funciona" element={<HowItWorksPage />} />
+            <Route path="/terminos" element={<TermsOfService />} />
+            <Route path="/privacidad" element={<PrivacyPolicy />} />
             {/* New lawyer dashboard routes */}
             <Route path="/lawyer" element={
               <div data-role="lawyer">
@@ -157,7 +164,34 @@ const AppContent = () => {
             {/* Legacy route for backward compatibility */}
             <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
             <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-            <Route path="/lawyer/:id" element={<PublicProfile />} />
+            {/* Main route for lawyer profiles */}
+            <Route path="/abogado">
+              {/* Route for SEO-friendly URLs: /abogado/name-lastname-uuid */}
+              <Route 
+                path=":slug" 
+                element={<PublicProfile />} 
+              />
+              
+              {/* Catch-all route for /abogado/* that isn't a valid profile URL */}
+              <Route 
+                path="*" 
+                element={
+                  <RouteHandler>
+                    <PublicProfile />
+                  </RouteHandler>
+                } 
+              />
+            </Route>
+            
+            {/* Legacy route for backward compatibility */}
+            <Route path="/lawyer/:id" element={({ match }) => {
+              // Extract just the ID part in case it's a full URL
+              const id = match.params.id.split('-').pop();
+              return <Navigate to={`/abogado/abogado-${id}`} replace />;
+            }} />
+            
+            {/* 404 Not Found Page - must be last */}
+            <Route path="*" element={<NotFound />} />
             <Route path="/profile" element={
               <RequireLawyer>
                 <PublicProfile />

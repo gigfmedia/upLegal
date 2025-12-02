@@ -121,11 +121,62 @@ interface LawyerWithViews extends Omit<LawyerProfile, 'profile_views'> {
   profile_views?: number;
 }
 
+// Helper function to create a URL-friendly slug from a string
+const createSlug = (str: string): string => {
+  if (!str) return '';
+  
+  return str
+    // Remove accents
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Convert to lowercase
+    .toLowerCase()
+    // Replace spaces and special characters with hyphens
+    .replace(/[^a-z0-9]+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
+    // Replace multiple consecutive hyphens with a single one
+    .replace(/-+/g, '-');
+};
+
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { path } = useParams<{ path: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get the ID and slug from the URL parameters
+  const { id: urlId, slug } = useParams<{ id?: string; slug?: string }>();
   const { user: currentUser } = useAuth();
+  
+  // Extract the ID from the URL
+  const id = useMemo(() => {
+    console.log('Extracting ID from URL params:', { urlId, slug });
+    
+    // If we have an ID from the URL params, use that
+    if (urlId) {
+      console.log('Using urlId:', urlId);
+      return urlId;
+    }
+    
+    // If we have a slug, try to extract the ID from it
+    if (slug) {
+      // UUID regex pattern
+      const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+      const match = slug.match(uuidRegex);
+      
+      if (match) {
+        console.log('Extracted UUID from slug:', match[0]);
+        return match[0];
+      }
+      
+      console.warn('No UUID found in slug:', slug);
+    }
+    
+    console.error('No ID could be extracted from URL');
+    return '';
+  }, [urlId, slug]);
+  
+  // State declarations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lawyer, setLawyer] = useState<LawyerWithViews | null>(null);
@@ -138,8 +189,39 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const [services, setServices] = useState<ServiceType[]>([]);
   const { toast } = useToast();
   
+  // Handle booking a service
+  const handleBookService = useCallback(async (service: ServiceType) => {
+    if (!currentUser) {
+      setAuthMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    
+    // Implement booking logic here
+    console.log('Booking service:', service);
+    toast({
+      title: 'Servicio reservado',
+      description: `Has reservado el servicio: ${service.title}`,
+    });
+  }, [currentUser, toast, setAuthMode, setIsAuthModalOpen]);
+  
+  // Check if we need to redirect to the new URL format
+  useEffect(() => {
+    // If we have the lawyer data, ensure we're using the correct URL format
+    if (id && lawyer) {
+      const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+      const nameSlug = fullName ? createSlug(fullName) : 'abogado';
+      const expectedPath = `/abogado/${nameSlug}-${id}`;
+      
+      // Only redirect if we're not already on the correct path
+      if (location.pathname !== expectedPath && !location.pathname.startsWith('/abogado/abogado-')) {
+        navigate(expectedPath, { replace: true });
+      }
+    }
+  }, [id, lawyer, location.pathname, navigate]);
+  
   // Memoize the handleServiceAction function to prevent unnecessary re-renders
-  const handleServiceAction = useCallback((actionType: 'contact' | 'schedule', serviceItem?: ServiceType) => {
+  const handleServiceAction = useCallback((actionType: 'contact' | 'schedule' | 'book', serviceItem?: ServiceType) => {
     if (!serviceItem) return;
     
     if (!currentUser) {
@@ -173,10 +255,19 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     } else if (actionType === 'schedule') {
       setSelectedService(serviceItem);
       setIsScheduleModalOpen(true);
-    } else if (actionType === 'book' && serviceItem) {
+    } else if (actionType === 'book') {
       handleBookService(serviceItem);
     }
-  }, [currentUser, id, setAuthMode, setIsAuthModalOpen, setSelectedService, setIsContactModalOpen, setIsScheduleModalOpen]);
+  }, [
+    currentUser, 
+    id, 
+    setAuthMode, 
+    setIsAuthModalOpen, 
+    setSelectedService, 
+    setIsContactModalOpen, 
+    setIsScheduleModalOpen, 
+    handleBookService
+  ]);
 
   // Handle pending actions after login
   useEffect(() => {
@@ -255,10 +346,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     }
   };
 
-  const handleBookService = (service: ServiceType) => {
-    setSelectedService(service);
-    setIsScheduleModalOpen(true);
-  };
 
   // Parse features from string or array
   const parseFeatures = useCallback((features: string | string[] | null | undefined): string[] => {
@@ -316,7 +403,14 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
   // Update the lawyer state with the fetched data
   const updateLawyerState = useCallback((profile: RawProfileData) => {
-    if (!profile) return;
+    console.log('updateLawyerState called with profile:', JSON.stringify(profile, null, 2));
+    
+    if (!profile) {
+      console.error('No profile data provided to updateLawyerState');
+      return;
+    }
+    
+    console.log('Processing profile data for:', profile.first_name, profile.last_name);
     
     // Parse availability with better error handling and fallbacks
     let availability: Availability = {
@@ -325,6 +419,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       quick_response: false,
       emergency_consultations: false
     };
+    
+    console.log('Initial availability:', availability);
 
     try {
       if (profile.availability) {
@@ -390,160 +486,71 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
   // Debug: Log the lawyer object when it changes
   useEffect(() => {
-    //console.log('Lawyer data:', lawyer);
+    console.log('Lawyer data:', lawyer);
   }, [lawyer]);
 
   // Fetch profile data when component mounts
-  const fetchProfile = useCallback(async () => {
-    if (!id) return;
+  const fetchProfile = useCallback(async (profileId: string) => {
+    if (!profileId) {
+      console.error('No ID provided to fetchProfile');
+      setError('ID de perfil no válido');
+      setLoading(false);
+      return null;
+    }
+    
+    // Clean the ID in case it contains any extra characters
+    const cleanId = profileId.trim();
+    
+    console.log('Fetching profile with ID:', cleanId);
     
     try {
       setLoading(true);
-      // Fetch profile by ID or user_id
-      const { data: profile, error } = await supabase
+      setError(null);
+      
+      console.log('1. Starting to fetch profile with ID:', cleanId);
+      
+      // First try to get the profile by ID
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .or(`id.eq.${id},user_id.eq.${id}`)
+        .or(`id.eq.${cleanId},user_id.eq.${cleanId}`)
         .single();
         
-      if (error) throw error;
+      if (profileError) throw profileError;
+      if (!profile) throw new Error('No se encontró el perfil');
       
-      // Debug: Log the raw profile data
-      //console.log('Raw profile data:', JSON.stringify(profile, null, 2));
+      console.log('Profile data:', profile);
       
-      // Update lawyer state with profile data
+      // Update the lawyer state
       updateLawyerState(profile);
       
-      // Fetch services for this lawyer
-      
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('lawyer_services')
-        .select('*')
-        .eq('lawyer_user_id', profile.user_id || profile.id);
-      
-      if (servicesError) {
-        throw servicesError;
+      // If we have a slug, check if it matches the expected format
+      if (slug) {
+        const expectedSlug = `${createSlug(profile.first_name || '')}-${createSlug(profile.last_name || '')}`;
+        const currentSlug = slug.replace(`-${cleanId}`, '');
+        
+        if (expectedSlug !== currentSlug) {
+          // Redirect to the canonical URL
+          const newPath = `/abogado/${expectedSlug}-${cleanId}`;
+          console.log('Redirecting to canonical URL:', newPath);
+          navigate(newPath, { replace: true });
+        }
       }
-
-      // Define service order for sorting
-      const serviceOrder = [
-        'consulta',
-        'asesoría',
-        'revisión',
-        'contrato',
-        'demanda',
-        'defensa',
-        'representación',
-        'acompañamiento'
-      ];
-
-      // Define a type for the service data from the API
-      interface ServiceData {
-        id: string;
-        title: string;
-        description?: string;
-        price?: number | string;
-        price_clp?: number | string | null;
-        features?: string | string[] | null;
-        duration?: number | string;
-        delivery_time?: string;
-        available?: boolean;
-        [key: string]: unknown;
-      }
-
-      // Map and sort services
-      const formattedServices = (servicesData || [])
-        .filter((service: unknown): service is ServiceData => 
-          typeof service === 'object' && 
-          service !== null && 
-          'id' in service && 
-          typeof service.id === 'string' &&
-          'title' in service &&
-          typeof service.title === 'string'
-        )
-        .map((service: ServiceData) => {
-          // Parse features from string or array
-          let features: string[] = [];
-          if (Array.isArray(service.features)) {
-            features = service.features.filter((f): f is string => typeof f === 'string');
-          } else if (typeof service.features === 'string') {
-            try {
-              // Try to parse as JSON if it's a stringified array
-              const parsed = JSON.parse(service.features);
-              features = Array.isArray(parsed) ? parsed : [String(service.features)];
-            } catch {
-              // If not valid JSON, split by newline
-              features = service.features.split('\n').filter(Boolean);
-            }
-          }
-          
-          // Format delivery time - check if it's a number or 'variable'
-          let deliveryTime: string = 'A convenir';
-          if (typeof service.delivery_time === 'string') {
-            const dt = service.delivery_time.trim();
-            if (dt.toLowerCase() === 'variable') {
-              deliveryTime = 'variable';
-            } else if (/^\d+$/.test(dt)) {
-              deliveryTime = `${dt} días`;
-            } else if (dt) {
-              deliveryTime = dt;
-            }
-          }
-
-          // Create the service object with all required fields
-          const serviceObj: ServiceType = {
-            id: service.id,
-            name: service.title,
-            title: service.title,
-            description: service.description || '',
-            price: typeof service.price === 'number' ? service.price : 0,
-            price_clp: Number(service.price_clp) || 0,
-            duration: service.duration || '',
-            delivery_time: deliveryTime,
-            features: features,
-            available: service.available !== false,
-            originalTitle: service.title.toLowerCase(),
-            // Add optional fields if they exist
-            ...('lawyer_id' in service ? { lawyer_id: String(service.lawyer_id) } : {}),
-            ...('lawyer_user_id' in service ? { lawyer_user_id: String(service.lawyer_user_id) } : {}),
-            ...('created_at' in service ? { created_at: String(service.created_at) } : {}),
-            ...('updated_at' in service ? { updated_at: String(service.updated_at) } : {})
-          };
-          
-          return serviceObj;
-        })
-        .sort((a, b) => {
-          const aTitle = a.originalTitle || '';
-          const bTitle = b.originalTitle || '';
-          
-          // Get the index in the order array, or a large number if not found (will be sorted to the end)
-          const aIndex = serviceOrder.findIndex(title => aTitle.includes(title));
-          const bIndex = serviceOrder.findIndex(title => bTitle.includes(title));
-          
-          // If both are in the order array, sort by their position
-          if (aIndex !== -1 && bIndex !== -1) {
-            return aIndex - bIndex;
-          }
-          // If only a is in the order array, it comes first
-          if (aIndex !== -1) return -1;
-          // If only b is in the order array, it comes first
-          if (bIndex !== -1) return 1;
-          
-          // If neither is in the order array, maintain their relative order
-          return 0;
-        });
       
-      setServices(formattedServices);
+      return profile;
+      
     } catch (error) {
-      setError('Error al cargar el perfil');
+      console.error('Error in fetchProfile:', error);
+      setError(`Error al cargar el perfil: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
     } finally {
       setLoading(false);
     }
-  }, [id, updateLawyerState]);
+  }, [slug, navigate, updateLawyerState]);
 
   useEffect(() => {
     if (id) {
-      fetchProfile();
+      fetchProfile(id);
     }
   }, [id, fetchProfile]);
 

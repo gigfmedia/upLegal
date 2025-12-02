@@ -210,7 +210,13 @@ export function LawyerCard({
               onClick={(e) => {
                 if (!isVerifiedLawyer) return;
                 e.stopPropagation();
-                navigate(`/lawyer/${lawyer.id}`);
+                const nameSlug = (lawyer.name || 'abogado')
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/^-+|-+$/g, '');
+                navigate(`/abogado/${nameSlug}-${lawyer.id}`);
               }}
               disabled={!isVerifiedLawyer}
               title={!isVerifiedLawyer ? 'Este perfil no está completo o verificado' : 'Ver perfil completo'}

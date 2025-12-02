@@ -717,7 +717,24 @@ export default function LawyerProfilePage() {
                 variant="outline"
                 type="button"
               >
-                <a href={`/lawyer/${user?.id}`} target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={`/abogado/${(user?.first_name && user?.last_name 
+                    ? `${user.first_name.toLowerCase()}-${user.last_name.toLowerCase()}` 
+                    : 'abogado')}-${user?.id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nameSlug = (user?.first_name && user?.last_name 
+                      ? `${user.first_name} ${user.last_name}` 
+                      : 'abogado')
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
+                    navigate(`/abogado/${nameSlug}-${user?.id}`);
+                    e.preventDefault();
+                  }}
+                >
                   <Eye className="mr-2 h-4 w-4" />
                   Ver perfil
                 </a>
@@ -1493,7 +1510,24 @@ export default function LawyerProfilePage() {
                 variant="outline"
                 type="button"
               >
-                <a href={`/lawyer/${user?.id}`} target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={`/abogado/${(user?.first_name && user?.last_name 
+                    ? `${user.first_name.toLowerCase()}-${user.last_name.toLowerCase()}` 
+                    : 'abogado')}-${user?.id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const nameSlug = (user?.first_name && user?.last_name 
+                      ? `${user.first_name} ${user.last_name}` 
+                      : 'abogado')
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/^-+|-+$/g, '');
+                    navigate(`/abogado/${nameSlug}-${user?.id}`);
+                    e.preventDefault();
+                  }}
+                >
                   <Eye className="mr-2 h-4 w-4" />
                   Ver perfil
                 </a>
