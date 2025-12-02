@@ -470,7 +470,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       
       try {
         // Use the same search function as the main search page
-        const { searchLawyers } = await import('@/lib/api/lawyerSearch');
+        const { searchLawyers } = await import('@/pages/api/search-lawyers');
         
         const response = await searchLawyers({
           specialty: selectedSpecialty,

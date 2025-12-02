@@ -235,7 +235,7 @@ const Index = () => {
       try {
         setIsLoadingLawyer(true);
         // Search for verified lawyers with empty query to get all
-        const { searchLawyers } = await import('@/lib/api/lawyerSearch');
+        const { searchLawyers } = await import('@/pages/api/search-lawyers');
         const { data: lawyers } = await searchLawyers({}, 1, 1);
         
         if (lawyers && lawyers.length > 0) {
@@ -373,7 +373,7 @@ const Index = () => {
     const fetchFeaturedLawyers = async () => {
       try {
         setIsLoadingFeatured(true);
-        const { searchLawyers } = await import('@/lib/api/lawyerSearch');
+        const { searchLawyers } = await import('@/pages/api/search-lawyers');
         const { data: lawyers, total } = await searchLawyers({}, 1, 20); // Get more lawyers to ensure we have enough complete profiles
         
         if (lawyers && lawyers.length > 0) {
@@ -754,7 +754,7 @@ const Index = () => {
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
-                <p className="text-sm text-gray-600">Divorcios, pensión de alimentos, tuición, adopciones, etc.</p>
+                <p className="text-sm text-gray-600">Divorcios, pensión de alimentos, cuidado personal, adopciones, etc.</p>
               </CardContent>
             </Card>
 
@@ -824,7 +824,7 @@ const Index = () => {
                   <Home className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Inmobiliario</h3>
-                <p className="text-sm text-gray-600">Compraventa, regularización, propiedad horizontal, etc.</p>
+                <p className="text-sm text-gray-600">Compraventa, regularización, etc.</p>
               </CardContent>
             </Card>
 

@@ -264,40 +264,98 @@ const SearchResults = () => {
     location,
     minRating,
     minExperience,
-    availableNow
-  }), [searchTerm, selectedSpecialty, location, minRating, minExperience, availableNow]);
+    availableNow: false // Deshabilitar temporalmente availableNow hasta que se arregle la base de datos
+  }), [searchTerm, selectedSpecialty, location, minRating, minExperience]);
 
   // Sync local state with URL parameters when they change
-  // Sync local state with URL parameters when they change
   useEffect(() => {
+    console.log('🔄 Sincronizando parámetros de búsqueda desde la URL');
     const urlQuery = searchParams.get('q') || '';
     const urlCategory = searchParams.get('category');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
     
+    console.log('📌 Parámetros de la URL:', {
+      urlQuery,
+      urlCategory,
+      urlSpecialties,
+      urlLocation
+    });
+    
     // Determine specialties from URL
-    let newSpecialties: string[] = ['all'];
+    let newSpecialties: string[] = [];
     if (urlCategory) {
       newSpecialties = [urlCategory];
+      console.log('🎯 Categoría seleccionada desde URL:', urlCategory);
     } else if (urlSpecialties.length > 0) {
       newSpecialties = urlSpecialties;
+      console.log('🎯 Especialidades seleccionadas desde URL:', urlSpecialties);
+    } else {
+      newSpecialties = ['all'];
+      console.log('ℹ️ No se encontraron especialidades en la URL, usando valor por defecto');
     }
 
-    // Only update if values are different to avoid infinite loops
+    // Update search term if changed
     if (urlQuery !== searchTerm) {
+      console.log('🔤 Actualizando término de búsqueda:', urlQuery);
       setSearchTerm(urlQuery);
     }
     
-    // Compare arrays
+    // Update specialties if changed
     const isSameSpecialties = selectedSpecialty.length === newSpecialties.length && 
       selectedSpecialty.every((val, index) => val === newSpecialties[index]);
       
     if (!isSameSpecialties) {
+      console.log('🏷️ Actualizando especialidades seleccionadas:', newSpecialties);
       setSelectedSpecialty(newSpecialties);
+    } else {
+      console.log('ℹ️ Las especialidades no han cambiado');
     }
     
+    // Update location if changed
     if (urlLocation !== location) {
+      console.log('📍 Actualizando ubicación:', urlLocation);
       setLocation(urlLocation);
+    } else {
+      console.log('ℹ️ La ubicación no ha cambiado');
+    }
+    
+    // Trigger search with current parameters
+    const shouldSearch = urlQuery || 
+      (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') || 
+      urlCategory || 
+      urlLocation;
+    
+    if (shouldSearch) {
+      console.log('🚀 Iniciando búsqueda con parámetros actualizados');
+      const searchParams = {
+        query: urlQuery,
+        specialty: newSpecialties,
+        location: urlLocation,
+        minRating,
+        minExperience,
+        availableNow: false
+      };
+      
+      console.log('🔍 Parámetros de búsqueda:', searchParams);
+      
+      debouncedSearchRef.current({
+        page: 1,
+        isInitialLoad: true,
+        searchParams,
+        currentPageSize: 12
+      });
+    } else if (searchParams.toString() === '') {
+      // Si no hay parámetros, limpiar resultados
+      console.log('🧹 Limpiando resultados de búsqueda');
+      setSearchResult({
+        lawyers: [],
+        total: 0,
+        page: 1,
+        pageSize: 12,
+        hasMore: false
+      });
+      setLoading(false);
     }
   }, [searchParams]); // Only depend on searchParams, not the state variables
 
@@ -324,15 +382,31 @@ const SearchResults = () => {
         setError(null);
         
         // Use dynamic import for code splitting
-        const { searchLawyers } = await import('@/lib/api/lawyerSearch');
-        const response = await searchLawyers({
+        const { searchLawyers } = await import('@/pages/api/search-lawyers');
+        
+        console.log('🔍 Parámetros de búsqueda:', {
           query,
           specialty,
           location,
           minRating,
           minExperience,
-          availableNow
-        }, page, currentPageSize);
+          availableNow,
+          page,
+          pageSize: currentPageSize
+        });
+        
+        const response = await searchLawyers({
+          query: query || '',
+          specialty: specialty && specialty[0] !== 'all' ? specialty : undefined,
+          location: location || undefined,
+          minRating: minRating || undefined,
+          minExperience: minExperience || undefined,
+          availableNow: availableNow || false,
+          page,
+          pageSize: currentPageSize
+        });
+        
+        console.log('📊 Respuesta de la búsqueda:', response);
         
         if (response) {
           //console.log('Raw API response:', response);
@@ -404,6 +478,32 @@ const SearchResults = () => {
       debouncedSearchRef.current.cancel();
     };
   }, []);
+
+  // Effect to trigger search when search parameters change
+  useEffect(() => {
+    console.log('🔄 Efecto de búsqueda activado con parámetros:', searchParamsMemo);
+    
+    // Cancel any pending debounced search
+    const debouncedSearch = debouncedSearchRef.current;
+    
+    // Always trigger search
+    setLoading(true);
+    console.log('🚀 Iniciando búsqueda (todos los abogados o con filtros)');
+    
+    // Trigger search with debounce
+    debouncedSearch({
+      page: 1,
+      isInitialLoad: true,
+      searchParams: searchParamsMemo,
+      currentPageSize: searchResult.pageSize
+    });
+
+    // Cleanup function to cancel debounce on unmount
+    return () => {
+      console.log('🧹 Limpiando búsqueda debounce');
+      debouncedSearch.cancel();
+    };
+  }, [searchParamsMemo, searchResult.pageSize]);
 
   // Wrapper function to call the debounced search
   const debouncedSearch = useCallback((page: number, isInitialLoad = false) => {
@@ -534,14 +634,35 @@ const SearchResults = () => {
   // Clear all filters
   const clearFilters = useCallback(() => {
     console.log('clearFilters called');
-    // Only clear URL params - let the useEffect sync the state
-    setSearchParams(new URLSearchParams());
+    // Show loading state
+    setLoading(true);
     
-    // Also reset filter-specific states that aren't in URL
-    setPriceRange([0, 1000000]);
+    // Reset all search-related states
+    setSearchTerm('');
+    setSelectedSpecialty(['all']);
+    setLocation('');
     setMinRating(0);
     setMinExperience(0);
     setAvailableNow(false);
+    setPriceRange([0, 1000000]);
+    
+    // Clear URL parameters
+    setSearchParams(new URLSearchParams());
+    
+    // Force a search with empty parameters to show all lawyers
+    debouncedSearchRef.current({
+      page: 1,
+      isInitialLoad: true,
+      searchParams: {
+        query: '',
+        specialty: ['all'],
+        location: '',
+        minRating: 0,
+        minExperience: 0,
+        availableNow: false
+      },
+      currentPageSize: 12
+    });
   }, [setSearchParams]);
 
   const handleContactClick = (lawyer: Lawyer) => {
@@ -703,26 +824,38 @@ const SearchResults = () => {
                           e.preventDefault();
                           e.stopPropagation();
                           console.log('Removing specialty filter:', specialty);
-                          // Use functional form to get latest params and avoid race conditions
-                          setSearchParams((prevParams) => {
-                            const params = new URLSearchParams(prevParams.toString());
-                            const currentSpecialties = params.getAll('specialty');
+                          
+                          // Create new specialties array without the removed one
+                          const newSpecialties = selectedSpecialty.filter(s => s !== specialty);
+                          const updatedSpecialties = newSpecialties.length > 0 ? newSpecialties : ['all'];
+                          
+                          // Show loading state
+                          setLoading(true);
+                          
+                          // Update URL first
+                          setSearchParams(prevParams => {
+                            const params = new URLSearchParams();
                             
-                            // Clear existing specialties
-                            params.delete('specialty');
+                            // Only keep location and other non-search parameters
+                            if (location) params.set('location', location);
+                            if (minRating > 0) params.set('minRating', minRating.toString());
+                            if (minExperience > 0) params.set('minExperience', minExperience.toString());
                             
-                            // Add back all except the one being removed
-                            currentSpecialties
-                              .filter(s => s !== specialty)
-                              .forEach(s => params.append('specialty', s));
-                            
-                            // Also remove category if it matches
-                            if (params.get('category') === specialty) {
-                              params.delete('category');
+                            // Only add specialty if it's not 'all' and there are specialties left
+                            if (updatedSpecialties[0] !== 'all') {
+                              updatedSpecialties.forEach(s => {
+                                if (s && s !== 'all') {
+                                  params.append('specialty', s);
+                                }
+                              });
                             }
                             
+                            console.log('Updated URL params:', params.toString());
                             return params;
                           });
+                          
+                          // Then update the state
+                          setSelectedSpecialty(updatedSpecialties);
                         }}
                         className="ml-1 text-blue-500 hover:text-blue-700 rounded-full focus:outline-none hover:bg-blue-200 p-0.5 transition-colors"
                         type="button"
@@ -807,42 +940,37 @@ const SearchResults = () => {
           </div>
 
           
-          {/* Results Grid with Virtualization */}
+          {/* Results Grid */}
           {loading && !searchResult.lawyers.length ? (
             <div className="flex justify-center items-center py-16">
               <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : searchResult.lawyers.length > 0 ? (
             <div className="w-full">
-              <VirtualizedList
-                items={searchResult.lawyers}
-                itemSize={240}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                renderItem={(lawyer, index) => {
-                  const rowData = { 
-                    lawyers: searchResult.lawyers, 
-                    user,
-                    setSelectedLawyer,
-                    setShowContactModal,
-                    setShowScheduleModal,
-                    setAuthMode,
-                    setShowAuthModal
-                  };
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
+                {searchResult.lawyers.map((lawyer) => {
+                  // Usar onContact y onSchedule para compatibilidad con versiones anteriores
+                  const handleContact = () => handleContactClick(lawyer);
+                  const handleSchedule = () => handleScheduleClick(lawyer);
                   
                   return (
-                    <LawyerRow 
-                      key={lawyer.id} 
-                      index={index} 
-                      style={{}} 
-                      data={rowData} 
-                    />
+                    <div key={lawyer.id} className="w-full h-full">
+                      <LawyerCard
+                        lawyer={lawyer}
+                        onContactClick={handleContact}
+                        onScheduleClick={handleSchedule}
+                        onContact={handleContact} // Para compatibilidad
+                        onSchedule={handleSchedule} // Para compatibilidad
+                        user={user}
+                      />
+                    </div>
                   );
-                }}
-              />
+                })}
+              </div>
               
               {/* Loading indicator at the bottom */}
               {(loading || loadingMore) && (
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center py-8">
                   <div className="h-8 w-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}

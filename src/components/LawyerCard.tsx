@@ -145,7 +145,13 @@ export function LawyerCard({
                       className="object-cover"
                     />
                     <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
-                      {lawyer.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      {(() => {
+                        const nameParts = lawyer.name.split(' ').filter(n => n);
+                        if (nameParts.length === 0) return '?';
+                        if (nameParts.length === 1) return nameParts[0][0].toUpperCase();
+                        // Take first letter of first word and first letter of last word
+                        return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+                      })()}
                     </AvatarFallback>
                   </Avatar>
                 </div>
