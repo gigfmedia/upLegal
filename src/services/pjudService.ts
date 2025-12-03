@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabaseClient';
 /**
  * Verifies a RUT with the Poder Judicial (PJUD) API
  * @param rut The RUT to verify (formatted as XX.XXX.XXX-X)
+ * @param fullName The full name of the lawyer to verify
  * @returns Promise with verification result
  */
-export const verifyRutWithPJUD = async (rut: string): Promise<{ valid: boolean; message?: string }> => {
+export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise<{ valid: boolean; message?: string }> => {
   try {
     if (!rut) {
       return { valid: false, message: 'El RUT es requerido' };
@@ -18,22 +19,53 @@ export const verifyRutWithPJUD = async (rut: string): Promise<{ valid: boolean; 
     }
 
     try {
-      // Call Supabase Edge Function (which acts as proxy to Render server)
-      const { data, error } = await supabase.functions.invoke('verify-rut', {
-        body: { rut: cleanRut }
+      // If no full name provided, only validate format
+      if (!fullName || !fullName.trim()) {
+        const { data, error } = await supabase.functions.invoke('verify-rut', {
+          body: { rut: cleanRut }
+        });
+
+        if (error) {
+          console.error('Error al verificar RUT:', error);
+          return { 
+            valid: false, 
+            message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
+          };
+        }
+
+        return {
+          valid: data?.valid || false,
+          message: data?.message || (data?.valid ? 'RUT válido' : 'RUT inválido')
+        };
+      }
+
+      // If full name is provided, verify with PJUD
+      const RENDER_SERVER_URL = 'https://uplegal-service.onrender.com';
+      
+      const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          rut: cleanRut,
+          fullName: fullName.trim()
+        })
       });
 
-      if (error) {
-        console.error('Error al verificar RUT:', error);
+      if (!response.ok) {
+        console.error('Error al verificar con PJUD:', response.statusText);
         return { 
           valid: false, 
           message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
         };
       }
 
+      const data = await response.json();
+
       return {
-        valid: data?.valid || false,
-        message: data?.message || (data?.valid ? 'RUT verificado exitosamente' : 'No se pudo verificar el RUT')
+        valid: data?.verified || false,
+        message: data?.message || (data?.verified ? 'Abogado verificado en el PJUD' : 'No se encontró el abogado en los registros del PJUD')
       };
     } catch (error) {
       console.error('Error en la función de verificación:', error);
