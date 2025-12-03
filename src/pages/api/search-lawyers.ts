@@ -62,17 +62,6 @@ export async function searchLawyers(params: SearchParams = {}) {
       select = 'id, user_id, first_name, last_name, specialties, specialty_id, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, contact_fee_clp, created_at, updated_at'
     } = params;
 
-    console.log('🔍 Iniciando búsqueda con parámetros:', JSON.stringify({
-      query, 
-      specialty, 
-      location, 
-      minRating, 
-      minExperience, 
-      availableNow: 'No se usa (columna no existe)',
-      page, 
-      pageSize 
-    }, null, 2));
-
     // Validar parámetros
     const validatedPage = Math.max(1, page);
     const validatedPageSize = Math.min(100, Math.max(1, pageSize));
@@ -80,7 +69,6 @@ export async function searchLawyers(params: SearchParams = {}) {
     const to = from + validatedPageSize - 1;
 
     // Construir consulta base
-    console.log('🔧 Construyendo consulta base...');
     let queryBuilder = supabase
       .from('profiles')
       .select(select, { count: 'exact' })
@@ -94,7 +82,6 @@ export async function searchLawyers(params: SearchParams = {}) {
     if (select.includes('available_now')) {
       const selectFields = select.split(',').map(f => f.trim()).filter(f => f !== 'available_now');
       queryBuilder = queryBuilder.select(selectFields.join(','), { count: 'exact' });
-      console.log('ℹ️ Se eliminó available_now de la consulta');
     }
 
     // Combinamos todas las condiciones en una sola consulta
@@ -102,7 +89,6 @@ export async function searchLawyers(params: SearchParams = {}) {
     
     // 1. Agregar condiciones de especialidad si existen
     if (specialty && specialty !== 'all') {
-      console.log(`🔍 Aplicando filtro de especialidad:`, specialty);
       
       const specialties = Array.isArray(specialty) ? specialty : [specialty];
       
@@ -131,13 +117,11 @@ export async function searchLawyers(params: SearchParams = {}) {
     if (query) {
       const searchTerm = query.trim();
       if (searchTerm) {
-        console.log(`🔍 Aplicando filtro de búsqueda: "${searchTerm}"`);
         const escapedTerm = escapeSearchTerm(searchTerm);
         
         // Si hay filtro de especialidad, NO buscar en specialties ni bio con el query
         // Solo buscar en nombres
         if (specialty && specialty !== 'all') {
-          console.log(`ℹ️ Filtro de especialidad presente, query solo busca en nombres`);
           conditions.push(
             `first_name.ilike.%${escapedTerm}%`,
             `last_name.ilike.%${escapedTerm}%`
@@ -155,7 +139,6 @@ export async function searchLawyers(params: SearchParams = {}) {
           const normalizedTerm = searchTerm.toLowerCase().trim();
           if (SPECIALTY_MAPPING[normalizedTerm]) {
             const mappedTerm = SPECIALTY_MAPPING[normalizedTerm];
-            console.log(`🔍 Término mapeado a especialidad: "${normalizedTerm}" -> "${mappedTerm}"`);
             conditions.push(`specialties.cs.{"${mappedTerm}"}`);
           }
         }
@@ -165,7 +148,6 @@ export async function searchLawyers(params: SearchParams = {}) {
     // Aplicar todas las condiciones con OR
     if (conditions.length > 0) {
       const conditionsStr = [...new Set(conditions)].join(',');
-      console.log(`🔍 Aplicando condiciones de búsqueda: ${conditionsStr}`);
       queryBuilder = queryBuilder.or(conditionsStr);
     }
 
@@ -173,28 +155,22 @@ export async function searchLawyers(params: SearchParams = {}) {
     if (location) {
       const locationTerm = location.toString().trim();
       if (locationTerm) {
-        console.log(`📍 Aplicando filtro de ubicación: "${locationTerm}"`);
         queryBuilder = queryBuilder.ilike('location', `%${escapeSearchTerm(locationTerm)}%`);
       }
     }
 
     if (minRating > 0) {
-      console.log(`⭐ Aplicando filtro de calificación mínima: ${minRating}`);
       queryBuilder = queryBuilder.gte('rating', minRating);
     }
 
     if (minExperience > 0) {
-      console.log(`📅 Aplicando filtro de experiencia mínima: ${minExperience} años`);
       queryBuilder = queryBuilder.gte('experience_years', minExperience);
     }
 
     if (availableNow) {
-      console.log('ℹ️ El filtro de disponibilidad está deshabilitado (columna no existe)');
     }
 
     // Ejecutar la consulta
-    console.log('⚡ Ejecutando consulta a la base de datos...');
-    console.log('🔍 Consulta SQL generada:', queryBuilder);
     
     const { data: lawyers, error, count } = await queryBuilder;
     const queryTime = Date.now() - startTime;
@@ -221,15 +197,7 @@ export async function searchLawyers(params: SearchParams = {}) {
     const totalResults = count || 0;
     const hasMore = to < totalResults - 1;
     
-    console.log(`✅ Búsqueda completada en ${queryTime}ms. Encontrados ${totalResults} abogados.`);
     if (lawyers && lawyers.length > 0) {
-      console.log('📋 Primeros abogados encontrados:', lawyers.slice(0, 3).map(l => ({
-        id: l.id,
-        name: `${l.first_name} ${l.last_name}`,
-        specialty: l.specialty_id,
-        specialties: l.specialties,
-        rating: l.rating
-      })));
     }
     
     return { 
