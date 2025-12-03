@@ -42,7 +42,7 @@ const formSchema = z.object({
   studyStartYear: z.string().optional(),
   studyEndYear: z.string().optional(),
   barAssociationNumber: z.string().optional(),
-  zoomLink: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
+  meetLink: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
   hourlyRate: z.string()
     .refine(val => !val || /^\d+$/.test(val), {
       message: 'Debe ser un número válido',
@@ -220,7 +220,7 @@ export function LawyerProfileForm() {
       studyStartYear: safeNumberToString(metadata.study_start_year),
       studyEndYear: safeNumberToString(metadata.study_end_year),
       barAssociationNumber: metadata.bar_association_number || '',
-      zoomLink: metadata.zoom_link || '',
+      meetLink: metadata.meet_link || '',
       hourlyRate: safeNumberToString(metadata.hourly_rate_clp),
       certifications: metadata.certifications || '',
       languages: Array.isArray(metadata.languages) ? metadata.languages : [],
@@ -250,7 +250,7 @@ export function LawyerProfileForm() {
       rut: userMetadata.rut || '',
       pjudVerified: userMetadata.pjud_verified || false,
       availability: userMetadata.availability || 'disponible',
-      zoomLink: userMetadata.zoom_link || '',
+      meetLink: userMetadata.meet_link || '',
     };
   };
   
@@ -375,7 +375,7 @@ export function LawyerProfileForm() {
         study_end_year: studyEndYear,
         certifications: data.certifications || null,
         bar_association_number: data.barAssociationNumber?.trim() || null,
-        zoom_link: data.zoomLink?.trim() || null,
+        meet_link: data.meetLink?.trim() || null,
         languages: Array.isArray(data.languages) 
           ? data.languages.filter(lang => lang && lang.trim() !== '')
           : [],

@@ -286,7 +286,7 @@ export default function DashboardSettings() {
 
               <Separator />
 
-              <div className="flex items-center justify-between">
+              {/*<div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="flex items-center space-x-2">
                     <Smartphone className="h-4 w-4" />
@@ -302,7 +302,7 @@ export default function DashboardSettings() {
                 />
               </div>
 
-              <Separator />
+              <Separator />*/}
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">

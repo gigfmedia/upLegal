@@ -346,7 +346,7 @@ export function LawyerCard({
 
       {/* Ratings Dialog */}
       <Dialog open={showRatingsDialog} onOpenChange={setShowRatingsDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="ratings-dialog-description">
+        <DialogContent className="max-w-3xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg" aria-describedby="ratings-dialog-description">
           <DialogHeader>
             <DialogTitle>Reseñas y calificaciones</DialogTitle>
             <DialogDescription id="ratings-dialog-description">

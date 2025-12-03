@@ -334,7 +334,7 @@ export default function ManageAvailability({ lawyerId, isEditing, onAvailability
           Gestionar disponibilidad
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] md:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg">
         <DialogHeader className="px-6 pt-6 pb-2 border-b">
           <DialogTitle>Gestionar disponibilidad semanal</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">

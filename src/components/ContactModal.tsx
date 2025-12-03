@@ -501,7 +501,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg">
+      <DialogContent className="sm:max-w-[500px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg p-0">
         <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
           <Button
             type="button"

@@ -17,11 +17,13 @@ interface ProgressItem {
 interface ProfileCompletionProps {
   onNavigateToTab?: (tabValue: string) => void;
   completionPercentage: number;
+  services?: any[]; // Add services prop
 }
 
-export function ProfileCompletion({ onNavigateToTab, completionPercentage }: ProfileCompletionProps) {
+export function ProfileCompletion({ onNavigateToTab, completionPercentage, services = [] }: ProfileCompletionProps) {
   const { user } = useAuth();
-  const { services } = useServices();
+  // Use the services passed as prop or fallback to useServices hook
+  const servicesData = services || useServices().services || [];
   
   // Use the provided completion percentage
   const profileProgress = completionPercentage;
@@ -32,6 +34,15 @@ export function ProfileCompletion({ onNavigateToTab, completionPercentage }: Pro
     if (!user?.user_metadata) return [];
 
     const items: { label: string; tab: 'profile' | 'services' | 'billing'; description: string }[] = [];
+    
+    // Check for services first
+    if (!servicesData || servicesData.length === 0) {
+      items.push({
+        label: 'Servicios',
+        tab: 'services',
+        description: 'Agrega al menos un servicio que ofreces'
+      });
+    }
     
     if (!user.user_metadata.first_name || !user.user_metadata.last_name) {
       items.push({
@@ -129,6 +140,7 @@ if (!user.user_metadata.rut) {
       });
     }
 
+    // Check if services exist (any service, active or not)
     if (!services?.length) {
       items.push({
         label: 'Servicios',
@@ -156,15 +168,17 @@ if (!user.user_metadata.rut) {
     },
     {
       label: 'Datos de Contacto',
-      completed: !!(user?.user_metadata?.location && user?.user_metadata?.zoom_link && user?.user_metadata?.bar_association_number),
+      completed: !!(user?.user_metadata?.location && user?.user_metadata?.meet_link),
       tab: 'profile',
-      description: 'Ubicación, Zoom y colegiatura'
+      description: 'Ubicación y Google Meet'
     },
     {
       label: 'Servicios',
-      completed: services && services.length > 0,
+      completed: servicesData && servicesData.length > 0,
       tab: 'services',
-      description: services && services.length > 0 ? `${services.length} servicio(s) configurado(s)` : 'Agrega al menos un servicio'
+      description: servicesData && servicesData.length > 0 
+        ? `${servicesData.length} servicio(s) configurado(s)` 
+        : 'Agrega al menos un servicio'
     },
     {
       label: 'Disponibilidad',

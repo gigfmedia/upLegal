@@ -212,7 +212,7 @@ export function LawyerRatings({
         aria-labelledby="rating-dialog-title"
         aria-describedby="rating-dialog-description"
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
           <DialogHeader>
             <DialogTitle id="rating-dialog-title">Deja tu reseña</DialogTitle>
             <DialogDescription id="rating-dialog-description">

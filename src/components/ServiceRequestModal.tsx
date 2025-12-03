@@ -34,7 +34,7 @@ export function ServiceRequestModal({ isOpen, onClose, service, onSubmit }: Serv
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
         <DialogHeader>
           <DialogTitle>Solicitar servicio: {service.title}</DialogTitle>
           <DialogDescription>

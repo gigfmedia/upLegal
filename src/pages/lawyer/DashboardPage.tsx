@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, Briefcase, MessageSquare } from 'lucide-react';
@@ -6,11 +6,91 @@ import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/lib/supabaseClient';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+
+interface DashboardCounters {
+  todayAppointments: number;
+  activeServices: number;
+  newConsultations: number;
+  lastUpdated: Date;
+}
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, services, completionPercentage } = useProfile(user?.id);
+  const [counters, setCounters] = useState<DashboardCounters>({
+    todayAppointments: 0,
+    activeServices: 0,
+    newConsultations: 0,
+    lastUpdated: new Date()
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCounters = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Get today's date range
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        
+        // Fetch today's appointments
+        const { count: appointmentsCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('lawyer_id', user.id)
+          .gte('scheduled_time', startOfDay.toISOString())
+          .lt('scheduled_time', endOfDay.toISOString())
+          .eq('status', 'confirmed');
+        
+        // Fetch active services
+        const { count: servicesCount } = await supabase
+          .from('services')
+          .select('*', { count: 'exact', head: true })
+          .eq('lawyer_id', user.id)
+          .eq('is_active', true);
+        
+        // Fetch new consultations (last 7 days)
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        const { count: consultationsCount } = await supabase
+          .from('consultations')
+          .select('*', { count: 'exact', head: true })
+          .eq('lawyer_id', user.id)
+          .gte('created_at', weekAgo.toISOString())
+          .eq('status', 'new');
+        
+        setCounters({
+          todayAppointments: appointmentsCount || 0,
+          activeServices: servicesCount || 0,
+          newConsultations: consultationsCount || 0,
+          lastUpdated: new Date()
+        });
+        
+      } catch (err) {
+        console.error('Error fetching dashboard counters:', err);
+        setError('Error al cargar los contadores. Por favor, intente recargar la página.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCounters();
+    
+    // Refresh counters every 5 minutes
+    const interval = setInterval(fetchCounters, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const handleNavigateToTab = (tab: string) => {
     if (tab === 'profile') {
@@ -48,8 +128,16 @@ export default function LawyerDashboardPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">+2 desde ayer</p>
+              {loading ? (
+                <div className="h-8 flex items-center">
+                  <div className="animate-pulse h-4 w-8 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">{counters.todayAppointments}</div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {format(counters.lastUpdated, 'HH:mm', { locale: es })} hrs
+              </p>
             </CardContent>
           </Card>
           
@@ -62,8 +150,16 @@ export default function LawyerDashboardPage() {
               <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">+1 este mes</p>
+              {loading ? (
+                <div className="h-8 flex items-center">
+                  <div className="animate-pulse h-4 w-8 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">{counters.activeServices}</div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {format(counters.lastUpdated, 'HH:mm', { locale: es })} hrs
+              </p>
             </CardContent>
           </Card>
           
@@ -72,12 +168,18 @@ export default function LawyerDashboardPage() {
             onClick={() => handleNavigateToTab('messages')}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Mensajes Nuevos</CardTitle>
+              <CardTitle className="text-sm font-medium">Consultas Nuevas</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
-              <p className="text-xs text-muted-foreground">Sin leer</p>
+              {loading ? (
+                <div className="h-8 flex items-center">
+                  <div className="animate-pulse h-4 w-8 bg-muted rounded"></div>
+                </div>
+              ) : (
+                <div className="text-2xl font-bold">{counters.newConsultations}</div>
+              )}
+              <p className="text-xs text-muted-foreground">Últimos 7 días</p>
             </CardContent>
           </Card>
           
@@ -147,6 +249,7 @@ export default function LawyerDashboardPage() {
               <ProfileCompletion 
                 onNavigateToTab={handleNavigateToTab} 
                 completionPercentage={completionPercentage}
+                services={services}
               />
             </CardContent>
           </Card>

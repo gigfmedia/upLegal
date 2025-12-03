@@ -98,7 +98,7 @@ export function WriteReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
         <DialogHeader>
           <DialogTitle>Escribir Reseña</DialogTitle>
           <DialogDescription>

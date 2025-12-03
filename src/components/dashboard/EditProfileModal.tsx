@@ -184,7 +184,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto rounded-none sm:rounded-lg">
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
