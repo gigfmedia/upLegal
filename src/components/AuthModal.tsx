@@ -114,9 +114,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     return { isValid: true };
   };
 
-  // Import the verifyRutWithPJUD function from pjudService
-  import { verifyRutWithPJUD } from '@/services/pjudService';
-
   // Verify RUT with Supabase function (fallback to client-side validation if needed)
   const verifyRutWithServer = async (rut: string): Promise<{ isValid: boolean; message?: string }> => {
     try {
