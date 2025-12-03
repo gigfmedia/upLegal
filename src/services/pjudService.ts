@@ -42,31 +42,45 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
       // If full name is provided, verify with PJUD
       const RENDER_SERVER_URL = 'https://uplegal-service.onrender.com';
       
-      const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          rut: cleanRut,
-          fullName: fullName.trim()
-        })
-      });
+      try {
+        const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            rut: cleanRut,
+            fullName: fullName.trim()
+          })
+        });
 
-      if (!response.ok) {
-        console.error('Error al verificar con PJUD:', response.statusText);
+        if (!response.ok) {
+          console.error('Error al verificar con PJUD:', await response.text());
+          throw new Error('Error en la respuesta del servidor');
+        }
+
+        const data = await response.json();
+        
+        // Log the full response for debugging
+        console.log('PJUD Verification Response:', data);
+        
+        // Only consider it valid if explicitly verified by the server
+        const isValid = data.verified === true;
+        
+        return {
+          valid: isValid,
+          message: data?.message || (isValid 
+            ? 'El RUT ha sido verificado como abogado en el sistema.' 
+            : 'El RUT no está registrado como abogado en el Poder Judicial. Verifica que el RUT y nombre coincidan con tu registro oficial.')
+        };
+        
+      } catch (error) {
+        console.error('Error en la comunicación con el servicio PJUD:', error);
         return { 
           valid: false, 
-          message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
+          message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.'
         };
       }
-
-      const data = await response.json();
-
-      return {
-        valid: data?.verified || false,
-        message: data?.message || (data?.verified ? 'Abogado verificado en el PJUD' : 'No se encontró el abogado en los registros del PJUD')
-      };
     } catch (error) {
       console.error('Error en la función de verificación:', error);
       return { 
