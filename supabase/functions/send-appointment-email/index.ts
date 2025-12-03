@@ -20,6 +20,8 @@ serve(async (req) => {
       clientEmail, 
       clientName, 
       lawyerName, 
+      lawyerId, // Added lawyerId
+      lawyerEmail: passedLawyerEmail, // Added lawyerEmail from request
       appointmentDate, 
       appointmentTime, 
       serviceType, 
@@ -27,7 +29,7 @@ serve(async (req) => {
       meetingDetails, 
       notes,
       sendToLawyer = false,
-      isLawyerEmail = false  // Nuevo parámetro para identificar si es correo del abogado
+      isLawyerEmail = false
     } = await req.json();
 
     // Initialize Resend with API key
@@ -35,7 +37,7 @@ serve(async (req) => {
     console.log('Resend API Key:', resendApiKey ? '***' + resendApiKey.slice(-4) : 'No encontrada');
     const resend = new Resend(resendApiKey);
 
-    // Get lawyer's email from the database
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -44,9 +46,39 @@ serve(async (req) => {
       }
     );
 
-    // Para simplificar, usamos el correo del cliente como destinatario del abogado
-    // En producción, deberías tener una forma de obtener el correo real del abogado
-    const lawyerEmail = clientEmail; // Temporal: usar el mismo correo para pruebas
+    // Determine lawyer's email
+    let lawyerEmail = passedLawyerEmail || null;
+    
+    if (sendToLawyer && !lawyerEmail) {
+      console.log('Lawyer email not provided, attempting to fetch...');
+      
+      // First fetch the user_id from profiles, since profiles doesn't have email
+      let query = supabaseClient.from('profiles').select('user_id');
+      
+      if (lawyerId) {
+        console.log('Fetching by lawyer ID:', lawyerId);
+        query = query.eq('id', lawyerId);
+      } else {
+        console.log('Fetching by lawyer name (fallback):', lawyerName);
+        query = query.eq('first_name', lawyerName.split(' ')[0]).eq('role', 'lawyer');
+      }
+      
+      const { data: profileData, error: profileError } = await query.single();
+      
+      if (profileError) {
+        console.error('Error fetching lawyer profile:', profileError);
+      } else if (profileData && profileData.user_id) {
+        // Now fetch the email from auth.users using the service role key
+        const { data: userData, error: userError } = await supabaseClient.auth.admin.getUserById(profileData.user_id);
+        
+        if (userError) {
+          console.error('Error fetching user data from auth:', userError);
+        } else if (userData && userData.user) {
+          lawyerEmail = userData.user.email;
+          console.log('Lawyer email found via auth:', lawyerEmail);
+        }
+      }
+    }
 
     // Format the email content directly in HTML
     const formatDate = (dateString: string) => {
@@ -101,7 +133,7 @@ serve(async (req) => {
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://uplegal.netlify.app/${isLawyerEmail ? 'lawyer/citas' : 'dashboard/appointments'}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 10px 0;">
+              <a href="https://legalup.cl/${isLawyerEmail ? 'lawyer/citas' : 'dashboard/appointments'}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 10px 0;">
                 Ver detalles de mi cita
               </a>
             </div>
@@ -114,7 +146,7 @@ serve(async (req) => {
           </div>
           
           <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
-            <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.app" style="color: #2563eb; text-decoration: none;">soporte@legalup.app</a></p>
+            <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
             <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
             <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
           </div>
@@ -123,29 +155,43 @@ serve(async (req) => {
       </html>
     `;
 
-    // Send email to client using Resend's test domain
-    console.log('Enviando correo a:', clientEmail);
-    const emailResponse = await resend.emails.send({
-      from: 'onboarding@resend.dev',  // Usando dominio verificado de Resend
-      to: 'gigfmedia@icloud.com',  // Solo para pruebas, reemplaza con clientEmail después
-      subject: `[PRUEBA] Confirmación de cita con ${lawyerName}`,
-      html: emailHtml,
-    }).catch(error => {
-      console.error('Error al enviar correo:', error);
-      throw error;
-    });
-    
-    console.log('Respuesta de Resend:', JSON.stringify(emailResponse, null, 2));
+    // Helper function to send email with retry logic
+    const sendEmailWithRetry = async (emailData: any, maxRetries = 3) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          console.log(`Intento ${attempt} de ${maxRetries} para enviar correo a:`, emailData.to);
+          const response = await resend.emails.send(emailData);
+          console.log(`Correo enviado exitosamente a ${emailData.to}:`, response);
+          return response;
+        } catch (error) {
+          console.error(`Error en intento ${attempt} para ${emailData.to}:`, error);
+          if (attempt === maxRetries) {
+            throw error;
+          }
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    };
 
-    // Si sendToLawyer es true, también enviamos al abogado
-    if (sendToLawyer) {
-      await resend.emails.send({
-        from: 'onboarding@resend.dev',  // Usando dominio verificado de Resend
-        to: 'gigfmedia@icloud.com',  // Solo para pruebas
-        subject: `[PRUEBA - ABOGADO] Nueva cita con ${clientName}`,
-        html: emailHtml.replace('¡Cita confirmada!', 'Tienes una nueva cita')
-                     .replace('Como abogado,', 'Como cliente,')
-                     .replace('el abogado te contactará', 'tú contactarás al cliente'),
+    // Send email to client
+    console.log('Enviando correo al cliente:', clientEmail);
+    const emailResponse = await sendEmailWithRetry({
+      from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
+      to: clientEmail,  // Correo real del cliente
+      subject: `Confirmación de cita con ${lawyerName}`,
+      html: emailHtml,
+    });
+
+    // Si sendToLawyer es true y tenemos el email del abogado, también enviamos al abogado
+    if (sendToLawyer && lawyerEmail) {
+      console.log('Enviando correo al abogado:', lawyerEmail);
+      await sendEmailWithRetry({
+        from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
+        to: lawyerEmail,  // Correo real del abogado
+        subject: `Nueva cita con ${clientName}`,
+        html: emailHtml.replace('¡Tu cita ha sido agendada con éxito!', 'Tienes una nueva cita')
+                     .replace(`Hola ${clientName}`, `Hola ${lawyerName}`),
       });
     }
 

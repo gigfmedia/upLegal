@@ -15,6 +15,7 @@ interface AppointmentData {
   clientEmail: string;
   clientName: string;
   lawyerName: string;
+  lawyerId?: string; // Added lawyerId
   appointmentDate: string;
   appointmentTime: string;
   serviceType: string;
@@ -26,9 +27,13 @@ interface AppointmentData {
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
   const [isVerified, setIsVerified] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [appointmentData, setAppointmentData] = useState<AppointmentData | null>(null);
-  const sessionId = searchParams.get('session_id');
+  
+  // MercadoPago parameters
+  const paymentId = searchParams.get('payment_id');
+  const status = searchParams.get('status');
+  const externalReference = searchParams.get('external_reference');
   
   // Load pending appointment data from localStorage
   useEffect(() => {
@@ -42,34 +47,63 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      if (!sessionId) return;
+      // If we don't have a payment_id, we can't verify
+      if (!paymentId) return;
 
       try {
+        console.log('Verifying payment:', paymentId);
+        
         const { data, error } = await supabase.functions.invoke('verify-payment', {
-          body: { sessionId }
+          body: { paymentId }
         });
 
         if (error) throw error;
 
+        console.log('Payment verification result:', data);
         setPaymentDetails(data);
         setIsVerified(true);
 
-        if (data.status === 'paid' && appointmentData) {
+        // Check if payment is approved
+        if (data.status === 'approved' && appointmentData) {
           try {
-            // First, get the lawyer's email
-            const { data: lawyerData } = await supabase
-              .from('profiles')
-              .select('email')
-              .ilike('full_name', `%${appointmentData.lawyerName}%`)
-              .single();
+            // Get the lawyer's email using ID if available, otherwise fallback to name (less reliable)
+            let lawyerEmail = '';
+            
+            if (appointmentData.lawyerId) {
+              const { data: lawyerData } = await supabase
+                .from('profiles')
+                .select('email')
+                .eq('id', appointmentData.lawyerId)
+                .single();
+                
+              if (lawyerData) {
+                lawyerEmail = lawyerData.email;
+              }
+            } else {
+              // Fallback to name search (legacy support)
+              const { data: lawyerData } = await supabase
+                .from('profiles')
+                .select('email')
+                .ilike('first_name', `%${appointmentData.lawyerName.split(' ')[0]}%`)
+                .eq('role', 'lawyer')
+                .limit(1)
+                .single();
+                
+              if (lawyerData) {
+                lawyerEmail = lawyerData.email;
+              }
+            }
 
+            console.log('Sending confirmation email...');
+            
             // Send confirmation email
             await supabase.functions.invoke('send-appointment-email', {
               body: {
                 clientEmail: appointmentData.clientEmail,
                 clientName: appointmentData.clientName,
                 lawyerName: appointmentData.lawyerName,
-                lawyerEmail: lawyerData?.email || '',
+                lawyerId: appointmentData.lawyerId, // Pass ID for robust lookup
+                lawyerEmail: lawyerEmail, // Now correctly fetched
                 appointmentDate: appointmentData.appointmentDate,
                 appointmentTime: appointmentData.appointmentTime,
                 serviceType: appointmentData.serviceType,
@@ -81,93 +115,98 @@ export default function PaymentSuccess() {
               }
             });
             
-            toast({
-              title: "¡Todo listo!",
-              description: "Tu pago se ha procesado exitosamente y hemos enviado los detalles de tu cita por email.",
-            });
+            console.log('Confirmation email sent successfully');
+            
           } catch (emailError) {
-            // Still show success but with a note about email
-            toast({
-              title: "¡Pago completado!",
-              description: "Tu pago se ha procesado exitosamente, pero hubo un error al enviar el correo de confirmación.",
-              variant: "default",
-            });
+            console.error('Error sending email:', emailError);
+            // Don't block the success page if email fails, but log it
           }
-        } else if (data.status === 'paid') {
-          toast({
-            title: "¡Pago completado!",
-            description: "Tu pago se ha procesado exitosamente.",
-          });
         }
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "No se pudo verificar el pago",
-          variant: "destructive",
-        });
+        console.error('Error verifying payment:', error);
       }
     };
 
     verifyPayment();
-  }, [sessionId, appointmentData]);
+  }, [paymentId, appointmentData]); // Re-run if paymentId or appointmentData changes
 
-  if (!sessionId) {
+  if (!paymentId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <p>Sesión de pago no encontrada</p>
-            <Link to="/">
-              <Button className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al inicio
-              </Button>
-            </Link>
-          </CardContent>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <Card className="w-full max-w-md p-6 text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+              <span className="text-2xl">⚠️</span>
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Información de pago no encontrada</h1>
+          <p className="text-gray-600 mb-6">
+            No se encontraron los detalles del pago. Si realizaste el pago, por favor contacta a soporte.
+          </p>
+          <Button 
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            onClick={() => window.location.href = '/'}
+          >
+            Volver al inicio
+          </Button>
         </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 flex flex-col items-center justify-center p-4">
-      <div 
-        className="mb-8 flex items-center justify-center space-x-2 cursor-pointer"
-        onClick={() => window.location.href = '/'}
-      >
-        <Scale className="h-8 w-8 text-blue-600" />
-        <span className="text-2xl font-bold text-gray-900">LegalUp</span>
-      </div>
-      <Card className="max-w-md w-full">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle className="h-6 w-6 text-green-600" />
           </div>
-          <CardTitle className="text-2xl text-green-600">
-            ¡Pago Exitoso!
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-muted-foreground">
-            Tu pago se ha procesado correctamente. El abogado se pondrá en contacto contigo pronto.
+        </div>
+        
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">¡Pago Exitoso!</h1>
+        
+        {isVerified ? (
+          <>
+            <p className="text-gray-600 mb-6">
+              Tu cita ha sido agendada correctamente. Hemos enviado un correo con los detalles.
+            </p>
+            
+            {appointmentData && (
+              <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm">
+                <p><strong>Abogado:</strong> {appointmentData.lawyerName}</p>
+                <p><strong>Fecha:</strong> {appointmentData.appointmentDate}</p>
+                <p><strong>Hora:</strong> {appointmentData.appointmentTime}</p>
+              </div>
+            )}
+            
+            {paymentDetails && (
+               <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm mt-2">
+                <p><strong>Estado:</strong> {paymentDetails.status === 'approved' ? 'Aprobado' : paymentDetails.status}</p>
+                <p><strong>ID de pago:</strong> {paymentId}</p>
+               </div>
+            )}
+          </>
+        ) : (
+          <p className="text-gray-600 mb-6">
+            Verificando tu pago...
           </p>
-          
-          {isVerified && paymentDetails && (
-            <div className="bg-muted/50 rounded-lg p-4 text-sm">
-              <p><strong>Estado:</strong> {paymentDetails.status === 'paid' ? 'Pagado' : 'Pendiente'}</p>
-              <p><strong>ID de sesión:</strong> {sessionId}</p>
-            </div>
-          )}
+        )}
 
-          <div className="space-y-2">
-            <Link to="/">
-              <Button className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al inicio
-              </Button>
-            </Link>
-          </div>
-        </CardContent>
+        <div className="space-y-3">
+          <Button 
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            onClick={() => window.location.href = '/dashboard/appointments'}
+          >
+            Ver mis citas
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => window.location.href = '/'}
+          >
+            Volver al inicio
+          </Button>
+        </div>
       </Card>
     </div>
   );

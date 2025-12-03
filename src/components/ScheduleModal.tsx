@@ -997,6 +997,23 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         // Redirect to payment URL
         if (paymentResult.payment_link) {
           console.log('Redirecting to payment URL:', paymentResult.payment_link);
+          
+          // Save appointment data to localStorage for the success page
+          const pendingAppointmentData = {
+            clientEmail: formData.email,
+            clientName: formData.name,
+            lawyerName: selectedLawyerData?.name || lawyerName,
+            lawyerId: finalLawyerId, // Important for fetching lawyer email later
+            appointmentDate: formData.date,
+            appointmentTime: formData.time,
+            serviceType: formData.consultationType,
+            duration: formData.duration,
+            description: formData.description,
+            contactMethod: formData.contactMethod
+          };
+          
+          localStorage.setItem('pendingAppointment', JSON.stringify(pendingAppointmentData));
+          
           window.location.href = paymentResult.payment_link;
         } else {
           throw new Error('No se pudo obtener el enlace de pago');

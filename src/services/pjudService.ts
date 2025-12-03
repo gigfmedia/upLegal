@@ -18,18 +18,26 @@ export const verifyRutWithPJUD = async (rut: string): Promise<{ valid: boolean; 
     }
 
     try {
-      // Call Supabase Edge Function to verify RUT
-      const { data, error } = await supabase.functions.invoke('verify-rut', {
-        body: { rut: cleanRut }
+      // Call Render server to verify RUT
+      const RENDER_SERVER_URL = 'https://uplegal-rut-verification.onrender.com';
+      
+      const response = await fetch(`${RENDER_SERVER_URL}/verify-rut`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rut: cleanRut })
       });
 
-      if (error) {
-        console.error('Error al verificar RUT:', error);
+      if (!response.ok) {
+        console.error('Error al verificar RUT:', response.statusText);
         return { 
           valid: false, 
           message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
         };
       }
+
+      const data = await response.json();
 
       return {
         valid: data?.valid || false,
