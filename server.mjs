@@ -76,6 +76,62 @@ const DEFAULT_CURRENCY = 'CLP';
 
 const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
 
+// Function to validate RUT verifier digit
+const validateRutDV = (rut) => {
+  const cleanRut = normalizeRut(rut);
+  
+  // Validate basic format
+  if (!/^\d{7,8}[0-9K]$/i.test(cleanRut)) {
+    return false;
+  }
+
+  // Extract verifier digit and number
+  const dv = cleanRut.slice(-1).toUpperCase();
+  const number = cleanRut.slice(0, -1);
+
+  // Calculate expected verifier digit
+  let sum = 0;
+  let multiplier = 2;
+  
+  for (let i = number.length - 1; i >= 0; i--) {
+    sum += parseInt(number.charAt(i)) * multiplier;
+    multiplier = multiplier === 7 ? 2 : multiplier + 1;
+  }
+  
+  const calculatedDV = (11 - (sum % 11)) % 11;
+  const expectedDV = calculatedDV === 10 ? 'K' : calculatedDV.toString();
+  
+  return dv === expectedDV;
+};
+
+// Simple endpoint to validate RUT (format only, no PJUD verification)
+app.post('/verify-rut', async (req, res) => {
+  const { rut } = req.body || {};
+
+  if (!rut) {
+    return res.status(400).json({
+      valid: false,
+      message: 'Se requiere un RUT para la verificación.'
+    });
+  }
+
+  try {
+    const isValid = validateRutDV(rut);
+    
+    return res.json({
+      valid: isValid,
+      message: isValid ? 'RUT válido' : 'RUT inválido'
+    });
+  } catch (error) {
+    console.error('Error al validar RUT:', error);
+    return res.status(500).json({
+      valid: false,
+      message: 'Error al validar el RUT',
+      error: error.message
+    });
+  }
+});
+
 // Verify lawyer endpoint
 app.post('/verify-lawyer', async (req, res) => {
   const { rut, fullName } = req.body || {};
