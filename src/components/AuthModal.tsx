@@ -114,7 +114,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     return { isValid: true };
   };
 
-  // Verify RUT with server
+  // Import the verifyRutWithPJUD function from pjudService
+  import { verifyRutWithPJUD } from '@/services/pjudService';
+
+  // Verify RUT with Supabase function (fallback to client-side validation if needed)
   const verifyRutWithServer = async (rut: string): Promise<{ isValid: boolean; message?: string }> => {
     try {
       setRutVerificationStatus('verifying');
@@ -126,40 +129,57 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         return { isValid: false, message: formatValidation.message };
       }
       
-      // If format is valid, verify with server
-      const response = await fetch('/verify-rut', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ rut }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Error al verificar el RUT');
-      }
-      
-      if (!data.valid) {
-        setRutVerificationStatus('error');
+      try {
+        // Use the Supabase function to verify RUT
+        const result = await verifyRutWithPJUD(rut);
+        
+        if (!result.valid) {
+          setRutVerificationStatus('error');
+          return { 
+            isValid: false, 
+            message: result.message || 'RUT no válido. Por favor verifica el número.' 
+          };
+        }
+        
+        // If we get here, RUT is valid
+        setRutVerificationStatus('verified');
         return { 
-          isValid: false, 
-          message: 'RUT no válido. Por favor verifica el número.' 
+          isValid: true,
+          message: result.message || 'RUT verificado correctamente'
         };
+        
+      } catch (serverError) {
+        console.warn('Error al verificar RUT con Supabase, usando validación local:', serverError);
+        
+        // Fallback to client-side validation if Supabase function fails
+        const localValidation = verifyRutFormat(rut);
+        if (localValidation.isValid) {
+          setRutVerificationStatus('verified');
+          return { 
+            isValid: true,
+            message: 'Verificación de RUT completada (validación local)'
+          };
+        } else {
+          setRutVerificationStatus('error');
+          return localValidation;
+        }
       }
-      
-      // If we get here, RUT is valid
-      setRutVerificationStatus('verified');
-      return { isValid: true };
       
     } catch (error) {
-      console.error('Error verifying RUT:', error);
-      setRutVerificationStatus('error');
-      return { 
-        isValid: false, 
-        message: 'Error al verificar el RUT. Por favor inténtalo de nuevo.' 
-      };
+      console.error('Error durante la verificación de RUT:', error);
+      
+      // On error, fall back to client-side validation
+      const localValidation = verifyRutFormat(rut);
+      if (localValidation.isValid) {
+        setRutVerificationStatus('verified');
+        return { 
+          isValid: true,
+          message: 'No se pudo verificar el RUT, pero el formato es válido.'
+        };
+      } else {
+        setRutVerificationStatus('error');
+        return localValidation;
+      }
     }
   };
 
