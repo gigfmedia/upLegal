@@ -91,11 +91,42 @@ export default defineConfig(({ mode }) => {
     assetsDir: 'assets',
     sourcemap: mode === 'development',
     minify: 'terser',
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          vendor: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+        manualChunks(id) {
+          // React core
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react';
+          }
+          // React Router
+          if (id.includes('node_modules/react-router')) {
+            return 'react-router';
+          }
+          // Supabase
+          if (id.includes('node_modules/@supabase/')) {
+            return 'supabase';
+          }
+          // Radix UI components
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'radix-ui';
+          }
+          // Tanstack Query
+          if (id.includes('node_modules/@tanstack/')) {
+            return 'tanstack';
+          }
+          // Date libraries
+          if (id.includes('node_modules/date-fns') || id.includes('node_modules/react-day-picker')) {
+            return 'date-libs';
+          }
+          // Lucide icons
+          if (id.includes('node_modules/lucide-react')) {
+            return 'icons';
+          }
+          // Other vendor libraries
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
         },
       },
     },

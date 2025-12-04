@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -18,49 +18,47 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 
-// Pages
-import NotFound from '@/pages/NotFound';
-
-// Layouts
+// Layouts (keep these eager as they're used frequently)
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import RequireLawyer from '@/components/auth/RequireLawyer';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import Footer from '@/components/Footer';
 
-// Pages
-import Index from './pages/Index';
-import SearchResults from './pages/SearchResults';
-import LawyerDashboard from './pages/LawyerDashboard';
-import LawyerDashboardPage from './pages/lawyer/DashboardPage';
-import AttorneyDashboard from './pages/AttorneyDashboard';
-import PublicProfile from './pages/PublicProfile';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentFailure from './pages/PaymentFailure';
-import PaymentCanceled from './pages/PaymentCanceled';
-import TermsOfService from './pages/TermsOfService';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import UserDashboard from './pages/UserDashboard';
-import DashboardProfile from './pages/DashboardProfile';
-import DashboardSettings from './pages/DashboardSettings';
-import DashboardConsultations from './pages/DashboardConsultations';
-import DashboardAppointments from './pages/DashboardAppointments';
-import DashboardPayments from './pages/DashboardPayments';
-import DashboardMessages from './pages/DashboardMessages';
-import NotificationSettingsPage from './pages/NotificationSettingsPage';
-import AdminDashboard from './pages/AdminDashboard';
-import EmailVerification from './pages/auth/EmailVerification';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import ProfileSetupPage from './pages/ProfileSetupPage';
-import ServicesPage from './pages/lawyer/ServicesPage';
-import ConsultasPage from './pages/lawyer/ConsultasPage';
-import CitasPage from './pages/lawyer/CitasPage';
-import EarningsPage from './pages/lawyer/EarningsPage';
-import ProfilePage from './pages/lawyer/ProfilePage';
-import AboutPage from './pages/AboutPage';
-import HowItWorksPage from './pages/HowItWorksPage';
-import PaymentSettings from './pages/PaymentSettings';
-import DashboardFavorites from './pages/DashboardFavorites';
-import ContactPage from './pages/ContactPage';
+// Lazy load all pages for code splitting
+const Index = lazy(() => import('./pages/Index'));
+const SearchResults = lazy(() => import('./pages/SearchResults'));
+const LawyerDashboard = lazy(() => import('./pages/LawyerDashboard'));
+const LawyerDashboardPage = lazy(() => import('./pages/lawyer/DashboardPage'));
+const AttorneyDashboard = lazy(() => import('./pages/AttorneyDashboard'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile'));
+const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
+const PaymentFailure = lazy(() => import('./pages/PaymentFailure'));
+const PaymentCanceled = lazy(() => import('./pages/PaymentCanceled'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const DashboardProfile = lazy(() => import('./pages/DashboardProfile'));
+const DashboardSettings = lazy(() => import('./pages/DashboardSettings'));
+const DashboardConsultations = lazy(() => import('./pages/DashboardConsultations'));
+const DashboardAppointments = lazy(() => import('./pages/DashboardAppointments'));
+const DashboardPayments = lazy(() => import('./pages/DashboardPayments'));
+const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
+const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
+const ServicesPage = lazy(() => import('./pages/lawyer/ServicesPage'));
+const ConsultasPage = lazy(() => import('./pages/lawyer/ConsultasPage'));
+const CitasPage = lazy(() => import('./pages/lawyer/CitasPage'));
+const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
+const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
+const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -126,105 +124,111 @@ const AppContent = () => {
         <LoadingIndicator />
         <main className="flex-1">
           <LegalAgent />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contacto" element={<ContactPage />} />
-            <Route path="/como-funciona" element={<HowItWorksPage />} />
-            <Route path="/terminos" element={<TermsOfService />} />
-            <Route path="/privacidad" element={<PrivacyPolicy />} />
-            {/* New lawyer dashboard routes */}
-            <Route path="/lawyer" element={
-              <div data-role="lawyer">
-                <DashboardLayout />
-              </div>
-            }>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<LawyerDashboardPage />} />
-              <Route path="services" element={<ServicesPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="consultas" element={<ConsultasPage />} />
-              <Route path="citas" element={<CitasPage />} />
-              <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
-              <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
-              <Route path="earnings" element={<EarningsPage />} />
-              <Route path="favorites" element={<DashboardFavorites />} />
-            </Route>
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contacto" element={<ContactPage />} />
+              <Route path="/como-funciona" element={<HowItWorksPage />} />
+              <Route path="/terminos" element={<TermsOfService />} />
+              <Route path="/privacidad" element={<PrivacyPolicy />} />
+              {/* New lawyer dashboard routes */}
+              <Route path="/lawyer" element={
+                <div data-role="lawyer">
+                  <DashboardLayout />
+                </div>
+              }>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<LawyerDashboardPage />} />
+                <Route path="services" element={<ServicesPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="consultas" element={<ConsultasPage />} />
+                <Route path="citas" element={<CitasPage />} />
+                <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
+                <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
+                <Route path="earnings" element={<EarningsPage />} />
+                <Route path="favorites" element={<DashboardFavorites />} />
+              </Route>
 
-            <Route
-              path="/admin"
-              element={
-                <RequireAdmin>
-                  <AdminDashboard />
-                </RequireAdmin>
-              }
-            />
-            
-            {/* Legacy route for backward compatibility */}
-            <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
-            <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
-            {/* Main route for lawyer profiles */}
-            <Route path="/abogado">
-              {/* Route for SEO-friendly URLs: /abogado/name-lastname-uuid */}
-              <Route 
-                path=":slug" 
-                element={<PublicProfile />} 
+              <Route
+                path="/admin"
+                element={
+                  <RequireAdmin>
+                    <AdminDashboard />
+                  </RequireAdmin>
+                }
               />
               
-              {/* Catch-all route for /abogado/* that isn't a valid profile URL */}
-              <Route 
-                path="*" 
-                element={
-                  <RouteHandler>
-                    <PublicProfile />
-                  </RouteHandler>
-                } 
-              />
-            </Route>
-            
-            {/* Legacy route for backward compatibility */}
-            <Route path="/lawyer/:id" element={({ match }) => {
-              // Extract just the ID part in case it's a full URL
-              const id = match.params.id.split('-').pop();
-              return <Navigate to={`/abogado/abogado-${id}`} replace />;
-            }} />
-            
-            {/* 404 Not Found Page - must be last */}
-            <Route path="*" element={<NotFound />} />
-            <Route path="/profile" element={
-              <RequireLawyer>
-                <PublicProfile />
-              </RequireLawyer>
-            } />
-            
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<UserDashboard />} />
-              <Route path="profile" element={<DashboardProfile />} />
-              <Route path="profile/setup" element={
+              {/* Legacy route for backward compatibility */}
+              <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
+              <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
+              {/* Main route for lawyer profiles */}
+              <Route path="/abogado">
+                {/* Route for SEO-friendly URLs: /abogado/name-lastname-uuid */}
+                <Route 
+                  path=":slug" 
+                  element={<PublicProfile />} 
+                />
+                
+                {/* Catch-all route for /abogado/* that isn't a valid profile URL */}
+                <Route 
+                  path="*" 
+                  element={
+                    <RouteHandler>
+                      <PublicProfile />
+                    </RouteHandler>
+                  } 
+                />
+              </Route>
+              
+              {/* Legacy route for backward compatibility */}
+              <Route path="/lawyer/:id" element={({ match }) => {
+                // Extract just the ID part in case it's a full URL
+                const id = match.params.id.split('-').pop();
+                return <Navigate to={`/abogado/abogado-${id}`} replace />;
+              }} />
+              
+              {/* 404 Not Found Page - must be last */}
+              <Route path="*" element={<NotFound />} />
+              <Route path="/profile" element={
                 <RequireLawyer>
-                  <ProfileSetupPage />
+                  <PublicProfile />
                 </RequireLawyer>
               } />
-              <Route path="settings" element={<DashboardSettings />} />
-              <Route path="consultations" element={<DashboardConsultations />} />
-              <Route path="appointments" element={<DashboardAppointments />} />
-              <Route path="payments" element={<DashboardPayments />} />
-              <Route path="payment-settings" element={<PaymentSettings />} />
-              <Route path="messages" element={<DashboardMessages />} />
-              <Route path="favorites" element={<DashboardFavorites />} />
-              <Route path="notifications" element={<NotificationSettingsPage />} />
-            </Route>
-            
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment/failure" element={<PaymentFailure />} />
-            <Route path="/payment-canceled" element={<PaymentCanceled />} />
-            <Route path="/verify-email" element={<EmailVerification />} />
-            <Route path="/auth/verify" element={<EmailVerification />} />
-            <Route path="/auth/confirm-email" element={<EmailVerification />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route index element={<UserDashboard />} />
+                <Route path="profile" element={<DashboardProfile />} />
+                <Route path="profile/setup" element={
+                  <RequireLawyer>
+                    <ProfileSetupPage />
+                  </RequireLawyer>
+                } />
+                <Route path="settings" element={<DashboardSettings />} />
+                <Route path="consultations" element={<DashboardConsultations />} />
+                <Route path="appointments" element={<DashboardAppointments />} />
+                <Route path="payments" element={<DashboardPayments />} />
+                <Route path="payment-settings" element={<PaymentSettings />} />
+                <Route path="messages" element={<DashboardMessages />} />
+                <Route path="favorites" element={<DashboardFavorites />} />
+                <Route path="notifications" element={<NotificationSettingsPage />} />
+              </Route>
+              
+              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment/failure" element={<PaymentFailure />} />
+              <Route path="/payment-canceled" element={<PaymentCanceled />} />
+              <Route path="/verify-email" element={<EmailVerification />} />
+              <Route path="/auth/verify" element={<EmailVerification />} />
+              <Route path="/auth/confirm-email" element={<EmailVerification />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </main>
         <Footer />
       </TooltipProvider>

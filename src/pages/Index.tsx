@@ -24,7 +24,8 @@ import {
   Clock, 
   User,
   Scale,
-  DollarSign
+  DollarSign,
+  Lightbulb
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -448,7 +449,6 @@ const Index = () => {
     "Derecho Civil",
     "Derecho Comercial",
     "Derecho Inmobiliario",
-    "Derecho de Seguros",
     "Derecho Tributario",
     "Derecho de Propiedad Intelectual",
     "Derecho de Extranjería"
@@ -684,7 +684,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Todos los abogados están completamente verificados y cuentan con las licencias y credenciales apropiadas.
+                  Todos los abogados están verificados en línea con el Poder Judicial.
                 </p>
               </CardContent>
             </Card>
@@ -719,89 +719,89 @@ const Index = () => {
       {/* Categorías de Práctica */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-        <p className="text-left text-blue-600 mb-2">
+          <p className="text-left text-blue-600 mb-2">
             Directorio de Abogados
           </p>
           <h2 className="text-3xl font-bold text-left text-gray-900 mb-4">
             Busca abogados por área de práctica
           </h2>
           <p className="text-left text-gray-600 mb-12">
-          Al buscar asistencia, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades.
+          Al buscar asesoría y representación, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Derecho Laboral */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=laboral')}
+              onClick={() => navigate('/search?specialty=Derecho+Laboral')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Briefcase className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Laboral</h3>
-                <p className="text-sm text-gray-600">Despidos, finiquitos, acoso laboral, accidentes del trabajo, etc.</p>
+                <p className="text-sm text-gray-600">Tutela Laboral, Despidos Injustificados, Despido Indirecto, Nulidad del despido, Acoso Laboral, entre otros.</p>
               </CardContent>
             </Card>
 
             {/* Derecho de Familia */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=Derecho de Familia')}
+              onClick={() => navigate('/search?specialty=Derecho+de+Familia')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
-                <p className="text-sm text-gray-600">Divorcios, pensión de alimentos, cuidado personal, adopciones, etc.</p>
+                <p className="text-sm text-gray-600">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos.</p>
               </CardContent>
             </Card>
 
             {/* Derecho Civil */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=civil')}
+              onClick={() => navigate('/search?specialty=Derecho+Civil')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Scale className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Civil</h3>
-                <p className="text-sm text-gray-600">Contratos, herencias, arriendos, responsabilidad civil, etc.</p>
+                <p className="text-sm text-gray-600">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción.</p>
               </CardContent>
             </Card>
 
             {/* Derecho Penal */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=penal')}
+              onClick={() => navigate('/search?specialty=Derecho+Penal')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Shield className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Penal</h3>
-                <p className="text-sm text-gray-600">Defensa penal, querellas, juicios orales, libertad condicional, etc.</p>
+                <p className="text-sm text-gray-600">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales.</p>
               </CardContent>
             </Card>
 
             {/* Derecho Comercial */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=comercial')}
+              onClick={() => navigate('/search?specialty=Derecho+Comercial')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
                   <Building2 className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Comercial</h3>
-                <p className="text-sm text-gray-600">Sociedades, quiebras, concursos, propiedad intelectual, etc.</p>
+                <p className="text-sm text-gray-600">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas.</p>
               </CardContent>
             </Card>
 
             {/* Derecho de Seguros */}
-            <Card 
+            {/* <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=seguros')}
             >
@@ -812,19 +812,19 @@ const Index = () => {
                 <h3 className="text-lg font-semibold mb-2">Derecho de Seguros</h3>
                 <p className="text-sm text-gray-600">Reclamos a aseguradoras, siniestros, coberturas, etc.</p>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Derecho Inmobiliario */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=inmobiliario')}
+              onClick={() => navigate('/search?specialty=Derecho+de+Propiedad+Intelectual')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Home className="h-6 w-6 text-blue-600" />
+                  <Lightbulb className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Derecho Inmobiliario</h3>
-                <p className="text-sm text-gray-600">Compraventa, regularización, etc.</p>
+                <h3 className="text-lg font-semibold mb-2">Propiedad intelectual</h3>
+                <p className="text-sm text-gray-600">Registro de marcas comerciales ante INAPI, renovación y vigilancia de marcas, oposiciones y defensas en procedimientos administrativos, asesoría en derechos de autor, protección de nombres comerciales y logotipos, entre otros.</p>
               </CardContent>
             </Card>
 

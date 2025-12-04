@@ -378,7 +378,6 @@ export default function LawyerProfilePage() {
     'Derecho Inmobiliario',
     'Derecho de Propiedad Intelectual',
     'Derecho Ambiental',
-    'Derecho de Seguros',
     'Derecho Bancario',
     'Derecho de Consumidor',
     'Derecho Migratorio',

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateGoogleMeetLink, formatMeetLink, isValidMeetUrl } from "@/lib/googleMeet";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format, parseISO, startOfDay, isSameDay, addDays, isBefore, isPast, isToday, isValid } from 'date-fns';
 import { es, enUS } from "date-fns/locale";
@@ -189,7 +189,6 @@ const SPECIALTIES = [
   "Derecho Tributario",
   "Derecho Inmobiliario",
   "Derecho de Salud",
-  "Derecho de Seguros",
   "Derecho Ambiental",
   "Derecho de Consumidor",
   "Derecho Administrativo",
@@ -309,32 +308,12 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
   return (
     <div className="space-y-2">
       <Label htmlFor="date">Fecha *</Label>
-      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !formData.date && "text-muted-foreground",
-              formData.date && "border-green-500 ring-0.5 ring-green-500"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {displayDate ? format(displayDate, 'PPP', { locale: es }) : "Selecciona una fecha"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            disabled={isDateDisabled}
-            initialFocus
-            locale={es}
-            className="p-3"
-          />
-        </PopoverContent>
-      </Popover>
+      <DatePicker 
+        date={selectedDate}
+        setDate={handleDateSelect}
+        disabled={isDateDisabled}
+        className={formData.date ? "border-green-500 ring-0.5 ring-green-500" : ""}
+      />
       {formData.date && (
         <Check 
           className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" 
