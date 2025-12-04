@@ -94,25 +94,7 @@ export default defineConfig(({ mode }) => {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          // Only split the largest libraries to avoid circular dependency issues
-          if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'react-vendor';
-            }
-            // Supabase
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            // UI libraries
-            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-              return 'ui-vendor';
-            }
-            // Everything else in one vendor chunk
-            return 'vendor';
-          }
-        },
+        // Let Vite handle chunking automatically to avoid circular dependencies
       },
     },
     commonjsOptions: {
