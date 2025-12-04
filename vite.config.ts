@@ -95,36 +95,21 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // React core
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react';
-          }
-          // React Router
-          if (id.includes('node_modules/react-router')) {
-            return 'react-router';
-          }
-          // Supabase
-          if (id.includes('node_modules/@supabase/')) {
-            return 'supabase';
-          }
-          // Radix UI components
-          if (id.includes('node_modules/@radix-ui/')) {
-            return 'radix-ui';
-          }
-          // Tanstack Query
-          if (id.includes('node_modules/@tanstack/')) {
-            return 'tanstack';
-          }
-          // Date libraries
-          if (id.includes('node_modules/date-fns') || id.includes('node_modules/react-day-picker')) {
-            return 'date-libs';
-          }
-          // Lucide icons
-          if (id.includes('node_modules/lucide-react')) {
-            return 'icons';
-          }
-          // Other vendor libraries
-          if (id.includes('node_modules/')) {
+          // Only split the largest libraries to avoid circular dependency issues
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'supabase-vendor';
+            }
+            // UI libraries
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            // Everything else in one vendor chunk
             return 'vendor';
           }
         },
