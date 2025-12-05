@@ -176,6 +176,7 @@ const Index = () => {
           .from('profiles')
           .select('*')
           .eq('role', 'lawyer')
+          .eq('available_for_hire', true)  // Solo mostrar abogados disponibles
           .limit(100);
         
         if (error) {
@@ -726,7 +727,7 @@ const Index = () => {
             Busca abogados por área de práctica
           </h2>
           <p className="text-left text-gray-600 mb-12">
-          Al buscar asesoría y representación, las personas a menudo buscan abogados que se especialicen en el área del derecho más relevante para sus necesidades.
+          Al buscar asesoría y representación, las personas a menudo buscan abogados que se especialicen en el área del derecho más adecuada para sus necesidades.
           </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -754,7 +755,7 @@ const Index = () => {
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
-                <p className="text-sm text-gray-600">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos.</p>
+                <p className="text-sm text-gray-600">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -768,7 +769,7 @@ const Index = () => {
                   <Scale className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Civil</h3>
-                <p className="text-sm text-gray-600">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción.</p>
+                <p className="text-sm text-gray-600">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -782,7 +783,7 @@ const Index = () => {
                   <Shield className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Penal</h3>
-                <p className="text-sm text-gray-600">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales.</p>
+                <p className="text-sm text-gray-600">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -796,7 +797,7 @@ const Index = () => {
                   <Building2 className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Comercial</h3>
-                <p className="text-sm text-gray-600">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas.</p>
+                <p className="text-sm text-gray-600">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -838,7 +839,7 @@ const Index = () => {
                   <Search className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 text-center">Ver todas las especialidades</h3>
-                <p className="text-sm text-gray-600 text-center">Explora todas nuestras categorías de práctica legal</p>
+                <p className="text-sm text-gray-600 text-center">Explora todas nuestras categorías de práctica legal.</p>
               </CardContent>
             </Card>
           </div>

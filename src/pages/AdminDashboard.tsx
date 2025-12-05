@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Loader2, RefreshCw, Play } from 'lucide-react'
+import { Loader2, RefreshCw, Play, Users } from 'lucide-react'
 
 import RequireAdmin from '@/components/auth/RequireAdmin'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { usePlatformSettings } from '@/hooks/usePlatformSettings'
 import { fetchPayoutLogs, triggerManualPayout } from '@/services/payoutLogs'
+import { UserManagement } from '@/components/admin/UserManagement'
 
 export default function AdminDashboard() {
   return (
@@ -29,9 +30,17 @@ export default function AdminDashboard() {
             </p>
           </header>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
             <FeeSettingsCard />
             <TransferStatusCard />
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-6 w-6 text-blue-600" />
+              <h2 className="text-2xl font-semibold">Gestión de Usuarios</h2>
+            </div>
+            <UserManagement />
           </div>
         </div>
       </div>
