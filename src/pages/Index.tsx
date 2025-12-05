@@ -635,7 +635,7 @@ const Index = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="flex flex-col items-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">
@@ -649,7 +649,7 @@ const Index = () => {
               <div className="text-gray-600">Abogados Verificados</div>
             </div>
 
-            <div className="text-center">
+            {/*<div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {isLoadingCount.completed ? (
                   <div className="h-8 w-24 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
@@ -658,11 +658,11 @@ const Index = () => {
                 )}
               </div>
               <div className="text-gray-600">Casos Resueltos</div>
-            </div>
-            <div className="text-center">
+            </div>*/}
+            {/* <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">4.8★</div>
               <div className="text-gray-600">Calificación Promedio</div>
-            </div>
+            </div> */}
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
               <div className="text-gray-600">Soporte</div>

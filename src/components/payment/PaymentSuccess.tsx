@@ -1,4 +1,4 @@
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils/currency';
@@ -17,7 +17,7 @@ interface PaymentSuccessProps {
 }
 
 export function PaymentSuccess({ payment, onBack, onViewReceipt }: PaymentSuccessProps) {
-  return (
+  return (  
     <Card className="max-w-md mx-auto">
       <CardHeader className="text-center space-y-4">
         <div className="mx-auto rounded-full bg-green-100 p-3">

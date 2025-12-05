@@ -2,10 +2,13 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, ArrowLeft, AlertCircle } from 'lucide-react';
+import Header from '@/components/Header';
 
 export default function PaymentPending() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+    <>
+      <Header />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-24">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
@@ -32,5 +35,6 @@ export default function PaymentPending() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

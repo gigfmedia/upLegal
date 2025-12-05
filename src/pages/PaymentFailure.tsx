@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PaymentFailure as PaymentFailureComponent } from '@/components/payment/PaymentFailure';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import Header from '@/components/Header';
 
 export default function PaymentFailure() {
   const navigate = useNavigate();
@@ -168,12 +169,15 @@ export default function PaymentFailure() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+    <>
+      <Header />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-24">
       <PaymentFailureComponent 
         onRetry={handleRetry}
         onBack={handleBack}
         isRetrying={isRetrying}
       />
     </div>
+    </>
   );
 }

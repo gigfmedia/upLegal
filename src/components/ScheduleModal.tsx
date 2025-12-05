@@ -328,6 +328,7 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
 export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerId }: ScheduleModalProps) {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const hasLoadedLawyers = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [bookedSlots, setBookedSlots] = useState<Set<string>>(new Set());
@@ -993,7 +994,13 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           
           localStorage.setItem('pendingAppointment', JSON.stringify(pendingAppointmentData));
           
-          window.location.href = paymentResult.payment_link;
+          // Show redirecting overlay
+          setIsRedirecting(true);
+          
+          // Small delay to allow React to render the overlay before redirecting
+          setTimeout(() => {
+            window.location.href = paymentResult.payment_link;
+          }, 300);
         } else {
           throw new Error('No se pudo obtener el enlace de pago');
         }
@@ -1019,6 +1026,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       });
     } finally {
       setIsProcessing(false);
+      setIsRedirecting(false);
     }
   };
 
@@ -1075,14 +1083,31 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent 
-        className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg"
-        overlayStyle={{
-          '--tw-bg-opacity': 0.5,
-          '--tw-backdrop-blur': 'blur(4px)',
-        } as React.CSSProperties}
-      >
+    <>
+      {/* Redirecting Overlay - Fixed position to appear on top of everything */}
+      {isRedirecting && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/95 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 p-8">
+            <div className="relative">
+              <div className="h-16 w-16 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-semibold text-gray-900">Redirigiendo al Checkout</h3>
+              <p className="text-sm text-gray-600">Por favor espera un momento...</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent 
+          className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg"
+          overlayStyle={{
+            '--tw-bg-opacity': 0.5,
+            '--tw-backdrop-blur': 'blur(4px)',
+          } as React.CSSProperties}
+        >
+
         <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
           <Button
             type="button"
@@ -1534,5 +1559,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

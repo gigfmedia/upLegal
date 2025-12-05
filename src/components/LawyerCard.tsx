@@ -167,7 +167,7 @@ export function LawyerCard({
                 {hasVerificationFlag && (
                   <Badge variant="secondary" className="w-fit mb-2 flex items-center gap-1 bg-green-50 text-green-700">
                     <ShieldCheck className="h-3 w-3" />
-                    {lawyer.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
+                    {lawyer.pjud_verified ? 'Verificado en PJUD' : 'Verificado en PJUD'}
                   </Badge>
                 )}
                 

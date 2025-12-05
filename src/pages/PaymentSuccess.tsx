@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft, Scale } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
+import Header from "@/components/Header";
 
 interface PaymentDetails {
   status: string;
@@ -155,7 +156,9 @@ export default function PaymentSuccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 pt-24">
       <Card className="w-full max-w-md p-6 text-center">
         <div className="mb-4 flex justify-center">
           <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -209,5 +212,6 @@ export default function PaymentSuccess() {
         </div>
       </Card>
     </div>
+    </>
   );
 }

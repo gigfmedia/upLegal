@@ -9,10 +9,8 @@ export default function RequireAdmin({ children }: { children: ReactNode }) {
 
   if (isLoading) return null
 
-  const isAdmin =
-    !!user &&
-    (user.email?.toLowerCase() === ADMIN_EMAIL ||
-      (user.user_metadata?.role?.toLowerCase?.() === 'admin'))
+  // Only allow access to the specific admin email
+  const isAdmin = !!user && user.email?.toLowerCase() === ADMIN_EMAIL
 
   if (!isAdmin) {
     return <Navigate to="/" replace />
