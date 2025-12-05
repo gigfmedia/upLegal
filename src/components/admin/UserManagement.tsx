@@ -96,7 +96,7 @@ export function UserManagement() {
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-white">
         <Table>
           <TableHeader>
             <TableRow>
@@ -114,7 +114,7 @@ export function UserManagement() {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-500" />
-                      {user.first_name} {user.last_name}
+                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
