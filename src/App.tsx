@@ -58,6 +58,7 @@ const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Create a single QueryClient instance
@@ -224,6 +225,7 @@ const AppContent = () => {
               <Route path="/payment-canceled" element={<PaymentCanceled />} />
               <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="*" element={<NotFound />} />

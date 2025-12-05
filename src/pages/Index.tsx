@@ -152,6 +152,17 @@ const Index = () => {
   const [registeredLawyer, setRegisteredLawyer] = useState<Lawyer | null>(null);
   const [isLoadingLawyer, setIsLoadingLawyer] = useState(true);
 
+  // Check for login parameter in URL and open auth modal
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('login') === 'true') {
+      setShowAuthModal(true);
+      setAuthMode('login');
+      // Clean up URL without reloading the page
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   // Handle contact click
   const handleContactClick = (lawyer: Lawyer) => {
     setSelectedLawyer(lawyer);
