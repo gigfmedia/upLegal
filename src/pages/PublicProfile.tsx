@@ -150,11 +150,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   
   // Extract the ID from the URL
   const id = useMemo(() => {
-    console.log('Extracting ID from URL params:', { urlId, slug });
     
     // If we have an ID from the URL params, use that
     if (urlId) {
-      console.log('Using urlId:', urlId);
       return urlId;
     }
     
@@ -165,7 +163,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       const match = slug.match(uuidRegex);
       
       if (match) {
-        console.log('Extracted UUID from slug:', match[0]);
         return match[0];
       }
       
@@ -198,7 +195,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     }
     
     // Implement booking logic here
-    console.log('Booking service:', service);
     toast({
       title: 'Servicio reservado',
       description: `Has reservado el servicio: ${service.title}`,
@@ -403,14 +399,10 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
   // Update the lawyer state with the fetched data
   const updateLawyerState = useCallback((profile: RawProfileData) => {
-    console.log('updateLawyerState called with profile:', JSON.stringify(profile, null, 2));
-    
     if (!profile) {
       console.error('No profile data provided to updateLawyerState');
       return;
     }
-    
-    console.log('Processing profile data for:', profile.first_name, profile.last_name);
     
     // Parse availability with better error handling and fallbacks
     let availability: Availability = {
@@ -419,8 +411,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       quick_response: false,
       emergency_consultations: false
     };
-    
-    console.log('Initial availability:', availability);
 
     try {
       if (profile.availability) {
@@ -500,14 +490,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     
     // Clean the ID in case it contains any extra characters
     const cleanId = profileId.trim();
-    
-    console.log('Fetching profile with ID:', cleanId);
-    
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('1. Starting to fetch profile with ID:', cleanId);
       
       // First try to get the profile by ID
       const { data: profile, error: profileError } = await supabase
@@ -519,10 +504,22 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       if (profileError) throw profileError;
       if (!profile) throw new Error('No se encontró el perfil');
       
-      console.log('Profile data:', profile);
+      
+      // Get appointment count for this lawyer (excluding pending payments)
+      const { data: appointmentCounts, error: countError } = await supabase
+        .from('appointments')
+        .select('lawyer_id, status')
+        .eq('lawyer_id', profile.id)
+        .neq('status', 'pending_payment');
+      
+      // Add appointment count to profile
+      const profileWithCount = {
+        ...profile,
+        profile_views: appointmentCounts?.length || 0
+      };
       
       // Update the lawyer state
-      updateLawyerState(profile);
+      updateLawyerState(profileWithCount);
       
       // If we have a slug, check if it matches the expected format
       if (slug) {
@@ -532,7 +529,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         if (expectedSlug !== currentSlug) {
           // Redirect to the canonical URL
           const newPath = `/abogado/${expectedSlug}-${cleanId}`;
-          console.log('Redirecting to canonical URL:', newPath);
           navigate(newPath, { replace: true });
         }
       }
@@ -1105,7 +1101,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           </div>
                           <div className="flex items-center">
                             <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
-                            <span>{lawyer?.profile_views || 0} visualizaciones</span>
+                            <span>{lawyer?.profile_views || 0} casos</span>
                           </div>
                         </div>
                       </div>

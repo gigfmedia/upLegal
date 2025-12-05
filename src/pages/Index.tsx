@@ -127,7 +127,6 @@ const Index = () => {
   
   // Debug: Log user object to verify structure
   useEffect(() => {
-    //console.log('Current user:', user);
   }, [user]);
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -180,8 +179,6 @@ const Index = () => {
     const fetchAllLawyers = async () => {
       try {
         setIsLoadingFeatured(true);
-        //console.log('Iniciando búsqueda de abogados...');
-        
         // Consulta directa a Supabase
         const { data: lawyers, error } = await supabase
           .from('profiles')
@@ -194,10 +191,25 @@ const Index = () => {
           console.error('Error al obtener abogados:', error);
           return;
         }
-
-        //console.log('Abogados encontrados:', lawyers);
         
         if (lawyers && lawyers.length > 0) {
+          // Get appointment counts for all lawyers (excluding pending payments)
+          const lawyerIds = lawyers.map(l => l.id);
+          const { data: appointmentCounts, error: countError } = await supabase
+            .from('appointments')
+            .select('lawyer_id, status')
+            .in('lawyer_id', lawyerIds)
+            .neq('status', 'pending_payment');
+          
+          // Create a map of lawyer_id to appointment count
+          const countsMap = new Map<string, number>();
+          if (appointmentCounts && !countError) {
+            appointmentCounts.forEach(apt => {
+              const count = countsMap.get(apt.lawyer_id) || 0;
+              countsMap.set(apt.lawyer_id, count + 1);
+            });
+          }
+          
           const formattedLawyers = lawyers
             .filter(lawyer => {
               const firstName = lawyer.first_name?.toLowerCase() || '';
@@ -212,7 +224,7 @@ const Index = () => {
             rating: Number(lawyer.rating) || 0,
             reviews: Number(lawyer.review_count) || 0,
             location: lawyer.location || 'Sin ubicación',
-            cases: 0, // Valor por defecto ya que no viene de la API
+            cases: countsMap.get(lawyer.id) || 0, // Get real appointment count
             hourlyRate: Number(lawyer.hourly_rate_clp) || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(Number(lawyer.hourly_rate_clp) * 0.5) : 0,
             image: lawyer.avatar_url || '',
@@ -390,6 +402,23 @@ const Index = () => {
         const { data: lawyers, total } = await searchLawyers({}, 1, 20); // Get more lawyers to ensure we have enough complete profiles
         
         if (lawyers && lawyers.length > 0) {
+          // Get appointment counts for all lawyers (excluding pending payments)
+          const lawyerIds = lawyers.map(l => l.id);
+          const { data: appointmentCounts, error: countError } = await supabase
+            .from('appointments')
+            .select('lawyer_id, status')
+            .in('lawyer_id', lawyerIds)
+            .neq('status', 'pending_payment');
+          
+          // Create a map of lawyer_id to appointment count
+          const countsMap = new Map<string, number>();
+          if (appointmentCounts && !countError) {
+            appointmentCounts.forEach(apt => {
+              const count = countsMap.get(apt.lawyer_id) || 0;
+              countsMap.set(apt.lawyer_id, count + 1);
+            });
+          }
+          
           const formattedLawyers = lawyers
             .filter(lawyer => {
               const firstName = lawyer.first_name?.toLowerCase() || '';
@@ -404,7 +433,7 @@ const Index = () => {
             rating: lawyer.rating || 0,
             reviews: lawyer.review_count || 0,
             location: lawyer.location || 'Santiago, Chile',
-            cases: 0,
+            cases: countsMap.get(lawyer.id) || 0, // Get real appointment count
             hourlyRate: lawyer.hourly_rate_clp || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
             image: lawyer.avatar_url || '',
