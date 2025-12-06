@@ -112,27 +112,4 @@ All colors MUST be HSL.
     font-style: normal !important;
   }
 
-  /* Fix react-day-picker calendar alignment */
-  .rdp {
-    --rdp-cell-size: 2.25rem;
-    --rdp-accent-color: hsl(var(--primary));
-  }
-
-  .rdp-head_cell {
-    width: var(--rdp-cell-size);
-    height: var(--rdp-cell-size);
-    text-align: center;
-    font-size: 0.8rem;
-    font-weight: normal;
-  }
-
-  .rdp-cell {
-    width: var(--rdp-cell-size);
-    height: var(--rdp-cell-size);
-  }
-
-  .rdp-day {
-    width: var(--rdp-cell-size);
-    height: var(--rdp-cell-size);
-  }
 }

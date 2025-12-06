@@ -308,19 +308,21 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
   return (
     <div className="space-y-2">
       <Label htmlFor="date">Fecha *</Label>
-      <DatePicker 
-        date={selectedDate}
-        setDate={handleDateSelect}
-        disabled={isDateDisabled}
-        className={formData.date ? "border-green-500 ring-0.5 ring-green-500" : ""}
-      />
-      {formData.date && (
-        <Check 
-          className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" 
-          aria-hidden="true"
-          strokeWidth={3}
+      <div className="relative">
+        <DatePicker 
+          date={selectedDate}
+          setDate={handleDateSelect}
+          disabled={isDateDisabled}
+          className={formData.date ? "border-green-500 ring-0.5 ring-green-500" : ""}
         />
-      )}
+        {formData.date && (
+          <Check 
+            className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500 pointer-events-none" 
+            aria-hidden="true"
+            strokeWidth={3}
+          />
+        )}
+      </div>
     </div>
   );
 };

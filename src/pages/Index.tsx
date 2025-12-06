@@ -35,90 +35,6 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
-
-// Mock data for lawyers (reduced to 4)
-export const mockLawyers: Lawyer[] = [
-  {
-    id: "1",
-    name: "Gabriela Ignacia Gómez Fernández",
-    specialties: ["Derecho Laboral", "Derecho de Familia"],
-    rating: 4.9,
-    reviews: 142,
-    location: "Santiago, Chile",
-    hourlyRate: 350000,
-    consultationPrice: 40000,
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1588&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    bio: "Abogada especializada en derecho laboral y de familia con más de 10 años de experiencia. Comprometida con la defensa de los derechos de los trabajadores y las familias chilenas.",
-    verified: true,
-    cases: 150,
-    availability: {
-      availableToday: true,
-      availableThisWeek: true,
-      quickResponse: true,
-      emergencyConsultations: true
-    }
-  },
-  {
-    id: "2",
-    name: "Carlos Muñoz",
-    specialties: ["Derecho Penal"],
-    rating: 4.8,
-    reviews: 89,
-    location: "Santiago, Chile",
-    hourlyRate: 300000,
-    consultationPrice: 40000,
-    image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    bio: "Abogado penalista con amplia experiencia en defensa de casos complejos y litigación en juicios orales.",
-    verified: true,
-    cases: 120,
-    availability: {
-      availableToday: false,
-      availableThisWeek: true,
-      quickResponse: true,
-      emergencyConsultations: true
-    }
-  },
-  {
-    id: "3",
-    name: "Carolina Méndez",
-    specialties: ["Derecho Inmobiliario", "Derecho Corporativo"],
-    rating: 4.7,
-    reviews: 65,
-    location: "Viña del Mar, Chile",
-    hourlyRate: 320000,
-    consultationPrice: 45000,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    bio: "Especialista en transacciones inmobiliarias y asesoría corporativa con más de 8 años de experiencia en el mercado chileno.",
-    verified: true,
-    cases: 95,
-    availability: {
-      availableToday: true,
-      availableThisWeek: true,
-      quickResponse: true,
-      emergencyConsultations: false
-    }
-  },
-  {
-    id: "4",
-    name: "Diego Silva",
-    specialties: ["Derecho de Propiedad Intelectual", "Derecho Comercial"],
-    rating: 4.9,
-    reviews: 112,
-    location: "Santiago, Chile",
-    hourlyRate: 380000,
-    consultationPrice: 50000,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1374&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    bio: "Experto en propiedad intelectual y derecho comercial, asesorando a empresas tecnológicas y emprendedores en la protección de sus activos intangibles.",
-    verified: true,
-    cases: 180,
-    availability: {
-      availableToday: true,
-      availableThisWeek: true,
-      quickResponse: true,
-      emergencyConsultations: true
-    }
-  }
-];
 import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verifiedLawyers";
 import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
 
@@ -512,28 +428,6 @@ const Index = () => {
     "Divorcio"
   ];
 
-  // Get Gabriela Gómez separately to ensure she's always included
-  const gabrielaGomez = mockLawyers.find(lawyer => lawyer.id === "7");
-  
-  // Filter other lawyers based on search criteria
-  // Filter lawyers based on search criteria
-  const otherFilteredLawyers = mockLawyers.filter(lawyer => {
-    // Skip Gabriela Gómez as we'll add her separately
-    if (lawyer.id === "1") return false;
-    
-    const matchesSearch = searchTerm === "" || 
-                         lawyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lawyer.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLocation = !location || 
-                          (lawyer.location && lawyer.location.toLowerCase().includes(location.toLowerCase()));
-    return matchesSearch && matchesLocation;
-  });
-  
-  // Combine Gabriela Gómez with other filtered lawyers, ensuring no duplicates
-  const filteredLawyers = [
-    ...(gabrielaGomez ? [gabrielaGomez] : []),
-    ...otherFilteredLawyers
-  ].slice(0, 6); // Limit to 6 lawyers total
 
   const handleAuthClick = (mode: 'login' | 'signup', role: 'client' | 'lawyer' = 'client') => {
     setAuthMode(mode);
