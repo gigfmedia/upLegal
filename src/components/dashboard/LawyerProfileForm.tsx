@@ -292,7 +292,6 @@ export function LawyerProfileForm() {
   useEffect(() => {
     if (user) {
       const newValues = getDefaultValues();
-      console.log('Actualizando formulario con valores:', newValues);
       // Usar reset con shouldValidate: false para evitar validaciones innecesarias
       form.reset(newValues, { keepValues: false });
     }
@@ -302,10 +301,6 @@ export function LawyerProfileForm() {
   useEffect(() => {
     if (user) {
       const values = getDefaultValues();
-      console.log('Actualizando formulario con valores:', {
-        hourlyRate: values.hourlyRate,
-        experience: values.experience
-      });
       
       // Actualizar el formulario sin marcar como dirty
       form.reset(values, {
@@ -324,8 +319,6 @@ export function LawyerProfileForm() {
     
     try {
       setIsLoading(true);
-      
-      console.log('Formulario enviado con datos:', data);
       
       // Procesar la tarifa horaria
       const processHourlyRate = (rate: any): number | null => {
@@ -353,12 +346,6 @@ export function LawyerProfileForm() {
       const studyEndYear = processYear(data.studyEndYear);
       const hourlyRate = processHourlyRate(data.hourlyRate);
       
-      console.log('Datos procesados:', { 
-        hourlyRate,
-        studyStartYear, 
-        studyEndYear 
-      });
-      
       // Preparar los datos del perfil
       const profileData = {
         ...user.user_metadata, // Mantener datos existentes
@@ -381,8 +368,6 @@ export function LawyerProfileForm() {
           : [],
         availability: data.availability || 'disponible'
       };
-      
-      console.log('Actualizando perfil con datos:', profileData);
       
       // Actualizar el perfil
       const result = await updateProfile(profileData);

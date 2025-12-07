@@ -44,8 +44,6 @@ export async function scrapePoderJudicial(rut: string, fullName: string): Promis
     formData.append('dni', rutBody);
     formData.append('digit', rutVerifier);
 
-    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
-
     // Submit the search form
     const response = await fetch(searchUrl, {
       method: 'POST',

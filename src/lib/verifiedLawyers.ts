@@ -9,7 +9,6 @@ let cachedCount: number | null = null;
  */
 export const getVerifiedLawyersCount = async (): Promise<number> => {
   // Forzar siempre una nueva consulta para obtener los datos más recientes
-  // console.log('Obteniendo conteo de abogados verificados...');
   
   try {
     // Primero, obtener todos los abogados

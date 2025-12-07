@@ -24,7 +24,6 @@ async function ensureAvatarsBucket() {
     
     if (bucketError) {
       if (bucketError.message.includes('Bucket not found')) {
-        console.log('Creating avatars bucket...');
         const { data: newBucket, error: createError } = await supabase.storage.createBucket('avatars', {
           public: true,
           allowedMimeTypes: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
@@ -34,17 +33,14 @@ async function ensureAvatarsBucket() {
         if (createError) {
           throw createError;
         }
-        
-        console.log('✅ Created avatars bucket:', newBucket);
       } else {
         throw bucketError;
       }
     } else {
-      console.log('✅ Avatars bucket already exists');
+
     }
     
     // Update bucket policy to be public
-    console.log('Updating bucket policy...');
     const { error: policyError } = await supabase.rpc('storage_set_bucket_policy', {
       bucket_id: 'avatars',
       public: true,
@@ -54,8 +50,6 @@ async function ensureAvatarsBucket() {
     if (policyError && !policyError.message.includes('already exists')) {
       throw policyError;
     }
-    
-    console.log('✅ Bucket policy updated');
     
   } catch (error) {
     console.error('Error ensuring avatars bucket:', error);

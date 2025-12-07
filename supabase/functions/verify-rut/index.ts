@@ -21,8 +21,6 @@ serve(async (req) => {
       );
     }
 
-    console.log('Verificando RUT:', rut);
-
     // Call Render server
     const RENDER_SERVER_URL = 'https://uplegal-service.onrender.com';
     
@@ -46,7 +44,6 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Resultado de verificación:', data);
 
     return new Response(
       JSON.stringify(data),

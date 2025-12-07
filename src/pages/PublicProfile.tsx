@@ -476,7 +476,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
   // Debug: Log the lawyer object when it changes
   useEffect(() => {
-    console.log('Lawyer data:', lawyer);
   }, [lawyer]);
 
   // Fetch profile data when component mounts

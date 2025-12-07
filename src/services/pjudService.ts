@@ -61,9 +61,6 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
 
         const data = await response.json();
         
-        // Log the full response for debugging
-        console.log('PJUD Verification Response:', data);
-        
         // Only consider it valid if explicitly verified by the server
         const isValid = data.verified === true;
         

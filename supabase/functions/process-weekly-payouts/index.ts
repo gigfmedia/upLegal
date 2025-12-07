@@ -97,8 +97,6 @@ serve(async (req) => {
 
 function validateSecret(req: Request) {
   const configuredSecret = Deno.env.get('PAYOUT_CRON_SECRET');
-  console.log('Configured secret exists:', !!configuredSecret);
-  console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
 
   if (!configuredSecret) {
     console.warn('PAYOUT_CRON_SECRET is not set; skipping auth guard');
@@ -106,7 +104,6 @@ function validateSecret(req: Request) {
   }
 
   const headerSecret = req.headers.get('x-cron-secret');
-  console.log('Header secret received:', headerSecret);
 
   if (!headerSecret || headerSecret !== configuredSecret) {
     throw new Error(`Unauthorized: missing or invalid cron secret. Received: ${headerSecret}`);

@@ -268,35 +268,23 @@ const SearchResults = () => {
 
   // Sync local state with URL parameters when they change
   useEffect(() => {
-    console.log('🔄 Sincronizando parámetros de búsqueda desde la URL');
     const urlQuery = searchParams.get('q') || '';
     const urlCategory = searchParams.get('category');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
     
-    console.log('📌 Parámetros de la URL:', {
-      urlQuery,
-      urlCategory,
-      urlSpecialties,
-      urlLocation
-    });
-    
     // Determine specialties from URL
     let newSpecialties: string[] = [];
     if (urlCategory) {
       newSpecialties = [urlCategory];
-      console.log('🎯 Categoría seleccionada desde URL:', urlCategory);
     } else if (urlSpecialties.length > 0) {
       newSpecialties = urlSpecialties;
-      console.log('🎯 Especialidades seleccionadas desde URL:', urlSpecialties);
     } else {
       newSpecialties = ['all'];
-      console.log('ℹ️ No se encontraron especialidades en la URL, usando valor por defecto');
     }
 
     // Update search term if changed
     if (urlQuery !== searchTerm) {
-      console.log('🔤 Actualizando término de búsqueda:', urlQuery);
       setSearchTerm(urlQuery);
     }
     
@@ -305,18 +293,16 @@ const SearchResults = () => {
       selectedSpecialty.every((val, index) => val === newSpecialties[index]);
       
     if (!isSameSpecialties) {
-      console.log('🏷️ Actualizando especialidades seleccionadas:', newSpecialties);
       setSelectedSpecialty(newSpecialties);
     } else {
-      console.log('ℹ️ Las especialidades no han cambiado');
+
     }
     
     // Update location if changed
     if (urlLocation !== location) {
-      console.log('📍 Actualizando ubicación:', urlLocation);
       setLocation(urlLocation);
     } else {
-      console.log('ℹ️ La ubicación no ha cambiado');
+
     }
     
     // Trigger search with current parameters
@@ -326,7 +312,6 @@ const SearchResults = () => {
       urlLocation;
     
     if (shouldSearch) {
-      console.log('🚀 Iniciando búsqueda con parámetros actualizados');
       const searchParams = {
         query: urlQuery,
         specialty: newSpecialties,
@@ -336,8 +321,6 @@ const SearchResults = () => {
         availableNow: false
       };
       
-      console.log('🔍 Parámetros de búsqueda:', searchParams);
-      
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
@@ -346,7 +329,6 @@ const SearchResults = () => {
       });
     } else if (searchParams.toString() === '') {
       // Si no hay parámetros, limpiar resultados
-      console.log('🧹 Limpiando resultados de búsqueda');
       setSearchResult({
         lawyers: [],
         total: 0,
@@ -383,17 +365,6 @@ const SearchResults = () => {
         // Use dynamic import for code splitting
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
         
-        console.log('🔍 Parámetros de búsqueda:', {
-          query,
-          specialty,
-          location,
-          minRating,
-          minExperience,
-          availableNow,
-          page,
-          pageSize: currentPageSize
-        });
-        
         const response = await searchLawyers({
           query: query || '',
           specialty: specialty && specialty[0] !== 'all' ? specialty : undefined,
@@ -405,11 +376,7 @@ const SearchResults = () => {
           pageSize: currentPageSize
         });
         
-        console.log('📊 Respuesta de la búsqueda:', response);
-        
         if (response) {
-          //console.log('Raw API response:', response);
-          
           // First, format all lawyers
           const formattedLawyers = response.lawyers.map(lawyer => ({
             id: lawyer.id,
@@ -480,14 +447,11 @@ const SearchResults = () => {
 
   // Effect to trigger search when search parameters change
   useEffect(() => {
-    console.log('🔄 Efecto de búsqueda activado con parámetros:', searchParamsMemo);
-    
     // Cancel any pending debounced search
     const debouncedSearch = debouncedSearchRef.current;
     
     // Always trigger search
     setLoading(true);
-    console.log('🚀 Iniciando búsqueda (todos los abogados o con filtros)');
     
     // Trigger search with debounce
     debouncedSearch({
@@ -499,7 +463,6 @@ const SearchResults = () => {
 
     // Cleanup function to cancel debounce on unmount
     return () => {
-      console.log('🧹 Limpiando búsqueda debounce');
       debouncedSearch.cancel();
     };
   }, [searchParamsMemo, searchResult.pageSize]);
@@ -653,7 +616,6 @@ const SearchResults = () => {
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    console.log('clearFilters called');
     // Show loading state
     setLoading(true);
     
@@ -842,7 +804,6 @@ const SearchResults = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('Removing specialty filter:', specialty);
                           
                           // Create new specialties array without the removed one
                           const newSpecialties = selectedSpecialty.filter(s => s !== specialty);
@@ -868,8 +829,6 @@ const SearchResults = () => {
                                 }
                               });
                             }
-                            
-                            console.log('Updated URL params:', params.toString());
                             return params;
                           });
                           
@@ -891,7 +850,6 @@ const SearchResults = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('Removing location filter');
                           // Use functional form to get latest params
                           setSearchParams((prevParams) => {
                             const params = new URLSearchParams(prevParams.toString());
@@ -913,7 +871,6 @@ const SearchResults = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('Clearing all filters');
                         clearFilters();
                       }}
                       className="text-sm text-blue-600 hover:text-blue-800 hover:underline ml-1 focus:outline-none font-medium"

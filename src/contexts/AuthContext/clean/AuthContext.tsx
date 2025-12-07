@@ -379,7 +379,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Ensure it's a valid number
         studyStartYear = isNaN(studyStartYear) ? null : studyStartYear;
       } else {
-        console.log('study_start_year is empty or null, setting to null');
+
       }
       
       if (profile.study_end_year !== undefined && profile.study_end_year !== null && profile.study_end_year !== '') {
@@ -389,7 +389,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Ensure it's a valid number
         studyEndYear = isNaN(studyEndYear) ? null : studyEndYear;
       } else {
-        console.log('study_end_year is empty or null, setting to null');
+
       }
 
       // Process hourly rate - ensure it's a number or null

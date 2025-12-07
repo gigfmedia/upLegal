@@ -174,8 +174,6 @@ export function ServicesSection({
         }
       };
 
-      console.log('Sending payment request:', payload);
-
       // Prepare the request body for MercadoPago
       const requestBody = {
         items: [{
@@ -237,8 +235,6 @@ export function ServicesSection({
         }
       };
 
-      console.log('Sending payment request:', requestBody);
-
       // Call the Supabase Function with the correct endpoint
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-mercado-pago-preference`,
@@ -260,7 +256,6 @@ export function ServicesSection({
       }
 
       const responseData = await response.json();
-      console.log('Payment response:', responseData);
 
       // Redirect to MercadoPago checkout - only use production URL
       if (responseData.init_point || responseData.url) {

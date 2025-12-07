@@ -33,15 +33,10 @@ const corsHeaders = {
  * Verification service using Poder Judicial web scraping
  */
 async function verifyWithPJUD(rut: string, fullName: string): Promise<{verified: boolean, message?: string, data?: any}> {
-  console.log('Starting verification for:', { rut, fullName });
   
   try {
     // Call the scraper function
     const result = await scrapePoderJudicial(rut, fullName);
-    
-    // Log the result for debugging
-    console.log('Verification result:', result);
-    
     return result;
   } catch (error) {
     console.error('Error in verification process:', error);
@@ -65,14 +60,9 @@ function jsonResponse(data: any, status: number = 200) {
 
 // Main request handler
 serve(async (req) => {
-  console.log('=== NEW REQUEST ===');
-  console.log('Method:', req.method);
-  console.log('URL:', req.url);
-  console.log('Headers:', Object.fromEntries(req.headers.entries()));
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight');
     return new Response('ok', { headers: corsHeaders });
   }
 
@@ -88,7 +78,6 @@ serve(async (req) => {
     let requestBody;
     try {
       requestBody = await req.json();
-      console.log('Request body:', JSON.stringify(requestBody, null, 2));
     } catch (parseError) {
       const error = 'Error parsing request body';
       console.error(error, parseError);
@@ -102,7 +91,6 @@ serve(async (req) => {
       );
     }
     
-    console.log('Extracting rut and fullName from request');
     const { rut, fullName } = requestBody;
     
     if (!rut || !fullName) {
@@ -117,8 +105,6 @@ serve(async (req) => {
       );
     }
     
-    console.log('RUT and fullName extracted successfully');
-    
     // Validate request
     if (!rut || !fullName) {
       const errorMsg = 'Se requieren RUT y nombre completo';
@@ -131,16 +117,11 @@ serve(async (req) => {
         400
       );
     }
-
-    console.log('Starting verification process...');
     
     // 1. First, verify with PJUD (mock for now)
-    console.log('Calling verifyWithPJUD...');
     const verification = await verifyWithPJUD(rut, fullName);
-    console.log('Verification result:', verification);
     
     // 2. Get auth token from headers
-    console.log('Checking auth header...');
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       const error = 'No authorization header provided';
@@ -155,14 +136,8 @@ serve(async (req) => {
     }
     
     // 3. Initialize Supabase client
-    console.log('Initializing Supabase client...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    console.log('Environment variables:', { 
-      hasSupabaseUrl: !!supabaseUrl,
-      hasSupabaseKey: !!supabaseKey 
-    });
     
     if (!supabaseUrl || !supabaseKey) {
       const error = 'Missing Supabase environment variables';
@@ -181,7 +156,6 @@ serve(async (req) => {
     });
     
     // 4. Verify user token
-    console.log('Verifying user token...');
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
@@ -196,11 +170,7 @@ serve(async (req) => {
       );
     }
     
-    console.log('User authenticated:', { userId: user.id });
-    
     // 5. Update user profile
-    console.log('Updating user profile with RUT:', rut);
-    
     try {
       // First try the standard update
       const { data: profile, error: updateError } = await supabaseClient
@@ -215,8 +185,6 @@ serve(async (req) => {
         .single();
 
       if (updateError) throw updateError;
-      console.log('Profile update successful:', profile);
-      
     } catch (error) {
       console.error('Standard update failed, trying RPC fallback...', error);
       
@@ -228,8 +196,6 @@ serve(async (req) => {
         });
         
         if (rpcError) throw rpcError;
-        console.log('RPC update successful:', data);
-        
       } catch (rpcError) {
         console.error('All update methods failed:', rpcError);
         // Continue anyway - we don't want to fail verification just because the update failed
@@ -237,7 +203,6 @@ serve(async (req) => {
     }
     
     // 6. Return success response
-    console.log('Returning success response');
     return jsonResponse({
       success: true,
       verified: true,

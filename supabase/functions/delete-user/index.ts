@@ -113,11 +113,6 @@ serve(async (req: Request) => {
       return errorResponse(401, 'Not authenticated', userError, origin);
     }
 
-    console.log('Authenticated user:', { 
-      id: user.id, 
-      email: user.email 
-    });
-
     // Check if user is an admin (has 'lawyer' role in profiles)
     const { data: profile, error: profileError } = await adminClient
       .from('profiles')

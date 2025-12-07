@@ -106,8 +106,6 @@ app.post('/verify-lawyer', async (req, res) => {
       nombre: fullName
     };
 
-    console.log('Enviando verificación PJUD desde el servidor...', body);
-
     const response = await fetch(PJUD_API_URL, {
       method: 'POST',
       headers: {

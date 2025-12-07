@@ -18,10 +18,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 async function applyMigration() {
   try {
-    console.log('Reading SQL migration file...');
     const sql = fs.readFileSync('supabase/migrations/20240921212000_fix_profile_rls_policies.sql', 'utf8');
     
-    console.log('Applying SQL migration...');
     const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/execute_sql`, {
       method: 'POST',
       headers: {
@@ -40,8 +38,6 @@ async function applyMigration() {
       console.error('Error applying migration:', data);
       process.exit(1);
     }
-    
-    console.log('Successfully applied RLS policies!', data);
   } catch (error) {
     console.error('Error:', error);
     process.exit(1);

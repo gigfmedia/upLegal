@@ -20,7 +20,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function applyRlsFix() {
   try {
-    console.log('Applying RLS fix for profile updates...');
     
     // Drop existing policies if they exist
     const dropPolicies = await supabase.rpc('execute_sql', {
@@ -34,8 +33,6 @@ async function applyRlsFix() {
       console.error('Error dropping policies:', dropPolicies.error);
       throw dropPolicies.error;
     }
-    
-    console.log('Dropped existing policies');
     
     // Create update policy
     const updatePolicy = await supabase.rpc('execute_sql', {
@@ -53,8 +50,6 @@ async function applyRlsFix() {
       throw updatePolicy.error;
     }
     
-    console.log('Created update policy');
-    
     // Create insert policy
     const insertPolicy = await supabase.rpc('execute_sql', {
       query: `
@@ -69,10 +64,6 @@ async function applyRlsFix() {
       console.error('Error creating insert policy:', insertPolicy.error);
       throw insertPolicy.error;
     }
-    
-    console.log('Created insert policy');
-    
-    console.log('Successfully applied RLS fix!');
   } catch (error) {
     console.error('Error applying RLS fix:', error);
     process.exit(1);

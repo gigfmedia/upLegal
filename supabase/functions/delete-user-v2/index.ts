@@ -52,12 +52,6 @@ serve(async (req: Request) => {
   }
 
   try {
-    console.log('Received request:', {
-      method: req.method,
-      url: req.url,
-      headers: Object.fromEntries(req.headers.entries())
-    });
-
     // Get environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
@@ -125,11 +119,6 @@ serve(async (req: Request) => {
       console.error('Error getting user:', userError);
       return errorResponse(401, 'Not authenticated', userError, origin);
     }
-
-    console.log('Authenticated user:', { 
-      id: user.id, 
-      email: user.email 
-    });
 
     // Check if user is an admin (has 'lawyer' role in profiles)
     const { data: profile, error: profileError } = await adminClient

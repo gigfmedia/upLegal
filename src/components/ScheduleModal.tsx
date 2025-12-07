@@ -291,13 +291,6 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
     
     const formattedDate = format(normalizedDate, 'yyyy-MM-dd');
     
-    console.log('Date selected:', {
-      original: date,
-      normalized: normalizedDate,
-      formatted: formattedDate,
-      utc: date.toISOString().split('T')[0]
-    });
-    
     onDateSelect(formattedDate);
     setIsCalendarOpen(false);
   };
@@ -441,12 +434,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   useEffect(() => {
     const fetchLawyers = async () => {
       if (!isAppointmentsPage || !selectedSpecialty) {
-        console.log('No specialty selected or not on appointments page');
         setLawyers([]);
         return;
       }
-      
-      console.log('Fetching lawyers for specialty:', selectedSpecialty);
+    
       setIsLoadingLawyers(true);
       hasLoadedLawyers.current = false;
       
@@ -458,12 +449,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           specialty: selectedSpecialty,
           minRating: 0,
           select: 'id,first_name,last_name,hourly_rate_clp,specialties,rating,review_count,avatar_url,experience_years,verified'
-        });
-        
-        console.log('Fetched lawyers response:', {
-          specialty: selectedSpecialty,
-          total: response?.total || 0,
-          lawyers: response?.lawyers?.length || 0
         });
         
         if (response?.lawyers?.length > 0) {
@@ -490,7 +475,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         
           // If there's only one lawyer, select it by default
           if (mappedLawyers.length === 1) {
-            console.log('Auto-selecting the only available lawyer:', mappedLawyers[0]);
             setSelectedLawyer(mappedLawyers[0].id);
             setSelectedLawyerData(mappedLawyers[0]);
           } else {
@@ -555,7 +539,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   // Helper function to generate time slots
   const generateTimeSlots = useCallback((startTime: string, endTime: string, duration: number, bookedSlots: string[] = []) => {
-    console.log('Generating time slots with:', { startTime, endTime, duration, bookedSlots });
     const slots: Array<{value: string, label: string}> = [];
     
     try {
@@ -611,7 +594,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         }
       }
       
-      console.log('Generated slots:', slots);
       return slots;
     } catch (error) {
       console.error('Error generating time slots:', error);
@@ -622,11 +604,8 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Fetch lawyer availability
   const fetchLawyerAvailability = useCallback(async (lawyerId: string) => {
     if (!lawyerId) {
-      console.log('No lawyer ID provided');
       return;
     }
-
-    console.log('Fetching availability for lawyer ID:', lawyerId);
     setIsLoadingAvailability(true);
     
     try {
@@ -644,7 +623,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       }
 
       if (!data || !data.availability) {
-        console.log('No availability data found');
         setLawyerAvailability(null);
         return;
       }
@@ -660,8 +638,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           return;
         }
       }
-
-      console.log('Raw availability data:', availability);
       setLawyerAvailability(availability);
 
     } catch (error) {
@@ -683,7 +659,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Function to fetch available time slots for a specific date and lawyer
   const fetchAvailableSlots = useCallback(async (dateString: string, lawyerId: string) => {
     if (!lawyerId || !dateString) {
-      console.log('Invalid date or lawyer ID');
       setAvailableSlots([]);
       return;
     }
@@ -701,17 +676,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       }
 
       if (date.getDay() === 0) {
-        console.log('Domingo no disponible para agendamiento.');
         setAvailableSlots([]);
         return;
       }
       const spanishDayOfWeek = format(date, 'EEEE', { locale: es });
-      
-      console.log('Fetching availability for:', {
-        date: dateString,
-        day: spanishDayOfWeek,
-        lawyerId
-      });
 
       const { data: bookedData, error: bookedError } = await supabase
         .from('consultations')
@@ -743,7 +711,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         .single();
 
       if (availabilityError || !availability) {
-        console.log('No specific availability found, using default hours');
 
         const slots = generateTimeSlots('09:00', '18:00', 60, bookedTimes);
         setAvailableSlots(slots);
@@ -777,7 +744,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   // Handle date selection from CalendarField
   const handleDateSelect = useCallback((date: string) => {
-    console.log('Date selected in parent:', date);
     setFormData(prev => ({
       ...prev,
       date: date,
@@ -858,13 +824,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         throw new Error('No se ha seleccionado un abogado');
       }
 
-      console.log('Creating appointment with data:', {
-        ...formData,
-        lawyer_id: finalLawyerId,
-        user_id: user?.id,
-        amount: clientAmount
-      });
-
       // Create appointment data
       const appointmentData = {
         name: formData.name || 'Cliente',
@@ -886,8 +845,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         address: formData.contactMethod === 'presencial' ? formData.address : null
       };
 
-      console.log('Sending appointment data to database:', appointmentData);
-
       // Insert the appointment into the database
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
@@ -899,13 +856,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         console.error('Database error:', appointmentError);
         throw new Error(`Error al crear la cita: ${appointmentError.message}`);
       }
-
-      console.log('Appointment created successfully:', appointment);
       
       // Create payment with MercadoPago
       try {
-        console.log('Creating payment with lawyer ID:', finalLawyerId);
-        console.log('Current user ID:', user?.id);
         
         const paymentParams = {
           amount: clientAmount,
@@ -926,27 +879,19 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         if (!paymentParams.successUrl || !paymentParams.failureUrl || !paymentParams.pendingUrl) {
           throw new Error('Error al generar las URLs de retorno del pago');
         }
-
-        console.log('Payment params:', paymentParams);
         
         // USAR NETLIFY FUNCTIONS - ENDPOINT CORRECTO
         const API_BASE_URL = 'https://uplegal.netlify.app';
         const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
         
-        console.log('Testing Netlify Function connection...');
-        
         // Test the function with OPTIONS request
         const testResponse = await fetch(FUNCTION_URL, {
           method: 'OPTIONS'
         });
-
-        console.log('Function OPTIONS test:', testResponse.status);
         
         if (!testResponse.ok) {
           throw new Error(`Function not available: ${testResponse.status}`);
         }
-
-        console.log('Netlify Function is available, creating payment...');
         
         // Create the payment
         const response = await fetch(FUNCTION_URL, {
@@ -956,8 +901,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           },
           body: JSON.stringify(paymentParams)
         });
-
-        console.log('Payment API response status:', response.status);
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -974,11 +917,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         }
 
         const paymentResult = await response.json();
-        console.log('Payment created successfully:', paymentResult);
         
         // Redirect to payment URL
         if (paymentResult.payment_link) {
-          console.log('Redirecting to payment URL:', paymentResult.payment_link);
           
           // Save appointment data to localStorage for the success page
           const pendingAppointmentData = {

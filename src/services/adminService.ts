@@ -10,16 +10,12 @@ export const adminService = {
         console.error('Error getting session:', sessionError);
         return { error: 'Not authenticated. Please log in again.' };
       }
-
-      console.log('Attempting to delete user:', userId);
       
       // Call the Edge Function to delete the user from auth.users
       try {
         const { data, error } = await supabase.functions.invoke('delete-user-admin', {
           body: { userId }
         });
-
-        console.log('Edge Function response:', { data, error });
 
         if (error) {
           console.error('Error calling delete function:', error);
@@ -35,7 +31,6 @@ export const adminService = {
           return { error: data.error };
         }
 
-        console.log('User deleted successfully');
         return { success: true };
       } catch (err) {
         console.error('Exception calling Edge Function:', err);
@@ -57,7 +52,6 @@ export const adminService = {
         throw new Error('Not authenticated. Please log in again.');
       }
 
-      console.log('Fetching users...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -68,7 +62,6 @@ export const adminService = {
         throw error;
       }
 
-      console.log('Fetched users:', data?.length || 0);
       return { data: data || [], error: null };
     } catch (error) {
       console.error('Error in adminService.getUsers:', error);

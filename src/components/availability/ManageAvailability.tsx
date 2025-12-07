@@ -29,14 +29,11 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
   const loadAvailability = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('Fetching availability for lawyer:', lawyerId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", lawyerId)
         .single();
-
-      console.log('Raw profile data:', data);
 
       if (error) {
         console.error('Error fetching profile:', error);
@@ -83,7 +80,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
 
   const toggleCell = (day, hourIndex) => {
     if (day === "Domingo") return; // Domingo no editable
-    console.log('Toggling cell:', { day, hourIndex });
 
     setAvailability((prev) => {
       // Ensure the day exists in the state
@@ -92,7 +88,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
         ...prev,
         [day]: dayAvailability.map((v, i) => (i === hourIndex ? !v : v)),
       };
-      console.log('New availability state:', newAvailability);
       return newAvailability;
     });
     
@@ -134,7 +129,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
 
   const save = async () => {
     setSaving(true);
-    console.log('Saving availability for lawyer:', lawyerId, 'Data:', availability);
     
     try {
       // Use the same approach as updateProfile in AuthContext
@@ -159,7 +153,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
           updated_at: new Date().toISOString()
         };
         
-        console.log('Updating existing profile:', updateData);
         const { data, error } = await supabase
           .from('profiles')
           .update(updateData)
@@ -176,7 +169,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
           updated_at: new Date().toISOString()
         };
         
-        console.log('Creating new profile:', newProfileData);
         const { data, error } = await supabase
           .from('profiles')
           .insert(newProfileData)
@@ -185,8 +177,6 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
           
         result = { data, error };
       }
-      
-      console.log('Save result:', result);
       
       if (result.error) {
         console.error('Save error:', result.error);

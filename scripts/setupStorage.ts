@@ -22,7 +22,6 @@ async function setupStorage() {
     const bucketExists = buckets.some(bucket => bucket.name === 'avatars');
     
     if (!bucketExists) {
-      console.log('Creating avatars bucket...');
       const { error: createError } = await supabase.storage.createBucket('avatars', {
         public: true,
         allowedMimeTypes: ['image/*'],
@@ -30,19 +29,14 @@ async function setupStorage() {
       });
       
       if (createError) throw createError;
-      console.log('Created avatars bucket');
     } else {
-      console.log('Avatars bucket already exists');
+      
     }
     
     // Set bucket policies
-    console.log('Setting bucket policies...');
-    
     const { error: policyError } = await supabase.rpc('set_avatar_policies');
     
     if (policyError) throw policyError;
-    
-    console.log('Storage setup completed successfully!');
   } catch (error) {
     console.error('Error setting up storage:', error);
     process.exit(1);

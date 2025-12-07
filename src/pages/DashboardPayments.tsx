@@ -287,9 +287,6 @@ export default function DashboardPayments() {
       description: `Iniciando descarga de la factura ${payment.invoiceNumber}`,
       variant: 'default',
     });
-    
-    // Aquí iría la lógica real de descarga
-    console.log('Descargando factura:', payment.invoiceNumber);
   };
   
   return (

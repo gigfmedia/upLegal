@@ -144,7 +144,6 @@ app.post('/verify-lawyer', async (req, res) => {
   }
 
   try {
-    console.log(`Iniciando verificación para RUT: ${rut}, Nombre: ${fullName}`);
 
     // Format RUT (remove dots and dash, keep only numbers and K)
     const cleanRut = normalizeRut(rut);
@@ -170,7 +169,6 @@ app.post('/verify-lawyer', async (req, res) => {
     formData.append('digit', rutVerifier);
 
     // Submit the search form
-    console.log(`Querying PJUD AJAX API for RUT ${rutBody}-${rutVerifier}...`);
     const searchResponse = await axios.post(searchUrl, formData.toString(), {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -262,7 +260,6 @@ app.get('/', (req, res) => {
 app.post('/create-payment', async (req, res) => {
   try {
     // Log the incoming request
-    console.log('Received payment request from origin:', req.get('origin'));
     
     const { 
       amount, 
@@ -277,10 +274,6 @@ app.post('/create-payment', async (req, res) => {
       userEmail, 
       userName 
     } = req.body;
-
-    console.log('Payment request data:', {
-      amount, userId, lawyerId, appointmentId, userEmail
-    });
 
     // Validations
     if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
@@ -351,8 +344,6 @@ app.post('/create-payment', async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    console.log('Inserting payment data:', paymentData);
-
     // Insert payment into database
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
@@ -368,8 +359,6 @@ app.post('/create-payment', async (req, res) => {
         code: paymentError.code
       });
     }
-
-    console.log('Payment record created successfully');
 
     // Create MercadoPago preference data
     const preferenceData = {
@@ -396,13 +385,9 @@ app.post('/create-payment', async (req, res) => {
       statement_descriptor: 'LEGALUP',
       notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
     };
-
-    console.log('Creating MercadoPago preference...');
     
     // Create preference using the mp client
     const mpResponse = await mp.create({ body: preferenceData });
-
-    console.log('MercadoPago response received');
 
     // Update payment with MercadoPago preference ID
     if (mpResponse.id) {
@@ -421,8 +406,6 @@ app.post('/create-payment', async (req, res) => {
     if (!paymentLink) {
       throw new Error('No payment link received from MercadoPago');
     }
-
-    console.log('Payment link generated successfully');
 
     return res.json({
       success: true,

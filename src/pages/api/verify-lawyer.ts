@@ -40,10 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 async function verifyWithPJUD(rutDigits: string, checkDigit: string, fullName: string): Promise<{ verified: boolean; message?: string }> {
   try {
     const rut = `${rutDigits}${checkDigit}`;
-    console.log(`Verifying RUT: ${rut} for ${fullName}`);
     
     const result = await scrapePoderJudicial(rut, fullName);
-    console.log('PJUD Verification Result:', JSON.stringify(result, null, 2));
     
     return {
       verified: result.verified,

@@ -14,7 +14,6 @@ function updateFile(filePath) {
   if (content.includes(oldImport)) {
     const newContent = content.replace(new RegExp(oldImport, 'g'), newImport);
     fs.writeFileSync(filePath, newContent, 'utf8');
-    console.log(`Updated: ${filePath}`);
     return true;
   }
   return false;
@@ -50,10 +49,8 @@ function processDirectory(directory) {
   return updatedCount;
 }
 
-console.log('Updating Supabase imports...');
 try {
   const updatedFiles = processDirectory(directory);
-  console.log(`\n✅ Updated ${updatedFiles} files.`);
 } catch (error) {
   console.error('\n❌ Error updating files:', error.message);
 }

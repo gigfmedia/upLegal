@@ -8,7 +8,6 @@ const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
 const DEFAULT_CURRENCY = 'CLP';
 
 exports.handler = async (event) => {
-  console.log('Function invoked with method:', event.httpMethod);
   
   // CORS headers
   const headers = {
@@ -40,7 +39,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    console.log('Processing payment request...');
     
     if (!event.body) {
       return {
@@ -120,20 +118,6 @@ exports.handler = async (event) => {
       };
     }
 
-    console.log('Resolved back URLs:', {
-      success: resolvedSuccessUrl,
-      failure: resolvedFailureUrl,
-      pending: resolvedPendingUrl
-    });
-
-    console.log('Payment request data:', { 
-      amount, 
-      userId: userId?.substring(0, 8) + '...',
-      lawyerId: lawyerId?.substring(0, 8) + '...',
-      appointmentId: appointmentId?.substring(0, 8) + '...',
-      userEmail: userEmail?.substring(0, 8) + '...'
-    });
-
     // Validations
     if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
       return {
@@ -161,12 +145,6 @@ exports.handler = async (event) => {
     const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
     const mpToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
-
-    console.log('Environment variables check:', {
-      hasSupabaseUrl: !!supabaseUrl,
-      hasSupabaseKey: !!supabaseKey,
-      hasMpToken: !!mpToken
-    });
 
     if (!supabaseUrl || !supabaseKey || !mpToken) {
       console.error('Missing environment variables');
@@ -242,7 +220,6 @@ exports.handler = async (event) => {
 
     if (consultationData && !consultationError) {
       isConsultation = true;
-      console.log('Found in consultations table');
     } else {
       // Si no está en consultations, verificar en appointments
       const { data: appointmentData, error: appointmentError } = await supabase
@@ -253,15 +230,8 @@ exports.handler = async (event) => {
 
       if (appointmentData && !appointmentError) {
         isAppointment = true;
-        console.log('Found in appointments table');
       }
     }
-
-    console.log('Reference type:', {
-      appointmentId,
-      isConsultation,
-      isAppointment
-    });
 
     if (!isConsultation && !isAppointment) {
       throw new Error('No se encontró la referencia en appointments ni consultations');
@@ -296,8 +266,6 @@ exports.handler = async (event) => {
       paymentData.consultation_id = null;
     }
 
-    console.log('Inserting payment data:', paymentData);
-
     // Insert payment into database
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
@@ -318,8 +286,6 @@ exports.handler = async (event) => {
         })
       };
     }
-
-    console.log('Payment record created, creating MercadoPago preference...');
 
     // Create MercadoPago preference
     const preference = new Preference(mercadopago);
@@ -350,12 +316,6 @@ exports.handler = async (event) => {
 
     const mpResponse = await preference.create({ body: preferenceData });
 
-    console.log('MercadoPago response received:', {
-      id: mpResponse.id,
-      hasInitPoint: !!mpResponse.init_point,
-      hasSandboxInitPoint: !!mpResponse.sandbox_init_point
-    });
-
     // Update payment with MercadoPago preference ID
     if (mpResponse.id) {
       await supabase
@@ -373,8 +333,6 @@ exports.handler = async (event) => {
       console.error('No payment link received from MercadoPago:', mpResponse);
       throw new Error('No payment link received from MercadoPago');
     }
-
-    console.log('Payment created successfully, returning payment link');
 
     return {
       statusCode: 200,

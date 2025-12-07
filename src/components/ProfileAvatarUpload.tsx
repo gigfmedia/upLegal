@@ -22,13 +22,11 @@ export function ProfileAvatarUpload({
 
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (disabled) {
-      console.log('Upload is disabled');
       return;
     }
     
     try {
       setUploading(true);
-      console.log('Starting avatar upload...');
       
       if (!event.target.files || event.target.files.length === 0) {
         throw new Error('Debes seleccionar una imagen');
@@ -39,7 +37,6 @@ export function ProfileAvatarUpload({
       }
 
       const file = event.target.files[0];
-      console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
       
       // Validate file type
       if (!file.type.startsWith('image/')) {
@@ -52,13 +49,10 @@ export function ProfileAvatarUpload({
         throw new Error('La imagen no debe superar los 5MB');
       }
 
-      console.log('Uploading avatar to storage...');
       // Use the storage utility to handle the upload
       const publicUrl = await updateUserAvatar(user.id, file);
-      console.log('Avatar uploaded successfully. Public URL:', publicUrl);
       
       // Call the onUpload callback with the new URL
-      console.log('Calling onUpload callback with URL:', publicUrl);
       onUpload(publicUrl);
 
       toast({

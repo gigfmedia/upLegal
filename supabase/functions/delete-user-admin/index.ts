@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Delete user function called')
     
     // Get the authorization header
     const authHeader = req.headers.get('Authorization')
@@ -38,8 +37,6 @@ serve(async (req) => {
       data: { user },
     } = await supabaseClient.auth.getUser()
 
-    console.log('User:', user?.email)
-
     if (!user) {
       console.error('Not authenticated')
       throw new Error('Not authenticated')
@@ -50,8 +47,6 @@ serve(async (req) => {
                     user.email === 'admin@example.com' ||
                     user.user_metadata?.role === 'admin'
 
-    console.log('Is admin:', isAdmin, 'Email:', user.email, 'Role:', user.user_metadata?.role)
-
     if (!isAdmin) {
       console.error('Not authorized - admin access required')
       throw new Error('Not authorized - admin access required')
@@ -60,15 +55,12 @@ serve(async (req) => {
     // Get the userId from the request body
     const { userId } = await req.json()
 
-    console.log('Deleting user:', userId)
-
     if (!userId) {
       throw new Error('userId is required')
     }
 
     // Create admin client with service role key
     const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY')
-    console.log('Service role key present:', !!serviceRoleKey)
     
     if (!serviceRoleKey) {
       throw new Error('SERVICE_ROLE_KEY not configured')
@@ -81,7 +73,6 @@ serve(async (req) => {
 
     // Delete all related data first to avoid foreign key constraints
     try {
-      console.log('Deleting related data...')
       
       // CRITICAL: Delete messages first (most common cause of foreign key errors)
       await supabaseAdmin.from('messages').delete().eq('receiver_id', userId)
@@ -118,20 +109,15 @@ serve(async (req) => {
       // Delete from linkedin_profiles
       await supabaseAdmin.from('linkedin_profiles').delete().eq('user_id', userId)
       
-      console.log('Related data deleted')
     } catch (cleanupError) {
       console.error('Error cleaning up related data:', cleanupError)
       // Continue anyway, some tables might not exist or have data
     }
-
-    console.log('Deleting from auth tables...')
     
     // Delete from auth tables
     await supabaseAdmin.from('auth.identities').delete().eq('user_id', userId)
     await supabaseAdmin.from('auth.sessions').delete().eq('user_id', userId)
     await supabaseAdmin.from('auth.refresh_tokens').delete().eq('user_id', userId)
-
-    console.log('Deleting user from auth.users...')
     
     // Now delete user from auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
@@ -140,8 +126,6 @@ serve(async (req) => {
       console.error('Error deleting user:', deleteError)
       throw deleteError
     }
-
-    console.log('User deleted successfully')
 
     return new Response(
       JSON.stringify({ success: true, message: 'User deleted successfully' }),

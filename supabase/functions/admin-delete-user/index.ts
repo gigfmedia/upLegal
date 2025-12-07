@@ -48,13 +48,6 @@ serve(async (req: Request) => {
     return corsResponse(200, { status: 'ok' }, origin);
   }
 
-  // Log the incoming request
-  console.log('Incoming request:', {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries())
-  });
-
   try {
     // Get environment variables
     const supabaseUrl = Deno.env.get('URL');
@@ -155,7 +148,6 @@ serve(async (req: Request) => {
     let requestBody;
     try {
       requestBody = await req.json();
-      console.log('Request body:', requestBody);
     } catch (e) {
       throw new Error('Invalid request body');
     }
@@ -187,7 +179,6 @@ serve(async (req: Request) => {
     }
 
     // Create an admin client with service role for user deletion
-    console.log('Creating admin client with service role');
     let adminClient;
     try {
       adminClient = createClient(
@@ -201,7 +192,6 @@ serve(async (req: Request) => {
         }
       }
       )
-      console.log('Admin client created successfully');
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error creating admin client:', errorMessage);
@@ -217,7 +207,6 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log('Deleting user profile:', userId);
     // Delete the user's profile first
     const { error: profileDeleteError } = await adminClient
       .from('profiles')
@@ -229,7 +218,6 @@ serve(async (req: Request) => {
       throw profileDeleteError;
     }
 
-    console.log('Deleting auth user:', userId);
     // Then delete the auth user
     const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId);
 
@@ -238,7 +226,6 @@ serve(async (req: Request) => {
       throw authDeleteError;
     }
 
-    console.log('User deleted successfully:', userId);
     return new Response(
       JSON.stringify({ success: true }),
       { 

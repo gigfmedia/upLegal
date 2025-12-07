@@ -24,7 +24,6 @@ async function applyMigrations() {
     
     const sql = fs.readFileSync(migrationPath, 'utf-8');
     
-    console.log('Applying migration...');
     const { data, error } = await supabase.rpc('exec', { query: sql });
     
     if (error) {
@@ -32,7 +31,6 @@ async function applyMigrations() {
       return;
     }
     
-    console.log('Migration applied successfully!');
   } catch (error) {
     console.error('Error:', error);
   }

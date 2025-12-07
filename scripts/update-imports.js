@@ -38,7 +38,6 @@ filesToUpdate.forEach(filePath => {
       'from "@/contexts/AuthContext"'
     );
     fs.writeFileSync(fullPath, content, 'utf8');
-    console.log(`Updated imports in ${filePath}`);
   } else {
     console.warn(`File not found: ${filePath}`);
   }

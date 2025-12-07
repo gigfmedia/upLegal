@@ -25,8 +25,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     message => message.conversationId === conversationId
   );
   
-  console.log('Current conversation messages:', conversationMessages);
-  
   if (isLoading || !currentConversation) {
     return (
       <div className="flex items-center justify-center h-full">

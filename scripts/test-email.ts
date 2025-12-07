@@ -12,7 +12,6 @@ try {
       process.env[key.trim()] = values.join('=').trim();
     }
   });
-  console.log('✅ Variables de entorno cargadas correctamente');
 } catch (error) {
   console.error('⚠️ No se pudo cargar .env.local, usando variables de entorno del sistema');
 }
@@ -22,12 +21,8 @@ const apiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
 
 if (!apiKey) {
   console.error('❌ Error: No se encontró RESEND_API_KEY en las variables de entorno');
-  console.log('Asegúrate de que tu archivo .env.local contenga:');
-  console.log('RESEND_API_KEY=tu_api_key_aquí');
   process.exit(1);
 }
-
-console.log('🔑 API Key encontrada');
 
 // 3. Configurar Resend
 const resend = new Resend(apiKey);
@@ -35,7 +30,6 @@ const resend = new Resend(apiKey);
 // 4. Función para enviar el correo
 async function testEmail() {
   try {
-    console.log('✉️  Enviando correo de prueba a gigfmedia@icloud.com...');
     
     const data = await resend.emails.send({
       from: 'UpLegal <hola@up-legal.cl>',
@@ -46,9 +40,6 @@ async function testEmail() {
         <p>Este es un correo de prueba enviado el ${new Date().toLocaleString()}</p>
       `,
     });
-
-    console.log('✅ ¡Correo enviado con éxito!');
-    console.log('📨 ID del mensaje:', data.id);
   } catch (error: any) {
     console.error('❌ Error al enviar el correo:');
     console.error('Mensaje:', error.message);

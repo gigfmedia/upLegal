@@ -282,7 +282,6 @@ export default function LawyerProfilePage() {
     }));
     
     try {
-      console.log('Iniciando verificación con PJUD para RUT:', rut);
       
       // Call the verifyLawyer function
       const result = await verifyLawyer(rut, fullName);
@@ -615,8 +614,6 @@ export default function LawyerProfilePage() {
         avatar_url: formData.avatar_url || null
       };
       
-      console.log('Saving profile with data:', updateData);
-      
       const updatedUser = await updateProfile(updateData);
       
       // Force a refresh of the user data
@@ -669,7 +666,6 @@ export default function LawyerProfilePage() {
       if (completionPercentage === 100 && hasChanges) {
         try {
           await handleSave();
-          console.log('Perfil guardado automáticamente al alcanzar 100% de completitud');
         } catch (error) {
           console.error('Error al guardar automáticamente el perfil:', error);
         }

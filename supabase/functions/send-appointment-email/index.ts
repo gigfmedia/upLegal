@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('Solicitud recibida:', req.method, req.url);
   
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -34,7 +33,6 @@ serve(async (req) => {
 
     // Initialize Resend with API key
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    console.log('Resend API Key:', resendApiKey ? '***' + resendApiKey.slice(-4) : 'No encontrada');
     const resend = new Resend(resendApiKey);
 
     // Initialize Supabase client
@@ -50,16 +48,12 @@ serve(async (req) => {
     let lawyerEmail = passedLawyerEmail || null;
     
     if (sendToLawyer && !lawyerEmail) {
-      console.log('Lawyer email not provided, attempting to fetch...');
-      
       // First fetch the user_id from profiles, since profiles doesn't have email
       let query = supabaseClient.from('profiles').select('user_id');
       
       if (lawyerId) {
-        console.log('Fetching by lawyer ID:', lawyerId);
         query = query.eq('id', lawyerId);
       } else {
-        console.log('Fetching by lawyer name (fallback):', lawyerName);
         query = query.eq('first_name', lawyerName.split(' ')[0]).eq('role', 'lawyer');
       }
       
@@ -75,7 +69,6 @@ serve(async (req) => {
           console.error('Error fetching user data from auth:', userError);
         } else if (userData && userData.user) {
           lawyerEmail = userData.user.email;
-          console.log('Lawyer email found via auth:', lawyerEmail);
         }
       }
     }
@@ -159,9 +152,7 @@ serve(async (req) => {
     const sendEmailWithRetry = async (emailData: any, maxRetries = 3) => {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-          console.log(`Intento ${attempt} de ${maxRetries} para enviar correo a:`, emailData.to);
           const response = await resend.emails.send(emailData);
-          console.log(`Correo enviado exitosamente a ${emailData.to}:`, response);
           return response;
         } catch (error) {
           console.error(`Error en intento ${attempt} para ${emailData.to}:`, error);
@@ -175,7 +166,6 @@ serve(async (req) => {
     };
 
     // Send email to client
-    console.log('Enviando correo al cliente:', clientEmail);
     const emailResponse = await sendEmailWithRetry({
       from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
       to: clientEmail,  // Correo real del cliente
@@ -185,7 +175,6 @@ serve(async (req) => {
 
     // Si sendToLawyer es true y tenemos el email del abogado, también enviamos al abogado
     if (sendToLawyer && lawyerEmail) {
-      console.log('Enviando correo al abogado:', lawyerEmail);
       await sendEmailWithRetry({
         from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
         to: lawyerEmail,  // Correo real del abogado
@@ -201,8 +190,6 @@ serve(async (req) => {
       timestamp: new Date().toISOString(),
       resendResponse: emailResponse
     };
-    
-    console.log('Respuesta exitosa:', JSON.stringify(response, null, 2));
     
     return new Response(
       JSON.stringify(response),

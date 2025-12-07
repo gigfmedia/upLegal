@@ -39,7 +39,6 @@ interface VerificationResult {
 }
 
 export const verifyLawyer = async (rut: string, fullName: string): Promise<VerificationResult> => {
-  console.log(`Iniciando verificación de abogado - RUT: ${rut}, Nombre: ${fullName}`);
   
   try {
     // First validate RUT format
@@ -52,8 +51,6 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
         error: errorMsg
       };
     }
-
-    console.log('Realizando verificación con el Poder Judicial...');
 
     // Use backend server (more reliable than Edge Functions for external requests)
     const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -74,7 +71,6 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
     const payload = await response.json();
 
     if (payload.verified) {
-      console.log('Verificación exitosa - Abogado encontrado en los registros');
 
       // Update current user's profile to reflect verification
       try {
@@ -107,7 +103,6 @@ export const verifyLawyer = async (rut: string, fullName: string): Promise<Verif
       };
     } else {
       const errorMsg = payload.message || 'El RUT no está registrado como abogado en el Poder Judicial';
-      console.log(errorMsg);
 
       // Explicitly flag the profile as not verified to keep state consistent
       try {

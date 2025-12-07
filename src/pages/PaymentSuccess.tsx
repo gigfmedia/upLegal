@@ -52,7 +52,6 @@ export default function PaymentSuccess() {
       if (!paymentId) return;
 
       try {
-        console.log('Verifying payment:', paymentId);
         
         const { data, error } = await supabase.functions.invoke('verify-payment', {
           body: { paymentId }
@@ -60,7 +59,6 @@ export default function PaymentSuccess() {
 
         if (error) throw error;
 
-        console.log('Payment verification result:', data);
         setPaymentDetails(data);
         setIsVerified(true);
 
@@ -94,8 +92,6 @@ export default function PaymentSuccess() {
                 lawyerEmail = lawyerData.email;
               }
             }
-
-            console.log('Sending confirmation email...');
             
             // Send confirmation email
             await supabase.functions.invoke('send-appointment-email', {
@@ -115,8 +111,6 @@ export default function PaymentSuccess() {
                 sendToLawyer: true // Send to both client and lawyer
               }
             });
-            
-            console.log('Confirmation email sent successfully');
             
           } catch (emailError) {
             console.error('Error sending email:', emailError);

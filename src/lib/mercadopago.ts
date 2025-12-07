@@ -68,7 +68,6 @@ export const mercadopago = new MercadoPagoConfig({
 async function testMercadoPagoAPI() {
   try {
     const baseUrl = 'https://uplegal.netlify.app'; // Production URL
-    console.log(`Fetching payment methods from: ${baseUrl}/api/payment-methods`);
     
     const response = await fetch(`${baseUrl}/api/payment-methods`, {
       method: 'GET',
@@ -86,7 +85,6 @@ async function testMercadoPagoAPI() {
     }
 
     const data = await response.json();
-    console.log('MercadoPago API Response:', data);
     return data;
   } catch (error) {
     console.error('Error in testMercadoPagoAPI:', error);
@@ -170,12 +168,6 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
         statement_descriptor: 'UPLEGAL',
       }),
     };
-
-    // Debug log the preference data being sent
-    console.log('Creating preference with data:', {
-      ...preferenceData,
-      payer: { ...preferenceData.payer, email: '[REDACTED]' } // Don't log full email
-    });
     
     // Create preference
     const result = await preference.create({ body: preferenceData });
@@ -186,7 +178,6 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     if (result.id) {
       const timestamp = Date.now();
       const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}&ts=${timestamp}`;
-      console.log('Redirecting to production URL:', prodUrl);
       console.groupEnd();
       
       // Force redirect immediately

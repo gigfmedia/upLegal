@@ -167,7 +167,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   // Check if user is logged in
   const checkUser = useCallback(async () => {
     try {
-      console.log('[Auth] Checking user session...');
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
@@ -178,10 +177,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       setSession(session);
       
       if (session?.user) {
-        console.log('[Auth] User session found, loading profile...');
         await loadUserProfile(session.user);
       } else {
-        console.log('[Auth] No active session found');
         setUser(null);
       }
     } catch (error) {
@@ -196,16 +193,11 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   // Login with email/password
   const login = useCallback(async (email: string, password: string): Promise<User> => {
     try {
-      console.log('[Auth] Starting login process');
       setIsLoading(true);
-      console.log('[Auth] isLoading set to true');
-      
-      console.log('[Auth] Calling supabase.auth.signInWithPassword');
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password
       });
-      console.log('[Auth] supabase.auth.signInWithPassword response:', { data, error });
 
       if (error) {
         console.error('[Auth] Login error:', error);
@@ -217,46 +209,36 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           errorMessage = 'Por favor verifica tu correo electrónico antes de iniciar sesión';
         }
         
-        console.log('[Auth] Showing error toast:', errorMessage);
         toast({
           title: 'Error',
           description: errorMessage,
           variant: 'destructive'
         });
         
-        console.log('[Auth] Throwing error:', errorMessage);
         throw new Error(errorMessage);
       }
 
       if (!data?.user) {
-        console.log('[Auth] No user data in response');
         throw new Error('No se pudo obtener la información del usuario');
       }
 
-      console.log('[Auth] User authenticated, loading profile...');
       const userProfile = await loadUserProfile(data.user);
       
       if (!userProfile) {
         throw new Error('No se pudo cargar el perfil del usuario');
       }
-      
-      console.log('[Auth] User profile loaded:', userProfile);
-      
-      console.log('[Auth] Showing welcome toast');
+    
       toast({
         title: '¡Bienvenido!',
         description: 'Has iniciado sesión correctamente.'
       });
       
-      console.log('[Auth] Login successful, returning user profile');
       return userProfile;
     } catch (error) {
       console.error('[Auth] Error in login process:', error);
       throw error;
     } finally {
-      console.log('[Auth] Setting isLoading to false');
       setIsLoading(false);
-      console.log('[Auth] Login process completed');
     }
   }, [loadUserProfile]);
 
@@ -366,8 +348,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }
     
     try {
-      console.log('[Auth] Updating profile for user:', user.id);
-      console.log('[Auth] Profile update data:', profile);
       
       // Ensure all fields are properly included in the update
       const updateData = {
@@ -390,7 +370,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       }
       
       // Refresh user data
-      console.log('[Auth] Profile updated, refreshing user data...');
       const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
       
       if (userError) {
@@ -438,7 +417,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
   // Set up auth state listener
   useEffect(() => {
-    console.log('[Auth] Setting up auth state listener');
     
     // Initial check
     checkUser().catch(error => {
@@ -451,10 +429,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           setSession(session);
           
           if (session?.user) {
-            console.log('[Auth] User authenticated, loading profile...');
             await loadUserProfile(session.user);
           } else {
-            console.log('[Auth] No user in session, setting user to null');
             setUser(null);
           }
         } catch (error) {
@@ -465,7 +441,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     );
 
     return () => {
-      console.log('[Auth] Cleaning up auth state listener');
       subscription?.unsubscribe();
     };
   }, [checkUser, loadUserProfile]);

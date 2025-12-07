@@ -83,7 +83,7 @@ serve(async (req) => {
       // If payment is approved, you might want to trigger other actions here
       if (payment.status === 'approved') {
         // Example: Send confirmation email, create appointment, etc.
-        console.log('Payment approved:', payment.id);
+        //console.log('Payment approved:', payment.id);
       }
     }
 

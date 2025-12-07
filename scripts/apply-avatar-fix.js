@@ -15,7 +15,6 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function applyMigrations() {
   try {
-    console.log('Applying avatar fix migrations...');
     
     // Create the update_profile_avatar function
     const { error: functionError } = await supabase.rpc('create_or_replace_function', {
@@ -39,8 +38,6 @@ async function applyMigrations() {
       console.error('Error creating function:', functionError);
       throw functionError;
     }
-
-    console.log('Granting execute permission...');
     const { error: grantError } = await supabase.rpc('grant', {
       privilege: 'EXECUTE',
       object_type: 'FUNCTION',
@@ -53,7 +50,6 @@ async function applyMigrations() {
       throw grantError;
     }
 
-    console.log('Updating storage policies...');
     const { error: policyError } = await supabase.rpc('create_or_replace_policy', {
       policy_name: 'Enable avatar update for users based on user_id',
       table_name: 'profiles',
@@ -67,8 +63,6 @@ async function applyMigrations() {
       console.error('Error updating policies:', policyError);
       throw policyError;
     }
-
-    console.log('All migrations applied successfully!');
     process.exit(0);
   } catch (error) {
     console.error('Error applying migrations:', error);

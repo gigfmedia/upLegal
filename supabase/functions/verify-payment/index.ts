@@ -23,8 +23,6 @@ serve(async (req) => {
       throw new Error('MercadoPago access token not configured');
     }
 
-    console.log('Verifying payment:', paymentId);
-
     // Query MercadoPago API
     const response = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: {
@@ -40,7 +38,6 @@ serve(async (req) => {
     }
 
     const paymentData = await response.json();
-    console.log('Payment status:', paymentData.status);
 
     return new Response(
       JSON.stringify({

@@ -121,7 +121,7 @@ export const createMercadoPagoPreference = async (req: Request) => {
   
   // Helper function to log messages with request ID
   const log = (message: string, data: unknown = '') => {
-    console.log(`[${new Date().toISOString()}] [${requestId}] ${message}`, data);
+    //console.log(`[${new Date().toISOString()}] [${requestId}] ${message}`, data);
   };
   
   log('Received request', {
@@ -478,5 +478,4 @@ export const createMercadoPagoPreference = async (req: Request) => {
 };
 
 // Start the server
-console.log('MercadoPago preference function started');
 serve(createMercadoPagoPreference);

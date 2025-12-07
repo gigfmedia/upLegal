@@ -101,7 +101,6 @@ export function AvatarUpload({ userId, currentAvatarUrl, onUpload }: AvatarUploa
       // Add cache busting parameter
       const uploadTimestamp = Date.now();
       const publicUrlWithCache = `${publicUrl}${publicUrl.includes('?') ? '&' : '?'}t=${uploadTimestamp}`;
-      console.log('Public URL:', publicUrlWithCache);
 
       // 4. First, check if the profile exists
       const { data: existingProfile, error: fetchError } = await supabase
@@ -164,8 +163,6 @@ export function AvatarUpload({ userId, currentAvatarUrl, onUpload }: AvatarUploa
         console.error('Auth update error:', authError);
         throw new Error('Error al actualizar la información de autenticación');
       }
-      
-      console.log('Avatar updated successfully');
       
       // 9. Refresh the session to update user data
       await supabase.auth.refreshSession();
