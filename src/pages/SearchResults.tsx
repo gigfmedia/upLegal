@@ -406,18 +406,22 @@ const SearchResults = () => {
           }));
 
           // Then sort them by profile completeness and rating
+          // Then sort them by verified status, then profile completeness and rating
           const sortedLawyers = [...formattedLawyers].sort((a, b) => {
-            // Check if profile is complete (has all required fields)
-            const isAComplete = a.verified && a.bio?.trim() && a.specialties?.length > 0 && 
+            // First priority: Verified status
+            if (a.verified && !b.verified) return -1;
+            if (!a.verified && b.verified) return 1;
+
+            // Second priority: Profile completeness
+            const isAComplete = a.bio?.trim() && a.specialties?.length > 0 && 
                               a.location?.trim() && a.hourlyRate > 0;
-            const isBComplete = b.verified && b.bio?.trim() && b.specialties?.length > 0 && 
+            const isBComplete = b.bio?.trim() && b.specialties?.length > 0 && 
                               b.location?.trim() && b.hourlyRate > 0;
             
-            // Sort complete profiles first
             if (isAComplete && !isBComplete) return -1;
             if (!isAComplete && isBComplete) return 1;
             
-            // If both have same completeness, sort by rating (highest first)
+            // Third priority: Rating
             return (b.rating || 0) - (a.rating || 0);
           });
 
@@ -557,8 +561,13 @@ const SearchResults = () => {
       return [];
     }
     
-    // Apply client-side sorting only
+    // Apply client-side sorting
     return [...searchResult.lawyers].sort((a, b) => {
+      // Always prioritize verified lawyers first
+      if (a.verified && !b.verified) return -1;
+      if (!a.verified && b.verified) return 1;
+
+      // Then apply selected sort criteria
       switch (sortBy) {
         case 'price-asc':
           return a.consultationPrice - b.consultationPrice;

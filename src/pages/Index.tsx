@@ -90,85 +90,7 @@ const Index = () => {
     setShowScheduleModal(true);
   };
 
-  // Fetch all lawyers
-  useEffect(() => {
-    const fetchAllLawyers = async () => {
-      try {
-        setIsLoadingFeatured(true);
-        // Consulta directa a Supabase
-        const { data: lawyers, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'lawyer')
-          .eq('available_for_hire', true)  // Solo mostrar abogados disponibles
-          .limit(100);
-        
-        if (error) {
-          console.error('Error al obtener abogados:', error);
-          return;
-        }
-        
-        if (lawyers && lawyers.length > 0) {
-          // Get appointment counts for all lawyers (excluding pending payments)
-          const lawyerIds = lawyers.map(l => l.id);
-          const { data: appointmentCounts, error: countError } = await supabase
-            .from('appointments')
-            .select('lawyer_id, status')
-            .in('lawyer_id', lawyerIds)
-            .neq('status', 'pending_payment');
-          
-          // Create a map of lawyer_id to appointment count
-          const countsMap = new Map<string, number>();
-          if (appointmentCounts && !countError) {
-            appointmentCounts.forEach(apt => {
-              const count = countsMap.get(apt.lawyer_id) || 0;
-              countsMap.set(apt.lawyer_id, count + 1);
-            });
-          }
-          
-          const formattedLawyers = lawyers
-            .filter(lawyer => {
-              const firstName = lawyer.first_name?.toLowerCase() || '';
-              const lastName = lawyer.last_name?.toLowerCase() || '';
-              return !firstName.includes('admin') && !lastName.includes('admin');
-            })
-            .map(lawyer => ({
-            id: lawyer.id || '',
-            user_id: lawyer.user_id || '',
-            name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Nombre no disponible',
-            specialties: Array.isArray(lawyer.specialties) ? lawyer.specialties : [],
-            rating: Number(lawyer.rating) || 0,
-            reviews: Number(lawyer.review_count) || 0,
-            location: lawyer.location || 'Sin ubicación',
-            cases: countsMap.get(lawyer.id) || 0, // Get real appointment count
-            hourlyRate: Number(lawyer.hourly_rate_clp) || 0,
-            consultationPrice: lawyer.hourly_rate_clp ? Math.round(Number(lawyer.hourly_rate_clp) * 0.5) : 0,
-            image: lawyer.avatar_url || '',
-            bio: lawyer.bio || '',
-            verified: Boolean(lawyer.verified),
-            availability: {
-              availableToday: true,
-              availableThisWeek: true,
-              quickResponse: true,
-              emergencyConsultations: true
-            }
-          }));
-          
-          if (typeof setFeaturedLawyers === 'function') {
-            setFeaturedLawyers(formattedLawyers);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching lawyers:', error);
-      } finally {
-        if (typeof setIsLoadingFeatured === 'function') {
-          setIsLoadingFeatured(false);
-        }
-      }
-    };
 
-    fetchAllLawyers();
-  }, [setIsLoadingFeatured, setFeaturedLawyers]);
 
   // Fetch the registered lawyer data
   useEffect(() => {
@@ -177,7 +99,7 @@ const Index = () => {
         setIsLoadingLawyer(true);
         // Search for verified lawyers with empty query to get all
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { data: lawyers } = await searchLawyers({}, 1, 1);
+        const { lawyers } = await searchLawyers({ page: 1, pageSize: 1 });
         
         if (lawyers && lawyers.length > 0) {
           const lawyer = lawyers[0];
@@ -315,7 +237,7 @@ const Index = () => {
       try {
         setIsLoadingFeatured(true);
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { data: lawyers, total } = await searchLawyers({}, 1, 20); // Get more lawyers to ensure we have enough complete profiles
+        const { lawyers, total } = await searchLawyers({ page: 1, pageSize: 20 }); // Get more lawyers to ensure we have enough complete profiles
         
         if (lawyers && lawyers.length > 0) {
           // Get appointment counts for all lawyers (excluding pending payments)
@@ -336,7 +258,7 @@ const Index = () => {
           }
           
           const formattedLawyers = lawyers
-            .filter(lawyer => {
+            .filter((lawyer: any) => {
               const firstName = lawyer.first_name?.toLowerCase() || '';
               const lastName = lawyer.last_name?.toLowerCase() || '';
               return !firstName.includes('admin') && !lastName.includes('admin');
@@ -365,24 +287,25 @@ const Index = () => {
           
           // Sort lawyers with complete and verified profiles first, then by rating
           const sortedLawyers = [...formattedLawyers].sort((a, b) => {
-            // Check if profile is verified and complete
-            const aIsVerifiedComplete = a.verified && 
-                                     a.bio?.trim() && 
-                                     a.specialties?.length > 0 && 
-                                     a.location?.trim() && 
-                                     a.hourlyRate > 0;
+            // First priority: Verified status
+            if (a.verified && !b.verified) return -1;
+            if (!a.verified && b.verified) return 1;
             
-            const bIsVerifiedComplete = b.verified && 
-                                     b.bio?.trim() && 
-                                     b.specialties?.length > 0 && 
-                                     b.location?.trim() && 
-                                     b.hourlyRate > 0;
+            // Second priority: Profile completeness
+            const aIsComplete = a.bio?.trim() && 
+                               a.specialties?.length > 0 && 
+                               a.location?.trim() && 
+                               a.hourlyRate > 0;
             
-            // Unverified or incomplete profiles go to the end
-            if (aIsVerifiedComplete && !bIsVerifiedComplete) return -1;
-            if (!aIsVerifiedComplete && bIsVerifiedComplete) return 1;
+            const bIsComplete = b.bio?.trim() && 
+                               b.specialties?.length > 0 && 
+                               b.location?.trim() && 
+                               b.hourlyRate > 0;
             
-            // If both are in the same category (both complete or both incomplete), sort by rating
+            if (aIsComplete && !bIsComplete) return -1;
+            if (!aIsComplete && bIsComplete) return 1;
+            
+            // Third priority: Rating
             return (b.rating || 0) - (a.rating || 0);
           });
           
@@ -391,6 +314,7 @@ const Index = () => {
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
+      } finally {
         setIsLoadingFeatured(false);
       }
     };

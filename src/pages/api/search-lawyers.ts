@@ -74,7 +74,8 @@ export async function searchLawyers(params: SearchParams = {}) {
       .select(select, { count: 'exact' })
       .eq('role', 'lawyer')
       .eq('available_for_hire', true)  // Solo mostrar abogados disponibles
-      .or('verified.eq.true,pjud_verified.eq.true')
+      .eq('available_for_hire', true)  // Solo mostrar abogados disponibles
+      .order('verified', { ascending: false, nullsLast: true })
       .order('rating', { ascending: false, nullsLast: true })
       .order('review_count', { ascending: false, nullsLast: true })
       .range(from, to);

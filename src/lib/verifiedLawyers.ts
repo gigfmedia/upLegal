@@ -71,7 +71,7 @@ export const subscribeToVerifiedLawyers = (callback: (count: number) => void) =>
     )
     .subscribe(
       (status, err) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           console.error('Error en la suscripción a cambios de perfiles:', status, err);
         }
       }

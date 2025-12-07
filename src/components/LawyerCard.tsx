@@ -195,7 +195,7 @@ export function LawyerCard({
                   </button>
                   <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
                   <span className="text-blue-600 font-medium">
-                    {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos
+                  {/*  {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos */}
                   </span>
                 </div>
               </div>

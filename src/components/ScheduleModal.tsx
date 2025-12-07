@@ -18,6 +18,7 @@ import { format, parseISO, startOfDay, isSameDay, addDays, isBefore, isPast, isT
 import { es, enUS } from "date-fns/locale";
 import { createMercadoPagoPayment } from '@/services/mercadopagoService';
 import { fetchPlatformSettings, getDefaultPlatformSettings } from '@/services/platformSettings';
+import { isChileanHoliday } from '@/lib/holidays';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -271,6 +272,11 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
 
     // Disable Sundays explicitly
     if (dateToCheck.getDay() === 0) {
+      return true;
+    }
+
+    // Disable Chilean holidays
+    if (isChileanHoliday(dateToCheck)) {
       return true;
     }
 
