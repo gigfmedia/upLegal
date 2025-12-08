@@ -617,7 +617,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       bio: lawyerWithViews?.bio || 'Este abogado no ha proporcionado una biografía.',
       education: education,
       experience: [
-        `Abogado con ${lawyerWithViews?.experience_years || 0} años de experiencia`
+        `${lawyerWithViews?.experience_years || 0} años de experiencia`
       ],
       certifications: lawyerWithViews?.certifications 
         ? (typeof lawyerWithViews.certifications === 'string' 
@@ -1035,12 +1035,15 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   <div className="flex-1 space-y-4">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                          {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
-                        </h2>
+                        <div className="flex flex-col gap-2">
+                          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                            {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
+                          </h2>
+                        </div>
+                        
                         {/* Desktop verified badge next to name */}
                         {(lawyer?.verified || lawyer?.pjud_verified) && (
-                          <div className="hidden sm:flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full">
+                          <div className="hidden sm:flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full self-start mt-2">
                             <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
                             <span className="text-xs font-medium text-green-700">
                               {lawyer?.pjud_verified ? 'Verificado en PJUD' : 'Verificado'}
@@ -1070,6 +1073,32 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       )}
                     </div>
                     
+                    <div className="w-full">
+                    {/* Specialty Badges */}
+                      {lawyer?.specialties && lawyer.specialties.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {Array.isArray(lawyer.specialties) ? (
+                            lawyer.specialties.map((specialty, index) => (
+                              <Badge 
+                                key={index} 
+                                variant="outline" 
+                                className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
+                              >
+                                {specialty}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
+                            >
+                              {lawyer.specialties}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 w-full">
                       <div className="flex items-center w-full sm:w-auto">
                         <Star className="h-5 w-5 text-yellow-500 mr-1 flex-shrink-0" />
@@ -1086,23 +1115,35 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       </div>
                     </div>
 
-                    
-
                     <div className="w-full">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 w-full sm:w-auto">
+                          <div className="flex items-center">
+                              {profileData.experience.length > 0 ? (
+                                profileData.experience.map((exp, index) => (
+                                  <div key={index}>
+                                    {/*<Clock className="h-4 w-4 mr-1 flex-shrink-0" />*/}
+                                    <span>{exp}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-gray-500">No se ha proporcionado información de experiencia</p>
+                              )}
+                            
+                          </div>
                           <div className="flex items-center min-w-[160px]">
                             <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
                           </div>
-                          <div className="flex items-center min-w-[140px]">
+                          {/*<div className="flex items-center min-w-[140px]">
                             <ThumbsUp className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">{profileData.completionRate} éxito en trabajos</span>
-                          </div>
+                          </div>*/}
                           <div className="flex items-center">
                             <Gavel className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span>{lawyer?.profile_views || 0} casos</span>
                           </div>
+                          
                         </div>
                       </div>
                     </div>
@@ -1254,25 +1295,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               </CardContent>
             </Card>
 
-            {/* Experience Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Experiencia</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {profileData.experience.length > 0 ? (
-                    profileData.experience.map((exp, index) => (
-                      <div key={index} className="border-l-2 border-blue-200 pl-4">
-                        <p className="font-medium text-gray-900">{exp}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No se ha proporcionado información de experiencia</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
 
             {/* Services Section */}

@@ -8,3 +8,5 @@
 .env.*.local
 
 config.toml
+supabase/functions
+
