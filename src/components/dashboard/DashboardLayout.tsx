@@ -61,22 +61,29 @@ function DashboardLayout() {
       if (isLoading) return;
       
       if (!user) {
-        navigate('/login');
+        navigate('/');
         return;
       }
       
-      // Skip profile check if already on setup page
-      if (location.pathname === '/dashboard/profile/setup') return;
+      // Skip profile check for these routes
+      const excludedRoutes = [
+        '/dashboard/profile/setup',
+        '/dashboard/profile'
+      ];
+      
+      if (excludedRoutes.some(route => location.pathname.startsWith(route))) {
+        return;
+      }
       
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('first_name')
+          .select('first_name, profile_setup_completed')
           .eq('user_id', user.id)
           .single();
           
-        // If profile doesn't exist or is not fully set up, redirect to setup
-        if (error || !profile?.first_name) {
+        // Only redirect if not on an excluded route and profile is not set up
+        if (error || !profile?.profile_setup_completed) {
           navigate('/dashboard/profile/setup');
         }
       } catch (error) {

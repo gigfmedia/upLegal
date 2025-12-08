@@ -725,6 +725,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     required
                     placeholder="Juan"
+                    autoComplete="given-name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -736,6 +737,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     required
                     placeholder="Pérez"
+                    autoComplete="family-name"
                   />
                 </div>
               </div>

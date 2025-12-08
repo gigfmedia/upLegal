@@ -1,63 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/supabase';
 
-// Validar variables de entorno al cargar el módulo
-const validateEnvVars = (): { url: string; anonKey: string } => {
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { supabase } from '@/lib/supabaseClient';
 
-  if (!url || !anonKey) {
-    const errorMessage = '❌ Missing required Supabase environment variables';
-    console.error(errorMessage, {
-      VITE_SUPABASE_URL: url ? '✅ Presente' : '❌ Faltante',
-      VITE_SUPABASE_ANON_KEY: anonKey ? '✅ Presente' : '❌ Faltante',
-      NODE_ENV: import.meta.env.MODE,
-    });
-    throw new Error(errorMessage);
-  }
+// Re-export the client for compatibility
+export { supabase };
 
-  // Validar formato de la URL y la clave
-  if (!url.startsWith('https://')) {
-    throw new Error('❌ URL de Supabase inválida: debe comenzar con https://');
-  }
-
-  if (!anonKey.startsWith('eyJ')) {
-    console.warn('⚠️  La clave anónima no parece tener un formato JWT estándar');
-  }
-
-  return { url, anonKey };
-};
-
-// Inicializar cliente de Supabase con configuración segura
-let supabaseInstance: SupabaseClient<Database> | null = null;
-
-export const getSupabaseClient = (): SupabaseClient<Database> => {
-  if (supabaseInstance) return supabaseInstance;
-
-  try {
-    const { url, anonKey } = validateEnvVars();
-    
-    supabaseInstance = createClient<Database>(url, anonKey, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-      global: {
-        headers: {
-          'X-Client-Info': 'uplegal-web/1.0.0',
-        },
-      },
-    });
-
-    return supabaseInstance;
-  } catch (error) {
-    console.error('❌ Error al inicializar Supabase:', error);
-    throw new Error('No se pudo inicializar el cliente de Supabase');
-  }
-};
-
-export const supabase = getSupabaseClient();
+// Helper to get the client (just returns the imported one)
+export const getSupabaseClient = () => supabase;
 
 // Constantes para buckets
 export const BUCKETS = {
@@ -165,12 +115,25 @@ export async function updateUserAvatar(userId: string, file: File) {
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
     
+    // Debug: Check session and userId
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log(' Uploading avatar:', {
+      userIdParam: userId,
+      authUser: session?.user?.id,
+      fileName,
+      isAuthenticated: !!session
+    });
+
+    if (!session) {
+      throw new Error('No active session found during upload');
+    }
+
     // 2. Upload the file directly to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: true,
+        upsert: false,
         contentType: file.type
       });
     
@@ -181,11 +144,14 @@ export async function updateUserAvatar(userId: string, file: File) {
       .from('avatars')
       .getPublicUrl(fileName);
     
-    // 4. Update the profile using the RPC function
-    const { data, error: updateError } = await supabase.rpc('update_user_avatar', {
-      p_user_id: userId,
-      p_avatar_url: publicUrl
-    });
+    // 4. Update the profile directly
+    const { data, error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        avatar_url: publicUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
     
     if (updateError) {
       throw updateError;

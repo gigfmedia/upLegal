@@ -222,35 +222,19 @@ export function LawyerProfileForm() {
       barAssociationNumber: metadata.bar_association_number || '',
       meetLink: metadata.meet_link || '',
       hourlyRate: safeNumberToString(metadata.hourly_rate_clp),
-      certifications: metadata.certifications || '',
+      certifications: (() => {
+        const certs = metadata.certifications;
+        if (!certs) return '';
+        if (Array.isArray(certs)) return certs.join('\n');
+        if (typeof certs === 'string') return certs;
+        if (typeof certs === 'object') return Object.values(certs).filter(Boolean).join('\n');
+        return '';
+      })(),
       languages: Array.isArray(metadata.languages) ? metadata.languages : [],
       availability: metadata.availability || 'disponible',
       rut: metadata.rut || '',
       pjudVerified: metadata.pjud_verified || false,
       email: user?.email || ''
-    };
-        
-        if (Array.isArray(certs)) {
-          return certs.join('\n');
-        }
-        
-        if (typeof certs === 'string') {
-          if (certs.includes('\n')) return certs;
-          if (certs.includes(',')) return certs.split(',').map(c => c.trim()).join('\n');
-          return certs;
-        }
-        
-        if (typeof certs === 'object' && certs !== null) {
-          return Object.values(certs).filter(Boolean).join('\n');
-        }
-        
-        return '';
-      })(),
-      barAssociationNumber: userMetadata.bar_association_number || '',
-      rut: userMetadata.rut || '',
-      pjudVerified: userMetadata.pjud_verified || false,
-      availability: userMetadata.availability || 'disponible',
-      meetLink: userMetadata.meet_link || '',
     };
   };
   
@@ -436,7 +420,7 @@ export function LawyerProfileForm() {
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tu nombre" {...field} />
+                    <Input placeholder="Tu nombre" {...field} autoComplete="given-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -450,7 +434,7 @@ export function LawyerProfileForm() {
                 <FormItem>
                   <FormLabel>Apellido</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tu apellido" {...field} />
+                    <Input placeholder="Tu apellido" {...field} autoComplete="family-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

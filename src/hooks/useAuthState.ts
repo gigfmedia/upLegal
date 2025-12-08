@@ -11,12 +11,13 @@ export interface AuthState {
   isLoading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
+  setUser: (user: User | null) => void;
   checkSession: () => Promise<boolean>;
   refreshAuth: () => Promise<void>;
 }
 
 export const useAuthState = (): AuthState => {
-  const [state, setState] = useState<Omit<AuthState, 'checkSession' | 'refreshAuth'>>({
+  const [state, setState] = useState<Omit<AuthState, 'checkSession' | 'refreshAuth' | 'setUser'>>({
     user: null,
     session: null,
     isLoading: true,
@@ -27,7 +28,7 @@ export const useAuthState = (): AuthState => {
   const supabase = getSupabaseClient();
   
   // Update state helper
-  const updateState = useCallback((updates: Partial<Omit<AuthState, 'checkSession' | 'refreshAuth'>>) => {
+  const updateState = useCallback((updates: Partial<Omit<AuthState, 'checkSession' | 'refreshAuth' | 'setUser'>>) => {
     setState(prev => ({
       ...prev,
       ...updates,
@@ -35,6 +36,11 @@ export const useAuthState = (): AuthState => {
       isAuthenticated: updates.user !== undefined ? !!updates.user : prev.isAuthenticated,
     }));
   }, []);
+
+  // Manual user update helper
+  const setUser = useCallback((user: User | null) => {
+    updateState({ user });
+  }, [updateState]);
   
   // Check and refresh the current session
   const checkSession = useCallback(async (): Promise<boolean> => {
@@ -203,6 +209,7 @@ export const useAuthState = (): AuthState => {
     isAuthenticated: state.isAuthenticated,
     checkSession,
     refreshAuth,
+    setUser,
   }), [
     state.user, 
     state.session, 
@@ -211,6 +218,7 @@ export const useAuthState = (): AuthState => {
     state.isAuthenticated,
     checkSession,
     refreshAuth,
+    setUser,
   ]);
 };
 

@@ -48,7 +48,8 @@ import {
   Building2,
   DollarSign,
   CheckCircle,
-  Heart
+  Heart,
+  Gavel
 } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
 
@@ -1099,7 +1100,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                             <span className="truncate">{profileData.completionRate} éxito en trabajos</span>
                           </div>
                           <div className="flex items-center">
-                            <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <Gavel className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span>{lawyer?.profile_views || 0} casos</span>
                           </div>
                         </div>

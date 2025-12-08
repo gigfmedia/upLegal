@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession,
     refreshAuth,
     isAuthenticated,
+    setUser,
   } = useAuth();
   
   // Set error helper function
@@ -232,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               zoom_link: '',
               profile_visible: true,
               show_online_status: true,
-              allow_direct_messages: true,
+
               settings: {},
               notifications: { email: true, push: true },
               preferences: { theme: 'light', language: 'es' },
@@ -363,294 +364,189 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       
-      // Get current user data
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const currentMetadata = currentUser?.user_metadata || {};
-      // Prepare the update data with only the fields that exist in the database
-      // Handle study years - ensure they are properly converted to numbers or null
-      let studyStartYear = null;
-      let studyEndYear = null;
+      // Process the input profile data to clean/format values
+      // Only process fields that are actually present in the input
+      const updates: any = {
+        updated_at: new Date().toISOString()
+      };
 
+      // Helper to safely trim strings
+      const safeTrim = (val: any) => (typeof val === 'string' ? val.trim() : val);
 
-      if (profile.study_start_year !== undefined && profile.study_start_year !== null && profile.study_start_year !== '') {
-        studyStartYear = typeof profile.study_start_year === 'string' 
-          ? parseInt(profile.study_start_year, 10) 
-          : Number(profile.study_start_year);
-        // Ensure it's a valid number
-        studyStartYear = isNaN(studyStartYear) ? null : studyStartYear;
-      } else {
-
-      }
+      if ('first_name' in profile) updates.first_name = safeTrim(profile.first_name) || null;
+      if ('last_name' in profile) updates.last_name = safeTrim(profile.last_name) || null;
+      if ('display_name' in profile) updates.display_name = safeTrim(profile.display_name) || null;
+      if ('bio' in profile) updates.bio = safeTrim(profile.bio) || null;
+      if ('phone' in profile) updates.phone = safeTrim(profile.phone) || null;
+      if ('location' in profile) updates.location = safeTrim(profile.location) || null;
+      if ('website' in profile) updates.website = safeTrim(profile.website) || null;
+      if ('education' in profile) updates.education = safeTrim(profile.education) || null;
+      if ('university' in profile) updates.university = safeTrim(profile.university) || null;
+      if ('bar_association_number' in profile) updates.bar_association_number = safeTrim(profile.bar_association_number) || null;
+      if ('rut' in profile) updates.rut = safeTrim(profile.rut) || null;
+      if ('zoom_link' in profile) updates.zoom_link = safeTrim(profile.zoom_link) || null;
+      if ('avatar_url' in profile) updates.avatar_url = safeTrim(profile.avatar_url) || null;
+      if ('pjud_verified' in profile) updates.pjud_verified = Boolean(profile.pjud_verified);
       
-      if (profile.study_end_year !== undefined && profile.study_end_year !== null && profile.study_end_year !== '') {
-        studyEndYear = typeof profile.study_end_year === 'string' 
-          ? parseInt(profile.study_end_year, 10) 
-          : Number(profile.study_end_year);
-        // Ensure it's a valid number
-        studyEndYear = isNaN(studyEndYear) ? null : studyEndYear;
-      } else {
+      // Arrays
+      if ('specialties' in profile && Array.isArray(profile.specialties)) {
+        updates.specialties = profile.specialties.map(s => String(s).trim()).filter(s => s !== '');
+      }
+      if ('languages' in profile && Array.isArray(profile.languages)) {
+        updates.languages = profile.languages.map(l => String(l).trim()).filter(l => l !== '');
+      }
 
+      // Numbers / Complex fields
+      if ('experience_years' in profile) {
+        updates.experience_years = profile.experience_years !== undefined 
+          ? (typeof profile.experience_years === 'string' 
+              ? parseInt(profile.experience_years, 10) 
+              : profile.experience_years)
+          : null;
+      }
+
+      if ('study_start_year' in profile) {
+        let val = profile.study_start_year;
+        if (val !== undefined && val !== null && val !== '') {
+          const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+          updates.study_start_year = isNaN(num) ? null : num;
+        } else {
+          updates.study_start_year = null;
+        }
+      }
+
+      if ('study_end_year' in profile) {
+        let val = profile.study_end_year;
+        if (val !== undefined && val !== null && val !== '') {
+          const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+          updates.study_end_year = isNaN(num) ? null : num;
+        } else {
+          updates.study_end_year = null;
+        }
       }
 
       // Process hourly rate - ensure it's a number or null
       const processHourlyRate = (rate: any): number | null => {
-        
-        if (rate === null || rate === undefined || rate === '') {
-          return null;
-        }
-        
+        if (rate === null || rate === undefined || rate === '') return null;
         try {
-          if (typeof rate === 'number') {
-            return rate;
-          }
-          
-          // Handle string input with thousand separators and decimal comma
+          if (typeof rate === 'number') return rate;
           let cleanRate = String(rate)
-            .replace(/\./g, '')  // Remove thousand separators
-            .replace(',', '.')    // Convert decimal comma to dot
-            .replace(/[^0-9.]/g, ''); // Remove any remaining non-numeric characters
-          
-          // Use Number() instead of parseFloat for more precise parsing
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .replace(/[^0-9.]/g, '');
           const num = Number(cleanRate);
-          
-          if (isNaN(num)) {
-            return null;
-          }
-          
-          // For whole numbers, avoid decimal places
-          if (Number.isInteger(num)) {
-            return num;
-          }
-          
-          // For decimal numbers, round to 2 decimal places to avoid floating point issues
-          const rounded = Math.round((num + Number.EPSILON) * 100) / 100;
-          return rounded;
+          if (isNaN(num)) return null;
+          if (Number.isInteger(num)) return num;
+          return Math.round((num + Number.EPSILON) * 100) / 100;
         } catch (error) {
           console.error('Error processing hourly rate:', error);
           return null;
         }
       };
 
-      // Process certifications - ensure it's a string with line breaks
+      if ('hourly_rate_clp' in profile) {
+        updates.hourly_rate_clp = processHourlyRate(profile.hourly_rate_clp);
+      }
+
+      // Process certifications
       const processCertifications = (certs: any): string | null => {
-        
-        if (certs === null || certs === undefined || certs === '') {
-          return undefined; // Return undefined to indicate no change
-        }
-        
+        if (certs === null || certs === undefined || certs === '') return null;
         try {
-          let result: string;
-          
           if (Array.isArray(certs)) {
-            result = certs
-              .map(c => String(c).trim())
-              .filter(c => c !== '')
-              .join('\n');
+            return certs.map(c => String(c).trim()).filter(c => c !== '').join('\n') || null;
           } else if (typeof certs === 'string') {
-            result = certs
-              .split('\n')
-              .map(line => line.trim())
-              .filter(line => line !== '')
-              .join('\n');
+            return certs.split('\n').map(line => line.trim()).filter(line => line !== '').join('\n') || null;
           } else if (typeof certs === 'object' && certs !== null) {
-            // Handle case where certs is an object
-            result = Object.values(certs)
-              .filter(v => v !== null && v !== undefined)
-              .map(v => String(v).trim())
-              .filter(v => v !== '')
-              .join('\n');
-          } else {
-            result = String(certs || '').trim();
+            return Object.values(certs).filter(v => v !== null && v !== undefined).map(v => String(v).trim()).filter(v => v !== '').join('\n') || null;
           }
-          return result || null;
+          return String(certs).trim() || null;
         } catch (error) {
           console.error('Error processing certifications:', error);
           return null;
         }
       };
 
-      // Process hourly rate
-      const hourlyRate = 'hourly_rate_clp' in profile 
-        ? processHourlyRate(profile.hourly_rate_clp)
-        : undefined;
-        
-      // Always process certifications to ensure proper formatting
-      // But only include in update if explicitly provided
-      const certifications = 'certifications' in profile
-        ? processCertifications(profile.certifications)
-        : undefined;
-      
-      const updateData: Omit<Profile, 'id' | 'user_id' | 'created_at'> & { updated_at: string } = {
-        ...profile, // Spread all profile data first
-        first_name: profile.first_name?.trim() || null,
-        last_name: profile.last_name?.trim() || null,
-        display_name: profile.display_name?.trim() || null,
-        bio: profile.bio?.trim() || null,
-        phone: profile.phone?.trim() || null,
-        hourly_rate_clp: hourlyRate,
-        certifications: certifications,
-        location: profile.location?.trim() || null,
-        website: profile.website?.trim() || null,
-        specialties: Array.isArray(profile.specialties) 
-          ? profile.specialties.map(s => String(s).trim()).filter(s => s !== '')
-          : [],
-        experience_years: profile.experience_years !== undefined 
-          ? (typeof profile.experience_years === 'string' 
-              ? parseInt(profile.experience_years, 10) 
-              : profile.experience_years)
-          : null,
-        languages: Array.isArray(profile.languages) 
-          ? profile.languages.map(l => String(l).trim()).filter(l => l !== '')
-          : [],
-        education: profile.education?.trim() || null,
-        university: profile.university?.trim() || null,
-        study_start_year: studyStartYear,
-        study_end_year: studyEndYear,
-        bar_association_number: profile.bar_association_number?.trim() || null,
-        rut: profile.rut?.trim() || null,
-        pjud_verified: Boolean(profile.pjud_verified),
-        zoom_link: profile.zoom_link?.trim() || null,
-        avatar_url: profile.avatar_url?.trim() || null,
-        profile_setup_completed: true,
-        updated_at: new Date().toISOString()
-      };
+      if ('certifications' in profile) {
+        updates.certifications = processCertifications(profile.certifications);
+      }
 
-      // Prepare the update payload for the database
-      const updatePayload = {
-        ...updateData,
-        updated_at: new Date().toISOString()
-      };
+      // Always set profile_setup_completed if we are updating
+      updates.profile_setup_completed = true;
 
       try {
-        // First, check if a profile exists for this user
-        // First, get the current profile data to preserve existing fields
-        const { data: currentProfile, error: fetchError } = await supabase
+        // Try to update existing profile
+        const { data: updateResult, error: updateError } = await supabase
           .from('profiles')
-          .select('*')
+          .update(updates)
           .eq('user_id', user.id)
-          .single();
-        
-        // Merge existing profile data with the new updates
-        const updateData = {
-          ...currentProfile, // Preserve all existing fields
-          ...updatePayload,  // Apply the new updates
-          // Only update certifications if they are being explicitly set in the payload
-          certifications: updatePayload.certifications !== undefined 
-            ? updatePayload.certifications 
-            : currentProfile?.certifications || null,
-          // Asegurarse de que los campos numéricos no se sobrescriban con null si no se proporcionan
-          hourly_rate_clp: updatePayload.hourly_rate_clp !== undefined
-            ? updatePayload.hourly_rate_clp
-            : currentProfile?.hourly_rate_clp || null,
-          experience_years: updatePayload.experience_years !== undefined
-            ? updatePayload.experience_years
-            : currentProfile?.experience_years || null,
-          user_id: user.id,  // Ensure user_id is always set
-          updated_at: new Date().toISOString()
-        };
-        
-        if (currentProfile) {
-          // Profile exists, perform update
-          const { data: updateResult, error: updateError } = await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('user_id', user.id);
-            
-          if (updateError) {
-            console.error('Error updating profile:', updateError);
-            throw updateError;
-          }
-        } else {
-          // No profile exists, perform insert with default values
-          const newProfileData = {
-            ...updateData,
+          .select(); // Select to see if row existed
+
+        if (updateError) throw updateError;
+
+        // If no row was updated, we need to insert
+        if (!updateResult || updateResult.length === 0) {
+          const insertData = {
+            ...updates,
+            user_id: user.id,
             created_at: new Date().toISOString(),
-            // Ensure required fields have default values
-            certifications: updateData.certifications || null,
-            hourly_rate_clp: updateData.hourly_rate_clp || null,
-            specialties: updateData.specialties || [],
-            languages: updateData.languages || []
+            // Set defaults for required fields if they are missing in updates
+            first_name: updates.first_name || null,
+            last_name: updates.last_name || null,
+            // Ensure other required fields have defaults if not provided in `updates`
+            display_name: updates.display_name || null,
+            email: user.email, // Email should always be present from user object
+            role: updates.role || 'client', // Default role if not provided
+            bio: updates.bio || '',
+            avatar_url: updates.avatar_url || '',
+            phone: updates.phone || '',
+            website: updates.website || '',
+            location: updates.location || '',
+            specialties: updates.specialties || [],
+            languages: updates.languages || [],
+            verified: updates.verified || false,
+            response_time: updates.response_time || '24h',
+            satisfaction_rate: updates.satisfaction_rate || 0,
+            zoom_link: updates.zoom_link || '',
+            profile_visible: updates.profile_visible || true,
+            show_online_status: updates.show_online_status || true,
+            settings: updates.settings || {},
+            notifications: updates.notifications || { email: true, push: true },
+            preferences: updates.preferences || { theme: 'light', language: 'es' },
+            metadata: updates.metadata || { signup_method: 'email', signup_date: new Date().toISOString() }
           };
           
-          const { data: insertResult, error: insertError } = await supabase
+          const { error: insertError } = await supabase
             .from('profiles')
-            .insert(newProfileData);
+            .insert(insertData);
             
-          if (insertError) {
-            console.error('Error inserting profile:', insertError);
-            throw insertError;
-          }
-          
+          if (insertError) throw insertError;
         }
+
+        // Update auth metadata (merges with existing)
+        const { data: updatedUser, error: authError } = await supabase.auth.updateUser({
+          data: updates
+        });
+
+        if (authError) throw authError;
+        if (!updatedUser.user) throw new Error('No se pudo actualizar el perfil');
+
+        // Manually update local state
+        setUser(updatedUser.user);
+        
+        return updatedUser.user;
+
       } catch (error) {
         console.error('Exception during profile update:', error);
         throw error;
       }
-
-      // Fetch the updated profile to verify the data
-      const { data: updatedProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single<DatabaseProfile>();
-
-      if (fetchError) {
-        console.error('Error fetching updated profile:', fetchError);
-      } else if (updatedProfile) {
-      }
-
-      // Then update the auth user metadata with the same data
-      const userMetadata = {
-        ...currentMetadata, // Keep existing metadata
-        first_name: updateData.first_name,
-        last_name: updateData.last_name,
-        bio: updateData.bio,
-        phone: updateData.phone,
-        location: updateData.location,
-        website: updateData.website,
-        specialties: updateData.specialties,
-        // Asegurarse de que los valores numéricos se guarden correctamente
-        experience_years: updateData.experience_years !== undefined 
-          ? updateData.experience_years 
-          : currentMetadata?.experience_years || null,
-        hourly_rate_clp: updateData.hourly_rate_clp !== undefined 
-          ? updateData.hourly_rate_clp 
-          : currentMetadata?.hourly_rate_clp || null,
-        education: updateData.education,
-        university: updateData.university,
-        study_start_year: studyStartYear,
-        study_end_year: studyEndYear,
-        // Asegurarse de que las certificaciones no se sobrescriban con null
-        certifications: updateData.certifications !== undefined 
-          ? updateData.certifications 
-          : currentMetadata?.certifications || null,
-        bar_association_number: updateData.bar_association_number,
-        availability: updateData.availability,
-        zoom_link: updateData.zoom_link,
-        languages: updateData.languages,
-        profile_setup_completed: true
-      };
-
-      const { data: updatedUser, error: updateError } = await supabase.auth.updateUser({
-        data: userMetadata
-      });
-
-      if (updateError) throw updateError;
-      if (!updatedUser.user) throw new Error('No se pudo actualizar el perfil');
-
-      // The useAuth hook will automatically update the user state
-      // by listening to auth state changes
-      
-      return updatedUser.user;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error in updateProfile:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, setUser]);
 
   // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo(
-    () => ({
+  const contextValue = useMemo ( () => ({
       user,
       session,
       isLoading,
@@ -688,8 +584,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshAuth,
       setLoadingState,
       setErrorState,
-    ]
-  );
+    ]);
 
   return (
     <AuthContext.Provider value={contextValue}>

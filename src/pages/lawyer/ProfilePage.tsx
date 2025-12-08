@@ -452,9 +452,10 @@ export default function LawyerProfilePage() {
   // Initialize form data when userProfile is loaded
   useEffect(() => {
     if (userProfile && !initializedRef.current) {
+      const metadata = user?.user_metadata || {};
       setFormData({
-        first_name: userProfile.first_name || '',
-        last_name: userProfile.last_name || '',
+        first_name: userProfile.first_name || metadata.first_name || '',
+        last_name: userProfile.last_name || metadata.last_name || '',
         bio: userProfile.bio || '',
         phone: userProfile.phone || '',
         location: userProfile.location || '',
@@ -820,30 +821,27 @@ export default function LawyerProfilePage() {
               <div className="w-24 h-24">
                 <ProfileAvatarUpload 
                   avatarUrl={formData.avatar_url || user?.user_metadata?.avatar_url || null}
-                  onUpload={(url) => {
+                  onUpload={async (url) => {
                     if (user) {
-                      // Update the user metadata
-                      const updatedMetadata = {
-                        ...user.user_metadata,
-                        avatar_url: url
-                      };
+                      // Update the local state immediately
+                      setFormData(prev => ({ ...prev, avatar_url: url }));
                       
-                      // @ts-expect-error - Supabase types don't include this property
-                      user.user_metadata = updatedMetadata;
-                      
-                      // Update the form data to trigger the save button
-                      setFormData(prev => ({
-                        ...prev,
-                        avatar_url: url
-                      }));
-                      
-                      setHasChanges(true);
-                      
-                      // Show success message
-                      toast({
-                        title: '¡Éxito!',
-                        description: 'La foto de perfil se ha subido correctamente. No olvides guardar los cambios.',
-                      });
+                      try {
+                        // Update the auth user metadata via context to sync Header
+                        await updateProfile({ avatar_url: url });
+                        
+                        toast({
+                          title: "Avatar actualizado",
+                          description: "Tu foto de perfil ha sido actualizada exitosamente.",
+                        });
+                      } catch (error) {
+                        console.error('Error updating profile metadata:', error);
+                        toast({
+                          title: "Error",
+                          description: "Se subió la imagen pero hubo un error al actualizar el perfil.",
+                          variant: "destructive"
+                        });
+                      }
                     } else {
                       console.error('No user object available when updating avatar');
                     }
@@ -864,6 +862,7 @@ export default function LawyerProfilePage() {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       placeholder="Tus nombres"
+                      autoComplete="given-name"
                     />
                   </div>
                   
@@ -876,6 +875,7 @@ export default function LawyerProfilePage() {
                       onChange={handleInputChange}
                       disabled={!isEditing}
                       placeholder="Tus apellidos"
+                      autoComplete="family-name"
                     />
                   </div>
                 </div>
@@ -1156,7 +1156,7 @@ export default function LawyerProfilePage() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  value={formData.hourly_rate_clp === 0 ? '' : formData.hourly_rate_clp.toString()}
+                  value={formData.hourly_rate_clp === 0 ? '' : (formData.hourly_rate_clp || 0).toString()}
                   onChange={handleNumberInput}
                   disabled={!isEditing}
                   placeholder="Ej: 50000"
