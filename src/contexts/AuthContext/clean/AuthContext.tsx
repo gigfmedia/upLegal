@@ -216,6 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               last_name: userData.lastName.trim(),
               display_name: `${userData.firstName} ${userData.lastName}`.trim(),
               profile_setup_completed: userData.role === 'lawyer' ? false : true,
+              // Prevent any automatic display name generation from email
+              username: userData.firstName.trim().toLowerCase(),
               updated_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
               role: userData.role,

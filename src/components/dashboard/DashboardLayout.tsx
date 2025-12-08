@@ -60,6 +60,7 @@ function DashboardLayout() {
     const checkAuthAndProfile = async () => {
       if (isLoading) return;
       
+      // Redirect to home if not authenticated
       if (!user) {
         navigate('/');
         return;
@@ -68,9 +69,12 @@ function DashboardLayout() {
       // Skip profile check for these routes
       const excludedRoutes = [
         '/dashboard/profile/setup',
-        '/dashboard/profile'
+        '/dashboard/profile',
+        '/dashboard/lawyer',
+        '/dashboard/lawyer/'
       ];
       
+      // Skip if on an excluded route
       if (excludedRoutes.some(route => location.pathname.startsWith(route))) {
         return;
       }
@@ -78,14 +82,15 @@ function DashboardLayout() {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('first_name, profile_setup_completed')
+          .select('first_name, profile_setup_completed, role')
           .eq('user_id', user.id)
           .single();
           
-        // Only redirect if not on an excluded route and profile is not set up
-        if (error || !profile?.profile_setup_completed) {
-          navigate('/dashboard/profile/setup');
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
         }
+        // For lawyers, don't force redirection to setup
       } catch (error) {
         console.error('Error checking profile:', error);
       }

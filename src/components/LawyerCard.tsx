@@ -193,7 +193,7 @@ export function LawyerCard({
                     <span className="font-medium">{currentRating.toFixed(1)}</span>
                     <span className="text-gray-400">({currentReviewCount})</span>
                   </button>
-                  <div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>
+                  {/*<div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>*/}
                   <span className="text-blue-600 font-medium">
                   {/*  {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos */}
                   </span>

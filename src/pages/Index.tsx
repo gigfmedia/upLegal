@@ -109,7 +109,7 @@ const Index = () => {
             specialties: lawyer.specialties || [],
             rating: lawyer.rating || 0,
             reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Santiago, Chile',
+            location: lawyer.location || 'Sin ubicación',
             cases: 0, // Default value
             hourlyRate: lawyer.hourly_rate_clp || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
@@ -270,7 +270,7 @@ const Index = () => {
             specialties: lawyer.specialties || [],
             rating: lawyer.rating || 0,
             reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Santiago, Chile',
+            location: lawyer.location || 'Sin ubicación',
             cases: countsMap.get(lawyer.id) || 0, // Get real appointment count
             hourlyRate: lawyer.hourly_rate_clp || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
