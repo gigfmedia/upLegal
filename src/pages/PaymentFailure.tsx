@@ -107,8 +107,25 @@ export default function PaymentFailure() {
       alert('No se pudo encontrar la cita. Por favor, intenta nuevamente desde el inicio.');
       navigate('/');
     } catch (error) {
-      console.error('Error retrying payment:', error);
-      alert('Ocurrió un error al reintentar el pago. Por favor, verifica tu conexión e intenta nuevamente.');
+      console.error('Error retrying payment:', {
+        error,
+        message: error.message,
+        stack: error.stack,
+        appointmentId,
+        user: user ? { id: user.id, email: user.email } : 'No user'
+      });
+      
+      let errorMessage = 'Ocurrió un error al reintentar el pago. Por favor, verifica tu conexión e intenta nuevamente.';
+      
+      if (error.message.includes('No active session')) {
+        errorMessage = 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.';
+      } else if (error.message.includes('Error al crear el pago')) {
+        errorMessage = 'Error al procesar el pago. Por favor, verifica los datos e intenta nuevamente.';
+      } else if (error.message.includes('No se pudo obtener el enlace de pago')) {
+        errorMessage = 'No se pudo generar el enlace de pago. Por favor, inténtalo de nuevo más tarde.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsRetrying(false);
     }
@@ -116,6 +133,12 @@ export default function PaymentFailure() {
 
   const createPaymentForAppointment = async (appointment: any) => {
     try {
+      console.log('Creating payment for appointment:', { 
+        appointmentId: appointment.id,
+        amount: appointment.amount || appointment.price,
+        lawyerId: appointment.lawyer_id
+      });
+
       const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
@@ -135,6 +158,11 @@ export default function PaymentFailure() {
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
 
+      console.log('Sending payment request:', {
+        url: FUNCTION_URL,
+        params: { ...paymentParams, userName: '...' } // Ocultamos el nombre de usuario en los logs
+      });
+
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -143,27 +171,55 @@ export default function PaymentFailure() {
         body: JSON.stringify(paymentParams)
       });
 
+      const responseText = await response.text();
+      console.log('Payment API response:', {
+        status: response.status,
+        statusText: response.statusText,
+        response: responseText
+      });
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Payment API error:', errorText);
-        throw new Error('Error al crear el pago');
+        console.error('Payment API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          response: responseText
+        });
+        throw new Error(`Error al crear el pago: ${response.status} ${response.statusText}`);
       }
 
-      const paymentResult = await response.json();
+      let paymentResult;
+      try {
+        paymentResult = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Error parsing payment response:', e, { responseText });
+        throw new Error('Respuesta del servidor no válida');
+      }
       
       if (paymentResult.payment_link) {
+        console.log('Redirecting to payment link:', paymentResult.payment_link);
         window.location.href = paymentResult.payment_link;
       } else {
+        console.error('No payment link in response:', paymentResult);
         throw new Error('No se pudo obtener el enlace de pago');
       }
     } catch (error) {
-      console.error('Error creating payment for appointment:', error);
+      console.error('Error in createPaymentForAppointment:', {
+        error,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   };
 
   const createPaymentForConsultation = async (consultation: any) => {
     try {
+      console.log('Creating payment for consultation:', { 
+        consultationId: consultation.id,
+        amount: consultation.price,
+        lawyerId: consultation.lawyer_id
+      });
+
       const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
@@ -183,6 +239,11 @@ export default function PaymentFailure() {
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
 
+      console.log('Sending payment request for consultation:', {
+        url: FUNCTION_URL,
+        params: { ...paymentParams, userName: '...' } // Ocultamos el nombre de usuario en los logs
+      });
+
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -191,21 +252,43 @@ export default function PaymentFailure() {
         body: JSON.stringify(paymentParams)
       });
 
+      const responseText = await response.text();
+      console.log('Payment API response for consultation:', {
+        status: response.status,
+        statusText: response.statusText,
+        response: responseText
+      });
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Payment API error:', errorText);
-        throw new Error('Error al crear el pago');
+        console.error('Payment API error for consultation:', {
+          status: response.status,
+          statusText: response.statusText,
+          response: responseText
+        });
+        throw new Error(`Error al crear el pago: ${response.status} ${response.statusText}`);
       }
 
-      const paymentResult = await response.json();
+      let paymentResult;
+      try {
+        paymentResult = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Error parsing payment response for consultation:', e, { responseText });
+        throw new Error('Respuesta del servidor no válida');
+      }
       
       if (paymentResult.payment_link) {
+        console.log('Redirecting to payment link for consultation:', paymentResult.payment_link);
         window.location.href = paymentResult.payment_link;
       } else {
+        console.error('No payment link in response for consultation:', paymentResult);
         throw new Error('No se pudo obtener el enlace de pago');
       }
     } catch (error) {
-      console.error('Error creating payment for consultation:', error);
+      console.error('Error in createPaymentForConsultation:', {
+        error,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   };
