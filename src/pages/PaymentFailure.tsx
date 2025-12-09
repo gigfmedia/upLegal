@@ -51,15 +51,16 @@ export default function PaymentFailure() {
         // Si encontramos la cita, obtener el nombre del abogado por separado
         let lawyerName = 'Abogado';
         if (appointment.lawyer_id) {
-          const { data: lawyer } = await supabase
+          const { data: lawyer, error: lawyerError } = await supabase
             .from('profiles')
             .select('display_name')
             .eq('id', appointment.lawyer_id)
-            .single()
-            .catch(() => null);
+            .single();
           
-          if (lawyer?.display_name) {
+          if (!lawyerError && lawyer?.display_name) {
             lawyerName = lawyer.display_name;
+          } else {
+            console.warn('Error fetching lawyer profile:', lawyerError);
           }
         }
         
@@ -82,15 +83,16 @@ export default function PaymentFailure() {
         // Si encontramos la consulta, obtener el nombre del abogado por separado
         let lawyerName = 'Abogado';
         if (consultation.lawyer_id) {
-          const { data: lawyer } = await supabase
+          const { data: lawyer, error: lawyerError } = await supabase
             .from('profiles')
             .select('display_name')
             .eq('id', consultation.lawyer_id)
-            .single()
-            .catch(() => null);
+            .single();
           
-          if (lawyer?.display_name) {
+          if (!lawyerError && lawyer?.display_name) {
             lawyerName = lawyer.display_name;
+          } else {
+            console.warn('Error fetching lawyer profile for consultation:', lawyerError);
           }
         }
         
