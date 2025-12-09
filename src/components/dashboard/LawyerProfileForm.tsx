@@ -335,6 +335,7 @@ export function LawyerProfileForm() {
         ...user.user_metadata, // Mantener datos existentes
         first_name: data.firstName?.trim() || null,
         last_name: data.lastName?.trim() || null,
+        display_name: `${data.firstName?.trim() || ''} ${data.lastName?.trim() || ''}`.trim() || null,
         phone: data.phone?.trim() || null,
         bio: data.bio?.trim() || null,
         specialties: data.specialization ? [data.specialization] : [],
@@ -347,6 +348,8 @@ export function LawyerProfileForm() {
         certifications: data.certifications || null,
         bar_association_number: data.barAssociationNumber?.trim() || null,
         meet_link: data.meetLink?.trim() || null,
+        rut: data.rut ? cleanRut(data.rut) : null, // Asegurar que el RUT se guarde limpio
+        pjud_verified: verificationStatus === 'verified',
         languages: Array.isArray(data.languages) 
           ? data.languages.filter(lang => lang && lang.trim() !== '')
           : [],

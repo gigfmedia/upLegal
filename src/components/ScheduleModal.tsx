@@ -1499,7 +1499,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-70"
               >
                 {isProcessing 
-                  ? "Procesando..." 
+                  ? "Redirigendo al Checkout..." 
                   : (selectedLawyer || lawyerId)
                     ? `Pagar ${formatCurrency(clientAmount)}`
                     : 'Selecciona un abogado'}

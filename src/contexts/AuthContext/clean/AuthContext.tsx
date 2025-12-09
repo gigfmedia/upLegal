@@ -233,11 +233,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               zoom_link: '',
               profile_visible: true,
               show_online_status: true,
-
+              // Asegurarse de que el RUT se guarde correctamente
+              rut: userData.rut || null,
+              pjud_verified: false,
+              bar_association_number: null,
+              experience_years: null,
+              education: null,
+              university: null,
               settings: {},
               notifications: { email: true, push: true },
               preferences: { theme: 'light', language: 'es' },
-              metadata: { signup_method: 'email', signup_date: new Date().toISOString() }
+              metadata: { 
+                signup_method: 'email', 
+                signup_date: new Date().toISOString(),
+                first_name: userData.firstName.trim(),
+                last_name: userData.lastName.trim()
+              }
             });
 
           if (profileError) {

@@ -33,40 +33,82 @@ export default function PaymentFailure() {
     setIsRetrying(true);
 
     try {
-      // First, try to find in appointments table
+      // Obtener el token de sesión actual
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session found');
+      }
+
+      // Primero intentar obtener la cita sin hacer join con profiles
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
-        .select('*, profiles!appointments_lawyer_id_fkey(display_name)')
+        .select('*')
         .eq('id', appointmentId)
         .single();
 
       if (appointment && !appointmentError) {
-        // Found in appointments - create payment directly
-        await createPaymentForAppointment(appointment);
+        // Si encontramos la cita, obtener el nombre del abogado por separado
+        let lawyerName = 'Abogado';
+        if (appointment.lawyer_id) {
+          const { data: lawyer } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', appointment.lawyer_id)
+            .single()
+            .catch(() => null);
+          
+          if (lawyer?.display_name) {
+            lawyerName = lawyer.display_name;
+          }
+        }
+        
+        // Crear pago con la información disponible
+        await createPaymentForAppointment({
+          ...appointment,
+          profiles: { display_name: lawyerName }
+        });
         return;
       }
 
-      // If not in appointments, try consultations table
+      // Si no está en appointments, buscar en consultations
       const { data: consultation, error: consultationError } = await supabase
         .from('consultations')
-        .select('*, profiles!consultations_lawyer_id_fkey(display_name)')
+        .select('*')
         .eq('id', appointmentId)
         .single();
 
       if (consultation && !consultationError) {
-        // Found in consultations - create payment directly
-        await createPaymentForConsultation(consultation);
+        // Si encontramos la consulta, obtener el nombre del abogado por separado
+        let lawyerName = 'Abogado';
+        if (consultation.lawyer_id) {
+          const { data: lawyer } = await supabase
+            .from('profiles')
+            .select('display_name')
+            .eq('id', consultation.lawyer_id)
+            .single()
+            .catch(() => null);
+          
+          if (lawyer?.display_name) {
+            lawyerName = lawyer.display_name;
+          }
+        }
+        
+        // Crear pago con la información disponible
+        await createPaymentForConsultation({
+          ...consultation,
+          profiles: { display_name: lawyerName }
+        });
         return;
       }
 
-      // If not found in either table, go back to home
+      // Si no se encuentra en ninguna tabla, redirigir con mensaje
       console.error('Appointment/Consultation not found');
       alert('No se pudo encontrar la cita. Por favor, intenta nuevamente desde el inicio.');
       navigate('/');
     } catch (error) {
       console.error('Error retrying payment:', error);
-      alert('Ocurrió un error al reintentar el pago. Por favor, intenta nuevamente.');
-      navigate('/');
+      alert('Ocurrió un error al reintentar el pago. Por favor, verifica tu conexión e intenta nuevamente.');
     } finally {
       setIsRetrying(false);
     }
@@ -74,7 +116,7 @@ export default function PaymentFailure() {
 
   const createPaymentForAppointment = async (appointment: any) => {
     try {
-      const API_BASE_URL = 'https://uplegal.netlify.app';
+      const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
       const lawyerName = appointment.profiles?.display_name || 'Abogado';
@@ -86,9 +128,9 @@ export default function PaymentFailure() {
         lawyerId: appointment.lawyer_id,
         appointmentId: appointment.id,
         description: `Consulta legal con ${lawyerName}`,
-        successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${appointment.id}`,
-        failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${appointment.id}`,
-        pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${appointment.id}`,
+        successUrl: `${window.location.origin || 'https://legalup.cl'}/payment/success?appointmentId=${appointment.id}`,
+        failureUrl: `${window.location.origin || 'https://legalup.cl'}/payment/failure?appointmentId=${appointment.id}`,
+        pendingUrl: `${window.location.origin || 'https://legalup.cl'}/payment/pending?appointmentId=${appointment.id}`,
         userEmail: user!.email || '',
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
@@ -122,7 +164,7 @@ export default function PaymentFailure() {
 
   const createPaymentForConsultation = async (consultation: any) => {
     try {
-      const API_BASE_URL = 'https://uplegal.netlify.app';
+      const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
       const lawyerName = consultation.profiles?.display_name || 'Abogado';
@@ -134,9 +176,9 @@ export default function PaymentFailure() {
         lawyerId: consultation.lawyer_id,
         appointmentId: consultation.id,
         description: `Consulta legal con ${lawyerName}`,
-        successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${consultation.id}`,
-        failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${consultation.id}`,
-        pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${consultation.id}`,
+        successUrl: `${window.location.origin || 'https://legalup.cl'}/payment/success?appointmentId=${consultation.id}`,
+        failureUrl: `${window.location.origin || 'https://legalup.cl'}/payment/failure?appointmentId=${consultation.id}`,
+        pendingUrl: `${window.location.origin || 'https://legalup.cl'}/payment/pending?appointmentId=${consultation.id}`,
         userEmail: user!.email || '',
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
