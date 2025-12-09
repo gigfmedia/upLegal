@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,9 @@ export interface Lawyer {
   id: string;
   user_id?: string;
   name: string;
+  display_name?: string;
+  first_name?: string;
+  last_name?: string;
   specialties: string[];
   rating: number;
   reviews: number;
@@ -39,6 +42,12 @@ export interface Lawyer {
     quickResponse: boolean;
     emergencyConsultations: boolean;
   };
+  availableToday?: boolean;
+  availableThisWeek?: boolean;
+  quickResponse?: boolean;
+  emergencyConsultations?: boolean;
+  experience_years?: number;
+  review_count?: number;
 }
 
 interface LawyerCardProps {
@@ -62,6 +71,18 @@ export function LawyerCard({
   onSchedule,
   user
 }: LawyerCardProps & { user?: any }) {
+  const displayName = React.useMemo(() => {
+    // If we have both first and last name, use them
+    if (lawyer.first_name && lawyer.last_name) {
+      return `${lawyer.first_name} ${lawyer.last_name}`.trim();
+    }
+    // If we have just first name
+    if (lawyer.first_name) return lawyer.first_name;
+    // If we have just last name
+    if (lawyer.last_name) return lawyer.last_name;
+    // Fall back to display_name or name
+    return lawyer.display_name || lawyer.name || 'Abogado';
+  }, [lawyer.first_name, lawyer.last_name, lawyer.display_name, lawyer.name]);
   // Check if the current user is the owner of this lawyer profile
   const isOwnProfile = Boolean(
     user?.id && 
@@ -159,8 +180,9 @@ export function LawyerCard({
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between w-full mb-1">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" title={lawyer.name}>
-                    {lawyer.name}
+                  <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" 
+                      title={displayName}>
+                    {displayName}
                   </h3>
                 </div>
                 

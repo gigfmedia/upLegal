@@ -36,12 +36,24 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   useEffect(() => {
     const getUserRole = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUserRole(user.user_metadata?.role || 'client');
+        if (user?.id) {
+          // First check the profiles table
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && profile?.role) {
+            setUserRole(profile.role);
+          } else {
+            // Fallback to user_metadata if profile not found
+            setUserRole(user.user_metadata?.role || 'client');
+          }
         }
       } catch (error) {
         console.error('Error getting user role:', error);
+        setUserRole(user?.user_metadata?.role || 'client');
       }
     };
 

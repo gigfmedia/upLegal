@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useMemo } from 'react';
+import { createContext, useCallback, useMemo, useEffect } from 'react';
 import type { Session, User, SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 import { sendWelcomeEmail } from '@/lib/emails/welcomeEmail';
@@ -214,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: data.user.email,
               first_name: userData.firstName.trim(),
               last_name: userData.lastName.trim(),
-              display_name: `${userData.firstName} ${userData.lastName}`.trim(),
+              display_name: `${userData.firstName.trim()} ${userData.lastName.trim()}`.trim(),
               profile_setup_completed: userData.role === 'lawyer' ? false : true,
               updated_at: new Date().toISOString(),
               created_at: new Date().toISOString(),
@@ -357,7 +357,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [checkSession, setErrorState, setLoadingState]);
 
-  const updateProfile = useCallback(async (profile: Partial<Profile>) => {
+  // Set up profile deletion detection
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // Set up a channel to listen for profile deletions
+    const channel = supabase
+      .channel('profile_deletions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        async () => {
+          console.log('Profile deleted, signing out...');
+          // Use the existing logout function
+          await logout();
+          
+          // Show a message to the user
+          if (typeof window !== 'undefined') {
+            alert('Su perfil ha sido eliminado. Ha sido desconectado del sistema.');
+          }
+        }
+      )
+      .subscribe();
+
+    // Clean up the subscription when the component unmounts or user changes
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user?.id, logout]);
+
+  const updateProfile = useCallback(async (profile: Partial<Profile>): Promise<User | null> => {
     if (!user) {
       throw new Error('No user is currently signed in');
     }
