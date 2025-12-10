@@ -14,12 +14,15 @@ import { Label } from '@/components/ui/label'
 import { usePlatformSettings } from '@/hooks/usePlatformSettings'
 import { fetchPayoutLogs, triggerManualPayout } from '@/services/payoutLogs'
 import { UserManagement } from '@/components/admin/UserManagement'
+import Header from '@/components/Header';
 
 export default function AdminDashboard() {
   return (
+    <div className="w-full">
+    <Header />
     <RequireAdmin>
       <div className="min-h-screen bg-slate-50 pt-20 pb-10">
-        <div className="max-w-6xl mx-auto px-4 space-y-8">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <header>
             <Badge variant="outline" className="mb-2">
               Panel interno
@@ -45,6 +48,7 @@ export default function AdminDashboard() {
         </div>
       </div>
     </RequireAdmin>
+    </div>
   )
 }
 

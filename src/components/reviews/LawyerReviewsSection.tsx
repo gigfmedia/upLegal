@@ -31,20 +31,38 @@ export function LawyerReviewsSection({ lawyerId, lawyerName }: LawyerReviewsSect
     try {
       setIsLoading(true);
       
-      // Load reviews
-      const reviewsData = await ratingService.getRatingsByLawyer(lawyerId);
-      setReviews(reviewsData);
+      // Load only approved reviews
+      const { data: reviewsData, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('lawyer_id', lawyerId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false });
 
-      // Load rating stats
-      const stats = await ratingService.getLawyerRatingStats(lawyerId);
-      setRatingStats(stats);
+      if (error) throw error;
+      
+      setReviews(reviewsData || []);
 
-      // Calculate distribution
-      const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      reviewsData.forEach(review => {
-        distribution[review.rating] = (distribution[review.rating] || 0) + 1;
-      });
-      setRatingDistribution(distribution);
+      // Calculate stats from approved reviews only
+      if (reviewsData && reviewsData.length > 0) {
+        const totalRating = reviewsData.reduce((sum, review) => sum + review.rating, 0);
+        const averageRating = totalRating / reviewsData.length;
+        
+        setRatingStats({
+          average: parseFloat(averageRating.toFixed(1)),
+          count: reviewsData.length
+        });
+
+        // Calculate distribution
+        const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        reviewsData.forEach(review => {
+          distribution[review.rating] = (distribution[review.rating] || 0) + 1;
+        });
+        setRatingDistribution(distribution);
+      } else {
+        setRatingStats({ average: 0, count: 0 });
+        setRatingDistribution({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+      }
     } catch (error) {
       console.error('Error loading reviews:', error);
     } finally {

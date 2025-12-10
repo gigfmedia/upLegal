@@ -194,6 +194,21 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                         <span>Ir al Panel</span>
                       </DropdownMenuItem>
 
+                      {(userRole === 'admin' || 
+                        user?.user_metadata?.is_admin === true || 
+                        user?.is_admin === true ||
+                        user?.email?.toLowerCase() === 'gigfmedia@icloud.com') && (
+                        <DropdownMenuItem 
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            handleNavigation('/admin/reviews');
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          <span>Admin Reviews</span>
+                        </DropdownMenuItem>
+                      )}
+
                       {userRole === 'lawyer' && (
                         <>
                           <DropdownMenuItem 

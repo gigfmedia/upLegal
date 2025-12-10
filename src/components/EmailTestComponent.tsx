@@ -17,7 +17,7 @@ export function EmailTestComponent() {
         body: {
           clientEmail: "gigfmedia@icloud.com",
           clientName: "Test Usuario",
-          lawyerName: "Dr. Juan Pérez",
+          lawyerName: "Juan Pérez",
           lawyerEmail: "abogado@test.com",
           appointmentDate: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Santiago'), 'yyyy-MM-dd'),
           appointmentTime: format(toZonedTime(new Date(Date.now() + 86400000), 'America/Santiago'), 'HH:mm'),
@@ -25,6 +25,7 @@ export function EmailTestComponent() {
           status: "scheduled",
           meetingDetails: "Reunión vía Google Meet - Link incluido abajo",
           notes: "Este es un email de prueba del sistema de notificaciones",
+          contactMethod: "videollamada",
           sendToLawyer: false,
           meetLink: "https://meet.google.com/meet-1234-abcd"
         }

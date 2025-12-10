@@ -93,6 +93,20 @@ export default function PaymentSuccess() {
               }
             }
             
+            // Obtener el meet_link del perfil del abogado
+            let meetLink = '';
+            if (appointmentData.lawyerId) {
+              const { data: lawyerProfile } = await supabase
+                .from('profiles')
+                .select('meet_link')
+                .eq('id', appointmentData.lawyerId)
+                .single();
+                
+              if (lawyerProfile?.meet_link) {
+                meetLink = lawyerProfile.meet_link;
+              }
+            }
+
             // Send confirmation email
             await supabase.functions.invoke('send-appointment-email', {
               body: {
@@ -108,7 +122,8 @@ export default function PaymentSuccess() {
                 meetingDetails: `Duración: ${appointmentData.duration} minutos`,
                 notes: appointmentData.description,
                 contactMethod: appointmentData.contactMethod || 'videollamada',
-                sendToLawyer: true // Send to both client and lawyer
+                sendToLawyer: true, // Send to both client and lawyer
+                meetLink: meetLink // Pass the meet link to the email function
               }
             });
             

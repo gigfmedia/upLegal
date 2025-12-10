@@ -4,6 +4,17 @@ import { getSupabaseClient } from '@/lib/supabaseClient';
 import { validateAndRefreshSession, refreshSession } from '@/lib/sessionUtils';
 import { handleAuthError } from '@/lib/authErrorHandler';
 
+// Extend the User type to include admin status
+declare module '@supabase/supabase-js' {
+  interface User {
+    is_admin?: boolean;
+    user_metadata?: {
+      is_admin?: boolean;
+      [key: string]: any;
+    };
+  }
+}
+
 // Define the shape of our auth state
 export interface AuthState {
   user: User | null;
@@ -48,6 +59,22 @@ export const useAuthState = (): AuthState => {
       updateState({ isLoading: true, error: null });
       
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+      
+      // If we have a session, enhance the user with admin status
+      if (currentSession?.user) {
+        // Check if user is admin by email or user_metadata
+        const isAdmin = currentSession.user.email?.toLowerCase() === 'gigfmedia@icloud.com' || 
+                       currentSession.user.user_metadata?.is_admin === true;
+        
+        // Add is_admin to user object
+        currentSession.user.is_admin = isAdmin;
+        
+        // Also ensure user_metadata exists and has is_admin
+        currentSession.user.user_metadata = {
+          ...currentSession.user.user_metadata,
+          is_admin: isAdmin
+        };
+      }
       
       if (error) throw error;
       

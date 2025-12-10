@@ -28,7 +28,8 @@ serve(async (req) => {
       meetingDetails, 
       notes,
       sendToLawyer = false,
-      isLawyerEmail = false
+      isLawyerEmail = false,
+      meetLink: providedMeetLink = null // Nuevo parámetro para el enlace de Google Meet
     } = await req.json();
 
     // Initialize Resend with API key
@@ -87,6 +88,20 @@ serve(async (req) => {
     const contactMethod = meetingDetails?.includes('Videollamada') ? 'Videollamada' : 'Llamada telefónica';
     const duration = meetingDetails?.match(/Duración: (\d+) minutos/)?.[1] || '60';
     
+    // Obtener el meet_link del perfil del abogado si no se proporcionó
+    let meetLink = providedMeetLink;
+    if (!meetLink && lawyerId) {
+      const { data: lawyerProfile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('meet_link')
+        .eq('id', lawyerId)
+        .single();
+      
+      if (!profileError && lawyerProfile?.meet_link) {
+        meetLink = lawyerProfile.meet_link;
+      }
+    }
+    
     const emailHtml = `
       <!DOCTYPE html>
       <html>
@@ -120,7 +135,14 @@ serve(async (req) => {
             
             <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
               ${contactMethod === 'Videollamada' 
-                ? 'Recibirás un correo con el enlace para unirte a la videollamada 15 minutos antes de la cita.'
+                ? meetLink 
+                  ? `La reunión se realizará a través de Google Meet. Puedes unirte a la reunión haciendo clic en el siguiente enlace:<br><br>
+                    <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 10px 0;">
+                      Unirse a la reunión
+                    </a>
+                    <br><br>O copia y pega este enlace en tu navegador:<br>
+                    <span style="word-break: break-all; color: #2563eb;">${meetLink}</span>`
+                  : 'Recibirás un correo con el enlace para unirte a la videollamada 15 minutos antes de la cita.'
                 : 'El abogado te llamará al número proporcionado al momento de la cita.'
               }
             </p>
@@ -175,12 +197,24 @@ serve(async (req) => {
 
     // Si sendToLawyer es true y tenemos el email del abogado, también enviamos al abogado
     if (sendToLawyer && lawyerEmail) {
+      // Crear una versión del correo para el abogado
+      let lawyerEmailHtml = emailHtml
+        .replace('¡Tu cita ha sido agendada con éxito!', 'Tienes una nueva cita')
+        .replace(`Hola ${clientName}`, `Hola ${lawyerName}`);
+      
+      // Si es una videollamada y hay un meet_link, asegurarse de que el abogado lo vea
+      if (contactMethod === 'Videollamada' && meetLink) {
+        lawyerEmailHtml = lawyerEmailHtml.replace(
+          'La reunión se realizará a través de Google Meet.',
+          `La reunión se realizará a través de Google Meet usando tu enlace personalizado.`
+        );
+      }
+      
       await sendEmailWithRetry({
         from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
         to: lawyerEmail,  // Correo real del abogado
         subject: `Nueva cita con ${clientName}`,
-        html: emailHtml.replace('¡Tu cita ha sido agendada con éxito!', 'Tienes una nueva cita')
-                     .replace(`Hola ${clientName}`, `Hola ${lawyerName}`),
+        html: lawyerEmailHtml,
       });
     }
 

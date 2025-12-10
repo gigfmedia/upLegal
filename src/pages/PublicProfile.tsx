@@ -49,7 +49,8 @@ import {
   DollarSign,
   CheckCircle,
   Heart,
-  Gavel
+  Gavel,
+  UserCheck
 } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
 
@@ -114,6 +115,7 @@ interface LawyerProfile {
   university?: string;
   study_start_year?: string | number | null;
   study_end_year?: string | number | null;
+  created_at?: string; // Fecha de creación del perfil
   [key: string]: unknown; // For any additional properties
 }
 
@@ -1118,18 +1120,23 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     <div className="w-full">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 w-full sm:w-auto">
-                          <div className="flex items-center">
-                              {profileData.experience.length > 0 ? (
-                                profileData.experience.map((exp, index) => (
-                                  <div key={index}>
-                                    {/*<Clock className="h-4 w-4 mr-1 flex-shrink-0" />*/}
-                                    <span>{exp}</span>
+                          <div className="flex items-center gap-6">
+                            {profileData.experience.length > 0 ? (
+                              <>
+                                <div className="flex items-center">
+                                  <Briefcase className="h-4 w-4 mr-1.5 text-gray-500 flex-shrink-0" />
+                                  <span>{profileData.experience[0]}</span>
+                                </div>
+                                {lawyer?.created_at && (
+                                  <div className="flex items-center">
+                                    <UserCheck className="h-4 w-4 mr-1 flex-shrink-0" />
+                                    <span>Miembro desde {new Date(lawyer.created_at).getFullYear()}</span>
                                   </div>
-                                ))
-                              ) : (
-                                <p className="text-gray-500">No se ha proporcionado información de experiencia</p>
-                              )}
-                            
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-gray-500">No se ha proporcionado información de experiencia</p>
+                            )}
                           </div>
                           <div className="flex items-center min-w-[160px]">
                             <Clock className="h-4 w-4 mr-1 flex-shrink-0" />

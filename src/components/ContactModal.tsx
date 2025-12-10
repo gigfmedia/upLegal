@@ -58,13 +58,16 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     
     const { data, error } = await supabase
       .from('consultations')
-      .select('id')
+      .select('id, status')
       .eq('client_id', user.id)
       .eq('lawyer_id', lawyerId)
+      .in('status', ['completed', 'confirmed', 'paid'])
       .limit(1);
 
     if (!error && data && data.length > 0) {
       setHasUsedFirstConsultation(true);
+    } else {
+      setHasUsedFirstConsultation(false);
     }
   }, [user, lawyerId]);
 
@@ -87,21 +90,17 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     }
   }, [contactFeeClp, lawyerId]);
 
-  // SOLUCIÓN 2: Resetear estados cuando se abre el modal
+  // Resetear estados cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
       // Resetear y actualizar cuando el modal se abre
       setActualContactFee(contactFeeClp);
       setHasUsedFirstConsultation(false);
       
-      // Volver a verificar todo
-      const checkEverything = async () => {
-        await checkFirstConsultationStatus();
-        await getUpdatedContactFee();
-      };
-      
+      // Verificar el estado de la primera consulta
       if (user) {
-        checkEverything();
+        checkFirstConsultationStatus();
+        getUpdatedContactFee();
       }
     }
   }, [isOpen, contactFeeClp, user, lawyerId, checkFirstConsultationStatus, getUpdatedContactFee]);
@@ -496,6 +495,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       subject: "",
       message: ""
     });
+    setHasUsedFirstConsultation(false);
     onClose();
   };
 
@@ -662,7 +662,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Procesando...
+                    Redirigiendo al Checkout...
                   </>
                 ) : (
                   `Pagar ${formatCLP(pricing.total)}`

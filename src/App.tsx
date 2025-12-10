@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-route
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
+import { EmailTestComponent } from '@/components/EmailTestComponent';
 
 // UI Components
 import { Toaster } from '@/components/ui/toaster';
@@ -45,6 +46,7 @@ const DashboardPayments = lazy(() => import('./pages/DashboardPayments'));
 const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
 const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
@@ -164,6 +166,14 @@ const AppContent = () => {
                   </RequireAdmin>
                 }
               />
+              <Route
+                path="/admin/reviews"
+                element={
+                  <RequireAdmin>
+                    <AdminReviewsPage />
+                  </RequireAdmin>
+                }
+              />
               
               {/* Legacy route for backward compatibility */}
               <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
@@ -228,8 +238,14 @@ const AppContent = () => {
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+              <Route path="test-email" element={
+            <div className="container mx-auto p-4">
+              <h1 className="text-2xl font-bold mb-4">Prueba de Envío de Correo</h1>
+              <EmailTestComponent />
+            </div>
+          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
           </Suspense>
         </main>
         <Footer />
