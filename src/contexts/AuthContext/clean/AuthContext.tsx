@@ -16,6 +16,7 @@ export interface UserData {
   firstName: string;
   lastName: string;
   role: UserRole;
+  rut?: string; // Optional RUT for lawyer registration
 }
 
 export // Interface for database profile with all fields
@@ -174,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             first_name: userData.firstName.trim(),
             last_name: userData.lastName.trim(),
             role: userData.role,
+            rut: userData.rut || null,
             email_redirect_to: `${window.location.origin}/auth/callback`,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -203,64 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { user: null, error };
       }
       
-      // Create user profile in the database
-      if (data.user) {
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: data.user.id,
-              user_id: data.user.id,
-              email: data.user.email,
-              first_name: userData.firstName.trim(),
-              last_name: userData.lastName.trim(),
-              display_name: `${userData.firstName.trim()} ${userData.lastName.trim()}`.trim(),
-              profile_setup_completed: userData.role === 'lawyer' ? false : true,
-              updated_at: new Date().toISOString(),
-              created_at: new Date().toISOString(),
-              role: userData.role,
-              // Include other required fields with default values
-              bio: '',
-              avatar_url: '',
-              phone: '',
-              website: '',
-              location: '',
-              specialties: [],
-              languages: [],
-              verified: false,
-              response_time: '24h',
-              satisfaction_rate: 0,
-              zoom_link: '',
-              profile_visible: true,
-              show_online_status: true,
-              // Asegurarse de que el RUT se guarde correctamente
-              rut: userData.rut || null,
-              pjud_verified: false,
-              bar_association_number: null,
-              experience_years: null,
-              education: null,
-              university: null,
-              settings: {},
-              notifications: { email: true, push: true },
-              preferences: { theme: 'light', language: 'es' },
-              metadata: { 
-                signup_method: 'email', 
-                signup_date: new Date().toISOString(),
-                first_name: userData.firstName.trim(),
-                last_name: userData.lastName.trim()
-              }
-            });
-
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            // Don't fail the entire signup if profile creation fails
-            // The user can update their profile later
-          }
-        } catch (profileError) {
-          console.error('Unexpected error creating profile:', profileError);
-          // Continue with signup even if profile creation fails
-        }
-      }
+      // Profile creation is now handled automatically by Supabase triggers:
+      // 1. Supabase auto-creates profile from auth.users
+      // 2. Our custom trigger (fix_profile_after_signup) updates it with correct data from user metadata
       
       // The useAuth hook will handle updating the user and session
       await checkSession();

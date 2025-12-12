@@ -315,28 +315,23 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           return;
         }
 
-        // Check if RUT is already registered and verified
-        const cleanRut = formData.rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+        // Check if RUT is already registered
         const { data: existingLawyer, error: checkError } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('rut', cleanRut)
-          .eq('pjud_verified', true)
+          .select('id, first_name, last_name, pjud_verified')
+          .eq('rut', formData.rut) // Search with format (e.g., "17.598.658-8")
           .maybeSingle();
 
         if (checkError) {
           console.error('Error checking duplicate RUT:', checkError);
-          // We continue if there's an error checking, assuming it might be RLS or network, 
-          // but ideally we should probably block or warn. 
-          // For now, let's log and proceed, or maybe throw? 
-          // If RLS blocks reading other profiles, this will always be null/error.
-          // Let's assume we can read public profiles or at least check existence if we have a function.
-          // If we can't read, this check is useless without an RPC.
-          // Let's try to proceed, but if we really want to block, we should throw.
+          // Continue if there's an error - might be RLS or network issue
         }
 
         if (existingLawyer) {
-          throw new Error('Este RUT ya está registrado y verificado en nuestra plataforma.');
+          const lawyerName = existingLawyer.first_name && existingLawyer.last_name 
+            ? `${existingLawyer.first_name} ${existingLawyer.last_name}` 
+            : 'otro usuario';
+          throw new Error(`Este RUT ya está registrado por ${lawyerName} en nuestra plataforma.`);
         }
       }
       
@@ -394,13 +389,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         }
         
         // Call signup
+        
         const signupResponse = await signup(
           formData.email, 
           formData.password, 
           {
             firstName: formData.firstName,
             lastName: formData.lastName,
-            role: formData.role
+            role: formData.role,
+            rut: formData.role === 'lawyer' ? formData.rut : undefined
           }
         );
         
@@ -777,7 +774,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={rutVerificationStatus === 'verifying'}
                   onClick={async () => {
                     try {
                       setRutVerificationStatus('verifying');
