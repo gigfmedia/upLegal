@@ -39,14 +39,15 @@ export function ProfileAvatarUpload({
       const file = event.target.files[0];
       
       // Validate file type
+      // Allow any image type
       if (!file.type.startsWith('image/')) {
         throw new Error('El archivo debe ser una imagen');
       }
       
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        throw new Error('La imagen no debe superar los 5MB');
+        throw new Error('La imagen no debe superar los 10MB');
       }
 
       // Use the storage utility to handle the upload
@@ -63,7 +64,7 @@ export function ProfileAvatarUpload({
       console.error('Error uploading avatar:', error);
       toast({
         title: 'Error',
-        description: 'No se pudo cargar la imagen. Intenta de nuevo.',
+        description: error instanceof Error ? error.message : 'No se pudo cargar la imagen. Intenta de nuevo.',
         variant: 'destructive',
       });
     } finally {
