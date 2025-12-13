@@ -223,6 +223,20 @@ app.post('/verify-lawyer', async (req, res) => {
     const firstRow = rows.first();
     const cols = firstRow.find('td');
     
+    // Check for suspension (Sanción Ejecutoriada Permanente)
+    const rowText = firstRow.text();
+    if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
+      return res.json({
+        verified: false,
+        message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
+        details: {
+          rut: cleanRut,
+          nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+          reason: 'Abogado suspendido indefinidamente'
+        }
+      });
+    }
+
     let lawyerData = {
       rut: cleanRut,
       nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
