@@ -397,7 +397,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             firstName: formData.firstName,
             lastName: formData.lastName,
             role: formData.role,
-            rut: formData.role === 'lawyer' ? formData.rut : undefined
+            rut: formData.role === 'lawyer' ? formData.rut : undefined,
+            pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false
           }
         );
         

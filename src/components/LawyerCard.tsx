@@ -359,7 +359,7 @@ export function LawyerCard({
           {buttonsDisabled && (
             <p className="text-xs text-gray-500 mt-2 text-center">
               {isOwnProfile 
-                ? 'No puedes contactar o agendar contigo mismo' 
+                ? 'No puedes contactar ni agendar contigo mismo' 
                 : 'Este abogado no está verificado o su perfil está incompleto'}
             </p>
           )}

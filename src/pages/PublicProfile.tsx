@@ -1210,7 +1210,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       </div>
                       {currentUser?.id === lawyer?.user_id && (
                         <p className="text-xs text-gray-500 text-center mt-1">
-                          No puedes contactar o agendar contigo mismo
+                          No puedes contactar ni agendar contigo mismo
                         </p>
                       )}
                     </div>

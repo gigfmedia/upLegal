@@ -17,6 +17,7 @@ export interface UserData {
   lastName: string;
   role: UserRole;
   rut?: string; // Optional RUT for lawyer registration
+  pjudVerified?: boolean; // Optional verification status
 }
 
 export // Interface for database profile with all fields
@@ -176,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             last_name: userData.lastName.trim(),
             role: userData.role,
             rut: userData.rut || null,
+            pjud_verified: userData.pjudVerified || false,
             email_redirect_to: `${window.location.origin}/auth/callback`,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
@@ -376,7 +378,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if ('university' in profile) updates.university = safeTrim(profile.university) || null;
       if ('bar_association_number' in profile) updates.bar_association_number = safeTrim(profile.bar_association_number) || null;
       if ('rut' in profile) updates.rut = safeTrim(profile.rut) || null;
-      if ('zoom_link' in profile) updates.zoom_link = safeTrim(profile.zoom_link) || null;
       if ('avatar_url' in profile) updates.avatar_url = safeTrim(profile.avatar_url) || null;
       if ('pjud_verified' in profile) updates.pjud_verified = Boolean(profile.pjud_verified);
       
