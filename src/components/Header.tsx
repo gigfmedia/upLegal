@@ -22,6 +22,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const navigate = useNavigate();
   const location = useLocation();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const isActive = (path: string) => {
     return location.pathname === path || 
@@ -34,31 +35,38 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   useEffect(() => {
-    const getUserRole = async () => {
+    const getUserProfile = async () => {
       try {
         if (user?.id) {
           // First check the profiles table
           const { data: profile, error } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, first_name, last_name')
             .eq('id', user.id)
             .single();
           
-          if (!error && profile?.role) {
+          if (!error && profile) {
             setUserRole(profile.role);
+            if (profile.first_name || profile.last_name) {
+              setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim());
+            }
           } else {
             // Fallback to user_metadata if profile not found
             setUserRole(user.user_metadata?.role || 'client');
+            const metaName = user.user_metadata?.first_name 
+              ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
+              : user.user_metadata?.name;
+            setUserName(metaName || null);
           }
         }
       } catch (error) {
-        console.error('Error getting user role:', error);
+        console.error('Error getting user profile:', error);
         setUserRole(user?.user_metadata?.role || 'client');
       }
     };
 
     if (user) {
-      getUserRole();
+      getUserProfile();
     }
   }, [user]);
 
@@ -168,7 +176,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
                           <p className="text-sm font-medium leading-none">
-                            {user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'}
+                            {userName || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'}
                           </p>
                           <p className="text-xs leading-none text-muted-foreground truncate max-w-[200px]">
                             {user.email}

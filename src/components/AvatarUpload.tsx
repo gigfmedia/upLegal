@@ -85,8 +85,8 @@ export function AvatarUpload({ userId, currentAvatarUrl, onUpload }: AvatarUploa
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw new Error('Error al subir la imagen. Por favor, inténtalo de nuevo.');
+        console.error('Upload error details:', uploadError);
+        throw new Error(`Error al subir la imagen: ${uploadError.message}`);
       }
 
       // 3. Get the public URL
@@ -201,7 +201,7 @@ export function AvatarUpload({ userId, currentAvatarUrl, onUpload }: AvatarUploa
     <div className="relative">
       <input
         type="file"
-        accept="image/png, image/jpeg, image/webp"
+        accept="image/*"
         onChange={handleUpload}
         className="hidden"
         id="avatar-upload"

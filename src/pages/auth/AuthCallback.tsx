@@ -21,7 +21,8 @@ export default function AuthCallback() {
 
         if (session) {
           // User is authenticated, redirect to home
-          navigate('/');
+          // User is authenticated, but we redirect to home with login modal open as requested
+          navigate('/?login=true');
         } else {
           // No session, redirect to home with login modal open
           navigate('/?login=true');
