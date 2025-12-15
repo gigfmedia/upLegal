@@ -29,7 +29,8 @@ serve(async (req) => {
       notes,
       sendToLawyer = false,
       isLawyerEmail = false,
-      meetLink: providedMeetLink = null // Nuevo parámetro para el enlace de Google Meet
+      meetLink: providedMeetLink = null, // Nuevo parámetro para el enlace de Google Meet
+      contactMethod: passedContactMethod // Extract contactMethod from request
     } = await req.json();
 
     // Initialize Resend with API key
@@ -85,8 +86,26 @@ serve(async (req) => {
       });
     };
 
-    const contactMethod = meetingDetails?.includes('Videollamada') ? 'Videollamada' : 'Llamada telefónica';
+    // Normalize contact method
+    const contactMethod = passedContactMethod || (meetingDetails?.includes('Videollamada') ? 'videollamada' : 'llamada');
+    const isVideoCall = contactMethod.toLowerCase().includes('video');
+    const displayContactMethod = isVideoCall ? 'Videollamada' : 'Llamada telefónica';
+
     const duration = meetingDetails?.match(/Duración: (\d+) minutos/)?.[1] || '60';
+    
+    // Map service types to readable names
+    const getServiceLabel = (type: string) => {
+      const map: Record<string, string> = {
+        'legal-advice': 'Asesoría Legal',
+        'consultation': 'Consulta Inicial',
+        'initial_consultation': 'Consulta Inicial',
+        'document-review': 'Revisión de Documentos',
+        'representation': 'Representación Legal'
+      };
+      return map[type] || type || 'Servicio Legal';
+    };
+
+    const displayServiceType = getServiceLabel(serviceType);
     
     // Obtener el meet_link del perfil del abogado si no se proporcionó
     let meetLink = providedMeetLink;
@@ -125,16 +144,16 @@ serve(async (req) => {
             
             <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0; border: 1px solid #e2e8f0;">
               <p style="margin: 10px 0; color: #101820;"><strong>Abogado:</strong> ${lawyerName}</p>
-              <p style="margin: 10px 0; color: #101820;"><strong>Tipo de servicio:</strong> ${serviceType === 'legal-advice' ? 'Asesoría Legal' : 'Otro servicio'}</p>
+              <p style="margin: 10px 0; color: #101820;"><strong>Tipo de servicio:</strong> ${displayServiceType}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Fecha:</strong> ${formatDate(appointmentDate)}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Hora:</strong> ${appointmentTime}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Duración:</strong> ${duration} minutos</p>
-              <p style="margin: 10px 0; color: #101820;"><strong>Modalidad:</strong> ${contactMethod}</p>
+              <p style="margin: 10px 0; color: #101820;"><strong>Modalidad:</strong> ${displayContactMethod}</p>
               ${notes ? `<p style="margin: 10px 0; color: #101820;"><strong>Detalles:</strong> ${notes}</p>` : ''}
             </div>
             
             <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
-              ${contactMethod === 'Videollamada' 
+              ${isVideoCall 
                 ? meetLink 
                   ? `La reunión se realizará a través de Google Meet. Puedes unirte a la reunión haciendo clic en el siguiente enlace:<br><br>
                     <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 10px 0;">

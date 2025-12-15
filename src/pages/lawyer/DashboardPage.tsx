@@ -1,26 +1,32 @@
+import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
+import { useToast } from '@/hooks/use-toast';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { User, Calendar, Briefcase, MessageSquare } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface DashboardCounters {
-  todayAppointments: number;
-  activeServices: number;
-  newConsultations: number;
-  lastUpdated: Date;
-}
-
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, services, completionPercentage } = useProfile(user?.id);
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  
+  interface DashboardCounters {
+    todayAppointments: number;
+    activeServices: number;
+    newConsultations: number;
+    lastUpdated: Date;
+  }
+
   const [counters, setCounters] = useState<DashboardCounters>({
     todayAppointments: 0,
     activeServices: 0,
@@ -29,6 +35,18 @@ export default function LawyerDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get('google_auth') === 'success') {
+      toast({
+        title: "Conexión Exitosa",
+        description: "Tu Google Calendar se ha conectado correctamente.",
+        className: "bg-green-50 border-green-200 text-green-900",
+      });
+      // Clean up the URL
+      navigate('/lawyer/dashboard', { replace: true });
+    }
+  }, [searchParams, toast, navigate]);
 
   useEffect(() => {
     const fetchCounters = async () => {
@@ -108,6 +126,7 @@ export default function LawyerDashboardPage() {
 
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+      {/* ... existing header and counters ... */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Panel de Abogado</h2>
@@ -119,6 +138,7 @@ export default function LawyerDashboardPage() {
 
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {/* ... existing counter cards ... */}
           <Card 
             className="hover:bg-accent/50 transition-colors cursor-pointer" 
             onClick={() => handleNavigateToTab('appointments')}
@@ -199,46 +219,51 @@ export default function LawyerDashboardPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Actividad Reciente</CardTitle>
-              <CardDescription>Últimas acciones en tu cuenta</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start pb-4 last:pb-0 border-b last:border-b-0">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <Calendar className="h-5 w-5" />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Actividad Reciente</CardTitle>
+                <CardDescription>Últimas acciones en tu cuenta</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-start pb-4 last:pb-0 border-b last:border-b-0">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">Nueva cita programada</p>
+                      <p className="text-sm text-muted-foreground">Consulta inicial con Juan Pérez para el 25 de Octubre</p>
+                      <p className="text-xs text-muted-foreground">Hace 2 horas</p>
+                    </div>
                   </div>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">Nueva cita programada</p>
-                    <p className="text-sm text-muted-foreground">Consulta inicial con Juan Pérez para el 25 de Octubre</p>
-                    <p className="text-xs text-muted-foreground">Hace 2 horas</p>
+                  <div className="flex items-start pb-4 last:pb-0 border-b last:border-b-0">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                      <Briefcase className="h-5 w-5" />
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">Servicio actualizado</p>
+                      <p className="text-sm text-muted-foreground">Has actualizado los detalles de tu servicio de Derecho Laboral</p>
+                      <p className="text-xs text-muted-foreground">Ayer a las 14:30</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                      <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">Nuevo mensaje</p>
+                      <p className="text-sm text-muted-foreground">Tienes un nuevo mensaje de María González</p>
+                      <p className="text-xs text-muted-foreground">Ayer a las 10:15</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start pb-4 last:pb-0 border-b last:border-b-0">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                    <Briefcase className="h-5 w-5" />
-                  </div>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">Servicio actualizado</p>
-                    <p className="text-sm text-muted-foreground">Has actualizado los detalles de tu servicio de Derecho Laboral</p>
-                    <p className="text-xs text-muted-foreground">Ayer a las 14:30</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                    <MessageSquare className="h-5 w-5" />
-                  </div>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">Nuevo mensaje</p>
-                    <p className="text-sm text-muted-foreground">Tienes un nuevo mensaje de María González</p>
-                    <p className="text-xs text-muted-foreground">Ayer a las 10:15</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            {/* Google Calendar Integration */}
+            <GoogleCalendarConnect />
+          </div>
 
           <Card>
             <CardHeader>

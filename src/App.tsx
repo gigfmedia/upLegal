@@ -230,7 +230,7 @@ const AppContent = () => {
                 <Route path="notifications" element={<NotificationSettingsPage />} />
               </Route>
               
-              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/failure" element={<PaymentFailure />} />
               <Route path="/payment-canceled" element={<PaymentCanceled />} />
               <Route path="/verify-email" element={<EmailVerification />} />

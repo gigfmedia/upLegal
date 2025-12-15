@@ -340,10 +340,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const [isLoadingLawyers, setIsLoadingLawyers] = useState(false);
   const [specialties, setSpecialties] = useState<string[]>(SPECIALTIES);
   const [lawyerAvailability, setLawyerAvailability] = useState<LawyerAvailabilityMap | null>(null);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<Array<{ value: string; label: string }>>([]);
   const [platformSettings, setPlatformSettings] = useState(getDefaultPlatformSettings());
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
   
   // Normalized availability for the selected lawyer
   const normalizedAvailability = useMemo(
@@ -421,6 +422,42 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       address: "" // Add address field for presential meetings
     };
   });
+
+  const [googleBusySlots, setGoogleBusySlots] = useState<{ start: string; end: string }[]>([]);
+
+  // Fetch Google Busy Slots
+  useEffect(() => {
+    const fetchGoogleBusySlots = async () => {
+      if (!formData.date || !lawyerId) return;
+
+      try {
+        const date = parseLocalDateString(formData.date);
+        if (!date) return;
+
+        const start = new Date(date);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setHours(23, 59, 59, 999);
+
+        const { data, error } = await supabase.functions.invoke('get-google-busy-slots', {
+          body: {
+            lawyerId: lawyerId,
+            startDate: start.toISOString(),
+            endDate: end.toISOString(),
+          }
+        });
+
+        if (error) throw error;
+        setGoogleBusySlots(data.busySlots || []);
+      } catch (error) {
+        console.error('Error fetching Google busy slots:', error);
+        // Don't block booking if this fails, just log it
+        setGoogleBusySlots([]);
+      }
+    };
+
+    fetchGoogleBusySlots();
+  }, [formData.date, lawyerId]);
 
   // CORRECCIÓN: Inicializar selectedLawyerData cuando se abre el modal desde una tarjeta
   useEffect(() => {
@@ -544,68 +581,85 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   }, [user]);
 
   // Helper function to generate time slots
-  const generateTimeSlots = useCallback((startTime: string, endTime: string, duration: number, bookedSlots: string[] = []) => {
-    const slots: Array<{value: string, label: string}> = [];
-    
-    try {
-      // Parse start and end times
-      const [startHour, startMinute] = startTime.split(':').map(Number);
-      const [endHour, endMinute] = endTime.split(':').map(Number);
-      
-      // Validate inputs
-      if (isNaN(startHour) || isNaN(startMinute) || isNaN(endHour) || isNaN(endMinute)) {
-        console.error('Invalid time format');
-        return [];
-      }
+  const generateTimeSlots = useCallback(() => {
+    // Debug logging
+    console.log('Generating time slots...', { 
+      hasAvailability: !!lawyerAvailability, 
+      date: formData?.date,
+      googleBusy: googleBusySlots 
+    });
 
-      let currentHour = startHour;
-      let currentMinute = startMinute;
-      
-      // Generate slots until we reach or pass the end time
-      while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
-        const slotStart = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-        
-        // Calculate end time of this slot
-        let slotEndHour = currentHour;
-        let slotEndMinute = currentMinute + duration;
-        
-        // Handle hour rollover
-        while (slotEndMinute >= 60) {
-          slotEndHour += 1;
-          slotEndMinute -= 60;
-        }
-        
-        const slotEnd = `${String(slotEndHour).padStart(2, '0')}:${String(slotEndMinute).padStart(2, '0')}`;
-        
-        // Check if this slot is booked
-        const isBooked = bookedSlots.some(booked => {
-          if (!booked) return false;
-          const [bookedHour, bookedMinute] = booked.split(':').map(Number);
-          return currentHour === bookedHour && currentMinute === bookedMinute;
-        });
-        
-        // Only add the slot if it doesn't go past the end time and is not booked
-        if ((slotEndHour < endHour || (slotEndHour === endHour && slotEndMinute <= endMinute)) && !isBooked) {
-          slots.push({
-            value: slotStart,
-            label: `${slotStart} - ${slotEnd}`
-          });
-        }
-        
-        // Move to the next slot
-        currentMinute += duration;
-        while (currentMinute >= 60) {
-          currentHour += 1;
-          currentMinute -= 60;
-        }
-      }
-      
-      return slots;
-    } catch (error) {
-      console.error('Error generating time slots:', error);
+    if (!lawyerAvailability || !formData.date) return [];
+
+    const selectedDate = parseLocalDateString(formData.date);
+    if (!selectedDate) return [];
+
+    const dayOfWeek = selectedDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Map to Spanish day names used in ManageAvailability
+    const dayMap = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const dayName = dayMap[dayOfWeek];
+
+    // Availability is stored as { "Lunes": [true, false, ...], ... } mapping to hours 9:00-19:00
+    // We need to cast it to any because TypeScript thinks it's a string from the DB schema
+    const availabilityObj = lawyerAvailability as any;
+    
+    // Handle case sensitivity by trying to find the key
+    const key = Object.keys(availabilityObj).find(k => k.toLowerCase() === dayName.toLowerCase()) || dayName;
+    const dayAvailability = availabilityObj[key];
+
+    // If no availability data for this day or it's not an array (invalid format), return empty
+    if (!dayAvailability || !Array.isArray(dayAvailability)) {
+      console.log(`No availability array for ${dayName}`);
       return [];
     }
-  }, []);
+
+    const slots: { value: string; label: string }[] = [];
+    const HOURS_START = 9; // 9:00 AM
+
+    dayAvailability.forEach((isAvailable: boolean, index: number) => {
+      if (!isAvailable) return;
+
+      const hour = HOURS_START + index;
+      const timeString = `${String(hour).padStart(2, '0')}:00`;
+      
+      // Calculate end time (assuming 1 hour duration for simplicity based on the grid)
+      const endTimeString = `${String(hour + 1).padStart(2, '0')}:00`;
+
+      // Check if slot is already booked
+      const isBooked = bookedSlots.has(timeString);
+
+      // Check if slot overlaps with Google Busy Slots
+      let isGoogleBusy = false;
+      if (googleBusySlots.length > 0 && selectedDate) {
+        const slotStartDateTime = new Date(selectedDate);
+        slotStartDateTime.setHours(hour, 0, 0, 0);
+        const slotEndDateTime = new Date(selectedDate);
+        slotEndDateTime.setHours(hour + 1, 0, 0, 0);
+
+        isGoogleBusy = googleBusySlots.some(busy => {
+          const busyStart = new Date(busy.start);
+          const busyEnd = new Date(busy.end);
+          
+          // Check for overlap
+          return (
+            (slotStartDateTime >= busyStart && slotStartDateTime < busyEnd) || // Slot starts during busy
+            (slotEndDateTime > busyStart && slotEndDateTime <= busyEnd) ||   // Slot ends during busy
+            (slotStartDateTime <= busyStart && slotEndDateTime >= busyEnd)     // Slot encompasses busy
+          );
+        });
+      }
+
+      if (!isBooked && !isGoogleBusy) {
+        slots.push({
+          value: timeString,
+          label: `${timeString} - ${endTimeString}`
+        });
+      }
+    });
+
+    console.log(`Generated ${slots.length} available slots for ${dayName}`);
+    return slots;
+  }, [lawyerAvailability, formData.date, bookedSlots, googleBusySlots]);
 
   // Fetch lawyer availability
   const fetchLawyerAvailability = useCallback(async (lawyerId: string) => {
@@ -640,10 +694,28 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           availability = JSON.parse(availability);
         } catch (parseError) {
           console.error('Error parsing availability JSON:', parseError);
-          setLawyerAvailability(null);
-          return;
+          // If the data is "24/7" or empty, default to standard business hours (9am-6pm, Monday to Friday)
+          if (data.availability === '24/7' || !data.availability) {
+            console.log('No specific availability set, defaulting to standard business hours (9am-6pm, Monday to Friday)');
+            // Create boolean arrays for standard hours (9:00 to 19:00 = 10 slots)
+            // true means available. 
+            // We need to match the length expected by ManageAvailability (usually 11 slots for 9-19)
+            const standardDay = Array(11).fill(false).map((_, i) => i < 9); // 9 hours from 9am = until 6pm
+            
+            setLawyerAvailability({
+              lunes: [...standardDay],
+              martes: [...standardDay],
+              miercoles: [...standardDay],
+              jueves: [...standardDay],
+              viernes: [...standardDay],
+              sabado: Array(11).fill(false).map((_, i) => i < 5), // Until 2pm (5 hours)
+              domingo: Array(11).fill(false)
+            });
+            return;
+          }
         }
       }
+      
       setLawyerAvailability(availability);
 
     } catch (error) {
@@ -662,82 +734,52 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     }
   }, [selectedLawyer, lawyerId, fetchLawyerAvailability]);
 
-  // Function to fetch available time slots for a specific date and lawyer
+
+  // Fetch available slots when date or lawyer changes
   const fetchAvailableSlots = useCallback(async (dateString: string, lawyerId: string) => {
-    if (!lawyerId || !dateString) {
-      setAvailableSlots([]);
-      return;
-    }
-
+    if (!dateString || !lawyerId) return;
+    
+    setIsLoadingSlots(true);
     try {
-      setIsLoadingSlots(true);
-      setAvailableSlots([]);
+      // Note: generateTimeSlots now uses the state (lawyerAvailability, selectedDate, etc.)
+      // so we don't need to fetch anything here if the state is already set.
+      // However, we do need to ensure bookedSlots are up to date.
       
-      // Parse the date string to get day of week in Spanish
-      const date = parseLocalDateString(dateString);
-      if (!date) {
-        console.warn('Fecha inválida para disponibilidad:', dateString);
-        setAvailableSlots([]);
-        return;
-      }
-
-      if (date.getDay() === 0) {
-        setAvailableSlots([]);
-        return;
-      }
-      const spanishDayOfWeek = format(date, 'EEEE', { locale: es });
-
       const { data: bookedData, error: bookedError } = await supabase
-        .from('consultations')
-        .select('start_time')
+        .from('appointments') // Changed from consultations to appointments as that's the main table now
+        .select('appointment_time')
         .eq('lawyer_id', lawyerId)
-        .eq('appointment_date', dateString);
+        .eq('appointment_date', dateString)
+        .neq('status', 'cancelled'); // Don't count cancelled appointments
 
       if (bookedError) {
         console.error('Error fetching booked slots:', bookedError);
       }
 
       const bookedTimes = bookedData
-        ?.map((slot) => slot.start_time)
+        ?.map((slot) => {
+          // Normalize HH:mm:ss to HH:mm
+          return slot.appointment_time?.substring(0, 5);
+        })
         .filter((time): time is string => Boolean(time)) || [];
-
-      const availabilityFromProfile = getDayAvailabilityForDateString(dateString);
-      if (availabilityFromProfile && availabilityFromProfile.some(Boolean)) {
-        const slots = buildSlotsFromAvailability(availabilityFromProfile, bookedTimes);
-        setAvailableSlots(slots);
-        return;
-      }
-
-      // Try to get availability from lawyer_availability table
-      const { data: availability, error: availabilityError } = await supabase
-        .from('lawyer_availability')
-        .select('*')
-        .eq('lawyer_id', lawyerId)
-        .eq('day_of_week', spanishDayOfWeek)
-        .single();
-
-      if (availabilityError || !availability) {
-
-        const slots = generateTimeSlots('09:00', '18:00', 60, bookedTimes);
-        setAvailableSlots(slots);
-        return;
-      }
+        
+      setBookedSlots(new Set(bookedTimes));
       
-      const slots = generateTimeSlots(
-        availability.start_time || '09:00',
-        availability.end_time || '18:00',
-        availability.slot_duration || 60,
-        bookedTimes
-      );
+      // The actual slot generation happens in the useEffect that watches bookedSlots
       
-      setAvailableSlots(slots);
     } catch (error) {
       console.error('Error in fetchAvailableSlots:', error);
       setAvailableSlots([]);
     } finally {
       setIsLoadingSlots(false);
     }
-  }, [generateTimeSlots, getDayAvailabilityForDateString]);
+  }, []);
+
+  // Update available slots when dependencies change
+  useEffect(() => {
+    const slots = generateTimeSlots();
+    setAvailableSlots(slots); 
+  }, [generateTimeSlots]);
 
   // Fetch available slots when date or lawyer changes
   useEffect(() => {
@@ -847,7 +889,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         notes: formData.description || '',
         amount: clientAmount,
         currency: 'CLP',
-        meeting_link: formData.contactMethod === 'videollamada' ? 'https://meet.google.com/new' : null,
+        meeting_link: null,
         address: formData.contactMethod === 'presencial' ? formData.address : null
       };
 
@@ -1051,10 +1093,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       <Dialog open={isOpen} onOpenChange={handleClose}>
         <DialogContent 
           className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg"
-          overlayStyle={{
-            '--tw-bg-opacity': 0.5,
-            '--tw-backdrop-blur': 'blur(4px)',
-          } as React.CSSProperties}
+
         >
 
         <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
@@ -1473,30 +1512,33 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 </span>
               </div>
 
-              <div className="border-t border-gray-200 my-1"></div>
-
-              <div className="flex justify-between items-center">
+              <div className="border-t border-gray-200 my-2"></div>
+              
+              <div className="flex justify-between items-center font-semibold text-lg">
                 <span className="text-base font-bold">Total a pagar</span>
-                <span className="text-xl font-bold text-blue-600">
-                  {formatCurrency(clientAmount)}
-                </span>
+                <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
               </div>
+            </div>
 
               <p className="text-xs text-gray-500 mt-2">
                 * Incluye 10% de recargo por servicio app.
               </p>
-              
+            
             </div>
-          </div>
             
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleClose}
+                disabled={isProcessing}
+              >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={isProcessing || (!selectedLawyer && !lawyerId)}
+              <Button 
+                type="submit" 
                 className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-70"
+                disabled={isProcessing || !formData.date || !formData.time}
               >
                 {isProcessing 
                   ? "Redirigendo al Checkout..." 

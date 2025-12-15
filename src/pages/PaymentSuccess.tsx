@@ -46,18 +46,21 @@ export default function PaymentSuccess() {
     }
   }, []);
 
+  const appointmentId = searchParams.get('appointmentId');
+
   useEffect(() => {
     const verifyPayment = async () => {
       // If we don't have a payment_id, we can't verify
       if (!paymentId) return;
 
       try {
-        
-        const { data, error } = await supabase.functions.invoke('verify-payment', {
+      try {
+        const { data: verifyData, error } = await supabase.functions.invoke('verify-payment', {
           body: { paymentId }
         });
 
         if (error) throw error;
+        const data = verifyData;
 
         setPaymentDetails(data);
         setIsVerified(true);
@@ -65,37 +68,52 @@ export default function PaymentSuccess() {
         // Check if payment is approved
         if (data.status === 'approved' && appointmentData) {
           try {
-            // Get the lawyer's email using ID if available, otherwise fallback to name (less reliable)
-            let lawyerEmail = '';
+            // 1. Create Google Meeting (if applicable)
+            let meetLink = '';
             
-            if (appointmentData.lawyerId) {
-              const { data: lawyerData } = await supabase
-                .from('profiles')
-                .select('email')
-                .eq('id', appointmentData.lawyerId)
-                .single();
+            if (appointmentData.contactMethod === 'videollamada' && appointmentId) {
+              try {
+                const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
+                  body: { appointmentId }
+                });
                 
-              if (lawyerData) {
-                lawyerEmail = lawyerData.email;
+                if (meetData?.success === false || meetData?.error) {
+                   console.error('Edge Function reported error:', meetData.error);
+                   toast({
+                    title: "Error creando Meet",
+                    description: "Hubo un problema al generar el enlace de la reunión.",
+                    variant: "destructive"
+                  });
+                } else if (!meetError && meetData?.meetLink) {
+                  meetLink = meetData.meetLink;
+                } else {
+                  console.warn('Could not create Google Meet:', meetError || 'No link returned');
+                }
+                } else if (!meetError && meetData?.meetLink) {
+                  meetLink = meetData.meetLink;
+                  console.log('Meet link generated:', meetLink);
+                } else {
+                  console.warn('Could not create Google Meet:', meetError || 'No link returned');
+                  toast({
+                    title: "Advertencia",
+                    description: "No se pudo generar el enlace de Meet automáticamente.",
+                    variant: "destructive"
+                  });
+                }
+              } catch (err) {
+                console.error('Error calling create-google-meeting:', err);
               }
             } else {
-              // Fallback to name search (legacy support)
-              const { data: lawyerData } = await supabase
-                .from('profiles')
-                .select('email')
-                .ilike('first_name', `%${appointmentData.lawyerName.split(' ')[0]}%`)
-                .eq('role', 'lawyer')
-                .limit(1)
-                .single();
-                
-              if (lawyerData) {
-                lawyerEmail = lawyerData.email;
-              }
+              console.log('Skipping Meet generation (not videollamada or no ID)');
             }
+
+            // Get the lawyer's email using ID if available, otherwise fallback to name (less reliable)
+            // Note: We don't fetch the email here because 'profiles' table doesn't expose it.
+            // The Edge Function 'send-appointment-email' handles fetching the email securely.
+            let lawyerEmail = '';
             
-            // Obtener el meet_link del perfil del abogado
-            let meetLink = '';
-            if (appointmentData.lawyerId) {
+            // If no dynamic meet link, try to get static one from profile (fallback)
+            if (!meetLink && appointmentData.lawyerId) {
               const { data: lawyerProfile } = await supabase
                 .from('profiles')
                 .select('meet_link')
@@ -108,7 +126,7 @@ export default function PaymentSuccess() {
             }
 
             // Send confirmation email
-            await supabase.functions.invoke('send-appointment-email', {
+            const { data: emailData, error: emailFuncError } = await supabase.functions.invoke('send-appointment-email', {
               body: {
                 clientEmail: appointmentData.clientEmail,
                 clientName: appointmentData.clientName,
@@ -126,9 +144,34 @@ export default function PaymentSuccess() {
                 meetLink: meetLink // Pass the meet link to the email function
               }
             });
+
+            if (emailFuncError) {
+              console.error('Email function failed:', emailFuncError);
+              toast({
+                title: "Error enviando correo",
+                description: "No se pudo enviar el correo de confirmación.",
+                variant: "destructive"
+              });
+            } else {
+              console.log('Email function success:', emailData);
+              // Check if the function returned an internal error
+              if (emailData?.error) {
+                 console.error('Email service returned error:', emailData);
+                 toast({
+                  title: "Problema con el correo",
+                  description: "El servicio de correo reportó un error: " + (emailData.details || emailData.error),
+                  variant: "destructive"
+                });
+              } else {
+                 toast({
+                  title: "Correo enviado",
+                  description: "Se ha enviado la confirmación a tu correo.",
+                });
+              }
+            }
             
           } catch (emailError) {
-            console.error('Error sending email:', emailError);
+            console.error('Error executing email logic:', emailError);
             // Don't block the success page if email fails, but log it
           }
         }

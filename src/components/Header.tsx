@@ -21,8 +21,13 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
+  
+  // Derive user info directly from AuthContext
+  const userRole = user?.role || user?.profile?.role || 'client';
+  const userName = user?.name || 
+    (user?.profile?.first_name && user?.profile?.last_name 
+      ? `${user.profile.first_name} ${user.profile.last_name}` 
+      : null);
 
   const isActive = (path: string) => {
     return location.pathname === path || 
@@ -33,42 +38,6 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const [servicesOpen, setServicesOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-
-  useEffect(() => {
-    const getUserProfile = async () => {
-      try {
-        if (user?.id) {
-          // First check the profiles table
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('role, first_name, last_name')
-            .eq('id', user.id)
-            .single();
-          
-          if (!error && profile) {
-            setUserRole(profile.role);
-            if (profile.first_name || profile.last_name) {
-              setUserName(`${profile.first_name || ''} ${profile.last_name || ''}`.trim());
-            }
-          } else {
-            // Fallback to user_metadata if profile not found
-            setUserRole(user.user_metadata?.role || 'client');
-            const metaName = user.user_metadata?.first_name 
-              ? `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim()
-              : user.user_metadata?.name;
-            setUserName(metaName || null);
-          }
-        }
-      } catch (error) {
-        console.error('Error getting user profile:', error);
-        setUserRole(user?.user_metadata?.role || 'client');
-      }
-    };
-
-    if (user) {
-      getUserProfile();
-    }
-  }, [user]);
 
   const handleNavigation = (path: string) => {
     navigate(path);

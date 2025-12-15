@@ -42,12 +42,19 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
 
       if (data?.availability) {
         // Ensure we have the correct data structure
-        const savedAvailability = typeof data.availability === 'string' 
-          ? JSON.parse(data.availability)
-          : data.availability;
+        let savedAvailability = {};
+        try {
+          savedAvailability = typeof data.availability === 'string' 
+            ? JSON.parse(data.availability)
+            : data.availability;
+        } catch (e) {
+          console.error('Error parsing availability JSON:', e, data.availability);
+          // Fallback to empty if parse fails
+          savedAvailability = {};
+        }
           
-        setAvailability(savedAvailability);
-        setOriginalAvailability(savedAvailability);
+        setAvailability(savedAvailability || {});
+        setOriginalAvailability(savedAvailability || {});
         setHasChanges(false);
       } else {
         // Initialize with all days and hours set to false
@@ -244,10 +251,10 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
                 <button
                   key={day + hour}
                   onClick={() => toggleCell(day, hourIndex)}
-                  disabled={isSunday}
+                  disabled={isSunday || (day === "Sábado" && hour >= 15)}
                   className={`
                     h-12 w-full rounded-md border relative transition-all flex items-center justify-center
-                    ${isSunday
+                    ${isSunday || (day === "Sábado" && hour >= 15)
                       ? "bg-gray-200 border-gray-300 cursor-not-allowed"
                       : active
                       ? "bg-blue-200 border-blue-500"
