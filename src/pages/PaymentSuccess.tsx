@@ -54,7 +54,6 @@ export default function PaymentSuccess() {
       if (!paymentId) return;
 
       try {
-      try {
         const { data: verifyData, error } = await supabase.functions.invoke('verify-payment', {
           body: { paymentId }
         });
@@ -165,13 +164,14 @@ export default function PaymentSuccess() {
               }
             }
             
-          } catch (emailError) {
-            console.error('Error executing email logic:', emailError);
-            // Don't block the success page if email fails, but log it
           }
         }
       } catch (error) {
-        console.error('Error verifying payment:', error);
+        if (error instanceof Error) {
+          console.error('Error in payment verification:', error.message);
+        } else {
+          console.error('An unknown error occurred during payment verification');
+        }
       }
     };
 
