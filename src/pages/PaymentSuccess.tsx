@@ -86,10 +86,6 @@ export default function PaymentSuccess() {
                   });
                 } else if (!meetError && meetData?.meetLink) {
                   meetLink = meetData.meetLink;
-                } else {
-                  console.warn('Could not create Google Meet:', meetError || 'No link returned');
-                } else if (!meetError && meetData?.meetLink) {
-                  meetLink = meetData.meetLink;
                   console.log('Meet link generated:', meetLink);
                 } else {
                   console.warn('Could not create Google Meet:', meetError || 'No link returned');
