@@ -66,40 +66,35 @@ export default function PaymentSuccess() {
 
         // Check if payment is approved
         if (data.status === 'approved' && appointmentData) {
-          try {
-            // 1. Create Google Meeting (if applicable)
-            let meetLink = '';
+          // 1. Create Google Meeting (if applicable)
+          let meetLink = '';
+          
+          if (appointmentData.contactMethod === 'videollamada' && appointmentId) {
+            const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
+              body: { appointmentId }
+            });
             
-            if (appointmentData.contactMethod === 'videollamada' && appointmentId) {
-              try {
-                const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
-                  body: { appointmentId }
-                });
-                
-                if (meetData?.success === false || meetData?.error) {
-                   console.error('Edge Function reported error:', meetData.error);
-                   toast({
-                    title: "Error creando Meet",
-                    description: "Hubo un problema al generar el enlace de la reunión.",
-                    variant: "destructive"
-                  });
-                } else if (!meetError && meetData?.meetLink) {
-                  meetLink = meetData.meetLink;
-                  console.log('Meet link generated:', meetLink);
-                } else {
-                  console.warn('Could not create Google Meet:', meetError || 'No link returned');
-                  toast({
-                    title: "Advertencia",
-                    description: "No se pudo generar el enlace de Meet automáticamente.",
-                    variant: "destructive"
-                  });
-                }
-              } catch (err) {
-                console.error('Error calling create-google-meeting:', err);
-              }
+            if (meetData?.success === false || meetData?.error) {
+              console.error('Edge Function reported error:', meetData.error);
+              toast({
+                title: "Error creando Meet",
+                description: "Hubo un problema al generar el enlace de la reunión.",
+                variant: "destructive"
+              });
+            } else if (!meetError && meetData?.meetLink) {
+              meetLink = meetData.meetLink;
+              console.log('Meet link generated:', meetLink);
             } else {
-              console.log('Skipping Meet generation (not videollamada or no ID)');
+              console.warn('Could not create Google Meet:', meetError || 'No link returned');
+              toast({
+                title: "Advertencia",
+                description: "No se pudo generar el enlace de Meet automáticamente.",
+                variant: "destructive"
+              });
             }
+          } else {
+            console.log('Skipping Meet generation (not videollamada or no ID)');
+          }
 
             // Get the lawyer's email using ID if available, otherwise fallback to name (less reliable)
             // Note: We don't fetch the email here because 'profiles' table doesn't expose it.
@@ -150,22 +145,19 @@ export default function PaymentSuccess() {
               console.log('Email function success:', emailData);
               // Check if the function returned an internal error
               if (emailData?.error) {
-                 console.error('Email service returned error:', emailData);
-                 toast({
+                console.error('Email service returned error:', emailData);
+                toast({
                   title: "Problema con el correo",
                   description: "El servicio de correo reportó un error: " + (emailData.details || emailData.error),
                   variant: "destructive"
                 });
               } else {
-                 toast({
+                toast({
                   title: "Correo enviado",
                   description: "Se ha enviado la confirmación a tu correo.",
                 });
               }
             }
-            
-          }
-        }
       } catch (error) {
         if (error instanceof Error) {
           console.error('Error in payment verification:', error.message);
