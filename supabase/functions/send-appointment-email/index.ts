@@ -208,7 +208,7 @@ serve(async (req) => {
 
     // Send email to client
     const emailResponse = await sendEmailWithRetry({
-      from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
+      from: 'LegalUp <noreply@mg.legalup.cl>',  // Usando dominio verificado personalizado
       to: clientEmail,  // Correo real del cliente
       subject: `Confirmación de cita con ${lawyerName}`,
       html: emailHtml,

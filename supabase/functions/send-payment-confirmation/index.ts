@@ -100,7 +100,7 @@ serve(async (req) => {
     console.log('Enviando correo de confirmación de pago a:', clientEmail);
     
     const response = await resend.emails.send({
-      from: 'noreply@mg.legalup.cl',
+      from: 'LegalUp <noreply@mg.legalup.cl>',
       to: clientEmail,
       subject: `Pago confirmado - ${formatCurrency(amount)}`,
       html: emailHtml,

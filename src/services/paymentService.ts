@@ -90,6 +90,100 @@ export const getPaymentsByUser = async (userId: string): Promise<PaymentWithDeta
   return data as unknown as PaymentWithDetails[];
 };
 
+export const getAllPayments = async (): Promise<PaymentWithDetails[]> => {
+  // First, get all payments
+  const { data: payments, error: paymentsError } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (paymentsError) {
+    console.error('Error fetching payments:', paymentsError);
+    throw new Error('Failed to fetch payments');
+  }
+
+  if (!payments || payments.length === 0) {
+    return [];
+  }
+
+  // Get unique user and lawyer IDs
+  const userIds = [...new Set(payments.map(p => p.client_user_id))];
+  const lawyerIds = [...new Set(payments.map(p => p.lawyer_user_id))];
+  const serviceIds = payments.map(p => p.service_id).filter(Boolean) as string[];
+
+  // Function to fetch user data with email from auth.users
+  const fetchUserData = async (userIds: string[]) => {
+    if (userIds.length === 0) return [];
+    
+    const { data, error } = await supabase
+      .from('auth.users')
+      .select(`
+        id,
+        email,
+        raw_user_meta_data->>full_name as full_name,
+        raw_user_meta_data->>avatar_url as avatar_url
+      `)
+      .in('id', userIds);
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw new Error('Failed to fetch user data');
+    }
+
+    return data.map(user => ({
+      id: user.id,
+      email: user.email || '',
+      full_name: user.full_name || 'Usuario',
+      avatar_url: user.avatar_url || ''
+    }));
+  };
+
+  // Fetch users and lawyers data in parallel
+  const [usersData, lawyersData] = await Promise.all([
+    fetchUserData(userIds),
+    fetchUserData(lawyerIds)
+  ]);
+
+  // Fetch services data if there are any service IDs
+  let servicesData: any[] = [];
+  if (serviceIds.length > 0) {
+    const { data: services, error: servicesError } = await supabase
+      .from('services')
+      .select('*')
+      .in('id', serviceIds);
+
+    if (servicesError) {
+      console.error('Error fetching services:', servicesError);
+      // Continue without services data if there's an error
+    } else {
+      servicesData = services || [];
+    }
+  }
+
+  // Create maps for quick lookup
+  const usersMap = new Map(usersData.map(user => [user.id, user]));
+  const lawyersMap = new Map(lawyersData.map(lawyer => [lawyer.id, lawyer]));
+  const servicesMap = new Map(servicesData.map(service => [service.id, service]));
+
+  // Combine the data
+  return payments.map(payment => ({
+    ...payment,
+    user: {
+      id: usersMap.get(payment.client_user_id)?.id || payment.client_user_id,
+      email: usersMap.get(payment.client_user_id)?.email || '',
+      full_name: usersMap.get(payment.client_user_id)?.full_name || 'Usuario',
+      avatar_url: usersMap.get(payment.client_user_id)?.avatar_url || ''
+    },
+    lawyer: {
+      id: lawyersMap.get(payment.lawyer_user_id)?.id || payment.lawyer_user_id,
+      email: lawyersMap.get(payment.lawyer_user_id)?.email || '',
+      full_name: lawyersMap.get(payment.lawyer_user_id)?.full_name || 'Abogado',
+      avatar_url: lawyersMap.get(payment.lawyer_user_id)?.avatar_url || ''
+    },
+    service: payment.service_id ? servicesMap.get(payment.service_id) || null : null
+  }));
+};
+
 export const getLawyerEarnings = async (lawyerId: string): Promise<{
   totalEarnings: number;
   availableBalance: number;

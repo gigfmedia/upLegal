@@ -8,7 +8,8 @@ import {
   TrendingUp, 
   Calendar,
   Download,
-  CreditCard
+  CreditCard,
+  AlertCircle
 } from "lucide-react";
 
 interface EarningsStatsProps {
@@ -116,13 +117,27 @@ export function EarningsStats({ stats }: EarningsStatsProps) {
         </CardContent>
       </Card>
 
+      {/* Recordatorio sobre la configuración de MercadoPago */}
+      {/*<div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-yellow-600" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-yellow-700">
+              <span className="font-medium">¡Importante!</span> Para recibir tus pagos, asegúrate de tener una cuenta en MercadoPago y haberla vinculado en la sección de pagos.
+            </p>
+          </div>
+        </div>
+      </div>*/}
+
       {/* Recent Transactions */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Transacciones Recientes</CardTitle>
-              <CardDescription>Tus últimos pagos y facturas</CardDescription>
+              <CardTitle>Ganancias</CardTitle>
+              <CardDescription>Resumen de tus ingresos y transacciones</CardDescription>
             </div>
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />

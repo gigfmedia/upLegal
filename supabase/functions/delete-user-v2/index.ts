@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 // Allowed origins for CORS
 const allowedOrigins = [
   'http://localhost:3001',
-  'https://your-production-domain.com' // Replace with your production domain
+  'https://legalup.cl' // Replace with your production domain
 ];
 
 // Helper to create CORS headers

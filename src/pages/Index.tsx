@@ -261,7 +261,26 @@ const Index = () => {
             .filter((lawyer: any) => {
               const firstName = lawyer.first_name?.toLowerCase() || '';
               const lastName = lawyer.last_name?.toLowerCase() || '';
-              return !firstName.includes('admin') && !lastName.includes('admin');
+              
+              // Skip admin accounts
+              if (firstName.includes('admin') || lastName.includes('admin')) {
+                return false;
+              }
+              
+              // Check if profile is complete and verified
+              const isProfileComplete = 
+                lawyer.verified && 
+                lawyer.bio?.trim() && 
+                lawyer.specialties?.length > 0 && 
+                lawyer.location?.trim() && 
+                lawyer.hourly_rate_clp > 0;
+              
+              if (!isProfileComplete) {
+                console.log(`Hiding lawyer ${lawyer.id} - Incomplete or unverified profile`);
+                return false;
+              }
+              
+              return true;
             })
             .map(lawyer => ({
             id: lawyer.id || '',
@@ -756,6 +775,7 @@ const Index = () => {
                 <LawyerCard
                   key={lawyer.id}
                   lawyer={lawyer}
+                  hideCard={true}
                   onContactClick={() => {
                     if (!user) {
                       setAuthMode('login');

@@ -111,6 +111,7 @@ const LawyerRow = ({ index, style, data }: { index: number, style: React.CSSProp
         key={lawyer.id}
         lawyer={lawyer}
         user={user}
+        hideCard={true}
         onContactClick={() => {
           if (!user) {
             setAuthMode('login');

@@ -38,7 +38,7 @@ serve(async (req) => {
             <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
               ${message.replace(/\n/g, '<br>')}
             </div>
-            <p>Puedes responder a este mensaje directamente desde tu panel de control en upLegal.</p>
+            <p>Puedes responder a este mensaje directamente desde tu panel de control en LegalUp.</p>
             <p>Saludos,<br>El equipo de upLegal</p>
           </div>
         `,
