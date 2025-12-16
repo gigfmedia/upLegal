@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, User, MapPin, Mail, Phone, X, Check, Plus, Search as SearchIcon } from 'lucide-react';
+import { Calendar, Clock, User, Mail, Phone, X, Check, Search as SearchIcon } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 
 // UI Components
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/use-toast';
 
 // Interface for consultation data
 interface Consulta {
-  id: number;
+  id: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;
@@ -26,31 +27,72 @@ interface Consulta {
 }
 
 export default function ConsultasPage() {
-  // State for consultations and UI
+  const { user } = useAuth();
   const [consultas, setConsultas] = useState<Consulta[]>([]);
   const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch consultations
+  // Fetch consultations from the database
+  const fetchConsultations = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('consultations')
+        .select(`
+          id,
+          title,
+          description,
+          status,
+          created_at,
+          price,
+          client:profiles!consultations_client_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        `)
+        .eq('lawyer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform the data to match our UI interface
+      const formattedConsultas: Consulta[] = (data || []).map((consultation: any) => ({
+        id: consultation.id,
+        clientName: `${consultation.client?.first_name || ''} ${consultation.client?.last_name || ''}`.trim() || 'Cliente',
+        clientEmail: consultation.client?.email || '',
+        clientPhone: consultation.client?.phone || '',
+        service: consultation.title || 'Consulta Legal',
+        date: new Date(consultation.created_at),
+        duration: 30, // Default duration
+        status: consultation.status === 'pending' ? 'pending' : 
+                consultation.status === 'completed' ? 'completed' : 
+                consultation.status === 'cancelled' ? 'cancelled' : 'confirmed',
+        notes: consultation.description
+      }));
+
+      setConsultas(formattedConsultas);
+    } catch (error) {
+      console.error('Error fetching consultations:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las consultas. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Mock data - replace with actual API call
-    const mockConsultas: Consulta[] = [
-      {
-        id: 1,
-        clientName: 'Juan Pérez',
-        clientEmail: 'juan@example.com',
-        clientPhone: '+56912345678',
-        service: 'Asesoría Legal Inicial',
-        date: new Date(2023, 5, 15, 10, 0),
-        duration: 60,
-        status: 'pending',
-        notes: 'Cliente nuevo, necesita asesoría sobre contrato de arriendo.'
-      },
-      // Add more mock data as needed
-    ];
-
-    setConsultas(mockConsultas);
-  }, []);
+    fetchConsultations();
+  }, [user?.id]);
 
   // Filter consultations by status and search query
   const filteredConsultas = (status: Consulta['status']) => {
@@ -66,23 +108,52 @@ export default function ConsultasPage() {
   };
 
   // Handle status change
-  const handleStatusChange = (id: number, newStatus: Consulta['status']) => {
-    setConsultas(prev => 
-      prev.map(consulta => 
-        consulta.id === id ? { ...consulta, status: newStatus } : consulta
-      )
-    );
+  const handleStatusChange = async (id: string, newStatus: Consulta['status']) => {
+    try {
+      const { error } = await supabase
+        .from('consultations')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setConsultas(prev => 
+        prev.map(consulta => 
+          consulta.id === id ? { ...consulta, status: newStatus } : consulta
+        )
+      );
+
+      // Update selected consulta if it's the one being updated
+      if (selectedConsulta?.id === id) {
+        setSelectedConsulta(prev => prev ? { ...prev, status: newStatus } : null);
+      }
+
+      toast({
+        title: 'Estado actualizado',
+        description: `La consulta ha sido marcada como ${getStatusLabel(newStatus)}`,
+      });
+    } catch (error) {
+      console.error('Error updating consultation status:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el estado de la consulta. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Get status label in Spanish
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, capitalize = false) => {
+    let label = '';
     switch (status) {
-      case 'pending': return 'pendientes';
-      case 'confirmed': return 'confirmadas';
-      case 'completed': return 'completadas';
-      case 'cancelled': return 'canceladas';
-      default: return status;
+      case 'pending': label = 'pendiente'; break;
+      case 'confirmed': label = 'confirmada'; break;
+      case 'completed': label = 'completada'; break;
+      case 'cancelled': label = 'cancelada'; break;
+      default: label = status;
     }
+    return capitalize ? label.charAt(0).toUpperCase() + label.slice(1) : label;
   };
 
   return (
@@ -97,7 +168,7 @@ export default function ConsultasPage() {
         
         <div className="w-full md:w-auto">
           <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <SearchIcon className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Buscar consultas..."
@@ -116,6 +187,12 @@ export default function ConsultasPage() {
           <TabsTrigger value="completed">Completadas</TabsTrigger>
           <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
         </TabsList>
+        
+        {isLoading && (
+          <div className="flex justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        )}
 
         {['pending', 'confirmed', 'completed', 'cancelled'].map((status) => (
           <TabsContent key={status} value={status} className="space-y-4">
@@ -141,7 +218,7 @@ export default function ConsultasPage() {
       
       {/* Consultation Detail Modal */}
       {selectedConsulta && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 space-y-6">
               <div className="flex justify-between items-start">

@@ -80,70 +80,135 @@ export default function CitasPage() {
     });
   };
 
-  // Manejar nueva cita
-  const handleNewAppointment = (data: any) => {
-    const newAppointment: Appointment = {
-      id: Date.now().toString(),
-      clientName: data.clientName,
-      clientEmail: data.clientEmail,
-      clientPhone: data.clientPhone,
-      service: data.service,
-      date: new Date(`${data.date}T${data.time}`),
-      duration: parseInt(data.duration, 10),
-      status: 'pending',
-      type: data.type,
-      notes: data.notes
-    };
-    setAppointments(prev => [...prev, newAppointment]);
-    setShowNewAppointmentForm(false);
+  // Handle new appointment
+  const handleNewAppointment = async (data: any) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // First, find or create the client
+      let clientId: string;
+      
+      // Check if client exists by email
+      const { data: existingClient } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', data.clientEmail)
+        .single();
+
+      if (existingClient) {
+        clientId = existingClient.id;
+      } else {
+        // Create new client profile
+        const { data: newClient, error: clientError } = await supabase
+          .from('profiles')
+          .insert({
+            first_name: data.clientName.split(' ')[0],
+            last_name: data.clientName.split(' ').slice(1).join(' '),
+            email: data.clientEmail,
+            phone: data.clientPhone,
+            role: 'client'
+          })
+          .select('id')
+          .single();
+
+        if (clientError) throw clientError;
+        clientId = newClient.id;
+      }
+
+      // Create the appointment
+      const { error } = await supabase
+        .from('appointments')
+        .insert({
+          client_id: clientId,
+          lawyer_id: session.user.id,
+          date: new Date(`${data.date}T${data.time}`).toISOString(),
+          duration: parseInt(data.duration, 10),
+          status: 'pending',
+          type: data.type,
+          service_type: data.service,
+          notes: data.notes
+        });
+
+      if (error) throw error;
+
+      // Refresh appointments
+      await fetchAppointments();
+      
+      toast({
+        title: 'Cita creada',
+        description: 'La cita ha sido agendada correctamente.',
+      });
+      
+      setShowNewAppointmentForm(false);
+    } catch (error) {
+      console.error('Error creating appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo crear la cita. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  // Mock data inicial
+  // Fetch appointments from database
+  const fetchAppointments = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Get lawyer's appointments
+      const { data: appointments, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          date,
+          duration,
+          status,
+          type,
+          notes,
+          service_type,
+          client:profiles!appointments_client_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        `)
+        .eq('lawyer_id', session.user.id)
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform data to match the expected format
+      const formattedAppointments = appointments.map(appt => ({
+        id: appt.id,
+        clientName: `${appt.client?.first_name || ''} ${appt.client?.last_name || ''}`.trim() || 'Cliente',
+        clientEmail: appt.client?.email || '',
+        clientPhone: appt.client?.phone || '',
+        service: appt.service_type || 'Consulta',
+        date: new Date(appt.date),
+        duration: appt.duration || 30, // Default to 30 minutes if not specified
+        status: appt.status || 'pending',
+        type: appt.type || 'video',
+        notes: appt.notes || ''
+      }));
+
+      setAppointments(formattedAppointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudieron cargar las citas. Por favor, inténtalo de nuevo.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Fetch appointments on component mount
   useEffect(() => {
-    const now = new Date();
-    const createDate = (baseDate: Date, hours: number, minutes: number) => {
-      const date = new Date(baseDate);
-      date.setHours(hours, minutes, 0, 0);
-      return date;
-    };
-    setAppointments([
-      {
-        id: '1',
-        clientName: 'María González',
-        clientEmail: 'maria@example.com',
-        clientPhone: '+56987654321',
-        service: 'Asesoría Laboral',
-        date: createDate(now, 10, 0),
-        duration: 60,
-        status: 'confirmed',
-        type: 'video',
-        notes: 'Consulta sobre despido injustificado.'
-      },
-      {
-        id: '2',
-        clientName: 'Roberto Sánchez',
-        clientEmail: 'roberto@example.com',
-        clientPhone: '+56912345678',
-        service: 'Contrato de Arriendo',
-        date: createDate(now, 15, 30),
-        duration: 30,
-        status: 'pending',
-        type: 'in_person',
-        notes: 'Revisión de cláusulas abusivas.'
-      },
-      {
-        id: '3',
-        clientName: 'Ana Torres',
-        clientEmail: 'ana@example.com',
-        clientPhone: '+56955555555',
-        service: 'Divorcio Mutuo Acuerdo',
-        date: createDate(addDays(now, 1), 11, 0),
-        duration: 90,
-        status: 'confirmed',
-        type: 'phone',
-        notes: 'Inicio de proceso de divorcio.'
-      }
-    ]);
+    fetchAppointments();
   }, []);
 
   const dailyAppointments = getAppointmentsForDate(selectedDate);

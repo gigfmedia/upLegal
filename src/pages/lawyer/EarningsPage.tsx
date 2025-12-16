@@ -150,36 +150,77 @@ export default function EarningsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
 
+  // Fetch transactions from the database
+  const fetchTransactions = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Fetch payments from the database
+      const { data: payments, error } = await supabase
+        .from('payments')
+        .select(`
+          id,
+          amount,
+          status,
+          created_at,
+          is_test,
+          appointment_id (
+            id,
+            client_id,
+            client:profiles!appointments_client_id_fkey (
+              first_name,
+              last_name
+            ),
+            service_type
+          )
+        `)
+        .eq('lawyer_id', session.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      console.log('Raw payments data from database:', payments);
+
+      // Filter out test payments and transform the data
+      const formattedTransactions: Transaction[] = (payments || [])
+        .filter(payment => {
+          // Skip test payments and payments with 0 amount
+          const isTestPayment = payment.is_test || payment.amount === 0;
+          if (isTestPayment) {
+            console.log('Filtering out test payment:', payment);
+            return false;
+          }
+          return true;
+        })
+        .map(payment => ({
+          id: payment.id,
+          date: new Date(payment.created_at),
+          clientName: payment.appointment_id?.client 
+            ? `${payment.appointment_id.client.first_name} ${payment.appointment_id.client.last_name}`.trim() || 'Cliente'
+            : 'Cliente',
+          service: payment.appointment_id?.service_type || 'Consulta',
+          amount: payment.amount,
+          status: payment.status as Transaction['status'],
+          type: 'consultation'
+        }));
+
+      console.log('Formatted transactions:', formattedTransactions);
+      setTransactions(formattedTransactions);
+      
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      // Don't fall back to mock data in production
+      setTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Load transactions
   useEffect(() => {
-    const loadTransactions = () => {
-      setIsLoading(true);
-      try {
-        // In a real app, you would fetch this from your API
-        const savedTransactions = localStorage.getItem('lawyerTransactions');
-        
-        if (savedTransactions) {
-          const parsedTransactions = JSON.parse(savedTransactions) as Array<Omit<Transaction, 'date'> & { date: string }>;
-          const transactionsWithDates = parsedTransactions.map(tx => ({
-            ...tx,
-            date: new Date(tx.date)
-          }));
-          setTransactions(transactionsWithDates);
-        } else {
-          // Generate mock data if no saved transactions
-          const mockTransactions = generateMockTransactions();
-          setTransactions(mockTransactions);
-          // Save to localStorage for persistence
-          localStorage.setItem('lawyerTransactions', JSON.stringify(mockTransactions));
-        }
-      } catch (error) {
-        // Error loading transactions
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTransactions();
+    fetchTransactions();
   }, []);
 
   // Filter transactions based on selected time range
@@ -211,11 +252,14 @@ export default function EarningsPage() {
   // Calculate earnings summary
   const calculateEarnings = (transactions: Transaction[]) => {
     return transactions.reduce((acc, tx) => {
-      if (tx.status === 'completed' || tx.status === 'pending') {
-        acc.total += tx.amount;
-        acc.completed += tx.status === 'completed' ? tx.amount : 0;
-        acc.pending += tx.status === 'pending' ? tx.amount : 0;
+      acc.total += tx.amount;
+      
+      if (tx.status === 'completed') {
+        acc.completed += tx.amount;
+      } else if (tx.status === 'pending') {
+        acc.pending += tx.amount;
       }
+      
       return acc;
     }, { total: 0, completed: 0, pending: 0 });
   };
@@ -225,51 +269,72 @@ export default function EarningsPage() {
 
   // Calculate monthly earnings for the selected year
   const getMonthlyEarnings = () => {
-    const months = Array.from({ length: 12 }, (_, i) => {
+    return Array.from({ length: 12 }, (_, i) => {
       const monthStart = new Date(selectedYear, i, 1);
       const monthEnd = endOfMonth(monthStart);
       
-      const monthEarnings = transactions
-        .filter(tx => 
-          isWithinInterval(tx.date, { start: monthStart, end: monthEnd }) &&
+      // Filter transactions for the current month and year
+      const monthlyTransactions = transactions.filter(tx => {
+        const txDate = new Date(tx.date);
+        return (
+          txDate.getFullYear() === selectedYear &&
+          txDate.getMonth() === i &&
           (tx.status === 'completed' || tx.status === 'pending')
-        )
-        .reduce((sum, tx) => sum + tx.amount, 0);
+        );
+      });
+      
+      // Calculate total earnings for the month
+      const monthEarnings = monthlyTransactions.reduce((sum, tx) => sum + tx.amount, 0);
       
       return {
         month: i,
-        earnings: monthEarnings
+        earnings: monthEarnings,
+        // Add count for reference if needed
+        transactionCount: monthlyTransactions.length
       };
     });
-    
-    return months;
   };
 
   const monthlyEarnings = getMonthlyEarnings();
   const maxEarnings = Math.max(...monthlyEarnings.map(m => m.earnings), 0);
 
-  // Get top services
+  // Get top services with real transaction data
   const getTopServices = () => {
-    const serviceMap = new Map<string, { count: number; amount: number }>();
-    
-    filteredTransactions.forEach(tx => {
-      if (tx.status === 'completed') {
-        const service = serviceMap.get(tx.service) || { count: 0, amount: 0 };
-        serviceMap.set(tx.service, {
+    // Group transactions by service and calculate totals
+    const serviceStats = transactions
+      .filter(tx => tx.status === 'completed')
+      .reduce((acc, tx) => {
+        const serviceName = tx.service || 'Sin categoría';
+        const service = acc.get(serviceName) || { count: 0, amount: 0 };
+        
+        return acc.set(serviceName, {
           count: service.count + 1,
           amount: service.amount + tx.amount
         });
-      }
-    });
+      }, new Map<string, { count: number; amount: number }>());
     
-    return Array.from(serviceMap.entries())
+    // Convert to array and sort by amount (descending)
+    const sortedServices = Array.from(serviceStats.entries())
       .map(([service, data]) => ({
         service,
-        ...data,
-        percentage: (data.amount / completed) * 100 || 0
+        count: data.count,
+        amount: data.amount,
+        percentage: completed > 0 ? (data.amount / completed) * 100 : 0
       }))
       .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5);
+      .slice(0, 5); // Get top 5 services
+    
+    // If no services found, return a default message
+    if (sortedServices.length === 0) {
+      return [{
+        service: 'No hay servicios completados',
+        count: 0,
+        amount: 0,
+        percentage: 0
+      }];
+    }
+    
+    return sortedServices;
   };
 
   const topServices = getTopServices();
@@ -315,8 +380,15 @@ export default function EarningsPage() {
     }
   };
 
-  // Generate year options (last 5 years)
-  const yearOptions = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+  // Generate year options (from current year + 1 to 2025, in descending order)
+  const currentYear = new Date().getFullYear();
+  const startYear = 2025;
+  const endYear = Math.max(currentYear + 1, startYear);
+  const yearsCount = endYear - startYear + 1;
+  const yearOptions = Array.from(
+    { length: yearsCount },
+    (_, i) => endYear - i
+  );
   
   // Month names in Spanish
   const monthNames = [
@@ -522,7 +594,7 @@ export default function EarningsPage() {
                 : 'Tus ingresos a lo largo del tiempo'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
+          <CardContent>
             {timeRange === 'year' ? (
               <div className="mt-4 space-y-4">
                 {monthlyEarnings.map(({ month, earnings }) => (
