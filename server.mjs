@@ -232,7 +232,9 @@ app.post('/verify-lawyer', async (req, res) => {
         details: {
           rut: cleanRut,
           nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
-          reason: 'Abogado suspendido indefinidamente'
+          reason: 'Abogado suspendido indefinidamente',
+          suspensionType: 'Permanente',
+          suspensionDate: '30-12-9999'
         }
       });
     }

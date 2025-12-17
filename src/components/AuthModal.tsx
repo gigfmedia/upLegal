@@ -307,31 +307,50 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     setSubmitting(true);
 
     try {
+      // Check if email already exists in auth.users
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email')
+        .ilike('email', formData.email)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error('Este correo electrónico ya está registrado.');
+      }
+
       // If lawyer registration, verify RUT first
       if (formData.role === 'lawyer') {
+        if (!formData.rut) {
+          throw new Error('El RUT es obligatorio para abogados');
+        }
+
         const isRutValid = await handleRutVerification(formData.rut);
         if (!isRutValid) {
           setSubmitting(false);
           return;
         }
 
-        // Check if RUT is already registered
+        // Check if RUT or email is already registered
         const { data: existingLawyer, error: checkError } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, pjud_verified')
-          .eq('rut', formData.rut) // Search with format (e.g., "17.598.658-8")
+          .select('id, first_name, last_name, pjud_verified, email, rut')
+          .or(`and(rut.eq.${formData.rut}),and(email.eq.${formData.email})`)
           .maybeSingle();
 
         if (checkError) {
-          console.error('Error checking duplicate RUT:', checkError);
-          // Continue if there's an error - might be RLS or network issue
+          console.error('Error checking duplicate RUT/Email:', checkError);
+          throw new Error('Error al verificar la información. Por favor, inténtalo de nuevo.');
         }
 
         if (existingLawyer) {
-          const lawyerName = existingLawyer.first_name && existingLawyer.last_name 
-            ? `${existingLawyer.first_name} ${existingLawyer.last_name}` 
-            : 'otro usuario';
-          throw new Error(`Este RUT ya está registrado por ${lawyerName} en nuestra plataforma.`);
+          if (existingLawyer.email?.toLowerCase() === formData.email.toLowerCase()) {
+            throw new Error('Este correo electrónico ya está registrado.');
+          } else {
+            const lawyerName = existingLawyer.first_name && existingLawyer.last_name 
+              ? `${existingLawyer.first_name} ${existingLawyer.last_name}` 
+              : 'otro usuario';
+            throw new Error(`El RUT ${formData.rut} ya está registrado por ${lawyerName} en nuestra plataforma.`);
+          }
         }
       }
       
@@ -388,8 +407,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           throw new Error('La contraseña no cumple con todos los requisitos de seguridad');
         }
         
-        // Call signup
-        
+        // Call signup with error handling for duplicate emails/RUTs
         const signupResponse = await signup(
           formData.email, 
           formData.password, 
@@ -402,7 +420,30 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           }
         );
         
-        if (signupResponse.error) throw signupResponse.error;
+        if (signupResponse.error) {
+          // Handle specific error messages from the server
+          if (signupResponse.error.message.includes('duplicate key value violates unique constraint') || 
+              signupResponse.error.message.includes('already registered')) {
+            throw new Error('Este correo electrónico ya está registrado.');
+          } else if (signupResponse.error.message.includes('El RUT ya está registrado')) {
+            throw new Error('El RUT ya está registrado en nuestra plataforma');
+          } else if (signupResponse.error.message.includes('RUT inválido')) {
+            throw new Error('El RUT ingresado no es válido');
+          } else {
+            throw signupResponse.error;
+          }
+        }
+        
+        // Reset form on successful signup
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          firstName: '',
+          lastName: '',
+          rut: '',
+          role: 'client',
+        });
         
         // Show appropriate success message based on email confirmation status
         if (signupResponse.requiresEmailConfirmation) {
@@ -486,30 +527,30 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           });
 
           if (loginError) throw loginError;
+
+          // Show success message
+          toast({
+            title: 'Inicio de sesión exitoso',
+            description: '¡Bienvenido de nuevo!',
+            variant: 'default',
+          });
+
+          // Reset form and close modal
+          setFormData({
+            email: '',
+            password: '',
+            confirmPassword: '',
+            firstName: '',
+            lastName: '',
+            rut: '',
+            role: 'client',
+          });
           
-          // Get the user's role from the user_metadata
-          const userRole = currentUser?.user_metadata?.role || 'client';
-          
-          // Close the modal
-          onClose();
-          
-          // If there's a redirect URL in the query params, use it
-          if (redirectTo) {
-            window.location.href = redirectTo;
-            return;
+          if (onLoginSuccess) {
+            onLoginSuccess();
           }
-          
-          // Redirect to home page after successful login
-          navigate('/');
-          
-          // Otherwise, redirect based on user role
-          navigate(userRole === 'lawyer' ? '/lawyer/dashboard' : '/dashboard');
+          onClose();
         }
-      } else {
-        // For signup, we'll use the role from the form data
-        onClose();
-        const userRole = formData.role || 'client';
-        navigate(userRole === 'lawyer' ? '/lawyer/dashboard' : '/dashboard');
       }
     } catch (error) {
       console.error('Auth error:', error);
