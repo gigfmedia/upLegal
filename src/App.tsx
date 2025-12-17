@@ -4,6 +4,8 @@ import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { EmailTestComponent } from '@/components/EmailTestComponent';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { logError } from '@/utils/errorLogger';
 
 // UI Components
 import { Toaster } from '@/components/ui/toaster';
@@ -18,6 +20,7 @@ import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { usePageTracking } from '@/hooks/usePageTracking';
 
 // Layouts (keep these eager as they're used frequently)
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -47,6 +50,8 @@ const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
+const AdminAnalyticsPage = lazy(() => import('./pages/admin/analytics'));
+const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
 const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
@@ -69,6 +74,32 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      onError: (error) => {
+        logError({
+          type: 'react_query_error',
+          message: error instanceof Error ? error.message : 'Unknown React Query error',
+          details: {
+            error: error instanceof Error ? {
+              name: error.name,
+              stack: error.stack,
+            } : error,
+          },
+        });
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        logError({
+          type: 'react_mutation_error',
+          message: error instanceof Error ? error.message : 'Unknown mutation error',
+          details: {
+            error: error instanceof Error ? {
+              name: error.name,
+              stack: error.stack,
+            } : error,
+          },
+        });
+      },
     },
   },
 });
@@ -83,7 +114,14 @@ const LoadingIndicator = () => {
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 300);
-    return () => clearTimeout(timer);
+    
+    // Setup global error handlers
+    const cleanup = setupGlobalErrorHandlers();
+    
+    return () => {
+      clearTimeout(timer);
+      cleanup?.();
+    };
   }, [location]);
 
   // Only show loading indicator if not in the middle of auth check
@@ -100,8 +138,46 @@ const LoadingIndicator = () => {
   );
 };
 
+// Global error handlers
+const setupGlobalErrorHandlers = () => {
+  // Handle uncaught errors
+  const handleError = (event: ErrorEvent) => {
+    logError({
+      type: 'uncaught_error',
+      message: event.message,
+      details: {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      },
+    });
+  };
+
+  // Handle unhandled promise rejections
+  const handleRejection = (event: PromiseRejectionEvent) => {
+    logError({
+      type: 'unhandled_rejection',
+      message: event.reason?.message || 'Unhandled promise rejection',
+      details: {
+        reason: event.reason,
+      },
+    });
+  };
+
+  window.addEventListener('error', handleError);
+  window.addEventListener('unhandledrejection', handleRejection);
+
+  return () => {
+    window.removeEventListener('error', handleError);
+    window.removeEventListener('unhandledrejection', handleRejection);
+  };
+};
+
 const AppContent = () => {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
+  
+  // Track page views
+  usePageTracking();
   
   // Only show loading state for the initial auth check
   const [initialAuthCheck, setInitialAuthCheck] = useState(true);
@@ -174,6 +250,17 @@ const AppContent = () => {
                   </RequireAdmin>
                 }
               />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <RequireAdmin>
+                    <AdminAnalyticsPage />
+                  </RequireAdmin>
+                }
+              />
+              <Route path="/test-analytics" element={
+                <TestAnalytics />
+              } />
               
               {/* Legacy route for backward compatibility */}
               <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
