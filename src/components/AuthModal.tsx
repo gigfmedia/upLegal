@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Dialog, 
@@ -43,6 +42,26 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
   });
   const [rutVerificationStatus, setRutVerificationStatus] = useState<'idle' | 'verifying' | 'verified' | 'error'>('idle');
   const [rutError, setRutError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  
+  // Password requirements state
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSymbol: false,
+  });
+
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
+  const navigate = useNavigate();
 
   // Format RUT as user types (XX.XXX.XXX-X)
   const formatRut = (rut: string): string => {
@@ -114,7 +133,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     return { isValid: true };
   };
 
-  // Verify RUT with Supabase function (no fallback to client-side validation)
+  // Verify RUT with Supabase function
   const verifyRutWithServer = async (rut: string): Promise<{ isValid: boolean; message?: string }> => {
     try {
       setRutVerificationStatus('verifying');
@@ -203,33 +222,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     if (rutError) {
       setRutError(null);
     }
-    
-    // Auto-verify when RUT is complete (with debounce)
-    const cleanRut = formattedRut.replace(/[^0-9Kk]/g, '');
-    if (cleanRut.length >= 8) { // Minimum length for a valid RUT
-      const timer = setTimeout(async () => {
-        await handleRutVerification(formattedRut);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
   };
-  const { toast } = useToast();
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [forgotPassword, setForgotPassword] = useState(false);
-  const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  
-  // Password requirements state
-  const [passwordRequirements, setPasswordRequirements] = useState({
-    length: false,
-    hasUppercase: false,
-    hasLowercase: false,
-    hasNumber: false,
-    hasSymbol: false,
-  });
 
   // Check password strength and update requirements
   const checkPasswordStrength = (password: string) => {
@@ -241,9 +234,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+/.test(password),
     });
   };
-  
-  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
-  const navigate = useNavigate();
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -307,53 +297,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     setSubmitting(true);
 
     try {
-      // Check if email already exists in auth.users
-      const { data: existingUser } = await supabase
-        .from('profiles')
-        .select('email')
-        .ilike('email', formData.email)
-        .maybeSingle();
-
-      if (existingUser) {
-        throw new Error('Este correo electrónico ya está registrado.');
-      }
-
-      // If lawyer registration, verify RUT first
-      if (formData.role === 'lawyer') {
-        if (!formData.rut) {
-          throw new Error('El RUT es obligatorio para abogados');
-        }
-
-        const isRutValid = await handleRutVerification(formData.rut);
-        if (!isRutValid) {
-          setSubmitting(false);
-          return;
-        }
-
-        // Check if RUT or email is already registered
-        const { data: existingLawyer, error: checkError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, pjud_verified, email, rut')
-          .or(`and(rut.eq.${formData.rut}),and(email.eq.${formData.email})`)
-          .maybeSingle();
-
-        if (checkError) {
-          console.error('Error checking duplicate RUT/Email:', checkError);
-          throw new Error('Error al verificar la información. Por favor, inténtalo de nuevo.');
-        }
-
-        if (existingLawyer) {
-          if (existingLawyer.email?.toLowerCase() === formData.email.toLowerCase()) {
-            throw new Error('Este correo electrónico ya está registrado.');
-          } else {
-            const lawyerName = existingLawyer.first_name && existingLawyer.last_name 
-              ? `${existingLawyer.first_name} ${existingLawyer.last_name}` 
-              : 'otro usuario';
-            throw new Error(`El RUT ${formData.rut} ya está registrado por ${lawyerName} en nuestra plataforma.`);
-          }
-        }
-      }
-      
       // Check if email is verified
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -370,187 +313,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       }
       
       if (mode === 'signup') {
-        // Validate form data for signup
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Las contraseñas no coinciden');
-        }
-        
-        if (!formData.firstName.trim() || !formData.lastName.trim()) {
-          throw new Error('Por favor ingresa tu nombre completo');
-        }
-        
-        // Validate RUT for lawyers
-        if (formData.role === 'lawyer') {
-          if (!formData.rut) {
-            throw new Error('Por favor ingresa tu RUT');
-          }
-          
-          // Set verification status for UI feedback
-          if (rutVerificationStatus !== 'verified') {
-            const isRutValid = await handleRutVerification(formData.rut);
-            if (!isRutValid) {
-              throw new Error('Por favor verifica tu RUT');
-            }
-          }
-        }
-        
-        // Enhanced password validation
-        if (formData.password.length < 8) {
-          throw new Error('La contraseña debe tener al menos 8 caracteres');
-        }
-        
-        if (formData.password.length > 18) {
-          throw new Error('La contraseña no puede tener más de 18 caracteres');
-        }
-        
-        if (!isPasswordValid) {
-          throw new Error('La contraseña no cumple con todos los requisitos de seguridad');
-        }
-        
-        // Call signup with error handling for duplicate emails/RUTs
-        const signupResponse = await signup(
-          formData.email, 
-          formData.password, 
-          {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            role: formData.role,
-            rut: formData.role === 'lawyer' ? formData.rut : undefined,
-            pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false
-          }
-        );
-        
-        if (signupResponse.error) {
-          // Handle specific error messages from the server
-          if (signupResponse.error.message.includes('duplicate key value violates unique constraint') || 
-              signupResponse.error.message.includes('already registered')) {
-            throw new Error('Este correo electrónico ya está registrado.');
-          } else if (signupResponse.error.message.includes('El RUT ya está registrado')) {
-            throw new Error('El RUT ya está registrado en nuestra plataforma');
-          } else if (signupResponse.error.message.includes('RUT inválido')) {
-            throw new Error('El RUT ingresado no es válido');
-          } else {
-            throw signupResponse.error;
-          }
-        }
-        
-        // Reset form on successful signup
-        setFormData({
-          email: '',
-          password: '',
-          confirmPassword: '',
-          firstName: '',
-          lastName: '',
-          rut: '',
-          role: 'client',
-        });
-        
-        // Show appropriate success message based on email confirmation status
-        if (signupResponse.requiresEmailConfirmation) {
-          toast({
-            title: '¡Registro exitoso!',
-            description: 'Por favor revisa tu correo electrónico para confirmar tu cuenta.',
-            variant: 'default',
-          });
-          onClose();
-        } else {
-          if (formData.role === 'lawyer') {
-            // Redirect lawyer to profile setup
-            navigate('/dashboard/profile/setup');
-            toast({
-              title: '¡Bienvenido a LegalUp!',
-              description: 'Completa tu perfil para comenzar a recibir clientes.',
-              variant: 'default',
-            });
-          } else {
-            toast({
-              title: '¡Bienvenido a LegalUp!',
-              description: 'Tu cuenta ha sido creada y verificada correctamente.',
-              variant: 'default',
-            });
-          }
-          onClose();
-        }
+        await handleSignup();
       } else {
-        // Login flow
-        if (!formData.email || !formData.password) {
-          throw new Error('Por favor ingresa tu correo y contraseña');
-        }
-        
-        const { error: loginError } = await login(
-          formData.email.trim(), 
-          formData.password
-        );
-        
-        if (loginError) {
-          console.error('Login error details:', loginError);
-          
-          // More specific error messages based on the error code
-          if (loginError.message.includes('Invalid login credentials')) {
-            throw new Error('Correo o contraseña incorrectos');
-          } else if (loginError.message.includes('Email not confirmed')) {
-            setIsEmailVerified(false);
-            // No lanzamos un error aquí, en su lugar mostramos el mensaje y permitimos al usuario reenviar el correo
-            toast({
-              title: 'Correo no verificado',
-              description: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
-              variant: 'destructive',
-            });
-            return; // Salimos temprano para evitar el flujo de éxito
-          } else if (loginError.message.includes('Too many requests')) {
-            throw new Error('Demasiados intentos. Por favor intente más tarde');
-          }
-          
-          throw loginError;
-        }
-      }
-      
-      // Reset form
-      setFormData({ 
-        email: '', 
-        password: '', 
-        confirmPassword: '', 
-        firstName: '', 
-        lastName: '', 
-        role: 'client' 
-      });
-      
-      // Handle success based on mode
-      if (mode === 'login') {
-        if (onLoginSuccess) {
-          onLoginSuccess();
-        } else {
-          // Get the user data from the login response
-          const { data: { user: currentUser }, error: loginError } = await supabase.auth.signInWithPassword({
-            email: formData.email.trim(),
-            password: formData.password
-          });
-
-          if (loginError) throw loginError;
-
-          // Show success message
-          toast({
-            title: 'Inicio de sesión exitoso',
-            description: '¡Bienvenido de nuevo!',
-            variant: 'default',
-          });
-
-          // Reset form and close modal
-          setFormData({
-            email: '',
-            password: '',
-            confirmPassword: '',
-            firstName: '',
-            lastName: '',
-            rut: '',
-            role: 'client',
-          });
-          
-          if (onLoginSuccess) {
-            onLoginSuccess();
-          }
-          onClose();
-        }
+        await handleLogin();
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -565,6 +330,198 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     } finally {
       setSubmitting(false);
     }
+  };
+  
+  const handleSignup = async () => {
+    // Check if email already exists in auth.users
+    const { data: existingUser } = await supabase
+      .from('profiles')
+      .select('email')
+      .ilike('email', formData.email)
+      .maybeSingle();
+
+    if (existingUser) {
+      throw new Error('Este correo electrónico ya está registrado.');
+    }
+
+    // Validate form data for signup
+    if (formData.password !== formData.confirmPassword) {
+      throw new Error('Las contraseñas no coinciden');
+    }
+    
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      throw new Error('Por favor ingresa tu nombre completo');
+    }
+
+    // Enhanced password validation
+    if (formData.password.length < 8) {
+      throw new Error('La contraseña debe tener al menos 8 caracteres');
+    }
+    
+    if (formData.password.length > 18) {
+      throw new Error('La contraseña no puede tener más de 18 caracteres');
+    }
+    
+    if (!isPasswordValid) {
+      throw new Error('La contraseña no cumple con todos los requisitos de seguridad');
+    }
+
+    // If lawyer registration, verify RUT first
+    if (formData.role === 'lawyer') {
+      if (!formData.rut) {
+        throw new Error('El RUT es obligatorio para abogados');
+      }
+
+      const isRutValid = await handleRutVerification(formData.rut);
+      if (!isRutValid) {
+        throw new Error('Por favor verifica tu RUT');
+      }
+
+      // Check if RUT or email is already registered
+      const { data: existingLawyer, error: checkError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, pjud_verified, email, rut')
+        .or(`and(rut.eq.${formData.rut}),and(email.eq.${formData.email})`)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking duplicate RUT/Email:', checkError);
+        throw new Error('Error al verificar la información. Por favor, inténtalo de nuevo.');
+      }
+
+      if (existingLawyer) {
+        if (existingLawyer.email?.toLowerCase() === formData.email.toLowerCase()) {
+          throw new Error('Este correo electrónico ya está registrado.');
+        } else {
+          const lawyerName = existingLawyer.first_name && existingLawyer.last_name 
+            ? `${existingLawyer.first_name} ${existingLawyer.last_name}` 
+            : 'otro usuario';
+          throw new Error(`El RUT ${formData.rut} ya está registrado por ${lawyerName} en nuestra plataforma.`);
+        }
+      }
+    }
+    
+    // Call signup with error handling for duplicate emails/RUTs
+    const signupResponse = await signup(
+      formData.email, 
+      formData.password, 
+      {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role,
+        rut: formData.role === 'lawyer' ? formData.rut : undefined,
+        pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false
+      }
+    );
+    
+    if (signupResponse.error) {
+      // Handle specific error messages from the server
+      if (signupResponse.error.message.includes('duplicate key value violates unique constraint') || 
+          signupResponse.error.message.includes('already registered')) {
+        throw new Error('Este correo electrónico ya está registrado');
+      } else if (signupResponse.error.message.includes('El RUT ya está registrado')) {
+        throw new Error('El RUT ya está registrado en nuestra plataforma');
+      } else if (signupResponse.error.message.includes('RUT inválido')) {
+        throw new Error('El RUT ingresado no es válido');
+      } else {
+        throw signupResponse.error;
+      }
+    }
+    
+    // Reset form on successful signup
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      rut: '',
+      role: 'client',
+    });
+    
+    // Show appropriate success message based on email confirmation status
+    if (signupResponse.requiresEmailConfirmation) {
+      toast({
+        title: '¡Registro exitoso!',
+        description: 'Por favor revisa tu correo electrónico para confirmar tu cuenta.',
+        variant: 'default',
+      });
+      onClose();
+    } else {
+      if (formData.role === 'lawyer') {
+        // Redirect lawyer to profile setup
+        navigate('/dashboard/profile/setup');
+        toast({
+          title: '¡Bienvenido a LegalUp!',
+          description: 'Completa tu perfil para comenzar a recibir clientes.',
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: '¡Bienvenido a LegalUp!',
+          description: 'Tu cuenta ha sido creada y verificada correctamente.',
+          variant: 'default',
+        });
+      }
+      onClose();
+    }
+  };
+  
+  const handleLogin = async () => {
+    if (!formData.email || !formData.password) {
+      throw new Error('Por favor ingresa tu correo y contraseña');
+    }
+
+    // Get the user data from the login response
+    const { data: { user: currentUser }, error: loginError } = await supabase.auth.signInWithPassword({
+      email: formData.email.trim(),
+      password: formData.password
+    });
+
+    if (loginError) {
+      console.error('Login error details:', loginError);
+      
+      // More specific error messages based on the error code
+      if (loginError.message.includes('Invalid login credentials')) {
+        throw new Error('Correo o contraseña incorrectos');
+      } else if (loginError.message.includes('Email not confirmed')) {
+        setIsEmailVerified(false);
+        // Show message and allow user to resend email
+        toast({
+          title: 'Correo no verificado',
+          description: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
+          variant: 'destructive',
+        });
+        return; // Exit early to avoid success flow
+      } else if (loginError.message.includes('Too many requests')) {
+        throw new Error('Demasiados intentos. Por favor intente más tarde');
+      }
+      
+      throw loginError;
+    }
+
+    // Show success message
+    toast({
+      title: 'Inicio de sesión exitoso',
+      description: '¡Bienvenido de nuevo!',
+      variant: 'default',
+    });
+
+    // Reset form and close modal
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      rut: '',
+      role: 'client',
+    });
+    
+    if (onLoginSuccess) {
+      onLoginSuccess();
+    }
+    onClose();
   };
 
   const handleInputChange = (field: string, value: string) => {
