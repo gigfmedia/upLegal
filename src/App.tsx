@@ -344,12 +344,7 @@ const AppContent = () => {
 import GoogleAnalytics from '@/components/GoogleAnalytics';
 
 const App = () => (
-  <BrowserRouter
-    future={{
-      v7_startTransition: true,
-      v7_relativeSplatPath: true,
-    }}
-  >
+  <>
     <GoogleAnalytics />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -362,7 +357,7 @@ const App = () => (
         </NotificationProvider>
       </AuthProvider>
     </QueryClientProvider>
-  </BrowserRouter>
+  </>
 );
 
 export default App;

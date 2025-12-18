@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import { StrictMode } from 'react';
+import { StrictMode, useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -18,15 +18,20 @@ const queryClient = new QueryClient({
   },
 });
 
-// Simple theme context
-const ThemeContext = React.createContext({
+// Theme context
+type ThemeContextType = {
+  theme: string;
+  setTheme: (theme: string) => void;
+};
+
+const ThemeContext = React.createContext<ThemeContextType>({
   theme: 'light',
-  setTheme: (theme: string) => {}
+  setTheme: () => {}
 });
 
-// Simple theme provider
+// Theme provider
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = React.useState('light');
+  const [theme, setTheme] = useState('light');
   
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -37,21 +42,86 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Simple toaster component
-const Toaster = () => {
-  // This is a no-op for now
+// App Wrapper para manejar el estado de montaje
+const AppWrapper = () => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Forzar una actualización cuando la app vuelve al primer plano
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('App is now visible');
+        // Forzar una actualización del estado
+        setIsMounted(prev => !prev);
+        setTimeout(() => setIsMounted(true), 0);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  return <App />;
 };
 
-createRoot(document.getElementById('root')!).render(
+// Obtener el contenedor raíz
+const container = document.getElementById('root');
+if (!container) throw new Error('Failed to find the root element');
+
+// Crear la raíz de la aplicación
+const root = createRoot(container);
+
+// Renderizar la aplicación
+root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
         <ThemeProvider>
           <AuthProvider>
-            <App />
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <AppWrapper />
+            </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>
       </HelmetProvider>
     </QueryClientProvider>
   </StrictMode>
 );
+
+// Manejar el evento de visibilidad para iOS
+const handleVisibilityChange = () => {
+  if (!document.hidden) {
+    // Forzar una actualización cuando la app vuelve al primer plano
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <HelmetProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <BrowserRouter
+                  future={{
+                    v7_startTransition: true,
+                    v7_relativeSplatPath: true,
+                  }}
+                >
+                  <AppWrapper />
+                </BrowserRouter>
+              </AuthProvider>
+            </ThemeProvider>
+          </HelmetProvider>
+        </QueryClientProvider>
+      </StrictMode>
+    );
+  }
+};
+
+document.addEventListener('visibilitychange', handleVisibilityChange);
