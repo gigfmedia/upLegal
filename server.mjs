@@ -263,17 +263,34 @@ app.post('/verify-lawyer', async (req, res) => {
         // RUT is already registered
         const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
         
+        // Format RUT for display (12.345.678-9)
+        const formatRutForDisplay = (rut) => {
+          const clean = rut.replace(/[^0-9kK]/g, '');
+          if (clean.length < 2) return clean;
+          
+          const body = clean.slice(0, -1);
+          const dv = clean.slice(-1);
+          
+          // Add dots every 3 digits from right to left
+          const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          return `${formatted}-${dv}`;
+        };
+        
+        const formattedRut = formatRutForDisplay(cleanRut);
+        
         console.log('Duplicate RUT found:', {
           cleanRut,
+          formattedRut,
           existingRut: existingProfile.rut,
           existingName
         });
         
         return res.json({
           verified: false,
-          message: `El RUT ${rut} ya está registrado por ${existingName} en nuestra plataforma.`,
+          message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
           details: {
             rut: cleanRut,
+            formattedRut,
             registeredBy: existingName,
             reason: 'RUT duplicado'
           }
