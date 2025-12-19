@@ -340,6 +340,9 @@ export default function EarningsPage() {
         </div>
       </div>
 
+      {/* MercadoPago Connection */}
+      <MercadoPagoConnect />
+
       {/* Time Range Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <Tabs 
@@ -375,9 +378,6 @@ export default function EarningsPage() {
           </div>
         )}
       </div>
-
-      {/* MercadoPago Connection */}
-      <MercadoPagoConnect />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -141,20 +141,26 @@ export const MercadoPagoConnect: React.FC = () => {
 
   const handleConnect = () => {
     const clientId = import.meta.env.VITE_MERCADOPAGO_CLIENT_ID;
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const redirectUri = `${appUrl}/api/mercadopago/oauth/callback`;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    
+    // IMPORTANT: redirect_uri must point to the BACKEND server, not the frontend
+    const redirectUri = `${apiBaseUrl}/api/mercadopago/oauth/callback`;
     const state = Math.random().toString(36).substring(2);
 
     // Save state for validation
     localStorage.setItem('mp_auth_state', state);
 
-    // Redirect to MercadoPago OAuth
-    const authUrl = new URL('https://auth.mercadopago.cl/authorization');
+    // Build OAuth URL - MercadoPago uses different endpoints depending on the integration type
+    // For standard OAuth (not marketplace), use the authorization endpoint
+    const authUrl = new URL('https://auth.mercadopago.com.ar/authorization');
     authUrl.searchParams.append('client_id', clientId);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('platform_id', 'mp');
     authUrl.searchParams.append('state', state);
     authUrl.searchParams.append('redirect_uri', redirectUri);
+
+    console.log('MercadoPago OAuth URL:', authUrl.toString());
+    console.log('Redirect URI (backend):', redirectUri);
 
     window.location.href = authUrl.toString();
   };

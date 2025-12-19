@@ -56,8 +56,6 @@ const corsOptions = {
     'https://www.legalup.cl',
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
     'https://uplegal.netlify.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -550,11 +548,13 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Handle OAuth errors
     if (oauthError) {
       console.error('MercadoPago OAuth error:', oauthError);
-      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=${oauthError}`);
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=${oauthError}`);
     }
 
     if (!code) {
-      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=no_code`);
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=no_code`);
     }
 
     // Exchange code for access token
@@ -569,14 +569,15 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
         client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
         client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
         code: code,
-        redirect_uri: `${process.env.VITE_APP_URL}/api/mercadopago/oauth/callback`
+        redirect_uri: `${process.env.VITE_API_BASE_URL || 'http://localhost:3001'}/api/mercadopago/oauth/callback`
       })
     });
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error('Token exchange failed:', errorData);
-      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=token_exchange_failed`);
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -591,7 +592,8 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     if (!userResponse.ok) {
       console.error('Failed to fetch user info');
-      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=user_fetch_failed`);
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=user_fetch_failed`);
     }
 
     const userData = await userResponse.json();
@@ -599,9 +601,9 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000));
 
-    // Store in database - we'll get user_id from the frontend via a separate endpoint
-    // For now, redirect with the data
-    const redirectUrl = new URL(`${process.env.VITE_APP_URL}/lawyer/dashboard`);
+    // Redirect to frontend with OAuth data
+    const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+    const redirectUrl = new URL(`${frontendUrl}/lawyer/dashboard`);
     redirectUrl.searchParams.append('mp_success', 'true');
     redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
     redirectUrl.searchParams.append('mp_email', userData.email);

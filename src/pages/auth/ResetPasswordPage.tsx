@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Check, ArrowLeft } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { handlePasswordReset } from '@/utils/auth-utils';
+import Header from "@/components/Header";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -60,13 +62,26 @@ export default function ResetPasswordPage() {
 
     try {
       setProcessingReset(true);
+      const code = searchParams.get('code');
+      const email = searchParams.get('email');
       
-      // Update the password
-      const { error } = await supabase.auth.updateUser({
+      if (code && email) {
+        // If we have a code and email, verify the OTP first
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          email,
+          token: code,
+          type: 'recovery'
+        });
+
+        if (verifyError) throw verifyError;
+      }
+
+      // Now update the password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
       
       setSuccess(true);
       toast({
@@ -84,36 +99,72 @@ export default function ResetPasswordPage() {
       
     } catch (error) {
       console.error('Error al actualizar la contraseña:', error);
-      setError('Ocurrió un error al actualizar la contraseña. Por favor, inténtalo de nuevo.');
+      setError('Ocurrió un error al actualizar la contraseña. El enlace puede haber expirado. Por favor, solicita uno nuevo.');
     } finally {
-      setLoading(false);
+      setProcessingReset(false);
     }
   };
 
-  // If coming from email link, update the session
+  // Handle the password reset token from URL
   useEffect(() => {
-    const handlePasswordReset = async () => {
-      const accessToken = searchParams.get('access_token');
-      const refreshToken = searchParams.get('refresh_token');
+    const processPasswordReset = async () => {
+      const code = searchParams.get('code');
+      const email = searchParams.get('email');
       
-      if (accessToken && refreshToken) {
+      if (code && email) {
         try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+          setProcessingReset(true);
+          // Just verify the code is valid, don't update the password yet
+          const { error } = await supabase.auth.verifyOtp({
+            email,
+            token: code,
+            type: 'recovery'
           });
           
           if (error) throw error;
           
         } catch (error) {
           console.error('Error al procesar el enlace de recuperación:', error);
-          setError('El enlace de recuperación no es válido o ha expirado.');
+          setError('El enlace de recuperación no es válido o ha expirado. Por favor, solicita un nuevo enlace.');
+        } finally {
+          setProcessingReset(false);
         }
       }
+      setLoading(false);
     };
-    
-    handlePasswordReset();
+
+    processPasswordReset();
   }, [searchParams]);
+
+  // Show error if no code is provided
+  if (!searchParams.get('code') && !searchParams.get('access_token')) {
+    return (
+      <div className="w-full">
+      <Header />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
+            <div className="text-center">
+              <AlertCircle className="mx-auto h-12 w-12 text-yellow-500" />
+              <h2 className="mt-6 text-2xl font-bold text-gray-900">
+                Enlace inválido o expirado
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                No se encontró un código de restablecimiento válido. Por favor, solicita un nuevo enlace desde la página de inicio de sesión.
+              </p>
+              <div className="mt-6">
+                <Button
+                  onClick={() => navigate('/')}
+                  className="w-full"
+                >
+                  Volver al inicio de sesión
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -128,104 +179,110 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-md w-full space-y-8 text-center p-8 bg-white rounded-lg shadow">
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
-            <Check className="h-8 w-8 text-green-600" />
+      <div className="w-full">
+      <Header />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+          <div className="max-w-md w-full space-y-8 text-center p-8 bg-white rounded-lg shadow">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="mt-6 text-2xl font-bold text-gray-900">
+              ¡Contraseña actualizada!
+            </h2>
+            <p className="text-gray-600">
+              Tu contraseña ha sido actualizada correctamente. Serás redirigido a la página de inicio de sesión.
+            </p>
+            <Button 
+              onClick={() => navigate('/login')} 
+              className="mt-4"
+            >
+              Ir al inicio de sesión
+            </Button>
           </div>
-          <h2 className="mt-6 text-2xl font-bold text-gray-900">
-            ¡Contraseña actualizada!
-          </h2>
-          <p className="text-gray-600">
-            Tu contraseña ha sido actualizada correctamente. Serás redirigido a la página de inicio de sesión.
-          </p>
-          <Button 
-            onClick={() => navigate('/login')} 
-            className="mt-4"
-          >
-            Ir al inicio de sesión
-          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="mb-4 -ml-2"
-            onClick={() => navigate('/login')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Volver al inicio de sesión
-          </Button>
-          
-          <h2 className="mt-2 text-2xl font-bold text-gray-900">
-            Restablecer contraseña
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Ingresa tu nueva contraseña. Asegúrate de que tenga al menos 6 caracteres.
-          </p>
-        </div>
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="password">Nueva contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1"
-                minLength={6}
-                placeholder="••••••"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1"
-                minLength={6}
-                placeholder="••••••"
-              />
-            </div>
-          </div>
-
+    <div className="w-full">
+      <Header />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
           <div>
             <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={processingReset}
-              size="lg"
+              variant="ghost" 
+              size="sm" 
+              className="mb-4 -ml-2"
+              onClick={() => navigate('/login')}
             >
-              {processingReset ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Procesando...
-                </>
-              ) : (
-                'Actualizar contraseña'
-              )}
+              <ArrowLeft className="h-4 w-4 mr-1" /> Volver al inicio de sesión
             </Button>
+            
+            <h2 className="mt-2 text-2xl font-bold text-gray-900">
+              Restablecer contraseña
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Ingresa tu nueva contraseña. Asegúrate de que tenga al menos 6 caracteres.
+            </p>
           </div>
-        </form>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="password">Nueva contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1"
+                  minLength={6}
+                  placeholder="••••••"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="mt-1"
+                  minLength={6}
+                  placeholder="••••••"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={processingReset}
+                size="lg"
+              >
+                {processingReset ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Procesando...
+                  </>
+                ) : (
+                  'Actualizar contraseña'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
