@@ -538,6 +538,192 @@ app.get('/payment/:paymentId', async (req, res) => {
   }
 });
 
+// ============================================
+// MERCADOPAGO OAUTH ENDPOINTS
+// ============================================
+
+// OAuth callback endpoint - receives authorization code from MercadoPago
+app.get('/api/mercadopago/oauth/callback', async (req, res) => {
+  try {
+    const { code, state, error: oauthError } = req.query;
+
+    // Handle OAuth errors
+    if (oauthError) {
+      console.error('MercadoPago OAuth error:', oauthError);
+      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=${oauthError}`);
+    }
+
+    if (!code) {
+      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=no_code`);
+    }
+
+    // Exchange code for access token
+    const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
+        client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
+        code: code,
+        redirect_uri: `${process.env.VITE_APP_URL}/api/mercadopago/oauth/callback`
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error('Token exchange failed:', errorData);
+      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=token_exchange_failed`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    console.log('Token exchange successful:', { user_id: tokenData.user_id });
+
+    // Get user info from MercadoPago
+    const userResponse = await fetch('https://api.mercadopago.com/users/me', {
+      headers: {
+        'Authorization': `Bearer ${tokenData.access_token}`
+      }
+    });
+
+    if (!userResponse.ok) {
+      console.error('Failed to fetch user info');
+      return res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=user_fetch_failed`);
+    }
+
+    const userData = await userResponse.json();
+
+    // Calculate token expiration
+    const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000));
+
+    // Store in database - we'll get user_id from the frontend via a separate endpoint
+    // For now, redirect with the data
+    const redirectUrl = new URL(`${process.env.VITE_APP_URL}/lawyer/dashboard`);
+    redirectUrl.searchParams.append('mp_success', 'true');
+    redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
+    redirectUrl.searchParams.append('mp_email', userData.email);
+    
+    // Store tokens temporarily in a secure way (you might want to use sessions instead)
+    // For now, we'll pass them to the frontend to complete the connection
+    redirectUrl.searchParams.append('mp_access_token', tokenData.access_token);
+    redirectUrl.searchParams.append('mp_refresh_token', tokenData.refresh_token || '');
+    redirectUrl.searchParams.append('mp_public_key', tokenData.public_key || '');
+    redirectUrl.searchParams.append('mp_expires_at', expiresAt.toISOString());
+
+    res.redirect(redirectUrl.toString());
+
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=server_error`);
+  }
+});
+
+// Save MercadoPago account - called by frontend after OAuth callback
+app.post('/api/mercadopago/save-account', async (req, res) => {
+  try {
+    const {
+      userId,
+      mercadopagoUserId,
+      accessToken,
+      refreshToken,
+      publicKey,
+      email,
+      nickname,
+      firstName,
+      lastName,
+      expiresAt
+    } = req.body;
+
+    if (!userId || !mercadopagoUserId || !accessToken) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Upsert the account
+    const { data, error } = await supabase
+      .from('mercadopago_accounts')
+      .upsert({
+        user_id: userId,
+        mercadopago_user_id: mercadopagoUserId,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        public_key: publicKey,
+        email: email,
+        nickname: nickname,
+        first_name: firstName,
+        last_name: lastName,
+        expires_at: expiresAt,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error saving MercadoPago account:', error);
+      return res.status(500).json({ error: 'Failed to save account' });
+    }
+
+    res.json({ success: true, account: data });
+
+  } catch (error) {
+    console.error('Save account error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get MercadoPago account for a user
+app.get('/api/mercadopago/account/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const { data, error } = await supabase
+      .from('mercadopago_accounts')
+      .select('id, mercadopago_user_id, email, nickname, first_name, last_name, expires_at, created_at')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.json({ connected: false });
+      }
+      throw error;
+    }
+
+    res.json({ connected: true, account: data });
+
+  } catch (error) {
+    console.error('Get account error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Disconnect MercadoPago account
+app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const { error } = await supabase
+      .from('mercadopago_accounts')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error disconnecting account:', error);
+      return res.status(500).json({ error: 'Failed to disconnect account' });
+    }
+
+    res.json({ success: true });
+
+  } catch (error) {
+    console.error('Disconnect error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {

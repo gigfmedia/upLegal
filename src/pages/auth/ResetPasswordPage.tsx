@@ -4,19 +4,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Check } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
+import { Loader2, Check, ArrowLeft } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { handlePasswordReset } from '@/utils/auth-utils';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [processingReset, setProcessingReset] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Handle the password reset token from URL
+  useEffect(() => {
+    const processPasswordReset = async () => {
+      const code = searchParams.get('code');
+      
+      if (code) {
+        setProcessingReset(true);
+        const result = await handlePasswordReset();
+        if (!result.success) {
+          setError(result.error || 'Error al procesar el restablecimiento de contraseña');
+          toast({
+            title: 'Error',
+            description: result.error || 'Error al procesar el restablecimiento de contraseña',
+            variant: 'destructive',
+          });
+        }
+      }
+      setLoading(false);
+      setProcessingReset(false);
+    };
+
+    processPasswordReset();
+  }, [searchParams, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +59,9 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      setLoading(true);
+      setProcessingReset(true);
+      
+      // Update the password
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -43,10 +71,13 @@ export default function ResetPasswordPage() {
       setSuccess(true);
       toast({
         title: '¡Contraseña actualizada!',
-        description: 'Tu contraseña ha sido actualizada correctamente.',
+        description: 'Tu contraseña ha sido actualizada correctamente. Serás redirigido para iniciar sesión.',
       });
       
-      // Redirect to home with login modal open after 3 seconds
+      // Sign out the user to ensure they need to log in again
+      await supabase.auth.signOut();
+      
+      // Redirect to login page after 3 seconds
       setTimeout(() => {
         navigate('/?showAuth=login');
       }, 3000);
@@ -84,39 +115,59 @@ export default function ResetPasswordPage() {
     handlePasswordReset();
   }, [searchParams]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+          <p className="mt-4 text-gray-600">Procesando solicitud de restablecimiento...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
-                <Check className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">¡Contraseña actualizada!</h1>
-            <p className="mt-2 text-gray-600">
-              Tu contraseña ha sido actualizada correctamente. Serás redirigido al inicio de sesión...
-            </p>
-            <Button 
-              onClick={() => navigate('/login')} 
-              className="w-full mt-6"
-            >
-              Ir al inicio de sesión
-            </Button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full space-y-8 text-center p-8 bg-white rounded-lg shadow">
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+            <Check className="h-8 w-8 text-green-600" />
           </div>
+          <h2 className="mt-6 text-2xl font-bold text-gray-900">
+            ¡Contraseña actualizada!
+          </h2>
+          <p className="text-gray-600">
+            Tu contraseña ha sido actualizada correctamente. Serás redirigido a la página de inicio de sesión.
+          </p>
+          <Button 
+            onClick={() => navigate('/login')} 
+            className="mt-4"
+          >
+            Ir al inicio de sesión
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Restablecer contraseña</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+        <div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mb-4 -ml-2"
+            onClick={() => navigate('/login')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> Volver al inicio de sesión
+          </Button>
+          
+          <h2 className="mt-2 text-2xl font-bold text-gray-900">
+            Restablecer contraseña
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Ingresa tu nueva contraseña
+            Ingresa tu nueva contraseña. Asegúrate de que tenga al menos 6 caracteres.
           </p>
         </div>
 
@@ -126,47 +177,54 @@ export default function ResetPasswordPage() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Nueva contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              placeholder="Ingresa tu nueva contraseña"
-              className="w-full"
-            />
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="password">Nueva contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1"
+                minLength={6}
+                placeholder="••••••"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1"
+                minLength={6}
+                placeholder="••••••"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              placeholder="Confirma tu nueva contraseña"
-              className="w-full"
-            />
+          <div>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={processingReset}
+              size="lg"
+            >
+              {processingReset ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : (
+                'Actualizar contraseña'
+              )}
+            </Button>
           </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Actualizando...
-              </>
-            ) : 'Actualizar contraseña'}
-          </Button>
         </form>
       </div>
     </div>

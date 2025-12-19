@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { MercadoPagoConnect } from '@/components/dashboard/MercadoPagoConnect';
 
 interface Transaction {
   id: string;
@@ -71,80 +72,6 @@ const generateMockTransactions = (): Transaction[] => {
 
 export default function EarningsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
-  const [isMercadoPagoConnected, setIsMercadoPagoConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [mercadoPagoUser, setMercadoPagoUser] = useState<{
-    email?: string;
-    nickname?: string;
-    connected_at?: string;
-  } | null>(null);
-
-  // Check MercadoPago connection status on component mount
-  useEffect(() => {
-    const checkMercadoPagoConnection = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('mercado_pago_connected, mercado_pago_email, mercado_pago_nickname, mercado_pago_connected_at')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profile?.mercado_pago_connected) {
-          setIsMercadoPagoConnected(true);
-          setMercadoPagoUser({
-            email: profile.mercado_pago_email || undefined,
-            nickname: profile.mercado_pago_nickname || undefined,
-            connected_at: profile.mercado_pago_connected_at
-          });
-        }
-      } catch (error) {
-        console.error('Error checking MercadoPago connection:', error);
-      }
-    };
-
-    checkMercadoPagoConnection();
-  }, []);
-
-  const handleConnectMercadoPago = async () => {
-    try {
-      setIsConnecting(true);
-      setConnectionError(null);
-      
-      // For MercadoPago Chile, we need to use the web platform integration
-      const clientId = '5728750272037413';
-      const state = Math.random().toString(36).substring(2);
-      
-      // Save state for validation after redirect
-      localStorage.setItem('mp_auth_state', state);
-      
-      // Build the authorization URL for MercadoPago Chile (production)
-      const authUrl = new URL('https://www.mercadopago.cl/developers/panel/app/5728750272037413/webhooks');
-      
-      // Alternative direct integration URL
-      // const authUrl = new URL('https://www.mercadopago.cl/developers/panel/app/5728750272037413/webhooks');
-      
-      // If still not working, try the marketplace URL
-      // const authUrl = new URL('https://www.mercadopago.cl/developers/panel/app/5728750272037413/marketplace_places/new');
-      
-      authUrl.searchParams.append('client_id', clientId);
-      authUrl.searchParams.append('response_type', 'code');
-      authUrl.searchParams.append('platform_id', 'mp');
-      authUrl.searchParams.append('state', state);
-      authUrl.searchParams.append('production', 'true');
-      
-      console.log('Redirecting to MercadoPago:', authUrl.toString());
-      window.location.href = authUrl.toString();
-    } catch (error) {
-      console.error('Error connecting to MercadoPago:', error);
-      setConnectionError('Error al conectar con MercadoPago. Por favor, inténtalo de nuevo.');
-    } finally {
-      setIsConnecting(false);
-    }
-  };
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -449,65 +376,8 @@ export default function EarningsPage() {
         )}
       </div>
 
-      {/* MercadoPago Connection Status */}
-      {/*{!isMercadoPagoConnected ? (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 pt-0.5">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  <span className="font-medium">¡Importante!</span> Para recibir tus pagos, debes vincular tu cuenta de MercadoPago.
-                </p>
-                {connectionError && (
-                  <p className="text-sm text-red-600 mt-1">{connectionError}</p>
-                )}
-              </div>
-            </div>
-            <Button 
-              onClick={handleConnectMercadoPago}
-              variant="outline" 
-              size="sm"
-              disabled={isConnecting}
-              className="whitespace-nowrap bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-            >
-              <span className="flex items-center">
-                <img 
-                  src="https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/7.0.17/mercadopago/logo__large@2x.png" 
-                  alt="MercadoPago" 
-                  className="h-4 mr-2" 
-                />
-                {isConnecting ? 'Conectando...' : 'Vincular Cuenta'}
-              </span>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-green-50 border-l-4 border-green-400 p-4 rounded-r">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 pt-0.5">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-700">
-                <span className="font-medium">¡Excelente!</span> Tu cuenta de MercadoPago está vinculada correctamente.
-              </p>
-              {mercadoPagoUser?.email && (
-                <p className="text-xs text-green-600 mt-1">
-                  Conectado como: {mercadoPagoUser.email}
-                  {mercadoPagoUser.connected_at && (
-                    <span className="block text-xs text-green-500">
-                      Vinculada el: {new Date(mercadoPagoUser.connected_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}*/}
+      {/* MercadoPago Connection */}
+      <MercadoPagoConnect />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
