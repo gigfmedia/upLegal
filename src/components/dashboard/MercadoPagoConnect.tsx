@@ -150,9 +150,8 @@ export const MercadoPagoConnect: React.FC = () => {
     // Save state for validation
     localStorage.setItem('mp_auth_state', state);
 
-    // Build OAuth URL - MercadoPago uses different endpoints depending on the integration type
-    // For standard OAuth (not marketplace), use the authorization endpoint
-    const authUrl = new URL('https://auth.mercadopago.com.ar/authorization');
+    // Build OAuth URL - MercadoPago uses a unified OAuth endpoint for all regions
+    const authUrl = new URL('https://auth.mercadopago.com/authorization');
     authUrl.searchParams.append('client_id', clientId);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('platform_id', 'mp');
