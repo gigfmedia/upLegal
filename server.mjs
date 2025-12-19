@@ -239,6 +239,31 @@ app.post('/verify-lawyer', async (req, res) => {
       });
     }
 
+    // **NEW: Check if RUT is already registered by another user**
+    const { data: existingProfiles, error: dbError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, rut, user_id')
+      .eq('rut', cleanRut);
+
+    if (dbError) {
+      console.error('Error checking for duplicate RUT:', dbError);
+      // Continue with verification even if DB check fails
+    } else if (existingProfiles && existingProfiles.length > 0) {
+      // RUT is already registered
+      const existingProfile = existingProfiles[0];
+      const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
+      
+      return res.json({
+        verified: false,
+        message: `El RUT ${rut} ya está registrado por ${existingName} en nuestra plataforma.`,
+        details: {
+          rut: cleanRut,
+          registeredBy: existingName,
+          reason: 'RUT duplicado'
+        }
+      });
+    }
+
     let lawyerData = {
       rut: cleanRut,
       nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
