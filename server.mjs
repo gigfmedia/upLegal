@@ -557,6 +557,17 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=no_code`);
     }
 
+    // Build redirect_uri - MUST match exactly what was used in the authorization request
+    const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+    const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
+    
+    console.log('Token exchange - redirect_uri:', redirectUri);
+    console.log('Environment variables:', {
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
+      RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL,
+      VITE_APP_URL: process.env.VITE_APP_URL
+    });
+
     // Exchange code for access token
     const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
       method: 'POST',
@@ -569,7 +580,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
         client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
         client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
         code: code,
-        redirect_uri: `${process.env.VITE_API_BASE_URL || 'http://localhost:3001'}/api/mercadopago/oauth/callback`
+        redirect_uri: redirectUri
       })
     });
 
