@@ -52,7 +52,6 @@ const AppWrapper = () => {
     // Forzar una actualización cuando la app vuelve al primer plano
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        console.log('App is now visible');
         // Forzar una actualización del estado
         setIsMounted(prev => !prev);
         setTimeout(() => setIsMounted(true), 0);
