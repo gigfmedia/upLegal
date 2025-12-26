@@ -206,6 +206,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setErrorState(error);
         return { user: null, error };
       }
+
+      // GA4 event (opcional pero recomendado)
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'sign_up', {
+          method: 'modal',
+          role: userData.role, // 'client' | 'lawyer'
+          status: 'pending_email_confirmation'
+        });
+      }
       
       // Profile creation is now handled automatically by Supabase triggers:
       // 1. Supabase auto-creates profile from auth.users
