@@ -537,6 +537,190 @@ app.get('/payment/:paymentId', async (req, res) => {
 });
 
 // ============================================
+// BOOKINGS ENDPOINTS
+// ============================================
+
+// Create booking endpoint - NO AUTHENTICATION REQUIRED
+app.post('/api/bookings/create', async (req, res) => {
+  try {
+    const {
+      lawyer_id,
+      user_email,
+      user_name,
+      scheduled_date,
+      scheduled_time,
+      duration,
+      price
+    } = req.body;
+
+    // Validate required fields
+    if (!lawyer_id || !user_email || !user_name || !scheduled_date || !scheduled_time || !duration || !price) {
+      return res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['lawyer_id', 'user_email', 'user_name', 'scheduled_date', 'scheduled_time', 'duration', 'price']
+      });
+    }
+
+    // Validate duration
+    if (![30, 60].includes(duration)) {
+      return res.status(400).json({ error: 'Duration must be 30 or 60 minutes' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(user_email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Check if lawyer exists
+    const { data: lawyer, error: lawyerError } = await supabase
+      .from('profiles')
+      .select('user_id, first_name, last_name')
+      .eq('user_id', lawyer_id)
+      .eq('role', 'lawyer')
+      .single();
+
+    if (lawyerError || !lawyer) {
+      return res.status(404).json({ error: 'Lawyer not found' });
+    }
+
+    // TODO: Check lawyer availability for the selected time slot
+    // This would require querying the lawyer's calendar/bookings
+
+    // Create booking record
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        lawyer_id,
+        user_email,
+        user_name,
+        scheduled_date,
+        scheduled_time,
+        duration,
+        price,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (bookingError) {
+      console.error('Error creating booking:', bookingError);
+      return res.status(500).json({ error: 'Failed to create booking' });
+    }
+
+    // Create MercadoPago preference
+    const preferenceData = {
+      items: [{
+        id: booking.id,
+        title: `Asesoría Legal - ${lawyer.first_name} ${lawyer.last_name}`,
+        description: `Asesoría legal de ${duration} minutos`,
+        category_id: 'services',
+        quantity: 1,
+        unit_price: price
+      }],
+      payer: {
+        name: user_name,
+        email: user_email
+      },
+      back_urls: {
+        success: `${process.env.VITE_APP_URL}/booking/success?booking_id=${booking.id}`,
+        failure: `${process.env.VITE_APP_URL}/booking/failure?booking_id=${booking.id}`,
+        pending: `${process.env.VITE_APP_URL}/booking/pending?booking_id=${booking.id}`
+      },
+      auto_return: 'approved',
+      external_reference: booking.id,
+      metadata: {
+        booking_id: booking.id,
+        lawyer_id,
+        user_email,
+        user_name,
+        duration,
+        scheduled_date,
+        scheduled_time
+      },
+      statement_descriptor: 'LEGALUP',
+      notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
+    };
+
+    // Create preference using MercadoPago API
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
+      },
+      body: JSON.stringify(preferenceData)
+    });
+
+    if (!mpResponse.ok) {
+      const errorData = await mpResponse.json();
+      console.error('MercadoPago API error:', errorData);
+      throw new Error('Failed to create MercadoPago preference');
+    }
+
+    const mpData = await mpResponse.json();
+
+    // Update booking with MercadoPago preference ID
+    await supabase
+      .from('bookings')
+      .update({ 
+        mercadopago_preference_id: mpData.id,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', booking.id);
+
+    // Return booking and payment link
+    const paymentLink = mpData.init_point || mpData.sandbox_init_point;
+
+    res.json({
+      success: true,
+      booking_id: booking.id,
+      payment_link: paymentLink,
+      message: 'Booking created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error in /api/bookings/create:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      details: error.message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+    });
+  }
+});
+
+// Get booking by ID - PUBLIC endpoint for success page
+app.get('/api/bookings/:bookingId', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const { data: booking, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        lawyer:profiles!bookings_lawyer_id_fkey(
+          user_id,
+          first_name,
+          last_name,
+          specialties,
+          profile_picture_url
+        )
+      `)
+      .eq('id', bookingId)
+      .single();
+
+    if (error || !booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    res.json({ booking });
+  } catch (error) {
+    console.error('Error fetching booking:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ============================================
 // MERCADOPAGO OAUTH ENDPOINTS
 // ============================================
 
