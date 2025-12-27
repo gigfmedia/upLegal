@@ -23,6 +23,9 @@ dotenv.config();
 // Get environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const appUrl = process.env.VITE_APP_URL || 'https://uplegal.netlify.app';
+
+console.log('App URL:', appUrl);
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('Missing required environment variables');
@@ -623,9 +626,9 @@ app.post('/api/bookings/create', async (req, res) => {
         email: user_email
       },
       back_urls: {
-        success: `${process.env.VITE_APP_URL}/booking/success?booking_id=${booking.id}`,
-        failure: `${process.env.VITE_APP_URL}/booking/failure?booking_id=${booking.id}`,
-        pending: `${process.env.VITE_APP_URL}/booking/pending?booking_id=${booking.id}`
+        success: `${appUrl}/booking/success?booking_id=${booking.id}`,
+        failure: `${appUrl}/booking/failure?booking_id=${booking.id}`,
+        pending: `${appUrl}/booking/pending?booking_id=${booking.id}`
       },
       auto_return: 'approved',
       external_reference: booking.id,
