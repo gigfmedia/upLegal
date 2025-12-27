@@ -1185,13 +1185,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id) {
-                              handleAuthRequired('schedule');
+                              navigate(`/booking/${lawyer?.user_id}`);
                             }
                           }}
                           disabled={currentUser?.id === lawyer?.user_id}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
-                          Agendar
+                          Agendar asesoría
                         </Button>
                         <Button 
                           variant="outline" 
