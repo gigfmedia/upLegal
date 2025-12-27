@@ -31,6 +31,9 @@ interface AuthModalProps {
 export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
   const { login, signup, user } = useAuth();
   const [isEmailVerified, setIsEmailVerified] = useState(true);
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState('');
+  const [isResending, setIsResending] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -486,12 +489,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         throw new Error('Correo o contraseña incorrectos');
       } else if (loginError.message.includes('Email not confirmed')) {
         setIsEmailVerified(false);
-        // Show message and allow user to resend email
-        toast({
-          title: 'Correo no verificado',
-          description: 'Por favor verifica tu correo electrónico antes de iniciar sesión.',
-          variant: 'destructive',
-        });
+        setShowResendButton(true);
+        setUnconfirmedEmail(formData.email);
+        setError('Por favor confirma tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.');
         return; // Exit early to avoid success flow
       } else if (loginError.message.includes('Too many requests')) {
         throw new Error('Demasiados intentos. Por favor intente más tarde');
@@ -522,6 +522,36 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       onLoginSuccess();
     }
     onClose();
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return;
+    
+    setIsResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: unconfirmedEmail,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Correo enviado",
+        description: "Hemos reenviado el correo de confirmación. Por favor revisa tu bandeja de entrada.",
+      });
+      setShowResendButton(false);
+      setError('');
+    } catch (error) {
+      console.error('Error resending confirmation:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo reenviar el correo. Por favor intenta más tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -662,6 +692,30 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
+          )}
+
+          {showResendButton && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 mb-3">
+                ¿No recibiste el correo de confirmación?
+              </p>
+              <Button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={isResending}
+                variant="outline"
+                className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Reenviando...
+                  </>
+                ) : (
+                  'Reenviar correo de confirmación'
+                )}
+              </Button>
+            </div>
           )}
 
           {mode === 'signup' && (
