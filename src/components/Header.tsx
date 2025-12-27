@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Scale, User, LogOut, Eye, ChevronDown } from "lucide-react";
+import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -38,9 +38,11 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const [servicesOpen, setServicesOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleNavigation = (path: string) => {
     navigate(path);
+    setIsMobileMenuOpen(false);
     const dropdown = document.querySelector('[data-radix-popper-content-wrapper]');
     if (dropdown) {
       dropdown.removeAttribute('data-state');
@@ -50,21 +52,35 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const handleAuthNavigation = (mode: 'login' | 'signup') => {
     setAuthMode(mode);
     setIsAuthModalOpen(true);
+    setIsMobileMenuOpen(false);
   };
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-7xl mx-auto">
         <div className="relative flex items-center justify-between h-full w-full">
-          {mobileMenuButton && (
+          {/* Mobile Menu Button - use prop if provided, otherwise show default hamburger */}
+          {mobileMenuButton ? (
             <div className="md:hidden flex items-center">{mobileMenuButton}</div>
+          ) : (
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 text-gray-700" />
+              ) : (
+                <Menu className="h-6 w-6 text-gray-700" />
+              )}
+            </button>
           )}
 
-          {/* Logo */}
+          {/* Logo - Centered on mobile */}
           <div
             className={cn(
               "flex items-center space-x-2 cursor-pointer transition-colors",
-              centerLogoOnMobile
+              centerLogoOnMobile || !mobileMenuButton
                 ? "absolute left-1/2 -translate-x-1/2 md:relative md:left-auto md:translate-x-0"
                 : ""
             )}
@@ -218,7 +234,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="flex items-center space-x-3 h-16">
+              <div className="hidden md:flex items-center space-x-3 h-16">
                 <Button 
                   variant="ghost" 
                   onClick={() => handleAuthNavigation('login')}
@@ -237,6 +253,65 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown - only show when no mobileMenuButton (not logged in) */}
+      {!mobileMenuButton && isMobileMenuOpen && (
+        <div className="md:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
+          <nav className="flex flex-col p-4 space-y-3">
+            <button
+              onClick={() => handleNavigation('/search')}
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors",
+                isActive('/search')
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Explorar Servicios
+            </button>
+            <button
+              onClick={() => handleNavigation('/como-funciona')}
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors",
+                isActive('/como-funciona')
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Cómo Funciona
+            </button>
+            <button
+              onClick={() => handleNavigation('/about')}
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors",
+                isActive('/about')
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Acerca de
+            </button>
+
+            {!user && (
+              <div className="pt-3 border-t border-gray-200 space-y-2">
+                <Button
+                  onClick={() => handleAuthNavigation('login')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Iniciar Sesión
+                </Button>
+                <Button
+                  onClick={() => handleAuthNavigation('signup')}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  Registrarse
+                </Button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
       
       <AuthModal 
         isOpen={isAuthModalOpen} 

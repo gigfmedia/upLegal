@@ -184,18 +184,17 @@ function DashboardLayout() {
         onAuthClick={() => {}}
         centerLogoOnMobile
         mobileMenuButton={
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 rounded-md hover:bg-gray-100 transition-colors"
             aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {isSidebarOpen ? (
-              <X className="h-5 w-5" />
+              <X className="h-6 w-6 text-gray-700" />
             ) : (
-              <Menu className="h-5 w-5" />
+              <Menu className="h-6 w-6 text-gray-700" />
             )}
-          </Button>
+          </button>
         }
       />
       

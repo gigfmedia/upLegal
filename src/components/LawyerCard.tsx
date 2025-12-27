@@ -353,7 +353,7 @@ export function LawyerCard({
               title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
             >
               <Calendar className="h-4 w-4 mr-2" />
-              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar asesoría'}
             </Button>
           </div>
           {buttonsDisabled && (

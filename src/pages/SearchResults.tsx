@@ -719,19 +719,25 @@ const SearchResults = () => {
               >
                 {[
                   'Todas',
-                  'Derecho Laboral', 
-                  'Derecho de Familia', 
-                  'Derecho Civil', 
-                  'Derecho Penal', 
-                  'Derecho Comercial', 
-                  'Derecho Inmobiliario', 
+                  'Derecho Civil',
+                  'Derecho Penal',
+                  'Derecho Laboral',
+                  'Derecho de Familia',
+                  'Derecho Comercial',
                   'Derecho Tributario',
-                  'Derecho de Propiedad Intelectual',
+                  'Derecho Inmobiliario',
+                  'Derecho de Salud',
                   'Derecho Ambiental',
-                  'Derecho Bancario',
                   'Derecho de Consumidor',
-                  'Derecho Migratorio',
-                  'Derecho de Salud'
+                  'Derecho Administrativo',
+                  'Derecho Procesal',
+                  'Derecho de Propiedad Intelectual',
+                  'Derecho de Seguridad Social',
+                  'Derecho Minero',
+                  'Derecho Aduanero',
+                  'Derecho Marítimo',
+                  'Derecho Aeronáutico',
+                  'Derecho Deportivo'
                 ].map((specialty) => (
                   <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
                     <button
@@ -758,7 +764,7 @@ const SearchResults = () => {
                       }}
                       className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
                         selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
-                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                           : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
                       }`}
                       style={{
