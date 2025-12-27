@@ -921,6 +921,97 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
   }
 });
 
+// MercadoPago Webhook
+app.post('/api/mercadopago/webhook', async (req, res) => {
+  try {
+    const { type, data } = req.body;
+    const topic = req.body.topic || type;
+    const id = req.body.id || data?.id;
+
+    console.log(`Received webhook: ${topic} ${id}`);
+
+    if (topic === 'payment') {
+      const payment = await new Payment(mpClient).get({ id });
+      
+      if (payment.status === 'approved') {
+        const bookingId = payment.external_reference;
+        console.log(`Payment approved for booking ${bookingId}`);
+        
+        // 1. Update booking status
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .update({ 
+            status: 'confirmed', 
+            payment_id: payment.id.toString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
+
+        if (bookingError) {
+          console.error('Error updating booking:', bookingError);
+        }
+
+        if (booking) {
+          // 2. Check if user exists
+          const { data: existingUser } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', booking.user_email)
+            .single();
+
+          let userId = existingUser?.id;
+
+          // 3. Create user if not exists
+          if (!userId) {
+            console.log(`Creating new user for ${booking.user_email}`);
+            const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+            
+            const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+              email: booking.user_email,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                first_name: booking.user_name.split(' ')[0],
+                last_name: booking.user_name.split(' ').slice(1).join(' ') || '',
+                full_name: booking.user_name
+              }
+            });
+
+            if (createError) {
+              console.error('Error creating user:', createError);
+            } else {
+              userId = newUser.user.id;
+              
+              // Create profile for new user (if trigger didn't handle it)
+              // Note: Supabase usually creates profile via trigger on auth.users
+              // But we'll ensure it exists or update it
+              
+              // TODO: Send welcome email with temp password
+            }
+          }
+
+          // 4. Associate booking with user
+          if (userId) {
+            await supabase
+              .from('bookings')
+              .update({ user_id: userId })
+              .eq('id', bookingId);
+          }
+
+          // TODO: Send confirmation emails
+        }
+      }
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {

@@ -66,6 +66,8 @@ const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
+const BookingPage = lazy(() => import('./pages/BookingPage'));
+const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
 // Create a single QueryClient instance
@@ -216,6 +218,11 @@ const AppContent = () => {
               <Route path="/como-funciona" element={<HowItWorksPage />} />
               <Route path="/terminos" element={<TermsOfService />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />
+              
+              {/* Booking Routes */}
+              <Route path="/booking/:lawyerId" element={<BookingPage />} />
+              <Route path="/booking/success" element={<BookingSuccessPage />} />
+
               {/* New lawyer dashboard routes */}
               <Route path="/lawyer" element={
                 <div data-role="lawyer">

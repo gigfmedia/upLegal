@@ -141,13 +141,8 @@ export function LawyerCard({
   // Handle schedule button click
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      setAuthMode('login');
-      setShowAuthModal(true);
-      return;
-    }
-    if (onScheduleClick) onScheduleClick();
-    else if (onSchedule) onSchedule();
+    // New flow: Redirect to booking page without auth check
+    navigate(`/booking/${lawyer.user_id || lawyer.id}`);
   };
   
   return (
