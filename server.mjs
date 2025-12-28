@@ -25,7 +25,12 @@ dotenv.config();
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 const appUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-const resend = new Resend(process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+if (!resend) {
+  console.warn('⚠️ RESEND_API_KEY missing. Email features will be disabled.');
+}
 
 console.log('App URL:', appUrl);
 
@@ -1039,7 +1044,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           }
 
           // Send confirmation email to Client
-          try {
+          if (resend) {
+            try {
             await resend.emails.send({
               from: 'UpLegal <hola@up-legal.cl>',
               to: userEmail,
@@ -1072,12 +1078,15 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               `
             });
             console.log('Confirmation email sent to user:', userEmail);
-          } catch (emailError) {
-             console.error('Error sending user email:', emailError);
+            } catch (emailError) {
+               console.error('Error sending user email:', emailError);
+            }
+          } else {
+            console.log('Skipping client email: Resend not configured');
           }
 
           // Send notification email to Lawyer
-          if (lawyerEmail) {
+          if (lawyerEmail && resend) {
             try {
               await resend.emails.send({
                 from: 'UpLegal <hola@up-legal.cl>',
