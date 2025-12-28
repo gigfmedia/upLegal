@@ -124,7 +124,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         <DialogHeader>
           <DialogTitle>Confirma tu asesoría legal</DialogTitle>
           <DialogDescription>
-            Estás a un paso de hablar con un abogado verificado por videollamada.
+            Estás a un paso de hablar con un abogado verificado en PJUD por videollamada.
           </DialogDescription>
         </DialogHeader>
 
@@ -164,7 +164,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="text-sm text-blue-800 space-y-1">
               <p className="font-medium">Resumen de tu asesoría:</p>
-              <p>• Abogado verificado en PJUD: {bookingData.lawyer_name}</p>
+              <p>• Abogado: {bookingData.lawyer_name}</p>
               <p>• Duración: {bookingData.duration} minutos</p>
               <p>• Total: ${bookingData.price.toLocaleString('es-CL')}</p>
               <p>• Reembolso si el abogado no asiste</p>
