@@ -79,7 +79,18 @@ export default function BookingPage() {
     }
 
     fetchLawyer();
+    fetchLawyer();
   }, [lawyerId, navigate]);
+
+  // Track booking_start event when lawyer data is loaded
+  useEffect(() => {
+    if (lawyer?.user_id && window.gtag) {
+      window.gtag('event', 'booking_start', {
+        lawyer_id: lawyer.user_id,
+        lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`
+      });
+    }
+  }, [lawyer]);
 
   // Constants mapping indices to hours for availability JSON
   // ManageAvailability.tsx: const HOURS = Array.from({ length: 10 }, (_, i) => 9 + i); // 09:00–20:00 (Check: 9+9=18, so 09:00 to 18:00 start times)
@@ -240,6 +251,15 @@ export default function BookingPage() {
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
+    
+    // Track time_selected event
+    if (window.gtag && lawyer?.user_id && selectedDate) {
+      window.gtag('event', 'time_selected', {
+        lawyer_id: lawyer.user_id,
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: time
+      });
+    }
   };
 
   const handleContinue = () => {
