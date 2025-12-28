@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, DollarSign, User, ArrowLeft } from 'lucide-react';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { isChileanHoliday } from '@/lib/holidays';
 import PreCheckoutModal from '@/components/PreCheckoutModal';
 import Header from '@/components/Header';
 
@@ -33,7 +34,7 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [duration, setDuration] = useState<30 | 60>(60);
+  const [duration, setDuration] = useState<30 | 60 | 90 | 120>(60);
   const [showPreCheckout, setShowPreCheckout] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
 
@@ -80,12 +81,17 @@ export default function BookingPage() {
       return;
     }
 
-    // Generate slots from 9 AM to 6 PM
+    // Determine end hour based on day of week
+    // Saturday (6) ends at 14:00, others at 18:00
+    const isSaturday = selectedDate.getDay() === 6;
+    const endHour = isSaturday ? 14 : 18;
+
+    // Generate slots from 9 AM to endHour
     const slots: TimeSlot[] = [];
-    for (let hour = 9; hour < 18; hour++) {
-      // If duration is 60, only show hourly slots (e.g. 9:00, 10:00)
+    for (let hour = 9; hour < endHour; hour++) {
+      // If duration is >= 60, only show hourly slots (e.g. 9:00, 10:00)
       // If duration is 30, show half-hourly slots (e.g. 9:00, 9:30)
-      const minutes = duration === 60 ? [0] : [0, 30];
+      const minutes = duration >= 60 ? [0] : [0, 30];
       
       for (let minute of minutes) {
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
@@ -97,9 +103,10 @@ export default function BookingPage() {
     setAvailableSlots(slots);
   }, [selectedDate, duration]);
 
-  // Generate next 30 days for date selection, excluding Sundays
+  // Generate next 30 days for date selection, excluding Sundays and Holidays
   const availableDates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i + 1))
-    .filter(date => date.getDay() !== 0); // 0 is Sunday
+    .filter(date => date.getDay() !== 0) // Exclude Sundays (0)
+    .filter(date => !isChileanHoliday(date)); // Exclude holidays
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
@@ -115,10 +122,20 @@ export default function BookingPage() {
     setShowPreCheckout(true);
   };
 
-  const calculatePrice = () => {
+  const calculateLawyerFee = () => {
     if (!lawyer) return 0;
-    return duration === 60 ? lawyer.hourly_rate_clp : Math.round(lawyer.hourly_rate_clp / 2);
+    switch (duration) {
+      case 30: return Math.round(lawyer.hourly_rate_clp / 2);
+      case 60: return lawyer.hourly_rate_clp;
+      case 90: return Math.round(lawyer.hourly_rate_clp * 1.5);
+      case 120: return lawyer.hourly_rate_clp * 2;
+      default: return lawyer.hourly_rate_clp;
+    }
   };
+
+  const lawyerFee = calculateLawyerFee();
+  const serviceFee = Math.round(lawyerFee * 0.10); // 10% service fee
+  const totalPrice = lawyerFee + serviceFee;
 
   if (loading) {
     return (
@@ -141,7 +158,7 @@ export default function BookingPage() {
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className="mb-4 mt-8"
+          className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
@@ -184,9 +201,9 @@ export default function BookingPage() {
             {/* Duration Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duración
+                Duración:
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <button
                   onClick={() => setDuration(30)}
                   className={`p-4 border-2 rounded-lg transition-all ${
@@ -219,6 +236,38 @@ export default function BookingPage() {
                     ${lawyer.hourly_rate_clp.toLocaleString('es-CL')}
                   </div>
                 </button>
+                <button
+                  onClick={() => setDuration(90)}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    duration === 90
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-medium">90 minutos</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    ${Math.round(lawyer.hourly_rate_clp * 1.5).toLocaleString('es-CL')}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setDuration(120)}
+                  className={`p-4 border-2 rounded-lg transition-all ${
+                    duration === 120
+                      ? 'border-blue-600 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-medium">120 minutos</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">
+                    ${(lawyer.hourly_rate_clp * 2).toLocaleString('es-CL')}
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -226,7 +275,7 @@ export default function BookingPage() {
               {/* Date Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecciona una fecha
+                  Selecciona una fecha:
                 </label>
                 <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
                   {availableDates.map((date) => (
@@ -256,7 +305,7 @@ export default function BookingPage() {
               {/* Time Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecciona un horario
+                  Selecciona un horario:
                 </label>
                 {selectedDate ? (
                   <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2">
@@ -304,15 +353,29 @@ export default function BookingPage() {
                     <span className="text-gray-600">Duración:</span>
                     <span className="font-medium">{duration} minutos</span>
                   </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                    <span>Total:</span>
-                    <span className="text-blue-600">${calculatePrice().toLocaleString('es-CL')}</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Honorarios abogado:</span>
+                    <span className="font-medium">${lawyerFee.toLocaleString('es-CL')}</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center">
+                      <span className="text-gray-600">Tarifa por servicio</span>
+                      <span className="ml-1 text-xs text-gray-500">*</span>
+                    </div>
+                    <span className="font-medium text-gray-600">+${serviceFee.toLocaleString('es-CL')}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                    <span>Total a pagar:</span>
+                    <span className="text-blue-600">${totalPrice.toLocaleString('es-CL')}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    * Incluye 10% de recargo por servicio app.
+                  </p>
                 </div>
 
                 <Button
                   onClick={handleContinue}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-6"
                 >
                   Continuar al pago
                 </Button>
@@ -333,7 +396,7 @@ export default function BookingPage() {
             scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
             scheduled_time: selectedTime,
             duration,
-            price: calculatePrice()
+            price: totalPrice
           }}
         />
       )}

@@ -9,6 +9,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { v4 as uuidv4 } from 'uuid';
 import { load } from 'cheerio';
 import axios from 'axios';
+import { Resend } from 'resend';
 
 // ... (imports)
 
@@ -23,7 +24,8 @@ dotenv.config();
 // Get environment variables
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const appUrl = process.env.VITE_APP_URL || 'https://uplegal.netlify.app';
+const appUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY);
 
 console.log('App URL:', appUrl);
 
@@ -1003,7 +1005,112 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               .eq('id', bookingId);
           }
 
-          // TODO: Send confirmation emails
+          // Fetch lawyer email to send notification
+          let lawyerEmail = '';
+          try {
+            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
+            if (lawyerUser?.user) {
+              lawyerEmail = lawyerUser.user.email;
+            } else {
+               console.error('Could not find lawyer user for email notification', lawyerError);
+            }
+          } catch (e) {
+            console.error('Error fetching lawyer email:', e);
+          }
+
+          // Generate Magic Link for user auto-login
+          let magicLink = `${appUrl}/login`;
+          try {
+            const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+              type: 'magiclink',
+              email: userEmail,
+              options: {
+                redirectTo: `${appUrl}/dashboard/appointments`
+              }
+            });
+            
+            if (linkData?.properties?.action_link) {
+              magicLink = linkData.properties.action_link;
+            } else if (linkError) {
+                console.error('Error generating magic link:', linkError);
+            }
+          } catch (e) {
+            console.error('Error generating magic link exception:', e);
+          }
+
+          // Send confirmation email to Client
+          try {
+            await resend.emails.send({
+              from: 'UpLegal <hola@up-legal.cl>',
+              to: userEmail,
+              subject: '¡Tu asesoría está confirmada!',
+              html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
+                  <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
+                  <p>Tu asesoría ha sido confirmada exitosamente.</p>
+                  
+                  <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Abogado:</strong> Consultar en plataforma</p>
+                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.date}</p>
+                    <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.time}</p>
+                    <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration} min</p>
+                  </div>
+
+                  <p>Hemos creado una cuenta para ti (o actualizado la existente) para que puedas gestionar tu cita.</p>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${magicLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                      Ingresar a mi cuenta y ver detalles
+                    </a>
+                  </div>
+
+                  <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">
+                    Si el botón no funciona, copia y pega este enlace: ${magicLink}
+                  </p>
+                </div>
+              `
+            });
+            console.log('Confirmation email sent to user:', userEmail);
+          } catch (emailError) {
+             console.error('Error sending user email:', emailError);
+          }
+
+          // Send notification email to Lawyer
+          if (lawyerEmail) {
+            try {
+              await resend.emails.send({
+                from: 'UpLegal <hola@up-legal.cl>',
+                to: lawyerEmail,
+                subject: 'Nueva reserva confirmada',
+                html: `
+                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
+                    <p>Has recibido una nueva reserva confirmada.</p>
+                    
+                    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                      <p style="margin: 5px 0;"><strong>Cliente:</strong> ${userName}</p>
+                      <p style="margin: 5px 0;"><strong>Email:</strong> ${userEmail}</p>
+                      <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.date}</p>
+                      <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.time}</p>
+                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration} min</p>
+                    </div>
+
+                    <p>Ingresa a tu panel para ver más detalles.</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="${appUrl}/dashboard/appointments" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        Ir a mis citas
+                      </a>
+                    </div>
+                  </div>
+                `
+              });
+              console.log('Notification email sent to lawyer:', lawyerEmail);
+            } catch (emailError) {
+               console.error('Error sending lawyer email:', emailError);
+            }
+          }
         }
       }
     }

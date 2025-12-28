@@ -58,6 +58,33 @@ export default function BookingSuccessPage() {
     fetchBooking();
   }, [bookingId, navigate]);
 
+  // Track purchase and booking_confirmed events once booking is loaded
+  useEffect(() => {
+    if (booking) {
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        // Purchase event
+        (window as any).gtag('event', 'purchase', {
+          transaction_id: booking.id,
+          value: booking.price,
+          currency: 'CLP',
+          items: [{
+            item_id: booking.lawyer.first_name, // Using lawyer name/id as item
+            item_name: `Asesoría con ${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+            price: booking.price,
+            quantity: 1
+          }]
+        });
+
+        // Custom booking_confirmed event
+        (window as any).gtag('event', 'booking_confirmed', {
+          booking_id: booking.id,
+          lawyer_name: `${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+          price: booking.price
+        });
+      }
+    }
+  }, [booking]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

@@ -124,7 +124,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         <DialogHeader>
           <DialogTitle>Completa tus datos</DialogTitle>
           <DialogDescription>
-            Usaremos tu email únicamente para enviarte la confirmación de la asesoría
+            Usaremos tu email únicamente para enviarte la confirmación de la asesoría.
           </DialogDescription>
         </DialogHeader>
 
@@ -132,14 +132,13 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           <div className="space-y-2">
             <Label htmlFor="name">Nombre completo</Label>
             <div className="relative">
-              <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              {/* <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
               <Input
                 id="name"
                 type="text"
                 placeholder="Juan Pérez"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="pl-10"
                 disabled={isSubmitting}
                 required
               />
@@ -149,14 +148,13 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              {/* <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
               <Input
                 id="email"
                 type="email"
                 placeholder="juan@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-10"
                 disabled={isSubmitting}
                 required
               />
