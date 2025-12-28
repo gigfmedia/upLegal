@@ -138,11 +138,23 @@ export function LawyerCard({
     else if (onContact) onContact();
   };
   
+  // Create URL-friendly slug from lawyer's name
+  const createSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD') // Decompose combined characters (e.g. "ñ" -> "n" + "~")
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with hyphens
+      .replace(/(^-|-$)/g, ''); // Remove leading/trailing hyphens
+  };
+
   // Handle schedule button click
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     // New flow: Redirect to booking page without auth check
-    navigate(`/booking/${lawyer.user_id || lawyer.id}`);
+    const lawyerName = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+    const nameSlug = lawyerName ? createSlug(lawyerName) : 'abogado';
+    navigate(`/booking/${nameSlug}-${lawyer.user_id || lawyer.id}`);
   };
   
   return (

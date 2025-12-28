@@ -1184,8 +1184,20 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
                           onClick={(e) => {
                             e.preventDefault();
-                            if (currentUser?.id !== lawyer?.user_id) {
-                              navigate(`/booking/${lawyer?.user_id}`);
+                            if (currentUser?.id !== lawyer?.user_id && lawyer) {
+                              // Helper to generate slug
+                              const createSlug = (name: string) => {
+                                return name
+                                  .toLowerCase()
+                                  .normalize('NFD')
+                                  .replace(/[\u0300-\u036f]/g, '')
+                                  .replace(/[^a-z0-9]+/g, '-')
+                                  .replace(/(^-|-$)/g, '');
+                              };
+                              
+                              const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+                              const nameSlug = fullName ? createSlug(fullName) : 'abogado';
+                              navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
                             }
                           }}
                           disabled={currentUser?.id === lawyer?.user_id}

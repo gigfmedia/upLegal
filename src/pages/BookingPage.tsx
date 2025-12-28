@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { isChileanHoliday } from '@/lib/holidays';
@@ -33,6 +34,7 @@ export default function BookingPage() {
   
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [duration, setDuration] = useState<30 | 60 | 90 | 120>(60);
@@ -44,12 +46,16 @@ export default function BookingPage() {
     async function fetchLawyer() {
       if (!lawyerId) return;
 
-      console.log('Fetching lawyer:', lawyerId);
+      // Extract UUID from the URL parameter (which might be "slug-uuid")
+      // UUIDs are 36 characters long. If the param is longer, we assume it's slug-uuid.
+      const actualId = lawyerId.length > 36 ? lawyerId.slice(-36) : lawyerId;
+
+      console.log('Fetching lawyer:', actualId);
 
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified')
-        .eq('user_id', lawyerId)
+        .eq('user_id', actualId)
         .eq('role', 'lawyer')
         .single();
 
@@ -109,7 +115,7 @@ export default function BookingPage() {
       }
 
       try {
-        setLoading(true); // Reuse loading state or create a specific one if needed, but 'loading' covers the page. Better to just set slots.
+        setIsLoadingSlots(true); // Only show loading in slots area
         
         // Call RPC
         const { data: busySlots, error } = await supabase
@@ -131,23 +137,30 @@ export default function BookingPage() {
         // Let's assume we update the initial fetch to include 'availability'.
 
         let availabilityConfig = {};
-        if (lawyer && (lawyer as any).availability) {
-             availabilityConfig = typeof (lawyer as any).availability === 'string' 
-            ? JSON.parse((lawyer as any).availability)
-            : (lawyer as any).availability;
-        } else {
-             // If not loaded in state, fetch it specifically (or rely on defaults)
-             const { data: profileData } = await supabase
-              .from('profiles')
-              .select('availability')
-              .eq('user_id', lawyerId)
-              .single();
-              
-             if (profileData?.availability) {
-                availabilityConfig = typeof profileData.availability === 'string'
-                  ? JSON.parse(profileData.availability)
-                  : profileData.availability;
-             }
+        try {
+          if (lawyer && (lawyer as any).availability) {
+              const rawAvail = (lawyer as any).availability;
+              availabilityConfig = typeof rawAvail === 'string' 
+              ? JSON.parse(rawAvail)
+              : rawAvail;
+          } else {
+              // If not loaded in state, fetch it specifically (or rely on defaults)
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('availability')
+                .eq('user_id', lawyerId)
+                .single();
+                
+              if (profileData?.availability) {
+                  const rawAvail = profileData.availability;
+                  availabilityConfig = typeof rawAvail === 'string'
+                    ? JSON.parse(rawAvail)
+                    : rawAvail;
+              }
+          }
+        } catch (parseError) {
+          console.warn('Error parsing lawyer availability config, defaulting to open or closed defaults based on logic:', parseError);
+          // availabilityConfig remains {}
         }
 
         const dayName = getDayName(selectedDate);
@@ -164,7 +177,10 @@ export default function BookingPage() {
             if (dayAvailability && Array.isArray(dayAvailability)) {
                 return dayAvailability[hourIndex] === true;
             }
-            return false; // Default to closed if not configured
+            // Default to OPEN if no configuration exists (legacy support)
+            // If the lawyer hasn't set up availability, we assume standard hours (9-14 Sat, 9-18 M-F) are open
+            // matching the 'baseSlots' generation logic.
+            return true;
         });
 
         // 4. Fetch busy slots from DB (Bookings) - defined above, now map them
@@ -194,6 +210,8 @@ export default function BookingPage() {
       } catch (err) {
         console.error('Failed to check availability', err);
         setAvailableSlots(baseSlots);
+      } finally {
+        setIsLoadingSlots(false);
       }
     };
 
@@ -244,10 +262,78 @@ export default function BookingPage() {
   const serviceFee = Math.round(lawyerFee * 0.10); // 10% service fee
   const totalPrice = lawyerFee + serviceFee;
 
+  const BookingSkeleton = () => (
+    <div className="space-y-6">
+      {/* Lawyer Info Skeleton */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-6 w-48" />
+              <div className="flex gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Duration Selection Skeleton */}
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-32" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-lg" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Date and Time Selection Skeleton */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Date Picker Skeleton */}
+            <div>
+              <Skeleton className="h-5 w-32 mb-4" />
+              <div className="grid grid-cols-3 gap-2 h-64">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-lg" />
+                ))}
+              </div>
+            </div>
+            
+            {/* Time Picker Skeleton */}
+            <div>
+              <Skeleton className="h-5 w-32 mb-4" />
+              <div className="grid grid-cols-2 gap-2 h-64">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-12 rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-16">
-        <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="py-8 px-4 pt-24">
+          <div className="max-w-4xl mx-auto">
+            <BookingSkeleton />
+          </div>
+        </div>
       </div>
     );
   }
@@ -419,12 +505,12 @@ export default function BookingPage() {
                 </label>
                 {selectedDate ? (
                   <>
-                  <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2">
+                  <div className={`grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2 ${isLoadingSlots ? 'opacity-50' : ''}`}>
                     {availableSlots.map((slot) => (
                       <button
                         key={slot.time}
                         onClick={() => handleTimeSelect(slot.time)}
-                        disabled={!slot.available}
+                        disabled={!slot.available || isLoadingSlots}
                         className={`p-3 border-2 rounded-lg transition-all ${
                           selectedTime === slot.time
                             ? 'border-blue-600 bg-blue-50'
