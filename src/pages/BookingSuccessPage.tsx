@@ -87,8 +87,8 @@ export default function BookingSuccessPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      <div className="flex justify-center items-center py-16">
+        <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function BookingSuccessPage() {
     return null;
   }
 
-  const formattedDate = format(parseISO(booking.scheduled_date), "d 'de' MMMM, yyyy", { locale: es });
+  const formattedDate = format(parseISO(booking.scheduled_date), "d 'de' MMMM yyyy", { locale: es });
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -108,10 +108,10 @@ export default function BookingSuccessPage() {
             <CheckCircle className="h-12 w-12 text-green-600" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            ¡Tu asesoría está confirmada!
+            ¡Asesoría confirmada con éxito!
           </h1>
           <p className="text-gray-600">
-            Hemos enviado los detalles a tu correo electrónico
+            Te enviamos un correo con los detalles y el enlace de la videollamada.
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function BookingSuccessPage() {
         {/* Email Confirmation Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-800 text-center">
-            📧 <strong>Revisa tu correo</strong> para confirmar tu cuenta y acceder a todas las funciones de la plataforma
+            <strong>Revisa tu correo</strong> para confirmar tu cuenta y acceder a todas las funciones de la plataforma
           </p>
         </div>
 
@@ -195,7 +195,7 @@ export default function BookingSuccessPage() {
             onClick={() => navigate('/dashboard/appointments')}
             className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
           >
-            Gestionar mi asesoría
+            Ver mi asesoría
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
 

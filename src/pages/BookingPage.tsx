@@ -152,17 +152,8 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="py-8 px-4">
+      <div className="py-8 px-4 pt-24">
       <div className="max-w-4xl mx-auto">
-        {/* Back button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver
-        </Button>
 
         {/* Lawyer Info Card */}
         <Card className="mb-6">
@@ -308,6 +299,7 @@ export default function BookingPage() {
                   Selecciona un horario:
                 </label>
                 {selectedDate ? (
+                  <>
                   <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2">
                     {availableSlots.map((slot) => (
                       <button
@@ -326,6 +318,8 @@ export default function BookingPage() {
                       </button>
                     ))}
                   </div>
+                  <p className="text-sm font-medium text-gray-700 mt-4">Este horario se libera automáticamente si no se confirma el pago</p>
+                  </>
                 ) : (
                   <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm bg-gray-50">
                     <Calendar className="h-8 w-8 mb-2 opacity-50" />
@@ -342,7 +336,7 @@ export default function BookingPage() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Fecha:</span>
                     <span className="font-medium">
-                      {format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}
+                      {format(selectedDate, "d 'de' MMMM yyyy", { locale: es })}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
