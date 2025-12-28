@@ -572,8 +572,9 @@ app.post('/api/bookings/create', async (req, res) => {
     }
 
     // Validate duration
-    if (![30, 60].includes(duration)) {
-      return res.status(400).json({ error: 'Duration must be 30 or 60 minutes' });
+    // Validate duration
+    if (![30, 60, 90, 120].includes(duration)) {
+      return res.status(400).json({ error: 'Duration must be 30, 60, 90 or 120 minutes' });
     }
 
     // Validate email format
