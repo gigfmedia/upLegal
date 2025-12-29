@@ -60,85 +60,22 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LegalService",
+      "@type": ["LegalService", "Organization"],
       "name": "LegalUp",
-      "description": "Plataforma de asesoría legal online que conecta usuarios con abogados especializados para consultas jurídicas rápidas y confiables",
+      "description": "Plataforma de asesoría legal online en Chile que conecta personas con abogados verificados para resolver consultas jurídicas de forma rápida y confiable.",
       "url": "https://legalup.cl",
-      "logo": "https://legalup.cl/images/logo.png",
-      "telephone": "+56 9 1234 5678",
-      "email": "info@legalup.cl",
+      "logo": "https://legalup.cl/assets/logo.png",
+      "areaServed": "CL",
+      "serviceType": "Asesoría legal online",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Camino a Cahuil ",
-        "addressLocality": "Pichilemu",
-        "postalCode": "28001",
-        "addressCountry": "ES"
-      },
-      "areaServed": ["CL"],
-      "serviceType": "Asesoría legal online",
-      "hoursAvailable": {
-        "@type": "OpeningHoursSpecification",
-        "dayOfWeek": [
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-          "Friday",
-          "Saturday",
-          "Sunday"
-        ],
-        "opens": "00:00",
-        "closes": "23:59"
-      },
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Servicios Legales Online",
-        "itemListElement": [
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Consulta Legal Inicial",
-              "description": "Consulta legal básica con abogado especializado",
-              "price": "29",
-              "priceCurrency": "CLP"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Asesoría Legal Especializada",
-              "description": "Asesoría legal detallada por área de derecho",
-              "price": "59",
-              "priceCurrency": "CLP"
-            }
-          },
-          {
-            "@type": "Offer",
-            "itemOffered": {
-              "@type": "Service",
-              "name": "Representación Legal",
-              "description": "Representación legal completa ante tribunales",
-              "price": "199",
-              "priceCurrency": "CLP"
-            }
-          }
-        ]
-      },
-      "serviceArea": {
-        "@type": "GeoCircle",
-        "geoMidpoint": {
-          "@type": "GeoCoordinates",
-          "latitude": "40.4168",
-          "longitude": "-3.7038"
-        },
-        "geoRadius": "5000000"
+        "addressCountry": "CL"
       },
       "sameAs": [
-        "https://www.facebook.cl/legalup",
-        "https://www.linkedin.cl/company/legalup",
-        "https://twitter.cl/legalup"
+        "https://www.facebook.com/legalup",
+        "https://www.linkedin.com/company/legalup",
+        "https://twitter.com/legalup",
+        "https://instagram.com/legalupcl"
       ]
     }
     </script>
@@ -162,7 +99,7 @@
           "name": "¿Qué tipos de servicios legales ofrecen?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Ofrecemos consultas legales iniciales ($20.000 CLP), asesoría especializada en derecho laboral, civil, mercantil, familia y penal (59€), redacción de documentos legales y representación legal ante tribunales (desde 199€). Todos nuestros abogados están verificados y tienen más de 5 años de experiencia."
+            "text": "Ofrecemos consultas legales iniciales ($20.000 CLP), asesoría especializada en derecho laboral, civil, mercantil, familia y penal (59€), redacción de documentos legales y representación legal ante tribunales. Todos nuestros abogados están verificados y tienen más de 1 años de experiencia."
           }
         },
         {
@@ -170,7 +107,7 @@
           "name": "¿Cuánto cuesta una consulta legal en LegalUp?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "La consulta legal inicial tiene un costo de 29€. Incluye: análisis de tu caso, orientación legal específica y plan de acción. La asesoría especializada cuesta 59€ e incluye análisis detallado y documentación básica."
+            "text": "La consulta legal inicial depende de lo que el abogado cobre por hora. Incluye: análisis de tu caso, orientación legal específica y plan de acción. La asesoría especializada los puedes ver en servicios ofrecidos del abogado."
           }
         },
         {
