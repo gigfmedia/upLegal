@@ -4,13 +4,15 @@ import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { isChileanHoliday } from '@/lib/holidays';
 import PreCheckoutModal from '@/components/PreCheckoutModal';
 import Header from '@/components/Header';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LawyerProfile {
   user_id: string;
@@ -31,6 +33,9 @@ interface TimeSlot {
 export default function BookingPage() {
   const { lawyerId } = useParams<{ lawyerId: string }>();
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,6 +130,22 @@ export default function BookingPage() {
         }
       }
 
+      const applySameDayFilter = (slots: TimeSlot[]) => {
+        const now = new Date();
+        if (selectedDate.toDateString() !== now.toDateString()) {
+          return slots;
+        }
+
+        const cutoff = new Date(now.getTime() + 15 * 60 * 1000);
+
+        return slots.filter((slot) => {
+          const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+          const slotDateTime = new Date(selectedDate);
+          slotDateTime.setHours(slotHour, slotMinute, 0, 0);
+          return slotDateTime.getTime() >= cutoff.getTime();
+        });
+      };
+
       try {
         setIsLoadingSlots(true); // Only show loading in slots area
         
@@ -137,7 +158,11 @@ export default function BookingPage() {
 
         if (error) {
           console.error('Error fetching availability:', error);
-          setAvailableSlots(baseSlots); // Fallback to all available on error? Or none? Safe to show all (risk of double booking) or error.
+          const filtered = applySameDayFilter(baseSlots);
+          if (selectedTime && !filtered.some(slot => slot.time === selectedTime)) {
+            setSelectedTime(null);
+          }
+          setAvailableSlots(filtered);
           return;
         }
 
@@ -216,11 +241,21 @@ export default function BookingPage() {
           return { ...slot, available: !isBlocked };
         });
 
-        setAvailableSlots(finalSlots);
+        const filteredSlots = applySameDayFilter(finalSlots);
+
+        if (selectedTime && !filteredSlots.some(slot => slot.time === selectedTime)) {
+          setSelectedTime(null);
+        }
+
+        setAvailableSlots(filteredSlots);
 
       } catch (err) {
         console.error('Failed to check availability', err);
-        setAvailableSlots(baseSlots);
+        const filtered = applySameDayFilter(baseSlots);
+        if (selectedTime && !filtered.some(slot => slot.time === selectedTime)) {
+          setSelectedTime(null);
+        }
+        setAvailableSlots(filtered);
       } finally {
         setIsLoadingSlots(false);
       }
@@ -239,8 +274,87 @@ export default function BookingPage() {
     return date.getHours() * 100 + date.getMinutes();
   };
 
-  // Generate next 30 days for date selection, excluding Sundays and Holidays
-  const availableDates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i + 1))
+  const getAuthenticatedUserName = () => {
+    const metadata = user?.user_metadata || {};
+    const fullName = metadata.full_name
+      || [metadata.first_name, metadata.last_name].filter(Boolean).join(' ')
+      || metadata.name;
+    if (fullName && fullName.trim().length > 0) {
+      return fullName.trim();
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Cliente LegalUp';
+  };
+
+  const handleAuthenticatedCheckout = async (userName: string, userEmail: string) => {
+    if (!selectedDate || !selectedTime || !lawyer) return;
+
+    setIsProcessingPayment(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          lawyer_id: lawyer.user_id,
+          user_email: userEmail,
+          user_name: userName,
+          scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+          scheduled_time: selectedTime,
+          duration,
+          price: totalPrice
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al crear la reserva');
+      }
+
+      if (window.gtag) {
+        window.gtag('event', 'lead_created', {
+          lawyer_id: lawyer.user_id,
+          duration,
+          price: totalPrice
+        });
+      }
+
+      if (data.payment_link) {
+        if (window.gtag) {
+          window.gtag('event', 'begin_checkout', {
+            booking_id: data.booking_id,
+            value: totalPrice,
+            currency: 'CLP',
+            items: [{
+              item_id: data.booking_id,
+              item_name: `Asesoría con ${lawyer.first_name} ${lawyer.last_name}`,
+              price: totalPrice,
+              quantity: 1
+            }]
+          });
+        }
+
+        window.location.href = data.payment_link;
+      } else {
+        throw new Error('No se recibió el link de pago');
+      }
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'No se pudo crear la reserva',
+        variant: 'destructive'
+      });
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const availableDates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i))
     .filter(date => date.getDay() !== 0) // Exclude Sundays (0)
     .filter(date => !isChileanHoliday(date)); // Exclude holidays
 
@@ -262,9 +376,25 @@ export default function BookingPage() {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedDate || !selectedTime) return;
-    setShowPreCheckout(true);
+    if (isProcessingPayment) return;
+
+    if (isAuthenticated && user) {
+      if (!user.email) {
+        toast({
+          title: 'Cuenta sin email',
+          description: 'Tu cuenta no tiene un email válido. Completa tus datos para continuar con el pago.',
+          variant: 'destructive'
+        });
+        setShowPreCheckout(true);
+        return;
+      }
+
+      await handleAuthenticatedCheckout(getAuthenticatedUserName(), user.email);
+    } else {
+      setShowPreCheckout(true);
+    }
   };
 
   const calculateLawyerFee = () => {
@@ -595,8 +725,16 @@ export default function BookingPage() {
                 <Button
                   onClick={handleContinue}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-6"
+                  disabled={isProcessingPayment}
                 >
-                  Continuar al pago
+                  {isProcessingPayment ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Redirigiendo...
+                    </>
+                  ) : (
+                    'Continuar al pago'
+                  )}
                 </Button>
               </div>
             )}

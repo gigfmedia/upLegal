@@ -882,6 +882,7 @@ export default function LawyerProfilePage() {
                 
                 <div className="space-y-2">
                   <Label htmlFor="bio">Biografía</Label>
+                  <small className='inline-flex'>Cuéntanos sobre tu experiencia, especialidades y forma de trabajo. Esta información ayuda a los usuarios a conocerte mejor y tomar una decisión informada al agendar.</small>
                   <Textarea
                     id="bio"
                     name="bio"
