@@ -894,14 +894,43 @@ app.get('/api/mercadopago/account/:userId', async (req, res) => {
       .eq('user_id', userId)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.json({ connected: false });
-      }
+    if (!error && data) {
+      return res.json({ connected: true, account: data });
+    }
+
+    if (error && error.code !== 'PGRST116') {
       throw error;
     }
 
-    res.json({ connected: true, account: data });
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('mercado_pago_connected, mercado_pago_email, mercado_pago_nickname, mercado_pago_connected_at, mercado_pago_user_id, first_name, last_name')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      if (profileError.code === 'PGRST116') {
+        return res.json({ connected: false });
+      }
+      throw profileError;
+    }
+
+    if (!profile?.mercado_pago_connected) {
+      return res.json({ connected: false });
+    }
+
+    const accountFromProfile = {
+      id: profile.mercado_pago_user_id ? profile.mercado_pago_user_id.toString() : `profile-${userId}`,
+      mercadopago_user_id: profile.mercado_pago_user_id,
+      email: profile.mercado_pago_email || '',
+      nickname: profile.mercado_pago_nickname || '',
+      first_name: profile.first_name || '',
+      last_name: profile.last_name || '',
+      expires_at: profile.mercado_pago_connected_at || null,
+      created_at: profile.mercado_pago_connected_at || null,
+    };
+
+    return res.json({ connected: true, account: accountFromProfile });
 
   } catch (error) {
     console.error('Get account error:', error);
