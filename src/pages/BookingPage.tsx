@@ -121,6 +121,7 @@ export default function BookingPage() {
       const baseSlots: TimeSlot[] = [];
       const isSaturday = selectedDate.getDay() === 6;
       const endHour = isSaturday ? 14 : 18;
+      const needsExtendedSlot = !isSaturday;
 
       for (let hour = 9; hour < endHour; hour++) {
         const minutes = duration >= 60 ? [0] : [0, 30];
@@ -128,6 +129,14 @@ export default function BookingPage() {
           const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           baseSlots.push({ time, available: true });
         }
+      }
+
+      if (needsExtendedSlot) {
+        const extraMinutes = duration >= 60 ? [0] : [0, 30];
+        extraMinutes.forEach(minute => {
+          const time = `18:${minute.toString().padStart(2, '0')}`;
+          baseSlots.push({ time, available: true });
+        });
       }
 
       const applySameDayFilter = (slots: TimeSlot[]) => {
