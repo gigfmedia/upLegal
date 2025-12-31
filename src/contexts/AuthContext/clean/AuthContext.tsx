@@ -168,8 +168,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Sign up the user with Supabase Auth
+      const normalizedEmail = email.trim().toLowerCase();
+
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
         options: {
           data: {
@@ -207,7 +209,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { user: null, error };
       }
 
-      const normalizedEmail = email.trim().toLowerCase();
       const firstName = userData.firstName.trim();
       const lastName = userData.lastName.trim();
       const displayName = [firstName, lastName].filter(Boolean).join(' ') || normalizedEmail.split('@')[0];
