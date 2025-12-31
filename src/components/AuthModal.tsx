@@ -907,6 +907,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   )}
                 </Button>
               </div>
+              <small className="text-xs text-gray-500">Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
               
               {rutError && (
                 <p className="text-xs text-red-500 mt-1">{rutError}</p>

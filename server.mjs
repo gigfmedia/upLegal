@@ -745,12 +745,12 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     if (oauthError) {
       console.error('MercadoPago OAuth error:', oauthError);
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=${oauthError}`);
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=${oauthError}`);
     }
 
     if (!code) {
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=no_code`);
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=no_code`);
     }
 
     // Build redirect_uri - MUST match exactly what was used in the authorization request
@@ -784,7 +784,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       const errorData = await tokenResponse.text();
       console.error('Token exchange failed:', errorData);
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=token_exchange_failed`);
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
@@ -800,7 +800,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     if (!userResponse.ok) {
       console.error('Failed to fetch user info');
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-      return res.redirect(`${frontendUrl}/lawyer/dashboard?mp_error=user_fetch_failed`);
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=user_fetch_failed`);
     }
 
     const userData = await userResponse.json();
@@ -810,7 +810,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     // Redirect to frontend with OAuth data
     const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-    const redirectUrl = new URL(`${frontendUrl}/lawyer/dashboard`);
+    const redirectUrl = new URL(`${frontendUrl}/lawyer/earnings`);
     redirectUrl.searchParams.append('mp_success', 'true');
     redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
     redirectUrl.searchParams.append('mp_email', userData.email);
@@ -826,7 +826,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.redirect(`${process.env.VITE_APP_URL}/lawyer/dashboard?mp_error=server_error`);
+    res.redirect(`${process.env.VITE_APP_URL}/lawyer/earnings?mp_error=server_error`);
   }
 });
 

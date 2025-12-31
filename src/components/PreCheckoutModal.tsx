@@ -124,7 +124,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         <DialogHeader>
           <DialogTitle>Confirma tu asesoría legal</DialogTitle>
           <DialogDescription>
-            Estás a un paso de hablar con un abogado verificado en PJUD por videollamada.
+            Estás a un paso de hablar con un abogado verificado por el <strong>Poder Judicial</strong> por videollamada.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,7 +186,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
             )}
           </Button>
 
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-sm text-gray-500 text-center">
             Al continuar, serás redirigido a MercadoPago para completar el pago de forma segura
           </p>
         </form>
