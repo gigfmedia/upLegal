@@ -207,6 +207,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { user: null, error };
       }
 
+      const normalizedEmail = email.trim().toLowerCase();
+      const firstName = userData.firstName.trim();
+      const lastName = userData.lastName.trim();
+      const displayName = [firstName, lastName].filter(Boolean).join(' ') || normalizedEmail.split('@')[0];
+
+      try {
+        const baseProfileData = {
+          email: normalizedEmail,
+          first_name: firstName || null,
+          last_name: lastName || null,
+          display_name: displayName,
+          role: userData.role,
+          rut: userData.rut || null,
+          pjud_verified: userData.pjudVerified || false,
+          updated_at: new Date().toISOString(),
+        } satisfies Record<string, unknown>;
+
+        const { data: existingProfile, error: profileLookupError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
+        if (profileLookupError) {
+          throw profileLookupError;
+        }
+
+        const { error: profileMutationError } = existingProfile
+          ? await supabase
+              .from('profiles')
+              .update(baseProfileData)
+              .eq('user_id', data.user.id)
+          : await supabase
+              .from('profiles')
+              .insert({
+                ...baseProfileData,
+                id: data.user.id,
+                user_id: data.user.id,
+                created_at: new Date().toISOString(),
+                has_used_free_consultation: false,
+              });
+
+        if (profileMutationError) {
+          throw profileMutationError;
+        }
+      } catch (profileError) {
+        console.error('Error ensuring profile data:', profileError);
+        throw new Error('No se pudo crear el perfil del usuario. Inténtalo nuevamente.');
+      }
+
       // GA4 event (opcional pero recomendado)
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'sign_up', {

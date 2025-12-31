@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { load } from 'cheerio';
 import axios from 'axios';
 import { Resend } from 'resend';
+import crypto from 'crypto';
 
 // ... (imports)
 
@@ -994,49 +995,113 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
 
         if (booking) {
-          // 2. Check if user exists
-          const { data: existingUser } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('email', booking.user_email)
-            .single();
+          const userEmail = (booking.user_email || '').trim().toLowerCase();
+          const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+          const [firstName, ...restName] = userName.split(' ').filter(Boolean);
+          const lastName = restName.length > 0 ? restName.join(' ') : '';
 
-          let userId = existingUser?.id;
+          let userId = null;
+
+          if (userEmail) {
+            // 2. Check if user exists in auth.users
+            try {
+              const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
+              if (authLookupError && authLookupError.message !== 'User not found') {
+                console.error('Error looking up user by email:', authLookupError);
+              }
+              if (authUser?.user) {
+                userId = authUser.user.id;
+              }
+            } catch (lookupError) {
+              console.error('Exception checking existing user:', lookupError);
+            }
+          }
 
           // 3. Create user if not exists
-          if (!userId) {
-            console.log(`Creating new user for ${booking.user_email}`);
-            const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-            
+          if (!userId && userEmail) {
+            console.log(`Creating new user for ${userEmail}`);
+            const tempPassword = crypto.randomBytes(9).toString('hex');
+
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-              email: booking.user_email,
+              email: userEmail,
               password: tempPassword,
               email_confirm: true,
               user_metadata: {
-                first_name: booking.user_name.split(' ')[0],
-                last_name: booking.user_name.split(' ').slice(1).join(' ') || '',
-                full_name: booking.user_name
+                first_name: firstName || userName,
+                last_name,
+                full_name: userName,
+                role: 'client',
+                signup_method: 'booking'
               }
             });
 
             if (createError) {
               console.error('Error creating user:', createError);
-            } else {
+            } else if (newUser?.user?.id) {
               userId = newUser.user.id;
-              
-              // Create profile for new user (if trigger didn't handle it)
-              // Note: Supabase usually creates profile via trigger on auth.users
-              // But we'll ensure it exists or update it
-              
-              // TODO: Send welcome email with temp password
             }
           }
 
-          // 4. Associate booking with user
-          if (userId) {
+          // 4. Ensure profile exists and is up to date
+          if (userId && userEmail) {
+            try {
+              const { data: existingProfile, error: profileLookupError } = await supabase
+                .from('profiles')
+                .select('user_id')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+              if (profileLookupError) {
+                console.error('Error querying profile:', profileLookupError);
+              }
+
+              const baseProfile = {
+                email: userEmail,
+                first_name: firstName || null,
+                last_name: lastName || null,
+                display_name: userName,
+                role: 'client',
+                updated_at: new Date().toISOString(),
+              };
+
+              if (existingProfile) {
+                const { error: updateProfileError } = await supabase
+                  .from('profiles')
+                  .update(baseProfile)
+                  .eq('user_id', userId);
+
+                if (updateProfileError) {
+                  console.error('Error updating profile:', updateProfileError);
+                }
+              } else {
+                const { error: insertProfileError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    ...baseProfile,
+                    id: userId,
+                    user_id: userId,
+                    created_at: new Date().toISOString(),
+                    has_used_free_consultation: false,
+                  });
+
+                if (insertProfileError) {
+                  console.error('Error inserting profile:', insertProfileError);
+                }
+              }
+            } catch (profileError) {
+              console.error('Exception ensuring profile:', profileError);
+            }
+          }
+
+          // 5. Associate booking with user and normalize stored contact data
+          if (userId && userEmail) {
             await supabase
               .from('bookings')
-              .update({ user_id: userId })
+              .update({
+                user_id: userId,
+                user_email: userEmail,
+                user_name: userName,
+              })
               .eq('id', bookingId);
           }
 
@@ -1055,29 +1120,31 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
           // Generate Magic Link for user auto-login
           let magicLink = `${appUrl}/login`;
-          try {
-            const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-              type: 'magiclink',
-              email: userEmail,
-              options: {
-                redirectTo: `${appUrl}/dashboard/appointments`
+          if (userEmail) {
+            try {
+              const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+                type: 'magiclink',
+                email: userEmail,
+                options: {
+                  redirectTo: `${appUrl}/dashboard/appointments`
+                }
+              });
+              
+              if (linkData?.properties?.action_link) {
+                magicLink = linkData.properties.action_link;
+              } else if (linkError) {
+                  console.error('Error generating magic link:', linkError);
               }
-            });
-            
-            if (linkData?.properties?.action_link) {
-              magicLink = linkData.properties.action_link;
-            } else if (linkError) {
-                console.error('Error generating magic link:', linkError);
+            } catch (e) {
+              console.error('Error generating magic link exception:', e);
             }
-          } catch (e) {
-            console.error('Error generating magic link exception:', e);
           }
 
           // Send confirmation email to Client
           if (resend) {
             try {
             await resend.emails.send({
-              from: 'UpLegal <hola@up-legal.cl>',
+              from: 'LegalUp <hola@legalup.cl>',
               to: userEmail,
               subject: '¡Tu asesoría está confirmada!',
               html: `
@@ -1119,7 +1186,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           if (lawyerEmail && resend) {
             try {
               await resend.emails.send({
-                from: 'UpLegal <hola@up-legal.cl>',
+                from: 'LegalUp <hola@legalup.cl>',
                 to: lawyerEmail,
                 subject: 'Nueva reserva confirmada',
                 html: `
