@@ -34,12 +34,15 @@ export const MercadoPagoConnect: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mpSuccess = params.get('mp_success');
+    const mpConnected = params.get('mp_connected');
     const mpError = params.get('mp_error');
 
-    if (mpSuccess === 'true') {
+    // Handle success from OAuth callback
+    if (mpSuccess === 'true' || mpConnected === 'success') {
       // Extract OAuth data from URL
       const mpUserId = params.get('mp_user_id');
       const mpEmail = params.get('mp_email');
+      const mpNickname = params.get('mp_nickname');
       const mpAccessToken = params.get('mp_access_token');
       const mpRefreshToken = params.get('mp_refresh_token');
       const mpPublicKey = params.get('mp_public_key');
@@ -53,10 +56,18 @@ export const MercadoPagoConnect: React.FC = () => {
           refreshToken: mpRefreshToken || '',
           publicKey: mpPublicKey || '',
           email: mpEmail || '',
-          nickname: '',
+          nickname: mpNickname || '',
           firstName: '',
           lastName: '',
           expiresAt: mpExpiresAt || ''
+        });
+      } else if (mpConnected === 'success') {
+        // If we only have mp_connected=success, just refresh the connection status
+        // This happens when the backend saves the account directly
+        checkConnection();
+        toast({
+          title: 'Cuenta conectada',
+          description: 'Tu cuenta de MercadoPago ha sido conectada exitosamente.',
         });
       }
 
@@ -64,10 +75,10 @@ export const MercadoPagoConnect: React.FC = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    if (mpError) {
+    if (mpError || mpConnected === 'error') {
       toast({
         title: 'Error al conectar',
-        description: getErrorMessage(mpError),
+        description: getErrorMessage(mpError || 'server_error'),
         variant: 'destructive'
       });
       // Clean URL
@@ -101,7 +112,7 @@ export const MercadoPagoConnect: React.FC = () => {
       setIsConnected(data.connected);
       setAccount(data.account || null);
     } catch (error) {
-      console.error('Error checking MercadoPago connection:', error);
+      // Error handled silently
     } finally {
       setIsLoading(false);
     }
@@ -119,23 +130,42 @@ export const MercadoPagoConnect: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save account');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to save account');
+      }
+
+      const result = await response.json();
+      
+      // Update state immediately with the saved account data
+      if (result.account) {
+        setIsConnected(true);
+        setAccount({
+          id: result.account.id || accountData.mercadopagoUserId,
+          mercadopago_user_id: result.account.mercadopago_user_id || accountData.mercadopagoUserId,
+          email: result.account.email || accountData.email,
+          nickname: result.account.nickname || accountData.nickname || '',
+          first_name: result.account.first_name || accountData.firstName || '',
+          last_name: result.account.last_name || accountData.lastName || '',
+          expires_at: result.account.expires_at || accountData.expiresAt || '',
+          created_at: result.account.created_at || new Date().toISOString()
+        });
+      } else {
+        // If no account in response, refresh from server
+        await checkConnection();
       }
 
       toast({
         title: 'Cuenta conectada',
-        description: 'Tu cuenta de MercadoPago ha sido conectada exitosamente.',
+        description: `Tu cuenta de MercadoPago (${accountData.email || 'conectada'}) ha sido conectada exitosamente.`,
       });
-
-      // Refresh connection status
-      await checkConnection();
     } catch (error) {
-      console.error('Error saving account:', error);
       toast({
         title: 'Error',
         description: 'No se pudo guardar la conexión de MercadoPago.',
         variant: 'destructive'
       });
+      // Still try to check connection in case it was saved by the backend
+      await checkConnection();
     }
   };
 
@@ -157,9 +187,6 @@ export const MercadoPagoConnect: React.FC = () => {
     authUrl.searchParams.append('platform_id', 'mp');
     authUrl.searchParams.append('state', state);
     authUrl.searchParams.append('redirect_uri', redirectUri);
-
-    console.log('MercadoPago OAuth URL:', authUrl.toString());
-    console.log('Redirect URI (backend):', redirectUri);
 
     window.location.href = authUrl.toString();
   };
@@ -190,7 +217,6 @@ export const MercadoPagoConnect: React.FC = () => {
       setIsConnected(false);
       setAccount(null);
     } catch (error) {
-      console.error('Error disconnecting:', error);
       toast({
         title: 'Error',
         description: 'No se pudo desconectar la cuenta de MercadoPago.',

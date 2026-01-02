@@ -7,7 +7,7 @@ const Footer = () => {
       <div className="w-full max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-            <span>© 2025 LegalUp. Todos los derechos reservados.</span>
+            <span>© 2026 LegalUp. Todos los derechos reservados.</span>
           </div>
           
           <div className="flex items-center space-x-6 text-sm">

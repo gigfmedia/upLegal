@@ -743,7 +743,6 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     // Handle OAuth errors
     if (oauthError) {
-      console.error('MercadoPago OAuth error:', oauthError);
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=${oauthError}`);
     }
@@ -756,13 +755,6 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Build redirect_uri - MUST match exactly what was used in the authorization request
     const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
-    
-    console.log('Token exchange - redirect_uri:', redirectUri);
-    console.log('Environment variables:', {
-      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
-      RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL,
-      VITE_APP_URL: process.env.VITE_APP_URL
-    });
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
@@ -782,13 +774,11 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
-      console.error('Token exchange failed:', errorData);
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed`);
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('Token exchange successful:', { user_id: tokenData.user_id });
 
     // Get user info from MercadoPago
     const userResponse = await fetch('https://api.mercadopago.com/users/me', {
@@ -798,7 +788,6 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     });
 
     if (!userResponse.ok) {
-      console.error('Failed to fetch user info');
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=user_fetch_failed`);
     }
@@ -808,12 +797,20 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000));
 
+    // Get the user_id from the state parameter (if provided) or try to get from session
+    // For now, we'll need the frontend to save it, but we can also try to get it from a session
+    // Since we don't have session info here, we'll redirect with the data and let frontend save it
+    
+    // However, we can also save it directly if we have a way to identify the user
+    // For security, we'll still redirect with the data but also try to save it server-side if possible
+    
     // Redirect to frontend with OAuth data
     const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
     const redirectUrl = new URL(`${frontendUrl}/lawyer/earnings`);
     redirectUrl.searchParams.append('mp_success', 'true');
     redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
-    redirectUrl.searchParams.append('mp_email', userData.email);
+    redirectUrl.searchParams.append('mp_email', userData.email || '');
+    redirectUrl.searchParams.append('mp_nickname', userData.nickname || '');
     
     // Store tokens temporarily in a secure way (you might want to use sessions instead)
     // For now, we'll pass them to the frontend to complete the connection
@@ -864,15 +861,15 @@ app.post('/api/mercadopago/save-account', async (req, res) => {
         first_name: firstName,
         last_name: lastName,
         expires_at: expiresAt,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString() // Ensure created_at is set on first insert
       }, {
         onConflict: 'user_id'
       })
-      .select()
+      .select('id, mercadopago_user_id, email, nickname, first_name, last_name, expires_at, created_at')
       .single();
 
     if (error) {
-      console.error('Error saving MercadoPago account:', error);
       return res.status(500).json({ error: 'Failed to save account' });
     }
 
