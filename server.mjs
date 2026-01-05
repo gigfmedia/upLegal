@@ -177,154 +177,182 @@ app.post('/verify-lawyer', async (req, res) => {
     formData.append('dni', rutBody);
     formData.append('digit', rutVerifier);
 
-    // Submit the search form
-    const searchResponse = await axios.post(searchUrl, formData.toString(), {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html, */*; q=0.01',
-        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.pjud.cl',
-        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
-      }
-    });
+    // Create AbortController for timeout (15 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    // Parse the results
-    const $ = load(searchResponse.data);
-    
-    // Check for "No results" alert
-    if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
-      return res.json({
-        verified: false,
-        message: 'No se encontró el abogado en los registros',
-        details: {
-          rut: cleanRut,
-          nombre: fullName,
-          reason: 'No se encontró en los registros del Poder Judicial'
-        }
+    try {
+      // Submit the search form with timeout
+      const searchResponse = await axios.post(searchUrl, formData.toString(), {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html, */*; q=0.01',
+          'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://www.pjud.cl',
+          'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
+        },
+        signal: controller.signal,
+        timeout: 15000 // Additional timeout for axios
       });
-    }
+      
+      clearTimeout(timeoutId);
 
-    // Check for success table
-    const resultTable = $('table');
-    
-    if (resultTable.length === 0) {
-      console.warn('PJUD Response unexpected:', searchResponse.data.substring(0, 200));
-      return res.status(500).json({
-        verified: false,
-        message: 'Error al interpretar la respuesta del Poder Judicial',
-        details: { requiresHumanVerification: true }
-      });
-    }
-
-    // Extract data from the result table
-    const rows = resultTable.find('tbody tr');
-    
-    if (rows.length === 0) {
-      return res.json({
-        verified: false,
-        message: 'No se encontraron resultados válidos en la tabla'
-      });
-    }
-
-    // If we found at least one row, the RUT exists as a lawyer
-    const firstRow = rows.first();
-    const cols = firstRow.find('td');
-    
-    // Check for suspension (Sanción Ejecutoriada Permanente)
-    const rowText = firstRow.text();
-    if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
-      return res.json({
-        verified: false,
-        message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
-        details: {
-          rut: cleanRut,
-          nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
-          reason: 'Abogado suspendido indefinidamente',
-          suspensionType: 'Permanente',
-          suspensionDate: '30-12-9999'
-        }
-      });
-    }
-
-    // **Check if RUT is already registered by another user**
-    console.log('Checking for duplicate RUT:', cleanRut);
-    
-    // Query all profiles with RUT to handle different formats
-    const { data: allProfiles, error: dbError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, rut, user_id')
-      .not('rut', 'is', null);
-
-    if (dbError) {
-      console.error('Error checking for duplicate RUT:', dbError);
-      // Continue with verification even if DB check fails
-    } else if (allProfiles && allProfiles.length > 0) {
-      // Normalize and compare RUTs
-      const existingProfile = allProfiles.find(profile => {
-        if (!profile.rut) return false;
-        const normalizedProfileRut = normalizeRut(profile.rut);
-        return normalizedProfileRut === cleanRut;
-      });
-
-      if (existingProfile) {
-        // RUT is already registered
-        const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
-        
-        // Format RUT for display (12.345.678-9)
-        const formatRutForDisplay = (rut) => {
-          const clean = rut.replace(/[^0-9kK]/g, '');
-          if (clean.length < 2) return clean;
-          
-          const body = clean.slice(0, -1);
-          const dv = clean.slice(-1);
-          
-          // Add dots every 3 digits from right to left
-          const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-          return `${formatted}-${dv}`;
-        };
-        
-        const formattedRut = formatRutForDisplay(cleanRut);
-        
-        console.log('Duplicate RUT found:', {
-          cleanRut,
-          formattedRut,
-          existingRut: existingProfile.rut,
-          existingName
-        });
-        
+      // Parse the results
+      const $ = load(searchResponse.data);
+      
+      // Check for "No results" alert
+      if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
         return res.json({
           verified: false,
-          message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
+          message: 'No se encontró el abogado en los registros',
           details: {
             rut: cleanRut,
-            formattedRut,
-            registeredBy: existingName,
-            reason: 'RUT duplicado'
+            nombre: fullName,
+            reason: 'No se encontró en los registros del Poder Judicial'
           }
         });
       }
+
+      // Check for success table
+      const resultTable = $('table');
+      
+      if (resultTable.length === 0) {
+        return res.status(500).json({
+          verified: false,
+          message: 'Error al interpretar la respuesta del Poder Judicial',
+          details: { requiresHumanVerification: true }
+        });
+      }
+
+      // Extract data from the result table
+      const rows = resultTable.find('tbody tr');
+      
+      if (rows.length === 0) {
+        return res.json({
+          verified: false,
+          message: 'No se encontraron resultados válidos en la tabla'
+        });
+      }
+
+      // If we found at least one row, the RUT exists as a lawyer
+      const firstRow = rows.first();
+      const cols = firstRow.find('td');
+      
+      // Check for suspension (Sanción Ejecutoriada Permanente)
+      const rowText = firstRow.text();
+      if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
+        return res.json({
+          verified: false,
+          message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
+          details: {
+            rut: cleanRut,
+            nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+            reason: 'Abogado suspendido indefinidamente',
+            suspensionType: 'Permanente',
+            suspensionDate: '30-12-9999'
+          }
+        });
+      }
+
+      // **Check if RUT is already registered by another user**
+      // Optimized: Search for RUT using multiple formats to catch variations
+      const rutVariations = [
+        cleanRut, // 123456789
+        `${cleanRut.slice(0, -1)}-${cleanRut.slice(-1)}`, // 12345678-9
+        cleanRut.replace(/\B(?=(\d{3})+(?!\d))/g, '.'), // 12.345.6789
+        `${cleanRut.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${cleanRut.slice(-1)}` // 12.345.678-9
+      ];
+      
+      // Try to find existing RUT using a more efficient query
+      // First, try exact match with the most common format
+      const { data: existingProfiles, error: dbError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, rut, user_id')
+        .in('rut', rutVariations)
+        .limit(10);
+
+      if (dbError) {
+        // Continue with verification even if DB check fails
+      } else if (existingProfiles && existingProfiles.length > 0) {
+        // Double-check by normalizing RUTs (in case of format variations)
+        const existingProfile = existingProfiles.find(profile => {
+          if (!profile.rut) return false;
+          const normalizedProfileRut = normalizeRut(profile.rut);
+          return normalizedProfileRut === cleanRut;
+        });
+
+        if (existingProfile) {
+          // RUT is already registered
+          const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
+          
+          // Format RUT for display (12.345.678-9)
+          const formatRutForDisplay = (rut) => {
+            const clean = rut.replace(/[^0-9kK]/g, '');
+            if (clean.length < 2) return clean;
+            
+            const body = clean.slice(0, -1);
+            const dv = clean.slice(-1);
+            
+            // Add dots every 3 digits from right to left
+            const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return `${formatted}-${dv}`;
+          };
+          
+          const formattedRut = formatRutForDisplay(cleanRut);
+          
+          return res.json({
+            verified: false,
+            message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
+            details: {
+              rut: cleanRut,
+              formattedRut,
+              registeredBy: existingName,
+              reason: 'RUT duplicado'
+            }
+          });
+        }
+      }
+
+      let lawyerData = {
+        rut: cleanRut,
+        nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+        region: cols.length > 2 ? $(cols[2]).text().trim() : '',
+        source: 'Poder Judicial de Chile',
+        verifiedAt: new Date().toISOString()
+      };
+
+      return res.json({
+        verified: true,
+        message: 'Abogado verificado exitosamente',
+        details: lawyerData
+      });
+    } catch (axiosError) {
+      clearTimeout(timeoutId);
+      
+      // Handle timeout specifically
+      if (axiosError.code === 'ECONNABORTED' || axiosError.message?.includes('aborted') || axiosError.name === 'AbortError') {
+        return res.status(408).json({
+          verified: false,
+          message: 'La verificación tardó demasiado. Por favor, inténtalo de nuevo.',
+          error: 'timeout'
+        });
+      }
+      
+      // Re-throw to be caught by outer catch
+      throw axiosError;
+    }
+  } catch (error) {
+    // Handle timeout errors specifically
+    if (error.message && (error.message.includes('Timeout') || error.message.includes('timeout'))) {
+      return res.status(408).json({
+        verified: false,
+        message: 'La verificación tardó demasiado. Por favor, inténtalo de nuevo.',
+        error: 'timeout'
+      });
     }
     
-    console.log('No duplicate RUT found, proceeding with PJUD verification');
-
-    let lawyerData = {
-      rut: cleanRut,
-      nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
-      region: cols.length > 2 ? $(cols[2]).text().trim() : '',
-      source: 'Poder Judicial de Chile',
-      verifiedAt: new Date().toISOString()
-    };
-
-    return res.json({
-      verified: true,
-      message: 'Abogado verificado exitosamente',
-      details: lawyerData
-    });
-
-  } catch (error) {
-    console.error('Error en verificación:', error);
     return res.status(500).json({
       verified: false,
       message: 'Error al realizar la verificación',

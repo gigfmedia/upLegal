@@ -43,6 +43,10 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
       const RENDER_SERVER_URL = 'https://uplegal-service.onrender.com';
       
       try {
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+        
         const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
           method: 'POST',
           headers: {
@@ -51,11 +55,14 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
           body: JSON.stringify({ 
             rut: cleanRut,
             fullName: fullName.trim()
-          })
+          }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-          console.error('Error al verificar con PJUD:', await response.text());
+          const errorText = await response.text().catch(() => 'Error desconocido');
           throw new Error('Error en la respuesta del servidor');
         }
 
@@ -72,7 +79,21 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
         };
         
       } catch (error) {
-        console.error('Error en la comunicación con el servicio PJUD:', error);
+        // Handle timeout and network errors
+        if (error instanceof Error) {
+          if (error.name === 'AbortError' || error.message.includes('Timeout')) {
+            return { 
+              valid: false, 
+              message: 'La verificación tardó demasiado. Por favor, inténtalo de nuevo.'
+            };
+          }
+          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            return { 
+              valid: false, 
+              message: 'Error de conexión. Por favor, verifica tu internet e inténtalo de nuevo.'
+            };
+          }
+        }
         return { 
           valid: false, 
           message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.'
