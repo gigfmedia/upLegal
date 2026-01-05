@@ -803,7 +803,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               {/* RUT Field - First */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="rut">RUT</Label>
+                  <Label htmlFor="rut">
+                    RUT
+                    <small className="text-sm text-gray-500"> - Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
+                  </Label>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -962,8 +965,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     )}
                   </Button>
                 </div>
-                <small className="text-xs text-gray-500">Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
-                
                 {rutError && (
                   <p className="text-xs text-red-500 mt-1">{rutError}</p>
                 )}

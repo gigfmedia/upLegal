@@ -206,7 +206,7 @@ app.post('/verify-lawyer', async (req, res) => {
       if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
         return res.json({
           verified: false,
-          message: 'No se encontró el abogado en los registros',
+          message: 'No se encontró el abogado en los registros del Poder Judicial',
           details: {
             rut: cleanRut,
             nombre: fullName || 'No proporcionado',
