@@ -768,6 +768,36 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             </>
           )}
 
+
+          {mode === 'signup' && formData.role === 'client' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">Nombre</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  required
+                  placeholder="Juan"
+                  autoComplete="given-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Apellido</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  required
+                  placeholder="Pérez"
+                  autoComplete="family-name"
+                />
+              </div>
+            </div>
+          )}
+
           {mode === 'signup' && formData.role === 'lawyer' && (
             <>
               {/* RUT Field - First */}
