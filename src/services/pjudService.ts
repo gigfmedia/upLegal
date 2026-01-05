@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
  * @param fullName The full name of the lawyer to verify
  * @returns Promise with verification result
  */
-export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise<{ valid: boolean; message?: string }> => {
+export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise<{ valid: boolean; message?: string; data?: { nombre?: string; nombreCompleto?: string } }> => {
   try {
     if (!rut) {
       return { valid: false, message: 'El RUT es requerido' };
@@ -19,43 +19,29 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
     }
 
     try {
-      // If no full name provided, only validate format
-      if (!fullName || !fullName.trim()) {
-        const { data, error } = await supabase.functions.invoke('verify-rut', {
-          body: { rut: cleanRut }
-        });
-
-        if (error) {
-          console.error('Error al verificar RUT:', error);
-          return { 
-            valid: false, 
-            message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.' 
-          };
-        }
-
-        return {
-          valid: data?.valid || false,
-          message: data?.message || (data?.valid ? 'RUT válido' : 'RUT inválido')
-        };
-      }
-
-      // If full name is provided, verify with PJUD
+      // Always use the /verify-lawyer endpoint to get lawyer details from PJUD
       const RENDER_SERVER_URL = 'https://uplegal-service.onrender.com';
       
       try {
         // Create AbortController for timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        const requestBody: { rut: string; fullName?: string } = { rut: cleanRut };
+        
+        // Only include fullName if provided
+        if (fullName && fullName.trim()) {
+          requestBody.fullName = fullName.trim();
+        }
+        
+        console.log('Sending verification request:', requestBody);
         
         const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            rut: cleanRut,
-            fullName: fullName.trim()
-          }),
+          body: JSON.stringify(requestBody),
           signal: controller.signal
         });
         
@@ -63,19 +49,30 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
 
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Error desconocido');
+          console.error('Server error response:', errorText);
           throw new Error('Error en la respuesta del servidor');
         }
 
         const data = await response.json();
+        console.log('Verification response:', data);
         
         // Only consider it valid if explicitly verified by the server
         const isValid = data.verified === true;
+        
+        // Extract data from details - ensure nombre is properly extracted
+        const details = data?.details || {};
         
         return {
           valid: isValid,
           message: data?.message || (isValid 
             ? 'El RUT ha sido verificado como abogado en el sistema.' 
-            : 'El RUT no está registrado como abogado en el Poder Judicial. Verifica que el RUT y nombre coincidan con tu registro oficial.')
+            : 'El RUT no está registrado como abogado en el Poder Judicial. Verifica que el RUT y nombre coincidan con tu registro oficial.'),
+          data: {
+            nombre: details.nombre || details.nombreCompleto || null,
+            nombreCompleto: details.nombreCompleto || details.nombre || null,
+            region: details.region || null,
+            ...details
+          }
         };
         
       } catch (error) {
@@ -94,6 +91,7 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
             };
           }
         }
+        console.error('Verification error:', error);
         return { 
           valid: false, 
           message: 'Error al conectar con el servicio de verificación. Por favor, intente nuevamente.'
@@ -131,7 +129,7 @@ export const cleanRut = (rut: string): string => {
  */
 export const formatRut = (rut: string): string => {
   // Clean the RUT first
-  let clean = cleanRut(rut);
+  const clean = cleanRut(rut);
   if (!clean) return '';
 
   // Extract verifier digit (last character)

@@ -145,10 +145,10 @@ app.post('/verify-rut', async (req, res) => {
 app.post('/verify-lawyer', async (req, res) => {
   const { rut, fullName } = req.body || {};
 
-  if (!rut || !fullName) {
+  if (!rut) {
     return res.status(400).json({
       verified: false,
-      message: 'Se requieren rut y nombre completo para la verificación.'
+      message: 'Se requiere un RUT para la verificación.'
     });
   }
 
@@ -209,7 +209,7 @@ app.post('/verify-lawyer', async (req, res) => {
           message: 'No se encontró el abogado en los registros',
           details: {
             rut: cleanRut,
-            nombre: fullName,
+            nombre: fullName || 'No proporcionado',
             reason: 'No se encontró en los registros del Poder Judicial'
           }
         });
@@ -240,6 +240,41 @@ app.post('/verify-lawyer', async (req, res) => {
       const firstRow = rows.first();
       const cols = firstRow.find('td');
       
+      // Extract nombre from the first column - try multiple methods
+      let nombre = 'No disponible';
+      if (cols.length >= 1) {
+        // Try multiple extraction methods
+        // Method 1: Direct text extraction
+        nombre = $(cols[0]).text().trim();
+        
+        // Method 2: If empty, try getting inner HTML and cleaning it
+        if (!nombre || nombre === '' || nombre.length < 2) {
+          const innerHtml = $(cols[0]).html() || '';
+          nombre = innerHtml.replace(/<[^>]*>/g, '').trim();
+        }
+        
+        // Method 3: Try finding text in nested elements
+        if (!nombre || nombre === '' || nombre.length < 2) {
+          const nestedText = $(cols[0]).find('*').first().text().trim();
+          if (nestedText && nestedText.length > 0) {
+            nombre = nestedText;
+          }
+        }
+        
+        // Clean up any extra whitespace and newlines
+        nombre = nombre.replace(/\s+/g, ' ').replace(/\n/g, ' ').trim();
+        
+        // If still empty or too short, try the entire row text
+        if (!nombre || nombre === '' || nombre.length < 2) {
+          const rowText = firstRow.text().trim();
+          // Try to extract name from row (usually first part before numbers or special chars)
+          const nameMatch = rowText.match(/^([A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+(?:\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+)*)/);
+          if (nameMatch && nameMatch[1]) {
+            nombre = nameMatch[1].trim();
+          }
+        }
+      }
+      
       // Check for suspension (Sanción Ejecutoriada Permanente)
       const rowText = firstRow.text();
       if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
@@ -248,7 +283,7 @@ app.post('/verify-lawyer', async (req, res) => {
           message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
           details: {
             rut: cleanRut,
-            nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+            nombre: nombre,
             reason: 'Abogado suspendido indefinidamente',
             suspensionType: 'Permanente',
             suspensionDate: '30-12-9999'
@@ -257,7 +292,8 @@ app.post('/verify-lawyer', async (req, res) => {
       }
 
       // **Check if RUT is already registered by another user**
-      // Optimized: Search for RUT using multiple formats to catch variations
+      // Moved AFTER PJUD verification for better performance
+      // Only check if RUT was found in PJUD
       const rutVariations = [
         cleanRut, // 123456789
         `${cleanRut.slice(0, -1)}-${cleanRut.slice(-1)}`, // 12345678-9
@@ -266,7 +302,6 @@ app.post('/verify-lawyer', async (req, res) => {
       ];
       
       // Try to find existing RUT using a more efficient query
-      // First, try exact match with the most common format
       const { data: existingProfiles, error: dbError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, rut, user_id')
@@ -315,9 +350,25 @@ app.post('/verify-lawyer', async (req, res) => {
         }
       }
 
+      // Ensure nombre is valid before returning
+      if (nombre === 'No disponible' || !nombre || nombre.trim().length < 2) {
+        // Try one more time with all columns
+        const allColsText = firstRow.find('td').map((i, el) => $(el).text().trim()).get();
+        for (const colText of allColsText) {
+          // Look for text that looks like a name (starts with capital, has spaces)
+          const namePattern = /^[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+(?:\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+)+/;
+          const match = colText.match(namePattern);
+          if (match && match[0].length > 5) {
+            nombre = match[0].trim();
+            break;
+          }
+        }
+      }
+
       let lawyerData = {
         rut: cleanRut,
-        nombre: cols.length >= 1 ? $(cols[0]).text().trim() : 'No disponible',
+        nombre: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
+        nombreCompleto: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
         region: cols.length > 2 ? $(cols[2]).text().trim() : '',
         source: 'Poder Judicial de Chile',
         verifiedAt: new Date().toISOString()

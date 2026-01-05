@@ -765,6 +765,181 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 </div>
               </div>
 
+            </>
+          )}
+
+          {mode === 'signup' && formData.role === 'lawyer' && (
+            <>
+              {/* RUT Field - First */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="rut">RUT</Label>
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      id="rut"
+                      type="text"
+                      value={formData.rut}
+                      onChange={(e) => handleRutChange(e.target.value)}
+                      onBlur={() => {
+                        // Auto-validate on blur
+                        if (formData.rut) {
+                          const validation = validateRut(formData.rut);
+                          if (!validation.isValid) {
+                            setRutError(validation.message || 'RUT inválido');
+                          }
+                        }
+                      }}
+                      placeholder="12.345.678-9"
+                      required
+                      className={`uppercase pr-10 ${
+                        rutError ? 'border-red-500' : 
+                        rutVerificationStatus === 'verified' ? 'border-green-500' : ''
+                      }`}
+                      maxLength={12}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        setRutVerificationStatus('verifying');
+                        setRutError('');
+                        
+                        // First validate RUT format
+                        const formatValidation = verifyRutFormat(formData.rut);
+                        if (!formatValidation.isValid) {
+                          setRutVerificationStatus('error');
+                          setRutError(formatValidation.message);
+                          toast({
+                            title: 'Error',
+                            description: formatValidation.message,
+                            variant: 'destructive'
+                          });
+                          return;
+                        }
+                        
+                        // Verify with PJUD - don't require full name, let the server fetch it
+                        const { valid, message, data } = await verifyRutWithPJUD(formData.rut);
+                        
+                        console.log('Verification result:', { valid, message, data });
+                        
+                        if (valid) {
+                          setRutVerificationStatus('verified');
+                          
+                          // Auto-fill name and last name if available from PJUD data
+                          const nombreFromData = data?.nombre || data?.nombreCompleto || null;
+                          
+                          console.log('Name from PJUD:', nombreFromData);
+                          
+                          if (nombreFromData && nombreFromData !== 'No disponible' && nombreFromData.trim().length > 0) {
+                            const nombreCompleto = nombreFromData.trim();
+                            
+                            // Check if fields are empty or only whitespace
+                            const firstNameEmpty = !formData.firstName || formData.firstName.trim().length === 0;
+                            const lastNameEmpty = !formData.lastName || formData.lastName.trim().length === 0;
+                            
+                            // Auto-fill if at least one field is empty
+                            if (firstNameEmpty || lastNameEmpty) {
+                              const nombreParts = nombreCompleto.split(/\s+/).filter(part => part.length > 0);
+                              
+                              if (nombreParts.length > 0) {
+                                // First part is first name
+                                const firstName = nombreParts[0];
+                                // Rest is last name
+                                const lastName = nombreParts.slice(1).join(' ') || '';
+                                
+                                console.log('Auto-filling names:', { firstName, lastName });
+                                
+                                setFormData(prev => ({
+                                  ...prev,
+                                  firstName: prev.firstName?.trim() || firstName,
+                                  lastName: prev.lastName?.trim() || lastName
+                                }));
+                                
+                                toast({
+                                  title: 'Abogado verificado',
+                                  description: `RUT verificado. Nombre completado: ${nombreCompleto}`,
+                                  variant: 'default'
+                                });
+                              } else {
+                                toast({
+                                  title: 'Abogado verificado',
+                                  description: message || 'Tu RUT ha sido verificado exitosamente en el registro del Poder Judicial.',
+                                  variant: 'default'
+                                });
+                              }
+                            } else {
+                              toast({
+                                title: 'Abogado verificado',
+                                description: message || 'Tu RUT ha sido verificado exitosamente en el registro del Poder Judicial.',
+                                variant: 'default'
+                              });
+                            }
+                          } else {
+                            toast({
+                              title: 'Abogado verificado',
+                              description: message || 'Tu RUT ha sido verificado exitosamente en el registro del Poder Judicial.',
+                              variant: 'default'
+                            });
+                          }
+                        } else {
+                          setRutVerificationStatus('error');
+                          setRutError(message || 'No se encontró el abogado en los registros del PJUD');
+                          toast({
+                            title: 'No verificado',
+                            description: message || 'No se encontró tu registro como abogado en el Poder Judicial',
+                            variant: 'destructive'
+                          });
+                        }
+                      } catch (error) {
+                        setRutVerificationStatus('error');
+                        setRutError('Error al conectar con el servicio de verificación');
+                        toast({
+                          title: 'Error',
+                          description: 'No se pudo completar la verificación del RUT. Intente nuevamente.',
+                          variant: 'destructive'
+                        });
+                      }
+                    }}
+                    disabled={!formData.rut || rutVerificationStatus === 'verifying'}
+                    className="whitespace-nowrap"
+                  >
+                    {rutVerificationStatus === 'verifying' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Verificando...
+                      </>
+                    ) : rutVerificationStatus === 'verified' ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
+                        Verificado
+                      </>
+                    ) : (
+                      'Verificar RUT'
+                    )}
+                  </Button>
+                </div>
+                <small className="text-xs text-gray-500">Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
+                
+                {rutError && (
+                  <p className="text-xs text-red-500 mt-1">{rutError}</p>
+                )}
+                {!rutError && formData.rut && !validateRut(formData.rut).isValid && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Formato de RUT inválido. Usa el formato: 12.345.678-9
+                  </p>
+                )}
+                {rutVerificationStatus === 'verified' && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Verificado como abogado en el registro del Poder Judicial
+                  </p>
+                )}
+              </div>
+
+              {/* Name and Last Name - Second */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Nombre</Label>
@@ -792,137 +967,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 </div>
               </div>
             </>
-          )}
-
-          {mode === 'signup' && formData.role === 'lawyer' && (
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="rut">RUT</Label>
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    id="rut"
-                    type="text"
-                    value={formData.rut}
-                    onChange={(e) => handleRutChange(e.target.value)}
-                    onBlur={() => {
-                      // Auto-validate on blur
-                      if (formData.rut) {
-                        const validation = validateRut(formData.rut);
-                        if (!validation.isValid) {
-                          setRutError(validation.message || 'RUT inválido');
-                        }
-                      }
-                    }}
-                    placeholder="12.345.678-9"
-                    required
-                    className={`uppercase pr-10 ${
-                      rutError ? 'border-red-500' : 
-                      rutVerificationStatus === 'verified' ? 'border-green-500' : ''
-                    }`}
-                    maxLength={12}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={async () => {
-                    try {
-                      setRutVerificationStatus('verifying');
-                      setRutError('');
-                      
-                      // Get full name from form data
-                      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-                      
-                      if (!fullName || fullName.length < 3) {
-                        setRutVerificationStatus('error');
-                        setRutError('Por favor ingresa tu nombre completo primero');
-                        toast({
-                          title: 'Error',
-                          description: 'Debes ingresar tu nombre completo antes de verificar el RUT',
-                          variant: 'destructive'
-                        });
-                        return;
-                      }
-                      
-                      // First validate RUT format
-                      const formatValidation = verifyRutFormat(formData.rut);
-                      if (!formatValidation.isValid) {
-                        setRutVerificationStatus('error');
-                        setRutError(formatValidation.message);
-                        toast({
-                          title: 'Error',
-                          description: formatValidation.message,
-                          variant: 'destructive'
-                        });
-                        return;
-                      }
-                      
-                      // Then verify with PJUD
-                      const { valid, message } = await verifyRutWithPJUD(formData.rut, fullName);
-                      
-                      if (valid) {
-                        setRutVerificationStatus('verified');
-                        toast({
-                          title: 'Abogado verificado',
-                          description: message || 'Tu RUT ha sido verificado exitosamente en el registro del Poder Judicial.',
-                          variant: 'default'
-                        });
-                      } else {
-                        setRutVerificationStatus('error');
-                        setRutError(message || 'No se encontró el abogado en los registros del PJUD');
-                        toast({
-                          title: 'No verificado',
-                          description: message || 'No se encontró tu registro como abogado en el Poder Judicial',
-                          variant: 'destructive'
-                        });
-                      }
-                    } catch (error) {
-                      console.error('Error al verificar RUT:', error);
-                      setRutVerificationStatus('error');
-                      setRutError('Error al conectar con el servicio de verificación');
-                      toast({
-                        title: 'Error',
-                        description: 'No se pudo completar la verificación del RUT. Intente nuevamente.',
-                        variant: 'destructive'
-                      });
-                    }
-                  }}
-                  disabled={!formData.rut || !formData.firstName || !formData.lastName || rutVerificationStatus === 'verifying'}
-                  className="whitespace-nowrap"
-                >
-                  {rutVerificationStatus === 'verifying' ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Verificando...
-                    </>
-                  ) : rutVerificationStatus === 'verified' ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                      Verificado
-                    </>
-                  ) : (
-                    'Verificar RUT'
-                  )}
-                </Button>
-              </div>
-              <small className="text-xs text-gray-500">Verificamos tu RUT en el Poder Judicial para asegurar confianza a los clientes.</small>
-              
-              {rutError && (
-                <p className="text-xs text-red-500 mt-1">{rutError}</p>
-              )}
-              {!rutError && formData.rut && !validateRut(formData.rut).isValid && (
-                <p className="text-xs text-yellow-600 mt-1">
-                  Formato de RUT inválido. Usa el formato: 12.345.678-9
-                </p>
-              )}
-              {rutVerificationStatus === 'verified' && (
-                <p className="text-xs text-green-600 mt-1">
-                  Verificado como abogado en el registro del Poder Judicial
-                </p>
-              )}
-            </div>
           )}
 
           <div className="space-y-2">
