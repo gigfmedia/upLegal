@@ -876,10 +876,20 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                               const nombreParts = nombreCompleto.split(/\s+/).filter(part => part.length > 0);
                               
                               if (nombreParts.length > 0) {
-                                // First part is first name
-                                const firstName = nombreParts[0];
-                                // Rest is last name
-                                const lastName = nombreParts.slice(1).join(' ') || '';
+                                let firstName = '';
+                                let lastName = '';
+                                
+                                // Chilean name logic: usually 2 surnames (last 2 words)
+                                if (nombreParts.length > 2) {
+                                  // Use everything except last 2 words as firstName
+                                  firstName = nombreParts.slice(0, nombreParts.length - 2).join(' ');
+                                  // Use last 2 words as lastName
+                                  lastName = nombreParts.slice(nombreParts.length - 2).join(' ');
+                                } else {
+                                  // Fallback for foreign names or incomplete names (1 name + 1 surname)
+                                  firstName = nombreParts[0];
+                                  lastName = nombreParts.slice(1).join(' ') || '';
+                                }
                                 
                                 console.log('Auto-filling names:', { firstName, lastName });
                                 
