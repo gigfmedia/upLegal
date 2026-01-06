@@ -9,10 +9,11 @@ const Footer = () => {
         target="_blank" 
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="fixed bottom-6 right-6 z-50 bg-[#ffffff] hover:bg-[#101820] text-black-900 hover:text-white font-medium py-3 px-4 rounded-full shadow-lg flex items-center space-x-2 transition-colors duration-200"
+        className="fixed bottom-6 right-6 z-50 bg-[#ffffff] hover:bg-[#101820] text-black-900 hover:text-white border-2 border-solid font-medium py-3 px-4 rounded-full shadow-lg flex items-center space-x-2 transition-colors duration-200"
       >
         
         <img className="w-5 h-5" alt="Icon WhatsApp" src="assets/whatsapp_logo_green.png" />
+        
         <span>Habla con un abogado ahora</span>
       </a>
 

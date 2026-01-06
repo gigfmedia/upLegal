@@ -852,9 +852,20 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
+      const errorText = await tokenResponse.text();
+      console.error('MercadoPago Token Exchange Error:', errorText);
+      
+      let errorDetail = 'token_exchange_failed';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorDetail = errorJson.message || errorJson.error_description || errorJson.error || 'token_exchange_failed';
+      } catch (e) {
+        // use default or truncated text
+        errorDetail = errorText.substring(0, 100);
+      }
+      
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed`);
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed&details=${encodeURIComponent(errorDetail)}`);
     }
 
     const tokenData = await tokenResponse.json();
