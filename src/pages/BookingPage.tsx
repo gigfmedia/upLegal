@@ -222,7 +222,14 @@ export default function BookingPage() {
             if (dayAvailability && Array.isArray(dayAvailability)) {
                 return dayAvailability[hourIndex] === true;
             }
-            // Default to OPEN if no configuration exists (legacy support)
+
+            // If the lawyer has set up availability (config has keys), but this day is missing/undefined,
+            // it means the day is CLOSED.
+            if (availabilityConfig && typeof availabilityConfig === 'object' && Object.keys(availabilityConfig).length > 0) {
+                return false;
+            }
+
+            // Default to OPEN only if NO configuration exists at all (legacy support)
             // If the lawyer hasn't set up availability, we assume standard hours (9-14 Sat, 9-18 M-F) are open
             // matching the 'baseSlots' generation logic.
             return true;
