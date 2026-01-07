@@ -78,12 +78,85 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Helper to normalize strings safely
+const safeTrim = (value) => {
+  if (typeof value !== 'string') return value ?? null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 // Constants
 const DEFAULT_CLIENT_SURCHARGE_PERCENT = 0.1;
 const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
 const DEFAULT_CURRENCY = 'CLP';
 
 const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+// Profile management endpoint used during signup to ensure profiles are created
+app.post('/api/profiles', async (req, res) => {
+  try {
+    const {
+      userId,
+      email,
+      firstName,
+      lastName,
+      role,
+      rut,
+      pjudVerified,
+      displayName
+    } = req.body || {};
+
+    if (!userId || !email || !role) {
+      return res.status(400).json({
+        error: 'Missing required fields: userId, email and role.'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedFirstName = safeTrim(firstName);
+    const normalizedLastName = safeTrim(lastName);
+    const computedDisplayName = safeTrim(displayName) ||
+      [normalizedFirstName, normalizedLastName].filter(Boolean).join(' ') ||
+      normalizedEmail.split('@')[0];
+
+    const timestamp = new Date().toISOString();
+
+    const payload = {
+      id: userId,
+      user_id: userId,
+      email: normalizedEmail,
+      first_name: normalizedFirstName,
+      last_name: normalizedLastName,
+      display_name: computedDisplayName,
+      role,
+      rut: safeTrim(rut) || null,
+      pjud_verified: Boolean(pjudVerified),
+      has_used_free_consultation: false,
+      updated_at: timestamp,
+      created_at: timestamp
+    };
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error upserting profile from service:', error);
+      return res.status(500).json({
+        error: 'No se pudo guardar el perfil del usuario.'
+      });
+    }
+
+    return res.json({ success: true, profile: data || payload });
+  } catch (error) {
+    console.error('Unexpected error in /api/profiles:', error);
+    return res.status(500).json({
+      error: 'Error inesperado al crear el perfil.'
+    });
+  }
+});
 
 // Function to validate RUT verifier digit
 const validateRutDV = (rut) => {

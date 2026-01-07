@@ -28,6 +28,23 @@ interface AuthModalProps {
   onModeChange: (mode: 'login' | 'signup') => void;
 }
 
+const resolveApiBaseUrl = () => {
+  const envBase = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (envBase) {
+    return envBase.replace(/\/$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin.replace(/\/$/, '');
+    if (window.location.hostname === 'localhost') {
+      return 'http://localhost:3001';
+    }
+    return origin;
+  }
+
+  return '';
+};
+
 export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
   const { login, signup, user } = useAuth();
   const [isEmailVerified, setIsEmailVerified] = useState(true);
@@ -431,6 +448,34 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       }
     }
     
+    // Ensure profile record exists even if email confirmation is pending
+    const payload = {
+      userId: signupResponse.user?.id,
+      email: formData.email,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      role: formData.role,
+      rut: formData.role === 'lawyer' ? formData.rut : undefined,
+      pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false,
+      displayName: `${formData.firstName} ${formData.lastName}`.trim() || undefined
+    };
+
+    try {
+      if (payload.userId) {
+        const apiBaseUrl = resolveApiBaseUrl();
+        const profileEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/profiles` : '/api/profiles';
+        await fetch(profileEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (profileError) {
+      console.error('Error ensuring profile after signup:', profileError);
+    }
+
     // Reset form on successful signup
     setFormData({
       email: '',
