@@ -14,22 +14,31 @@ export default function AuthCallback() {
         
         if (error) {
           console.error('Error getting session:', error);
-          // Redirect to home with login modal open
           navigate('/?login=true');
           return;
         }
 
         if (session) {
-          // User is authenticated, redirect to home
-          // User is authenticated, but we redirect to home with login modal open as requested
-          navigate('/?login=true');
+          // Check profile to determine redirect
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+
+          // If repair is needed, it happens in useAuthState. 
+          // We can wait a moment or check if profile matches metadata
+          
+          if (profile?.role === 'lawyer' || session.user.user_metadata?.role === 'lawyer') {
+             navigate('/lawyer/dashboard');
+          } else {
+             navigate('/dashboard'); 
+          }
         } else {
-          // No session, redirect to home with login modal open
           navigate('/?login=true');
         }
       } catch (error) {
         console.error('Error in auth callback:', error);
-        // Redirect to home with login modal open on error
         navigate('/?login=true');
       }
     };
@@ -41,7 +50,8 @@ export default function AuthCallback() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-        <p className="text-gray-600">Verificando tu cuenta...</p>
+        <h2 className="text-xl font-semibold mb-2">Verificando tu cuenta...</h2>
+        <p className="text-gray-600">Estamos configurando tu entorno, esto tomará un momento.</p>
       </div>
     </div>
   );

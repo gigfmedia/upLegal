@@ -4,7 +4,6 @@ import { getSupabaseClient } from '@/lib/supabaseClient';
 import { validateAndRefreshSession, refreshSession } from '@/lib/sessionUtils';
 import { handleAuthError } from '@/lib/authErrorHandler';
 
-// Extend the User type to include admin status
 declare module '@supabase/supabase-js' {
   interface User {
     is_admin?: boolean;
@@ -12,6 +11,7 @@ declare module '@supabase/supabase-js' {
       is_admin?: boolean;
       [key: string]: any;
     };
+    profile?: any;
   }
 }
 
@@ -60,20 +60,78 @@ export const useAuthState = (): AuthState => {
       
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
-      // If we have a session, enhance the user with admin status
       if (currentSession?.user) {
-        // Check if user is admin by email or user_metadata
+        // 1. Fetch Profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentSession.user.id)
+          .maybeSingle();
+
+        // Attach profile to user object
+        currentSession.user.profile = profileData;
+
+        // 2. Admin Logic
         const isAdmin = currentSession.user.email?.toLowerCase() === 'gigfmedia@icloud.com' || 
-                       currentSession.user.user_metadata?.is_admin === true;
+                       currentSession.user.user_metadata?.is_admin === true ||
+                       profileData?.role === 'admin';
         
-        // Add is_admin to user object
         currentSession.user.is_admin = isAdmin;
         
-        // Also ensure user_metadata exists and has is_admin
-        currentSession.user.user_metadata = {
-          ...currentSession.user.user_metadata,
-          is_admin: isAdmin
-        };
+        // Ensure user_metadata exists
+        if (!currentSession.user.user_metadata) {
+            currentSession.user.user_metadata = { is_admin: isAdmin };
+        } else {
+            currentSession.user.user_metadata.is_admin = isAdmin;
+        }
+
+        // =========================================================================
+        // CLIENT-SIDE PROFILE REPAIR (Backup for Trigger Failures)
+        // =========================================================================
+        try {
+          const meta = currentSession.user.user_metadata;
+          // Use the ALREADY FETCHED profileData
+          const profile = profileData;
+
+          if (meta?.role === 'lawyer' && (!profile || profile.role !== 'lawyer')) {
+             console.log('Detected profile mismatch. Attempting client-side repair...', meta);
+              
+             const displayName = (meta.first_name && meta.last_name) 
+               ? `${meta.first_name} ${meta.last_name}` 
+               : currentSession.user.email?.split('@')[0];
+
+             const { error: upsertError } = await supabase.from('profiles').upsert({
+               id: currentSession.user.id,
+               user_id: currentSession.user.id,
+               email: currentSession.user.email,
+               role: 'lawyer',
+               first_name: meta.first_name || null,
+               last_name: meta.last_name || null,
+               display_name: displayName,
+               rut: meta.rut || null,
+               pjud_verified: meta.pjud_verified || false,
+               created_at: new Date().toISOString(),
+               updated_at: new Date().toISOString()
+             }, { onConflict: 'id' });
+
+             if (upsertError) throw upsertError;
+             
+             console.log('Profile repair completed.');
+             
+             // Update the local object immediately so UI reflects it without refresh
+             currentSession.user.profile = {
+               ...profile,
+               role: 'lawyer',
+               first_name: meta.first_name,
+               last_name: meta.last_name,
+               display_name: displayName,
+               rut: meta.rut,
+               pjud_verified: meta.pjud_verified
+             };
+          }
+        } catch (repairError) {
+          console.error('SERVER_REPAIR_ERROR: ', repairError);
+        }
       }
       
       if (error) throw error;
