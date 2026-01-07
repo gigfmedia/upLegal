@@ -62,6 +62,7 @@ const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
 const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const AsesoriaLegalOnlinePage = lazy(() => import('./pages/AsesoriaLegalOnline'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -216,6 +217,7 @@ const AppContent = () => {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contacto" element={<ContactPage />} />
               <Route path="/como-funciona" element={<HowItWorksPage />} />
+              <Route path="/asesoria-legal-online" element={<AsesoriaLegalOnlinePage />} />
               <Route path="/terminos" element={<TermsOfService />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />
               

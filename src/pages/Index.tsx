@@ -471,16 +471,16 @@ const Index = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 mt-8">
+          <p className="bg-blue-200 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2">Accede a asesoría legal online en Chile con abogados verificados.</p>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 mt-8">
             Encuentra el 
             <span className="text-blue-600 underline-offset-8"> Abogado </span>
-            ideal
+            ideal<br /> para tu asesoría legal online
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Conecta con abogados experimentados, recibe asesoría y resuelve tus asuntos legales
             con confianza. Servicios profesionales al alcance de tus manos.
           </p>
-          
           {/* Search Section */}
           <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -525,7 +525,7 @@ const Index = () => {
               </div>
               <div className="text-gray-600">Abogados Verificados</div>
             </div>
-
+            
             {/*<div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">
                 {isLoadingCount.completed ? (
@@ -545,6 +545,8 @@ const Index = () => {
               <div className="text-gray-600">Soporte</div>
             </div>
           </div>
+          <p className="mt-20">¿No sabes qué abogado elegir?</p>
+          <button className="text-blue-600 hover:text-blue-700 hover:underline" onClick={() => navigate('/asesoria-legal-online')}>Agenda una asesoría legal online</button>
         </div>
       </section>
 
