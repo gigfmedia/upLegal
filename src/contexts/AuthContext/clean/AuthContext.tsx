@@ -53,7 +53,6 @@ interface Profile {
   bar_association_number: string | null;
   rut: string | null;
   pjud_verified: boolean;
-  zoom_link: string | null;
   languages: string[];
   verified?: boolean;
   available_for_hire?: boolean;
@@ -416,105 +415,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, logout]);
 
   const updateProfile = useCallback(async (profile: Partial<Profile>): Promise<User | null> => {
-    if (!user) {
+    // First, ensure we have a valid user session
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession?.user?.id) {
+      console.error('No active user session found');
+      throw new Error('No active user session found. Please sign in again.');
+    }
+
+    const userId = currentSession.user.id;
+    if (!userId) {
+      console.error('No user ID found in session');
       throw new Error('No user is currently signed in');
     }
 
     try {
-      
-      // Process the input profile data to clean/format values
-      // Only process fields that are actually present in the input
-      const updates: any = {
-        updated_at: new Date().toISOString()
+      // Helper functions
+      const safeTrim = (val: string | null | undefined): string | undefined => 
+        typeof val === 'string' ? val.trim() : undefined;
+        
+      const safeNumber = (val: any): number | null => {
+        if (val === null || val === undefined || val === '') return null;
+        const num = typeof val === 'string' ? 
+          parseFloat(val.replace(/\./g, '').replace(',', '.')) : 
+          Number(val);
+        return isNaN(num) ? null : num;
       };
-
-      // Helper to safely trim strings
-      const safeTrim = (val: any) => (typeof val === 'string' ? val.trim() : val);
-
-      if ('first_name' in profile) updates.first_name = safeTrim(profile.first_name) || null;
-      if ('last_name' in profile) updates.last_name = safeTrim(profile.last_name) || null;
-      if ('display_name' in profile) updates.display_name = safeTrim(profile.display_name) || null;
-      if ('bio' in profile) updates.bio = safeTrim(profile.bio) || null;
-      if ('phone' in profile) updates.phone = safeTrim(profile.phone) || null;
-      if ('location' in profile) updates.location = safeTrim(profile.location) || null;
-      if ('website' in profile) updates.website = safeTrim(profile.website) || null;
-      if ('education' in profile) updates.education = safeTrim(profile.education) || null;
-      if ('university' in profile) updates.university = safeTrim(profile.university) || null;
-      if ('bar_association_number' in profile) updates.bar_association_number = safeTrim(profile.bar_association_number) || null;
-      if ('rut' in profile) updates.rut = safeTrim(profile.rut) || null;
-      if ('avatar_url' in profile) updates.avatar_url = safeTrim(profile.avatar_url) || null;
-      if ('pjud_verified' in profile) updates.pjud_verified = Boolean(profile.pjud_verified);
-      
-      // Arrays
-      if ('specialties' in profile && Array.isArray(profile.specialties)) {
-        updates.specialties = profile.specialties.map(s => String(s).trim()).filter(s => s !== '');
-      }
-      if ('languages' in profile && Array.isArray(profile.languages)) {
-        updates.languages = profile.languages.map(l => String(l).trim()).filter(l => l !== '');
-      }
-
-      // Numbers / Complex fields
-      if ('experience_years' in profile) {
-        updates.experience_years = profile.experience_years !== undefined 
-          ? (typeof profile.experience_years === 'string' 
-              ? parseInt(profile.experience_years, 10) 
-              : profile.experience_years)
-          : null;
-      }
-
-      if ('study_start_year' in profile) {
-        let val = profile.study_start_year;
-        if (val !== undefined && val !== null && val !== '') {
-          const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
-          updates.study_start_year = isNaN(num) ? null : num;
-        } else {
-          updates.study_start_year = null;
-        }
-      }
-
-      if ('study_end_year' in profile) {
-        let val = profile.study_end_year;
-        if (val !== undefined && val !== null && val !== '') {
-          const num = typeof val === 'string' ? parseInt(val, 10) : Number(val);
-          updates.study_end_year = isNaN(num) ? null : num;
-        } else {
-          updates.study_end_year = null;
-        }
-      }
-
-      // Process hourly rate - ensure it's a number or null
-      const processHourlyRate = (rate: any): number | null => {
-        if (rate === null || rate === undefined || rate === '') return null;
-        try {
-          if (typeof rate === 'number') return rate;
-          let cleanRate = String(rate)
-            .replace(/\./g, '')
-            .replace(',', '.')
-            .replace(/[^0-9.]/g, '');
-          const num = Number(cleanRate);
-          if (isNaN(num)) return null;
-          if (Number.isInteger(num)) return num;
-          return Math.round((num + Number.EPSILON) * 100) / 100;
-        } catch (error) {
-          console.error('Error processing hourly rate:', error);
-          return null;
-        }
-      };
-
-      if ('hourly_rate_clp' in profile) {
-        updates.hourly_rate_clp = processHourlyRate(profile.hourly_rate_clp);
-      }
 
       // Process certifications
       const processCertifications = (certs: any): string | null => {
-        if (certs === null || certs === undefined || certs === '') return null;
         try {
           if (Array.isArray(certs)) {
             return certs.map(c => String(c).trim()).filter(c => c !== '').join('\n') || null;
           } else if (typeof certs === 'string') {
             return certs.split('\n').map(line => line.trim()).filter(line => line !== '').join('\n') || null;
-          } else if (typeof certs === 'object' && certs !== null) {
-            return Object.values(certs).filter(v => v !== null && v !== undefined).map(v => String(v).trim()).filter(v => v !== '').join('\n') || null;
+          } else if (certs && typeof certs === 'object') {
+            return Object.values(certs)
+              .filter(v => v !== null && v !== undefined)
+              .map(v => String(v).trim())
+              .filter(v => v !== '')
+              .join('\n') || null;
           }
           return String(certs).trim() || null;
         } catch (error) {
@@ -523,87 +462,154 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      if ('certifications' in profile) {
-        updates.certifications = processCertifications(profile.certifications);
-      }
+      // Process profile data
+      const updates: Partial<Profile> = {
+        updated_at: new Date().toISOString(),
+        user_id: userId,  // Use the userId from session
+        // Basic fields
+        first_name: 'first_name' in profile ? safeTrim(profile.first_name) : undefined,
+        last_name: 'last_name' in profile ? safeTrim(profile.last_name) : undefined,
+        display_name: 'display_name' in profile ? safeTrim(profile.display_name) : undefined,
+        bio: 'bio' in profile ? safeTrim(profile.bio) : undefined,
+        phone: 'phone' in profile ? safeTrim(profile.phone) : undefined,
+        location: 'location' in profile ? safeTrim(profile.location) : undefined,
+        website: 'website' in profile ? safeTrim(profile.website) : undefined,
+        education: 'education' in profile ? safeTrim(profile.education) : undefined,
+        university: 'university' in profile ? safeTrim(profile.university) : undefined,
+        bar_association_number: 'bar_association_number' in profile ? safeTrim(profile.bar_association_number) : undefined,
+        rut: 'rut' in profile ? safeTrim(profile.rut) : undefined,
+        avatar_url: 'avatar_url' in profile ? safeTrim(profile.avatar_url) : undefined,
+        // Arrays
+        specialties: 'specialties' in profile && Array.isArray(profile.specialties) 
+          ? profile.specialties.map(s => String(s).trim()).filter(s => s !== '')
+          : undefined,
+        languages: 'languages' in profile && Array.isArray(profile.languages)
+          ? profile.languages.map(l => String(l).trim()).filter(l => l !== '')
+          : undefined,
+        // Numbers
+        experience_years: 'experience_years' in profile ? safeNumber(profile.experience_years) : undefined,
+        study_start_year: 'study_start_year' in profile ? safeNumber(profile.study_start_year) : undefined,
+        study_end_year: 'study_end_year' in profile ? safeNumber(profile.study_end_year) : undefined,
+        // Process hourly rate
+        hourly_rate_clp: 'hourly_rate_clp' in profile 
+          ? safeNumber(profile.hourly_rate_clp)
+          : undefined,
+        // Booleans
+        pjud_verified: 'pjud_verified' in profile ? Boolean(profile.pjud_verified) : undefined,
+        available_for_hire: 'available_for_hire' in profile ? Boolean(profile.available_for_hire) : undefined,
+        // Other fields
+        certifications: 'certifications' in profile ? processCertifications(profile.certifications) : undefined,
+        availability: 'availability' in profile ? profile.availability : undefined,
+        response_time: 'response_time' in profile ? profile.response_time : undefined,
+        satisfaction_rate: 'satisfaction_rate' in profile ? safeNumber(profile.satisfaction_rate) : undefined,
+        specialization: 'specialization' in profile ? profile.specialization : undefined,
+        // Always mark as completed when updating
+        profile_setup_completed: true
+      };
 
-      // Always set profile_setup_completed if we are updating
-      updates.profile_setup_completed = true;
-
-      try {
-        // Try to update existing profile
-        const { data: updateResult, error: updateError } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('user_id', user.id)
-          .select(); // Select to see if row existed
-
-        if (updateError) throw updateError;
-
-        // If no row was updated, we need to insert
-        if (!updateResult || updateResult.length === 0) {
-          const insertData = {
-            ...updates,
-            user_id: user.id,
-            created_at: new Date().toISOString(),
-            // Set defaults for required fields if they are missing in updates
-            first_name: updates.first_name || null,
-            last_name: updates.last_name || null,
-            // Ensure other required fields have defaults if not provided in `updates`
-            display_name: updates.display_name || null,
-            email: user.email, // Email should always be present from user object
-            role: updates.role || 'client', // Default role if not provided
-            bio: updates.bio || '',
-            avatar_url: updates.avatar_url || '',
-            phone: updates.phone || '',
-            website: updates.website || '',
-            location: updates.location || '',
-            specialties: updates.specialties || [],
-            languages: updates.languages || [],
-            verified: updates.verified || false,
-            response_time: updates.response_time || '24h',
-            satisfaction_rate: updates.satisfaction_rate || 0,
-            zoom_link: updates.zoom_link || '',
-            profile_visible: updates.profile_visible || true,
-            show_online_status: updates.show_online_status || true,
-            settings: updates.settings || {},
-            notifications: updates.notifications || { email: true, push: true },
-            preferences: updates.preferences || { theme: 'light', language: 'es' },
-            metadata: updates.metadata || { signup_method: 'email', signup_date: new Date().toISOString() }
-          };
-          
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert(insertData);
-            
-          if (insertError) throw insertError;
+      // Remove undefined values
+      Object.keys(updates).forEach(key => {
+        if (updates[key as keyof Profile] === undefined) {
+          delete updates[key as keyof Profile];
         }
+      });
 
-        // Update auth metadata (merges with existing)
-        const { data: updatedUser, error: authError } = await supabase.auth.updateUser({
-          data: updates
-        });
+      // Update the profile in Supabase
+      const { data: updatedProfile, error: updateError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,  // Use userId from session
+          ...updates
+        }, {
+          onConflict: 'id'
+        })
+        .select()
+        .single();
 
-        if (authError) throw authError;
-        if (!updatedUser.user) throw new Error('No se pudo actualizar el perfil');
-
-        // Manually update local state
-        setUser(updatedUser.user);
-        
-        return updatedUser.user;
-
-      } catch (error) {
-        console.error('Exception during profile update:', error);
-        throw error;
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw updateError;
       }
+
+      if (!updatedProfile) {
+        throw new Error('No se pudo actualizar el perfil');
+      }
+
+      // Get the latest user data to ensure we have the most up-to-date information
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('No se pudo obtener la información actualizada del usuario');
+      }
+
+      // Update local user state with the updated profile data
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          // Only include fields that exist in the User type
+          ...(updates.first_name !== undefined && { first_name: updates.first_name }),
+          ...(updates.last_name !== undefined && { last_name: updates.last_name }),
+          ...(updates.display_name !== undefined && { display_name: updates.display_name }),
+          ...(updates.avatar_url !== undefined && { avatar_url: updates.avatar_url })
+        };
+      });
+
+      return updatedProfile as unknown as User;
     } catch (error) {
       console.error('Error in updateProfile:', error);
       throw error;
     }
-  }, [user, setUser]);
+  }, []);
+
+  // Add fetchProfile function to handle profile fetching with proper error handling
+  const fetchProfile = useCallback(async (userId: string | undefined) => {
+    console.log('fetchProfile called with userId:', userId);
+    
+    if (!userId) {
+      console.error('No user ID provided to fetchProfile. Stack trace:', new Error().stack);
+      return null;
+    }
+
+    try {
+      console.log('Fetching profile for user ID:', userId);
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('first_name, profile_setup_completed, role, user_id, avatar_url')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // No rows returned
+          console.log('No profile found for user ID:', userId);
+          return null;
+        }
+        console.error('Error fetching profile:', error);
+        throw error;
+      }
+
+      console.log('Successfully fetched profile:', profile);
+      return profile;
+    } catch (error) {
+      console.error('Error in fetchProfile:', {
+        error,
+        message: error.message,
+        code: error.code,
+        userId
+      });
+      
+      if (error.message.includes('JWT') || 
+          error.message.includes('invalid input syntax for type uuid') ||
+          error.code === '22P02') {
+        console.log('Auth error detected, signing out...');
+        await supabase.auth.signOut();
+        setUser(null);
+      }
+      return null;
+    }
+  }, [setUser]);
 
   // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = useMemo ( () => ({
+  const contextValue = useMemo(() => ({
       user,
       session,
       isLoading,
@@ -625,6 +631,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       checkSession,
       refreshAuth,
       updateProfile,
+      fetchProfile,
     }),
     [
       user,
@@ -639,6 +646,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       confirmEmail,
       checkSession,
       refreshAuth,
+      fetchProfile,
       setLoadingState,
       setErrorState,
     ]);

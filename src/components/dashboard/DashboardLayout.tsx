@@ -65,6 +65,12 @@ function DashboardLayout() {
         navigate('/');
         return;
       }
+
+      // Ensure we have a valid user ID before querying Supabase
+      if (!user.id) {
+        console.warn('DashboardLayout: user is present but lacks an id; skipping profile check.');
+        return;
+      }
       
       // Skip profile check for these routes
       const excludedRoutes = [

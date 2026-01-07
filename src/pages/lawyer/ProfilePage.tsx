@@ -56,7 +56,6 @@ interface ProfileFormData {
   bar_association_number: string;
   rut: string;
   pjud_verified: boolean;
-  zoom_link: string;
   avatar_url?: string;
 };
 
@@ -429,10 +428,12 @@ export default function LawyerProfilePage() {
     languages: [],
     education: '',
     university: '',
+    certifications: '',
+    study_start_year: '',
+    study_end_year: '',
     bar_association_number: '',
     rut: '',
     pjud_verified: false,
-    zoom_link: '',
     avatar_url: ''
   });
 
@@ -473,7 +474,6 @@ export default function LawyerProfilePage() {
         bar_association_number: userProfile.bar_association_number || '',
         rut: userProfile.rut || '',
         pjud_verified: userProfile.pjud_verified || false,
-        zoom_link: userProfile.zoom_link || '',
         avatar_url: userProfile.avatar_url || ''
       });
       
@@ -488,7 +488,8 @@ export default function LawyerProfilePage() {
   const handleCancel = () => {
     if (user?.user_metadata) {
       const initialData = initializeFormData(user.user_metadata);
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         first_name: initialData.first_name || '',
         last_name: initialData.last_name || '',
         bio: initialData.bio || '',
@@ -500,17 +501,16 @@ export default function LawyerProfilePage() {
         hourly_rate_clp: initialData.hourly_rate_clp || 0,
         contact_fee_clp: initialData.contact_fee_clp || 0,
         languages: initialData.languages || [],
-        education: initialData.education || '',
-        university: initialData.university || '',
+        education: typeof initialData.education === 'string' ? initialData.education : '',
+        university: typeof initialData.university === 'string' ? initialData.university : '',
         study_start_year: initialData.study_start_year || '',
         study_end_year: initialData.study_end_year || '',
-        certifications: initialData.certifications || '',
+        certifications: typeof initialData.certifications === 'string' ? initialData.certifications : '',
         bar_association_number: initialData.bar_association_number || '',
         rut: initialData.rut || '',
         pjud_verified: initialData.pjud_verified || false,
-        zoom_link: initialData.zoom_link || '',
         avatar_url: initialData.avatar_url || ''
-      });
+      }));
       setSelectedSpecializations(initialData.specialties || []);
     }
     setIsEditing(false);
@@ -536,7 +536,8 @@ export default function LawyerProfilePage() {
     if (isEditing) {
       // If canceling edit, reset form to original values from the profile
       if (userProfile) {
-        setFormData({
+        setFormData(prev => ({
+          ...prev,
           first_name: userProfile.first_name || '',
           last_name: userProfile.last_name || '',
           bio: userProfile.bio || '',
@@ -556,9 +557,8 @@ export default function LawyerProfilePage() {
           bar_association_number: userProfile.bar_association_number || '',
           rut: userProfile.rut || '',
           pjud_verified: userProfile.pjud_verified || false,
-          zoom_link: userProfile.zoom_link || '',
           avatar_url: userProfile.avatar_url || ''
-        });
+        }));
       }
     }
     setIsEditing(!isEditing);
@@ -611,7 +611,6 @@ export default function LawyerProfilePage() {
         bar_association_number: safeTrim(formData.bar_association_number) || null,
         rut: safeTrim(formData.rut) || null,
         pjud_verified: formData.pjud_verified || false,
-        zoom_link: safeTrim(formData.zoom_link) || null,
         avatar_url: formData.avatar_url || null
       };
       

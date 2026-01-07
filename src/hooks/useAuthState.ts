@@ -61,15 +61,26 @@ export const useAuthState = (): AuthState => {
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (currentSession?.user) {
-        // 1. Fetch Profile
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentSession.user.id)
-          .maybeSingle();
+        let profileData = null;
+        
+        // Only try to fetch profile if we have a valid user ID
+        if (currentSession.user.id) {
+          const { data, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', currentSession.user.id)
+            .maybeSingle();
+            
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+            // Continue without profile data rather than failing
+          } else {
+            profileData = data;
+          }
+        }
 
         // Attach profile to user object
-        currentSession.user.profile = profileData;
+        currentSession.user.profile = profileData || {};
 
         // 2. Admin Logic
         const isAdmin = currentSession.user.email?.toLowerCase() === 'gigfmedia@icloud.com' || 

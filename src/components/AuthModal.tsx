@@ -464,16 +464,30 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       if (payload.userId) {
         const apiBaseUrl = resolveApiBaseUrl();
         const profileEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/profiles` : '/api/profiles';
-        await fetch(profileEndpoint, {
+        const response = await fetch(profileEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Error response from /api/profiles:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData
+          });
+          throw new Error(errorData.error || 'Error al crear el perfil');
+        }
+
+        const result = await response.json();
+        console.log('Profile creation result:', result);
       }
     } catch (profileError) {
       console.error('Error ensuring profile after signup:', profileError);
+      // No lanzamos el error para no interrumpir el flujo de registro
     }
 
     // Reset form on successful signup
