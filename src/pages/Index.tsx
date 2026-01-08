@@ -519,7 +519,7 @@ const Index = () => {
                   {isLoadingCount.verified ? (
                     <div className="h-8 w-20 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
                   ) : (
-                    <>{verifiedCount !== null ? `${verifiedCount}+` : '500+'}</>
+                    <>{verifiedCount !== null ? `${verifiedCount}` : '500+'}</>
                   )}
                 </div>
               </div>
