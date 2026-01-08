@@ -328,8 +328,8 @@ const Index = () => {
             return (b.rating || 0) - (a.rating || 0);
           });
           
-          // Take only the first 4 lawyers
-          setFeaturedLawyers(sortedLawyers.slice(0, 4));
+          // Take up to 9 featured lawyers
+          setFeaturedLawyers(sortedLawyers.slice(0, 9));
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
