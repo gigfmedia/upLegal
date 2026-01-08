@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,12 +23,18 @@ interface LawyerProfile {
   hourly_rate_clp: number;
   bio: string;
   pjud_verified: boolean;
+  availability?: Record<string, boolean[]> | string | null;
 }
 
 interface TimeSlot {
   time: string;
   available: boolean;
 }
+
+type BusySlot = {
+  scheduled_time: string;
+  duration: number;
+};
 
 export default function BookingPage() {
   const { lawyerId } = useParams<{ lawyerId: string }>();
@@ -38,6 +44,7 @@ export default function BookingPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
+  const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -59,7 +66,7 @@ export default function BookingPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified')
+        .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified, availability')
         .eq('user_id', actualId)
         .eq('role', 'lawyer')
         .single();
@@ -79,7 +86,23 @@ export default function BookingPage() {
         return;
       }
 
-      setLawyer(data);
+      let parsedAvailability: Record<string, boolean[]> | null = null;
+      if (data.availability) {
+        try {
+          const rawAvailability = typeof data.availability === 'string'
+            ? JSON.parse(data.availability)
+            : data.availability;
+
+          if (rawAvailability && typeof rawAvailability === 'object') {
+            parsedAvailability = rawAvailability as Record<string, boolean[]>;
+          }
+        } catch (parseError) {
+          console.warn('Error parsing lawyer availability config, defaulting to legacy behavior:', parseError);
+        }
+      }
+
+      setLawyer({ ...data, availability: parsedAvailability ?? data.availability ?? null });
+      setLawyerAvailability(parsedAvailability);
       setLoading(false);
     }
 
@@ -103,10 +126,34 @@ export default function BookingPage() {
   const AVAILABILITY_START_HOUR = 9;
 
   // Helper to get Day string for availability JSON key
-  const getDayName = (date: Date) => {
+  const getDayName = useCallback((date: Date) => {
     const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
     return days[date.getDay()];
-  };
+  }, []);
+
+  const normalizeDayKey = useCallback((key: string) =>
+    key
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase(),
+  []);
+
+  const getAvailabilityForDay = useCallback((
+    availability: Record<string, unknown> | null,
+    dayName: string
+  ): boolean[] | null => {
+    if (!availability) return null;
+
+    const targetKey = normalizeDayKey(dayName);
+
+    for (const [key, value] of Object.entries(availability)) {
+      if (normalizeDayKey(key) === targetKey && Array.isArray(value)) {
+        return value as boolean[];
+      }
+    }
+
+    return null;
+  }, [normalizeDayKey]);
 
   // Generate available time slots for selected date
   useEffect(() => {
@@ -125,7 +172,7 @@ export default function BookingPage() {
 
       for (let hour = 9; hour < endHour; hour++) {
         const minutes = duration >= 60 ? [0] : [0, 30];
-        for (let minute of minutes) {
+        for (const minute of minutes) {
           const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
           baseSlots.push({ time, available: true });
         }
@@ -181,62 +228,55 @@ export default function BookingPage() {
         // For simplicity and to avoid race conditions with state updates, let's fetch it or use the 'lawyer' state if we add the field to it.
         // Let's assume we update the initial fetch to include 'availability'.
 
-        let availabilityConfig = {};
-        try {
-          if (lawyer && (lawyer as any).availability) {
-              const rawAvail = (lawyer as any).availability;
-              availabilityConfig = typeof rawAvail === 'string' 
-              ? JSON.parse(rawAvail)
-              : rawAvail;
-          } else {
-              // If not loaded in state, fetch it specifically (or rely on defaults)
-              const { data: profileData } = await supabase
-                .from('profiles')
-                .select('availability')
-                .eq('user_id', lawyerId)
-                .single();
-                
-              if (profileData?.availability) {
-                  const rawAvail = profileData.availability;
-                  availabilityConfig = typeof rawAvail === 'string'
-                    ? JSON.parse(rawAvail)
-                    : rawAvail;
+        let availabilityConfig: Record<string, boolean[]> | null = lawyerAvailability;
+
+        if ((!availabilityConfig || Object.keys(availabilityConfig).length === 0) && lawyerId) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('availability')
+            .eq('user_id', lawyerId)
+            .single();
+
+          if (profileData?.availability) {
+            try {
+              const rawAvail =
+                typeof profileData.availability === 'string'
+                  ? JSON.parse(profileData.availability)
+                  : profileData.availability;
+
+              if (rawAvail && typeof rawAvail === 'object') {
+                availabilityConfig = rawAvail as Record<string, boolean[]>;
+                setLawyerAvailability(availabilityConfig);
               }
+            } catch (parseError) {
+              console.warn('Error parsing lawyer availability config, defaulting to open or closed defaults based on logic:', parseError);
+            }
           }
-        } catch (parseError) {
-          console.warn('Error parsing lawyer availability config, defaulting to open or closed defaults based on logic:', parseError);
-          // availabilityConfig remains {}
         }
 
         const dayName = getDayName(selectedDate);
-        const dayAvailability = (availabilityConfig as any)[dayName];
+        const dayAvailability = getAvailabilityForDay(availabilityConfig, dayName);
+        const hasCustomAvailability = availabilityConfig && Object.keys(availabilityConfig).length > 0;
 
         // 3. Filter base slots based on Lawyer Config
         const configFilteredSlots = baseSlots.filter(slot => {
             const hour = parseInt(slot.time.split(':')[0]);
             const hourIndex = hour - AVAILABILITY_START_HOUR;
 
-            // If no config for this day, assume unavailable (or available? ManageAvailability defaults to false usually)
-            // ManageAvailability initializes with empty object (all false), so safest is to assume false if undefined.
-            // However, legacy accounts might be undefined. Let's strictly check availability array.
             if (dayAvailability && Array.isArray(dayAvailability)) {
-                return dayAvailability[hourIndex] === true;
+              return dayAvailability[hourIndex] === true;
             }
 
-            // If the lawyer has set up availability (config has keys), but this day is missing/undefined,
-            // it means the day is CLOSED.
-            if (availabilityConfig && typeof availabilityConfig === 'object' && Object.keys(availabilityConfig).length > 0) {
-                return false;
+            if (hasCustomAvailability) {
+              return false;
             }
 
             // Default to OPEN only if NO configuration exists at all (legacy support)
-            // If the lawyer hasn't set up availability, we assume standard hours (9-14 Sat, 9-18 M-F) are open
-            // matching the 'baseSlots' generation logic.
             return true;
         });
 
         // 4. Fetch busy slots from DB (Bookings) - defined above, now map them
-        const bookedTimes = (busySlots as any[])?.map((slot: any) => ({
+        const bookedTimes = (busySlots as BusySlot[] | null)?.map((slot) => ({
           time: slot.scheduled_time.slice(0, 5), // "09:00:00" -> "09:00"
           duration: slot.duration
         })) || [];
@@ -246,7 +286,7 @@ export default function BookingPage() {
           const slotTimeVal = parseInt(slot.time.replace(':', ''));
           const slotEndVal = addMinutesToTime(slotTimeVal, duration);
 
-          const isBlocked = bookedTimes.some((booked: any) => {
+          const isBlocked = bookedTimes.some((booked) => {
             const bookedStart = parseInt(booked.time.replace(':', ''));
             const bookedEnd = addMinutesToTime(bookedStart, booked.duration);
 
@@ -278,7 +318,7 @@ export default function BookingPage() {
     };
 
     fetchAvailability();
-  }, [selectedDate, duration, lawyerId]);
+  }, [selectedDate, duration, lawyerId, lawyerAvailability, selectedTime, getDayName, getAvailabilityForDay]);
 
   // Helper to add minutes to HHMM integer (e.g. 900 + 60 => 1000)
   // This is a bit hacky, cleaner to use Date objects but sufficient for static slots
@@ -370,9 +410,21 @@ export default function BookingPage() {
     }
   };
 
-  const availableDates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i))
-    .filter(date => date.getDay() !== 0) // Exclude Sundays (0)
-    .filter(date => !isChileanHoliday(date)); // Exclude holidays
+  const availableDates = useMemo(() => {
+    const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i));
+
+    return dates
+      .filter(date => date.getDay() !== 0)
+      .filter(date => {
+        if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
+          return true;
+        }
+
+        const dayAvailability = getAvailabilityForDay(lawyerAvailability, getDayName(date));
+        return Array.isArray(dayAvailability) ? dayAvailability.some(Boolean) : false;
+      })
+      .filter(date => !isChileanHoliday(date));
+  }, [lawyerAvailability, getDayName, getAvailabilityForDay]);
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);

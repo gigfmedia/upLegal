@@ -21,13 +21,55 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Derive user info directly from AuthContext
-  const userRole = user?.role || user?.profile?.role || 'client';
-  const userName = user?.name || 
-    (user?.profile?.first_name && user?.profile?.last_name 
+
+  const metadata = user?.user_metadata ?? {};
+  const metadataFirstName = metadata.first_name ?? metadata.firstName ?? null;
+  const metadataLastName = metadata.last_name ?? metadata.lastName ?? null;
+  const metadataDisplayName = metadata.display_name ?? metadata.name ?? metadata.full_name ?? null;
+
+  const userRole = (metadata.role as string | undefined) 
+    ?? user?.role 
+    ?? user?.profile?.role 
+    ?? 'client';
+
+  const combinedName = [metadataFirstName, metadataLastName].filter(Boolean).join(' ');
+  const userName = metadataDisplayName 
+    || (combinedName.length ? combinedName : null)
+    || user?.name 
+    || (user?.profile?.first_name && user?.profile?.last_name 
       ? `${user.profile.first_name} ${user.profile.last_name}` 
       : null);
+
+  const deriveInitials = () => {
+    if (metadataFirstName && metadataLastName) {
+      return `${metadataFirstName[0]}${metadataLastName[0]}`.toUpperCase();
+    }
+
+    if (metadataDisplayName) {
+      const parts = metadataDisplayName.trim().split(/\s+/);
+      if (parts.length) {
+        return parts.slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('') || null;
+      }
+    }
+
+    if (combinedName.length) {
+      const parts = combinedName.trim().split(/\s+/);
+      return parts.slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('') || null;
+    }
+
+    if (userName) {
+      const parts = userName.trim().split(/\s+/);
+      return parts.slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('') || null;
+    }
+
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase();
+    }
+
+    return null;
+  };
+
+  const avatarInitials = deriveInitials() || 'U';
 
   const isActive = (path: string) => {
     return location.pathname === path || 
@@ -140,15 +182,12 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                     >
                       <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
                         <AvatarImage 
-                          src={user.user_metadata?.avatar_url} 
-                          alt={user.user_metadata?.name || 'User'} 
+                          src={user.user_metadata?.avatar_url ?? undefined}
+                          alt={userName || user?.email || 'Usuario'} 
                           className="object-cover"
                         />
                         <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
-                          {user.user_metadata?.name 
-                            ? user.user_metadata.name.split(' ').map(n => n[0]).join('').toUpperCase()
-                            : user.email?.charAt(0).toUpperCase() || 'U'
-                          }
+                          {avatarInitials}
                         </AvatarFallback>
                       </Avatar>
                     </Button>

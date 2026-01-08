@@ -168,14 +168,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Sign up the user with Supabase Auth
       const normalizedEmail = email.trim().toLowerCase();
+      const firstName = userData.firstName.trim();
+      const lastName = userData.lastName.trim();
+      const displayName = [firstName, lastName].filter(Boolean).join(' ') || normalizedEmail.split('@')[0];
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
           data: {
-            first_name: userData.firstName.trim(),
-            last_name: userData.lastName.trim(),
+            name: displayName,
+            first_name: firstName,
+            last_name: lastName,
             role: userData.role,
             rut: userData.rut || null,
             pjud_verified: userData.pjudVerified || false,
@@ -187,8 +191,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (signUpError) {
         console.error('Supabase signup error:', signUpError);
-        
         let errorMessage = 'Error creating account';
+        
         if (signUpError.message.includes('already registered')) {
           errorMessage = 'This email is already registered. Did you forget your password?';
         } else if (signUpError.message.includes('password')) {
@@ -208,71 +212,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { user: null, error };
       }
 
-      const firstName = userData.firstName.trim();
-      const lastName = userData.lastName.trim();
-      const displayName = [firstName, lastName].filter(Boolean).join(' ') || normalizedEmail.split('@')[0];
+      // Create or update profile with the user's information
+      const profileData = {
+        id: data.user.id,
+        user_id: data.user.id,
+        email: normalizedEmail,
+        first_name: firstName,
+        last_name: lastName,
+        display_name: displayName,
+        role: userData.role,
+        rut: userData.rut || null,
+        pjud_verified: userData.pjudVerified || false,
+        has_used_free_consultation: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      // Only attempt to manually create/update profile if we have a session (auto-confirm enabled)
-      // Otherwise, the RLS policies will block the insert (401 error) because the user is not authenticated yet.
-      if (data.session) {
-        try {
-          const baseProfileData = {
-            email: normalizedEmail,
-            first_name: firstName || null,
-            last_name: lastName || null,
-            display_name: displayName,
-            role: userData.role,
-            rut: userData.rut || null,
-            pjud_verified: userData.pjudVerified || false,
-            updated_at: new Date().toISOString(),
-          } satisfies Record<string, unknown>;
+      try {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert(profileData, { onConflict: 'id' });
 
-          const { data: existingProfile, error: profileLookupError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', data.user.id)
-            .maybeSingle();
-
-          if (profileLookupError) {
-            throw profileLookupError;
-          }
-
-          const { error: profileMutationError } = existingProfile
-            ? await supabase
-                .from('profiles')
-                .update(baseProfileData)
-                .eq('user_id', data.user.id)
-            : await supabase
-                .from('profiles')
-                .insert({
-                  ...baseProfileData,
-                  id: data.user.id,
-                  user_id: data.user.id,
-                  created_at: new Date().toISOString(),
-                  has_used_free_consultation: false,
-                });
-
-          if (profileMutationError) {
-            throw profileMutationError;
-          }
-        } catch (profileError) {
-          console.error('Error ensuring profile data:', profileError);
-          throw new Error('No se pudo crear el perfil del usuario. Inténtalo nuevamente.');
+        if (profileError) {
+          console.error('Error creating/updating profile:', profileError);
+          // Don't fail the signup if profile update fails, just log it
         }
+      } catch (profileError) {
+        console.error('Unexpected error during profile update:', profileError);
+        // Continue with signup even if profile update fails
       }
 
-      // GA4 event (opcional pero recomendado)
+      // GA4 event
       if (typeof window !== 'undefined' && window.gtag) {
         window.gtag('event', 'sign_up', {
           method: 'modal',
-          role: userData.role, // 'client' | 'lawyer'
+          role: userData.role,
           status: 'pending_email_confirmation'
         });
       }
-      
-      // Profile creation is now handled automatically by Supabase triggers:
-      // 1. Supabase auto-creates profile from auth.users
-      // 2. Our custom trigger (fix_profile_after_signup) updates it with correct data from user metadata
       
       // The useAuth hook will handle updating the user and session
       await checkSession();

@@ -197,8 +197,11 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
                 />
               ) : (
                 <AvatarFallback className="text-2xl bg-gray-100 flex items-center justify-center w-full h-full">
-                  {user?.user_metadata?.first_name?.charAt(0).toUpperCase() || 
-                   user?.email?.charAt(0).toUpperCase() || 'U'}
+                  {user?.user_metadata?.first_name?.charAt(0)?.toUpperCase() || 
+                   user?.first_name?.charAt(0)?.toUpperCase() ||
+                   user?.display_name?.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) ||
+                   user?.email?.charAt(0).toUpperCase() || 
+                   'U'}
                 </AvatarFallback>
               )}
             </Avatar>

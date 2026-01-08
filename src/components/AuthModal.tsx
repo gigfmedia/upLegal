@@ -426,13 +426,17 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       formData.email, 
       formData.password, 
       {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
         role: formData.role,
         rut: formData.role === 'lawyer' ? formData.rut : undefined,
         pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false
       }
     );
+    
+    if (signupResponse.error) {
+      throw signupResponse.error;
+    }
     
     if (signupResponse.error) {
       // Handle specific error messages from the server
