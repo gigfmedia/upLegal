@@ -84,11 +84,11 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. Pagos y comisiones</h2>
               <ul className="list-disc pl-6 space-y-2">
-                <li>LegalUp puede cobrar una comisión por servicio a los Abogados por cada transacción realizada a través de la Plataforma.</li>
-                <li>El precio del servicio es definido por cada Abogado.</li>
-                <li>LegalUp retiene automáticamente la comisión acordada antes de transferir el pago al Abogado.</li>
-                <li>LegalUp no se responsabiliza por retrasos o fallas imputables a bancos, proveedores externos o pasarelas de pago.</li>
-                <li>No se permiten transacciones fuera de la Plataforma con el fin de evadir la comisión.</li>
+                <li>LegalUp podrá cobrar una comisión por los servicios de intermediación, derivación o gestión de clientes que realice, respecto de cada cliente o caso generado directa o indirectamente a través de LegalUp, independiente del medio de contacto, pago o formalización utilizado.</li>
+                <li>El precio del servicio profesional es definido libremente por cada Abogado.</li>
+                <li>La comisión de LegalUp será retenida, descontada o facturada al Abogado, según corresponda, conforme al mecanismo de pago utilizado en cada caso.</li>
+                <li>LegalUp no se responsabiliza por retrasos, fallas o errores imputables a bancos, proveedores externos o pasarelas de pago.</li>
+                <li>No se permiten transacciones realizadas con el objeto de eludir o evadir el pago de la comisión correspondiente a LegalUp respecto de clientes o casos derivados por la Plataforma.</li>
               </ul>
             </section>
 
