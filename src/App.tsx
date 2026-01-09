@@ -73,7 +73,7 @@ const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 // const Consulta = lazy(() => import('./pages/Consulta'));
 // const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
-const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
+// const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
