@@ -4,7 +4,7 @@ const Footer = () => {
   const location = useLocation();
   
   // Hide WhatsApp button on Jorge Pacheco's booking page
-  const isJorgePachecoPage = location.pathname.includes('jorge-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1');
+  const isJorgePachecoPage = location.pathname.includes('jorge-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1') || location.pathname.includes('/search');
 
   return (
     <div className="relative">

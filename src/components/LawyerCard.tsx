@@ -159,7 +159,22 @@ export function LawyerCard({
   
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full">
+      <Card 
+        className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full cursor-pointer"
+        onClick={(e) => {
+          // Don't navigate if clicking on the schedule button or its children
+          if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
+            return;
+          }
+          const nameSlug = (lawyer.name || 'abogado')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          navigate(`/abogado/${nameSlug}-${lawyer.id}`);
+        }}
+      >
         <div className="flex-1 flex flex-col p-6 min-h-[300px] relative">
           {/* Sección superior - Info básica */}
           <div className="flex justify-between items-start mb-4 w-full">
@@ -231,28 +246,6 @@ export function LawyerCard({
             </div>
           </div>
             
-          <div className="absolute top-6 right-6">
-            <Button
-              variant="outline"
-              size="sm"
-              className={`${!isVerifiedLawyer ? 'opacity-50 cursor-not-allowed' : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'} border-gray-300 h-9 px-4 font-medium shadow-sm hover:shadow transition-all duration-200 whitespace-nowrap bg-white`}
-              onClick={(e) => {
-                if (!isVerifiedLawyer) return;
-                e.stopPropagation();
-                const nameSlug = (lawyer.name || 'abogado')
-                  .normalize('NFD')
-                  .replace(/[\u0300-\u036f]/g, '') // Remove accents
-                  .toLowerCase()
-                  .replace(/[^a-z0-9]+/g, '-')
-                  .replace(/^-+|-+$/g, '');
-                navigate(`/abogado/${nameSlug}-${lawyer.id}`);
-              }}
-              disabled={!isVerifiedLawyer}
-              title={!isVerifiedLawyer ? 'Este perfil no está completo o verificado' : 'Ver perfil completo'}
-            >
-              Ver perfil
-            </Button>
-          </div>
 
           {/* Contenido con alineación fija */}
           <div className="flex flex-col space-y-4 mt-auto">
@@ -334,7 +327,7 @@ export function LawyerCard({
         {/* Botones de acción - Fijos en la parte inferior */}
         <div className="p-6 pt-0 mt-auto">
           <div className="flex space-x-2 w-full">
-            <Button 
+            {/* <Button 
               variant="outline" 
               className={`flex-1 bg-white border-gray-300 ${
                 buttonsDisabled 
@@ -347,7 +340,7 @@ export function LawyerCard({
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Contactar'}
-            </Button>
+            </Button> */}
             <Button
               variant="default"
               className={`flex-1 bg-blue-600 ${
@@ -355,7 +348,10 @@ export function LawyerCard({
                   ? 'opacity-50 cursor-not-allowed' 
                   : 'hover:bg-blue-700'
               }`}
-              onClick={handleScheduleClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleScheduleClick(e);
+              }}
               disabled={buttonsDisabled}
               title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
             >

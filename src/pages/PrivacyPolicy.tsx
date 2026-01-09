@@ -179,7 +179,7 @@ const PrivacyPolicy = () => {
             <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:contacto@legalup.cl" className="text-blue-600 hover:underline">contacto@legalup.cl</a></p>
+            <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-blue-600 hover:underline">contacto@legalup.cl</a></p>
           </CardContent>
         </Card>
       </div>

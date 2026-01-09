@@ -48,7 +48,8 @@ const DashboardAppointments = lazy(() => import('./pages/DashboardAppointments')
 const DashboardPayments = lazy(() => import('./pages/DashboardPayments'));
 const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+// Admin pages
+const AdminDashboard = lazy(() => import('./pages/admin/analytics')); // Using analytics as dashboard for now
 const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/analytics'));
 const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
@@ -70,6 +71,9 @@ const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
+const Consulta = lazy(() => import('./pages/Consulta'));
+const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
+const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -224,6 +228,11 @@ const AppContent = () => {
               {/* Booking Routes */}
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
+
+              {/* Consultation Routes */}
+              <Route path="/consulta" element={<Consulta />} />
+              <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
+              <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
 
               {/* New lawyer dashboard routes */}
               <Route path="/lawyer" element={

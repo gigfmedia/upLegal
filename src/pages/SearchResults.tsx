@@ -219,7 +219,16 @@ const SearchResults = () => {
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string[]>(initialSpecialties);
   const [location, setLocation] = useState(initialLocation);
-  const [sortBy, setSortBy] = useState('rating');
+  const [sortBy, setSortBy] = useState('price-asc');
+  
+  // Set default sort to price-asc on initial load if no sort parameter is present
+  useEffect(() => {
+    if (!searchParams.has('sort')) {
+      setSortBy('price-asc');
+    } else {
+      setSortBy(searchParams.get('sort') || 'price-asc');
+    }
+  }, []);
   const [showFilters, setShowFilters] = useState(false);
   
   // New filter states
@@ -473,14 +482,21 @@ const SearchResults = () => {
   }, [searchParamsMemo, searchResult.pageSize]);
 
   // Wrapper function to call the debounced search
-  const debouncedSearch = useCallback((page: number, isInitialLoad = false) => {
-    debouncedSearchRef.current({
-      page,
-      isInitialLoad,
-      searchParams: searchParamsMemo,
-      currentPageSize: searchResult.pageSize
-    });
-  }, [searchParamsMemo, searchResult.pageSize]);
+  const debouncedSearch = useCallback((page: number, isInitialLoad = false, force = false) => {
+    // Only trigger a new search if we don't have results or if forced
+    if (searchResult.lawyers.length === 0 || force) {
+      debouncedSearchRef.current({
+        page,
+        isInitialLoad,
+        searchParams: searchParamsMemo,
+        currentPageSize: searchResult.pageSize
+      });
+    } else {
+      // Just update the loading state if we already have results
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, [searchParamsMemo, searchResult.pageSize, searchResult.lawyers.length]);
 
   // Fetch initial data and when filters change
   useEffect(() => {
@@ -687,7 +703,7 @@ const SearchResults = () => {
       <div className="bg-white py-8 pt-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900">Encuentra al abogado ideal para tu caso</h1>
-          <p className="mt-2 text-gray-600">Busca por especialidad, ubicación o nombre del abogado</p>
+          <p className="mt-2 text-gray-600">Agenda una asesoría y recibe orientación legal clara en 60 minutos.</p>
           
           {/* Search Bar */}
           <div className="mt-6">
@@ -909,14 +925,20 @@ const SearchResults = () => {
                 <select
                   id="sort"
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    // Update the URL with the new sort parameter
+                    const params = new URLSearchParams(searchParams);
+                    params.set('sort', e.target.value);
+                    setSearchParams(params);
+                  }}
                   className="h-10 w-full sm:w-48 pl-3 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="relevance">Relevancia</option>
-                  <option value="rating-desc">Mejor valorados</option>
                   <option value="price-asc">Precio más bajo</option>
                   <option value="price-desc">Precio más alto</option>
+                  <option value="rating-desc">Mejor valorados</option>
                   <option value="reviews-desc">Más reseñas</option>
+                  <option value="relevance">Relevancia</option>
                 </select>
               </div>
               
@@ -933,15 +955,14 @@ const SearchResults = () => {
 
           
           {/* Results Grid */}
-          {loading && !searchResult.lawyers.length ? (
+          {loading && !filteredLawyers.length ? (
             <div className="flex justify-center items-center py-16">
               <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
             </div>
-          ) : searchResult.lawyers.length > 0 ? (
+          ) : filteredLawyers.length > 0 ? (
             <div className="w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
-                {searchResult.lawyers.map((lawyer) => {
-                  // Usar onContact y onSchedule para compatibilidad con versiones anteriores
+                {filteredLawyers.map((lawyer) => {
                   const handleContact = () => handleContactClick(lawyer);
                   const handleSchedule = () => handleScheduleClick(lawyer);
                   
@@ -951,8 +972,8 @@ const SearchResults = () => {
                         lawyer={lawyer}
                         onContactClick={handleContact}
                         onScheduleClick={handleSchedule}
-                        onContact={handleContact} // Para compatibilidad
-                        onSchedule={handleSchedule} // Para compatibilidad
+                        onContact={handleContact}
+                        onSchedule={handleSchedule}
                         user={user}
                       />
                     </div>
