@@ -11,17 +11,15 @@ export default function AboutPage() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-6">Acerca de LegalUp</h1>
           <p className="text-lg text-gray-700 mb-12 max-w-3xl">
-            Bienvenido a LegalUp, tu puente digital con el mundo del asesoramiento legal profesional. 
-            Hemos creado esta plataforma pensando en personas como tú: buscando soluciones confiables, 
-            rápidas y accesibles para tus necesidades.
+            Bienvenido a LegalUp, tu puente digital con el mundo del asesoramiento legal profesional. Creamos esta plataforma para personas que buscan soluciones confiables, rápidas y transparentes, con acceso a abogados verificados de distintas especialidades y tarifas, para que puedas elegir la opción que mejor se adapte a tu necesidad.
           </p>
           
           {/* Mission Section */}
           <section className="mb-16 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Nuestra misión</h2>
             <p className="text-gray-700 text-lg leading-relaxed">
-              Empoderarte con acceso directo y transparente a abogados capacitados, sin complicaciones ni barreras. 
-              Creemos que el asesoramiento legal no debe ser un lujo, sino un derecho al que todos puedan acceder.
+              Empoderarte con acceso directo y transparente a abogados capacitados, sin complicaciones ni barreras.
+              Creemos que el asesoramiento legal no debe ser un lujo, sino un derecho, por eso conectamos a las personas con abogados de distintas especialidades y tarifas, para que cada quien elija la opción que mejor se ajuste a su necesidad.
             </p>
           </section>
 

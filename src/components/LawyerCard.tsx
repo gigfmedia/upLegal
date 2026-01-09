@@ -177,8 +177,8 @@ export function LawyerCard({
       >
         <div className="flex-1 flex flex-col p-6 min-h-[300px] relative">
           {/* Sección superior - Info básica */}
-          <div className="flex justify-between items-start mb-4 w-full">
-            <div className="flex space-x-4 flex-1">
+          <div className="flex justify-between items-start w-full">
+            <div className="flex space-x-4 w-full">
               <div className="relative">
                 <div className="relative">
                   <Avatar className="h-16 w-16">
@@ -200,12 +200,19 @@ export function LawyerCard({
                 </div>
               </div>
               
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between w-full mb-1">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate max-w-[180px]" 
+              <div className="flex-1 min-w-0 w-full">
+                <div className="flex items-center justify-between w-full mb-1 gap-2">
+                  <h3 className="text-lg font-semibold text-gray-900 truncate" 
                       title={displayName}>
                     {displayName}
                   </h3>
+                  {lawyer.hourlyRate > 60000 && (
+                    <div className="flex-shrink-0">
+                      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        🏅 Premium
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {hasVerificationFlag && (
@@ -225,21 +232,27 @@ export function LawyerCard({
                   </span>
                 </div>
                 
-                <div className="flex items-center space-x-4 text-sm">
-                  <button 
-                    className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/lawyer/${lawyer.id}#reviews-section`);
-                    }}
-                  >
-                    <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
-                    <span className="font-medium">{currentRating.toFixed(1)}</span>
-                    <span className="text-gray-400">({currentReviewCount})</span>
-                  </button>
-                  {/*<div className="h-4 w-px bg-gray-200 flex-shrink-0"></div>*/}
-                  <span className="text-blue-600 font-medium">
-                  {/*  {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos */}
+                <div className="flex items-center space-x-4 text-sm mt-2 mb-2">
+                  <div className="flex-1">
+                    <button 
+                      className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/lawyer/${lawyer.id}#reviews-section`);
+                      }}
+                    >
+                      <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
+                      <span className="font-medium">{currentRating.toFixed(1)}</span>
+                      <span className="text-gray-400">({currentReviewCount})</span>
+                    </button>
+                  </div>
+                  {lawyer.hourlyRate > 60000 && (
+                    <div className="text-xs text-gray-500 italic text-[11px]">
+                      Casos complejos · Alta experiencia
+                    </div>
+                  )}
+                  <span className="text-blue-600 font-medium flex-shrink-0">
+                    {/*  {lawyer.cases ? lawyer.cases.toLocaleString() : '0'} casos */}
                   </span>
                 </div>
               </div>
@@ -248,84 +261,90 @@ export function LawyerCard({
             
 
           {/* Contenido con alineación fija */}
-          <div className="flex flex-col space-y-4 mt-auto">
-            {/* Especialidades */}
-            <div className="min-h-6">
-              <div className="flex flex-wrap gap-2">
-                {(Array.isArray(lawyer.specialties) 
-                  ? lawyer.specialties.flatMap(s => 
-                      typeof s === 'string' ? s.split(',').map(x => x.trim()) : []
-                    )
-                  : typeof lawyer.specialties === 'string'
-                    ? lawyer.specialties.split(',').map(s => s.trim())
-                    : []
-                )
-                .filter(s => s) // Remove empty strings
-                .slice(0, 3) // Limit to 3 specialties
-                .map((specialty, index) => (
-                  <Badge 
-                    key={`${specialty}-${index}`} 
-                    variant="secondary" 
-                    className="text-xs font-normal bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  >
-                    {specialty}
-                  </Badge>
-                ))}
-                {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 || 
-                 (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
-                  <span className="text-xs text-gray-500 self-center">+{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más</span>
-                )}
+          <div className="flex flex-col h-full">
+            <div className="space-y-4">
+              {/* Especialidades */}
+              <div className="min-h-[40px]">
+                <div className="flex flex-wrap gap-2 items-start">
+                  {(Array.isArray(lawyer.specialties) 
+                    ? lawyer.specialties.flatMap(s => 
+                        typeof s === 'string' ? s.split(',').map(x => x.trim()) : []
+                      )
+                    : typeof lawyer.specialties === 'string'
+                      ? lawyer.specialties.split(',').map(s => s.trim())
+                      : []
+                  )
+                  .filter(s => s) // Remove empty strings
+                  .slice(0, 3) // Limit to 3 specialties
+                  .map((specialty, index) => (
+                    <Badge 
+                      key={`${specialty}-${index}`} 
+                      variant="secondary" 
+                      className="text-xs font-normal bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
+                    >
+                      {specialty}
+                    </Badge>
+                  ))}
+                  {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 || 
+                   (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
+                    <span className="text-xs text-gray-500 self-center">
+                      +{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Descripción */}
-            <div className="max-w-full">
-              {lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
-                <div className="text-gray-700 text-sm">
-                  <p className="overflow-hidden text-ellipsis" style={{ 
+              {/* Descripción */}
+              <div className="max-w-full flex-1">
+                {lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
+                  <div className="text-gray-700 text-sm">
+                    <p className="overflow-hidden text-ellipsis" style={{ 
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      lineClamp: 2,
+                      maxHeight: '2.8em',
+                      lineHeight: '1.4em',
+                      whiteSpace: 'normal',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {lawyer.bio}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-700 text-sm" style={{
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
                     lineClamp: 2,
                     maxHeight: '2.8em',
                     lineHeight: '1.4em',
-                    whiteSpace: 'normal',
                     overflow: 'hidden',
-                    textOverflow: 'ellipsis'
+                    textOverflow: 'ellipsis',
                   }}>
-                    {lawyer.bio}
+                    Este abogado no ha proporcionado una descripción.
                   </p>
-                </div>
-              ) : (
-                <p className="text-gray-700 text-sm" style={{
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  lineClamp: 2,
-                  maxHeight: '2.8em',
-                  lineHeight: '1.4em',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}>
-                  Este abogado no ha proporcionado una descripción.
-                </p>
-              )}
+                )}
+              </div>
             </div>
 
-            {/* Precio y rating */}
-            <div className="flex justify-between items-center pt-2">
-              <div>
-                <span className="text-2xl font-bold text-gray-900">
-                  ${formatCLP(lawyer.hourlyRate)}
-                </span>
-                <span className="text-gray-500 text-sm ml-1">/hora</span>
+            {/* Precio y rating - Siempre al final */}
+            <div className="mt-auto pt-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${formatCLP(lawyer.hourlyRate)}
+                  </span>
+                  <span className="text-gray-500 text-sm ml-1">/hora</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Botones de acción - Fijos en la parte inferior */}
-        <div className="p-6 pt-0 mt-auto">
+        <div className="p-6 pt-4 mt-auto border-t border-gray-100">
           <div className="flex space-x-2 w-full">
             {/* <Button 
               variant="outline" 
@@ -358,7 +377,9 @@ export function LawyerCard({
               <Calendar className="h-4 w-4 mr-2" />
               {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar asesoría'}
             </Button>
+            
           </div>
+          <p className="text-gray-700 text-xs text-center pt-2">Pago seguro · Orientación directa</p>
           {buttonsDisabled && (
             <p className="text-xs text-gray-500 mt-2 text-center">
               {isOwnProfile 
