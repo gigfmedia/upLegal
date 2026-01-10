@@ -1,15 +1,49 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 
 const Footer = () => {
   const location = useLocation();
+  const [isFeaturedSectionVisible, setIsFeaturedSectionVisible] = useState(false);
+  const featuredSectionRef = useRef<HTMLElement>(null);
   
-  // Hide WhatsApp button on Jorge Pacheco's booking page
-  const isJorgePachecoPage = location.pathname.includes('jorge-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1') || location.pathname.includes('/search');
+  // Set up intersection observer for the featured lawyers section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFeaturedSectionVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+      }
+    );
+
+    // Find the featured lawyers section by its ID
+    const featuredSection = document.getElementById('abogados-destacados');
+
+    if (featuredSection) {
+      observer.observe(featuredSection);
+    }
+
+    return () => {
+      if (featuredSection) {
+        observer.unobserve(featuredSection);
+      }
+    };
+  }, []);
+  
+  // Hide WhatsApp button on Jorge Pacheco's booking page or when in featured section
+  const shouldHideWhatsAppButton = isFeaturedSectionVisible || 
+    location.pathname.includes('jorge-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1') || 
+    location.pathname.includes('/search') ||
+    location.pathname.includes('/consulta/detalle') ||
+    location.pathname.includes('/consulta');
 
   return (
     <div className="relative">
       {/* WhatsApp Button - Fixed at bottom right */}
-      {!isJorgePachecoPage && (
+      {!shouldHideWhatsAppButton && (
         <a 
           href="https://wa.me/56950913358?text=Hola,%20quiero%20una%20consulta%20legal%20hoy" 
           target="_blank" 

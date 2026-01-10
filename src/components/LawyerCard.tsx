@@ -262,7 +262,7 @@ export function LawyerCard({
 
           {/* Contenido con alineación fija */}
           <div className="flex flex-col h-full">
-            <div className="space-y-4">
+            <div className="space-y-4 pt-2">
               {/* Especialidades */}
               <div className="min-h-[40px]">
                 <div className="flex flex-wrap gap-2 items-start">

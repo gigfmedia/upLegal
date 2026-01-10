@@ -296,6 +296,7 @@ const Index = () => {
             image: lawyer.avatar_url || '',
             bio: lawyer.bio || '',
             verified: lawyer.verified || false,
+            created_at: lawyer.created_at, // Add created_at for sorting
             availability: {
               availableToday: true,
               availableThisWeek: true,
@@ -304,28 +305,12 @@ const Index = () => {
             }
           }));
           
-          // Sort lawyers with complete and verified profiles first, then by rating
-          const sortedLawyers = [...formattedLawyers].sort((a, b) => {
-            // First priority: Verified status
-            if (a.verified && !b.verified) return -1;
-            if (!a.verified && b.verified) return 1;
-            
-            // Second priority: Profile completeness
-            const aIsComplete = a.bio?.trim() && 
-                               a.specialties?.length > 0 && 
-                               a.location?.trim() && 
-                               a.hourlyRate > 0;
-            
-            const bIsComplete = b.bio?.trim() && 
-                               b.specialties?.length > 0 && 
-                               b.location?.trim() && 
-                               b.hourlyRate > 0;
-            
-            if (aIsComplete && !bIsComplete) return -1;
-            if (!aIsComplete && bIsComplete) return 1;
-            
-            // Third priority: Rating
-            return (b.rating || 0) - (a.rating || 0);
+          // Sort lawyers by creation date (newest first)
+          const sortedLawyers = [...formattedLawyers].sort((a: any, b: any) => {
+            // First priority: Creation date (newest first)
+            const dateA = new Date(a.created_at || 0).getTime();
+            const dateB = new Date(b.created_at || 0).getTime();
+            return dateB - dateA; // Sort in descending order (newest first)
           });
           
           // Take up to 9 featured lawyers
@@ -726,7 +711,7 @@ const Index = () => {
       </section>
 
       {/* Lista de Abogados */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900">

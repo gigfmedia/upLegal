@@ -100,9 +100,14 @@ export const getMercadoPagoUser = async (accessToken: string): Promise<MercadoPa
 // Payment Functions
 export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
   try {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://legalup.cl';
+    const baseUrl = import.meta.env.DEV
+      ? ''
+      : (import.meta.env.VITE_APP_URL || window.location.origin);
 
-    const response = await fetch(`${API_BASE_URL}/api/mercadopago/create-payment`, {
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const endpoint = `${normalizedBaseUrl}/api/mercadopago/create-payment`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,13 +117,13 @@ export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create payment');
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.error || 'Failed to create payment');
     }
 
     return await response.json();
   } catch (error) {
     console.error('Error in createMercadoPagoPayment:', error);
-    throw new Error(error.message || 'Error creating payment');
+    throw new Error(error instanceof Error ? error.message : 'Error creating payment');
   }
 };

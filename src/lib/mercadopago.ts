@@ -140,6 +140,8 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
     const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
     
     // Create preference data with proper typing
+    const baseSiteUrl = import.meta.env.VITE_APP_URL || 'https://legalup.cl';
+
     const preferenceData: any = {
       binary_mode: true,
       auto_return: 'approved' as const,
@@ -150,9 +152,9 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       },
       // Force production URLs
       back_urls: {
-        success: `${baseUrl}/payment/success`,
-        failure: `${baseUrl}/payment/failure`,
-        pending: `${baseUrl}/payment/pending`,
+        success: `${baseSiteUrl}/payment/success`,
+        failure: `${baseSiteUrl}/payment/failure`,
+        pending: `${baseSiteUrl}/payment/pending`,
       },
       // Force production webhook URL if in production
       ...(isProduction && import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL && {
@@ -179,9 +181,7 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       const timestamp = Date.now();
       const prodUrl = `https://www.mercadopago.cl/checkout/v1/redirect?pref_id=${result.id}&ts=${timestamp}`;
       console.groupEnd();
-      
-      // Force redirect immediately
-      window.location.href = prodUrl;
+
       return prodUrl;
     }
     

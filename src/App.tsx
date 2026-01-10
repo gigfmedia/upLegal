@@ -57,7 +57,7 @@ const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
 const ServicesPage = lazy(() => import('./pages/lawyer/ServicesPage'));
-// const ConsultasPage = lazy(() => import('./pages/lawyer/ConsultasPage'));
+const ConsultasPage = lazy(() => import('./pages/lawyer/ConsultasPage'));
 const CitasPage = lazy(() => import('./pages/lawyer/CitasPage'));
 const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
 const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
@@ -71,9 +71,9 @@ const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
-// const Consulta = lazy(() => import('./pages/Consulta'));
-// const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
-// const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
+const Consulta = lazy(() => import('./pages/Consulta'));
+const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
+const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -229,11 +229,11 @@ const AppContent = () => {
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 
-              {/* Consultation Routes - Temporarily disabled
+              {/* Consultation Routes - Temporarily disabled */}
               <Route path="/consulta" element={<Consulta />} />
               <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
               <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
-              */}
+             
 
               {/* New lawyer dashboard routes */}
               <Route path="/lawyer" element={
