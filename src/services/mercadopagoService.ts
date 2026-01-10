@@ -105,7 +105,7 @@ export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
       : (import.meta.env.VITE_APP_URL || window.location.origin);
 
     const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    const endpoint = `${normalizedBaseUrl}/api/mercadopago/create-payment`;
+    const endpoint = `${normalizedBaseUrl}/create-payment`;
 
     const response = await fetch(endpoint, {
       method: 'POST',

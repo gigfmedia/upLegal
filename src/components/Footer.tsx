@@ -8,28 +8,40 @@ const Footer = () => {
   
   // Set up intersection observer for the featured lawyers section
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsFeaturedSectionVisible(entry.isIntersecting);
-      },
-      {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.target.id === 'abogados-destacados') {
+          console.log('Sección visible:', entry.isIntersecting);
+          setIsFeaturedSectionVisible(entry.isIntersecting);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    });
+
+    // Usar un pequeño retraso para asegurar que el DOM esté listo
+    const timer = setTimeout(() => {
+      const featuredSection = document.getElementById('abogados-destacados');
+      console.log('Buscando sección con ID:', 'abogados-destacados', 'Encontrado:', !!featuredSection);
+      
+      if (featuredSection) {
+        observer.observe(featuredSection);
+      } else {
+        console.warn('No se encontró la sección de abogados destacados');
       }
-    );
-
-    // Find the featured lawyers section by its ID
-    const featuredSection = document.getElementById('abogados-destacados');
-
-    if (featuredSection) {
-      observer.observe(featuredSection);
-    }
+    }, 500);
 
     return () => {
+      clearTimeout(timer);
+      const featuredSection = document.getElementById('abogados-destacados');
       if (featuredSection) {
         observer.unobserve(featuredSection);
       }
+      observer.disconnect();
     };
   }, []);
   
