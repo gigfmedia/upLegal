@@ -136,11 +136,10 @@ export const createPreference = async (items: PreferenceItem[], payer: Preferenc
       ...(item.category_id && { category_id: item.category_id }),
     }));
     
-    // Force production URLs
-    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    
-    // Create preference data with proper typing
-    const baseSiteUrl = import.meta.env.VITE_APP_URL || 'https://legalup.cl';
+    // Determine base URL based on environment
+    const baseSiteUrl = isProduction 
+      ? (import.meta.env.VITE_APP_URL || 'https://legalup.cl')
+      : (import.meta.env.VITE_APP_URL || window.location.origin);
 
     const preferenceData: any = {
       binary_mode: true,
