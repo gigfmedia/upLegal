@@ -26,7 +26,6 @@ const Footer = () => {
     // Usar un pequeño retraso para asegurar que el DOM esté listo
     const timer = setTimeout(() => {
       const featuredSection = document.getElementById('abogados-destacados');
-      console.log('Buscando sección con ID:', 'abogados-destacados', 'Encontrado:', !!featuredSection);
       
       if (featuredSection) {
         observer.observe(featuredSection);
@@ -47,9 +46,11 @@ const Footer = () => {
   
   // Hide WhatsApp button on Jorge Pacheco's booking page or when in featured section
   const shouldHideWhatsAppButton = isFeaturedSectionVisible || 
-    location.pathname.includes('jorge-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1') || 
+    location.pathname.includes('jorge-ignacio-pacheco-martinez-2fbae23d-f04e-4727-a2f1-9302566533c1') || 
+    location.pathname.includes('angel-labra-castillo-bd7b63c8-a482-49e6-88f1-f462bf1605f9') ||
     location.pathname.includes('/search') ||
     location.pathname.includes('/consulta/detalle') ||
+    location.pathname.includes('/booking') ||
     location.pathname.includes('/consulta');
 
   return (

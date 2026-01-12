@@ -582,12 +582,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   // Helper function to generate time slots
   const generateTimeSlots = useCallback(() => {
-    // Debug logging
-    console.log('Generating time slots...', { 
-      hasAvailability: !!lawyerAvailability, 
-      date: formData?.date,
-      googleBusy: googleBusySlots 
-    });
 
     if (!lawyerAvailability || !formData.date) return [];
 
@@ -609,7 +603,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
     // If no availability data for this day or it's not an array (invalid format), return empty
     if (!dayAvailability || !Array.isArray(dayAvailability)) {
-      console.log(`No availability array for ${dayName}`);
       return [];
     }
 
@@ -656,8 +649,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         });
       }
     });
-
-    console.log(`Generated ${slots.length} available slots for ${dayName}`);
     return slots;
   }, [lawyerAvailability, formData.date, bookedSlots, googleBusySlots]);
 
@@ -696,7 +687,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           console.error('Error parsing availability JSON:', parseError);
           // If the data is "24/7" or empty, default to standard business hours (9am-6pm, Monday to Friday)
           if (data.availability === '24/7' || !data.availability) {
-            console.log('No specific availability set, defaulting to standard business hours (9am-6pm, Monday to Friday)');
             // Create boolean arrays for standard hours (9:00 to 19:00 = 10 slots)
             // true means available. 
             // We need to match the length expected by ManageAvailability (usually 11 slots for 9-19)

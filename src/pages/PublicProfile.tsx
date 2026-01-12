@@ -619,7 +619,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       bio: lawyerWithViews?.bio || 'Este abogado no ha proporcionado una biografía.',
       education: education,
       experience: [
-        `${lawyerWithViews?.experience_years || 0} años de experiencia`
+        lawyerWithViews?.experience_years 
+          ? `${lawyerWithViews.experience_years} ${lawyerWithViews.experience_years === 1 ? 'año' : 'años'} de experiencia`
+          : 'Recién comenzando'
       ],
       certifications: lawyerWithViews?.certifications 
         ? (typeof lawyerWithViews.certifications === 'string' 
@@ -1028,7 +1030,12 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           </AvatarFallback>
                         </Avatar>
                       </div>
-                      <Badge variant="default" className="mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2">
+                      {lawyer?.hourly_rate_clp > 60000 && (
+                        <Badge variant="default" className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-gray-100">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">🏅 Premium</span>
+                        </Badge>
+                      )}
+                      <Badge variant="default" className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2">
                         <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400"></span>
                         <span>Disponible</span>
                       </Badge>
@@ -1102,15 +1109,17 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 w-full">
-                      <div className="flex items-center w-full sm:w-auto">
-                        <Star className="h-5 w-5 text-yellow-500 mr-1 flex-shrink-0" />
-                        <span className="font-semibold whitespace-nowrap">
-                          {lawyer?.rating ? Number(lawyer.rating).toFixed(1) : 'N/A'}
-                        </span>
-                        <span className="text-gray-600 ml-1">
-                          ({lawyer?.review_count || 0} reseñas)
-                        </span>
-                      </div>
+                      {lawyer?.review_count > 0 && (
+                        <div className="flex items-center w-full sm:w-auto">
+                          <Star className="h-5 w-5 text-yellow-500 mr-1 flex-shrink-0" />
+                          <span className="font-semibold whitespace-nowrap">
+                            {lawyer.rating ? Number(lawyer.rating).toFixed(1) : 'N/A'}
+                          </span>
+                          <span className="text-gray-600 ml-1">
+                            ({lawyer.review_count} reseña{lawyer.review_count !== 1 ? 's' : ''})
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center w-full sm:w-auto pt-3 sm:border-t-0 sm:pt-0">
                         <MapPin className="h-4 w-4 mr-1 text-gray-600 flex-shrink-0" />
                         <span className="truncate">{lawyer?.location || 'Sin ubicación'}</span>
@@ -1146,10 +1155,12 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                             <ThumbsUp className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">{profileData.completionRate} éxito en trabajos</span>
                           </div>*/}
-                          <div className="flex items-center">
-                            <Gavel className="h-4 w-4 mr-1 flex-shrink-0" />
-                            <span>{lawyer?.profile_views || 0} casos</span>
-                          </div>
+                          {lawyer?.profile_views ? (
+                            <div className="flex items-center">
+                              <Gavel className="h-4 w-4 mr-1 flex-shrink-0" />
+                              <span>{lawyer.profile_views} casos</span>
+                            </div>
+                          ) : null}
                           
                         </div>
                       </div>

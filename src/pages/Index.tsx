@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SearchBar } from "@/components/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
@@ -389,55 +388,62 @@ const Index = () => {
     setShowAuthModal(true);
   };
 
-  const handleSearch = (category?: string) => {
-    // If no search term, location, or category is provided, just navigate to /search
-    if (!searchTerm && !location && !category) {
-      navigate('/search');
-      return;
-    }
+  // Add a ref to track if a search is in progress
+  const isSearching = useRef(false);
+  
+  const handleSearch = useCallback((category?: string) => {
+    // Prevent multiple rapid searches
+    if (isSearching.current) return;
+    
+    try {
+      isSearching.current = true;
+      
+      // If both search term and location are empty, show all lawyers
+      if (!searchTerm.trim() && !location.trim()) {
+        navigate('/search');
+        return;
+      }
 
-    // Otherwise, include the provided parameters
-    const params = new URLSearchParams();
-    
-    // Check if search term contains specialty keywords
-    const searchTermLower = searchTerm.toLowerCase();
-    let detectedSpecialty = '';
-    
-    if (searchTermLower.includes('familia')) {
-      detectedSpecialty = 'Derecho de Familia';
-    } else if (searchTermLower.includes('laboral')) {
-      detectedSpecialty = 'Derecho Laboral';
-    } else if (searchTermLower.includes('penal')) {
-      detectedSpecialty = 'Derecho Penal';
-    } else if (searchTermLower.includes('civil')) {
-      detectedSpecialty = 'Derecho Civil';
-    } else if (searchTermLower.includes('comercial')) {
-      detectedSpecialty = 'Derecho Comercial';
-    } else if (searchTermLower.includes('inmobiliario')) {
-      detectedSpecialty = 'Derecho Inmobiliario';
-    } else if (searchTermLower.includes('tributario')) {
-      detectedSpecialty = 'Derecho Tributario';
+      const params = new URLSearchParams();
+      
+      // Set search term parameter if it exists and is not empty
+      if (searchTerm && searchTerm.trim()) {
+        const searchTermValue = searchTerm.trim();
+        params.set('q', searchTermValue);
+        
+        // Check if search term contains specialty keywords
+        const searchTermLower = searchTermValue.toLowerCase();
+        if (searchTermLower.includes('familia')) {
+          params.set('specialty', 'Derecho de Familia');
+        } else if (searchTermLower.includes('laboral')) {
+          params.set('specialty', 'Derecho Laboral');
+        } else if (searchTermLower.includes('penal')) {
+          params.set('specialty', 'Derecho Penal');
+        } else if (searchTermLower.includes('civil')) {
+          params.set('specialty', 'Derecho Civil');
+        } else if (searchTermLower.includes('comercial')) {
+          params.set('specialty', 'Derecho Comercial');
+        } else if (searchTermLower.includes('inmobiliario')) {
+          params.set('specialty', 'Derecho Inmobiliario');
+        } else if (searchTermLower.includes('tributario')) {
+          params.set('specialty', 'Derecho Tributario');
+        }
+      }
+      
+      // Set location parameter if it exists and is not empty
+      if (location && location.trim()) {
+        params.set('location', location.trim());
+      }
+      
+      // Navigate to search with the constructed parameters
+      navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
+    } finally {
+      // Reset the flag after a short delay to prevent rapid searches
+      setTimeout(() => {
+        isSearching.current = false;
+      }, 1000);
     }
-    
-    // Set search term parameter
-    if (searchTerm) params.set('q', searchTerm);
-    
-    // Set location parameter
-    if (location) params.set('location', location);
-    
-    // Set specialty parameter (either from detected keyword or category)
-    if (detectedSpecialty) {
-      params.set('specialty', detectedSpecialty);
-      setSelectedCategory(detectedSpecialty);
-    } else if (category) {
-      params.set('category', category);
-      setSelectedCategory(category);
-    } else {
-      setSelectedCategory(null);
-    }
-    
-    navigate(`/search?${params.toString()}`);
-  };
+  }, [navigate, searchTerm, location]); // Added dependency array
   
   // Effect to handle initial category from URL
   useEffect(() => {
@@ -467,33 +473,17 @@ const Index = () => {
             con confianza. Servicios profesionales al alcance de tus manos.
           </p>
           {/* Search Section */}
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  placeholder="Buscar abogados o especialidades..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-12"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  placeholder="Ubicación (opcional)"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="pl-10 h-12"
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                />
-              </div>
-              <Button size="lg" className="h-12 bg-blue-600 hover:bg-blue-700" onClick={() => handleSearch()}>
-                <Search className="mr-2 h-5 w-5" />
-                Buscar
-              </Button>
-            </div>
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-12">
+            <SearchBar
+              searchTerm={searchTerm}
+              onSearchTermChange={setSearchTerm}
+              location={location}
+              onLocationChange={setLocation}
+              onSearch={handleSearch}
+              onFiltersClick={() => {}}
+              showMobileFilters={false}
+              buttonWidth="1/3"
+            />
           </div>
 
           {/* Stats */}

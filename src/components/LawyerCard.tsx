@@ -233,19 +233,21 @@ export function LawyerCard({
                 </div>
                 
                 <div className="flex items-center space-x-4 text-sm mt-2 mb-2">
-                  <div className="flex-1">
-                    <button 
-                      className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/lawyer/${lawyer.id}#reviews-section`);
-                      }}
-                    >
-                      <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
-                      <span className="font-medium">{currentRating.toFixed(1)}</span>
-                      <span className="text-gray-400">({currentReviewCount})</span>
-                    </button>
-                  </div>
+                  {currentReviewCount > 0 && (
+                    <div className="flex-1">
+                      <button 
+                        className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/lawyer/${lawyer.id}#reviews-section`);
+                        }}
+                      >
+                        <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />
+                        <span className="font-medium">{currentRating.toFixed(1)}</span>
+                        <span className="text-gray-400">({currentReviewCount})</span>
+                      </button>
+                    </div>
+                  )}
                   {lawyer.hourlyRate > 60000 && (
                     <div className="text-xs text-gray-500 italic text-[11px]">
                       Casos complejos · Alta experiencia
@@ -337,6 +339,7 @@ export function LawyerCard({
                     ${formatCLP(lawyer.hourlyRate)}
                   </span>
                   <span className="text-gray-500 text-sm ml-1">/hora</span>
+                  <small className="text-gray-500 text-xs block">Asesoría online 60 min</small>
                 </div>
               </div>
             </div>

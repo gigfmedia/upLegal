@@ -13,27 +13,99 @@ interface SearchParams {
   select?: string;
 }
 
-// Mapeo de términos comunes de búsqueda
-const SPECIALTY_MAPPING: Record<string, string> = {
-  'familia': 'Derecho de Familia',
-  'laboral': 'Derecho Laboral',
-  'penal': 'Derecho Penal',
-  'civil': 'Derecho Civil',
-  'comercial': 'Derecho Comercial',
-  'inmobiliario': 'Derecho Inmobiliario',
-  'tributario': 'Derecho Tributario',
-  'familia y niños': 'Derecho de Familia',
-  'trabajo': 'Derecho Laboral',
-  'empresarial': 'Derecho Comercial',
-  'empresa': 'Derecho Comercial',
-  'contratos': 'Derecho Civil',
-  'arriendo': 'Derecho Civil',
-  'vivienda': 'Derecho Inmobiliario',
-  'propiedad': 'Derecho Inmobiliario',
-  'impuestos': 'Derecho Tributario',
-  'tributos': 'Derecho Tributario',
-  'delito': 'Derecho Penal',
-  'penitenciario': 'Derecho Penal'
+// Mapeo de términos de búsqueda a especialidades
+const SPECIALTY_MAPPING: Record<string, string[]> = {
+  // Familia
+  'familia': ['Derecho de Familia'],
+  'divorcio': ['Derecho de Familia'],
+  'pension alimenticia': ['Derecho de Familia'],
+  'cuidado personal': ['Derecho de Familia'],
+  'tuicion': ['Derecho de Familia'],
+  'relacion directa': ['Derecho de Familia'],
+  'violencia intrafamiliar': ['Derecho de Familia'],
+  
+  // Laboral
+  'laboral': ['Derecho Laboral'],
+  'despido': ['Derecho Laboral'],
+  'despido injustificado': ['Derecho Laboral'],
+  'finiquito': ['Derecho Laboral'],
+  'fuero': ['Derecho Laboral'],
+  'despido indirecto': ['Derecho Laboral'],
+  'despido nulo': ['Derecho Laboral'],
+  'despido por necesidades': ['Derecho Laboral'],
+  'fuero maternal': ['Derecho Laboral'],
+  
+  // Civil
+  'civil': ['Derecho Civil'],
+  'contrato': ['Derecho Civil'],
+  'arriendo': ['Derecho Civil'],
+  'compraventa': ['Derecho Civil'],
+  'arrendamiento': ['Derecho Civil'],
+  'responsabilidad civil': ['Derecho Civil'],
+  'daños y perjuicios': ['Derecho Civil'],
+  
+  // Comercial
+  'comercial': ['Derecho Comercial'],
+  'empresa': ['Derecho Comercial'],
+  'sociedad': ['Derecho Comercial'],
+  'quiebra': ['Derecho Comercial'],
+  'concurso acreedores': ['Derecho Comercial'],
+  'marca': ['Derecho Comercial'],
+  'patente': ['Derecho Comercial'],
+  'propiedad intelectual': ['Derecho Comercial'],
+  
+  // Inmobiliario
+  'inmobiliario': ['Derecho Inmobiliario'],
+  'propiedad': ['Derecho Inmobiliario'],
+  'hipoteca': ['Derecho Inmobiliario'],
+  'usufructo': ['Derecho Inmobiliario'],
+  'servidumbre': ['Derecho Inmobiliario'],
+  'regularizacion': ['Derecho Inmobiliario'],
+  
+  // Penal
+  'penal': ['Derecho Penal'],
+  'delito': ['Derecho Penal'],
+  'robo': ['Derecho Penal'],
+  'hurto': ['Derecho Penal'],
+  'estafa': ['Derecho Penal'],
+  'lesiones': ['Derecho Penal'],
+  'homicidio': ['Derecho Penal'],
+  
+  // Tributario
+  'tributario': ['Derecho Tributario'],
+  'impuestos': ['Derecho Tributario'],
+  'iva': ['Derecho Tributario'],
+  'renta': ['Derecho Tributario'],
+  'sii': ['Derecho Tributario'],
+  'multas tributarias': ['Derecho Tributario'],
+  'evasion': ['Derecho Tributario'],
+  
+  // Otros
+  'tránsito': ['Derecho de Tránsito'],
+  'accidente tránsito': ['Derecho de Tránsito'],
+  'seguro': ['Derecho de Seguros'],
+  'herencia': ['Derecho Sucesorio'],
+  'testamento': ['Derecho Sucesorio'],
+  'sucesion': ['Derecho Sucesorio'],
+  'consumidor': ['Derecho del Consumidor'],
+  'proteccion consumidor': ['Derecho del Consumidor'],
+  'salud': ['Derecho de Salud'],
+  'isapre': ['Derecho de Salud'],
+  'fonasa': ['Derecho de Salud'],
+  'previsional': ['Derecho Previsional'],
+  'afp': ['Derecho Previsional'],
+  'pensiones': ['Derecho Previsional'],
+  'migratorio': ['Derecho Migratorio'],
+  'extranjeria': ['Derecho Migratorio'],
+  'visa': ['Derecho Migratorio'],
+  'medio ambiente': ['Derecho Ambiental'],
+  'contaminacion': ['Derecho Ambiental'],
+  'agua': ['Derecho de Aguas'],
+  'mineria': ['Derecho Minero'],
+  'constitucional': ['Derecho Constitucional'],
+  'derechos humanos': ['Derechos Humanos'],
+  'amparo': ['Derecho Constitucional'],
+  'proteccion derechos': ['Derecho Constitucional']
 };
 
 // Función para escapar caracteres especiales en búsquedas LIKE
@@ -107,9 +179,11 @@ export async function searchLawyers(params: SearchParams = {}) {
         
         // Manejar términos comunes del mapeo
         if (SPECIALTY_MAPPING[lowerTerm]) {
-          const mappedTerm = SPECIALTY_MAPPING[lowerTerm];
-          // Solo búsqueda EXACTA del término mapeado completo
-          conditions.push(`specialties.cs.{"${mappedTerm}"}`);
+          const mappedTerms = SPECIALTY_MAPPING[lowerTerm];
+          // Agregar cada término mapeado a las condiciones
+          mappedTerms.forEach(term => {
+            conditions.push(`specialties.cs.{"${term}"}`);
+          });
         }
       }
     }
@@ -139,8 +213,10 @@ export async function searchLawyers(params: SearchParams = {}) {
           // Verificar si el término de búsqueda coincide con alguna especialidad conocida
           const normalizedTerm = searchTerm.toLowerCase().trim();
           if (SPECIALTY_MAPPING[normalizedTerm]) {
-            const mappedTerm = SPECIALTY_MAPPING[normalizedTerm];
-            conditions.push(`specialties.cs.{"${mappedTerm}"}`);
+            const mappedTerms = SPECIALTY_MAPPING[normalizedTerm];
+            mappedTerms.forEach(term => {
+              conditions.push(`specialties.cs.{"${term}"}`);
+            });
           }
         }
       }

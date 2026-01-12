@@ -62,8 +62,6 @@ export default function BookingPage() {
       // UUIDs are 36 characters long. If the param is longer, we assume it's slug-uuid.
       const actualId = lawyerId.length > 36 ? lawyerId.slice(-36) : lawyerId;
 
-      console.log('Fetching lawyer:', actualId);
-
       const { data, error } = await supabase
         .from('profiles')
         .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified, availability')

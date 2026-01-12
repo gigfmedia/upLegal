@@ -44,6 +44,30 @@ export function SearchFilters({
     quickResponse: false,
     emergencyConsultations: false,
   });
+  
+  const [modality, setModality] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [showRegionSelect, setShowRegionSelect] = useState<boolean>(false);
+  
+  // Lista de regiones de Chile
+  const regions = [
+    'Arica y Parinacota',
+    'Tarapacá',
+    'Antofagasta',
+    'Atacama',
+    'Coquimbo',
+    'Valparaíso',
+    'Metropolitana',
+    'O\'Higgins',
+    'Maule',
+    'Ñuble',
+    'Biobío',
+    'La Araucanía',
+    'Los Ríos',
+    'Los Lagos',
+    'Aysén',
+    'Magallanes'
+  ];
 
   const handleAvailabilityChange = (filter: keyof typeof availabilityFilters) => {
     setAvailabilityFilters(prev => ({
@@ -85,6 +109,8 @@ export function SearchFilters({
       minRating,
       minExperience,
       availableNow,
+      modality,
+      region: modality === 'presencial' ? selectedRegion : '',
       ...availabilityFilters,
     });
     onClose();
@@ -95,6 +121,8 @@ export function SearchFilters({
     setMinRating(0);
     setMinExperience(0);
     setAvailableNow(false);
+    setModality('');
+    setSelectedRegion('');
     onClearFilters();
   };
 
@@ -129,6 +157,74 @@ export function SearchFilters({
                 >
                   <X className="h-5 w-5" />
                 </button>
+              </div>
+
+              {/* Modalidad Filter */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Modalidad</h3>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="modality"
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      checked={modality === 'online'}
+                      onChange={() => {
+                        setModality('online');
+                        setSelectedRegion('');
+                      }}
+                    />
+                    <span className="text-sm text-gray-700">Online</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="modality"
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      checked={modality === 'presencial'}
+                      onChange={() => {
+                        setModality('presencial');
+                        setShowRegionSelect(true);
+                      }}
+                    />
+                    <span className="text-sm text-gray-700">Presencial</span>
+                  </label>
+                  {/* <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="modality"
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      checked={modality === ''}
+                      onChange={() => {
+                        setModality('');
+                        setSelectedRegion('');
+                      }}
+                    />
+                    <span className="text-sm text-gray-700">Cualquiera</span>
+                  </label> */}
+                </div>
+                
+                {/* Conditional Region Select */}
+                {showRegionSelect && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">Región</h3>
+                    <Select 
+                      value={selectedRegion}
+                      onValueChange={setSelectedRegion}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccionar región" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[200]">
+                        {regions.map(region => (
+                          <SelectItem key={region} value={region}>
+                            {region}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               {/* Specialty Filter */}
@@ -170,7 +266,7 @@ export function SearchFilters({
                   onValueChange={onSortByChange}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar orden" />
+                    <SelectValue                placeholder="Seleccionar orden" />
                   </SelectTrigger>
                   <SelectContent className="z-[200]">
                     <SelectItem value="rating">Mejor calificación</SelectItem>

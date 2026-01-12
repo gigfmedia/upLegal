@@ -703,7 +703,8 @@ const SearchResults = () => {
       <div className="bg-white py-8 pt-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900">Encuentra al abogado ideal para tu caso</h1>
-          <p className="mt-2 text-gray-600">Agenda una asesoría y recibe orientación legal clara en 60 minutos.</p>
+          <p className="mt-2 text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
+          <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros desde $30.000 · Sin llamadas incómodas ni intermediarios</small>
           
           {/* Search Bar */}
           <div className="mt-6">
@@ -955,9 +956,17 @@ const SearchResults = () => {
 
           
           {/* Results Grid */}
-          {loading && !filteredLawyers.length ? (
+          {loading && searchResult.lawyers.length === 0 ? (
             <div className="flex justify-center items-center py-16">
               <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : searchResult.lawyers.length === 0 && !searchParams.toString() ? (
+            <div className="text-center py-16 bg-white rounded-xl shadow-sm">
+              <div className="mx-auto h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                <Search className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Realiza una búsqueda para encontrar abogados</h3>
+              <p className="text-gray-500">Ingresa un término de búsqueda o selecciona una especialidad para comenzar</p>
             </div>
           ) : filteredLawyers.length > 0 ? (
             <div className="w-full">
