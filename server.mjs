@@ -718,6 +718,14 @@ app.post('/create-payment', async (req, res) => {
     // Update payment with MercadoPago preference ID
     // Update payment with MercadoPago preference ID using RPC to bypass RLS
     if (mpResponse.id) {
+      /* 
+       * COMENTADO TEMPORALMENTE: 
+       * Esta actualización está causando errores de RLS "Policy Agent" inexplicables
+       * incluso con try/catch y funciones RPC, lo que bloquea el pago del usuario.
+       * Como ya tenemos el paymentId en external_reference, esto no es crítico.
+       * Se prioriza que el usuario pueda pagar.
+       */
+      /*
       try {
         console.log('Attempting to update payment with gateway ID via RPC:', mpResponse.id);
         
@@ -743,6 +751,7 @@ app.post('/create-payment', async (req, res) => {
       } catch (updateEx) {
         console.error('❌ Exception during RPC/UPDATE (Non-fatal):', updateEx);
       }
+      */
     }
 
     // Return the payment link
