@@ -514,12 +514,60 @@ app.post('/create-payment', async (req, res) => {
     } = req.body;
 
     // Validations
-    if ((!amount && !originalAmount) || !userId || !lawyerId || !appointmentId) {
+    if ((!amount && !originalAmount) || !appointmentId) {
       return res.status(400).json({ 
         error: 'Missing required fields',
-        required: ['amount or originalAmount', 'userId', 'lawyerId', 'appointmentId'],
-        received: { amount, originalAmount, userId, lawyerId, appointmentId }
+        required: ['amount or originalAmount', 'appointmentId'],
+        received: { amount, originalAmount, appointmentId }
       });
+    }
+
+    // Handle guest users and general consultations
+    let actualUserId = userId;
+    let actualLawyerId = lawyerId;
+
+    // Create or get system user for guest consultations
+    if (!userId || userId === 'guest') {
+      const guestEmail = userEmail || `guest-${Date.now()}@legalup.cl`;
+      const { data: existingUser } = await supabase.auth.admin.listUsers();
+      const foundUser = existingUser?.users?.find(u => u.email === guestEmail);
+      
+      if (foundUser) {
+        actualUserId = foundUser.id;
+      } else {
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: guestEmail,
+          email_confirm: true,
+          user_metadata: { first_name: userName || 'Cliente', last_name: 'Invitado', role: 'client' }
+        });
+        if (createError) {
+          console.error('Error creating guest user:', createError);
+          return res.status(500).json({ error: 'Failed to create guest user' });
+        }
+        actualUserId = newUser.user.id;
+      }
+    }
+
+    // Handle general consultation lawyer
+    if (!lawyerId || lawyerId === 'consulta-general') {
+      const systemEmail = 'sistema@legalup.cl';
+      const { data: existingLawyer } = await supabase.auth.admin.listUsers();
+      const foundLawyer = existingLawyer?.users?.find(u => u.email === systemEmail);
+      
+      if (foundLawyer) {
+        actualLawyerId = foundLawyer.id;
+      } else {
+        const { data: newLawyer, error: createError } = await supabase.auth.admin.createUser({
+          email: systemEmail,
+          email_confirm: true,
+          user_metadata: { first_name: 'Sistema', last_name: 'LegalUp', role: 'lawyer' }
+        });
+        if (createError) {
+          console.error('Error creating system lawyer:', createError);
+          return res.status(500).json({ error: 'Failed to create system lawyer' });
+        }
+        actualLawyerId = newLawyer.user.id;
+      }
     }
 
     const numericAmount = Number(amount ?? originalAmount);
@@ -574,8 +622,8 @@ app.post('/create-payment', async (req, res) => {
       platform_fee: platformFee,
       currency,
       status: 'pending',
-      user_id: userId,  // Changed from client_user_id
-      lawyer_id: lawyerId,  // Changed from lawyer_user_id
+      user_id: actualUserId,  // Use the resolved UUID
+      lawyer_id: actualLawyerId,  // Use the resolved UUID
       service_id: null,  // No service for general consultations
       metadata: {  // Store additional data in metadata JSON field
         description: description || 'Consulta Legal',
