@@ -562,9 +562,10 @@ app.post('/create-payment', async (req, res) => {
     const platformFee = Math.round(derivedOriginalAmount * platformFeePercent);
     const lawyerAmount = Math.max(derivedOriginalAmount - platformFee, 0);
 
+
     const paymentData = {
       id: paymentId,
-      total_amount: clientAmount,
+      amount: derivedOriginalAmount,  // Must equal platform_fee + lawyer_amount per DB constraint
       original_amount: derivedOriginalAmount,
       client_surcharge: clientSurcharge,
       client_surcharge_percent: clientSurchargePercent,
@@ -573,11 +574,15 @@ app.post('/create-payment', async (req, res) => {
       platform_fee: platformFee,
       currency,
       status: 'pending',
-      service_description: description || 'Consulta Legal',
-      client_user_id: userId,
-      lawyer_user_id: lawyerId,
-      appointment_id: appointmentId,
-      payment_gateway_id: null,
+      user_id: userId,  // Changed from client_user_id
+      lawyer_id: lawyerId,  // Changed from lawyer_user_id
+      service_id: null,  // No service for general consultations
+      metadata: {  // Store additional data in metadata JSON field
+        description: description || 'Consulta Legal',
+        appointment_id: appointmentId,
+        client_total: clientAmount,  // Actual amount client pays (with surcharge)
+        payment_gateway_id: null
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };

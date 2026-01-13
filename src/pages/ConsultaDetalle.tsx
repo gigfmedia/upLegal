@@ -52,12 +52,16 @@ export default function ConsultaDetalle() {
       
       console.log('Respuesta de MercadoPago:', response);
       
-      if (!response?.init_point) {
+      // Backend returns 'payment_link', not 'init_point'
+      const paymentUrl = response?.payment_link || response?.init_point;
+      
+      if (!paymentUrl) {
         throw new Error('No se recibió un enlace de pago válido de MercadoPago');
       }
       
       // Redirect to MercadoPago
-      window.location.href = response.init_point;
+      console.log('Redirigiendo a MercadoPago:', paymentUrl);
+      window.location.href = paymentUrl;
 
     } catch (error) {
       console.error('Error en el pago:', error);
@@ -89,7 +93,7 @@ export default function ConsultaDetalle() {
     <div className="container mx-auto px-4 py-16 max-w-2xl pt-32">
       <Header />
       <h1 className="text-3xl font-bold mb-8">Detalles de la consulta</h1>
-      <p className="text-muted-foreground mb-6">Completa el formulario para agendar tu consulta legal de 30 minutos.</p>
+      <p className="text-muted-foreground mb-6">Completa el formulario para agendar tu consulta legal de 60 minutos.</p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">

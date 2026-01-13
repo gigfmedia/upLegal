@@ -100,12 +100,12 @@ export const getMercadoPagoUser = async (accessToken: string): Promise<MercadoPa
 // Payment Functions
 export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
   try {
-    const baseUrl = import.meta.env.DEV
-      ? ''
-      : (import.meta.env.VITE_APP_URL || window.location.origin);
-
-    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    // Use the backend API URL, not the frontend URL
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    const normalizedBaseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
     const endpoint = `${normalizedBaseUrl}/create-payment`;
+
+    console.log('Creating payment at endpoint:', endpoint);
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -121,7 +121,9 @@ export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
       throw new Error(errorData?.error || 'Failed to create payment');
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('Payment created successfully:', data);
+    return data;
   } catch (error) {
     console.error('Error in createMercadoPagoPayment:', error);
     throw new Error(error instanceof Error ? error.message : 'Error creating payment');
