@@ -650,19 +650,26 @@ app.post('/create-payment', async (req, res) => {
     };
 
     // Insert payment into database
-    const { data: payment, error: paymentError } = await supabase
-      .from('payments')
-      .insert(paymentData)
-      .select()
-      .single();
-
-    if (paymentError) {
-      console.error('Database error:', paymentError);
-      return res.status(500).json({
-        error: 'Failed to create payment record',
-        details: paymentError.message,
-        code: paymentError.code
-      });
+    console.log('Attempting to insert payment with data ID:', paymentData.id);
+    let payment;
+    
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .insert(paymentData)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('❌ Supabase INSERT Error:', JSON.stringify(error, null, 2));
+        throw error; // Re-throw to be caught by outer handler
+      }
+      
+      payment = data;
+      console.log('✅ Payment inserted successfully:', payment.id);
+    } catch (insertError) {
+      console.error('❌ Exception during INSERT:', insertError);
+      throw insertError;
     }
 
     // Create MercadoPago preference data
