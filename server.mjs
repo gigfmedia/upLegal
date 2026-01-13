@@ -703,25 +703,32 @@ app.post('/create-payment', async (req, res) => {
 
     // Update payment with MercadoPago preference ID
     // Update payment with MercadoPago preference ID
+    // Update payment with MercadoPago preference ID using RPC to bypass RLS
     if (mpResponse.id) {
       try {
-        console.log('Attempting to update payment with gateway ID:', mpResponse.id);
-        const { error: updateError } = await supabase
-          .from('payments')
-          .update({ 
-            payment_gateway_id: mpResponse.id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', paymentId);
+        console.log('Attempting to update payment with gateway ID via RPC:', mpResponse.id);
+        
+        const { error: rpcError } = await supabase.rpc('update_payment_gateway_id', {
+          p_payment_id: paymentId,
+          p_gateway_id: mpResponse.id
+        });
 
-        if (updateError) {
-          console.error('❌ Supabase UPDATE Error (Non-fatal):', JSON.stringify(updateError, null, 2));
+        if (rpcError) {
+          console.error('❌ Supabase RPC Error (Non-fatal):', JSON.stringify(rpcError, null, 2));
           // We don't throw here to avoid blocking the user from paying
+          // Fallback: try direct update just in case RPC failed but update might work
+          await supabase
+            .from('payments')
+            .update({ 
+              payment_gateway_id: mpResponse.id,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', paymentId);
         } else {
-          console.log('✅ Payment updated successfully with gateway ID');
+          console.log('✅ Payment updated successfully via RPC');
         }
       } catch (updateEx) {
-        console.error('❌ Exception during UPDATE (Non-fatal):', updateEx);
+        console.error('❌ Exception during RPC/UPDATE (Non-fatal):', updateEx);
       }
     }
 
