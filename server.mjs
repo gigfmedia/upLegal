@@ -719,8 +719,7 @@ app.post('/create-payment', async (req, res) => {
     // We already have the paymentId in external_reference
     console.log('Payment created without updating payment_gateway_id (Logic removed)');
 
-    // Return the payment link
-    const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
+
 
     // Return the payment link
     const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
