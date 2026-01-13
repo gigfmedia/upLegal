@@ -273,8 +273,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       created_at: new Date().toISOString()
     };
 
-    console.log('Enviando mensaje con datos:', messagePayload);
-
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -305,15 +303,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
 
       const consultationPrice = lawyerProfile.contact_fee_clp || contactFeeClp || 0;
       
-      console.log('Creating consultation with data:', {
-        client_id: user.id,
-        lawyer_id: lawyerId,
-        title: formData.subject || 'Nueva consulta',
-        description: formData.message,
-        status: 'pending',
-        price: consultationPrice
-      });
-      
       const { data, error } = await supabase
         .from('consultations')
         .insert([{
@@ -330,8 +319,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
         console.error('Error details from Supabase:', error);
         throw new Error(`No se pudo crear la consulta: ${error.message}`);
       }
-
-      console.log('Consultation created successfully:', data);
       return data?.[0];
     } catch (error) {
       console.error('Error in createConsultation:', error);
@@ -357,8 +344,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
     try {
       const BACKEND_URL = 'https://uplegal.netlify.app/.netlify/functions/create-payment';
       
-      console.log('Creating payment with params:', paymentParams);
-      
       const response = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
@@ -382,7 +367,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       }
 
       const paymentResult = await response.json();
-      console.log('Payment created successfully:', paymentResult);
       
       return paymentResult;
     } catch (error) {
@@ -441,8 +425,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
       if (!paymentParams.successUrl || !paymentParams.failureUrl || !paymentParams.pendingUrl) {
         throw new Error('Error al generar las URLs de retorno del pago');
       }
-
-      console.log('Creating payment with params:', paymentParams);
       
       const paymentResult = await createPayment(paymentParams);
       
@@ -461,7 +443,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
 
       // Redirect to MercadoPago
       if (paymentResult.payment_link) {
-        console.log('Redirecting to payment URL:', paymentResult.payment_link);
         window.location.href = paymentResult.payment_link;
       } else {
         throw new Error('No se pudo obtener el enlace de pago');

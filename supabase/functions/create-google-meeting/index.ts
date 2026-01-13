@@ -57,7 +57,6 @@ serve(async (req) => {
       .single();
 
     if (intError || !integration) {
-      console.log('Lawyer has not connected Google Calendar');
       return new Response(JSON.stringify({ message: 'No Google integration found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -67,7 +66,6 @@ serve(async (req) => {
 
     // 3. Check if token is expired and refresh if needed
     if (Date.now() >= integration.expires_at) {
-      console.log('Refreshing token...');
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
       const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 

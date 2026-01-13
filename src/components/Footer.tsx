@@ -11,7 +11,6 @@ const Footer = () => {
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
         if (entry.target.id === 'abogados-destacados') {
-          console.log('Sección visible:', entry.isIntersecting);
           setIsFeaturedSectionVisible(entry.isIntersecting);
         }
       });

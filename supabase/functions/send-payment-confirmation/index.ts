@@ -96,8 +96,6 @@ serve(async (req) => {
       </body>
       </html>
     `;
-
-    console.log('Enviando correo de confirmación de pago a:', clientEmail);
     
     const response = await resend.emails.send({
       from: 'LegalUp <noreply@mg.legalup.cl>',
@@ -105,8 +103,6 @@ serve(async (req) => {
       subject: `Pago confirmado - ${formatCurrency(amount)}`,
       html: emailHtml,
     });
-
-    console.log('Correo de pago enviado exitosamente:', response);
 
     return new Response(
       JSON.stringify({

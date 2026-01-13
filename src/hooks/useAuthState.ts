@@ -105,40 +105,37 @@ export const useAuthState = (): AuthState => {
           const profile = profileData;
 
           if (meta?.role === 'lawyer' && (!profile || profile.role !== 'lawyer')) {
-             console.log('Detected profile mismatch. Attempting client-side repair...', meta);
               
-             const displayName = (meta.first_name && meta.last_name) 
-               ? `${meta.first_name} ${meta.last_name}` 
-               : currentSession.user.email?.split('@')[0];
+            const displayName = (meta.first_name && meta.last_name) 
+              ? `${meta.first_name} ${meta.last_name}` 
+              : currentSession.user.email?.split('@')[0];
 
-             const { error: upsertError } = await supabase.from('profiles').upsert({
-               id: currentSession.user.id,
-               user_id: currentSession.user.id,
-               email: currentSession.user.email,
-               role: 'lawyer',
-               first_name: meta.first_name || null,
-               last_name: meta.last_name || null,
-               display_name: displayName,
-               rut: meta.rut || null,
-               pjud_verified: meta.pjud_verified || false,
-               created_at: new Date().toISOString(),
-               updated_at: new Date().toISOString()
-             }, { onConflict: 'id' });
+            const { error: upsertError } = await supabase.from('profiles').upsert({
+              id: currentSession.user.id,
+              user_id: currentSession.user.id,
+              email: currentSession.user.email,
+              role: 'lawyer',
+              first_name: meta.first_name || null,
+              last_name: meta.last_name || null,
+              display_name: displayName,
+              rut: meta.rut || null,
+              pjud_verified: meta.pjud_verified || false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' });
 
-             if (upsertError) throw upsertError;
-             
-             console.log('Profile repair completed.');
-             
-             // Update the local object immediately so UI reflects it without refresh
-             currentSession.user.profile = {
-               ...profile,
-               role: 'lawyer',
-               first_name: meta.first_name,
-               last_name: meta.last_name,
-               display_name: displayName,
-               rut: meta.rut,
-               pjud_verified: meta.pjud_verified
-             };
+            if (upsertError) throw upsertError;
+            
+            // Update the local object immediately so UI reflects it without refresh
+            currentSession.user.profile = {
+              ...profile,
+              role: 'lawyer',
+              first_name: meta.first_name,
+              last_name: meta.last_name,
+              display_name: displayName,
+              rut: meta.rut,
+              pjud_verified: meta.pjud_verified
+            };
           }
         } catch (repairError) {
           console.error('SERVER_REPAIR_ERROR: ', repairError);

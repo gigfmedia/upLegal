@@ -34,8 +34,6 @@ export const verifyRutWithPJUD = async (rut: string, fullName?: string): Promise
           requestBody.fullName = fullName.trim();
         }
         
-        console.log('Sending verification request:', requestBody);
-        
         const response = await fetch(`${RENDER_SERVER_URL}/verify-lawyer`, {
           method: 'POST',
           headers: {

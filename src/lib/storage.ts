@@ -117,12 +117,6 @@ export async function updateUserAvatar(userId: string, file: File) {
     
     // Debug: Check session and userId
     const { data: { session } } = await supabase.auth.getSession();
-    console.log(' Uploading avatar:', {
-      userIdParam: userId,
-      authUser: session?.user?.id,
-      fileName,
-      isAuthenticated: !!session
-    });
 
     if (!session) {
       throw new Error('No active session found during upload');

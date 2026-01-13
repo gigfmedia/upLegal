@@ -275,7 +275,6 @@ const Index = () => {
                 lawyer.hourly_rate_clp > 0;
               
               if (!isProfileComplete) {
-                console.log(`Hiding lawyer ${lawyer.id} - Incomplete or unverified profile`);
                 return false;
               }
               

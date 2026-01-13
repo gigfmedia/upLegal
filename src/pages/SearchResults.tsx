@@ -616,11 +616,21 @@ const SearchResults = () => {
     minRating: number;
     minExperience: number;
     availableNow: boolean;
+    modality?: string;
+    region?: string;
   }) => {
     setPriceRange(filters.priceRange);
     setMinRating(filters.minRating);
     setMinExperience(filters.minExperience);
     setAvailableNow(filters.availableNow);
+    
+    // Si la modalidad es 'presencial' y hay una región seleccionada, actualizamos la ubicación
+    if (filters.modality === 'presencial' && filters.region) {
+      setLocation(filters.region);
+    } else if (filters.modality !== 'presencial') {
+      // Si no es presencial, limpiamos la ubicación
+      setLocation('');
+    }
   }, []);
 
   // Handle specialty change from filters

@@ -487,7 +487,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         }
 
         const result = await response.json();
-        console.log('Profile creation result:', result);
       }
     } catch (profileError) {
       console.error('Error ensuring profile after signup:', profileError);
@@ -920,15 +919,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                         // Verify with PJUD - don't require full name, let the server fetch it
                         const { valid, message, data } = await verifyRutWithPJUD(formData.rut);
                         
-                        console.log('Verification result:', { valid, message, data });
-                        
                         if (valid) {
                           setRutVerificationStatus('verified');
                           
                           // Auto-fill name and last name if available from PJUD data
                           const nombreFromData = data?.nombre || data?.nombreCompleto || null;
-                          
-                          console.log('Name from PJUD:', nombreFromData);
                           
                           if (nombreFromData && nombreFromData !== 'No disponible' && nombreFromData.trim().length > 0) {
                             const nombreCompleto = nombreFromData.trim();
@@ -956,8 +951,6 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                                   firstName = nombreParts[0];
                                   lastName = nombreParts.slice(1).join(' ') || '';
                                 }
-                                
-                                console.log('Auto-filling names:', { firstName, lastName });
                                 
                                 setFormData(prev => ({
                                   ...prev,
