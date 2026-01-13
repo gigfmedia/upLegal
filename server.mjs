@@ -622,9 +622,9 @@ app.post('/create-payment', async (req, res) => {
       platform_fee: platformFee,
       currency,
       status: 'pending',
-      user_id: actualUserId,  // Use the resolved UUID
-      lawyer_id: actualLawyerId,  // Use the resolved UUID
-      service_id: null,  // No service for general consultations
+      user_id: actualUserId,
+      lawyer_id: actualLawyerId,
+      // service_id removed as it does not exist in current DB schema
       metadata: {  // Store additional data in metadata JSON field
         description: description || 'Consulta Legal',
         appointment_id: appointmentId,
