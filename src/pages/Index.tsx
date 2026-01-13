@@ -520,7 +520,12 @@ const Index = () => {
             </div>
           </div>
           <p className="mt-20">¿No sabes qué abogado elegir?</p>
-          <button className="text-blue-600 hover:text-blue-700 hover:underline" onClick={() => navigate('/asesoria-legal-online')}>Agenda una asesoría legal online</button>
+          <a 
+            href="/asesoria-legal-online" 
+            className="text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Agenda una asesoría legal online
+          </a>
         </div>
       </section>
 

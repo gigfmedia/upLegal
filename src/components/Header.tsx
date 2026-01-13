@@ -134,33 +134,33 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
 
           {/* Navigation - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-            <button 
-              onClick={() => handleNavigation('/search')} 
+            <a
+              href="/search"
               className={cn(
                 "transition-colors hover:text-blue-600",
                 isActive('/search') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
               Explorar Servicios
-            </button>
-            <button 
-              onClick={() => handleNavigation('/como-funciona')} 
+            </a>
+            <a
+              href="/como-funciona"
               className={cn(
                 "transition-colors hover:text-blue-600",
                 isActive('/como-funciona') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
               Cómo Funciona
-            </button>
-            <button 
-              onClick={() => handleNavigation('/about')} 
+            </a>
+            <a
+              href="/about"
               className={cn(
                 "transition-colors hover:text-blue-600",
                 isActive('/about') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
               Acerca de
-            </button>
+            </a>
           </nav>
 
           {/* Auth Section */}
