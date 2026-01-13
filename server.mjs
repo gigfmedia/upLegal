@@ -702,14 +702,27 @@ app.post('/create-payment', async (req, res) => {
     const mpResponse = await mp.create({ body: preferenceData });
 
     // Update payment with MercadoPago preference ID
+    // Update payment with MercadoPago preference ID
     if (mpResponse.id) {
-      await supabase
-        .from('payments')
-        .update({ 
-          payment_gateway_id: mpResponse.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', paymentId);
+      try {
+        console.log('Attempting to update payment with gateway ID:', mpResponse.id);
+        const { error: updateError } = await supabase
+          .from('payments')
+          .update({ 
+            payment_gateway_id: mpResponse.id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', paymentId);
+
+        if (updateError) {
+          console.error('❌ Supabase UPDATE Error (Non-fatal):', JSON.stringify(updateError, null, 2));
+          // We don't throw here to avoid blocking the user from paying
+        } else {
+          console.log('✅ Payment updated successfully with gateway ID');
+        }
+      } catch (updateEx) {
+        console.error('❌ Exception during UPDATE (Non-fatal):', updateEx);
+      }
     }
 
     // Return the payment link
