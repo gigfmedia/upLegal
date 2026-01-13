@@ -510,6 +510,7 @@ app.get('/', (req, res) => {
 
 // Create payment endpoint
 app.post('/create-payment', async (req, res) => {
+  console.log('--- START PAYMENT V_FINAL_DELETED ---');
   try {
     // Log the incoming request
     
@@ -714,45 +715,12 @@ app.post('/create-payment', async (req, res) => {
     // Create preference using the mp client
     const mpResponse = await mp.create({ body: preferenceData });
 
-    // Update payment with MercadoPago preference ID
-    // Update payment with MercadoPago preference ID
-    // Update payment with MercadoPago preference ID using RPC to bypass RLS
-    if (mpResponse.id) {
-      /* 
-       * COMENTADO TEMPORALMENTE: 
-       * Esta actualización está causando errores de RLS "Policy Agent" inexplicables
-       * incluso con try/catch y funciones RPC, lo que bloquea el pago del usuario.
-       * Como ya tenemos el paymentId en external_reference, esto no es crítico.
-       * Se prioriza que el usuario pueda pagar.
-       */
-      /*
-      try {
-        console.log('Attempting to update payment with gateway ID via RPC:', mpResponse.id);
-        
-        const { error: rpcError } = await supabase.rpc('update_payment_gateway_id', {
-          p_payment_id: paymentId,
-          p_gateway_id: mpResponse.id
-        });
+    // UPDATE LOGIC DELETED - To prevent RLS errors from blocking payment
+    // We already have the paymentId in external_reference
+    console.log('Payment created without updating payment_gateway_id (Logic removed)');
 
-        if (rpcError) {
-          console.error('❌ Supabase RPC Error (Non-fatal):', JSON.stringify(rpcError, null, 2));
-          // We don't throw here to avoid blocking the user from paying
-          // Fallback: try direct update just in case RPC failed but update might work
-          await supabase
-            .from('payments')
-            .update({ 
-              payment_gateway_id: mpResponse.id,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', paymentId);
-        } else {
-          console.log('✅ Payment updated successfully via RPC');
-        }
-      } catch (updateEx) {
-        console.error('❌ Exception during RPC/UPDATE (Non-fatal):', updateEx);
-      }
-      */
-    }
+    // Return the payment link
+    const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
 
     // Return the payment link
     const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
