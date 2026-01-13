@@ -649,26 +649,39 @@ app.post('/create-payment', async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    // Insert payment into database
-    console.log('Attempting to insert payment with data ID:', paymentData.id);
+    // Insert payment into database using SECURE RPC (Bypasses RLS)
+    console.log('Attempting to insert payment via RPC with ID:', paymentData.id);
     let payment;
     
     try {
-      const { data, error } = await supabase
-        .from('payments')
-        .insert(paymentData)
-        .select()
-        .single();
-        
+      const { data, error } = await supabase.rpc('create_payment_secure', {
+        p_id: paymentData.id,
+        p_amount: paymentData.amount,
+        p_original_amount: paymentData.original_amount,
+        p_client_surcharge: paymentData.client_surcharge,
+        p_client_surcharge_percent: paymentData.client_surcharge_percent,
+        p_platform_fee_percent: paymentData.platform_fee_percent,
+        p_lawyer_amount: paymentData.lawyer_amount,
+        p_platform_fee: paymentData.platform_fee,
+        p_currency: paymentData.currency,
+        p_status: paymentData.status,
+        p_user_id: paymentData.user_id,
+        p_lawyer_id: paymentData.lawyer_id,
+        p_metadata: paymentData.metadata,
+        p_created_at: paymentData.created_at,
+        p_updated_at: paymentData.updated_at
+      });
+
       if (error) {
-        console.error('❌ Supabase INSERT Error:', JSON.stringify(error, null, 2));
-        throw error; // Re-throw to be caught by outer handler
+        console.error('❌ Supabase RPC INSERT Error:', JSON.stringify(error, null, 2));
+        throw error;
       }
       
-      payment = data;
-      console.log('✅ Payment inserted successfully:', payment.id);
+      // Data from RPC might come differently depending on return type, handling jsonb
+      payment = data; 
+      console.log('✅ Payment inserted successfully via RPC:', paymentData.id);
     } catch (insertError) {
-      console.error('❌ Exception during INSERT:', insertError);
+      console.error('❌ Exception during RPC INSERT:', insertError);
       throw insertError;
     }
 
