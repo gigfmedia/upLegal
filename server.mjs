@@ -48,6 +48,20 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
+// DEBUG: Check if Service Role Key is actually a service role key
+try {
+  const [, payload] = serviceRoleKey.split('.');
+  const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
+  console.log('🔑 Supabase Key Role:', decoded.role);
+  if (decoded.role !== 'service_role') {
+    console.error('❌ CRITICAL: The key provided as VITE_SUPABASE_SERVICE_ROLE_KEY is NOT a service_role key! It is:', decoded.role);
+  } else {
+    console.log('✅ Service Role Key confirmed.');
+  }
+} catch (e) {
+  console.error('⚠️ Could not parse Supabase Key:', e.message);
+}
+
 // Configure MercadoPago
 const mpClient = new MercadoPagoConfig({
   accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
