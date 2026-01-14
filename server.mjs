@@ -599,6 +599,13 @@ app.post('/create-payment', async (req, res) => {
     // Fetch settings safely
     // DEBUG: HARDCODED TO RULE OUT RLS ERROR HERE
     console.log('--- DEBUG: Using hardcoded platform settings to bypass potential RLS ---');
+    // Fetch settings safely
+    console.log('--- DEBUG: Using hardcoded platform settings to bypass potential RLS ---');
+    // HARDCODED SETTINGS
+    clientSurchargePercent = 0.10;
+    platformFeePercent = 0.20;
+    currency = 'CLP';
+
     /* 
     try {
       const { data: settingsData } = await supabase
@@ -721,13 +728,19 @@ app.post('/create-payment', async (req, res) => {
     };
     
     // Create preference using the mp client
-    const mpResponse = await mp.create({ body: preferenceData });
+    console.log('--- DEBUG: PRE-MP-CREATE ---');
+    let mpResponse;
+    try {
+        mpResponse = await mp.create({ body: preferenceData });
+        console.log('--- DEBUG: POST-MP-CREATE SUCCESS ---');
+    } catch (mpError) {
+        console.error('--- DEBUG: MP-CREATE FAILED ---', mpError);
+        throw mpError;
+    }
 
     // UPDATE LOGIC DELETED - To prevent RLS errors from blocking payment
     // We already have the paymentId in external_reference
     console.log('Payment created without updating payment_gateway_id (Logic removed)');
-
-
 
     // Return the payment link
     const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
