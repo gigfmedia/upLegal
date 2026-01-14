@@ -727,23 +727,39 @@ app.post('/create-payment', async (req, res) => {
       notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
     };
     
-    // Create preference using the mp client
-    console.log('--- DEBUG: PRE-MP-CREATE ---');
-    let mpResponse;
-    try {
-        mpResponse = await mp.create({ body: preferenceData });
-        console.log('--- DEBUG: POST-MP-CREATE SUCCESS ---');
-    } catch (mpError) {
-        console.error('--- DEBUG: MP-CREATE FAILED ---', mpError);
-        throw mpError;
+    // Create preference using raw fetch to bypass any SDK potential issues
+    const mpAccessToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+    
+    // DEBUG: Check if token looks like Supabase (JWT starts with eyJ)
+    const isJwt = mpAccessToken.startsWith('eyJ');
+    console.log(`--- DEBUG: MP Token Check -- Prefix: ${mpAccessToken.substring(0, 15)}... | Is likely JWT (Wrong): ${isJwt}`);
+
+    if (isJwt) {
+        throw new Error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)! It should be a MercadoPago Access Token (TEST-... or APP_USR-...)');
     }
 
-    // UPDATE LOGIC DELETED - To prevent RLS errors from blocking payment
-    // We already have the paymentId in external_reference
-    console.log('Payment created without updating payment_gateway_id (Logic removed)');
+    console.log('--- DEBUG: ATTEMPTING RAW FETCH TO MERCADOPAGO ---');
+    
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${mpAccessToken}`
+        },
+        body: JSON.stringify(preferenceData)
+    });
+
+    const mpData = await mpResponse.json();
+
+    if (!mpResponse.ok) {
+        console.error('--- DEBUG: RAW FETCH FAILED ---', mpData);
+        throw new Error(`MercadoPago API Error: ${mpResponse.status} - ${JSON.stringify(mpData)}`);
+    }
+
+    console.log('--- DEBUG: RAW FETCH SUCCESS ---', mpData.id);
 
     // Return the payment link
-    const paymentLink = mpResponse.init_point || mpResponse.sandbox_init_point;
+    const paymentLink = mpData.init_point || mpData.sandbox_init_point;
     
     if (!paymentLink) {
       throw new Error('No payment link received from MercadoPago');
