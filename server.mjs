@@ -807,6 +807,58 @@ app.get('/payment/:paymentId', async (req, res) => {
 // BOOKINGS ENDPOINTS
 // ============================================
 
+// ============================================
+// DEBUG ENDPOINT
+// ============================================
+app.post('/debug-env', async (req, res) => {
+  console.log('--- START DEBUG ENV ---');
+  
+  // 1. Check Env Vars (Masked)
+  const mpToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+  const sbUrl = process.env.VITE_SUPABASE_URL || '';
+  
+  const debugInfo = {
+    mpToken_prefix: mpToken.substring(0, 10) + '...',
+    mpToken_length: mpToken.length,
+    sbUrl_prefix: sbUrl.substring(0, 10) + '...',
+    is_mp_token_jwt: mpToken.startsWith('ey'), // Check if it looks like a Supabase/JWT key by mistake
+    is_mp_token_sb_url: mpToken.startsWith('http') // Check if it looks like a URL by mistake
+  };
+  
+  console.log('Env Debug:', debugInfo);
+
+  // 2. Test Isolated MP Call
+  console.log('Testing Isolated MP Call...');
+  try {
+    const testPref = {
+      items: [{
+        id: 'test-iso-' + Date.now(),
+        title: 'Test Isolation',
+        quantity: 1,
+        currency_id: 'CLP',
+        unit_price: 1000
+      }],
+      back_urls: { success: 'https://google.com' },
+      auto_return: 'approved'
+    };
+    
+    // Create new client to be sure
+    const isoClient = new MercadoPagoConfig({
+      accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
+      options: { timeout: 5000 }
+    });
+    const isoMp = new Payment({ client: isoClient });
+
+    const response = await isoMp.create({ body: testPref });
+    console.log('✅ Isolated MP Call Success:', response.id);
+    
+    res.json({ success: true, debugInfo, mp_id: response.id });
+  } catch (error) {
+    console.error('❌ Isolated MP Call Failed:', error);
+    res.status(500).json({ error: error.message, stack: error.stack, debugInfo });
+  }
+});
+
 // Create booking endpoint - NO AUTHENTICATION REQUIRED
 app.post('/api/bookings/create', async (req, res) => {
   try {
