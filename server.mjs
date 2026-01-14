@@ -510,7 +510,7 @@ app.get('/', (req, res) => {
 
 // Create payment endpoint
 app.post('/create-payment', async (req, res) => {
-  console.log('--- START PAYMENT V_FINAL_DELETED ---');
+  console.log('--- START PAYMENT V_ABSOLUTE_FINAL ---');
   try {
     // Log the incoming request
     
