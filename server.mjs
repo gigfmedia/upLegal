@@ -596,19 +596,27 @@ app.post('/create-payment', async (req, res) => {
     let clientSurchargePercent = DEFAULT_CLIENT_SURCHARGE_PERCENT;
     let platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT;
     let currency = DEFAULT_CURRENCY;
+    // Fetch settings safely
+    // DEBUG: HARDCODED TO RULE OUT RLS ERROR HERE
+    console.log('--- DEBUG: Using hardcoded platform settings to bypass potential RLS ---');
+    /* 
+    try {
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('client_surcharge_percent, platform_fee_percent, currency')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    const { data: settingsData } = await supabase
-      .from('platform_settings')
-      .select('client_surcharge_percent, platform_fee_percent, currency')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (settingsData) {
-      clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
-      platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
-      currency = settingsData.currency ?? currency;
+      if (settingsData) {
+        clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+        platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+        currency = settingsData.currency ?? currency;
+      }
+    } catch (settingsError) {
+      console.warn('Could not fetch platform settings (using defaults):', settingsError.message);
     }
+    */
 
     const paymentId = uuidv4();
 
