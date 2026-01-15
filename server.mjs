@@ -1019,6 +1019,19 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
 
+    console.log('--- MSG OAUTH DEBUG ---');
+    console.log('Redirect URI sent:', redirectUri);
+    console.log('Code received:', code ? 'YES (masked)' : 'NO');
+    console.log('Client ID Prefix:', process.env.VITE_MERCADOPAGO_CLIENT_ID ? process.env.VITE_MERCADOPAGO_CLIENT_ID.substring(0, 5) : 'UNDEFINED');
+    
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
+      client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
+      code: code,
+      redirect_uri: redirectUri
+    });
+
     // Exchange code for access token
     const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
       method: 'POST',
@@ -1026,13 +1039,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json'
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
-        client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
-        code: code,
-        redirect_uri: redirectUri
-      })
+      body: params
     });
 
     if (!tokenResponse.ok) {
