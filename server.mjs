@@ -12,85 +12,134 @@ import axios from 'axios';
 import { Resend } from 'resend';
 import crypto from 'crypto';
 
-// ... (imports)
+import cookieParser from 'cookie-parser';
 
-// Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '.env.local') });
-dotenv.config();
-
-// Get environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const appUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
-const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
-
-if (!resend) {
-  console.warn('⚠️ RESEND_API_KEY missing. Email features will be disabled.');
-}
-
-console.log('App URL:', appUrl);
-
-if (!supabaseUrl || !serviceRoleKey) {
-  console.error('Missing required environment variables');
-  process.exit(1);
-}
-
-// Create Supabase client
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
-
-// DEBUG: Check if Service Role Key is actually a service role key
-try {
-  const [, payload] = serviceRoleKey.split('.');
-  const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
-  console.log('🔑 Supabase Key Role:', decoded.role);
-  if (decoded.role !== 'service_role') {
-    console.error('❌ CRITICAL: The key provided as VITE_SUPABASE_SERVICE_ROLE_KEY is NOT a service_role key! It is:', decoded.role);
-  } else {
-    console.log('✅ Service Role Key confirmed.');
-  }
-} catch (e) {
-  console.error('⚠️ Could not parse Supabase Key:', e.message);
-}
-
-// Configure MercadoPago
-const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
-  options: { timeout: 5000 }
-});
-
-// Create API client instance
-const mp = new Payment({ client: mpClient });
-
-// Initialize Express app
-const app = express();
-
-// Configure CORS
-const corsOptions = {
-  origin: [
-    'https://legalup.cl',
-    'https://www.legalup.cl',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://uplegal.netlify.app'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials: true
-};
+// ... (existing imports)
 
 // Apply middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser()); // Enable cookie parsing
+
+// ... (existing code)
+
+// ============================================
+// MERCADOPAGO OAUTH PKCE HELPERS
+// ============================================
+function base64URLEncode(str) {
+    return str.toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+}
+
+function sha256(buffer) {
+    return crypto.createHash('sha256').update(buffer).digest();
+}
+
+function generateCodeVerifier() {
+    return base64URLEncode(crypto.randomBytes(32));
+}
+
+function generateCodeChallenge(verifier) {
+    return base64URLEncode(sha256(verifier));
+}
+
+// Generate Auth URL endpoint (Server-Initiated PKCE)
+app.get('/api/mercadopago/auth-url', (req, res) => {
+    try {
+        const verifier = generateCodeVerifier();
+        const challenge = generateCodeChallenge(verifier);
+        const state = crypto.randomUUID(); // Generate secure state
+        
+        const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+        const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
+        const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
+
+        // Build Auth URL
+        const authUrl = new URL('https://auth.mercadopago.com/authorization');
+        authUrl.searchParams.append('client_id', clientId);
+        authUrl.searchParams.append('response_type', 'code');
+        authUrl.searchParams.append('platform_id', 'mp');
+        authUrl.searchParams.append('state', state);
+        authUrl.searchParams.append('redirect_uri', redirectUri);
+        authUrl.searchParams.append('code_challenge', challenge);
+        authUrl.searchParams.append('code_challenge_method', 'S256');
+
+        console.log('--- PKCE DEBUG ---');
+        console.log('Generated Verifier:', verifier);
+        console.log('Generated Challenge:', challenge);
+
+        // Store verifier in HttpOnly cookie (short-lived, 10 min)
+        res.cookie('mp_code_verifier', verifier, {
+            httpOnly: true,
+            secure: true, // Always true for Render/Production
+            sameSite: 'lax', // Use 'lax' to allow redirect to work
+            maxAge: 10 * 60 * 1000 // 10 minutes
+        });
+
+        res.json({ url: authUrl.toString() });
+
+    } catch (error) {
+        console.error('Error generating Auth URL:', error);
+        res.status(500).json({ error: 'Failed to generate auth url' });
+    }
+});
+
+// OAuth callback endpoint - receives authorization code from MercadoPago
+app.get('/api/mercadopago/oauth/callback', async (req, res) => {
+  try {
+    const { code, state, error: oauthError } = req.query;
+
+    // Handle OAuth errors
+    if (oauthError) {
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=${oauthError}`);
+    }
+
+    if (!code) {
+      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=no_code`);
+    }
+
+    // Backend-Initiated: Retrieve verifier from cookie
+    const codeVerifier = req.cookies.mp_code_verifier;
+    
+    console.log('--- MSG OAUTH DEBUG (PKCE) ---');
+    console.log('Code Verifier from Cookie:', codeVerifier ? 'YES' : 'NO/MISSING');
+
+    if (!codeVerifier) {
+         console.warn('WARNING: code_verifier cookie is missing. This might fail if PKCE was enforced.');
+         // NOTE: If cookie is missing (e.g. cross-browser issue), we might fail.
+         // But we try without it just in case, or we fail.
+    }
+
+    // Build redirect_uri - MUST match exactly what was used in the authorization request
+    const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+    const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
+
+    // Exchange code for access token
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
+      client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
+      code: code,
+      redirect_uri: redirectUri,
+    });
+    
+    // Add verifier if present
+    if (codeVerifier) {
+        params.append('code_verifier', codeVerifier);
+    }
+
+    const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: params
+    });
 
 // Helper to normalize strings safely
 const safeTrim = (value) => {
