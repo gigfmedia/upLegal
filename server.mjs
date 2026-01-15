@@ -597,16 +597,6 @@ app.post('/create-payment', async (req, res) => {
     let platformFeePercent = DEFAULT_PLATFORM_FEE_PERCENT;
     let currency = DEFAULT_CURRENCY;
     // Fetch settings safely
-    // DEBUG: HARDCODED TO RULE OUT RLS ERROR HERE
-    console.log('--- DEBUG: Using hardcoded platform settings to bypass potential RLS ---');
-    // Fetch settings safely
-    console.log('--- DEBUG: Using hardcoded platform settings to bypass potential RLS ---');
-    // HARDCODED SETTINGS
-    clientSurchargePercent = 0.10;
-    platformFeePercent = 0.20;
-    currency = 'CLP';
-
-    /* 
     try {
       const { data: settingsData } = await supabase
         .from('platform_settings')
@@ -623,7 +613,8 @@ app.post('/create-payment', async (req, res) => {
     } catch (settingsError) {
       console.warn('Could not fetch platform settings (using defaults):', settingsError.message);
     }
-    */
+    
+    /* HARDCODED SETTINGS REMOVED - Logic Restored */
 
     const paymentId = uuidv4();
 
@@ -732,10 +723,10 @@ app.post('/create-payment', async (req, res) => {
     
     // DEBUG: Check if token looks like Supabase (JWT starts with eyJ)
     const isJwt = mpAccessToken.startsWith('eyJ');
-    console.log(`--- DEBUG: MP Token Check -- Prefix: ${mpAccessToken.substring(0, 15)}... | Is likely JWT (Wrong): ${isJwt}`);
-
+    
     if (isJwt) {
-        throw new Error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)! It should be a MercadoPago Access Token (TEST-... or APP_USR-...)');
+        console.error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)!');
+        throw new Error('Server Config Error: MercadoPago Token is invalid');
     }
 
     console.log('--- DEBUG: ATTEMPTING RAW FETCH TO MERCADOPAGO ---');
@@ -822,58 +813,6 @@ app.get('/payment/:paymentId', async (req, res) => {
 // ============================================
 // BOOKINGS ENDPOINTS
 // ============================================
-
-// ============================================
-// DEBUG ENDPOINT
-// ============================================
-app.post('/debug-env', async (req, res) => {
-  console.log('--- START DEBUG ENV ---');
-  
-  // 1. Check Env Vars (Masked)
-  const mpToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
-  const sbUrl = process.env.VITE_SUPABASE_URL || '';
-  
-  const debugInfo = {
-    mpToken_prefix: mpToken.substring(0, 10) + '...',
-    mpToken_length: mpToken.length,
-    sbUrl_prefix: sbUrl.substring(0, 10) + '...',
-    is_mp_token_jwt: mpToken.startsWith('ey'), // Check if it looks like a Supabase/JWT key by mistake
-    is_mp_token_sb_url: mpToken.startsWith('http') // Check if it looks like a URL by mistake
-  };
-  
-  console.log('Env Debug:', debugInfo);
-
-  // 2. Test Isolated MP Call
-  console.log('Testing Isolated MP Call...');
-  try {
-    const testPref = {
-      items: [{
-        id: 'test-iso-' + Date.now(),
-        title: 'Test Isolation',
-        quantity: 1,
-        currency_id: 'CLP',
-        unit_price: 1000
-      }],
-      back_urls: { success: 'https://google.com' },
-      auto_return: 'approved'
-    };
-    
-    // Create new client to be sure
-    const isoClient = new MercadoPagoConfig({
-      accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
-      options: { timeout: 5000 }
-    });
-    const isoMp = new Payment({ client: isoClient });
-
-    const response = await isoMp.create({ body: testPref });
-    console.log('✅ Isolated MP Call Success:', response.id);
-    
-    res.json({ success: true, debugInfo, mp_id: response.id });
-  } catch (error) {
-    console.error('❌ Isolated MP Call Failed:', error);
-    res.status(500).json({ error: error.message, stack: error.stack, debugInfo });
-  }
-});
 
 // Create booking endpoint - NO AUTHENTICATION REQUIRED
 app.post('/api/bookings/create', async (req, res) => {

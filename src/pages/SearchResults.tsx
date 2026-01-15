@@ -221,12 +221,12 @@ const SearchResults = () => {
   const [location, setLocation] = useState(initialLocation);
   const [sortBy, setSortBy] = useState('price-asc');
   
-  // Set default sort to price-asc on initial load if no sort parameter is present
+  // Set default sort to 'relevance' on initial load if no sort parameter is present
   useEffect(() => {
     if (!searchParams.has('sort')) {
-      setSortBy('price-asc');
+      setSortBy('relevance');
     } else {
-      setSortBy(searchParams.get('sort') || 'price-asc');
+      setSortBy(searchParams.get('sort') || 'relevance');
     }
   }, []);
   const [showFilters, setShowFilters] = useState(false);
@@ -412,6 +412,8 @@ const SearchResults = () => {
             availableThisWeek: true,
             quickResponse: true,
             emergencyConsultations: true,
+            experience_years: lawyer.experience_years || 0,
+            // For backward compatibility with any components that might use experienceYears
             experienceYears: lawyer.experience_years || 0
           }));
 
@@ -586,26 +588,19 @@ const SearchResults = () => {
 
       // Then apply selected sort criteria
       switch (sortBy) {
-        case 'price-asc':
-          return a.consultationPrice - b.consultationPrice;
-        case 'price-desc':
-          return b.consultationPrice - a.consultationPrice;
+        case 'price':
+          return a.consultationPrice - b.consultationPrice; // Precio: de menor a mayor
         case 'rating':
-        case 'rating-desc':
-          return b.rating - a.rating;
-        case 'reviews':
-        case 'reviews-desc':
-          return (b.reviews || 0) - (a.reviews || 0);
+          return b.rating - a.rating; // Mejor calificados
+        case 'experience':
+          return (b.experience_years || 0) - (a.experience_years || 0); // Más experiencia
         case 'relevance':
-          if (searchTerm) {
-            const searchTermLower = searchTerm.toLowerCase();
-            const aMatch = a.name.toLowerCase().includes(searchTermLower) ? 1 : 0;
-            const bMatch = b.name.toLowerCase().includes(searchTermLower) ? 1 : 0;
-            return bMatch - aMatch || b.rating - a.rating;
-          }
-          return b.rating - a.rating;
         default:
-          return 0;
+          // Recomendados: First show verified, then by rating, then by price
+          if (a.verified && !b.verified) return -1;
+          if (!a.verified && b.verified) return 1;
+          if (b.rating !== a.rating) return b.rating - a.rating;
+          return a.consultationPrice - b.consultationPrice;
       }
     });
   }, [searchResult.lawyers, loading, searchTerm, sortBy]);
@@ -945,11 +940,10 @@ const SearchResults = () => {
                   }}
                   className="h-10 w-full sm:w-48 pl-3 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
                 >
-                  <option value="price-asc">Precio más bajo</option>
-                  <option value="price-desc">Precio más alto</option>
-                  <option value="rating-desc">Mejor valorados</option>
-                  <option value="reviews-desc">Más reseñas</option>
-                  <option value="relevance">Relevancia</option>
+                  <option value="relevance">Recomendados</option>
+                  <option value="rating">Mejor calificados</option>
+                  <option value="experience">Experiencia</option>
+                  <option value="price">Precio</option>
                 </select>
               </div>
               

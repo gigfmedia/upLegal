@@ -12,6 +12,7 @@ interface SearchBarProps {
   onFiltersClick: () => void;
   showMobileFilters?: boolean;
   buttonWidth?: string;
+  className?: string;
 }
 
 export function SearchBar({
@@ -23,6 +24,7 @@ export function SearchBar({
   onFiltersClick,
   showMobileFilters = true,
   buttonWidth = '1/4',
+  className = '',
 }: SearchBarProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {

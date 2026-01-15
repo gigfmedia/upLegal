@@ -38,8 +38,8 @@ export default function ConsultaDetalle() {
         appointmentId: consultationId,
         description: `Consulta Legal - ${formData.category || 'General'}`,
         successUrl: `${window.location.origin}/consulta/confirmacion`,
-        failureUrl: `${window.location.origin}/consulta/error`,
-        pendingUrl: `${window.location.origin}/consulta/pendiente`,
+        failureUrl: `${window.location.origin}/payment/failure`,
+        pendingUrl: `${window.location.origin}/payment/pending`,
         userEmail: formData.email || user?.email,
         userName: formData.name
       };

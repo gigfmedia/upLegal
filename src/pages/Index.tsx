@@ -482,6 +482,7 @@ const Index = () => {
               onFiltersClick={() => {}}
               showMobileFilters={false}
               buttonWidth="1/3"
+              className="h-16"
             />
           </div>
 
