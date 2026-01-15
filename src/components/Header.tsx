@@ -135,13 +135,13 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
           {/* Navigation - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <a
-              href="/search"
+              href="/consulta"
               className={cn(
                 "transition-colors hover:text-blue-600",
                 isActive('/search') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
-              Explorar Servicios
+              Consulta legal hoy – $30.000
             </a>
             <a
               href="/como-funciona"

@@ -13,7 +13,7 @@ export default function Consulta() {
           <div className="space-y-4">
             <h1 className="text-4xl font-bold tracking-tight">Habla con un abogado hoy</h1>
             <p className="text-xl text-muted-foreground">
-              Consulta legal online de 30 minutos con un abogado verificado en Chile.
+              Consulta legal online de 60 minutos con un abogado verificado en Chile.
             </p>
             <div className="pt-2">
               <Button 
