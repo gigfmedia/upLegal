@@ -1,11 +1,11 @@
 import { useState, useEffect, ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { supabase } from "@/lib/supabaseClient";
@@ -20,7 +20,7 @@ interface HeaderProps {
 export default function Header({ onAuthClick, centerLogoOnMobile = false, mobileMenuButton }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { pathname } = useLocation();
 
   const metadata = user?.user_metadata ?? {};
   const metadataFirstName = metadata.first_name ?? metadata.firstName ?? null;
@@ -138,7 +138,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
               href="/consulta"
               className={cn(
                 "transition-colors hover:text-blue-600",
-                isActive('/search') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                isActive('/consulta') || pathname.startsWith('/consulta/') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
               Consulta legal hoy – $30.000

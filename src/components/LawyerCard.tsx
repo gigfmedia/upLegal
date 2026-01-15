@@ -338,8 +338,9 @@ export function LawyerCard({
                   <span className="text-2xl font-bold text-gray-900">
                     ${formatCLP(lawyer.hourlyRate)}
                   </span>
-                  <span className="text-gray-500 text-sm ml-1">/hora</span>
-                  <small className="text-gray-500 text-xs block">Asesoría online 60 min</small>
+                  {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
+                  <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>
+                  <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
                 </div>
               </div>
             </div>
@@ -378,7 +379,7 @@ export function LawyerCard({
               title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
             >
               <Calendar className="h-4 w-4 mr-2" />
-              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar asesoría'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Ver disponibilidad'}
             </Button>
             
           </div>

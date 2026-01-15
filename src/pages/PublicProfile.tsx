@@ -1186,7 +1186,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       {lawyer?.hourly_rate_clp !== undefined && lawyer?.hourly_rate_clp !== null 
                         ? formatPrice(lawyer.hourly_rate_clp)
                         : 'Consultar precio'}
-                      <span className="text-gray-500 text-sm ml-1">/hora</span>
+                      {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
+                      <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>
+                 
                     </div>
 
                     <div className="space-y-3 w-full">
@@ -1214,7 +1216,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           disabled={currentUser?.id === lawyer?.user_id}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
-                          Agendar asesoría
+                          Ver disponibilidad
                         </Button>
                         <Button 
                           variant="outline" 
@@ -1236,6 +1238,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           No puedes contactar ni agendar contigo mismo
                         </p>
                       )}
+                       <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
                     </div>
                   </div>
                 </div>
