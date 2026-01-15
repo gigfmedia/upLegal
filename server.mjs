@@ -1023,6 +1023,11 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     console.log('Redirect URI sent:', redirectUri);
     console.log('Code received:', code ? 'YES (masked)' : 'NO');
     console.log('Client ID Prefix:', process.env.VITE_MERCADOPAGO_CLIENT_ID ? process.env.VITE_MERCADOPAGO_CLIENT_ID.substring(0, 5) : 'UNDEFINED');
+    console.log('Client Secret Present:', process.env.VITE_MERCADOPAGO_CLIENT_SECRET ? 'YES' : 'NO/UNDEFINED');
+
+    if (!process.env.VITE_MERCADOPAGO_CLIENT_SECRET) {
+      console.error('CRITICAL: Client Secret is missing! This may cause MP to demand code_verifier.');
+    }
     
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
