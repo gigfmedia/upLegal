@@ -15,6 +15,13 @@ interface SearchBarProps {
   className?: string;
 }
 
+const buttonWidthMap: Record<string, string> = {
+  '1/4': 'w-1/4',
+  '1/3': 'w-1/3',
+  '1/2': 'w-1/2',
+  'full': 'w-full',
+}
+
 export function SearchBar({
   searchTerm,
   onSearchTermChange,
@@ -53,7 +60,10 @@ export function SearchBar({
         
         <Button 
           onClick={onSearch}
-          className={`h-10 w-${buttonWidth} bg-blue-600 hover:bg-blue-700 text-white font-medium`}
+          className={cn(
+            'h-full bg-blue-600 hover:bg-blue-700 text-white font-medium',
+            buttonWidthMap[buttonWidth] ?? 'w-1/3'
+          )}
         >
           Buscar
         </Button>
