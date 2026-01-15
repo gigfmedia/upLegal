@@ -169,27 +169,26 @@ export const MercadoPagoConnect: React.FC = () => {
     }
   };
 
-  const handleConnect = async () => {
-    try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-      
-      // Request secure Auth URL from backend (PKCE enabled)
-      const response = await fetch(`${API_BASE_URL}/api/mercadopago/auth-url`);
-      const data = await response.json();
-      
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No auth URL returned');
-      }
-    } catch (error) {
-      console.error('Error initiating connection:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo iniciar la conexión con MercadoPago.',
-        variant: 'destructive'
-      });
-    }
+  const handleConnect = () => {
+    const clientId = import.meta.env.VITE_MERCADOPAGO_CLIENT_ID;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    
+    // IMPORTANT: redirect_uri must point to the BACKEND server, not the frontend
+    const redirectUri = `${apiBaseUrl}/api/mercadopago/oauth/callback`;
+    const state = Math.random().toString(36).substring(2);
+
+    // Save state for validation
+    localStorage.setItem('mp_auth_state', state);
+
+    // Build OAuth URL - MercadoPago uses a unified OAuth endpoint for all regions
+    const authUrl = new URL('https://auth.mercadopago.com/authorization');
+    authUrl.searchParams.append('client_id', clientId);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('platform_id', 'mp');
+    authUrl.searchParams.append('state', state);
+    authUrl.searchParams.append('redirect_uri', redirectUri);
+
+    window.location.href = authUrl.toString();
   };
 
   const handleDisconnect = async () => {
