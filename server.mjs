@@ -11,6 +11,7 @@ import { load } from 'cheerio';
 import axios from 'axios';
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import cookieParser from 'cookie-parser';
 
 // ... (imports)
 
@@ -91,6 +92,7 @@ const corsOptions = {
 // Apply middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 
 // Helper to normalize strings safely
 const safeTrim = (value) => {
@@ -1000,6 +1002,47 @@ app.get('/api/bookings/:bookingId', async (req, res) => {
 // ============================================
 
 // OAuth callback endpoint - receives authorization code from MercadoPago
+app.get('/api/mercadopago/auth-url', (req, res) => {
+    try {
+        const verifier = generateCodeVerifier();
+        const challenge = generateCodeChallenge(verifier);
+        const state = crypto.randomUUID(); // Generate secure state
+        
+        const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+        const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
+        const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
+
+        // Build Auth URL
+        const authUrl = new URL('https://auth.mercadopago.com/authorization');
+        authUrl.searchParams.append('client_id', clientId);
+        authUrl.searchParams.append('response_type', 'code');
+        authUrl.searchParams.append('platform_id', 'mp');
+        authUrl.searchParams.append('state', state);
+        authUrl.searchParams.append('redirect_uri', redirectUri);
+        authUrl.searchParams.append('code_challenge', challenge);
+        authUrl.searchParams.append('code_challenge_method', 'S256');
+
+        console.log('--- PKCE DEBUG ---');
+        console.log('Generated Verifier:', verifier);
+        console.log('Generated Challenge:', challenge);
+
+        // Store verifier in HttpOnly cookie (short-lived, 10 min)
+        res.cookie('mp_code_verifier', verifier, {
+            httpOnly: true,
+            secure: true, // Always true for Render/Production
+            sameSite: 'lax', // Use 'lax' to allow redirect to work
+            maxAge: 10 * 60 * 1000 // 10 minutes
+        });
+
+        res.json({ url: authUrl.toString() });
+
+    } catch (error) {
+        console.error('Error generating Auth URL:', error);
+        res.status(500).json({ error: 'Failed to generate auth url' });
+    }
+});
+
+// OAuth callback endpoint - receives authorization code from MercadoPago
 app.get('/api/mercadopago/oauth/callback', async (req, res) => {
   try {
     const { code, state, error: oauthError } = req.query;
@@ -1015,27 +1058,35 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=no_code`);
     }
 
+    // Backend-Initiated: Retrieve verifier from cookie
+    const codeVerifier = req.cookies.mp_code_verifier;
+    
+    console.log('--- MSG OAUTH DEBUG (PKCE) ---');
+    console.log('Code Verifier from Cookie:', codeVerifier ? 'YES' : 'NO/MISSING');
+
+    if (!codeVerifier) {
+         console.warn('WARNING: code_verifier cookie is missing. This might fail if PKCE was enforced.');
+    }
+
     // Build redirect_uri - MUST match exactly what was used in the authorization request
     const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
 
-    console.log('--- MSG OAUTH DEBUG ---');
-    console.log('Redirect URI sent:', redirectUri);
-    console.log('Code received:', code ? 'YES (masked)' : 'NO');
-    console.log('Client ID Prefix:', process.env.VITE_MERCADOPAGO_CLIENT_ID ? process.env.VITE_MERCADOPAGO_CLIENT_ID.substring(0, 5) : 'UNDEFINED');
-    console.log('Client Secret Present:', process.env.VITE_MERCADOPAGO_CLIENT_SECRET ? 'YES' : 'NO/UNDEFINED');
-
-    if (!process.env.VITE_MERCADOPAGO_CLIENT_SECRET) {
-      console.error('CRITICAL: Client Secret is missing! This may cause MP to demand code_verifier.');
-    }
-    
+    // Exchange code for access token
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
       client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
       code: code,
-      redirect_uri: redirectUri
+      redirect_uri: redirectUri,
     });
+    
+    // Add verifier if present
+    if (codeVerifier) {
+        params.append('code_verifier', codeVerifier);
+    }
+
+
 
     // Exchange code for access token
     const tokenResponse = await fetch('https://api.mercadopago.com/oauth/token', {
