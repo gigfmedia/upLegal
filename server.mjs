@@ -1123,12 +1123,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       code: code,
       redirect_uri: redirectUri,
     });
-      grant_type: 'authorization_code',
-      client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
-      client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
-      code: code,
-      redirect_uri: redirectUri,
-    });
+
     
     // Add verifier if present
     if (codeVerifier) {
