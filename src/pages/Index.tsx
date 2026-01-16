@@ -461,7 +461,7 @@ const Index = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="bg-blue-200 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2">Accede a asesoría legal online en Chile con abogados verificados.</p>
+          <p className="bg-blue-200 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2">Accede a asesoría legal online en Chile con abogados verificados</p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 mt-8">
             Encuentra el 
             <span className="text-blue-600 underline-offset-8"> Abogado </span>
@@ -482,7 +482,7 @@ const Index = () => {
               onFiltersClick={() => {}}
               showMobileFilters={false}
               buttonWidth="1/3"
-              className="h-16"
+              className="h-10"
             />
           </div>
 

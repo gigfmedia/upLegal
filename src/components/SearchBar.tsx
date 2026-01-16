@@ -61,7 +61,7 @@ export function SearchBar({
         <Button 
           onClick={onSearch}
           className={cn(
-            'h-full bg-blue-600 hover:bg-blue-700 text-white font-medium',
+            'bg-blue-600 hover:bg-blue-700 text-white font-medium',
             buttonWidthMap[buttonWidth] ?? 'w-1/3'
           )}
         >

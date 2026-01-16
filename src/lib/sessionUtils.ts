@@ -57,13 +57,18 @@ export const validateAndRefreshSession = async (): Promise<boolean> => {
  * Creates an interceptor for API calls that require authentication
  * Automatically refreshes the session if needed before making the request
  */
-export const withAuth = async <T>({
-  apiCall,
-  options = { autoRefresh: true }
-}: {
-  apiCall: () => Promise<T>;
-  options?: { autoRefresh?: boolean };
-}): Promise<T> => {
+// Simple type for auth options
+interface AuthOptions {
+  autoRefresh: boolean;
+}
+
+export async function withAuth<T>(
+  apiCall: () => Promise<T>,
+  options?: { autoRefresh?: boolean }
+): Promise<T> {
+  const opts: AuthOptions = {
+    autoRefresh: options?.autoRefresh ?? true
+  };
   try {
     if (options.autoRefresh) {
       const isValid = await validateAndRefreshSession();
