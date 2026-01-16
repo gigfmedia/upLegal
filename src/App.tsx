@@ -204,11 +204,24 @@ const AppContent = () => {
       const params = new URLSearchParams(rawHash.slice(1));
       const type = params.get('type');
       const emailParam = params.get('email') || params.get('user_email');
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
 
       hashHandledRef.current = true;
 
       try {
-        await supabase.auth.getSession();
+        if (accessToken && refreshToken) {
+          const { error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (setSessionError) {
+            console.error('Error estableciendo la sesión desde la invitación:', setSessionError);
+          }
+        } else {
+          await supabase.auth.getSession();
+        }
       } catch (error) {
         console.error('Error processing Supabase session from hash:', error);
       }
