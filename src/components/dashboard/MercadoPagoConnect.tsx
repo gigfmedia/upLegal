@@ -5,6 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Loader2, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 interface MercadoPagoAccount {
   id: string;
@@ -194,10 +206,6 @@ export const MercadoPagoConnect: React.FC = () => {
 
   const handleDisconnect = async () => {
     if (!user?.id) return;
-    
-    if (!confirm('¿Estás seguro de que deseas desconectar tu cuenta de MercadoPago?')) {
-      return;
-    }
 
     try {
       setIsDisconnecting(true);
