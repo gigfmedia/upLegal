@@ -270,24 +270,41 @@ export const MercadoPagoConnect: React.FC = () => {
               <p>Conectada desde: {new Date(account.created_at).toLocaleDateString('es-CL')}</p>
             </div>
 
-            <Button
-              variant="destructive"
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="w-full"
-            >
-              {isDisconnecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Desconectando...
-                </>
-              ) : (
-                <>
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Desconectar cuenta
-                </>
-              )}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={isDisconnecting}
+                  className="w-full"
+                >
+                  {isDisconnecting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Desconectando...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Desconectar cuenta
+                    </>
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción desconectará tu cuenta de MercadoPago. Dejarás de recibir los pagos directamente hasta que vuelvas a conectarla.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDisconnect} className="bg-red-600 hover:bg-red-700">
+                    Desconectar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         ) : (
           <>
