@@ -5,6 +5,7 @@ import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import Header from '@/components/Header';
 
 type InviteStatus = 'checking' | 'needs_password' | 'success' | 'error';
 
@@ -116,6 +117,7 @@ export default function AcceptInvite() {
   if (status === 'success') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <Header />
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="rounded-full bg-green-100 p-3">
@@ -131,6 +133,7 @@ export default function AcceptInvite() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <Header />
       <div className="max-w-md w-full space-y-6 bg-white p-8 rounded-lg shadow">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold text-gray-900">Configura tu contraseña</h1>
