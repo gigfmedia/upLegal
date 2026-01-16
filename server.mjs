@@ -1251,7 +1251,25 @@ app.post('/api/mercadopago/save-account', async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Error upserting mercadopago_accounts:', error);
       return res.status(500).json({ error: 'Failed to save account' });
+    }
+
+    // SYNC TO PROFILES: Also update the profiles table to keep it in sync
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        mercado_pago_connected: true,
+        mercado_pago_user_id: mercadopagoUserId,
+        mercado_pago_email: email,
+        mercado_pago_nickname: nickname,
+        mercado_pago_connected_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+
+    if (profileError) {
+      console.warn('Warning: Failed to sync MercadoPago status to profiles table:', profileError);
+      // We don't fail the request here because the main account table was updated, but it's worth logging
     }
 
     res.json({ success: true, account: data });
@@ -1330,6 +1348,22 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
     if (error) {
       console.error('Error disconnecting account:', error);
       return res.status(500).json({ error: 'Failed to disconnect account' });
+    }
+
+    // SYNC TO PROFILES: Update profiles table to reflect disconnection
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        mercado_pago_connected: false,
+        mercado_pago_connected_at: null,
+        mercado_pago_user_id: null,
+        mercado_pago_email: null,
+        mercado_pago_nickname: null
+      })
+      .eq('id', userId);
+
+    if (profileError) {
+       console.warn('Warning: Failed to sync disconnection to profiles table:', profileError);
     }
 
     res.json({ success: true });
