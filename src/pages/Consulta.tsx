@@ -15,7 +15,7 @@ export default function Consulta() {
             <p className="text-xl text-muted-foreground">
               Consulta legal online inmediata con un abogado verificado en Chile.
             </p>
-            <p className="text-sm text-muted-foreground">Duración aproximada: 30 minutos · Pago único · Videollamada</p>
+            <p className="text-sm text-muted-foreground">Duración aproximada: 20-30 minutos · Pago único · Videollamada</p>
             <p className="text-sm text-muted-foreground">La duración puede variar según la complejidad del caso</p>
             <div className="pt-2">
               <Button 
