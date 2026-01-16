@@ -1,5 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { MessageProvider } from '@/contexts/MessageProvider';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
+import { supabase } from '@/lib/supabaseClient';
 
 // Layouts (keep these eager as they're used frequently)
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -68,6 +69,7 @@ const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
+const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
@@ -182,9 +184,51 @@ const setupGlobalErrorHandlers = () => {
 
 const AppContent = () => {
   const { isLoading } = useAuth();
+  const navigate = useNavigate();
   
   // Track page views
   usePageTracking();
+
+  const hashHandledRef = useRef(false);
+
+  useEffect(() => {
+    const handleSupabaseHash = async () => {
+      if (hashHandledRef.current) return;
+      if (typeof window === 'undefined') return;
+
+      const rawHash = window.location.hash;
+      if (!rawHash || rawHash.length <= 1 || !rawHash.includes('access_token')) {
+        return;
+      }
+
+      const params = new URLSearchParams(rawHash.slice(1));
+      const type = params.get('type');
+      const emailParam = params.get('email') || params.get('user_email');
+
+      hashHandledRef.current = true;
+
+      try {
+        await supabase.auth.getSession();
+      } catch (error) {
+        console.error('Error processing Supabase session from hash:', error);
+      }
+
+      const cleanUrl = window.location.pathname + window.location.search;
+      window.history.replaceState(null, '', cleanUrl);
+
+      if (type === 'invite') {
+        const query = new URLSearchParams({ type: 'invite' });
+        if (emailParam) {
+          query.set('email', emailParam);
+        }
+        navigate(`/auth/accept-invite?${query.toString()}`);
+      } else {
+        navigate('/auth/callback');
+      }
+    };
+
+    handleSupabaseHash();
+  }, [navigate]);
   
   // Only show loading state for the initial auth check
   const [initialAuthCheck, setInitialAuthCheck] = useState(true);
@@ -344,6 +388,7 @@ const AppContent = () => {
               <Route path="/verify-email" element={<EmailVerification />} />
               <Route path="/auth/verify" element={<EmailVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/accept-invite" element={<AcceptInvite />} />
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="test-email" element={
