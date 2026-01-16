@@ -74,6 +74,7 @@ const mp = new Payment({ client: mpClient });
 
 // Initialize Express app
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Render/Heroku load balancer) for secure cookies
 
 // Configure CORS
 const corsOptions = {
@@ -1051,11 +1052,12 @@ app.get('/api/mercadopago/auth-url', (req, res) => {
         // Store verifier in HttpOnly cookie (short-lived, 10 min)
         res.cookie('mp_code_verifier', verifier, {
             httpOnly: true,
-            secure: true, // Always true for Render/Production
-            sameSite: 'lax', // Use 'lax' to allow redirect to work
+            secure: true, // Required for SameSite: None
+            sameSite: 'none', // Allow cross-site usage which is needed for redirects sometimes
             maxAge: 10 * 60 * 1000 // 10 minutes
         });
 
+        console.log('Set Cookie settings: httpOnly=true, secure=true, sameSite=none');
         res.json({ url: authUrl.toString() });
 
     } catch (error) {

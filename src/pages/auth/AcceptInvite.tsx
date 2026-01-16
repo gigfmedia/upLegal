@@ -114,7 +114,7 @@ export default function AcceptInvite() {
 
       setTimeout(() => {
         if (role === 'lawyer') {
-          navigate('/dashboard/profile/setup');
+          navigate('/lawyer/dashboard');
         } else {
           navigate('/dashboard');
         }
