@@ -1001,6 +1001,28 @@ app.get('/api/bookings/:bookingId', async (req, res) => {
 // MERCADOPAGO OAUTH ENDPOINTS
 // ============================================
 
+// ============================================
+// MERCADOPAGO OAUTH PKCE HELPERS
+// ============================================
+function base64URLEncode(str) {
+    return str.toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+}
+
+function sha256(buffer) {
+    return crypto.createHash('sha256').update(buffer).digest();
+}
+
+function generateCodeVerifier() {
+    return base64URLEncode(crypto.randomBytes(32));
+}
+
+function generateCodeChallenge(verifier) {
+    return base64URLEncode(sha256(verifier));
+}
+
 // OAuth callback endpoint - receives authorization code from MercadoPago
 app.get('/api/mercadopago/auth-url', (req, res) => {
     try {
