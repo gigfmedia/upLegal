@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import Header from '@/components/Header';
 
@@ -20,6 +21,7 @@ export default function AcceptInvite() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [role, setRole] = useState<'client' | 'lawyer'>('client');
 
   const hashParams = useMemo(() => {
     if (typeof window === 'undefined') return new URLSearchParams();
@@ -46,6 +48,9 @@ export default function AcceptInvite() {
         }
 
         setEmail(session.user.email || inviteEmail || '');
+        const metadataRole = (session.user.user_metadata?.role as 'client' | 'lawyer' | undefined) || undefined;
+        const inviteRoleParam = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
+        setRole(inviteRoleParam === 'lawyer' ? 'lawyer' : inviteRoleParam === 'client' ? 'client' : metadataRole ?? 'client');
 
         if (inviteType !== 'invite') {
           setStatus('error');
@@ -80,11 +85,26 @@ export default function AcceptInvite() {
 
     setIsSubmitting(true);
     try {
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+      if (getUserError || !user) {
+        throw getUserError || new Error('No pudimos obtener tu sesión. Intenta abrir el enlace nuevamente.');
+      }
+
       const { error: updateError } = await supabase.auth.updateUser({
         password,
+        data: {
+          role,
+        },
       });
 
       if (updateError) throw updateError;
+
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        role,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
 
       setStatus('success');
       toast({
@@ -93,7 +113,11 @@ export default function AcceptInvite() {
       });
 
       setTimeout(() => {
-        navigate('/dashboard');
+        if (role === 'lawyer') {
+          navigate('/dashboard/profile/setup');
+        } else {
+          navigate('/dashboard');
+        }
       }, 1500);
     } catch (err) {
       console.error('Error actualizando la contraseña:', err);
@@ -155,8 +179,53 @@ export default function AcceptInvite() {
 
         {status !== 'error' && (
           <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-3">
+              <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
+              <div className="space-y-3">
+                <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                  role === 'client'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                  <div className="flex items-center h-5">
+                    <input
+                      type="radio"
+                      name="accountType"
+                      value="client"
+                      checked={role === 'client'}
+                      onChange={() => setRole('client')}
+                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <span className="font-medium text-gray-900">Soy Cliente - Busco servicios legales</span>
+                  </div>
+                </label>
+
+                <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                  role === 'lawyer'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                  <div className="flex items-center h-5">
+                    <input
+                      type="radio"
+                      name="accountType"
+                      value="lawyer"
+                      checked={role === 'lawyer'}
+                      onChange={() => setRole('lawyer')}
+                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <span className="font-medium text-gray-900">Soy Abogado - Ofrezco servicios legales</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Contraseña</label>
+              <Label className="text-sm font-medium text-gray-700">Contraseña</Label>
               <Input
                 type="password"
                 required
@@ -167,7 +236,7 @@ export default function AcceptInvite() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Confirmar contraseña</label>
+              <Label className="text-sm font-medium text-gray-700">Confirmar contraseña</Label>
               <Input
                 type="password"
                 required
