@@ -126,16 +126,29 @@ export default function ConsultaDetalle() {
           <Label htmlFor="category">Área de derecho</Label>
           <Select onValueChange={handleCategoryChange} value={formData.category} required>
             <SelectTrigger>
-              <SelectValue placeholder="Selecciona un área" />
+              <SelectValue placeholder="¿Qué tipo de problema legal tienes?" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Laboral">Laboral</SelectItem>
-              <SelectItem value="Civil">Civil</SelectItem>
-              <SelectItem value="Familia">Familia</SelectItem>
-              <SelectItem value="Penal">Penal</SelectItem>
+              <SelectItem value="Familia">
+                Familia (divorcio, pensión, hijos)
+              </SelectItem>
+              <SelectItem value="Laboral">
+                Laboral (despido, finiquito)
+              </SelectItem>
+              <SelectItem value="Civil">
+                Civil (contratos, deudas)
+              </SelectItem>
+              <SelectItem value="Penal">
+                Penal (denuncias, defensa)
+              </SelectItem>
             </SelectContent>
           </Select>
+
+          <p className="text-xs text-muted-foreground mt-1">
+            No te preocupes si no eliges el área exacta, el abogado te orientará.
+          </p>
         </div>
+
         
         <div className="space-y-2">
           <Label htmlFor="description">Describe tu problema legal</Label>
@@ -160,7 +173,7 @@ export default function ConsultaDetalle() {
           <Button 
             type="submit" 
             className="w-full py-6 text-sm bg-blue-700 hover:bg-blue-800"
-            disabled={isLoading}
+            disabled={isLoading || !formData.category}
           >
             {isLoading ? 'Procesando pago...' : 'Pagar $30.000'}
           </Button>
