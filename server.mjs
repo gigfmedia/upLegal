@@ -1025,7 +1025,7 @@ function generateCodeChallenge(verifier) {
 }
 
 // OAuth callback endpoint - receives authorization code from MercadoPago
-app.get('/api/mercadopago/auth-url', (req, res) => {
+app.get('/api/mercadopago/auth-url', async (req, res) => {
     try {
         const verifier = generateCodeVerifier();
         const challenge = generateCodeChallenge(verifier);
@@ -1035,29 +1035,31 @@ app.get('/api/mercadopago/auth-url', (req, res) => {
         const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
         const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
 
+        // Store verifier in DB (Cookies fail on Render due to cross-site issues)
+        const { error: dbError } = await supabase
+            .from('auth_states')
+            .insert({ state, code_verifier: verifier });
+
+        if (dbError) {
+            console.error('Failed to store PKCE state:', dbError);
+            // Fallback for dev? No, strictly require DB for production stability
+            return res.status(500).json({ error: 'Failed to initialize secure session' });
+        }
+
         // Build Auth URL
         const authUrl = new URL('https://auth.mercadopago.com/authorization');
         authUrl.searchParams.append('client_id', clientId);
         authUrl.searchParams.append('response_type', 'code');
         authUrl.searchParams.append('platform_id', 'mp');
-        authUrl.searchParams.append('state', state);
+        authUrl.searchParams.append('state', state); // Valid state from DB
         authUrl.searchParams.append('redirect_uri', redirectUri);
         authUrl.searchParams.append('code_challenge', challenge);
         authUrl.searchParams.append('code_challenge_method', 'S256');
 
-        console.log('--- PKCE DEBUG ---');
+        console.log('--- PKCE DEBUG (DB-BACKED) ---');
         console.log('Generated Verifier:', verifier);
-        console.log('Generated Challenge:', challenge);
+        console.log('Stored State:', state);
 
-        // Store verifier in HttpOnly cookie (short-lived, 10 min)
-        res.cookie('mp_code_verifier', verifier, {
-            httpOnly: true,
-            secure: true, // Required for SameSite: None
-            sameSite: 'none', // Allow cross-site usage which is needed for redirects sometimes
-            maxAge: 10 * 60 * 1000 // 10 minutes
-        });
-
-        console.log('Set Cookie settings: httpOnly=true, secure=true, sameSite=none');
         res.json({ url: authUrl.toString() });
 
     } catch (error) {
@@ -1082,14 +1084,31 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=no_code`);
     }
 
-    // Backend-Initiated: Retrieve verifier from cookie
-    const codeVerifier = req.cookies.mp_code_verifier;
+    // Backend-Initiated: Retrieve verifier from TABLE using state
+    let codeVerifier = null;
     
-    console.log('--- MSG OAUTH DEBUG (PKCE) ---');
-    console.log('Code Verifier from Cookie:', codeVerifier ? 'YES' : 'NO/MISSING');
+    if (state) {
+        const { data: authState, error: stateError } = await supabase
+            .from('auth_states')
+            .select('code_verifier')
+            .eq('state', state)
+            .maybeSingle();
+
+        if (authState) {
+            codeVerifier = authState.code_verifier;
+            // Cleanup: delete used state
+            await supabase.from('auth_states').delete().eq('state', state);
+        } else {
+            console.warn('PKCE State not found in DB:', state);
+        }
+    }
+    
+    console.log('--- MSG OAUTH DEBUG (PKCE DB) ---');
+    console.log('State received:', state);
+    console.log('Code Verifier found:', codeVerifier ? 'YES' : 'NO/MISSING');
 
     if (!codeVerifier) {
-         console.warn('WARNING: code_verifier cookie is missing. This might fail if PKCE was enforced.');
+         console.warn('WARNING: code_verifier is missing. Link might have expired or state is invalid.');
     }
 
     // Build redirect_uri - MUST match exactly what was used in the authorization request
@@ -1098,6 +1117,12 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     // Exchange code for access token
     const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
+      client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
+      code: code,
+      redirect_uri: redirectUri,
+    });
       grant_type: 'authorization_code',
       client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
       client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
