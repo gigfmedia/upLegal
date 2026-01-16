@@ -50,7 +50,7 @@ const DashboardPayments = lazy(() => import('./pages/DashboardPayments'));
 const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 // Admin pages
-const AdminDashboard = lazy(() => import('./pages/admin/analytics')); // Using analytics as dashboard for now
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/analytics'));
 const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
