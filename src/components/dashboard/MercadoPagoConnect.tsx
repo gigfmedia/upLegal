@@ -275,7 +275,13 @@ export const MercadoPagoConnect: React.FC = () => {
             </Alert>
             
             <div className="text-sm text-gray-600">
-              <p>Conectada desde: {new Date(account.created_at).toLocaleDateString('es-CL')}</p>
+              <p>Conectada desde: {new Date(account.created_at).toLocaleString('es-CL', { 
+                day: '2-digit', 
+                month: '2-digit', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}</p>
             </div>
 
             <AlertDialog>
