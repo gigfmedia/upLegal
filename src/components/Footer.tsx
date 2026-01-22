@@ -8,10 +8,21 @@ const Footer = () => {
   
   // Set up intersection observer for the featured lawyers section
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
     const handleIntersection = (entries: IntersectionObserverEntry[]) => {
       entries.forEach(entry => {
         if (entry.target.id === 'abogados-destacados') {
-          setIsFeaturedSectionVisible(entry.isIntersecting);
+          // Usamos un umbral más alto para evitar parpadeos
+          const isVisible = entry.intersectionRatio > 0.1;
+          
+          // Usar un timeout para agrupar actualizaciones rápidas
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            setIsFeaturedSectionVisible(isVisible);
+          }, 50); // Pequeño retraso para agrupar actualizaciones
         }
       });
     };
@@ -19,8 +30,37 @@ const Footer = () => {
     const observer = new IntersectionObserver(handleIntersection, {
       root: null,
       rootMargin: '0px',
-      threshold: 0.1
+      threshold: [0.1, 0.5, 0.8] // Umbrales más espaciados
     });
+
+    // Usar requestAnimationFrame para optimizar el scroll
+    const handleScroll = () => {
+      lastScrollY = window.scrollY;
+      
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const featuredSection = document.getElementById('abogados-destacados');
+          if (featuredSection) {
+            const rect = featuredSection.getBoundingClientRect();
+            // Ajustado para que se oculte antes de llegar al botón 'Ver todos'
+            const isInView = (
+              rect.top <= window.innerHeight * 0.9 && 
+              rect.bottom >= window.innerHeight * 0.1
+            );
+            
+            // Solo actualizar el estado si hay un cambio real
+            setIsFeaturedSectionVisible(prev => {
+              if (prev !== isInView) {
+                return isInView;
+              }
+              return prev;
+            });
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
 
     // Usar un pequeño retraso para asegurar que el DOM esté listo
     const timer = setTimeout(() => {
@@ -28,18 +68,31 @@ const Footer = () => {
       
       if (featuredSection) {
         observer.observe(featuredSection);
+        // Verificación inicial más precisa
+        const rect = featuredSection.getBoundingClientRect();
+        // Ajustado para que se oculte antes de llegar al botón 'Ver todos'
+        const isInView = (
+          rect.top <= window.innerHeight * 0.9 && 
+          rect.bottom >= window.innerHeight * 0.1
+        );
+        setIsFeaturedSectionVisible(isInView);
       } else {
         console.warn('No se encontró la sección de abogados destacados');
       }
-    }, 500);
+      
+      // Agregar el event listener después de la verificación inicial
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }, 200);
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(timeoutId);
       const featuredSection = document.getElementById('abogados-destacados');
       if (featuredSection) {
         observer.unobserve(featuredSection);
       }
       observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
   

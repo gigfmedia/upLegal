@@ -51,7 +51,7 @@ export function SearchBar({
           <Input
             type="text"
             placeholder="Ej: despido injustificado, herencia, contrato, divorcio..."
-            className="pl-9 h-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
+            className="pl-9 h-12 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -61,7 +61,7 @@ export function SearchBar({
         <Button 
           onClick={onSearch}
           className={cn(
-            'bg-blue-600 hover:bg-blue-700 text-white font-medium',
+            'bg-blue-600 hover:bg-blue-700 text-white font-medium h-12',
             buttonWidthMap[buttonWidth] ?? 'w-1/3'
           )}
         >
