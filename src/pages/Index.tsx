@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -8,23 +8,15 @@ import { SearchBar } from "@/components/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
-  Star, 
-  MapPin, 
   Users, 
   Shield, 
   FileText, 
-  Loader2, 
   Briefcase, 
   Building2, 
-  ShieldCheck, 
-  Home,
-  MessageCircle,
-  Calendar,
-  Clock, 
-  User,
   Scale,
   DollarSign,
-  Lightbulb
+  Lightbulb,
+  ChevronDown
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,9 +54,14 @@ const Index = () => {
   const [featuredLawyers, setFeaturedLawyers] = useState<Lawyer[]>([]);
   const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
   
-  // Estados para el abogado registrado
-  const [registeredLawyer, setRegisteredLawyer] = useState<Lawyer | null>(null);
-  const [isLoadingLawyer, setIsLoadingLawyer] = useState(true);
+
+  
+  // Estado para FAQs
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  
+  // Estado para placeholders rotativos con animación de escritura
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const placeholderRef = useRef<HTMLInputElement | null>(null);
 
   // Check for login parameter in URL and open auth modal
   useEffect(() => {
@@ -76,87 +73,68 @@ const Index = () => {
       window.history.replaceState({}, '', '/');
     }
   }, []);
-
-  // Handle contact click
-  const handleContactClick = (lawyer: Lawyer) => {
-    setSelectedLawyer(lawyer);
-    setShowContactModal(true);
-  };
-
-  // Handle schedule click
-  const handleScheduleClick = (lawyer: Lawyer) => {
-    setSelectedLawyer(lawyer);
-    setShowScheduleModal(true);
-  };
-
-
-
-  // Fetch the registered lawyer data
+  
+  // Typing animation effect for placeholders - optimized to not cause re-renders
   useEffect(() => {
-    const fetchRegisteredLawyer = async () => {
-      try {
-        setIsLoadingLawyer(true);
-        // Search for verified lawyers with empty query to get all
-        const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { lawyers } = await searchLawyers({ page: 1, pageSize: 1 });
-        
-        if (lawyers && lawyers.length > 0) {
-          const lawyer = lawyers[0];
-          setRegisteredLawyer({
-            id: lawyer.id || '',
-            name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim(),
-            specialties: lawyer.specialties || [],
-            rating: lawyer.rating || 0,
-            reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Sin ubicación',
-            cases: 0, // Default value
-            hourlyRate: lawyer.hourly_rate_clp || 0,
-            consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
-            image: lawyer.avatar_url || '',
-            bio: lawyer.bio || '',
-            verified: lawyer.verified || false,
-            availability: {
-              availableToday: true,
-              availableThisWeek: true,
-              quickResponse: true,
-              emergencyConsultations: true
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching registered lawyer:', error);
-      } finally {
-        setIsLoadingLawyer(false);
+    const placeholders = [
+      "Despido injustificado…",
+      "Pensión de alimentos…",
+      "Divorcio…",
+      "Deudas…",
+      "Herencias…"
+    ];
+    
+    const currentPlaceholder = placeholders[placeholderIndex];
+    let currentIndex = 0;
+
+    // Find the search input and update its placeholder directly
+    const updatePlaceholder = (text: string) => {
+      const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+      if (searchInput) {
+        searchInput.placeholder = text;
       }
     };
 
-    fetchRegisteredLawyer();
+    updatePlaceholder("");
+
+    // Typing animation
+    const typingInterval = setInterval(() => {
+      if (currentIndex < currentPlaceholder.length) {
+        updatePlaceholder(currentPlaceholder.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        clearInterval(typingInterval);
+        
+        // Wait before moving to next placeholder
+        setTimeout(() => {
+          setPlaceholderIndex((prevIndex) => (prevIndex + 1) % placeholders.length);
+        }, 3000);
+      }
+    }, 60);
+
+    return () => clearInterval(typingInterval);
+  }, [placeholderIndex]);
+
+  // Handle contact click - memoized to prevent re-renders
+  const handleContactClick = useCallback((lawyer: Lawyer) => {
+    setSelectedLawyer(lawyer);
+    setShowContactModal(true);
   }, []);
 
-  // Función para forzar la actualización del contador
-  const refreshCounters = async () => {
-    try {
-      setIsLoadingCount(prev => ({ ...prev, verified: true }));
-      // Limpiar la caché forzando una nueva consulta
-      const { getVerifiedLawyersCount } = await import('@/lib/verifiedLawyers');
-      const count = await getVerifiedLawyersCount();
-      setVerifiedCount(count);
-    } catch (error) {
-      console.error('Error al actualizar el contador:', error);
-    } finally {
-      setIsLoadingCount(prev => ({ ...prev, verified: false }));
-    }
-  };
+  // Handle schedule click - memoized to prevent re-renders
+  const handleScheduleClick = useCallback((lawyer: Lawyer) => {
+    setSelectedLawyer(lawyer);
+    setShowScheduleModal(true);
+  }, []);
 
-  // Efecto para cargar los contadores y suscribirse a cambios
+
+
+
+
+  // Efecto para cargar los contadores (sin suscripciones en tiempo real para mejor performance)
   useEffect(() => {
-    let isMounted = true;
-    const unsubscribeFunctions: Array<() => void> = [];
-
-    // Función para manejar la carga inicial
     const loadInitialCounts = async () => {
       try {
-        // Mostrar carga mientras se obtienen los datos
         setIsLoadingCount({
           verified: true,
           completed: true
@@ -168,66 +146,22 @@ const Index = () => {
           getCompletedCasesCount()
         ]);
         
-        if (isMounted) {
-          setVerifiedCount(verifiedCount);
-          setCompletedCasesCount(completedCount);
-        }
+        setVerifiedCount(verifiedCount);
+        setCompletedCasesCount(completedCount);
       } catch (error) {
         console.error('Error al cargar los contadores:', error);
         // Establecer valores por defecto en caso de error
-        if (isMounted) {
-          setVerifiedCount(0);
-          setCompletedCasesCount(1000);
-        }
+        setVerifiedCount(0);
+        setCompletedCasesCount(1000);
       } finally {
-        if (isMounted) {
-          setIsLoadingCount({
-            verified: false,
-            completed: false
-          });
-        }
+        setIsLoadingCount({
+          verified: false,
+          completed: false
+        });
       }
     };
 
-    // Configurar las suscripciones
-    const setupSubscriptions = () => {
-      if (!isMounted) return;
-
-      // Suscripción a cambios en abogados verificados
-      const verifiedUnsubscribe = subscribeToVerifiedLawyers((count) => {
-        if (isMounted) {
-          setVerifiedCount(count);
-        }
-      });
-      unsubscribeFunctions.push(verifiedUnsubscribe);
-
-      // Suscripción a cambios en casos resueltos
-      const casesUnsubscribe = subscribeToCompletedCases((count) => {
-        if (isMounted) {
-          setCompletedCasesCount(count);
-        }
-      });
-      unsubscribeFunctions.push(casesUnsubscribe);
-    };
-
-    // Cargar datos iniciales
     loadInitialCounts();
-    
-    // Configurar suscripciones con un pequeño retraso para no bloquear la UI
-    const subscriptionTimer = setTimeout(setupSubscriptions, 100);
-
-    // Función de limpieza
-    return () => {
-      isMounted = false;
-      clearTimeout(subscriptionTimer);
-      unsubscribeFunctions.forEach(unsubscribe => {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error('Error al cancelar suscripción:', error);
-        }
-      });
-    };
   }, []);
 
   // Fetch featured lawyers
@@ -236,26 +170,9 @@ const Index = () => {
       try {
         setIsLoadingFeatured(true);
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { lawyers, total } = await searchLawyers({ page: 1, pageSize: 20 }); // Get more lawyers to ensure we have enough complete profiles
+        const { lawyers } = await searchLawyers({ page: 1, pageSize: 9 }); // Only fetch what we display
         
         if (lawyers && lawyers.length > 0) {
-          // Get appointment counts for all lawyers (excluding pending payments)
-          const lawyerIds = lawyers.map(l => l.id);
-          const { data: appointmentCounts, error: countError } = await supabase
-            .from('appointments')
-            .select('lawyer_id, status')
-            .in('lawyer_id', lawyerIds)
-            .neq('status', 'pending_payment');
-          
-          // Create a map of lawyer_id to appointment count
-          const countsMap = new Map<string, number>();
-          if (appointmentCounts && !countError) {
-            appointmentCounts.forEach(apt => {
-              const count = countsMap.get(apt.lawyer_id) || 0;
-              countsMap.set(apt.lawyer_id, count + 1);
-            });
-          }
-          
           const formattedLawyers = lawyers
             .filter((lawyer: any) => {
               const firstName = lawyer.first_name?.toLowerCase() || '';
@@ -274,11 +191,7 @@ const Index = () => {
                 lawyer.location?.trim() && 
                 lawyer.hourly_rate_clp > 0;
               
-              if (!isProfileComplete) {
-                return false;
-              }
-              
-              return true;
+              return isProfileComplete;
             })
             .map(lawyer => ({
             id: lawyer.id || '',
@@ -288,13 +201,13 @@ const Index = () => {
             rating: lawyer.rating || 0,
             reviews: lawyer.review_count || 0,
             location: lawyer.location || 'Sin ubicación',
-            cases: countsMap.get(lawyer.id) || 0, // Get real appointment count
+            cases: 0, // Simplified - not fetching appointment counts for performance
             hourlyRate: lawyer.hourly_rate_clp || 0,
             consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
             image: lawyer.avatar_url || '',
             bio: lawyer.bio || '',
             verified: lawyer.verified || false,
-            created_at: lawyer.created_at, // Add created_at for sorting
+            created_at: lawyer.created_at,
             availability: {
               availableToday: true,
               availableThisWeek: true,
@@ -305,14 +218,12 @@ const Index = () => {
           
           // Sort lawyers by creation date (newest first)
           const sortedLawyers = [...formattedLawyers].sort((a: any, b: any) => {
-            // First priority: Creation date (newest first)
             const dateA = new Date(a.created_at || 0).getTime();
             const dateB = new Date(b.created_at || 0).getTime();
-            return dateB - dateA; // Sort in descending order (newest first)
+            return dateB - dateA;
           });
           
-          // Take up to 9 featured lawyers
-          setFeaturedLawyers(sortedLawyers.slice(0, 9));
+          setFeaturedLawyers(sortedLawyers);
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
@@ -454,22 +365,21 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-t from-blue-400 to-indigo-600">
       
       <Header onAuthClick={handleAuthClick} />
       
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="bg-blue-200 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2">Accede a asesoría legal online en Chile con abogados verificados</p>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 mt-8">
-            Encuentra el 
-            <span className="text-blue-600 underline-offset-8"> Abogado </span>
-            ideal<br /> para tu asesoría legal online
+          <p className="border border-white rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4">Abogados verificados en todo Chile</p>
+          <h1 className="text-3xl sm:text-5xl leading-[1.4] sm:leading-[1.2] font-bold text-white mb-8 mt-8">
+            Asesoría legal online con&nbsp;
+            <span className="text-white underline underline-offset-8">Abogados verificados.</span> 
+            <br />Rápido, seguro y sin complicaciones.
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Conecta con abogados experimentados, recibe asesoría y resuelve tus asuntos legales
-            con confianza. Servicios profesionales al alcance de tus manos.
+          <p className="text-m sm:text-xl text-white mb-8 max-w-3xl mx-auto">
+            Conecta con un abogado experto según tu caso.<br /> Videollamadas, precios claros y disponibilidad inmediata.
           </p>
           {/* Search Section */}
           <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-12">
@@ -483,6 +393,7 @@ const Index = () => {
               showMobileFilters={false}
               buttonWidth="1/3"
               className="h-10"
+              placeholder="Despido injustificado..."
             />
           </div>
 
@@ -490,15 +401,11 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {isLoadingCount.verified ? (
-                    <div className="h-8 w-20 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
-                  ) : (
-                    <>{verifiedCount !== null ? `${verifiedCount}` : '500+'}</>
-                  )}
+                <div className="text-3xl font-bold text-white mb-2">
+                  +10
                 </div>
               </div>
-              <div className="text-gray-600">Abogados Verificados</div>
+              <div className="text-white">Áreas legales disponibles</div>
             </div>
             
             {/*<div className="text-center">
@@ -516,14 +423,14 @@ const Index = () => {
               <div className="text-gray-600">Calificación Promedio</div>
             </div> */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">24/7</div>
-              <div className="text-gray-600">Soporte</div>
+              <div className="text-3xl font-bold text-white mb-2">24/7</div>
+              <div className="text-white">Soporte disponible</div>
             </div>
           </div>
-          <p className="mt-20">¿No sabes qué abogado elegir?</p>
+          <p className="mt-20 text-white">¿No sabes qué abogado elegir?</p>
           <a 
             href="/asesoria-legal-online" 
-            className="text-blue-600 hover:text-blue-700 hover:underline"
+            className="text-white underline underline-offset-4  "
           >
             Agenda una asesoría legal online
           </a>
@@ -544,7 +451,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Todos los abogados están verificados en línea con el Poder Judicial.
+                  Todos los abogados están verificados con su RUT profesional y registro del Poder Judicial.
                 </p>
               </CardContent>
             </Card>
@@ -556,7 +463,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Precios claros y directos sin tarifas ocultas. Sabes exactamente lo que vas a pagar antes de comenzar.
+                  Precios claros sin tarifas ocultas. Sabes exactamente lo que vas a pagar antes de comenzar.
                 </p>
               </CardContent>
             </Card>
@@ -568,7 +475,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  Tus asuntos legales están protegidos con seguridad nivel bancario y secreto profesional abogado-cliente.
+                  Tus datos y documentos se mantienen protegidos con cifrado y secreto profesional.
                 </p>
               </CardContent>
             </Card>
@@ -600,7 +507,7 @@ const Index = () => {
                   <Briefcase className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Laboral</h3>
-                <p className="text-sm text-gray-600">Tutela Laboral, Despidos Injustificados, Despido Indirecto, Nulidad del despido, Acoso Laboral, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Tutela Laboral, Despidos Injustificados, Despido Indirecto, Nulidad del despido, Acoso Laboral, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -614,7 +521,7 @@ const Index = () => {
                   <Users className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
-                <p className="text-sm text-gray-600">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -628,7 +535,7 @@ const Index = () => {
                   <Scale className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Civil</h3>
-                <p className="text-sm text-gray-600">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -642,7 +549,7 @@ const Index = () => {
                   <Shield className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Penal</h3>
-                <p className="text-sm text-gray-600">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -656,7 +563,7 @@ const Index = () => {
                   <Building2 className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Comercial</h3>
-                <p className="text-sm text-gray-600">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -684,7 +591,7 @@ const Index = () => {
                   <Lightbulb className="h-6 w-6 text-blue-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Propiedad intelectual</h3>
-                <p className="text-sm text-gray-600">Registro de marcas comerciales ante INAPI, renovación y vigilancia de marcas, oposiciones y defensas en procedimientos administrativos, asesoría en derechos de autor, protección de nombres comerciales y logotipos, entre otros.</p>
+                <p className="text-sm text-gray-600 line-clamp-3">Registro de marcas comerciales ante INAPI, renovación y vigilancia de marcas, oposiciones y defensas en procedimientos administrativos, asesoría en derechos de autor, protección de nombres comerciales y logotipos, entre otros.</p>
               </CardContent>
             </Card>
 
@@ -784,25 +691,128 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            ¿Eres Abogado?
+      {/* FAQ Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Preguntas Frecuentes
+            </h2>
+            <p className="text-gray-600">
+              Resuelve tus dudas sobre cómo funciona nuestra plataforma
+            </p>
+          </div>
+          
+          <div className="space-y-4">
+            {[
+              {
+                question: "¿Cómo funciona LegalUp?",
+                answer: "LegalUp conecta clientes con abogados verificados de forma rápida y segura. Solo debes buscar un abogado según tu necesidad legal, revisar su perfil, agendar una consulta y realizar el pago. Luego recibirás asesoría profesional por videollamada o chat."
+              },
+              {
+                question: "¿Cuánto cuesta una consulta?",
+                answer: "El costo varía según el abogado y su especialidad. Cada abogado establece su tarifa por hora, y puedes ver el precio de la consulta claramente en su perfil antes de agendar. No hay tarifas ocultas, pagas exactamente lo que ves."
+              },
+              {
+                question: "¿Puedo elegir al abogado?",
+                answer: "Sí, tienes total libertad para elegir al abogado que prefieras. Puedes revisar sus perfiles, especialidades, experiencia y tarifas antes de tomar tu decisión."
+              },
+              {
+                question: "¿En cuánto tiempo me atienden?",
+                answer: "Muchos de nuestros abogados ofrecen disponibilidad inmediata o el mismo día. Al revisar el perfil del abogado, podrás ver su disponibilidad y agendar una cita en el horario que mejor te convenga."
+              },
+              {
+                question: "¿La asesoría es por videollamada o chat?",
+                answer: "Ofrecemos ambas opciones. Puedes comunicarte con tu abogado a través de videollamada para consultas más detalladas, o por chat para consultas rápidas. La modalidad depende de tus preferencias y del tipo de asesoría que necesites."
+              }
+            ].map((faq, index) => (
+              <Card 
+                key={index}
+                className="border border-gray-200 hover:border-blue-600 transition-colors cursor-pointer"
+                onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+              >
+                <CardHeader className="">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg font-semibold text-gray-900">
+                      {faq.question}
+                    </CardTitle>
+                    <ChevronDown 
+                      className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${
+                        openFaqIndex === index ? 'transform rotate-180' : ''
+                      }`}
+                    />
+                  </div>
+                </CardHeader>
+                {openFaqIndex === index && (
+                  <CardContent className="pt-0">
+                    <p className="text-gray-600 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Dual CTA Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-600 to-blue-700">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center text-white mb-12">
+            Comienza hoy mismo
           </h2>
-          <p className="text-xl mb-8 text-white">
-            Únete a nuestra plataforma y conecta con clientes que buscan tu experiencia.
-            Impulsa el crecimiento de tu estudio y potencia tu carrera.
-          </p>
-          <Button 
-            size="lg" 
-            variant="secondary"
-            onClick={() => handleAuthClick('signup', 'lawyer')}
-            className={`bg-white text-blue-600 hover:bg-gray-100 ${user?.user_metadata?.role === 'lawyer' ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={user?.user_metadata?.role === 'lawyer'}
-          >
-            {user?.user_metadata?.role === 'lawyer' ? 'Ya eres Abogado' : 'Comenzar como Abogado'}
-          </Button>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* CTA para Clientes */}
+            <Card className="border-none shadow-xl">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    ¿Necesitas un Abogado?
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Encuentra al abogado perfecto para tu caso. Asesoría legal profesional, rápida y segura.
+                  </p>
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => navigate('/search')}
+                  >
+                    Buscar Abogados
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* CTA para Abogados */}
+            <Card className="border-none shadow-xl bg-blue-50">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Briefcase className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    ¿Eres Abogado?
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Únete a nuestra plataforma y conecta con clientes. Impulsa el crecimiento de tu estudio.
+                  </p>
+                  <Button 
+                    size="lg" 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleAuthClick('signup', 'lawyer')}
+                    disabled={user?.user_metadata?.role === 'lawyer'}
+                  >
+                    {user?.user_metadata?.role === 'lawyer' ? 'Ya eres Abogado' : 'Comenzar como Abogado'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 

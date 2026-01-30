@@ -13,6 +13,7 @@ interface SearchBarProps {
   showMobileFilters?: boolean;
   buttonWidth?: string;
   className?: string;
+  placeholder?: string;
 }
 
 const buttonWidthMap: Record<string, string> = {
@@ -32,6 +33,7 @@ export function SearchBar({
   showMobileFilters = true,
   buttonWidth = '1/4',
   className = '',
+  placeholder = "Ej: despido injustificado, herencia, contrato, divorcio...",
 }: SearchBarProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -50,7 +52,7 @@ export function SearchBar({
           </div>
           <Input
             type="text"
-            placeholder="Ej: despido injustificado, herencia, contrato, divorcio..."
+            placeholder={placeholder}
             className="pl-9 h-12 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm"
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}

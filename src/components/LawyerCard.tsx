@@ -186,6 +186,7 @@ export function LawyerCard({
                       src={lawyer.image} 
                       alt={lawyer.name}
                       className="object-cover"
+                      loading="lazy"
                     />
                     <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
                       {(() => {

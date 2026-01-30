@@ -13,8 +13,6 @@ import { Resend } from 'resend';
 import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
 
-// ... (imports)
-
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,8 +32,6 @@ if (!resend) {
   console.warn('⚠️ RESEND_API_KEY missing. Email features will be disabled.');
 }
 
-console.log('App URL:', appUrl);
-
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('Missing required environment variables');
   process.exit(1);
@@ -53,11 +49,8 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 try {
   const [, payload] = serviceRoleKey.split('.');
   const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
-  console.log('🔑 Supabase Key Role:', decoded.role);
   if (decoded.role !== 'service_role') {
     console.error('❌ CRITICAL: The key provided as VITE_SUPABASE_SERVICE_ROLE_KEY is NOT a service_role key! It is:', decoded.role);
-  } else {
-    console.log('✅ Service Role Key confirmed.');
   }
 } catch (e) {
   console.error('⚠️ Could not parse Supabase Key:', e.message);
@@ -513,7 +506,6 @@ app.get('/', (req, res) => {
 
 // Create payment endpoint
 app.post('/create-payment', async (req, res) => {
-  console.log('--- START PAYMENT V_ABSOLUTE_FINAL ---');
   try {
     // Log the incoming request
     
@@ -660,7 +652,6 @@ app.post('/create-payment', async (req, res) => {
     };
 
     // Insert payment into database using SECURE RPC (Bypasses RLS)
-    console.log('Attempting to insert payment via RPC with ID:', paymentData.id);
     let payment;
     
     try {
@@ -689,7 +680,6 @@ app.post('/create-payment', async (req, res) => {
       
       // Data from RPC might come differently depending on return type, handling jsonb
       payment = data; 
-      console.log('✅ Payment inserted successfully via RPC:', paymentData.id);
     } catch (insertError) {
       console.error('❌ Exception during RPC INSERT:', insertError);
       throw insertError;
@@ -731,8 +721,6 @@ app.post('/create-payment', async (req, res) => {
         console.error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)!');
         throw new Error('Server Config Error: MercadoPago Token is invalid');
     }
-
-    console.log('--- DEBUG: ATTEMPTING RAW FETCH TO MERCADOPAGO ---');
     
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
         method: 'POST',
@@ -749,8 +737,6 @@ app.post('/create-payment', async (req, res) => {
         console.error('--- DEBUG: RAW FETCH FAILED ---', mpData);
         throw new Error(`MercadoPago API Error: ${mpResponse.status} - ${JSON.stringify(mpData)}`);
     }
-
-    console.log('--- DEBUG: RAW FETCH SUCCESS ---', mpData.id);
 
     // Return the payment link
     const paymentLink = mpData.init_point || mpData.sandbox_init_point;
@@ -1056,10 +1042,6 @@ app.get('/api/mercadopago/auth-url', async (req, res) => {
         authUrl.searchParams.append('code_challenge', challenge);
         authUrl.searchParams.append('code_challenge_method', 'S256');
 
-        console.log('--- PKCE DEBUG (DB-BACKED) ---');
-        console.log('Generated Verifier:', verifier);
-        console.log('Stored State:', state);
-
         res.json({ url: authUrl.toString() });
 
     } catch (error) {
@@ -1102,10 +1084,6 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
             console.warn('PKCE State not found in DB:', state);
         }
     }
-    
-    console.log('--- MSG OAUTH DEBUG (PKCE DB) ---');
-    console.log('State received:', state);
-    console.log('Code Verifier found:', codeVerifier ? 'YES' : 'NO/MISSING');
 
     if (!codeVerifier) {
          console.warn('WARNING: code_verifier is missing. Link might have expired or state is invalid.');
@@ -1381,14 +1359,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const topic = req.body.topic || type;
     const id = req.body.id || data?.id;
 
-    console.log(`Received webhook: ${topic} ${id}`);
-
     if (topic === 'payment') {
       const payment = await new Payment(mpClient).get({ id });
       
       if (payment.status === 'approved') {
         const bookingId = payment.external_reference;
-        console.log(`Payment approved for booking ${bookingId}`);
         
         // 1. Update booking status
         const { data: booking, error: bookingError } = await supabase
@@ -1431,7 +1406,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
           // 3. Create user if not exists
           if (!userId && userEmail) {
-            console.log(`Creating new user for ${userEmail}`);
             const tempPassword = crypto.randomBytes(9).toString('hex');
 
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -1586,12 +1560,9 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 </div>
               `
             });
-            console.log('Confirmation email sent to user:', userEmail);
             } catch (emailError) {
                console.error('Error sending user email:', emailError);
             }
-          } else {
-            console.log('Skipping client email: Resend not configured');
           }
 
           // Send notification email to Lawyer
@@ -1624,7 +1595,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </div>
                 `
               });
-              console.log('Notification email sent to lawyer:', lawyerEmail);
             } catch (emailError) {
                console.error('Error sending lawyer email:', emailError);
             }
@@ -1661,14 +1631,6 @@ app.use((error, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`CORS enabled for:`);
-  console.log(`- https://uplegal.netlify.app`);
-  console.log(`- http://localhost:3000`);
-  console.log(`- http://localhost:3001`);
-  console.log(`- http://127.0.0.1:3000`);
-  console.log(`- http://127.0.0.1:3001`);
-});
+app.listen(PORT, '0.0.0.0');
 
 export default app;
