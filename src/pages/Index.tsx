@@ -16,7 +16,8 @@ import {
   Scale,
   DollarSign,
   Lightbulb,
-  ChevronDown
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -398,7 +399,7 @@ const Index = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto mt-12">
             <div className="text-center">
               <div className="flex flex-col items-center">
                 <div className="text-3xl font-bold text-white mb-2">
@@ -430,9 +431,10 @@ const Index = () => {
           <p className="mt-20 text-white">¿No sabes qué abogado elegir?</p>
           <a 
             href="/asesoria-legal-online" 
-            className="text-white underline underline-offset-4  "
+            className="text-white underline underline-offset-4 inline-flex items-center gap-1 hover:underline transition-colors"
           >
             Agenda una asesoría legal online
+            <ChevronRight className="h-4 w-4 text-white pt-1" />
           </a>
         </div>
       </section>
@@ -707,7 +709,7 @@ const Index = () => {
             {[
               {
                 question: "¿Cómo funciona LegalUp?",
-                answer: "LegalUp conecta clientes con abogados verificados de forma rápida y segura. Solo debes buscar un abogado según tu necesidad legal, revisar su perfil, agendar una consulta y realizar el pago. Luego recibirás asesoría profesional por videollamada o chat."
+                answer: "LegalUp conecta clientes con abogados verificados de forma rápida y segura. Solo debes buscar un abogado según tu necesidad legal, revisar su perfil, agendar una consulta y realizar el pago. Luego recibirás asesoría profesional por videollamada."
               },
               {
                 question: "¿Cuánto cuesta una consulta?",
@@ -723,7 +725,7 @@ const Index = () => {
               },
               {
                 question: "¿La asesoría es por videollamada o chat?",
-                answer: "Ofrecemos ambas opciones. Puedes comunicarte con tu abogado a través de videollamada para consultas más detalladas, o por chat para consultas rápidas. La modalidad depende de tus preferencias y del tipo de asesoría que necesites."
+                answer: "La comunicación con tu abogado es por videollamada. Al agendar, recibirás automáticamente un enlace en tu correo para unirte a la reunión."
               }
             ].map((faq, index) => (
               <Card 
@@ -753,33 +755,42 @@ const Index = () => {
               </Card>
             ))}
           </div>
+          <div className="text-center mb-12">
+            <p className="text-center text-black font-bold items-center mt-8">¿Tienes otra duda?</p>
+            <Button
+              onClick={() => navigate('/search')}
+              className="bg-white border border-solid text-black hover:bg-black hover:text-white items-center mt-4"
+            >
+              Hablar con un abogado
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Dual CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-600 to-blue-700">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-t from-blue-400 to-indigo-600">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-white mb-12">
             Comienza hoy mismo
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* CTA para Clientes */}
-            <Card className="border-none shadow-xl">
-              <CardContent className="p-8">
+            {/* CTA para Clientes - Principal */}
+            <Card className="border-none shadow-2xl z-10 relative">
+              <CardContent className="p-10">
                 <div className="text-center">
                   <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Users className="h-8 w-8 text-blue-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     ¿Necesitas un Abogado?
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 mb-8">
                     Encuentra al abogado perfecto para tu caso. Asesoría legal profesional, rápida y segura.
                   </p>
                   <Button 
                     size="lg" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
                     onClick={() => navigate('/search')}
                   >
                     Buscar Abogados
@@ -788,22 +799,23 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* CTA para Abogados */}
-            <Card className="border-none shadow-xl bg-blue-50">
-              <CardContent className="p-8">
+            {/* CTA para Abogados - Secundario */}
+            <Card className="border-none shadow-lg bg-white/90 backdrop-blur">
+              <CardContent className="p-10">
                 <div className="text-center">
-                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Briefcase className="h-8 w-8 text-blue-600" />
+                  <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Briefcase className="h-8 w-8 text-gray-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     ¿Eres Abogado?
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-gray-600 mb-8">
                     Únete a nuestra plataforma y conecta con clientes. Impulsa el crecimiento de tu estudio.
                   </p>
                   <Button 
                     size="lg" 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    variant="outline"
+                    className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold"
                     onClick={() => handleAuthClick('signup', 'lawyer')}
                     disabled={user?.user_metadata?.role === 'lawyer'}
                   >

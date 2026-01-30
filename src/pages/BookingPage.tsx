@@ -105,7 +105,6 @@ export default function BookingPage() {
     }
 
     fetchLawyer();
-    fetchLawyer();
   }, [lawyerId, navigate]);
 
   // Track booking_start event when lawyer data is loaded
@@ -579,11 +578,11 @@ export default function BookingPage() {
                     {lawyer.first_name} {lawyer.last_name}
                   </h1>
                   {lawyer.pjud_verified && (
-                    <Badge variant="secondary" className="bg-green-50 text-green-800 flex items-center gap-1 w-fit mt-1 md:mt-0">
+                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 flex items-center gap-1 w-fit mt-1 md:mt-0">
                       <div className="p-[2px]">
-                        <ShieldCheck className="h-3.5 w-3.5 text-green-600" />
+                        <ShieldCheck className="h-3.5 w-3.5" />
                       </div>
-                      <span className="text-xs font-medium text-green-700">
+                      <span className="text-xs font-medium">
                         Verificado PJUD
                       </span>
                     </Badge>
@@ -721,24 +720,36 @@ export default function BookingPage() {
                 </label>
                 {selectedDate ? (
                   <>
-                  <div className={`grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2 ${isLoadingSlots ? 'opacity-50' : ''}`}>
-                    {availableSlots.map((slot) => (
-                      <button
-                        key={slot.time}
-                        onClick={() => handleTimeSelect(slot.time)}
-                        disabled={!slot.available || isLoadingSlots}
-                        className={`p-3 border-2 rounded-lg transition-all ${
-                          selectedTime === slot.time
-                            ? 'border-blue-600 bg-blue-50'
-                            : slot.available
-                            ? 'border-gray-200 hover:border-gray-300'
-                            : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {slot.time}
-                      </button>
-                    ))}
-                  </div>
+                  {isLoadingSlots && availableSlots.length === 0 ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="animate-spin h-6 w-6 text-gray-400" />
+                    </div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">
+                      <Clock className="h-8 w-8 mb-2 opacity-50" />
+                      <p className="font-medium text-center">No hay horas disponibles</p>
+                      <p className="text-xs text-center mt-1">Intenta seleccionando otra fecha</p>
+                    </div>
+                  ) : (
+                    <div className={`grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2 ${isLoadingSlots ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {availableSlots.map((slot) => (
+                        <button
+                          key={slot.time}
+                          onClick={() => handleTimeSelect(slot.time)}
+                          disabled={!slot.available || isLoadingSlots}
+                          className={`p-3 border-2 rounded-lg transition-all ${
+                            selectedTime === slot.time
+                              ? 'border-blue-600 bg-blue-50'
+                              : slot.available
+                              ? 'border-gray-200 hover:border-gray-300'
+                              : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <p className="text-sm font-medium text-gray-700 mt-4">Este horario se libera automáticamente si no se confirma el pago</p>
                   </>
                 ) : (

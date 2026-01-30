@@ -216,12 +216,21 @@ export function LawyerCard({
                   )}
                 </div>
                 
-                {hasVerificationFlag && (
-                  <Badge variant="secondary" className="w-fit mb-2 flex items-center gap-1 bg-green-50 text-green-700">
-                    <ShieldCheck className="h-3 w-3" />
-                    {lawyer.pjud_verified ? 'Verificado en PJUD' : 'Verificado en PJUD'}
-                  </Badge>
-                )}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {lawyer.availability?.availableToday && (
+                    <Badge variant="secondary" className="w-fit flex items-center gap-1.5 bg-green-100 text-green-800 hover:bg-green-200 border-none">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
+                      Disponible hoy
+                    </Badge>
+                  )}
+                  
+                  {hasVerificationFlag && (
+                    <Badge variant="secondary" className="w-fit flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-none">
+                      <ShieldCheck className="h-3 w-3" />
+                      {lawyer.pjud_verified ? 'Verificado en PJUD' : 'Verificado en PJUD'}
+                    </Badge>
+                  )}
+                </div>
                 
                 <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden mb-1">
                   <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
