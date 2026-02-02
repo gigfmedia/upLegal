@@ -379,11 +379,11 @@ const Index = () => {
             <span className="text-white underline underline-offset-8">Abogados verificados.</span> 
             <br />Rápido, seguro y sin complicaciones.
           </h1>
-          <p className="text-m sm:text-xl text-white mb-8 max-w-3xl mx-auto">
-            Conecta con un abogado experto según tu caso.<br /> Videollamadas, precios claros y disponibilidad inmediata.
+          <p className="text-m sm:text-xl text-white mb-12 max-w-3xl mx-auto">
+            Conecta con un abogado experto según tu caso.<br /> Videollamada, precios claros y disponibilidad inmediata.
           </p>
           {/* Search Section */}
-          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6 mb-12">
+          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-6 mb-12">
             <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
@@ -399,7 +399,7 @@ const Index = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto mt-12">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto mt-24">
             <div className="text-center">
               <div className="flex flex-col items-center">
                 <div className="text-3xl font-bold text-white mb-2">
@@ -428,13 +428,12 @@ const Index = () => {
               <div className="text-white">Soporte disponible</div>
             </div>
           </div>
-          <p className="mt-20 text-white">¿No sabes qué abogado elegir?</p>
+          <p className="mt-12 text-white font-bold">¿No sabes qué abogado elegir?</p>
           <a 
             href="/asesoria-legal-online" 
             className="text-white underline underline-offset-4 inline-flex items-center gap-1 hover:underline transition-colors"
           >
-            Agenda una asesoría legal online
-            <ChevronRight className="h-4 w-4 text-white pt-1" />
+            Agenda una asesoría legal online →
           </a>
         </div>
       </section>
@@ -756,10 +755,10 @@ const Index = () => {
             ))}
           </div>
           <div className="text-center mb-12">
-            <p className="text-center text-black font-bold items-center mt-8">¿Tienes otra duda?</p>
+            <p className="text-center text-gray-900 font-bold items-center mt-8">¿Tienes otra duda?</p>
             <Button
               onClick={() => navigate('/search')}
-              className="bg-white border border-solid text-black hover:bg-black hover:text-white items-center mt-4"
+              className="bg-white border border-solid text-gray-900 hover:bg-black hover:text-white items-center mt-4"
             >
               Hablar con un abogado
             </Button>
@@ -768,29 +767,29 @@ const Index = () => {
       </section>
 
       {/* Dual CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-t from-blue-400 to-indigo-600">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-12">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
             Comienza hoy mismo
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* CTA para Clientes - Principal */}
-            <Card className="border-none shadow-2xl z-10 relative">
+            <Card className="border-none shadow-2xl z-10 relative bg-blue-600">
               <CardContent className="p-10">
                 <div className="text-center">
-                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Users className="h-8 w-8 text-blue-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  <h3 className="text-2xl font-bold text-white mb-4">
                     ¿Necesitas un Abogado?
                   </h3>
-                  <p className="text-gray-600 mb-8">
+                  <p className="text-white mb-8">
                     Encuentra al abogado perfecto para tu caso. Asesoría legal profesional, rápida y segura.
                   </p>
                   <Button 
                     size="lg" 
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                    className="w-full bg-white hover:bg-blue-800 text-blue-600 hover:text-white font-bold shadow-lg hover:shadow-xl transition-all"
                     onClick={() => navigate('/search')}
                   >
                     Buscar Abogados
@@ -815,7 +814,7 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-semibold"
+                    className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold"
                     onClick={() => handleAuthClick('signup', 'lawyer')}
                     disabled={user?.user_metadata?.role === 'lawyer'}
                   >

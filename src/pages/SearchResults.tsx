@@ -543,11 +543,23 @@ const SearchResults = () => {
     const searchTermLower = searchTerm.toLowerCase();
     
     // Handle specialty logic
-    if (searchTermLower.includes('familia') && !selectedSpecialty.includes('Derecho de Familia')) {
-      // If searching for familia, ensure it's selected (replacing 'all' if present)
+    // Handle specialty logic
+    const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
+    const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela'];
+    
+    if (familyKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Derecho de Familia')) {
+      // If searching for family keywords, ensure it's selected (replacing 'all' if present)
       const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
       if (!newSpecialties.includes('Derecho de Familia')) {
         newSpecialties.push('Derecho de Familia');
+      }
+      setSelectedSpecialty(newSpecialties);
+      newSpecialties.forEach(s => params.append('specialty', s));
+    } else if (laborKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Derecho Laboral')) {
+       // If searching for labor keywords
+      const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
+      if (!newSpecialties.includes('Derecho Laboral')) {
+        newSpecialties.push('Derecho Laboral');
       }
       setSelectedSpecialty(newSpecialties);
       newSpecialties.forEach(s => params.append('specialty', s));

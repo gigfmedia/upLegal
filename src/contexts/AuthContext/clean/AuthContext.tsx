@@ -194,11 +194,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         let errorMessage = 'Error creating account';
         
         if (signUpError.message.includes('already registered')) {
-          errorMessage = 'This email is already registered. Did you forget your password?';
+          errorMessage = 'Este correo ya está registrado. ¿Olvidaste tu contraseña?';
         } else if (signUpError.message.includes('password')) {
-          errorMessage = 'Password does not meet the minimum requirements';
+          errorMessage = 'La contraseña no cumple con los requisitos mínimos';
+        } else if (signUpError.message.toLowerCase().includes('sending confirmation email')) {
+          errorMessage = 'Error al enviar el correo de confirmación. Posible problema temporal del servicio.';
         } else if (signUpError.message.includes('email')) {
-          errorMessage = 'Please enter a valid email address';
+          errorMessage = 'Por favor ingresa un correo válido';
         }
         
         const formattedError = new Error(errorMessage);

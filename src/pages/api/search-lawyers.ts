@@ -18,6 +18,10 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   // Familia
   'familia': ['Derecho de Familia'],
   'divorcio': ['Derecho de Familia'],
+  'separacion': ['Derecho de Familia'],
+  'pension': ['Derecho de Familia'],
+  'alimentos': ['Derecho de Familia'],
+  'visitas': ['Derecho de Familia'],
   'pension alimenticia': ['Derecho de Familia'],
   'cuidado personal': ['Derecho de Familia'],
   'tuicion': ['Derecho de Familia'],
