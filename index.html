@@ -9,7 +9,7 @@
     <meta name="description" content="LegalUp: Plataforma de asesoría legal online. Conecta con abogados especializados, resuelve consultas jurídicas y recibe asistencia legal profesional al instante." />
     
     <!-- Hotjar-->
-     <script src="https://t.contentsquare.net/uxa/8e593ddd9c70c.js"></script>
+    <!-- <script src="https://t.contentsquare.net/uxa/8e593ddd9c70c.js"></script> -->
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZJCG1RNJT6"></script>
@@ -23,12 +23,11 @@
     </script>
     <!-- Google tag (gtag.js) event -->
     <script>
-      gtag('event', 'sign_up', {
-    method: 'modal',
-    content_type: 'registration',
-    page_location: window.location.href,
-    page_path: window.location.pathname
-  });
+      function trackSignUp() {
+    gtag('event', 'sign_up', {
+      method: 'modal'
+    });
+  }
     </script>
     
     <!-- Metadatos básicos -->
