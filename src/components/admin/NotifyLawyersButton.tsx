@@ -46,7 +46,7 @@ export function NotifyLawyersButton() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ testMode })
+        body: JSON.stringify({ testMode, testEmail: 'juan.fercommerce@gmail.com' })
       });
 
       // First check if the response is OK

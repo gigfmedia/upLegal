@@ -22,10 +22,10 @@
   headers = {Access-Control-Allow-Origin = "*"}
 
 # SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+#[[redirects]]
+#  from = "/*"
+#  to = "/index.html"
+#  status = 200
 
 [build.environment]
   NODE_VERSION = "18.0.0"
