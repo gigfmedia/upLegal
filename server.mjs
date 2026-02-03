@@ -1610,6 +1610,90 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
   }
 });
 
+// Endpoint para notificar abogados
+app.post('/api/admin/notify-lawyers', async (req, res) => {
+  try {
+    const { testMode = false, testEmail } = req.body;
+
+    // Verificar si estamos en modo de prueba
+    if (testMode) {
+      if (!testEmail) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Se requiere un correo de prueba en modo test' 
+        });
+      }
+
+      // Enviar correo de prueba
+      await resend.emails.send({
+        from: 'LegalUp <hola@legalup.cl>',
+        to: testEmail,
+        subject: 'Prueba de notificación LegalUp',
+        html: '<h1>¡Prueba exitosa!</h1><p>Esta es una notificación de prueba de LegalUp.</p>'
+      });
+
+      return res.json({ 
+        success: true, 
+        message: 'Correo de prueba enviado correctamente',
+        testEmail
+      });
+    }
+
+    // Obtener todos los abogados que no han subido servicios
+    const { data: lawyers, error } = await supabase
+      .from('profiles')
+      .select('id, email, first_name, last_name')
+      .eq('role', 'lawyer')
+      .is('services', null)
+      .not('email', 'is', null);
+
+    if (error) {
+      console.error('Error al obtener abogados:', error);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error al obtener la lista de abogados' 
+      });
+    }
+
+    // Enviar correos
+    const results = [];
+    for (const lawyer of lawyers) {
+      try {
+        await resend.emails.send({
+          from: 'LegalUp <hola@legalup.cl>',
+          to: lawyer.email,
+          subject: '¡Completa tu perfil en LegalUp!',
+          html: `
+            <h1>¡Hola ${lawyer.first_name || 'abogado/a'}!</h1>
+            <p>Notamos que aún no has completado los servicios que ofreces en LegalUp.</p>
+            <p>Por favor, inicia sesión y completa tu perfil para que los clientes puedan encontrarte.</p>
+            <a href="${appUrl}/dashboard/profile" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px;">Completar perfil</a>
+          `
+        });
+        results.push({ email: lawyer.email, status: 'success' });
+      } catch (error) {
+        console.error(`Error enviando correo a ${lawyer.email}:`, error);
+        results.push({ email: lawyer.email, status: 'error', error: error.message });
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Notificaciones enviadas correctamente',
+      total: lawyers.length,
+      results
+    });
+
+  } catch (error) {
+    console.error('Error en notificación de abogados:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al procesar la solicitud',
+      error: error.message 
+    });
+  }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {

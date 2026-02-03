@@ -51,6 +51,7 @@ const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminNotifications = lazy(() => import('./pages/admin/notifications'));
 const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/analytics'));
 const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
@@ -312,30 +313,48 @@ const AppContent = () => {
                 <Route path="favorites" element={<DashboardFavorites />} />
               </Route>
 
-              <Route
-                path="/admin"
-                element={
-                  <RequireAdmin>
-                    <AdminDashboard />
-                  </RequireAdmin>
-                }
-              />
-              <Route
-                path="/admin/reviews"
-                element={
-                  <RequireAdmin>
-                    <AdminReviewsPage />
-                  </RequireAdmin>
-                }
-              />
-              <Route
-                path="/admin/analytics"
-                element={
-                  <RequireAdmin>
-                    <AdminAnalyticsPage />
-                  </RequireAdmin>
-                }
-              />
+              <Route path="/admin">
+                <Route
+                  index
+                  element={
+                    <RequireAdmin>
+                      <AdminDashboard />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="dashboard"
+                  element={
+                    <RequireAdmin>
+                      <Navigate to="/admin" replace />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="notifications"
+                  element={
+                    <RequireAdmin>
+                      <AdminNotifications />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="reviews"
+                  element={
+                    <RequireAdmin>
+                      <AdminReviewsPage />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="analytics"
+                  element={
+                    <RequireAdmin>
+                      <AdminAnalyticsPage />
+                    </RequireAdmin>
+                  }
+                />
+              </Route>
               <Route path="/test-analytics" element={
                 <TestAnalytics />
               } />

@@ -503,6 +503,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       rut: '',
       role: 'client',
     });
+
+    // Track signup event in GA4
+    if (typeof (window as any).trackSignUp === 'function') {
+      (window as any).trackSignUp();
+    }
     
     // Show appropriate success message based on email confirmation status
     if (signupResponse.requiresEmailConfirmation) {

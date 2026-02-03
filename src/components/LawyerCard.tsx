@@ -207,13 +207,13 @@ export function LawyerCard({
                       title={displayName}>
                     {displayName}
                   </h3>
-                  {lawyer.hourlyRate > 60000 && (
+                  {/*{lawyer.hourlyRate > 60000 && (
                     <div className="flex-shrink-0">
                       <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         🏅 Premium
                       </div>
                     </div>
-                  )}
+                  )}*/}
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
