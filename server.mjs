@@ -1530,7 +1530,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           if (resend) {
             try {
             await resend.emails.send({
-              from: 'LegalUp <hola@legalup.cl>',
+              from: 'LegalUp <hola@mg.legalup.cl>',
               to: userEmail,
               subject: '¡Tu asesoría está confirmada!',
               html: `
@@ -1569,7 +1569,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           if (lawyerEmail && resend) {
             try {
               await resend.emails.send({
-                from: 'LegalUp <hola@legalup.cl>',
+                from: 'LegalUp <hola@mg.legalup.cl>',
                 to: lawyerEmail,
                 subject: 'Nueva reserva confirmada',
                 html: `
@@ -1626,7 +1626,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 
       // Enviar correo de prueba
       await resend.emails.send({
-        from: 'LegalUp <hola@legalup.cl>',
+        from: 'LegalUp <hola@mg.legalup.cl>',
         to: testEmail,
         subject: 'Prueba de notificación LegalUp',
         html: '<h1>¡Prueba exitosa!</h1><p>Esta es una notificación de prueba de LegalUp.</p>'
@@ -1660,7 +1660,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
     for (const lawyer of lawyers) {
       try {
         await resend.emails.send({
-          from: 'LegalUp <hola@legalup.cl>',
+          from: 'LegalUp <hola@mg.legalup.cl>',
           to: lawyer.email,
           subject: '¡Completa tu perfil en LegalUp!',
           html: `
