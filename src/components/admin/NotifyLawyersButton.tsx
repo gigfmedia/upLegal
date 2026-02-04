@@ -33,77 +33,75 @@ export function NotifyLawyersButton() {
   };
 
   const confirmNotification = async () => {
-    setIsConfirmOpen(false);
-    setError(null);
-    setIsLoading(true);
-    setResults([]);
+  setIsConfirmOpen(false);
+  setError(null);
+  setIsLoading(true);
+  setResults([]);
 
+  try {
+    console.log('Sending test notification to:', 'juan.fercommerce@gmail.com');
+    
+    const response = await fetch('/api/admin/notify-lawyers', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ 
+        testMode, 
+        testEmail: 'juan.fercommerce@gmail.com' 
+      }),
+    });
+
+    console.log('Response status:', response.status);
+    
+    // Try to parse JSON response
+    let result;
     try {
-      console.log('Sending notification request with testMode:', testMode);
-      
-      const response = await fetch('/api/admin/notify-lawyers', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ testMode, testEmail: 'juan.fercommerce@gmail.com' })
-      });
-
-      // First check if the response is OK
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server responded with error:', response.status, errorText);
-        
-        let errorMessage = `Error del servidor (${response.status})`;
-        try {
-          // Try to parse the error message if it's JSON
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error?.message || errorJson.message || errorText;
-        } catch (e) {
-          // If not JSON, use the raw text
-          errorMessage = errorText || 'Error desconocido del servidor';
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      // If response is OK, try to parse as JSON
-      let result;
-      try {
-        result = await response.json();
-      } catch (e) {
-        console.error('Failed to parse JSON response:', e);
-        throw new Error('La respuesta del servidor no es válida');
-      }
-
-      console.log('Notification result:', result);
-
-      if (result.results) {
-        setResults(Array.isArray(result.results) ? result.results : []);
-      }
-
-      toast({
-        title: result.success !== false ? 'Notificaciones enviadas' : 'Error al enviar notificaciones',
-        description: result.message || (result.success ? 'Las notificaciones se enviaron correctamente' : 'Hubo un error al enviar las notificaciones'),
-        variant: result.success !== false ? 'default' : 'destructive',
-      });
-
-      if (result.error) {
-        setError(result.error.message || 'Error desconocido');
-      }
-    } catch (err) {
-      console.error('Error notificando abogados:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al enviar notificaciones';
-      setError(errorMessage);
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
+      result = await response.json();
+      console.log('Response data:', result);
+    } catch (jsonError) {
+      console.error('Error parsing JSON response:', jsonError);
+      const text = await response.text();
+      console.error('Raw response:', text);
+      throw new Error(`La respuesta del servidor no es válida: ${text}`);
     }
-  };
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Error al enviar notificaciones');
+    }
+
+    console.log('Notification result:', result);
+
+    if (result.results) {
+      setResults(Array.isArray(result.results) ? result.results : []);
+    }
+
+    toast({
+      title: result.success !== false ? 'Notificaciones enviadas' : 'Error al enviar notificaciones',
+      description: result.message || (result.success ? 'Las notificaciones se enviaron correctamente' : 'Hubo un error al enviar las notificaciones'),
+      variant: result.success !== false ? 'default' : 'destructive',
+    });
+
+    if (result.error) {
+      setError(result.error.message || 'Error desconocido');
+    }
+
+    return result;
+  } catch (err) {
+    console.error('Error notificando abogados:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Error desconocido al enviar notificaciones';
+    setError(errorMessage);
+    toast({
+      title: 'Error',
+      description: errorMessage,
+      variant: 'destructive',
+    });
+    throw err; // Re-throw to handle in the UI if needed
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="space-y-4 p-6 bg-white rounded-lg shadow">
