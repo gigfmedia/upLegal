@@ -1610,6 +1610,13 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
   }
 });
 
+app.get('/api/admin/notify-lawyers', (req, res) => {
+  res.json({ 
+    success: false, 
+    message: 'This endpoint only accepts POST requests. Please use POST to send notifications.' 
+  });
+});
+
 // Endpoint para notificar abogados
 app.post('/api/admin/notify-lawyers', async (req, res) => {
   try {

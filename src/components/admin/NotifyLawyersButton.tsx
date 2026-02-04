@@ -33,75 +33,77 @@ export function NotifyLawyersButton() {
   };
 
   const confirmNotification = async () => {
-  setIsConfirmOpen(false);
-  setError(null);
-  setIsLoading(true);
-  setResults([]);
+    setIsConfirmOpen(false);
+    setError(null);
+    setIsLoading(true);
+    setResults([]);
 
-  try {
-    console.log('Sending test notification to:', 'juan.fercommerce@gmail.com');
-    
-    const response = await fetch('/api/admin/notify-lawyers', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({ 
-        testMode, 
-        testEmail: 'juan.fercommerce@gmail.com' 
-      }),
-    });
-
-    console.log('Response status:', response.status);
-    
-    // Try to parse JSON response
-    let result;
     try {
-      result = await response.json();
-      console.log('Response data:', result);
-    } catch (jsonError) {
-      console.error('Error parsing JSON response:', jsonError);
-      const text = await response.text();
-      console.error('Raw response:', text);
-      throw new Error(`La respuesta del servidor no es válida: ${text}`);
+      console.log('Sending test notification to:', 'juan.fercommerce@gmail.com');
+      
+      // Use the full URL to your Render backend
+      const apiUrl = 'https://uplegal-service.onrender.com/api/admin/notify-lawyers';
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          testMode, 
+          testEmail: 'juan.fercommerce@gmail.com' 
+        }),
+      });
+
+      // Clone the response before reading it
+      const responseClone = response.clone();
+      
+      try {
+        const result = await response.json();
+        console.log('Response data:', result);
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Error al enviar notificaciones');
+        }
+
+        if (result.results) {
+          setResults(Array.isArray(result.results) ? result.results : []);
+        }
+
+        toast({
+          title: result.success !== false ? 'Notificaciones enviadas' : 'Error al enviar notificaciones',
+          description: result.message || (result.success ? 'Las notificaciones se enviaron correctamente' : 'Hubo un error al enviar las notificaciones'),
+          variant: result.success !== false ? 'default' : 'destructive',
+        });
+
+        if (result.error) {
+          setError(result.error.message || 'Error desconocido');
+        }
+
+        return result;
+      } catch (jsonError) {
+        // If JSON parsing fails, read as text
+        console.error('Error parsing JSON response, trying text:', jsonError);
+        const text = await responseClone.text();
+        console.error('Raw response:', text);
+        
+        throw new Error(text || 'La respuesta del servidor no es válida');
+      }
+    } catch (err) {
+      console.error('Error notificando abogados:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al enviar notificaciones';
+      setError(errorMessage);
+      toast({
+        title: 'Error',
+        description: 'No se pudo conectar con el servidor. Por favor, inténtalo de nuevo más tarde.',
+        variant: 'destructive',
+      });
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Error al enviar notificaciones');
-    }
-
-    console.log('Notification result:', result);
-
-    if (result.results) {
-      setResults(Array.isArray(result.results) ? result.results : []);
-    }
-
-    toast({
-      title: result.success !== false ? 'Notificaciones enviadas' : 'Error al enviar notificaciones',
-      description: result.message || (result.success ? 'Las notificaciones se enviaron correctamente' : 'Hubo un error al enviar las notificaciones'),
-      variant: result.success !== false ? 'default' : 'destructive',
-    });
-
-    if (result.error) {
-      setError(result.error.message || 'Error desconocido');
-    }
-
-    return result;
-  } catch (err) {
-    console.error('Error notificando abogados:', err);
-    const errorMessage = err instanceof Error ? err.message : 'Error desconocido al enviar notificaciones';
-    setError(errorMessage);
-    toast({
-      title: 'Error',
-      description: errorMessage,
-      variant: 'destructive',
-    });
-    throw err; // Re-throw to handle in the UI if needed
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="space-y-4 p-6 bg-white rounded-lg shadow">
