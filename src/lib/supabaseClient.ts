@@ -50,7 +50,7 @@ export const getSupabaseClient = () => {
         environment: process.env.NODE_ENV,
       });
       
-      const options = {
+            const options = {
         auth: {
           autoRefreshToken: true,
           persistSession: isBrowser,
@@ -72,6 +72,25 @@ export const getSupabaseClient = () => {
           storageKey: 'sb-auth-token',
           flowType: 'pkce' as const,
         },
+        // Disable realtime by default to prevent WebSocket connections
+        realtime: {
+          // Only enable realtime when explicitly needed
+          // This prevents the WebSocket connection that exposes the anon key
+          disabled: true,
+          // Rate limiting for realtime events if enabled
+          params: {
+            eventsPerSecond: 10
+          }
+        },
+        // Additional security headers
+        global: {
+          headers: {
+            'X-Client-Info': 'uplegal-web/1.0',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        },
+        // Disable auto-connect to prevent unnecessary connections
+        autoConnect: false
       };
       
       supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, options);
