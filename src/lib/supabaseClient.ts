@@ -50,48 +50,11 @@ export const getSupabaseClient = () => {
         environment: process.env.NODE_ENV,
       });
       
-            // Block WebSocket at the lowest level possible
-      if (isBrowser && !window.originalWebSocket) {
-        window.originalWebSocket = window.WebSocket;
-        
-        // Override WebSocket to block Supabase realtime connections
-        window.WebSocket = class BlockedWebSocket extends window.originalWebSocket {
-          constructor(url: string | URL, protocols?: string | string[]) {
-            if (typeof url === 'string' && url.includes('supabase.co/realtime')) {
-              console.warn('Blocked WebSocket connection to Supabase realtime:', url);
-              // Return a mock WebSocket that does nothing
-              const mockSocket = {
-                send: () => {},
-                close: () => {},
-                addEventListener: () => {},
-                removeEventListener: () => {},
-                dispatchEvent: () => true,
-                readyState: 3, // CLOSED
-                bufferedAmount: 0,
-                onopen: null,
-                onclose: null,
-                onerror: null,
-                onmessage: null,
-                url: '',
-                extensions: '',
-                protocol: '',
-                CONNECTING: 0,
-                OPEN: 1,
-                CLOSING: 2,
-                CLOSED: 3
-              };
-              return mockSocket as unknown as WebSocket;
-            }
-            super(url, protocols);
-          }
-        } as any;
-      }
-
-      const options = {
+            const options = {
         auth: {
           autoRefreshToken: true,
           persistSession: isBrowser,
-          detectSessionInUrl: false, // Disable URL session detection
+          detectSessionInUrl: false, // Mejor seguridad
           storage: isBrowser ? {
             getItem: (key: string) => {
               logger.debug('Storage getItem:', key);
@@ -109,28 +72,29 @@ export const getSupabaseClient = () => {
           storageKey: 'sb-auth-token',
           flowType: 'pkce' as const,
         },
-        // Completely disable realtime features
+        // Habilitar realtime con configuración segura
         realtime: {
-          disabled: true
+          params: {
+            // Añadir un ID de cliente único para mejor seguimiento
+            client_id: isBrowser ? 'web-' + Math.random().toString(36).substr(2, 9) : 'server',
+            // Limitar la tasa de eventos por segundo
+            eventsPerSecond: 10
+          }
         },
-        // Disable auto-connect
-        autoConnect: false,
-        // Global fetch handler as an additional safety measure
+        // Habilitar auto-conexión para características en tiempo real
+        autoConnect: true,
+        // Configuración global
         global: {
-          fetch: (url: string, options: any) => {
-            // Block any WebSocket or realtime connections
-            if (typeof url === 'string' && 
-                (url.includes('/realtime/') || 
-                 url.includes('websocket') || 
-                 url.startsWith('wss:'))) {
-              console.warn('Blocked WebSocket connection attempt to:', url);
-              return Promise.reject(new Error('WebSocket connections are disabled by client configuration'));
-            }
-            return fetch(url, options);
-          },
           headers: {
             'X-Client-Info': 'uplegal-web/1.0',
             'X-Requested-With': 'XMLHttpRequest'
+          },
+          // Manejador de fetch para registrar conexiones
+          fetch: (url: string, options: any) => {
+            if (process.env.NODE_ENV === 'development' && typeof url === 'string' && url.includes('supabase.co')) {
+              logger.debug('Supabase request:', { url, method: options?.method });
+            }
+            return fetch(url, options);
           }
         }
       };
