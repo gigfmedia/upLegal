@@ -21,12 +21,17 @@ const GoogleAnalytics = () => {
       }
       ReactGA.initialize(gaId);
 
-      // Expose gtag-compatible helper so legacy calls keep working
+      const originalGtag = window.gtag?.bind(window);
       window.gtag = (...args) => {
         if (import.meta.env.DEV) {
           console.log("gtag call", args);
         }
-        ReactGA.gtag(...args);
+
+        if (typeof originalGtag === "function") {
+          originalGtag(...args);
+        } else {
+          ReactGA.gtag(...args);
+        }
       };
 
       setInitialized(true);
