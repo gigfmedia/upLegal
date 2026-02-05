@@ -1605,17 +1605,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
     res.status(200).send('OK');
   } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
-  }
-});
-
-app.get('/api/admin/notify-lawyers', (req, res) => {
-  res.json({ 
-    success: false, 
-    message: 'This endpoint only accepts POST requests. Please use POST to send notifications.' 
-  });
-});
 
 // Endpoint para notificar abogados
 app.post('/api/admin/notify-lawyers', async (req, res) => {
@@ -1636,7 +1625,26 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         from: 'LegalUp <hola@mg.legalup.cl>',
         to: testEmail,
         subject: 'Prueba de notificación LegalUp',
-        html: '<h1>¡Prueba exitosa!</h1><p>Esta es una notificación de prueba de LegalUp.</p>'
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <img src="https://legalup.cl/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+              <h1 style="color: #2563eb; margin-bottom: 10px;">¡Bienvenido a LegalUp!</h1>
+              <p style="color: #4b5563; margin-bottom: 25px;">Esta es una notificación de prueba de LegalUp.</p>
+            </div>
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
+              <p style="margin: 0; color: #1e293b; line-height: 1.6;">
+                Si puedes ver este correo, el sistema de notificaciones está funcionando correctamente.
+              </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
+              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+              <p style="font-size: 12px; color: #94a3b8;">
+                Este es un correo automático, por favor no respondas a este mensaje.
+              </p>
+            </div>
+          </div>
+        `
       });
 
       return res.json({ 
@@ -1649,56 +1657,154 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
     // Obtener todos los abogados que no han subido servicios
     const { data: lawyers, error } = await supabase
       .from('profiles')
-      .select('id, email, first_name, last_name')
+      .select(`
+        id, 
+        email, 
+        first_name, 
+        last_name,
+        services (id)
+      `)
       .eq('role', 'lawyer')
-      .is('services', null)
+      .is('services.id', null)
       .not('email', 'is', null);
 
     if (error) {
-      console.error('Error al obtener abogados:', error);
+      console.error('Error al obtener abogados sin servicios:', error);
       return res.status(500).json({ 
         success: false, 
-        message: 'Error al obtener la lista de abogados' 
+        message: 'Error al obtener la lista de abogados',
+        error: error.message 
       });
     }
 
-    // Enviar correos
-    const results = [];
+    // Si no hay abogados para notificar
+    if (!lawyers || lawyers.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'No hay abogados sin servicios para notificar',
+        count: 0
+      });
+    }
+
+    // Contadores para el resumen
+    let successCount = 0;
+    let failCount = 0;
+    const failedEmails = [];
+
+    // Enviar notificación a cada abogado
     for (const lawyer of lawyers) {
       try {
+        const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado/a';
+        
         await resend.emails.send({
           from: 'LegalUp <hola@mg.legalup.cl>',
           to: lawyer.email,
-          subject: '¡Completa tu perfil en LegalUp!',
+          subject: '¡Aún no has cargado servicios en tu perfil!',
           html: `
-            <h1>¡Hola ${lawyer.first_name || 'abogado/a'}!</h1>
-            <p>Notamos que aún no has completado los servicios que ofreces en LegalUp.</p>
-            <p>Por favor, inicia sesión y completa tu perfil para que los clientes puedan encontrarte.</p>
-            <a href="${appUrl}/dashboard/profile" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px;">Completar perfil</a>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://legalup.cl/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+                <h1 style="color: #2563eb; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
+              </div>
+              
+              <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
+                Hemos notado que aún no has cargado ningún servicio en tu perfil de LegalUp. Para que los clientes puedan encontrarte y contratarte, es importante que completes esta información.
+              </p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${appUrl}/abogado/servicios" 
+                   style="background-color: #2563eb; color: white; padding: 12px 30px; 
+                          text-decoration: none; border-radius: 6px; font-weight: bold; 
+                          display: inline-block; font-size: 16px;">
+                  Agregar mi primer servicio
+                </a>
+              </div>
+
+              <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
+                Si necesitas ayuda para configurar tus servicios, no dudes en contactarnos a 
+                <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
+              </p>
+
+              <p style="color: #1e293b; line-height: 1.6; margin-bottom: 30px;">
+                ¡Estamos aquí para ayudarte a tener éxito en LegalUp!
+              </p>
+
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
+                <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                  Si ya has cargado tus servicios, por favor ignora este mensaje.
+                </p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                  Este es un correo automático, por favor no respondas a este mensaje.
+                </p>
+              </div>
+            </div>
           `
         });
-        results.push({ email: lawyer.email, status: 'success' });
-      } catch (error) {
-        console.error(`Error enviando correo a ${lawyer.email}:`, error);
-        results.push({ email: lawyer.email, status: 'error', error: error.message });
+        
+        successCount++;
+        
+        // Pequeña pausa para evitar saturar el servicio de envío
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+      } catch (emailError) {
+        console.error(`Error al enviar correo a ${lawyer.email}:`, emailError);
+        failCount++;
+        failedEmails.push({
+          email: lawyer.email,
+          error: emailError.message
+        });
       }
     }
 
-    res.json({ 
-      success: true, 
-      message: 'Notificaciones enviadas correctamente',
-      total: lawyers.length,
-      results
-    });
+    // Enviar resumen por correo al administrador
+    try {
+      await resend.emails.send({
+        from: 'LegalUp <hola@mg.legalup.cl>',
+        to: 'juan.fercommerce@gmail.com',
+        subject: `Resumen de notificaciones a abogados (${new Date().toLocaleDateString()})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #2563eb;">Resumen de notificaciones</h2>
+            <p>Se han procesado las notificaciones a abogados sin servicios cargados.</p>
+            
+            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+              <p><strong>Total de abogados notificados:</strong> ${successCount + failCount}</p>
+              <p style="color: #22c55e;"><strong>Notificaciones exitosas:</strong> ${successCount}</p>
+              <p style="color: ${failCount > 0 ? '#ef4444' : '#22c55e'}"><strong>Notificaciones fallidas:</strong> ${failCount}</p>
+            </div>
+            
+            ${failCount > 0 ? `
+              <div style="margin-top: 20px;">
+                <h3>Correos con error:</h3>
+                <ul>
+                  ${failedEmails.map(item => `
+                    <li>${item.email}: ${item.error}</li>
+                  `).join('')}
+                </ul>
+              </div>
+            ` : ''}
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
+              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+            </div>
+          </div>
+        `
+      });
+    } catch (summaryError) {
+      console.error('Error al enviar resumen:', summaryError);
+    }
 
-  } catch (error) {
-    console.error('Error en notificación de abogados:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error al procesar la solicitud',
-      error: error.message 
+    return res.json({
+      success: true,
+      message: `Notificaciones enviadas correctamente a ${successCount} abogados`,
+      details: {
+        total: lawyers.length,
+        success: successCount,
+        failed: failCount,
+        failedEmails: failedEmails.length > 0 ? failedEmails : undefined
+      }
     });
-  }
 });
 
 // Error handling middleware
