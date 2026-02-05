@@ -3,6 +3,24 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
+
+// Initialize Express app
+const app = express();
+
+// Middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cors({
+  origin: [
+    'https://legalup.cl',
+    'https://www.legalup.cl',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://uplegal.netlify.app'
+  ],
+  credentials: true
+}));
+app.use(cookieParser());
 import fetch from 'node-fetch';
 import { createClient } from '@supabase/supabase-js';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
