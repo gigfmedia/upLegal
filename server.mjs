@@ -1605,6 +1605,10 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
     res.status(200).send('OK');
   } catch (error) {
+    console.error('Error in MercadoPago webhook:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Endpoint para notificar abogados
 app.post('/api/admin/notify-lawyers', async (req, res) => {
