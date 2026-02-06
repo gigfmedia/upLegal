@@ -1809,6 +1809,14 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         failedEmails: failedEmails.length > 0 ? failedEmails : undefined
       }
     });
+  } catch (error) {
+    console.error('Error en el proceso de notificación:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al procesar la solicitud',
+      error: error.message
+    });
+  }
 });
 
 // Error handling middleware
