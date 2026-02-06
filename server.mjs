@@ -1632,18 +1632,38 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="https://legalup.cl/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
-              <h1 style="color: #2563eb; margin-bottom: 10px;">¡Bienvenido a LegalUp!</h1>
-              <p style="color: #4b5563; margin-bottom: 25px;">Esta es una notificación de prueba de LegalUp.</p>
+              <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+              <h1 style="color: #2563eb; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
             </div>
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 25px;">
-              <p style="margin: 0; color: #1e293b; line-height: 1.6;">
-                Si puedes ver este correo, el sistema de notificaciones está funcionando correctamente.
-              </p>
+            
+            <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
+              Hemos notado que aún no has cargado ningún servicio en tu perfil de LegalUp. Para que los clientes puedan encontrarte y contratarte, es importante que completes esta información.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${appUrl}/abogado/servicios" 
+                  style="background-color: #2563eb; color: white; padding: 12px 30px; 
+                        text-decoration: none; border-radius: 6px; font-weight: bold; 
+                        display: inline-block; font-size: 16px;">
+                Agregar mi primer servicio
+              </a>
             </div>
-            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
+
+            <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
+              Si necesitas ayuda para configurar tus servicios, no dudes en contactarnos a 
+              <a href="mailto:juan.fercommerce@gmail.com" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
+            </p>
+
+            <p style="color: #1e293b; line-height: 1.6; margin-bottom: 30px;">
+              ¡Estamos aquí para ayudarte a tener éxito en LegalUp!
+            </p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
               <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
-              <p style="font-size: 12px; color: #94a3b8;">
+              <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
+                Si ya has cargado tus servicios, por favor ignora este mensaje.
+              </p>
+              <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                 Este es un correo automático, por favor no respondas a este mensaje.
               </p>
             </div>
@@ -1707,7 +1727,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://legalup.cl/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+                <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
                 <h1 style="color: #2563eb; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
               </div>
               
@@ -1726,7 +1746,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 
               <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
                 Si necesitas ayuda para configurar tus servicios, no dudes en contactarnos a 
-                <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
+                <a href="mailto:juan.fercommerce@gmail.com" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
               </p>
 
               <p style="color: #1e293b; line-height: 1.6; margin-bottom: 30px;">
