@@ -1641,7 +1641,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${appUrl}/abogado/servicios" 
+              <a href="${appUrl}/lawyer/services" 
                   style="background-color: #2563eb; color: white; padding: 12px 30px; 
                         text-decoration: none; border-radius: 6px; font-weight: bold; 
                         display: inline-block; font-size: 16px;">
@@ -1736,7 +1736,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
               </p>
               
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${appUrl}/abogado/servicios" 
+                <a href="${appUrl}/lawyer/services" 
                    style="background-color: #2563eb; color: white; padding: 12px 30px; 
                           text-decoration: none; border-radius: 6px; font-weight: bold; 
                           display: inline-block; font-size: 16px;">
