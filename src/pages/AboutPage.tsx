@@ -1,5 +1,6 @@
 import { CheckCircle, ShieldCheck, Eye, Heart, Zap, Scale } from "lucide-react";
 import Header from "@/components/Header";
+import { lazy, Suspense } from 'react';
 
 export default function AboutPage() {
   return (
@@ -71,45 +72,77 @@ export default function AboutPage() {
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Nuestros valores</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <ShieldCheck className="h-6 w-6 text-blue-600" />
+              <Suspense fallback={
+                <div className="bg-white p-6 rounded-xl border border-gray-100 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Confianza</h3>
-                <p className="text-gray-600 text-sm">
-                  Validamos la idoneidad de todos los profesionales para garantizar tu tranquilidad.
-                </p>
-              </div>
+              }>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                    <ShieldCheck className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Confianza</h3>
+                  <p className="text-gray-600 text-sm">
+                    Validamos la idoneidad de todos los profesionales para garantizar tu tranquilidad.
+                  </p>
+                </div>
+              </Suspense>
 
-              <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <Eye className="h-6 w-6 text-blue-600" />
+              <Suspense fallback={
+                <div className="bg-white p-6 rounded-xl border border-gray-100 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Transparencia</h3>
-                <p className="text-gray-600 text-sm">
-                  Mostramos con claridad tarifas, tiempos y alcance de cada servicio.
-                </p>
-              </div>
+              }>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                    <Eye className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Transparencia</h3>
+                  <p className="text-gray-600 text-sm">
+                    Mostramos con claridad tarifas, tiempos y alcance de cada servicio.
+                  </p>
+                </div>
+              </Suspense>
 
-              <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <Heart className="h-6 w-6 text-blue-600" />
+              <Suspense fallback={
+                <div className="bg-white p-6 rounded-xl border border-gray-100 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Empatía</h3>
-                <p className="text-gray-600 text-sm">
-                  Entendemos tu situación y trabajamos con el mayor respeto y profesionalismo.
-                </p>
-              </div>
+              }>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                    <Heart className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Empatía</h3>
+                  <p className="text-gray-600 text-sm">
+                    Entendemos tu situación y trabajamos con el mayor respeto y profesionalismo.
+                  </p>
+                </div>
+              </Suspense>
 
-              <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-blue-600" />
+              <Suspense fallback={
+                <div className="bg-white p-6 rounded-xl border border-gray-100 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-16 bg-gray-200 rounded"></div>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Innovación</h3>
-                <p className="text-gray-600 text-sm">
-                  Utilizamos tecnología para hacer el acceso a servicios legales más eficiente.
-                </p>
-              </div>
+              }>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                    <Zap className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Innovación</h3>
+                  <p className="text-gray-600 text-sm">
+                    Utilizamos tecnología para hacer el acceso a servicios legales más eficiente.
+                  </p>
+                </div>
+              </Suspense>
             </div>
           </section>
         </div>
