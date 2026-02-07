@@ -15,12 +15,15 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import * as React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+<<<<<<< HEAD
 
 // Import Swiper components
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+=======
+>>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
 
 // Dynamic import will be handled in component
 import { useInView } from 'react-intersection-observer';
@@ -741,6 +744,7 @@ const SearchResults = () => {
           {/* Specialties Slider */}
           <div className="mt-4 relative">
             <div className="relative">
+<<<<<<< HEAD
               <Swiper
                 modules={[Navigation]}
                 spaceBetween={8}
@@ -753,6 +757,9 @@ const SearchResults = () => {
                 className="py-2 px-2"
                 style={{ paddingLeft: '8px', paddingRight: '8px' }}
               >
+=======
+              <div className="flex gap-2 overflow-x-auto pb-2">
+>>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
                 {[
                   'Todas',
                   'Derecho Civil',
@@ -775,6 +782,7 @@ const SearchResults = () => {
                   'Derecho Aeronáutico',
                   'Derecho Deportivo'
                 ].map((specialty) => (
+<<<<<<< HEAD
                   <SwiperSlide key={specialty} className="!w-auto">
                     <button
                       onClick={() => {
@@ -822,6 +830,48 @@ const SearchResults = () => {
             <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
               <ChevronRight className="h-4 w-4 text-gray-600" />
             </button>
+=======
+                  <button
+                    key={specialty}
+                    onClick={() => {
+                      const value = specialty === 'Todas' ? 'all' : specialty;
+                      let newSpecialties = [...selectedSpecialty];
+                      
+                      if (value === 'all') {
+                        newSpecialties = ['all'];
+                      } else {
+                        // Remove 'all' if present
+                        newSpecialties = newSpecialties.filter(s => s !== 'all');
+                        
+                        if (newSpecialties.includes(value)) {
+                          newSpecialties = newSpecialties.filter(s => s !== value);
+                        } else {
+                          newSpecialties.push(value);
+                        }
+                        
+                        if (newSpecialties.length === 0) newSpecialties = ['all'];
+                      }
+                      
+                      handleSpecialtyChange(newSpecialties);
+                    }}
+                    className={`transition-all duration-200 rounded-full font-medium text-sm whitespace-nowrap flex-shrink-0 ${
+                      selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
+                    }`}
+                    style={{
+                      padding: '0.5rem 1.25rem',
+                      fontSize: '0.875rem',
+                      lineHeight: '1.25rem',
+                      fontWeight: 500,
+                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                    }}
+                  >
+                    {specialty}
+                  </button>
+                ))}
+              </div>
+>>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
             </div>
           </div>
         </div>
