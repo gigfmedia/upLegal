@@ -15,14 +15,24 @@ import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import * as React from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { Suspense, lazy } from 'react';
+
+// Dynamic imports for better performance
+const LazySwiper = lazy(() => import('swiper/react').then(module => ({ default: module.Swiper })));
+const LazySwiperSlide = lazy(() => import('swiper/react').then(module => ({ default: module.SwiperSlide })));
+const LazyNavigation = lazy(() => import('swiper/modules').then(module => ({ default: module.Navigation })));
 
 // Dynamic import will be handled in component
 import { useInView } from 'react-intersection-observer';
 import { debounce } from 'lodash';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
+
+// Import Swiper CSS dynamically
+const loadSwiperCSS = async () => {
+  await Promise.all([
+    import('swiper/css'),
+    import('swiper/css/navigation')
+  ]);
+};
 
 const specialties = [
   "Derecho Civil",
@@ -197,6 +207,11 @@ const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  
+  // Load Swiper CSS on component mount
+  useEffect(() => {
+    loadSwiperCSS();
+  }, []);
   
   // Get search parameters from URL
   const initialQuery = searchParams.get('q') || '';
@@ -739,87 +754,97 @@ const SearchResults = () => {
           {/* Specialties Slider */}
           <div className="mt-4 relative">
             <div className="relative">
-              <Swiper
-                modules={[Navigation]}
-                spaceBetween={8}
-                slidesPerView={'auto'}
-                navigation={{
-                  nextEl: '.swiper-button-next-specialties',
-                  prevEl: '.swiper-button-prev-specialties',
-                  disabledClass: 'opacity-30 cursor-not-allowed',
-                }}
-                className="py-2 px-2"
-                style={{ paddingLeft: '8px', paddingRight: '8px' }}
-              >
-                {[
-                  'Todas',
-                  'Derecho Civil',
-                  'Derecho Penal',
-                  'Derecho Laboral',
-                  'Derecho de Familia',
-                  'Derecho Comercial',
-                  'Derecho Tributario',
-                  'Derecho Inmobiliario',
-                  'Derecho de Salud',
-                  'Derecho Ambiental',
-                  'Derecho de Consumidor',
-                  'Derecho Administrativo',
-                  'Derecho Procesal',
-                  'Derecho de Propiedad Intelectual',
-                  'Derecho de Seguridad Social',
-                  'Derecho Minero',
-                  'Derecho Aduanero',
-                  'Derecho Marítimo',
-                  'Derecho Aeronáutico',
-                  'Derecho Deportivo'
-                ].map((specialty) => (
-                  <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
-                    <button
-                      onClick={() => {
-                        const value = specialty === 'Todas' ? 'all' : specialty;
-                        let newSpecialties = [...selectedSpecialty];
-                        
-                        if (value === 'all') {
-                          newSpecialties = ['all'];
-                        } else {
-                          // Remove 'all' if present
-                          newSpecialties = newSpecialties.filter(s => s !== 'all');
+              <Suspense fallback={
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {['Todas', 'Derecho Civil', 'Derecho Penal', 'Derecho Laboral', 'Derecho de Familia', 'Derecho Comercial', 'Derecho Tributario', 'Derecho Inmobiliario'].map((specialty) => (
+                    <div key={specialty} className="flex-shrink-0">
+                      <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              }>
+                <LazySwiper
+                  modules={[LazyNavigation]}
+                  spaceBetween={8}
+                  slidesPerView={'auto'}
+                  navigation={{
+                    nextEl: '.swiper-button-next-specialties',
+                    prevEl: '.swiper-button-prev-specialties',
+                    disabledClass: 'opacity-30 cursor-not-allowed',
+                  }}
+                  className="py-2 px-2"
+                  style={{ paddingLeft: '8px', paddingRight: '8px' }}
+                >
+                  {[
+                    'Todas',
+                    'Derecho Civil',
+                    'Derecho Penal',
+                    'Derecho Laboral',
+                    'Derecho de Familia',
+                    'Derecho Comercial',
+                    'Derecho Tributario',
+                    'Derecho Inmobiliario',
+                    'Derecho de Salud',
+                    'Derecho Ambiental',
+                    'Derecho de Consumidor',
+                    'Derecho Administrativo',
+                    'Derecho Procesal',
+                    'Derecho de Propiedad Intelectual',
+                    'Derecho de Seguridad Social',
+                    'Derecho Minero',
+                    'Derecho Aduanero',
+                    'Derecho Marítimo',
+                    'Derecho Aeronáutico',
+                    'Derecho Deportivo'
+                  ].map((specialty) => (
+                    <LazySwiperSlide key={specialty} className="!w-auto">
+                      <button
+                        onClick={() => {
+                          const value = specialty === 'Todas' ? 'all' : specialty;
+                          let newSpecialties = [...selectedSpecialty];
                           
-                          if (newSpecialties.includes(value)) {
-                            newSpecialties = newSpecialties.filter(s => s !== value);
+                          if (value === 'all') {
+                            newSpecialties = ['all'];
                           } else {
-                            newSpecialties.push(value);
+                            // Remove 'all' if present
+                            newSpecialties = newSpecialties.filter(s => s !== 'all');
+                            
+                            if (newSpecialties.includes(value)) {
+                              newSpecialties = newSpecialties.filter(s => s !== value);
+                            } else {
+                              newSpecialties.push(value);
+                            }
+                            
+                            if (newSpecialties.length === 0) newSpecialties = ['all'];
                           }
                           
-                          if (newSpecialties.length === 0) newSpecialties = ['all'];
-                        }
-                        
-                        handleSpecialtyChange(newSpecialties);
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                        selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
-                      }`}
-                      style={{
-                        padding: '0.5rem 1.25rem',
-                        fontSize: '0.875rem',
-                        lineHeight: '1.25rem',
-                        fontWeight: 500,
-                        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                      }}
-                    >
-                      {specialty}
-                    </button>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-              <button className="swiper-button-prev-specialties absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-                <ChevronLeft className="h-4 w-4 text-gray-600" />
-              </button>
-              <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-                <ChevronRight className="h-4 w-4 text-gray-600" />
-              </button>
+                          handleSpecialtyChange(newSpecialties);
+                        }}
+                        className={`transition-all duration-200 rounded-full font-medium text-sm whitespace-nowrap ${
+                          selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
+                        }`}
+                        style={{
+                          padding: '0.5rem 1.25rem',
+                          fontSize: '0.875rem',
+                          lineHeight: '1.25rem',
+                          fontWeight: 500,
+                          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                        }}
+                      >
+                        {specialty}
+                      </button>
+                    </LazySwiperSlide>
+                  ))}
+                </LazySwiper>
+              </Suspense>
+            <button className="swiper-button-prev-specialties absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
+              <ChevronLeft className="h-4 w-4 text-gray-600" />
+            </button>
+            <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
+              <ChevronRight className="h-4 w-4 text-gray-600" />
+            </button>
             </div>
           </div>
         </div>
