@@ -1632,8 +1632,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
-              <h1 style="color: #2563eb; margin-bottom: 10px;">¡Hola!</h1>
+              <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+              <h1 style="color: #201810; margin-bottom: 10px;">¡Hola!</h1>
             </div>
             
             <p style="color: #1e293b; line-height: 1.6; margin-bottom: 20px;">
@@ -1727,7 +1727,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+                <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
                 <h1 style="color: #2563eb; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
               </div>
               

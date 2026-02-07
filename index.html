@@ -154,6 +154,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.cl" />
     <link rel="preconnect" href="https://fonts.gstatic.cl" crossorigin />
     
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/logo-200.png" as="image" />
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    
+    <!-- DNS prefetch for external domains -->
+    <link rel="dns-prefetch" href="https://lgxsfmvyjctxehwslvyw.supabase.co" />
+    <link rel="dns-prefetch" href="https://api.resend.com" />
+    
     <!-- Meta para temas de color del navegador -->
     <meta name="theme-color" content="#1a365d" />
     <meta name="msapplication-TileColor" content="#1a365d" />

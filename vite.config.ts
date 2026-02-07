@@ -94,8 +94,14 @@ export default defineConfig(({ mode }) => {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // Let Vite handle chunking automatically to avoid circular dependencies
-      },
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['@radix-ui/react-slot', '@radix-ui/react-dialog'],
+          supabase: ['@supabase/supabase-js'],
+          query: ['@tanstack/react-query']
+        }
+      }
     },
     commonjsOptions: {
       include: [/node_modules/],

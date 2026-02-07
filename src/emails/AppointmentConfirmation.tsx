@@ -42,7 +42,7 @@ export function AppointmentConfirmationEmail({
             <div style={styles.logo}>
               <img 
                 height="40" 
-                src="https://www.legalup.app/logo.png" 
+                src="https://legalup.cl/assets/logo-200.png" 
                 alt="LegalUp" 
                 style={styles.logoImage}
               />
@@ -115,7 +115,7 @@ export function AppointmentConfirmationEmail({
             
             <div style={styles.buttonContainer}>
               <a 
-                href="https://app.legalup.app/mis-citas" 
+                href="https://legalup.cl/dashboard/appointments" 
                 style={styles.button}
               >
                 Ver detalles de la cita
@@ -130,10 +130,10 @@ export function AppointmentConfirmationEmail({
               <p style={styles.footerText}>
                 Si tienes alguna pregunta, no dudes en contactarnos en{' '}
                 <a 
-                  href="mailto:soporte@legalup.app" 
+                  href="mailto:juan.fercommerce@gmail.cl" 
                   style={styles.footerLink}
                 >
-                  soporte@legalup.app
+                  soporte@legalup.cl
                 </a>
               </p>
             </div>

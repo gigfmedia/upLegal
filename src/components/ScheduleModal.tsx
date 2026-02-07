@@ -1481,7 +1481,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-700">Duración seleccionada</span>
                 <span className="text-sm font-medium">
-                  {formData.duration || "60"} minutos
+                  hasta {formData.duration || "60"} minutos
                 </span>
               </div>
 
