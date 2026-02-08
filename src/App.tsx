@@ -303,9 +303,7 @@ const AppContent = () => {
                 <Route path="dashboard" element={<LawyerDashboardPage />} />
                 <Route path="services" element={<ServicesPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                {/* Temporarily disabled - ConsultasPage not available
                 <Route path="consultas" element={<ConsultasPage />} />
-                */}
                 <Route path="citas" element={<CitasPage />} />
                 <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
                 <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />

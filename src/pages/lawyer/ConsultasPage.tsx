@@ -49,7 +49,7 @@ export default function ConsultasPage() {
           status,
           created_at,
           price,
-          client:profiles!consultations_client_id_fkey (
+          client:profiles (
             id,
             first_name,
             last_name,
@@ -336,7 +336,7 @@ export default function ConsultasPage() {
 
 interface ConsultaCardProps {
   consulta: Consulta;
-  onStatusChange: (id: number, status: 'pending' | 'confirmed' | 'cancelled' | 'completed') => void;
+  onStatusChange: (id: string, status: 'pending' | 'confirmed' | 'cancelled' | 'completed') => void;
   onSelect: (consulta: Consulta) => void;
 }
 

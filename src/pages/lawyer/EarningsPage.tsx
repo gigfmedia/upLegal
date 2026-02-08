@@ -85,53 +85,82 @@ export default function EarningsPage() {
       if (!session) return;
 
       // Fetch payments from the database
-      const { data: payments, error } = await supabase
+      // 1. Fetch payments first
+      const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select(`
           id,
           amount,
           status,
           created_at,
-          is_test,
-          appointment_id (
-            id,
-            client_id,
-            client:profiles!appointments_client_id_fkey (
-              first_name,
-              last_name
-            ),
-            service_type
-          )
+          appointment_id,
+          lawyer_id
         `)
         .eq('lawyer_id', session.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (paymentsError) throw paymentsError;
 
-      console.log('Raw payments data from database:', payments);
+      // 2. Get unique appointment IDs
+      const appointmentIds = [...new Set((payments || [])
+        .map(p => p.appointment_id)
+        .filter(id => id) // filter out nulls
+      )];
 
-      // Filter out test payments and transform the data
+      // 3. Fetch appointments with client details
+      let appointmentsMap = new Map();
+      
+      if (appointmentIds.length > 0) {
+        const { data: appointments, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select(`
+            id,
+            service_type,
+            client_id,
+            client:profiles!appointments_client_id_fkey (
+              first_name,
+              last_name
+            )
+          `)
+          .in('id', appointmentIds);
+          
+        if (appointmentsError) {
+          console.error('Error fetching appointments details:', appointmentsError);
+          // Continue without details if this fails
+        } else if (appointments) {
+          appointments.forEach(app => {
+            appointmentsMap.set(app.id, app);
+          });
+        }
+      }
+
+      console.log('Raw payments:', payments);
+      console.log('Appointments map size:', appointmentsMap.size);
+
+      // 4. Merge data
       const formattedTransactions: Transaction[] = (payments || [])
         .filter(payment => {
-          // Skip test payments and payments with 0 amount
-          const isTestPayment = payment.is_test || payment.amount === 0;
-          if (isTestPayment) {
-            console.log('Filtering out test payment:', payment);
+          // Skip payments with 0 amount (no test payment check)
+          if (payment.amount === 0) {
             return false;
           }
           return true;
         })
-        .map(payment => ({
-          id: payment.id,
-          date: new Date(payment.created_at),
-          clientName: payment.appointment_id?.client 
-            ? `${payment.appointment_id.client.first_name} ${payment.appointment_id.client.last_name}`.trim() || 'Cliente'
-            : 'Cliente',
-          service: payment.appointment_id?.service_type || 'Consulta',
-          amount: payment.amount,
-          status: payment.status as Transaction['status'],
-          type: 'consultation'
-        }));
+        .map((payment: any) => {
+          const appointment = appointmentsMap.get(payment.appointment_id);
+          
+          return {
+            id: payment.id,
+            date: new Date(payment.created_at),
+            clientName: appointment?.client 
+              ? `${appointment.client.first_name || ''} ${appointment.client.last_name || ''}`.trim() || 'Cliente'
+              : 'Cliente',
+            service: appointment?.service_type || 'Consulta',
+            amount: payment.amount,
+            status: payment.status as Transaction['status'],
+            type: 'consultation'
+          };
+        });
 
       console.log('Formatted transactions:', formattedTransactions);
       setTransactions(formattedTransactions);
@@ -143,6 +172,8 @@ export default function EarningsPage() {
     } finally {
       setIsLoading(false);
     }
+
+
   };
 
   // Load transactions
