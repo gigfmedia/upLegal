@@ -11,23 +11,13 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AuthContextType } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
-import { ContactModal } from "@/components/ContactModal";
-import { ScheduleModal } from "@/components/ScheduleModal";
 import * as React from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-<<<<<<< HEAD
-
-// Import Swiper components
+import { useInView } from 'react-intersection-observer';
+import { debounce } from 'lodash';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
-=======
->>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
-
-// Dynamic import will be handled in component
-import { useInView } from 'react-intersection-observer';
-import { debounce } from 'lodash';
 
 const specialties = [
   "Derecho Civil",
@@ -101,101 +91,7 @@ const chileanLocations = [
   'Punta Arenas', 'Puerto Natales', 'Porvenir', 'Puerto Williams'
 ];
 
-// Row component for virtualized list
-const LawyerRow = ({ index, style, data }: { index: number, style: React.CSSProperties, data: any }) => {
-  // Get the lawyer data directly from the data prop
-  const lawyer = data.lawyers[index];
-  const { user, setShowAuthModal, setAuthMode } = data;
-  const { setSelectedLawyer, setShowContactModal, setShowScheduleModal } = data;
 
-  if (!lawyer) return null;
-
-  return (
-    <div style={style}>
-      <LawyerCard 
-        key={lawyer.id}
-        lawyer={lawyer}
-        user={user}
-        hideCard={true}
-        onContactClick={() => {
-          if (!user) {
-            setAuthMode('login');
-            setShowAuthModal(true);
-          } else {
-            setSelectedLawyer(lawyer);
-            setShowContactModal(true);
-          }
-        }}
-        onScheduleClick={() => {
-          if (!user) {
-            setAuthMode('login');
-            setShowAuthModal(true);
-          } else {
-            setSelectedLawyer(lawyer);
-            setShowScheduleModal(true);
-          }
-        }}
-      />
-    </div>
-  );
-};
-
-// Virtualized list component using @tanstack/react-virtual
-const VirtualizedList = ({ 
-  items, 
-  itemSize, 
-  renderItem,
-  className = ''
-}: {
-  items: any[];
-  itemSize: number;
-  renderItem: (item: any, index: number) => React.ReactNode;
-  className?: string;
-}) => {
-  const parentRef = React.useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => itemSize,
-    overscan: 5,
-  });
-
-  return (
-    <div 
-      ref={parentRef}
-      className={`${className}`}
-      style={{
-        height: 'auto',
-        width: '100%',
-      }}
-    >
-      <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {rowVirtualizer.getVirtualItems().map((virtualRow) => (
-          <div
-            key={virtualRow.key}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start}px)`,
-            }}
-          >
-            {renderItem(items[virtualRow.index], virtualRow.index)}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
 
 const SearchResults = () => {
   const { user } = useAuth() as AuthContextType;
@@ -262,8 +158,7 @@ const SearchResults = () => {
   
   // Modal states
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  
   
   // Infinite scroll ref
   const { ref: loadMoreRef, inView } = useInView({
@@ -271,22 +166,15 @@ const SearchResults = () => {
     triggerOnce: false,
   });
 
-  // Memoize search parameters to prevent unnecessary fetches
-  const searchParamsMemo = useMemo(() => ({
-    query: searchTerm,
-    specialty: selectedSpecialty,
-    location,
-    minRating,
-    minExperience,
-    availableNow: false // Deshabilitar temporalmente availableNow hasta que se arregle la base de datos
-  }), [searchTerm, selectedSpecialty, location, minRating, minExperience]);
-
   // Sync local state with URL parameters when they change
   useEffect(() => {
     const urlQuery = searchParams.get('q') || '';
     const urlCategory = searchParams.get('category');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
+    const urlMinRating = Number(searchParams.get('minRating')) || 0;
+    const urlMinExperience = Number(searchParams.get('minExperience')) || 0;
+    // const urlAvailableNow = searchParams.get('availableNow') === 'true'; // Not used in backend query yet
     
     // Determine specialties from URL
     let newSpecialties: string[] = [];
@@ -316,23 +204,28 @@ const SearchResults = () => {
     // Update location if changed
     if (urlLocation !== location) {
       setLocation(urlLocation);
-    } else {
-
     }
+
+    // Update filters if changed in URL (sync back to state)
+    if (urlMinRating !== minRating) setMinRating(urlMinRating);
+    if (urlMinExperience !== minExperience) setMinExperience(urlMinExperience);
+
     
     // Trigger search with current parameters
     const shouldSearch = urlQuery || 
       (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') || 
       urlCategory || 
-      urlLocation;
+      urlLocation ||
+      urlMinRating > 0 ||
+      urlMinExperience > 0;
     
     if (shouldSearch) {
       const searchParams = {
         query: urlQuery,
         specialty: newSpecialties,
         location: urlLocation,
-        minRating,
-        minExperience,
+        minRating: urlMinRating,
+        minExperience: urlMinExperience,
         availableNow: false
       };
       
@@ -343,15 +236,21 @@ const SearchResults = () => {
         currentPageSize: 12
       });
     } else if (searchParams.toString() === '') {
-      // Si no hay parámetros, limpiar resultados
-      setSearchResult({
-        lawyers: [],
-        total: 0,
+      // Si no hay parámetros, buscar todos los abogados
+      setLoading(true);
+      debouncedSearchRef.current({
         page: 1,
-        pageSize: 12,
-        hasMore: false
+        isInitialLoad: true,
+        searchParams: {
+          query: '',
+          specialty: ['all'],
+          location: '',
+          minRating: 0,
+          minExperience: 0,
+          availableNow: false
+        },
+        currentPageSize: 12
       });
-      setLoading(false);
     }
   }, [searchParams]); // Only depend on searchParams, not the state variables
 
@@ -362,7 +261,14 @@ const SearchResults = () => {
     debounce(async (params: {
       page: number;
       isInitialLoad: boolean;
-      searchParams: typeof searchParamsMemo;
+      searchParams: {
+        query: string;
+        specialty: string[];
+        location: string;
+        minRating: number;
+        minExperience: number;
+        availableNow: boolean;
+      };
       currentPageSize: number;
     }) => {
       const { page, isInitialLoad, searchParams, currentPageSize } = params;
@@ -466,62 +372,26 @@ const SearchResults = () => {
     };
   }, []);
 
-  // Effect to trigger search when search parameters change
-  useEffect(() => {
-    // Cancel any pending debounced search
-    const debouncedSearch = debouncedSearchRef.current;
-    
-    // Always trigger search
-    setLoading(true);
-    
-    // Trigger search with debounce
-    debouncedSearch({
-      page: 1,
-      isInitialLoad: true,
-      searchParams: searchParamsMemo,
-      currentPageSize: searchResult.pageSize
-    });
-
-    // Cleanup function to cancel debounce on unmount
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [searchParamsMemo, searchResult.pageSize]);
-
-  // Wrapper function to call the debounced search
-  const debouncedSearch = useCallback((page: number, isInitialLoad = false, force = false) => {
-    // Only trigger a new search if we don't have results or if forced
-    if (searchResult.lawyers.length === 0 || force) {
-      debouncedSearchRef.current({
-        page,
-        isInitialLoad,
-        searchParams: searchParamsMemo,
-        currentPageSize: searchResult.pageSize
-      });
-    } else {
-      // Just update the loading state if we already have results
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [searchParamsMemo, searchResult.pageSize, searchResult.lawyers.length]);
-
-  // Fetch initial data and when filters change
-  useEffect(() => {
-    debouncedSearch(1, true);
-    
-    // No need for cleanup here as we handle it in the debounce ref cleanup
-    return () => {
-      // Cleanup is handled by the debouncedSearchRef cleanup effect
-    };
-  }, [debouncedSearch]);
-
   // Load more when scroll reaches the bottom
   useEffect(() => {
     if (inView && !loading && !loadingMore && searchResult.hasMore) {
-      setSearchResult(prev => ({ ...prev, page: prev.page + 1 }));
-      debouncedSearch(searchResult.page + 1, false);
+      const nextPage = searchResult.page + 1;
+      setLoadingMore(true);
+      debouncedSearchRef.current({
+        page: nextPage,
+        isInitialLoad: false,
+        searchParams: {
+          query: searchTerm,
+          specialty: selectedSpecialty,
+          location,
+          minRating,
+          minExperience,
+          availableNow: false
+        },
+        currentPageSize: searchResult.pageSize
+      });
     }
-  }, [inView, loading, loadingMore, searchResult.hasMore, searchResult.page, debouncedSearch]);
+  }, [inView, loading, loadingMore, searchResult.hasMore, searchResult.page, searchResult.pageSize, searchTerm, selectedSpecialty, location, minRating, minExperience]);
 
   // Handle search
   const handleSearch = useCallback(() => {
@@ -541,7 +411,19 @@ const SearchResults = () => {
         hasMore: true
       }));
       
-      debouncedSearch(1, true);
+      debouncedSearchRef.current({
+        page: 1,
+        isInitialLoad: true,
+        searchParams: {
+          query: '',
+          specialty: ['all'],
+          location: '',
+          minRating: 0,
+          minExperience: 0,
+          availableNow: false
+        },
+        currentPageSize: searchResult.pageSize
+      });
       return;
     }
     
@@ -588,8 +470,20 @@ const SearchResults = () => {
       hasMore: true
     }));
     
-    debouncedSearch(1, true);
-  }, [searchTerm, selectedSpecialty, location, debouncedSearch, setSearchParams]);
+    debouncedSearchRef.current({
+      page: 1,
+      isInitialLoad: true,
+      searchParams: {
+        query: searchTerm,
+        specialty: selectedSpecialty,
+        location,
+        minRating,
+        minExperience,
+        availableNow: false
+      },
+      currentPageSize: searchResult.pageSize
+    });
+  }, [searchTerm, selectedSpecialty, location, minRating, minExperience, searchResult.pageSize, setSearchParams]);
 
   // Get the lawyers from the search result
   const filteredLawyers = useMemo(() => {
@@ -631,19 +525,40 @@ const SearchResults = () => {
     modality?: string;
     region?: string;
   }) => {
+    // Update local state is handled by URL sync now, but we can update optimistically/redundantly
     setPriceRange(filters.priceRange);
-    setMinRating(filters.minRating);
-    setMinExperience(filters.minExperience);
-    setAvailableNow(filters.availableNow);
     
-    // Si la modalidad es 'presencial' y hay una región seleccionada, actualizamos la ubicación
-    if (filters.modality === 'presencial' && filters.region) {
-      setLocation(filters.region);
-    } else if (filters.modality !== 'presencial') {
-      // Si no es presencial, limpiamos la ubicación
-      setLocation('');
-    }
-  }, []);
+    // Update URL params to trigger search and persistence
+    setSearchParams(prev => {
+      const params = new URLSearchParams(prev);
+      
+      // Update Min Experience
+      if (filters.minExperience > 0) {
+        params.set('minExperience', filters.minExperience.toString());
+      } else {
+        params.delete('minExperience');
+      }
+
+      // Update Min Rating
+      if (filters.minRating > 0) {
+        params.set('minRating', filters.minRating.toString());
+      } else {
+        params.delete('minRating');
+      }
+
+      // Handle Modality & Region (Location)
+      if (filters.modality === 'presencial' && filters.region) {
+        params.set('location', filters.region);
+      } else if (filters.modality !== 'presencial') {
+        params.delete('location');
+      }
+
+      // Note: availableNow and priceRange might not be fully supported in URL/Backend yet based on previous analysis
+      
+      return params;
+    });
+
+  }, [setSearchParams]);
 
   // Handle specialty change from filters
   const handleSpecialtyChange = useCallback((specialties: string[]) => {
@@ -695,25 +610,7 @@ const SearchResults = () => {
     });
   }, [setSearchParams]);
 
-  const handleContactClick = (lawyer: Lawyer) => {
-    if (!user) {
-      setAuthMode('login');
-      setShowAuthModal(true);
-    } else {
-      setSelectedLawyer(lawyer);
-      setShowContactModal(true);
-    }
-  };
 
-  const handleScheduleClick = (lawyer: Lawyer) => {
-    if (!user) {
-      setAuthMode('login');
-      setShowAuthModal(true);
-    } else {
-      setSelectedLawyer(lawyer);
-      setShowScheduleModal(true);
-    }
-  };
 
   // clearFilters function is now defined above
   
@@ -744,7 +641,6 @@ const SearchResults = () => {
           {/* Specialties Slider */}
           <div className="mt-4 relative">
             <div className="relative">
-<<<<<<< HEAD
               <Swiper
                 modules={[Navigation]}
                 spaceBetween={8}
@@ -757,9 +653,6 @@ const SearchResults = () => {
                 className="py-2 px-2"
                 style={{ paddingLeft: '8px', paddingRight: '8px' }}
               >
-=======
-              <div className="flex gap-2 overflow-x-auto pb-2">
->>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
                 {[
                   'Todas',
                   'Derecho Civil',
@@ -782,8 +675,7 @@ const SearchResults = () => {
                   'Derecho Aeronáutico',
                   'Derecho Deportivo'
                 ].map((specialty) => (
-<<<<<<< HEAD
-                  <SwiperSlide key={specialty} className="!w-auto">
+                  <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
                     <button
                       onClick={() => {
                         const value = specialty === 'Todas' ? 'all' : specialty;
@@ -806,7 +698,7 @@ const SearchResults = () => {
                         
                         handleSpecialtyChange(newSpecialties);
                       }}
-                      className={`transition-all duration-200 rounded-full font-medium text-sm whitespace-nowrap ${
+                      className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
                         selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
                           ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                           : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
@@ -824,54 +716,12 @@ const SearchResults = () => {
                   </SwiperSlide>
                 ))}
               </Swiper>
-            <button className="swiper-button-prev-specialties absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-              <ChevronLeft className="h-4 w-4 text-gray-600" />
-            </button>
-            <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-              <ChevronRight className="h-4 w-4 text-gray-600" />
-            </button>
-=======
-                  <button
-                    key={specialty}
-                    onClick={() => {
-                      const value = specialty === 'Todas' ? 'all' : specialty;
-                      let newSpecialties = [...selectedSpecialty];
-                      
-                      if (value === 'all') {
-                        newSpecialties = ['all'];
-                      } else {
-                        // Remove 'all' if present
-                        newSpecialties = newSpecialties.filter(s => s !== 'all');
-                        
-                        if (newSpecialties.includes(value)) {
-                          newSpecialties = newSpecialties.filter(s => s !== value);
-                        } else {
-                          newSpecialties.push(value);
-                        }
-                        
-                        if (newSpecialties.length === 0) newSpecialties = ['all'];
-                      }
-                      
-                      handleSpecialtyChange(newSpecialties);
-                    }}
-                    className={`transition-all duration-200 rounded-full font-medium text-sm whitespace-nowrap flex-shrink-0 ${
-                      selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
-                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                        : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
-                    }`}
-                    style={{
-                      padding: '0.5rem 1.25rem',
-                      fontSize: '0.875rem',
-                      lineHeight: '1.25rem',
-                      fontWeight: 500,
-                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                    }}
-                  >
-                    {specialty}
-                  </button>
-                ))}
-              </div>
->>>>>>> d340debed68e2c84f15c7a648f2eeacb8584dc43
+              <button className="swiper-button-prev-specialties absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              </button>
+              <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
+                <ChevronRight className="h-4 w-4 text-gray-600" />
+              </button>
             </div>
           </div>
         </div>
@@ -1047,10 +897,6 @@ const SearchResults = () => {
                     <div key={lawyer.id} className="w-full h-full">
                       <LawyerCard
                         lawyer={lawyer}
-                        onContactClick={handleContact}
-                        onScheduleClick={handleSchedule}
-                        onContact={handleContact}
-                        onSchedule={handleSchedule}
                         user={user}
                       />
                     </div>
@@ -1095,24 +941,7 @@ const SearchResults = () => {
         onModeChange={(mode) => setAuthMode(mode)}
       />
       
-      {selectedLawyer && (
-        <>
-          <ContactModal
-            isOpen={showContactModal}
-            onClose={() => setShowContactModal(false)}
-            lawyerName={selectedLawyer.name}
-            lawyerId={selectedLawyer.id}
-          />
-          
-          <ScheduleModal
-            isOpen={showScheduleModal}
-            onClose={() => setShowScheduleModal(false)}
-            lawyerId={selectedLawyer.id}
-            lawyerName={selectedLawyer.name}
-            hourlyRate={selectedLawyer.hourlyRate}
-          />
-        </>
-      )}
+      {/* Modals moved or removed as per requirement */}
     </div>
   );
 };

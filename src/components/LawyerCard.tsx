@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AuthModal } from "./AuthModal";
-import { ContactModal } from "./ContactModal";
+
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { LawyerRatings } from "./ratings/LawyerRatings";
 import {
@@ -112,7 +112,7 @@ export function LawyerCard({
     console.debug('isOwnProfile:', isOwnProfile, 'isVerifiedLawyer:', isVerifiedLawyer);
   }
 
-  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRatingsDialog, setShowRatingsDialog] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -426,21 +426,7 @@ export function LawyerCard({
         </DialogContent>
       </Dialog>
 
-      {/* Contact Modal */}
-      <ContactModal
-        isOpen={isConsultationOpen}
-        onClose={() => setIsConsultationOpen(false)}
-        lawyerName={lawyer.name}
-        lawyerId={lawyer.id}
-        hasFreeConsultation={hasFreeConsultation}
-        contactFeeClp={lawyer.contact_fee_clp || 0}
-        service={{
-          id: 'consultation',
-          title: 'Consulta Legal',
-          description: 'Consulta inicial con el abogado',
-          price_clp: lawyer.contact_fee_clp || 0
-        }}
-      />
+
 
       {/* Auth Modal */}
       <AuthModal 
