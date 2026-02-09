@@ -171,7 +171,11 @@ const Index = () => {
       try {
         setIsLoadingFeatured(true);
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { lawyers } = await searchLawyers({ page: 1, pageSize: 9 }); // Only fetch what we display
+        const { lawyers } = await searchLawyers({ 
+          page: 1, 
+          pageSize: 9,
+          minExperience: 5 // Show lawyers with >= 5 years of experience
+        }); // Only fetch what we display
         
         if (lawyers && lawyers.length > 0) {
           const formattedLawyers = lawyers
