@@ -1678,28 +1678,41 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
       });
     }
 
-    // Obtener todos los abogados que no han subido servicios
-    const { data: lawyers, error } = await supabase
+    // Obtener todos los abogados
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select(`
-        id, 
-        email, 
-        first_name, 
-        last_name,
-        services (id)
-      `)
+      .select('id, email, first_name, last_name')
       .eq('role', 'lawyer')
-      .is('services.id', null)
       .not('email', 'is', null);
 
-    if (error) {
-      console.error('Error al obtener abogados sin servicios:', error);
+    if (profileError) {
+      console.error('Error al obtener perfiles de abogados:', profileError);
       return res.status(500).json({ 
         success: false, 
         message: 'Error al obtener la lista de abogados',
-        error: error.message 
+        error: profileError.message 
       });
     }
+
+    // Obtener IDs de abogados que ya tienen servicios cargados
+    const { data: servicesData, error: servicesError } = await supabase
+      .from('lawyer_services')
+      .select('lawyer_user_id');
+
+    if (servicesError) {
+      console.error('Error al obtener lawyer_services:', servicesError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error al verificar servicios de abogados',
+        error: servicesError.message 
+      });
+    }
+
+    // Crear un set de IDs con servicios para un filtrado eficiente
+    const lawyerIdsWithServices = new Set(servicesData.map(s => s.lawyer_user_id));
+
+    // Filtrar abogados que NO tienen servicios
+    const lawyers = profiles.filter(profile => !lawyerIdsWithServices.has(profile.id));
 
     // Si no hay abogados para notificar
     if (!lawyers || lawyers.length === 0) {

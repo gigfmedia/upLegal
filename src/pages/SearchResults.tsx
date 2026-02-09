@@ -640,6 +640,7 @@ const SearchResults = () => {
 
           {/* Specialties Slider */}
           <div className="mt-4 relative">
+            <h4 className="text-lg font-semibold mb-4">¿Buscas alguna subespecialidad?</h4>
             <div className="relative">
               <Swiper
                 modules={[Navigation]}
@@ -656,24 +657,24 @@ const SearchResults = () => {
                 {[
                   'Todas',
                   'Derecho Civil',
-                  'Derecho Penal',
-                  'Derecho Laboral',
-                  'Derecho de Familia',
-                  'Derecho Comercial',
-                  'Derecho Tributario',
-                  'Derecho Inmobiliario',
-                  'Derecho de Salud',
-                  'Derecho Ambiental',
-                  'Derecho de Consumidor',
-                  'Derecho Administrativo',
-                  'Derecho Procesal',
-                  'Derecho de Propiedad Intelectual',
-                  'Derecho de Seguridad Social',
-                  'Derecho Minero',
-                  'Derecho Aduanero',
-                  'Derecho Marítimo',
-                  'Derecho Aeronáutico',
-                  'Derecho Deportivo'
+                  'Penal',
+                  'Laboral',
+                  'de Familia',
+                  'Comercial',
+                  'Tributario',
+                  'Inmobiliario',
+                  'de Salud',
+                  'Ambiental',
+                  'de Consumidor',
+                  'Administrativo',
+                  'Procesal',
+                  'de Propiedad Intelectual',
+                  'de Seguridad Social',
+                  'Minero',
+                  'Aduanero',
+                  'Marítimo',
+                  'Aeronáutico',
+                  'Deportivo'
                 ].map((specialty) => (
                   <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
                     <button
