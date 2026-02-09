@@ -94,7 +94,7 @@ export const post: APIRoute = async ({ request }) => {
       try {
         const { data, error } = await supabaseAdmin
           .from('profiles')
-          .select('email, first_name, last_name')
+          .select('email, first_name, last_name, user_id')
           .eq('role', 'lawyer')
           .not('email', 'is', null);
 
@@ -103,8 +103,38 @@ export const post: APIRoute = async ({ request }) => {
           return createErrorResponse('Error al obtener la lista de abogados', 500, error);
         }
         
-        console.log(`Found ${data?.length || 0} lawyers`);
-        lawyers = data || [];
+        console.log(`Found ${data?.length || 0} lawyers total`);
+        
+        // Filter out lawyers who already have services
+        const lawyersWithoutServices = [];
+        
+        for (const lawyer of data || []) {
+          // Check services table
+          const { data: servicesData, error: servicesError } = await supabaseAdmin
+            .from('services')
+            .select('id')
+            .eq('lawyer_id', lawyer.user_id)
+            .limit(1);
+            
+          // Check lawyer_services table  
+          const { data: lawyerServicesData, error: lawyerServicesError } = await supabaseAdmin
+            .from('lawyer_services')
+            .select('id')
+            .eq('lawyer_user_id', lawyer.user_id)
+            .limit(1);
+            
+          // If no services found in either table, include this lawyer
+          if ((!servicesData || servicesData.length === 0) && (!lawyerServicesData || lawyerServicesData.length === 0)) {
+            lawyersWithoutServices.push({
+              email: lawyer.email,
+              first_name: lawyer.first_name,
+              last_name: lawyer.last_name
+            });
+          }
+        }
+        
+        console.log(`Found ${lawyersWithoutServices.length} lawyers without services`);
+        lawyers = lawyersWithoutServices;
       } catch (error) {
         console.error('Unexpected error fetching lawyers:', error);
         return createErrorResponse('Error inesperado al obtener abogados', 500, error);

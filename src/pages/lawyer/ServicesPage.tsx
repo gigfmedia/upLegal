@@ -636,7 +636,7 @@ export default function ServicesPage() {
 
       {/* Add/Edit Service Modal */}
       <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleCancelEdit()}>
-        <DialogContent className="sm:max-w-[600px]" aria-describedby="dialog-description">
+        <DialogContent className="sm:max-w-[600px] max-h-[100vh] flex flex-col aria-describedby:dialog-description">
           <DialogHeader>
             <DialogTitle>
               {editingService.id ? 'Editar Servicio' : 'Nuevo Servicio'}
@@ -646,7 +646,7 @@ export default function ServicesPage() {
             </p>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 overflow-y-auto flex-1">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <Label htmlFor="available" className="text-sm font-medium text-gray-700">
                 Disponible para contratación
@@ -759,6 +759,7 @@ export default function ServicesPage() {
             <Button 
               onClick={handleSaveService}
               disabled={isLoading}
+              className="mb-4"
             >
               {isLoading ? (
                 <>

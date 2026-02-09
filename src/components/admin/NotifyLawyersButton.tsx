@@ -115,7 +115,7 @@ export function NotifyLawyersButton() {
             <DialogDescription>
               {testMode 
                 ? '¿Estás seguro de que deseas enviar una notificación de prueba a juan.fercocommerce@gmail.com?'
-                : '¿Estás seguro de que deseas enviar notificaciones a todos los abogados sin servicios registrados?'}
+                : '¿Estás seguro de que deseas enviar notificaciones solo a abogados que no tienen servicios registrados?'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-start">
@@ -143,7 +143,7 @@ export function NotifyLawyersButton() {
           <p className="text-sm text-gray-600">
             {testMode 
               ? 'MODO PRUEBA: Solo se enviará a juan.fercocommerce@gmail.com' 
-              : 'Se enviará a todos los abogados sin servicios registrados'}
+              : 'Se enviará solo a abogados que no tienen servicios registrados'}
           </p>
         </div>
         <div className="flex items-center space-x-2">

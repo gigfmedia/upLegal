@@ -8,8 +8,9 @@ import { SearchBar } from "@/components/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
-  Users, 
+  Users,
   Shield, 
+  ShieldCheck, 
   FileText, 
   Briefcase, 
   Building2, 
@@ -451,7 +452,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center border-none shadow-lg rounded-2xl">
               <CardHeader>
-                <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                <ShieldCheck className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <CardTitle>Profesionales Verificados</CardTitle>
               </CardHeader>
               <CardContent>
