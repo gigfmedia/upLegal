@@ -44,26 +44,6 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
 // App Wrapper para manejar el estado de montaje
 const AppWrapper = () => {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-    
-    // Forzar una actualización cuando la app vuelve al primer plano
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Forzar una actualización del estado
-        setIsMounted(prev => !prev);
-        setTimeout(() => setIsMounted(true), 0);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
   return <App />;
 };
 
@@ -95,32 +75,3 @@ root.render(
     </QueryClientProvider>
   </StrictMode>
 );
-
-// Manejar el evento de visibilidad para iOS
-const handleVisibilityChange = () => {
-  if (!document.hidden) {
-    // Forzar una actualización cuando la app vuelve al primer plano
-    root.render(
-      <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <HelmetProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <BrowserRouter
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                  }}
-                >
-                  <AppWrapper />
-                </BrowserRouter>
-              </AuthProvider>
-            </ThemeProvider>
-          </HelmetProvider>
-        </QueryClientProvider>
-      </StrictMode>
-    );
-  }
-};
-
-document.addEventListener('visibilitychange', handleVisibilityChange);

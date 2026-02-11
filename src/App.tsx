@@ -448,7 +448,9 @@ const App = () => (
           <MessageProvider>
             <Toaster />
             <Sonner />
-            <AppContent />
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
           </MessageProvider>
         </NotificationProvider>
       </AuthProvider>

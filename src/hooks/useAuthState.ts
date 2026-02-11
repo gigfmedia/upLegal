@@ -7,10 +7,6 @@ import { handleAuthError } from '@/lib/authErrorHandler';
 declare module '@supabase/supabase-js' {
   interface User {
     is_admin?: boolean;
-    user_metadata?: {
-      is_admin?: boolean;
-      [key: string]: any;
-    };
     profile?: any;
   }
 }
@@ -145,7 +141,7 @@ export const useAuthState = (): AuthState => {
       if (error) throw error;
       
       if (currentSession) {
-        const isValid = await validateAndRefreshSession(currentSession);
+        const isValid = await validateAndRefreshSession();
         
         if (isValid) {
           updateState({
@@ -212,8 +208,16 @@ export const useAuthState = (): AuthState => {
     let mounted = true;
     
     const initializeAuth = async () => {
+      const timeoutId = setTimeout(() => {
+        if (mounted && state.isLoading) {
+          console.warn('Auth initialization timed out, setting isLoading to false');
+          updateState({ isLoading: false });
+        }
+      }, 5000); // 5 second timeout for safety
+
       try {
         await checkSession();
+        clearTimeout(timeoutId);
         
         // Set up auth state change listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -237,7 +241,6 @@ export const useAuthState = (): AuthState => {
                   break;
                   
                 case 'SIGNED_OUT':
-                case 'USER_DELETED':
                   updateState({
                     session: null,
                     user: null,
@@ -273,12 +276,23 @@ export const useAuthState = (): AuthState => {
             handleAuthError(error, { showToast: false });
           }
         }, 5 * 60 * 1000); // Check every 5 minutes
+
+        // Add visibility listener to refresh session when tab becomes visible
+        const handleVisibilityChange = async () => {
+          if (!document.hidden && mounted) {
+            console.log('App became visible, checking session...');
+            await checkSession();
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
         
         return () => {
           subscription?.unsubscribe();
           clearInterval(intervalId);
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
       } catch (error) {
+        clearTimeout(timeoutId);
         updateState({
           error: error instanceof Error ? error : new Error('Failed to initialize auth'),
           isLoading: false,
