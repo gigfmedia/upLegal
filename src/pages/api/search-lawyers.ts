@@ -151,8 +151,7 @@ export async function searchLawyers(params: SearchParams = {}) {
       .eq('role', 'lawyer')
 
       .order('verified', { ascending: false, nullsLast: true })
-      .order('rating', { ascending: false, nullsLast: true })
-      .order('review_count', { ascending: false, nullsLast: true })
+      // Remove rating and review_count ordering - will be handled in frontend
       .range(from, to);
       
     // Asegurarse de que no se incluya available_now en la consulta

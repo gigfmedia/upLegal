@@ -369,7 +369,7 @@ export function LawyerCard({
               }`}
               onClick={handleContactClick}
               disabled={buttonsDisabled}
-              title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
+              title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Contactar'}
@@ -386,7 +386,7 @@ export function LawyerCard({
                 handleScheduleClick(e);
               }}
               disabled={buttonsDisabled}
-              title={!isVerifiedLawyer ? 'Este abogado no está verificado o su perfil está incompleto' : ''}
+              title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
             >
               <Calendar className="h-4 w-4 mr-2" />
               {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Ver disponibilidad'}
@@ -398,7 +398,7 @@ export function LawyerCard({
             <p className="text-xs text-gray-500 mt-2 text-center">
               {isOwnProfile 
                 ? 'No puedes contactar ni agendar contigo mismo' 
-                : 'Este abogado no está verificado o su perfil está incompleto'}
+                : 'Este abogado tiene un perfil incompleto'}
             </p>
           )}
         </div>

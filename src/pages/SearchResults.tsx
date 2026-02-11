@@ -120,16 +120,9 @@ const SearchResults = () => {
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string[]>(initialSpecialties);
   const [location, setLocation] = useState(initialLocation);
-  const [sortBy, setSortBy] = useState('price-asc');
-  
-  // Set default sort to 'relevance' on initial load if no sort parameter is present
-  useEffect(() => {
-    if (!searchParams.has('sort')) {
-      setSortBy('relevance');
-    } else {
-      setSortBy(searchParams.get('sort') || 'relevance');
-    }
-  }, []);
+  const [sortBy, setSortBy] = useState(() => {
+    return searchParams.get('sort') || 'relevance';
+  });
   const [showFilters, setShowFilters] = useState(false);
   
   // New filter states
@@ -220,20 +213,16 @@ const SearchResults = () => {
       urlMinExperience > 0;
     
     if (shouldSearch) {
-      const searchParams = {
-        query: urlQuery,
-        specialty: newSpecialties,
-        location: urlLocation,
-        minRating: urlMinRating,
-        minExperience: urlMinExperience,
-        availableNow: false
-      };
-      
+      setLoading(true);
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
-        searchParams,
-        currentPageSize: 12
+        searchTerm: searchTerm || '',
+        selectedSpecialty: selectedSpecialty,
+        location: location,
+        minRating: minRating,
+        minExperience: minExperience,
+        sortBy: sortBy
       });
     } else if (searchParams.toString() === '') {
       // Si no hay parámetros, buscar todos los abogados
@@ -241,18 +230,15 @@ const SearchResults = () => {
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
-        searchParams: {
-          query: '',
-          specialty: ['all'],
-          location: '',
-          minRating: 0,
-          minExperience: 0,
-          availableNow: false
-        },
-        currentPageSize: 12
+        searchTerm: '',
+        selectedSpecialty: ['all'],
+        location: '',
+        minRating: 0,
+        minExperience: 0,
+        sortBy: 'relevance'
       });
     }
-  }, [searchParams]); // Only depend on searchParams, not the state variables
+  }, [searchParams, searchTerm, selectedSpecialty, location, minRating, minExperience, sortBy]); // Only depend on searchParams, not the state variables
 
 
 
@@ -272,7 +258,18 @@ const SearchResults = () => {
       currentPageSize: number;
     }) => {
       const { page, isInitialLoad, searchParams, currentPageSize } = params;
-      const { query, specialty, location, minRating, minExperience, availableNow } = searchParams;
+      
+      // Add safety check for searchParams
+      const safeSearchParams = searchParams || {
+        query: '',
+        specialty: '',
+        location: '',
+        minRating: 0,
+        minExperience: 0,
+        availableNow: false
+      };
+      
+      const { query, specialty, location, minRating, minExperience, availableNow } = safeSearchParams;
       
       try {
         if (isInitialLoad) {
@@ -312,7 +309,7 @@ const SearchResults = () => {
             consultationPrice: lawyer.hourly_rate_clp || 0,
             image: lawyer.avatar_url || '',
             bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
-            verified: lawyer.verified || false,
+            verified: Boolean(lawyer.verified), // Ensure proper boolean conversion
             availability: {
               availableToday: true,
               availableThisWeek: true,
@@ -329,23 +326,33 @@ const SearchResults = () => {
           }));
 
           // Then sort them by profile completeness and rating
-          // Then sort them by verified status, then profile completeness and rating
           const sortedLawyers = [...formattedLawyers].sort((a, b) => {
-            // First priority: Verified status
-            if (a.verified && !b.verified) return -1;
-            if (!a.verified && b.verified) return 1;
+            // First priority: Verified status (verified MUST come first)
+            const aVerified = Boolean(a.verified);
+            const bVerified = Boolean(b.verified);
+            
+            if (aVerified && !bVerified) return -1;
+            if (!aVerified && bVerified) return 1;
 
-            // Second priority: Profile completeness
-            const isAComplete = a.bio?.trim() && a.specialties?.length > 0 && 
-                              a.location?.trim() && a.hourlyRate > 0;
-            const isBComplete = b.bio?.trim() && b.specialties?.length > 0 && 
-                              b.location?.trim() && b.hourlyRate > 0;
+            // Second priority: Profile completeness (complete profiles first)
+            const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && 
+                              a.location?.trim() && a.hourlyRate > 0);
+            const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && 
+                              b.location?.trim() && b.hourlyRate > 0);
             
             if (isAComplete && !isBComplete) return -1;
             if (!isAComplete && isBComplete) return 1;
             
-            // Third priority: Rating
-            return (b.rating || 0) - (a.rating || 0);
+            // Third priority: Rating (higher rating first)
+            const aRating = Number(a.rating) || 0;
+            const bRating = Number(b.rating) || 0;
+            
+            if (isAComplete && isBComplete) {
+              return bRating - aRating;
+            }
+            
+            // For incomplete profiles, also sort by rating
+            return bRating - aRating;
           });
 
           setSearchResult(prev => ({
@@ -493,9 +500,21 @@ const SearchResults = () => {
     
     // Apply client-side sorting
     return [...searchResult.lawyers].sort((a, b) => {
-      // Always prioritize verified lawyers first
-      if (a.verified && !b.verified) return -1;
-      if (!a.verified && b.verified) return 1;
+      // First priority: Verified status (verified MUST come first)
+      const aVerified = Boolean(a.verified);
+      const bVerified = Boolean(b.verified);
+      
+      if (aVerified && !bVerified) return -1;
+      if (!aVerified && bVerified) return 1;
+
+      // Second priority: Profile completeness (complete profiles first)
+      const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && 
+                                a.location?.trim() && a.hourlyRate > 0);
+      const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && 
+                                b.location?.trim() && b.hourlyRate > 0);
+      
+      if (isAComplete && !isBComplete) return -1;
+      if (!isAComplete && isBComplete) return 1;
 
       // Then apply selected sort criteria
       switch (sortBy) {
@@ -507,11 +526,9 @@ const SearchResults = () => {
           return (b.experience_years || 0) - (a.experience_years || 0); // Más experiencia
         case 'relevance':
         default:
-          // Recomendados: First show verified, then by rating, then by price
-          if (a.verified && !b.verified) return -1;
-          if (!a.verified && b.verified) return 1;
-          if (b.rating !== a.rating) return b.rating - a.rating;
-          return a.consultationPrice - b.consultationPrice;
+          // Relevance: Already handled by verified and completeness logic above
+          // Just sort by rating within complete/incomplete groups
+          return b.rating - a.rating;
       }
     });
   }, [searchResult.lawyers, loading, searchTerm, sortBy]);

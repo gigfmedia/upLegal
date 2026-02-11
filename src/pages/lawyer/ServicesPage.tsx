@@ -748,7 +748,7 @@ export default function ServicesPage() {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4">
             <Button 
               variant="outline" 
               onClick={handleCancelEdit}
