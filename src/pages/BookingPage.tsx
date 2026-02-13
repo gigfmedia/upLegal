@@ -13,6 +13,7 @@ import PreCheckoutModal from '@/components/PreCheckoutModal';
 import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { logPaymentEvent } from '@/utils/paymentLogger';
 
 interface LawyerProfile {
   user_id: string;
@@ -377,7 +378,21 @@ export default function BookingPage() {
         });
       }
 
+      // Redirect to MercadoPago payment
       if (data.payment_link) {
+        // Log payment started event
+        await logPaymentEvent({
+          event_type: 'started',
+          user_id: user?.id,
+          appointment_id: data.booking_id,
+          amount: totalPrice,
+          metadata: {
+            lawyer_id: lawyer.user_id,
+            duration,
+            source: 'BookingPage'
+          }
+        });
+
         if (window.gtag) {
           window.gtag('event', 'begin_checkout', {
             booking_id: data.booking_id,

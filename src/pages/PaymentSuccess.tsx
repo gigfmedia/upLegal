@@ -6,6 +6,7 @@ import { CheckCircle, ArrowLeft, Scale } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { logPaymentEvent } from "@/utils/paymentLogger";
 
 interface PaymentDetails {
   status: string;
@@ -158,6 +159,18 @@ export default function PaymentSuccess() {
             console.error('Error in email logic:', emailError);
           }
         }
+
+        // Log payment outcome
+        await logPaymentEvent({
+          event_type: data.status === 'approved' ? 'success' : (data.status === 'pending' ? 'pending' : 'failure'),
+          appointment_id: appointmentId || undefined,
+          payment_id: paymentId || undefined,
+          status: data.status,
+          metadata: {
+            source: 'PaymentSuccess',
+            verification_data: data
+          }
+        });
       } catch (error) {
         if (error instanceof Error) {
           console.error('Error in payment verification:', error.message);

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Users, Calendar, Eye, BarChart2, Clock } from 'lucide-react';
+import { Loader2, Users, Calendar, Eye, BarChart2, Clock, Landmark, AlertCircle, CheckCircle2, Timer, Database } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +34,26 @@ type AppointmentStats = {
     lawyer_name: string;
     service_title: string;
   }>;
+};
+
+type PaymentEvent = {
+  id: string;
+  event_type: 'started' | 'success' | 'failure' | 'pending';
+  created_at: string;
+  amount: number | null;
+  status: string | null;
+  metadata: any;
+};
+
+type ErrorLog = {
+  id: string;
+  type: string;
+  message: string;
+  details?: any;
+  user_id?: string;
+  path?: string;
+  created_at: string;
+  is_database_error?: boolean;
 };
 
 // Helper Components
@@ -103,61 +125,206 @@ const RecentActivityItem = ({ item, type }) => {
   );
 };
 
+const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: boolean }) => {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-left">
+        <thead className="text-xs uppercase bg-slate-50">
+          <tr>
+            <th className="px-4 py-2">Tipo</th>
+            <th className="px-4 py-2">Mensaje</th>
+            <th className="px-4 py-2">Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {isLoading ? (
+            <tr><td colSpan={3} className="text-center py-4"><Loader2 className="animate-spin inline mr-2" /></td></tr>
+          ) : errors.length === 0 ? (
+            <tr><td colSpan={3} className="text-center py-4 text-muted-foreground">No hay errores</td></tr>
+          ) : (
+            errors.map(error => (
+              <tr key={error.id} className="border-b">
+                <td className="px-4 py-2">
+                  <Badge variant={error.is_database_error ? "destructive" : "outline"}>{error.type}</Badge>
+                </td>
+                <td className="px-4 py-2 max-w-md truncate">{error.message}</td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  {formatDistanceToNow(new Date(error.created_at), { addSuffix: true, locale: es })}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 // Main Component
 export default function AnalyticsDashboard() {
-  // Fetch page views
-  const { data: pageViews = [], isLoading: isLoadingViews } = useQuery({
-    queryKey: ['page-views'],
+  // Fetch page views for lists
+  const { data: pageViews = [] } = useQuery({
+    queryKey: ['page-views-list'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('page_views')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      return data as PageView[];
+      const { data } = await supabase.from('page_views').select('*').order('created_at', { ascending: false }).limit(1000);
+      return (data || []) as PageView[];
     }
   });
 
-  // Fetch appointment stats
-  const { data: appointmentStats, isLoading: isLoadingAppointments } = useQuery({
-    queryKey: ['appointment-stats'],
+  // Fetch recent appointments for lists
+  const { data: recentAppointments = [] } = useQuery({
+    queryKey: ['recent-appointments-list'],
     queryFn: async () => {
-      const { data: stats } = await supabase.rpc('get_appointment_stats');
-      const { data: recent } = await supabase
+      // Fetch appointments without joins to avoid PGRST200
+      const { data: appts, error: apptsError } = await supabase
         .from('appointments')
         .select(`
           id,
           created_at,
           status,
-          users!appointments_user_id_fkey(name, email),
-          lawyer:lawyers!appointments_lawyer_id_fkey(id, user_id, users!lawyers_user_id_fkey(name, email)),
-          services!appointments_service_id_fkey(title)
+          name,
+          lawyer_id
         `)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
+      
+      if (apptsError) {
+        console.error("Error fetching recent appointments:", apptsError);
+        return [];
+      }
+
+      if (!appts || appts.length === 0) return [];
+
+      // Fetch lawyer names separately
+      const lawyerIds = [...new Set(appts.map(a => a.lawyer_id).filter(Boolean))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, display_name')
+        .in('id', lawyerIds);
+
+      const profileMap = (profiles || []).reduce((acc: any, p) => {
+        acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
+        return acc;
+      }, {});
+      
+      return appts.map((a: any) => ({
+        id: a.id,
+        created_at: a.created_at,
+        status: a.status,
+        user_name: a.name || 'Usuario',
+        lawyer_name: profileMap[a.lawyer_id] || 'Abogado',
+        service_title: a.consultation_type || a.type || 'Servicio',
+      })) as any[];
+    }
+  });
+
+  // Fetch payment events
+  const { data: paymentEvents = [], isLoading: isLoadingPayments } = useQuery({
+    queryKey: ['payment-events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payment_events')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as PaymentEvent[];
+    }
+  });
+
+  // Fetch error logs
+  const { data: errorLogs = [], isLoading: isLoadingErrors } = useQuery({
+    queryKey: ['admin-errors'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('error_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      
+      if (error) throw error;
+      return data as ErrorLog[];
+    }
+  });
+
+  // Fetch comprehensive stats
+  const { data: realStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['admin-real-stats'],
+    queryFn: async () => {
+      const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      // Total Counts
+      const [{ count: totalViews }, { count: totalAppts }, { count: currentViews }, { count: prevViews }, { count: currentAppts }, { count: prevAppts }] = await Promise.all([
+        supabase.from('page_views').select('*', { count: 'exact', head: true }),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }),
+        supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
+        supabase.from('page_views').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
+      ]);
+
+      // Unique Visitors (Last 30 days) - Approximate if millions, but here we can count
+      const { data: uniqueData } = await supabase.from('page_views').select('user_id').gte('created_at', thirtyDaysAgo.toISOString());
+      const currentUnique = new Set(uniqueData?.map(v => v.user_id)).size;
+      
+      const { data: prevUniqueData } = await supabase.from('page_views').select('user_id').lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString());
+      const prevUnique = new Set(prevUniqueData?.map(v => v.user_id)).size;
+
+      // Peak Hours & Avg Duration
+      const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
+      
+      const hourCounts = (apptData || []).reduce((acc: any, curr) => {
+        const hour = curr.appointment_time.split(':')[0];
+        acc[hour] = (acc[hour] || 0) + 1;
+        return acc;
+      }, {});
+      
+      const peakHour = Object.entries(hourCounts).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || '--';
+      const avgDuration = apptData?.length ? (apptData.reduce((acc, curr) => acc + (curr.duration || 0), 0) / apptData.length) : 0;
+
+      const calcTrend = (curr: number, prev: number) => {
+        if (!prev) return (curr || 0) > 0 ? 100 : 0;
+        return (( (curr || 0) - (prev || 0)) / prev) * 100;
+      };
+
+      // Status Counts
+      const [{ count: completed }, { count: pending }, { count: cancelled }] = await Promise.all([
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+      ]);
 
       return {
-        ...stats,
-        recent: recent?.map(a => ({
-          id: a.id,
-          created_at: a.created_at,
-          status: a.status,
-          user_name: a.users?.name || 'Usuario',
-          lawyer_name: a.lawyer?.users?.name || 'Abogado',
-          service_title: a.services?.title || 'Servicio',
-        })) || [],
-      } as AppointmentStats;
+        totalViews: totalViews || 0,
+        totalAppts: totalAppts || 0,
+        completed: completed || 0,
+        pending: pending || 0,
+        cancelled: cancelled || 0,
+        uniqueVisitors: currentUnique,
+        viewsTrend: calcTrend(currentViews, prevViews),
+        uniqueTrend: calcTrend(currentUnique, prevUnique),
+        apptsTrend: calcTrend(currentAppts, prevAppts),
+        conversionTrend: calcTrend(
+          (currentAppts || 0) / (Math.max(currentViews || 0, 1)),
+          (prevAppts || 0) / (Math.max(prevViews || 0, 1))
+        ),
+        peakHour: peakHour !== '--' ? `${peakHour}:00` : '--',
+        avgDuration: avgDuration.toFixed(1)
+      };
     }
   });
 
   // Calculate unique visitors
-  const uniqueVisitors = new Set(pageViews.map(view => view.user_id)).size;
+  const uniqueVisitors = realStats?.uniqueVisitors || 0;
   
   // Group page views by path
   const pageStats = pageViews.reduce((acc, view) => {
-    const path = view.page_path;
+    // Normalize path by removing query parameters (e.g., ?fbclid=...)
+    const path = view.page_path?.split('?')[0] || '/';
     if (!acc[path]) {
       acc[path] = { path, count: 0, title: view.page_title };
     }
@@ -165,7 +332,13 @@ export default function AnalyticsDashboard() {
     return acc;
   }, {});
 
-  const isLoading = isLoadingViews || isLoadingAppointments;
+  // Calculate payment funnel stats
+  const startedPayments = paymentEvents.filter(e => e.event_type === 'started').length;
+  const successfulPayments = paymentEvents.filter(e => e.event_type === 'success').length;
+  const failedPayments = paymentEvents.filter(e => e.event_type === 'failure').length;
+  const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
+
+  const isLoading = isLoadingStats || isLoadingPayments || isLoadingErrors;
 
   if (isLoading) {
     return (
@@ -188,30 +361,30 @@ export default function AnalyticsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Visitas Totales"
-          value={pageViews.length}
+          value={realStats?.totalViews || 0}
           icon={Eye}
-          trend={12.5}
+          trend={realStats?.viewsTrend || 0}
           trendText="respecto al mes pasado"
         />
         <StatCard
           title="Visitantes Únicos"
-          value={uniqueVisitors}
+          value={realStats?.uniqueVisitors || 0}
           icon={Users}
-          trend={8.2}
+          trend={realStats?.uniqueTrend || 0}
           trendText="respecto al mes pasado"
         />
         <StatCard
           title="Citas Totales"
-          value={appointmentStats?.total || 0}
+          value={realStats?.totalAppts || 0}
           icon={Calendar}
-          trend={5.3}
+          trend={realStats?.apptsTrend || 0}
           trendText="respecto al mes pasado"
         />
         <StatCard
           title="Tasa de Conversión"
-          value={`${((appointmentStats?.total / pageViews.length) * 100 || 0).toFixed(1)}%`}
+          value={`${realStats?.totalViews ? ((realStats.totalAppts / realStats.totalViews) * 100).toFixed(1) : '0.0'}%`}
           icon={BarChart2}
-          trend={2.1}
+          trend={realStats?.conversionTrend || 0}
           trendText="respecto al mes pasado"
         />
       </div>
@@ -221,9 +394,73 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="pages">Páginas</TabsTrigger>
           <TabsTrigger value="appointments">Citas</TabsTrigger>
+          <TabsTrigger value="payments">Pagos (MP)</TabsTrigger>
+          <TabsTrigger value="errors">Errores</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Embudo de Conversión de Pagos</CardTitle>
+                <CardDescription>Resumen del proceso de pago actual</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">Conversión Total</span>
+                    <span className="text-sm font-bold text-green-600">{successRate.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-500" 
+                      style={{ width: `${successRate}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-2 text-center">
+                    <div>
+                      <div className="text-lg font-bold">{startedPayments}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">Iniciados</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{successfulPayments}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">Exitosos</div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-bold">{startedPayments - successfulPayments}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase">Abandonos</div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={() => document.querySelector('[data-value="payments"]')?.click()}
+                  >
+                    Ver detalles del embudo
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Últimas Citas</CardTitle>
+                <CardDescription>Recientes reservas de citas</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {recentAppointments.map((appointment) => (
+                  <RecentActivityItem 
+                    key={appointment.id} 
+                    item={appointment} 
+                    type="appointment" 
+                  />
+                ))}
+                {recentAppointments.length === 0 && <p className="text-sm text-muted-foreground">No hay citas recientes</p>}
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -239,17 +476,30 @@ export default function AnalyticsDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Últimas Citas</CardTitle>
-                <CardDescription>Recientes reservas de citas</CardDescription>
+                <CardTitle>Eventos de Pago</CardTitle>
+                <CardDescription>Últimas interacciones con MercadoPago</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {appointmentStats?.recent?.map((appointment) => (
-                  <RecentActivityItem 
-                    key={appointment.id} 
-                    item={appointment} 
-                    type="appointment" 
-                  />
-                )) || <p className="text-sm text-muted-foreground">No hay citas recientes</p>}
+                {paymentEvents.slice(0, 5).map((event) => (
+                  <div key={event.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-md transition-colors text-sm">
+                    <div className="flex items-center space-x-2">
+                      {event.event_type === 'success' ? (
+                        <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      ) : event.event_type === 'failure' ? (
+                        <AlertCircle className="h-3 w-3 text-red-500" />
+                      ) : (
+                        <Landmark className="h-3 w-3 text-blue-500" />
+                      )}
+                      <span className="capitalize">{event.event_type === 'started' ? 'Iniciado' : event.event_type}</span>
+                    </div>
+                    <span className="text-xs text-slate-400">
+                      {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: es })}
+                    </span>
+                  </div>
+                ))}
+                {paymentEvents.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4 italic">Sin eventos de pago aún</p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -302,13 +552,13 @@ export default function AnalyticsDashboard() {
                 </div>
                 <div className="flex space-x-2">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                    {appointmentStats?.completed || 0} Completadas
+                    {realStats?.completed || 0} Completadas
                   </span>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                    {appointmentStats?.pending || 0} Pendientes
+                    {realStats?.pending || 0} Pendientes
                   </span>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                    {appointmentStats?.cancelled || 0} Canceladas
+                    {realStats?.cancelled || 0} Canceladas
                   </span>
                 </div>
               </div>
@@ -318,27 +568,144 @@ export default function AnalyticsDashboard() {
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Tasa de Conversión</h3>
                   <div className="text-3xl font-bold">
-                    {((appointmentStats?.total / pageViews.length) * 100 || 0).toFixed(1)}%
+                    {realStats?.totalViews ? ((realStats.totalAppts / realStats.totalViews) * 100).toFixed(1) : '0.0'}%
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {appointmentStats?.total} citas de {pageViews.length} visitas
+                    {realStats?.totalAppts || 0} citas de {realStats?.totalViews || 0} visitas
                   </p>
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Tiempo Promedio</h3>
-                  <div className="text-3xl font-bold">12.5 min</div>
+                  <div className="text-3xl font-bold">{realStats?.avgDuration || 0} min</div>
                   <p className="text-sm text-muted-foreground">
                     Duración promedio de las citas
                   </p>
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Horario Pico</h3>
-                  <div className="text-3xl font-bold">3:00 PM - 5:00 PM</div>
+                  <div className="text-3xl font-bold">{realStats?.peakHour || '--'}</div>
                   <p className="text-sm text-muted-foreground">
-                    Horas con más citas programadas
+                    Hora con más citas programadas
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="payments">
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Embudo de Conversión de Pagos</CardTitle>
+                <CardDescription>Seguimiento desde el inicio hasta el éxito</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-8 py-4">
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <Landmark className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">Pagos Iniciados</span>
+                      </div>
+                      <span className="text-sm font-bold">{startedPayments}</span>
+                    </div>
+                    <div className="h-4 bg-blue-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 w-full" />
+                    </div>
+                  </div>
+
+                  <div className="relative pl-8 border-l-2 border-dashed border-slate-200 ml-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium">Pagos Exitosos</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-bold block">{successfulPayments}</span>
+                        <span className="text-xs text-green-600 font-medium">{successRate.toFixed(1)}% conversión</span>
+                      </div>
+                    </div>
+                    <div className="h-4 bg-green-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-green-500" 
+                        style={{ width: `${successRate}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative pl-8 border-l-2 border-dashed border-slate-200 ml-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium">Pagos Fallidos / Abandonos</span>
+                      </div>
+                      <span className="text-sm font-bold">{startedPayments - successfulPayments}</span>
+                    </div>
+                    <div className="h-4 bg-red-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-red-500" 
+                        style={{ width: `${100 - successRate}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Eventos de Pago Recientes</CardTitle>
+                <CardDescription>Últimas interacciones con MercadoPago</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {paymentEvents.slice(0, 8).map((event) => (
+                    <div key={event.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-md transition-colors border-b last:border-0 border-slate-100 pb-3">
+                      <div className="flex items-center space-x-3">
+                        {event.event_type === 'success' ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : event.event_type === 'failure' ? (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        ) : event.event_type === 'pending' ? (
+                          <Timer className="h-4 w-4 text-yellow-500" />
+                        ) : (
+                          <Landmark className="h-4 w-4 text-blue-500" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium capitalize">
+                            {event.event_type === 'started' ? 'Pago Iniciado' : 
+                             event.event_type === 'success' ? 'Pago Exitoso' : 
+                             event.event_type === 'failure' ? 'Pago Fallido' : 'Pago Pendiente'}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {event.amount ? `$${event.amount.toLocaleString('es-CL')}` : 'Monto no disponible'}
+                            {event.metadata?.source && ` • ${event.metadata.source}`}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-slate-400">
+                        {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: es })}
+                      </span>
+                    </div>
+                  ))}
+                  {paymentEvents.length === 0 && (
+                    <p className="text-sm text-center py-8 text-muted-foreground italic">
+                      No se han registrado eventos de pago aún.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="errors">
+          <Card>
+            <CardHeader>
+              <CardTitle>Registro de Errores</CardTitle>
+              <CardDescription>Últimos errores detectados en el sistema</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ErrorTable errors={errorLogs} isLoading={isLoadingErrors} />
             </CardContent>
           </Card>
         </TabsContent>

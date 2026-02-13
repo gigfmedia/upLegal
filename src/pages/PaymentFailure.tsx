@@ -4,6 +4,7 @@ import { PaymentFailure as PaymentFailureComponent } from '@/components/payment/
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import Header from '@/components/Header';
+import { logPaymentEvent } from '@/utils/paymentLogger';
 
 export default function PaymentFailure() {
   const navigate = useNavigate();
@@ -12,6 +13,19 @@ export default function PaymentFailure() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const appointmentId = searchParams.get('appointmentId');
+
+  useState(() => {
+    // Log initial failure event when landing on this page
+    logPaymentEvent({
+      event_type: 'failure',
+      appointment_id: appointmentId || undefined,
+      status: 'failed',
+      metadata: {
+        source: 'PaymentFailure',
+        params: Object.fromEntries(searchParams.entries())
+      }
+    });
+  });
 
   const handleBack = () => {
     navigate('/');

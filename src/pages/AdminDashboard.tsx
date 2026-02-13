@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Loader2, RefreshCw, Play, Users, CreditCard, DollarSign, BarChart2, Calendar, Eye, Clock, Database, AlertCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
 import { PaymentWithDetails } from '@/types/payment';
 import { supabase } from '@/lib/supabase';
@@ -22,6 +23,7 @@ import RequireAdmin from '@/components/auth/RequireAdmin';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { PaymentsTable } from '@/components/admin/PaymentsTable';
 import { NotifyLawyersButton } from '@/components/admin/NotifyLawyersButton';
+import AnalyticsDashboard from './admin/analytics';
 
 interface ErrorData {
   id: string;
@@ -177,7 +179,28 @@ const TABS = {
 type TabType = typeof TABS[keyof typeof TABS];
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<TabType>(TABS.DASHBOARD);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabType;
+  
+  // Use URL param as initial state, fallback to DASHBOARD
+  const initialTab = useMemo(() => {
+    return (Object.values(TABS) as string[]).includes(tabParam) 
+      ? tabParam 
+      : TABS.DASHBOARD;
+  }, [tabParam]);
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+
+  // Sync state to URL
+  useEffect(() => {
+    if (activeTab !== tabParam) {
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.set('tab', activeTab);
+        return newParams;
+      }, { replace: true });
+    }
+  }, [activeTab, tabParam, setSearchParams]);
   const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
 
@@ -191,96 +214,7 @@ export default function AdminDashboard() {
     enabled: activeTab === TABS.PAYMENTS
   });
 
-  // Fetch all errors
-  const { data: allErrors = [], isLoading: isLoadingErrors, refetch: refetchErrors } = useQuery({
-    queryKey: ['admin-errors'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('error_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      if (error) {
-        console.error('Error fetching errors:', error);
-        throw error;
-      }
-      return data || [];
-    },
-    refetchInterval: 30000, // Refetch every 30 seconds
-    enabled: activeTab === TABS.ANALYTICS
-  });
-
-  // Separate database errors from other errors
-  const { databaseErrors, otherErrors } = useMemo(() => {
-    return {
-      databaseErrors: allErrors.filter((error: any) => error.is_database_error),
-      otherErrors: allErrors.filter((error: any) => !error.is_database_error)
-    };
-  }, [allErrors]);
-
-  // Refresh errors
-  const handleRefreshErrors = async () => {
-    await refetchErrors();
-    toast.success('Errores actualizados');
-  };
-
-  // Fetch analytics data
-  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
-    queryKey: ['admin-analytics'],
-    queryFn: async () => {
-      const { data: pageViews } = await supabase
-        .from('page_views')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      const { data: appointments } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      // Get new users from the last 30 days
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { count: newUsersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', thirtyDaysAgo.toISOString());
-
-      const uniqueVisitors = new Set(pageViews?.map((view: any) => view.user_id)).size;
-      
-      return {
-        pageViews: pageViews || [],
-        appointments: appointments || [],
-        uniqueVisitors,
-        newUsersCount: newUsersCount || 0,
-        totalAppointments: appointments?.length || 0,
-        recentActivity: [
-          ...(pageViews?.slice(0, 5).map((view: any) => ({
-            type: 'page_view' as const,
-            id: view.id,
-            title: view.page_title || view.page_path,
-            path: view.page_path,
-            timestamp: view.created_at,
-            user: view.user_id ? `User ${view.user_id.substring(0, 6)}` : 'Anónimo'
-          })) || []),
-          ...(appointments?.slice(0, 5).map((appt: any) => ({
-            type: 'appointment' as const,
-            id: appt.id,
-            title: 'Nueva cita',
-            status: appt.status,
-            timestamp: appt.created_at,
-            user: `User ${appt.user_id?.substring(0, 6) || 'Desconocido'}`
-          })) || [])
-        ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-          .slice(0, 10)
-      };
-    },
-    enabled: activeTab === TABS.ANALYTICS
-  });
+  // No longer needed here as they are in AnalyticsDashboard
 
   const loadPayments = async () => {
     try {
@@ -430,190 +364,7 @@ export default function AdminDashboard() {
               )}
 
               {activeTab === TABS.ANALYTICS && (
-                <div className="space-y-6">
-                  {isLoadingAnalytics ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-32 w-full" />
-                      <Skeleton className="h-64 w-full" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Visitantes Únicos</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-2xl font-bold">{analyticsData?.uniqueVisitors || 0}</div>
-                            <p className="text-xs text-muted-foreground">
-                              +12.5% desde el mes pasado
-                            </p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Nuevos Usuarios</CardTitle>
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-2xl font-bold">{analyticsData?.newUsersCount || 0}</div>
-                            <p className="text-xs text-muted-foreground">
-                              Últimos 30 días
-                            </p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Citas Totales</CardTitle>
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-2xl font-bold">{analyticsData?.totalAppointments || 0}</div>
-                            <p className="text-xs text-muted-foreground">
-                              +5.3% desde el mes pasado
-                            </p>
-                          </CardContent>
-                        </Card>
-                        <Card>
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Tasa de Conversión</CardTitle>
-                            <BarChart2 className="h-4 w-4 text-muted-foreground" />
-                          </CardHeader>
-                          <CardContent>
-                            <div className="text-2xl font-bold">
-                              {analyticsData?.pageViews?.length 
-                                ? `${((analyticsData.totalAppointments / analyticsData.pageViews.length) * 100).toFixed(1)}%` 
-                                : '0%'}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              +2.1% desde el mes pasado
-                            </p>
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="grid gap-6 md:grid-cols-2">
-                          <Card>
-                            <CardHeader>
-                              <CardTitle>Actividad Reciente</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                {analyticsData?.recentActivity?.map((activity: any) => (
-                                  <div key={`${activity.type}-${activity.id}`} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="p-2 rounded-full bg-slate-100">
-                                        {activity.type === 'page_view' ? (
-                                          <Eye className="h-4 w-4 text-slate-600" />
-                                        ) : (
-                                          <Calendar className="h-4 w-4 text-slate-600" />
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium">
-                                          {activity.type === 'page_view' 
-                                            ? `Página vista: ${activity.title}`
-                                            : `Nueva cita: ${activity.status}`}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                          {activity.user} • {activity.type === 'page_view' ? activity.path : `Estado: ${activity.status}`}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <span className="text-xs text-slate-400">
-                                      {format(new Date(activity.timestamp), 'PPp', { locale: es })}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <Card>
-                            <CardHeader>
-                              <CardTitle>Últimas Citas</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                {analyticsData?.appointments?.slice(0, 5).map((appointment: any) => (
-                                  <div key={`appointment-${appointment.id}`} className="flex items-start justify-between p-3 hover:bg-slate-50 rounded-lg">
-                                    <div className="flex items-start space-x-3">
-                                      <div className="p-2 rounded-full bg-blue-100 mt-1">
-                                        <Calendar className="h-4 w-4 text-blue-600" />
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium">
-                                          Cita #{appointment.id.substring(0, 6)}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                          {appointment.user_name || 'Usuario'} con {appointment.lawyer_name || 'Abogado'}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                          {appointment.service_title || 'Servicio'}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="text-right">
-                                      <Badge 
-                                        variant={
-                                          appointment.status === 'completed' ? 'default' : 
-                                          appointment.status === 'cancelled' ? 'destructive' : 'secondary'
-                                        }
-                                        className="text-xs"
-                                      >
-                                        {appointment.status === 'completed' ? 'Completada' :
-                                        appointment.status === 'cancelled' ? 'Cancelada' : 'Pendiente'}
-                                      </Badge>
-                                      <p className="text-xs text-slate-400 mt-1">
-                                        {format(new Date(appointment.created_at), 'PPp', { locale: es })}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
-                                {(!analyticsData?.appointments || analyticsData.appointments.length === 0) && (
-                                  <p className="text-sm text-slate-500 text-center py-4">
-                                    No hay citas recientes
-                                  </p>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-
-                        {/* Database Errors Section */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium">Errores Recientes</h3>
-                            <div className="flex items-center space-x-2">
-
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleRefreshErrors}
-                                disabled={isLoadingErrors}
-                              >
-                                <RefreshCw className={`h-4 w-4 ${isLoadingErrors ? 'animate-spin' : ''}`} />
-                                Actualizar
-                              </Button>
-                            </div>
-                          </div>
-                          <Card>
-                            <CardContent className="p-0">
-                              <div className="max-h-[300px] overflow-y-auto">
-                                <ErrorTable 
-                                  errors={databaseErrors} 
-                                  isLoading={isLoadingErrors}
-                                  showDatabaseDetails={true}
-                                />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <AnalyticsDashboard />
               )}
             </div>
           </div>

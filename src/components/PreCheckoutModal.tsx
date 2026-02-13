@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { logPaymentEvent } from '@/utils/paymentLogger';
 
 interface BookingData {
   lawyer_id: string;
@@ -87,6 +88,18 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
 
       // Redirect to MercadoPago payment
       if (data.payment_link) {
+        // Log payment started event
+        await logPaymentEvent({
+          event_type: 'started',
+          appointment_id: data.booking_id,
+          amount: bookingData.price,
+          metadata: {
+            lawyer_id: bookingData.lawyer_id,
+            duration: bookingData.duration,
+            source: 'PreCheckoutModal'
+          }
+        });
+
         // Track begin_checkout event
         if (window.gtag) {
           window.gtag('event', 'begin_checkout', {
