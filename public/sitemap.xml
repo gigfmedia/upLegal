@@ -15,4 +15,9 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://legalup.cl/blog</loc>
+    <priority>0.8</priority>
+  </url>
+
 </urlset>
