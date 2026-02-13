@@ -161,6 +161,15 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             >
               Acerca de
             </a>
+            <a
+              href="/blog"
+              className={cn(
+                "transition-colors hover:text-blue-600",
+                isActive('/blog') || pathname.startsWith('/blog/') ? 'text-blue-600 font-medium' : 'text-gray-600'
+              )}
+            >
+              Blog
+            </a>
           </nav>
 
           {/* Auth Section */}
@@ -318,6 +327,17 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
               )}
             >
               Cómo Funciona
+            </button>
+            <button
+              onClick={() => handleNavigation('/blog')}
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors",
+                isActive('/blog') || pathname.startsWith('/blog/')
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Blog
             </button>
             <button
               onClick={() => handleNavigation('/about')}

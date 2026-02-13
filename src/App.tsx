@@ -77,6 +77,9 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 const Consulta = lazy(() => import('./pages/Consulta'));
 const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
 const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
+// Blog pages
+const BlogIndex = lazy(() => import('./pages/blog/index'));
+const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -291,6 +294,10 @@ const AppContent = () => {
               <Route path="/consulta" element={<Consulta />} />
               <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
               <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
+              
+              {/* Blog Routes */}
+              <Route path="/blog" element={<BlogIndex />} />
+              <Route path="/blog/me-subieron-el-arriendo-que-hago" element={<BlogArticle />} />
              
 
               {/* New lawyer dashboard routes */}

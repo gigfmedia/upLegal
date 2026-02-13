@@ -327,22 +327,22 @@ const Index = () => {
         const searchTermValue = searchTerm.trim();
         params.set('q', searchTermValue);
         
-        // Check if search term contains specialty keywords
+        // Check if search term contains specialty keywords and set category parameter
         const searchTermLower = searchTermValue.toLowerCase();
         if (searchTermLower.includes('familia')) {
-          params.set('specialty', 'Derecho de Familia');
+          params.set('category', 'Derecho de Familia');
         } else if (searchTermLower.includes('laboral')) {
-          params.set('specialty', 'Derecho Laboral');
+          params.set('category', 'Derecho Laboral');
         } else if (searchTermLower.includes('penal')) {
-          params.set('specialty', 'Derecho Penal');
+          params.set('category', 'Derecho Penal');
         } else if (searchTermLower.includes('civil')) {
-          params.set('specialty', 'Derecho Civil');
+          params.set('category', 'Derecho Civil');
         } else if (searchTermLower.includes('comercial')) {
-          params.set('specialty', 'Derecho Comercial');
+          params.set('category', 'Derecho Comercial');
         } else if (searchTermLower.includes('inmobiliario')) {
-          params.set('specialty', 'Derecho Inmobiliario');
+          params.set('category', 'Derecho Inmobiliario');
         } else if (searchTermLower.includes('tributario')) {
-          params.set('specialty', 'Derecho Tributario');
+          params.set('category', 'Derecho Tributario');
         }
       }
       
@@ -506,7 +506,7 @@ const Index = () => {
             {/* Derecho Laboral */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+Laboral')}
+              onClick={() => navigate('/search?category=Derecho+Laboral')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -520,7 +520,7 @@ const Index = () => {
             {/* Derecho de Familia */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+de+Familia')}
+              onClick={() => navigate('/search?category=Derecho+de+Familia')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -534,7 +534,7 @@ const Index = () => {
             {/* Derecho Civil */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+Civil')}
+              onClick={() => navigate('/search?category=Derecho+Civil')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -548,7 +548,7 @@ const Index = () => {
             {/* Derecho Penal */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+Penal')}
+              onClick={() => navigate('/search?category=Derecho+Penal')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -562,7 +562,7 @@ const Index = () => {
             {/* Derecho Comercial */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+Comercial')}
+              onClick={() => navigate('/search?category=Derecho+Comercial')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
@@ -590,7 +590,7 @@ const Index = () => {
             {/* Derecho Inmobiliario */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?specialty=Derecho+de+Propiedad+Intelectual')}
+              onClick={() => navigate('/search?category=Derecho+de+Propiedad+Intelectual')}
             >
               <CardContent className="p-6">
                 <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">

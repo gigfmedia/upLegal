@@ -190,8 +190,6 @@ const SearchResults = () => {
       
     if (!isSameSpecialties) {
       setSelectedSpecialty(newSpecialties);
-    } else {
-
     }
     
     // Update location if changed
@@ -217,12 +215,15 @@ const SearchResults = () => {
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
-        searchTerm: searchTerm || '',
-        selectedSpecialty: selectedSpecialty,
-        location: location,
-        minRating: minRating,
-        minExperience: minExperience,
-        sortBy: sortBy
+        searchParams: {
+          query: searchTerm || '',
+          specialty: selectedSpecialty,
+          location: location,
+          minRating: minRating,
+          minExperience: minExperience,
+          availableNow: availableNow
+        },
+        currentPageSize: 12
       });
     } else if (searchParams.toString() === '') {
       // Si no hay parámetros, buscar todos los abogados
@@ -230,15 +231,18 @@ const SearchResults = () => {
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
-        searchTerm: '',
-        selectedSpecialty: ['all'],
-        location: '',
-        minRating: 0,
-        minExperience: 0,
-        sortBy: 'relevance'
+        searchParams: {
+          query: '',
+          specialty: ['all'],
+          location: '',
+          minRating: 0,
+          minExperience: 0,
+          availableNow: false
+        },
+        currentPageSize: 12
       });
     }
-  }, [searchParams, searchTerm, selectedSpecialty, location, minRating, minExperience, sortBy]); // Only depend on searchParams, not the state variables
+  }, [searchParams]); // Only depend on searchParams, not state variables
 
 
 
@@ -676,17 +680,17 @@ const SearchResults = () => {
                   'Derecho Civil',
                   'Penal',
                   'Laboral',
-                  'de Familia',
+                  'Familia',
                   'Comercial',
                   'Tributario',
                   'Inmobiliario',
-                  'de Salud',
+                  'Salud',
                   'Ambiental',
-                  'de Consumidor',
+                  'Consumidor',
                   'Administrativo',
                   'Procesal',
-                  'de Propiedad Intelectual',
-                  'de Seguridad Social',
+                  'Propiedad Intelectual',
+                  'Seguridad Social',
                   'Minero',
                   'Aduanero',
                   'Marítimo',
