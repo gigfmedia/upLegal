@@ -88,6 +88,11 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check para mantener Render despierto
+app.get('/health', (req, res) => {
+  res.json({ ok: true, timestamp: Date.now() });
+});
+
 // Helper to normalize strings safely
 const safeTrim = (value) => {
   if (typeof value !== 'string') return value ?? null;
@@ -1633,7 +1638,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
               <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
-              <h1 style="color: #101820; margin-bottom: 10px;">¡Hola!</h1>
+              <h1 style="color: #101820; margin-bottom: 10px;">º</h1>
             </div>
             
             <p style="color: #101820; line-height: 1.6; margin-bottom: 20px;">
