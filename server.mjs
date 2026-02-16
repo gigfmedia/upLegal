@@ -928,6 +928,24 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(500).json({ error: 'Failed to create booking' });
     }
 
+    // Track payment start for analytics
+    try {
+      await supabase.from('payment_events').insert({
+        event_type: 'started',
+        amount: price,
+        status: 'processing',
+        metadata: {
+          booking_id: booking.id,
+          lawyer_id,
+          source: 'booking_create'
+        },
+        user_id: null, // User not logged in yet
+      });
+      console.log('[analytics] payment started tracked', { bookingId: booking.id });
+    } catch (trackingError) {
+      console.error('Failed to track payment start:', trackingError);
+    }
+
     // Create MercadoPago preference
     const preferenceData = {
       items: [{
@@ -1450,7 +1468,25 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       let userId = null;
 
       if (userEmail) {
-        // 2. Check if user exists in auth.users
+        // 2. Track payment event for analytics
+        try {
+          await supabase.from('payment_events').insert({
+            event_type: 'success',
+            amount: payment.transaction_amount,
+            status: 'completed',
+            metadata: {
+              payment_id: payment.id,
+              booking_id: bookingId,
+              source: 'webhook'
+            },
+            user_id: null, // Will be updated after user creation
+          });
+          console.log('[analytics] payment event tracked', { paymentId: payment.id, bookingId });
+        } catch (trackingError) {
+          console.error('Failed to track payment event:', trackingError);
+        }
+
+        // 3. Check if user already exists in auth.users
         try {
           const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
           if (authLookupError && authLookupError.message !== 'User not found') {
@@ -1464,8 +1500,26 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
       }
 
+      // 2. Track payment event for analytics
+      try {
+        await supabase.from('payment_events').insert({
+          event_type: 'success',
+          amount: payment.transaction_amount,
+          status: 'completed',
+          metadata: {
+            payment_id: payment.id,
+            booking_id: bookingId,
+            source: 'webhook'
+          },
+          user_id: userId || null,
+        });
+        console.log('[analytics] payment event tracked', { paymentId: payment.id, bookingId });
+      } catch (trackingError) {
+        console.error('Failed to track payment event:', trackingError);
+      }
+
       // 3. Create user if not exists
-      if (!userId && userEmail) {
+      if (userEmail && !userId) {
         const tempPassword = crypto.randomBytes(9).toString('hex');
 
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
