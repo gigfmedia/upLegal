@@ -163,12 +163,17 @@ const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: bool
 // Main Component
 export default function AnalyticsDashboard() {
   // Fetch page views for lists
-  const { data: pageViews = [] } = useQuery({
+  const { data: pageViews = [], error: pageViewsError } = useQuery({
     queryKey: ['page-views-list'],
     queryFn: async () => {
-      const { data } = await supabase.from('page_views').select('*').order('created_at', { ascending: false }).limit(1000);
+      const { data, error } = await supabase.from('page_views').select('*').order('created_at', { ascending: false }).limit(1000);
+      if (error) {
+        console.error('Error fetching page views:', error);
+        throw error;
+      }
       return (data || []) as PageView[];
-    }
+    },
+    retry: 1
   });
 
   // Fetch recent appointments for lists
@@ -219,7 +224,7 @@ export default function AnalyticsDashboard() {
   });
 
   // Fetch payment events
-  const { data: paymentEvents = [], isLoading: isLoadingPayments } = useQuery({
+  const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
     queryKey: ['payment-events'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -227,13 +232,17 @@ export default function AnalyticsDashboard() {
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data as PaymentEvent[];
-    }
+      if (error) {
+        console.error('Error fetching payment events:', error);
+        throw error;
+      }
+      return (data || []) as PaymentEvent[];
+    },
+    retry: 1
   });
 
   // Fetch error logs
-  const { data: errorLogs = [], isLoading: isLoadingErrors } = useQuery({
+  const { data: errorLogs = [], isLoading: isLoadingErrors, error: errorLogsError } = useQuery({
     queryKey: ['admin-errors'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -242,13 +251,17 @@ export default function AnalyticsDashboard() {
         .order('created_at', { ascending: false })
         .limit(1000);
       
-      if (error) throw error;
-      return data as ErrorLog[];
-    }
+      if (error) {
+        console.error('Error fetching error logs:', error);
+        throw error;
+      }
+      return (data || []) as ErrorLog[];
+    },
+    retry: 1
   });
 
   // Fetch comprehensive stats
-  const { data: realStats, isLoading: isLoadingStats } = useQuery({
+  const { data: realStats, isLoading: isLoadingStats, error: statsError } = useQuery({
     queryKey: ['admin-real-stats'],
     queryFn: async () => {
       const now = new Date();
@@ -315,7 +328,8 @@ export default function AnalyticsDashboard() {
         peakHour: peakHour !== '--' ? `${peakHour}:00` : '--',
         avgDuration: avgDuration.toFixed(1)
       };
-    }
+    },
+    retry: 1
   });
 
   // Calculate unique visitors
@@ -339,11 +353,38 @@ export default function AnalyticsDashboard() {
   const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
 
   const isLoading = isLoadingStats || isLoadingPayments || isLoadingErrors;
+  const hasError = pageViewsError || paymentEventsError || errorLogsError || statsError;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  if (hasError) {
+    const errorMessage = pageViewsError?.message || paymentEventsError?.message || errorLogsError?.message || statsError?.message || 'Error desconocido';
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Panel de Análisis</h2>
+          <p className="text-muted-foreground">
+            Estadísticas de visitas y citas en tiempo real
+          </p>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center justify-center py-12">
+              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Error al cargar los datos</h3>
+              <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
+              <p className="text-xs text-muted-foreground">
+                Si las tablas de analytics no existen, ejecuta la migración: <code className="bg-slate-100 px-2 py-1 rounded">20250102000000_create_analytics_tables.sql</code>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
