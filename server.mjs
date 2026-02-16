@@ -841,6 +841,49 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
+    // Prevent double-booking: block if slot overlaps an existing booking (pending or confirmed)
+    try {
+      const { data: existingBookings, error: existingError } = await supabase
+        .from('bookings')
+        .select('id, scheduled_time, duration, status')
+        .eq('lawyer_id', lawyer_id)
+        .eq('scheduled_date', scheduled_date)
+        .in('status', ['pending', 'confirmed']);
+
+      if (existingError) {
+        console.error('Error checking existing bookings:', existingError);
+      } else if (existingBookings && existingBookings.length > 0) {
+        const parseTimeToMinutes = (timeStr = '') => {
+          const [hh, mm] = String(timeStr).slice(0, 5).split(':').map(Number);
+          if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+          return hh * 60 + mm;
+        };
+
+        const reqStart = parseTimeToMinutes(scheduled_time);
+        const reqDur = Number(duration);
+        const reqEnd = reqStart == null ? null : reqStart + reqDur;
+
+        if (reqStart != null && reqEnd != null) {
+          const overlaps = existingBookings.some((b) => {
+            const bStart = parseTimeToMinutes(b.scheduled_time);
+            const bDur = Number(b.duration) || 0;
+            const bEnd = bStart == null ? null : bStart + bDur;
+            if (bStart == null || bEnd == null) return false;
+            return reqStart < bEnd && reqEnd > bStart;
+          });
+
+          if (overlaps) {
+            return res.status(409).json({
+              error: 'Time slot not available',
+              message: 'Este horario ya está reservado. Por favor elige otro.'
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Exception checking booking overlap:', e);
+    }
+
     // Check if lawyer exists
     const { data: lawyer, error: lawyerError } = await supabase
       .from('profiles')

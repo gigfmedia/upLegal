@@ -43,6 +43,11 @@ export default function BookingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const actualLawyerId = useMemo(() => {
+    if (!lawyerId) return '';
+    return lawyerId.length > 36 ? lawyerId.slice(-36) : lawyerId;
+  }, [lawyerId]);
   
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
   const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null>(null);
@@ -59,9 +64,7 @@ export default function BookingPage() {
     async function fetchLawyer() {
       if (!lawyerId) return;
 
-      // Extract UUID from the URL parameter (which might be "slug-uuid")
-      // UUIDs are 36 characters long. If the param is longer, we assume it's slug-uuid.
-      const actualId = lawyerId.length > 36 ? lawyerId.slice(-36) : lawyerId;
+      const actualId = actualLawyerId;
 
       const { data, error } = await supabase
         .from('profiles')
@@ -106,7 +109,7 @@ export default function BookingPage() {
     }
 
     fetchLawyer();
-  }, [lawyerId, navigate]);
+  }, [lawyerId, actualLawyerId, navigate]);
 
   // Track booking_start event when lawyer data is loaded
   useEffect(() => {
@@ -206,7 +209,7 @@ export default function BookingPage() {
         // Call RPC
         const { data: busySlots, error } = await supabase
           .rpc('get_lawyer_busy_slots', {
-            query_lawyer_id: lawyerId,
+            query_lawyer_id: actualLawyerId,
             query_date: format(selectedDate, 'yyyy-MM-dd')
           });
 
@@ -228,11 +231,11 @@ export default function BookingPage() {
 
         let availabilityConfig: Record<string, boolean[]> | null = lawyerAvailability;
 
-        if ((!availabilityConfig || Object.keys(availabilityConfig).length === 0) && lawyerId) {
+        if ((!availabilityConfig || Object.keys(availabilityConfig).length === 0) && actualLawyerId) {
           const { data: profileData } = await supabase
             .from('profiles')
             .select('availability')
-            .eq('user_id', lawyerId)
+            .eq('user_id', actualLawyerId)
             .single();
 
           if (profileData?.availability) {
@@ -316,7 +319,7 @@ export default function BookingPage() {
     };
 
     fetchAvailability();
-  }, [selectedDate, duration, lawyerId, lawyerAvailability, selectedTime, getDayName, getAvailabilityForDay]);
+  }, [selectedDate, duration, actualLawyerId, lawyerAvailability, selectedTime, getDayName, getAvailabilityForDay]);
 
   // Helper to add minutes to HHMM integer (e.g. 900 + 60 => 1000)
   // This is a bit hacky, cleaner to use Date objects but sufficient for static slots
