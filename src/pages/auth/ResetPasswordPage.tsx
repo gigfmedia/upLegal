@@ -29,6 +29,8 @@ export default function ResetPasswordPage() {
 
         const url = new URL(window.location.href);
         const queryCode = searchParams.get('code');
+        const queryTokenHash = searchParams.get('token_hash');
+        const queryType = searchParams.get('type');
         const hashParams = new URLSearchParams(url.hash.replace('#', ''));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -51,6 +53,18 @@ export default function ResetPasswordPage() {
           // Remove code from URL
           const newUrl = new URL(window.location.href);
           newUrl.searchParams.delete('code');
+          window.history.replaceState({}, '', newUrl.toString());
+        } else if (queryTokenHash && queryType === 'recovery') {
+          const { error: verifyError } = await supabase.auth.verifyOtp({
+            type: 'recovery',
+            token_hash: queryTokenHash,
+          });
+          if (verifyError) throw verifyError;
+
+          // Remove token_hash/type from URL
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('token_hash');
+          newUrl.searchParams.delete('type');
           window.history.replaceState({}, '', newUrl.toString());
         }
       } catch (err) {
@@ -117,7 +131,8 @@ export default function ResetPasswordPage() {
 
   // Show error if no code is provided
   const hasHashRecoveryToken = typeof window !== 'undefined' && window.location.hash.includes('access_token=');
-  if (!searchParams.get('code') && !hasHashRecoveryToken) {
+  const hasQueryRecoveryToken = Boolean(searchParams.get('code') || (searchParams.get('token_hash') && searchParams.get('type') === 'recovery'));
+  if (!hasQueryRecoveryToken && !hasHashRecoveryToken) {
     return (
       <div className="w-full">
       <Header />
