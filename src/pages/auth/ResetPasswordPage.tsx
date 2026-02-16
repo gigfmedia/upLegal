@@ -8,7 +8,6 @@ import { Loader2, Check, ArrowLeft } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { handlePasswordReset } from '@/utils/auth-utils';
 import Header from "@/components/Header";
 
 export default function ResetPasswordPage() {
@@ -22,25 +21,50 @@ export default function ResetPasswordPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Handle the password reset token from URL
+  // Process recovery link: Supabase may send tokens in URL hash or a code in query
   useEffect(() => {
     const processPasswordReset = async () => {
-      const code = searchParams.get('code');
-      
-      if (code) {
+      try {
         setProcessingReset(true);
-        const result = await handlePasswordReset();
-        if (!result.success) {
-          setError(result.error || 'Error al procesar el restablecimiento de contraseña');
-          toast({
-            title: 'Error',
-            description: result.error || 'Error al procesar el restablecimiento de contraseña',
-            variant: 'destructive',
+
+        const url = new URL(window.location.href);
+        const queryCode = searchParams.get('code');
+        const hashParams = new URLSearchParams(url.hash.replace('#', ''));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && refreshToken && type === 'recovery') {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
           });
+          if (sessionError) throw sessionError;
+
+          // Clear hash to avoid leaking tokens
+          window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+        } else if (queryCode) {
+          // PKCE/code flow
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(queryCode);
+          if (exchangeError) throw exchangeError;
+
+          // Remove code from URL
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('code');
+          window.history.replaceState({}, '', newUrl.toString());
         }
+      } catch (err) {
+        console.error('Error al procesar el enlace de recuperación:', err);
+        setError('El enlace de recuperación no es válido o ha expirado. Por favor, solicita un nuevo enlace.');
+        toast({
+          title: 'Error',
+          description: 'El enlace de recuperación no es válido o ha expirado. Por favor, solicita un nuevo enlace.',
+          variant: 'destructive',
+        });
+      } finally {
+        setProcessingReset(false);
+        setLoading(false);
       }
-      setLoading(false);
-      setProcessingReset(false);
     };
 
     processPasswordReset();
@@ -62,21 +86,7 @@ export default function ResetPasswordPage() {
 
     try {
       setProcessingReset(true);
-      const code = searchParams.get('code');
-      const email = searchParams.get('email');
-      
-      if (code && email) {
-        // If we have a code and email, verify the OTP first
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          email,
-          token: code,
-          type: 'recovery'
-        });
-
-        if (verifyError) throw verifyError;
-      }
-
-      // Now update the password
+      // Update password (requires a valid recovery session)
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
@@ -105,39 +115,9 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // Handle the password reset token from URL
-  useEffect(() => {
-    const processPasswordReset = async () => {
-      const code = searchParams.get('code');
-      const email = searchParams.get('email');
-      
-      if (code && email) {
-        try {
-          setProcessingReset(true);
-          // Just verify the code is valid, don't update the password yet
-          const { error } = await supabase.auth.verifyOtp({
-            email,
-            token: code,
-            type: 'recovery'
-          });
-          
-          if (error) throw error;
-          
-        } catch (error) {
-          console.error('Error al procesar el enlace de recuperación:', error);
-          setError('El enlace de recuperación no es válido o ha expirado. Por favor, solicita un nuevo enlace.');
-        } finally {
-          setProcessingReset(false);
-        }
-      }
-      setLoading(false);
-    };
-
-    processPasswordReset();
-  }, [searchParams]);
-
   // Show error if no code is provided
-  if (!searchParams.get('code') && !searchParams.get('access_token')) {
+  const hasHashRecoveryToken = typeof window !== 'undefined' && window.location.hash.includes('access_token=');
+  if (!searchParams.get('code') && !hasHashRecoveryToken) {
     return (
       <div className="w-full">
       <Header />

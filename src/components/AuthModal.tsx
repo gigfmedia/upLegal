@@ -266,8 +266,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
 
     try {
       setSubmitting(true);
+      const appUrl = (import.meta as any)?.env?.VITE_APP_URL || window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       });
 
       if (error) throw error;

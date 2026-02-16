@@ -107,35 +107,50 @@ export const getAllPayments = async (): Promise<PaymentWithDetails[]> => {
   }
 
   // Get unique user and lawyer IDs
-  const userIds = [...new Set(payments.map(p => p.client_user_id))];
-  const lawyerIds = [...new Set(payments.map(p => p.lawyer_user_id))];
+  const userIds = [...new Set(payments.map(p => p.client_user_id).filter(Boolean))] as string[];
+  const lawyerIds = [...new Set(payments.map(p => p.lawyer_user_id).filter(Boolean))] as string[];
   const serviceIds = payments.map(p => p.service_id).filter(Boolean) as string[];
 
-  // Function to fetch user data with email from auth.users
-  const fetchUserData = async (userIds: string[]) => {
-    if (userIds.length === 0) return [];
-    
-    const { data, error } = await supabase
-      .from('auth.users')
-      .select(`
-        id,
-        email,
-        raw_user_meta_data->>full_name as full_name,
-        raw_user_meta_data->>avatar_url as avatar_url
-      `)
-      .in('id', userIds);
+  // Function to fetch user data from profiles (auth.users is not accessible from the frontend)
+  const fetchUserData = async (ids: string[]) => {
+    const cleanIds = (ids || []).filter((id): id is string => Boolean(id));
+    if (cleanIds.length === 0) return [];
 
-    if (error) {
-      console.error('Error fetching users:', error);
-      throw new Error('Failed to fetch user data');
+    try {
+      const [{ data: byUserId, error: byUserIdError }, { data: byId, error: byIdError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, user_id, email, display_name, first_name, last_name, avatar_url')
+          .in('user_id', cleanIds),
+        supabase
+          .from('profiles')
+          .select('id, user_id, email, display_name, first_name, last_name, avatar_url')
+          .in('id', cleanIds)
+      ]);
+
+      if (byUserIdError) console.error('Error fetching users by user_id:', byUserIdError);
+      if (byIdError) console.error('Error fetching users by id:', byIdError);
+
+      const combined = [...(byUserId || []), ...(byId || [])];
+      const uniqueByProfileId = new Map<string, any>();
+      for (const row of combined) {
+        if (!row?.id) continue;
+        if (!uniqueByProfileId.has(row.id)) uniqueByProfileId.set(row.id, row);
+      }
+
+      return Array.from(uniqueByProfileId.values()).map((p: any) => {
+        const fullName = (p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Usuario') as string;
+        return {
+          id: p.user_id || p.id,
+          email: p.email || '',
+          full_name: fullName,
+          avatar_url: p.avatar_url || ''
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching users from profiles:', error);
+      return [];
     }
-
-    return data.map(user => ({
-      id: user.id,
-      email: user.email || '',
-      full_name: user.full_name || 'Usuario',
-      avatar_url: user.avatar_url || ''
-    }));
   };
 
   // Fetch users and lawyers data in parallel

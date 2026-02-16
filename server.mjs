@@ -1501,7 +1501,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           try {
             const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
             if (lawyerUser?.user) {
-              lawyerEmail = lawyerUser.user.email;
+              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
             } else {
                console.error('Could not find lawyer user for email notification', lawyerError);
             }
@@ -1534,7 +1534,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           // Send confirmation email to Client
           if (resend) {
             try {
-            await resend.emails.send({
+            const userEmailResponse = await resend.emails.send({
               from: 'LegalUp <hola@mg.legalup.cl>',
               to: userEmail,
               subject: '¡Tu asesoría está confirmada!',
@@ -1546,9 +1546,9 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   
                   <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <p style="margin: 5px 0;"><strong>Abogado:</strong> Consultar en plataforma</p>
-                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.date}</p>
-                    <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.time}</p>
-                    <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration} min</p>
+                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
+                    <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
+                    <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
                   </div>
 
                   <p>Hemos creado una cuenta para ti (o actualizado la existente) para que puedas gestionar tu cita.</p>
@@ -1565,15 +1565,27 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 </div>
               `
             });
+
+            console.log('[booking-email] user confirmation sent', {
+              bookingId,
+              to: userEmail,
+              resendId: userEmailResponse?.data?.id,
+            });
             } catch (emailError) {
-               console.error('Error sending user email:', emailError);
+               console.error('[booking-email] Error sending user email:', {
+                 bookingId,
+                 to: userEmail,
+                 error: emailError
+               });
             }
           }
 
           // Send notification email to Lawyer
           if (lawyerEmail && resend) {
             try {
-              await resend.emails.send({
+              console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
+
+              const lawyerEmailResponse = await resend.emails.send({
                 from: 'LegalUp <hola@mg.legalup.cl>',
                 to: lawyerEmail,
                 subject: 'Nueva reserva confirmada',
@@ -1585,9 +1597,9 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                       <p style="margin: 5px 0;"><strong>Cliente:</strong> ${userName}</p>
                       <p style="margin: 5px 0;"><strong>Email:</strong> ${userEmail}</p>
-                      <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.date}</p>
-                      <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.time}</p>
-                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration} min</p>
+                      <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
+                      <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
+                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
                     </div>
 
                     <p>Ingresa a tu panel para ver más detalles.</p>
@@ -1600,9 +1612,25 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </div>
                 `
               });
+
+              console.log('[booking-email] lawyer confirmation sent', {
+                bookingId,
+                to: lawyerEmail,
+                resendId: lawyerEmailResponse?.data?.id,
+              });
             } catch (emailError) {
-               console.error('Error sending lawyer email:', emailError);
+               console.error('[booking-email] Error sending lawyer email:', {
+                 bookingId,
+                 to: lawyerEmail,
+                 error: emailError
+               });
             }
+          } else {
+            console.warn('[booking-email] lawyer email not sent (missing lawyerEmail or resend not configured)', {
+              bookingId,
+              lawyerEmail,
+              resendConfigured: Boolean(resend)
+            });
           }
         }
       }

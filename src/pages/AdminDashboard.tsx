@@ -201,33 +201,31 @@ export default function AdminDashboard() {
       }, { replace: true });
     }
   }, [activeTab, tabParam, setSearchParams]);
-  const [payments, setPayments] = useState<PaymentWithDetails[]>([]);
-  const [loadingPayments, setLoadingPayments] = useState(false);
 
   // Fetch payments data
-  const { data: paymentsData, isLoading: isLoadingPayments } = useQuery({
+  const {
+    data: paymentsData,
+    isLoading: isLoadingPayments,
+    isFetching: isFetchingPayments,
+    refetch: refetchPayments,
+  } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
       const data = await getAllPayments();
       return data;
     },
-    enabled: activeTab === TABS.PAYMENTS
+    enabled: activeTab === TABS.PAYMENTS,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // No longer needed here as they are in AnalyticsDashboard
 
-  const loadPayments = async () => {
-    try {
-      setLoadingPayments(true);
-      const data = await getAllPayments();
-      setPayments(data);
-    } catch (error) {
-      console.error('Error loading payments:', error);
-      toast.error('Error al cargar los pagos');
-    } finally {
-      setLoadingPayments(false);
+  useEffect(() => {
+    if (activeTab === TABS.PAYMENTS) {
+      refetchPayments();
     }
-  };
+  }, [activeTab, refetchPayments]);
 
   return (
     <div className="w-full">
@@ -322,16 +320,16 @@ export default function AdminDashboard() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={loadPayments}
-                        disabled={loadingPayments}
+                        onClick={() => refetchPayments()}
+                        disabled={isFetchingPayments}
                       >
-                        <RefreshCw className={`h-4 w-4 mr-2 ${loadingPayments ? 'animate-spin' : ''}`} />
+                        <RefreshCw className={`h-4 w-4 mr-2 ${isFetchingPayments ? 'animate-spin' : ''}`} />
                         Actualizar
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <PaymentsTable payments={payments} loading={loadingPayments} />
+                    <PaymentsTable payments={paymentsData || []} loading={isLoadingPayments || isFetchingPayments} />
                   </CardContent>
                 </Card>
               )}

@@ -38,8 +38,9 @@ export async function handlePasswordReset() {
 
 export async function sendPasswordResetEmail(email: string) {
   try {
+    const appUrl = (import.meta as any)?.env?.VITE_APP_URL || window.location.origin;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
+      redirectTo: `${appUrl}/reset-password`
     });
     
     if (error) throw error;

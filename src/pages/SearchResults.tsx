@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
-import { X, SlidersHorizontal, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { X, SlidersHorizontal, Search } from "lucide-react";
 import { Lawyer } from "@/components/LawyerCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +14,9 @@ import { AuthModal } from "@/components/AuthModal";
 import * as React from 'react';
 import { useInView } from 'react-intersection-observer';
 import { debounce } from 'lodash';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SpecialtiesSlider = lazy(() => import('@/components/search/SpecialtiesSlider'));
 
 const specialties = [
   "Derecho Civil",
@@ -148,6 +147,13 @@ const SearchResults = () => {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [showSpecialtiesSlider, setShowSpecialtiesSlider] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setShowSpecialtiesSlider(true), 0);
+    return () => window.clearTimeout(id);
+  }, []);
   
   // Modal states
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
@@ -179,49 +185,41 @@ const SearchResults = () => {
       newSpecialties = ['all'];
     }
 
-    // Update search term if changed
-    if (urlQuery !== searchTerm) {
-      setSearchTerm(urlQuery);
-    }
-    
-    // Update specialties if changed
-    const isSameSpecialties = selectedSpecialty.length === newSpecialties.length && 
-      selectedSpecialty.every((val, index) => val === newSpecialties[index]);
-      
-    if (!isSameSpecialties) {
-      setSelectedSpecialty(newSpecialties);
-    }
-    
-    // Update location if changed
-    if (urlLocation !== location) {
-      setLocation(urlLocation);
-    }
-
-    // Update filters if changed in URL (sync back to state)
-    if (urlMinRating !== minRating) setMinRating(urlMinRating);
-    if (urlMinExperience !== minExperience) setMinExperience(urlMinExperience);
+    // Sync state from URL without depending on state variables (avoids exhaustive-deps loop)
+    setSearchTerm((prev) => (prev === urlQuery ? prev : urlQuery));
+    setSelectedSpecialty((prev) => {
+      const isSame =
+        prev.length === newSpecialties.length &&
+        prev.every((val, index) => val === newSpecialties[index]);
+      return isSame ? prev : newSpecialties;
+    });
+    setLocation((prev) => (prev === urlLocation ? prev : urlLocation));
+    setMinRating((prev) => (prev === urlMinRating ? prev : urlMinRating));
+    setMinExperience((prev) => (prev === urlMinExperience ? prev : urlMinExperience));
 
     
-    // Trigger search with current parameters
-    const shouldSearch = urlQuery || 
-      (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') || 
-      urlCategory || 
-      urlLocation ||
-      urlMinRating > 0 ||
-      urlMinExperience > 0;
-    
+    // Trigger search using URL-derived values (avoid stale state + fixes hook deps)
+    const shouldSearch = Boolean(
+      urlQuery ||
+        (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') ||
+        urlCategory ||
+        urlLocation ||
+        urlMinRating > 0 ||
+        urlMinExperience > 0
+    );
+
     if (shouldSearch) {
       setLoading(true);
       debouncedSearchRef.current({
         page: 1,
         isInitialLoad: true,
         searchParams: {
-          query: searchTerm || '',
-          specialty: selectedSpecialty,
-          location: location,
-          minRating: minRating,
-          minExperience: minExperience,
-          availableNow: availableNow
+          query: urlQuery,
+          specialty: newSpecialties,
+          location: urlLocation,
+          minRating: urlMinRating,
+          minExperience: urlMinExperience,
+          availableNow: false
         },
         currentPageSize: 12
       });
@@ -663,87 +661,18 @@ const SearchResults = () => {
           <div className="mt-4 relative">
             <h4 className="text-lg font-semibold mb-4">¿Buscas alguna subespecialidad?</h4>
             <div className="relative">
-              <Swiper
-                modules={[Navigation]}
-                spaceBetween={8}
-                slidesPerView={'auto'}
-                navigation={{
-                  nextEl: '.swiper-button-next-specialties',
-                  prevEl: '.swiper-button-prev-specialties',
-                  disabledClass: 'opacity-30 cursor-not-allowed',
-                }}
-                className="py-2 px-2"
-                style={{ paddingLeft: '8px', paddingRight: '8px' }}
-              >
-                {[
-                  'Todas',
-                  'Derecho Civil',
-                  'Penal',
-                  'Laboral',
-                  'Familia',
-                  'Comercial',
-                  'Tributario',
-                  'Inmobiliario',
-                  'Salud',
-                  'Ambiental',
-                  'Consumidor',
-                  'Administrativo',
-                  'Procesal',
-                  'Propiedad Intelectual',
-                  'Seguridad Social',
-                  'Minero',
-                  'Aduanero',
-                  'Marítimo',
-                  'Aeronáutico',
-                  'Deportivo'
-                ].map((specialty) => (
-                  <SwiperSlide key={specialty} className="w-auto" style={{ width: 'auto' }}>
-                    <button
-                      onClick={() => {
-                        const value = specialty === 'Todas' ? 'all' : specialty;
-                        let newSpecialties = [...selectedSpecialty];
-                        
-                        if (value === 'all') {
-                          newSpecialties = ['all'];
-                        } else {
-                          // Remove 'all' if present
-                          newSpecialties = newSpecialties.filter(s => s !== 'all');
-                          
-                          if (newSpecialties.includes(value)) {
-                            newSpecialties = newSpecialties.filter(s => s !== value);
-                          } else {
-                            newSpecialties.push(value);
-                          }
-                          
-                          if (newSpecialties.length === 0) newSpecialties = ['all'];
-                        }
-                        
-                        handleSpecialtyChange(newSpecialties);
-                      }}
-                      className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
-                        selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
-                          ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
-                      }`}
-                      style={{
-                        padding: '0.5rem 1.25rem',
-                        fontSize: '0.875rem',
-                        lineHeight: '1.25rem',
-                        fontWeight: 500,
-                        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-                      }}
-                    >
-                      {specialty}
-                    </button>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-              <button className="swiper-button-prev-specialties absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-                <ChevronLeft className="h-4 w-4 text-gray-600" />
-              </button>
-              <button className="swiper-button-next-specialties absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 focus:outline-none">
-                <ChevronRight className="h-4 w-4 text-gray-600" />
-              </button>
+              <div className="min-h-[56px]">
+                {showSpecialtiesSlider ? (
+                  <Suspense fallback={<div className="h-14 w-full rounded-lg bg-gray-50 border border-gray-200" />}>
+                    <SpecialtiesSlider
+                      selectedSpecialty={selectedSpecialty}
+                      onSpecialtyChange={handleSpecialtyChange}
+                    />
+                  </Suspense>
+                ) : (
+                  <div className="h-14 w-full rounded-lg bg-gray-50 border border-gray-200" />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -897,8 +826,35 @@ const SearchResults = () => {
           
           {/* Results Grid */}
           {loading && searchResult.lawyers.length === 0 ? (
-            <div className="flex justify-center items-center py-16">
-              <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <div key={i} className="w-full">
+                    <div className="bg-white rounded-xl shadow-sm p-6 min-h-[300px]">
+                      <div className="flex items-start gap-4">
+                        <Skeleton className="h-16 w-16 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-5 w-3/4" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <div className="flex gap-2">
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                            <Skeleton className="h-6 w-20 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
+                      </div>
+                      <div className="mt-6 grid grid-cols-2 gap-2">
+                        <Skeleton className="h-10 w-full rounded-md" />
+                        <Skeleton className="h-10 w-full rounded-md" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : searchResult.lawyers.length === 0 && !searchParams.toString() ? (
             <div className="text-center py-16 bg-white rounded-xl shadow-sm">
