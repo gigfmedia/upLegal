@@ -1539,6 +1539,59 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               .eq('id', bookingId);
           }
 
+          // 6. Ensure appointment exists for lawyer dashboard
+          if (userId) {
+            try {
+              const { data: existingAppointment, error: existingAppointmentError } = await supabase
+                .from('appointments')
+                .select('id')
+                .eq('lawyer_id', booking.lawyer_id)
+                .eq('user_id', userId)
+                .eq('appointment_date', booking.scheduled_date)
+                .eq('appointment_time', booking.scheduled_time)
+                .maybeSingle();
+
+              if (existingAppointmentError) {
+                console.error('Error checking existing appointment:', existingAppointmentError);
+              }
+
+              if (!existingAppointment) {
+                const { error: insertAppointmentError } = await supabase
+                  .from('appointments')
+                  .insert({
+                    lawyer_id: booking.lawyer_id,
+                    user_id: userId,
+                    email: userEmail,
+                    name: userName,
+                    appointment_date: booking.scheduled_date,
+                    appointment_time: booking.scheduled_time,
+                    duration: booking.duration,
+                    price: booking.price,
+                    status: 'confirmed',
+                    consultation_type: 'paid',
+                    contact_method: 'platform',
+                    currency: 'CLP',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+
+                if (insertAppointmentError) {
+                  console.error('Error inserting appointment:', insertAppointmentError);
+                } else {
+                  console.log('[booking->appointment] appointment created', {
+                    bookingId,
+                    lawyerId: booking.lawyer_id,
+                    userId,
+                    appointment_date: booking.scheduled_date,
+                    appointment_time: booking.scheduled_time,
+                  });
+                }
+              }
+            } catch (appointmentError) {
+              console.error('Exception ensuring appointment:', appointmentError);
+            }
+          }
+
           // Fetch lawyer email to send notification
           let lawyerEmail = '';
           try {
