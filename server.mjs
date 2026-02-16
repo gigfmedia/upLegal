@@ -25,11 +25,19 @@ dotenv.config();
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 const appUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+const mercadoPagoWebhookUrl =
+  process.env.MERCADOPAGO_WEBHOOK_URL ||
+  process.env.VITE_MERCADOPAGO_WEBHOOK_URL ||
+  '';
 const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 if (!resend) {
-  console.warn('⚠️ RESEND_API_KEY missing. Email features will be disabled.');
+  console.warn('⚠️ RESEND_API_KEY is not configured. Emails will NOT be sent.');
+}
+
+if (!mercadoPagoWebhookUrl) {
+  console.warn('⚠️ MERCADOPAGO_WEBHOOK_URL is not configured. MercadoPago webhooks will NOT be received, and bookings may remain pending.');
 }
 
 if (!supabaseUrl || !serviceRoleKey) {
@@ -951,7 +959,7 @@ app.post('/api/bookings/create', async (req, res) => {
         scheduled_time
       },
       statement_descriptor: 'LEGALUP',
-      notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
+      ...(mercadoPagoWebhookUrl ? { notification_url: mercadoPagoWebhookUrl } : {})
     };
 
     // Create preference using MercadoPago API
@@ -1407,234 +1415,238 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const topic = req.body.topic || type;
     const id = req.body.id || data?.id;
 
-    if (topic === 'payment') {
-      const payment = await new Payment(mpClient).get({ id });
-      
-      if (payment.status === 'approved') {
-        const bookingId = payment.external_reference;
-        
-        // 1. Update booking status
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed', 
-            payment_id: payment.id.toString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', bookingId)
-          .select()
-          .single();
+    const handleApprovedPayment = async (payment) => {
+      const bookingId = payment.external_reference;
 
-        if (bookingError) {
-          console.error('Error updating booking:', bookingError);
+      // 1. Update booking status
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_id: payment.id.toString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId)
+        .select()
+        .single();
+
+      if (bookingError) {
+        console.error('Error updating booking:', bookingError);
+      }
+
+      if (!booking) {
+        console.warn('[mp] approved payment but booking not found', {
+          paymentId: payment.id,
+          external_reference: bookingId,
+        });
+        return;
+      }
+
+      const userEmail = (booking.user_email || '').trim().toLowerCase();
+      const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+      const [firstName, ...restName] = userName.split(' ').filter(Boolean);
+      const lastName = restName.length > 0 ? restName.join(' ') : '';
+
+      let userId = null;
+
+      if (userEmail) {
+        // 2. Check if user exists in auth.users
+        try {
+          const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
+          if (authLookupError && authLookupError.message !== 'User not found') {
+            console.error('Error looking up user by email:', authLookupError);
+          }
+          if (authUser?.user) {
+            userId = authUser.user.id;
+          }
+        } catch (lookupError) {
+          console.error('Exception checking existing user:', lookupError);
         }
+      }
 
-        if (booking) {
-          const userEmail = (booking.user_email || '').trim().toLowerCase();
-          const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
-          const [firstName, ...restName] = userName.split(' ').filter(Boolean);
-          const lastName = restName.length > 0 ? restName.join(' ') : '';
+      // 3. Create user if not exists
+      if (!userId && userEmail) {
+        const tempPassword = crypto.randomBytes(9).toString('hex');
 
-          let userId = null;
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: userEmail,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            first_name: firstName || userName,
+            last_name,
+            full_name: userName,
+            role: 'client',
+            signup_method: 'booking'
+          }
+        });
 
-          if (userEmail) {
-            // 2. Check if user exists in auth.users
-            try {
-              const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
-              if (authLookupError && authLookupError.message !== 'User not found') {
-                console.error('Error looking up user by email:', authLookupError);
-              }
-              if (authUser?.user) {
-                userId = authUser.user.id;
-              }
-            } catch (lookupError) {
-              console.error('Exception checking existing user:', lookupError);
-            }
+        if (createError) {
+          console.error('Error creating user:', createError);
+        } else if (newUser?.user?.id) {
+          userId = newUser.user.id;
+        }
+      }
+
+      // 4. Ensure profile exists and is up to date
+      if (userId && userEmail) {
+        try {
+          const { data: existingProfile, error: profileLookupError } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (profileLookupError) {
+            console.error('Error querying profile:', profileLookupError);
           }
 
-          // 3. Create user if not exists
-          if (!userId && userEmail) {
-            const tempPassword = crypto.randomBytes(9).toString('hex');
+          const baseProfile = {
+            email: userEmail,
+            first_name: firstName || null,
+            last_name: lastName || null,
+            display_name: userName,
+            role: 'client',
+            updated_at: new Date().toISOString(),
+          };
 
-            const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-              email: userEmail,
-              password: tempPassword,
-              email_confirm: true,
-              user_metadata: {
-                first_name: firstName || userName,
-                last_name,
-                full_name: userName,
-                role: 'client',
-                signup_method: 'booking'
-              }
-            });
+          if (existingProfile) {
+            const { error: updateProfileError } = await supabase
+              .from('profiles')
+              .update(baseProfile)
+              .eq('user_id', userId);
 
-            if (createError) {
-              console.error('Error creating user:', createError);
-            } else if (newUser?.user?.id) {
-              userId = newUser.user.id;
+            if (updateProfileError) {
+              console.error('Error updating profile:', updateProfileError);
             }
-          }
-
-          // 4. Ensure profile exists and is up to date
-          if (userId && userEmail) {
-            try {
-              const { data: existingProfile, error: profileLookupError } = await supabase
-                .from('profiles')
-                .select('user_id')
-                .eq('user_id', userId)
-                .maybeSingle();
-
-              if (profileLookupError) {
-                console.error('Error querying profile:', profileLookupError);
-              }
-
-              const baseProfile = {
-                email: userEmail,
-                first_name: firstName || null,
-                last_name: lastName || null,
-                display_name: userName,
-                role: 'client',
-                updated_at: new Date().toISOString(),
-              };
-
-              if (existingProfile) {
-                const { error: updateProfileError } = await supabase
-                  .from('profiles')
-                  .update(baseProfile)
-                  .eq('user_id', userId);
-
-                if (updateProfileError) {
-                  console.error('Error updating profile:', updateProfileError);
-                }
-              } else {
-                const { error: insertProfileError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    ...baseProfile,
-                    id: userId,
-                    user_id: userId,
-                    created_at: new Date().toISOString(),
-                    has_used_free_consultation: false,
-                  });
-
-                if (insertProfileError) {
-                  console.error('Error inserting profile:', insertProfileError);
-                }
-              }
-            } catch (profileError) {
-              console.error('Exception ensuring profile:', profileError);
-            }
-          }
-
-          // 5. Associate booking with user and normalize stored contact data
-          if (userId && userEmail) {
-            await supabase
-              .from('bookings')
-              .update({
+          } else {
+            const { error: insertProfileError } = await supabase
+              .from('profiles')
+              .insert({
+                ...baseProfile,
+                id: userId,
                 user_id: userId,
-                user_email: userEmail,
-                user_name: userName,
-              })
-              .eq('id', bookingId);
-          }
-
-          // 6. Ensure appointment exists for lawyer dashboard
-          if (userId) {
-            try {
-              const { data: existingAppointment, error: existingAppointmentError } = await supabase
-                .from('appointments')
-                .select('id')
-                .eq('lawyer_id', booking.lawyer_id)
-                .eq('user_id', userId)
-                .eq('appointment_date', booking.scheduled_date)
-                .eq('appointment_time', booking.scheduled_time)
-                .maybeSingle();
-
-              if (existingAppointmentError) {
-                console.error('Error checking existing appointment:', existingAppointmentError);
-              }
-
-              if (!existingAppointment) {
-                const { error: insertAppointmentError } = await supabase
-                  .from('appointments')
-                  .insert({
-                    lawyer_id: booking.lawyer_id,
-                    user_id: userId,
-                    email: userEmail,
-                    name: userName,
-                    appointment_date: booking.scheduled_date,
-                    appointment_time: booking.scheduled_time,
-                    duration: booking.duration,
-                    price: booking.price,
-                    status: 'confirmed',
-                    consultation_type: 'paid',
-                    contact_method: 'platform',
-                    currency: 'CLP',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                  });
-
-                if (insertAppointmentError) {
-                  console.error('Error inserting appointment:', insertAppointmentError);
-                } else {
-                  console.log('[booking->appointment] appointment created', {
-                    bookingId,
-                    lawyerId: booking.lawyer_id,
-                    userId,
-                    appointment_date: booking.scheduled_date,
-                    appointment_time: booking.scheduled_time,
-                  });
-                }
-              }
-            } catch (appointmentError) {
-              console.error('Exception ensuring appointment:', appointmentError);
-            }
-          }
-
-          // Fetch lawyer email to send notification
-          let lawyerEmail = '';
-          try {
-            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
-            if (lawyerUser?.user) {
-              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
-            } else {
-               console.error('Could not find lawyer user for email notification', lawyerError);
-            }
-          } catch (e) {
-            console.error('Error fetching lawyer email:', e);
-          }
-
-          // Generate Magic Link for user auto-login
-          let magicLink = `${appUrl}/login`;
-          if (userEmail) {
-            try {
-              const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-                type: 'magiclink',
-                email: userEmail,
-                options: {
-                  redirectTo: `${appUrl}/dashboard/appointments`
-                }
+                created_at: new Date().toISOString(),
+                has_used_free_consultation: false,
               });
-              
-              if (linkData?.properties?.action_link) {
-                magicLink = linkData.properties.action_link;
-              } else if (linkError) {
-                  console.error('Error generating magic link:', linkError);
-              }
-            } catch (e) {
-              console.error('Error generating magic link exception:', e);
+
+            if (insertProfileError) {
+              console.error('Error inserting profile:', insertProfileError);
             }
           }
+        } catch (profileError) {
+          console.error('Exception ensuring profile:', profileError);
+        }
+      }
 
-          // Send confirmation email to Client
-          if (resend) {
-            try {
-            const userEmailResponse = await resend.emails.send({
-              from: 'LegalUp <hola@mg.legalup.cl>',
-              to: userEmail,
-              subject: '¡Tu asesoría está confirmada!',
-              html: `
+      // 5. Associate booking with user and normalize stored contact data
+      if (userId && userEmail) {
+        await supabase
+          .from('bookings')
+          .update({
+            user_id: userId,
+            user_email: userEmail,
+            user_name: userName,
+          })
+          .eq('id', bookingId);
+      }
+
+      // 6. Ensure appointment exists for lawyer dashboard
+      if (userId) {
+        try {
+          const { data: existingAppointment, error: existingAppointmentError } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('lawyer_id', booking.lawyer_id)
+            .eq('user_id', userId)
+            .eq('appointment_date', booking.scheduled_date)
+            .eq('appointment_time', booking.scheduled_time)
+            .maybeSingle();
+
+          if (existingAppointmentError) {
+            console.error('Error checking existing appointment:', existingAppointmentError);
+          }
+
+          if (!existingAppointment) {
+            const { error: insertAppointmentError } = await supabase
+              .from('appointments')
+              .insert({
+                lawyer_id: booking.lawyer_id,
+                user_id: userId,
+                email: userEmail,
+                name: userName,
+                appointment_date: booking.scheduled_date,
+                appointment_time: booking.scheduled_time,
+                duration: booking.duration,
+                price: booking.price,
+                status: 'confirmed',
+                consultation_type: 'paid',
+                contact_method: 'platform',
+                currency: 'CLP',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+
+            if (insertAppointmentError) {
+              console.error('Error inserting appointment:', insertAppointmentError);
+            } else {
+              console.log('[booking->appointment] appointment created', {
+                bookingId,
+                lawyerId: booking.lawyer_id,
+                userId,
+                appointment_date: booking.scheduled_date,
+                appointment_time: booking.scheduled_time,
+              });
+            }
+          }
+        } catch (appointmentError) {
+          console.error('Exception ensuring appointment:', appointmentError);
+        }
+      }
+
+      // Fetch lawyer email to send notification
+      let lawyerEmail = '';
+      try {
+        const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
+        if (lawyerUser?.user) {
+          lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+        } else {
+          console.error('Could not find lawyer user for email notification', lawyerError);
+        }
+      } catch (e) {
+        console.error('Error fetching lawyer email:', e);
+      }
+
+      // Generate Magic Link for user auto-login
+      let magicLink = `${appUrl}/login`;
+      if (userEmail) {
+        try {
+          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+            type: 'magiclink',
+            email: userEmail,
+            options: {
+              redirectTo: `${appUrl}/dashboard/appointments`
+            }
+          });
+
+          if (linkData?.properties?.action_link) {
+            magicLink = linkData.properties.action_link;
+          } else if (linkError) {
+            console.error('Error generating magic link:', linkError);
+          }
+        } catch (e) {
+          console.error('Error generating magic link exception:', e);
+        }
+      }
+
+      // Send confirmation email to Client
+      if (resend) {
+        try {
+          const userEmailResponse = await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: userEmail,
+            subject: '¡Tu asesoría está confirmada!',
+            html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                   <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
                   <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
@@ -1660,32 +1672,32 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </p>
                 </div>
               `
-            });
+          });
 
-            console.log('[booking-email] user confirmation sent', {
-              bookingId,
-              to: userEmail,
-              resendId: userEmailResponse?.data?.id,
-            });
-            } catch (emailError) {
-               console.error('[booking-email] Error sending user email:', {
-                 bookingId,
-                 to: userEmail,
-                 error: emailError
-               });
-            }
-          }
+          console.log('[booking-email] user confirmation sent', {
+            bookingId,
+            to: userEmail,
+            resendId: userEmailResponse?.data?.id,
+          });
+        } catch (emailError) {
+          console.error('[booking-email] Error sending user email:', {
+            bookingId,
+            to: userEmail,
+            error: emailError
+          });
+        }
+      }
 
-          // Send notification email to Lawyer
-          if (lawyerEmail && resend) {
-            try {
-              console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
+      // Send notification email to Lawyer
+      if (lawyerEmail && resend) {
+        try {
+          console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
 
-              const lawyerEmailResponse = await resend.emails.send({
-                from: 'LegalUp <hola@mg.legalup.cl>',
-                to: lawyerEmail,
-                subject: 'Nueva reserva confirmada',
-                html: `
+          const lawyerEmailResponse = await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: lawyerEmail,
+            subject: 'Nueva reserva confirmada',
+            html: `
                   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
                     <p>Has recibido una nueva reserva confirmada.</p>
@@ -1707,28 +1719,34 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                   </div>
                 `
-              });
+          });
 
-              console.log('[booking-email] lawyer confirmation sent', {
-                bookingId,
-                to: lawyerEmail,
-                resendId: lawyerEmailResponse?.data?.id,
-              });
-            } catch (emailError) {
-               console.error('[booking-email] Error sending lawyer email:', {
-                 bookingId,
-                 to: lawyerEmail,
-                 error: emailError
-               });
-            }
-          } else {
-            console.warn('[booking-email] lawyer email not sent (missing lawyerEmail or resend not configured)', {
-              bookingId,
-              lawyerEmail,
-              resendConfigured: Boolean(resend)
-            });
-          }
+          console.log('[booking-email] lawyer confirmation sent', {
+            bookingId,
+            to: lawyerEmail,
+            resendId: lawyerEmailResponse?.data?.id,
+          });
+        } catch (emailError) {
+          console.error('[booking-email] Error sending lawyer email:', {
+            bookingId,
+            to: lawyerEmail,
+            error: emailError
+          });
         }
+      } else {
+        console.warn('[booking-email] lawyer email not sent (missing lawyerEmail or resend not configured)', {
+          bookingId,
+          lawyerEmail,
+          resendConfigured: Boolean(resend)
+        });
+      }
+    };
+
+    if (topic === 'payment') {
+      const payment = await new Payment(mpClient).get({ id });
+      
+      if (payment.status === 'approved') {
+        await handleApprovedPayment(payment);
       }
     }
 
@@ -1736,6 +1754,130 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
   } catch (error) {
     console.error('Error in MercadoPago webhook:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Manual reconcile for already-approved payments (backup if webhook delivery fails)
+app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
+  try {
+    const adminSecret = process.env.MP_RECONCILE_SECRET;
+    const providedSecret = req.headers['x-reconcile-secret'];
+    if (!adminSecret || String(providedSecret || '') !== String(adminSecret)) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { paymentId } = req.params;
+    const payment = await new Payment(mpClient).get({ id: paymentId });
+    if (!payment) return res.status(404).json({ error: 'Payment not found' });
+    if (payment.status !== 'approved') {
+      return res.status(409).json({
+        error: 'Payment not approved',
+        status: payment.status,
+        status_detail: payment.status_detail,
+        external_reference: payment.external_reference,
+      });
+    }
+
+    const bookingId = payment.external_reference;
+    const { data: booking, error: bookingFetchError } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .maybeSingle();
+    if (bookingFetchError) {
+      console.error('Error fetching booking for reconcile:', bookingFetchError);
+      return res.status(500).json({ error: 'Failed to fetch booking' });
+    }
+    if (!booking) return res.status(404).json({ error: 'Booking not found', bookingId });
+
+    let clientUserId = booking.user_id;
+    const userEmail = (booking.user_email || '').trim().toLowerCase();
+    const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+
+    if (!clientUserId && userEmail) {
+      try {
+        const { data: authUser } = await supabase.auth.admin.getUserByEmail(userEmail);
+        if (authUser?.user?.id) {
+          clientUserId = authUser.user.id;
+        }
+      } catch (e) {
+        console.error('Error looking up user by email (reconcile):', e);
+      }
+    }
+
+    if (!clientUserId && userEmail) {
+      const tempPassword = crypto.randomBytes(9).toString('hex');
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email: userEmail,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: userName, role: 'client', signup_method: 'booking' }
+      });
+      if (createError) {
+        console.error('Error creating user (reconcile):', createError);
+      }
+      if (newUser?.user?.id) clientUserId = newUser.user.id;
+    }
+
+    const { error: bookingUpdateError } = await supabase
+      .from('bookings')
+      .update({
+        status: 'confirmed',
+        payment_id: payment.id.toString(),
+        user_id: clientUserId,
+        user_email: userEmail,
+        user_name: userName,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+    if (bookingUpdateError) {
+      console.error('Error updating booking (reconcile):', bookingUpdateError);
+      return res.status(500).json({ error: 'Failed to update booking' });
+    }
+
+    if (clientUserId) {
+      const { data: existingAppointment } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('lawyer_id', booking.lawyer_id)
+        .eq('user_id', clientUserId)
+        .eq('appointment_date', booking.scheduled_date)
+        .eq('appointment_time', booking.scheduled_time)
+        .maybeSingle();
+
+      if (!existingAppointment) {
+        const { error: apptError } = await supabase
+          .from('appointments')
+          .insert({
+            lawyer_id: booking.lawyer_id,
+            user_id: clientUserId,
+            email: userEmail,
+            name: userName,
+            appointment_date: booking.scheduled_date,
+            appointment_time: booking.scheduled_time,
+            duration: booking.duration,
+            price: booking.price,
+            status: 'confirmed',
+            consultation_type: 'paid',
+            contact_method: 'platform',
+            currency: 'CLP',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        if (apptError) console.error('Error creating appointment (reconcile):', apptError);
+      }
+    }
+
+    return res.json({
+      success: true,
+      paymentId: payment.id,
+      external_reference: bookingId,
+      bookingUpdated: true,
+      clientUserId,
+    });
+  } catch (error) {
+    console.error('Error in MercadoPago reconcile endpoint:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
