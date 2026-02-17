@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
 
 // Types
@@ -56,6 +56,7 @@ type ErrorLog = {
   is_database_error?: boolean;
 };
 
+import { useAuth } from '@/contexts/AuthContext';
 // Helper Components
 const StatCard = ({ title, value, icon: Icon, trend, trendText, className = '' }) => (
   <Card className={className}>
@@ -162,9 +163,48 @@ const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: bool
 
 // Main Component
 export default function AnalyticsDashboard() {
-  // Fetch page views for lists
-  const { data: pageViews = [], error: pageViewsError } = useQuery({
-    queryKey: ['page-views-list'],
+  const { user } = useAuth();
+  const [showDevData, setShowDevData] = useState(false);
+
+  // Fetch payment events
+  const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
+    queryKey: ['payment-events', user?.id],
+    queryFn: async () => {
+      // Use the user from auth context that we know is authenticated
+      console.log('[Analytics] Current user from context:', user?.id, user?.email);
+      
+      if (!user) {
+        console.warn('[Analytics] No user found in context, returning empty data');
+        return []; 
+      }
+      
+      // Check admin status
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      console.log('[Analytics] User role:', profile?.role);
+      
+      const { data, error, count } = await supabase
+        .from('payment_events')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching payment events:', error);
+        throw error;
+      }
+      
+      console.log('[Analytics] Payment events fetched:', data?.length || 0, 'events (total in DB:', count, ')');
+      return data as PaymentEvent[];
+    },
+    retry: 1
+  });
+
+  // Fetch page views
+  const { data: pageViews = [], isLoading: isLoadingPageViews, error: pageViewsError } = useQuery({
+    queryKey: ['page-views', user?.id, showDevData],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('page_views')
@@ -174,11 +214,13 @@ export default function AnalyticsDashboard() {
       
       if (error) {
         console.error('Error fetching page views:', error);
-        throw error;
+        throw error; // Let react-query handle the error state
       }
-      
-      // Filter out localhost/development page views - only count production traffic
+
+      // Filter logic
       const filtered = (data || []).filter((view: PageView) => {
+        if (showDevData) return true; // Show everything if toggle is on
+
         const referrer = view.referrer?.toLowerCase() || '';
         const path = view.page_path?.toLowerCase() || '';
         
@@ -390,59 +432,7 @@ export default function AnalyticsDashboard() {
     retry: 1
   });
 
-  // Fetch payment events
-  const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
-    queryKey: ['payment-events'],
-    queryFn: async () => {
-      // First, check if we're authenticated as admin
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('[Analytics] Current user:', user?.id, user?.email);
-      
-      // Check admin status
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        console.log('[Analytics] User role:', profile?.role);
-      }
-      
-      const { data, error, count } = await supabase
-        .from('payment_events')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .limit(1000);
-      
-      if (error) {
-        console.error('[Analytics] Error fetching payment events:', error);
-        console.error('[Analytics] Error details:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        throw error;
-      }
-      
-      // Debug: Log payment events count
-      console.log('[Analytics] Payment events fetched:', data?.length || 0, 'events (total in DB:', count || 0, ')');
-      if (data && data.length > 0) {
-        console.log('[Analytics] Sample payment events:', data.slice(0, 3).map(e => ({
-          id: e.id,
-          type: e.event_type,
-          amount: e.amount,
-          created: e.created_at,
-          user_id: e.user_id
-        })));
-      } else {
-        console.warn('[Analytics] No payment events found in database');
-      }
-      
-      return (data || []) as PaymentEvent[];
-    },
-    retry: 1
-  });
+
 
   // Fetch error logs
   const { data: errorLogs = [], isLoading: isLoadingErrors, error: errorLogsError } = useQuery({
@@ -592,11 +582,11 @@ export default function AnalyticsDashboard() {
         { count: bookingPending },
         { count: bookingCancelled }
       ] = await Promise.all([
-        supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-        supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).in('status', ['completed', 'confirmed']),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_payment']),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['completed', 'confirmed']),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_payment']),
         supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
       ]);
 
@@ -682,16 +672,34 @@ export default function AnalyticsDashboard() {
       </div>
     );
   }
-
   if (hasError) {
     const errorMessage = pageViewsError?.message || paymentEventsError?.message || errorLogsError?.message || statsError?.message || appointmentsError?.message || 'Error desconocido';
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Panel de Análisis</h2>
-          <p className="text-muted-foreground">
-            Estadísticas de visitas y citas en tiempo real
-          </p>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-gold-400 to-gold-600 bg-clip-text text-transparent">
+              Panel de Analytics
+            </h1>
+            <p className="text-gray-400 text-sm mt-1">
+              Monitoreo en tiempo real del rendimiento del sitio
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+               <div className="flex items-center space-x-2 bg-black/40 px-3 py-2 rounded-lg border border-white/10">
+                  <input 
+                    type="checkbox" 
+                    id="showDevDataError" 
+                    checked={showDevData} 
+                    onChange={(e) => setShowDevData(e.target.checked)}
+                    className="rounded border-gray-600 bg-black/50 text-gold-500 focus:ring-gold-500/50"
+                  />
+                  <label htmlFor="showDevDataError" className="text-xs text-gray-300 cursor-pointer select-none">
+                    Mostrar datos de prueba
+                  </label>
+              </div>
+          </div>
         </div>
         <Card>
           <CardContent className="pt-6">
@@ -711,11 +719,28 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Panel de Análisis</h2>
-        <p className="text-muted-foreground">
-          Estadísticas de visitas y citas en tiempo real
-        </p>
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Panel de Análisis</h2>
+          <p className="text-muted-foreground">
+            Estadísticas de visitas y citas en tiempo real
+          </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+             <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
+                <input 
+                  type="checkbox" 
+                  id="showDevDataMain" 
+                  checked={showDevData} 
+                  onChange={(e) => setShowDevData(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="showDevDataMain" className="text-xs text-slate-700 cursor-pointer select-none font-medium">
+                  Mostrar datos de prueba (localhost)
+                </label>
+            </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
