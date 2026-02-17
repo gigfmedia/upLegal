@@ -279,62 +279,62 @@ app.post('/verify-lawyer', async (req, res) => {
 
     try {
       // Submit the search form with timeout
-      const searchResponse = await axios.post(searchUrl, formData.toString(), {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html, */*; q=0.01',
-          'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Origin': 'https://www.pjud.cl',
-          'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
+    const searchResponse = await axios.post(searchUrl, formData.toString(), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html, */*; q=0.01',
+        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Origin': 'https://www.pjud.cl',
+        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
         },
         signal: controller.signal,
         timeout: 15000 // Additional timeout for axios
-      });
+    });
       
       clearTimeout(timeoutId);
 
-      // Parse the results
-      const $ = load(searchResponse.data);
-      
-      // Check for "No results" alert
-      if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
-        return res.json({
-          verified: false,
+    // Parse the results
+    const $ = load(searchResponse.data);
+    
+    // Check for "No results" alert
+    if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
+      return res.json({
+        verified: false,
           message: 'No se encontró el abogado en los registros del Poder Judicial',
-          details: {
-            rut: cleanRut,
+        details: {
+          rut: cleanRut,
             nombre: fullName || 'No proporcionado',
-            reason: 'No se encontró en los registros del Poder Judicial'
-          }
-        });
-      }
+          reason: 'No se encontró en los registros del Poder Judicial'
+        }
+      });
+    }
 
-      // Check for success table
-      const resultTable = $('table');
-      
-      if (resultTable.length === 0) {
-        return res.status(500).json({
-          verified: false,
-          message: 'Error al interpretar la respuesta del Poder Judicial',
-          details: { requiresHumanVerification: true }
-        });
-      }
+    // Check for success table
+    const resultTable = $('table');
+    
+    if (resultTable.length === 0) {
+      return res.status(500).json({
+        verified: false,
+        message: 'Error al interpretar la respuesta del Poder Judicial',
+        details: { requiresHumanVerification: true }
+      });
+    }
 
-      // Extract data from the result table
-      const rows = resultTable.find('tbody tr');
-      
-      if (rows.length === 0) {
-        return res.json({
-          verified: false,
-          message: 'No se encontraron resultados válidos en la tabla'
-        });
-      }
+    // Extract data from the result table
+    const rows = resultTable.find('tbody tr');
+    
+    if (rows.length === 0) {
+      return res.json({
+        verified: false,
+        message: 'No se encontraron resultados válidos en la tabla'
+      });
+    }
 
-      // If we found at least one row, the RUT exists as a lawyer
-      const firstRow = rows.first();
-      const cols = firstRow.find('td');
+    // If we found at least one row, the RUT exists as a lawyer
+    const firstRow = rows.first();
+    const cols = firstRow.find('td');
       
       // Extract nombre from the first column - try multiple methods
       let nombre = 'No disponible';
@@ -370,24 +370,24 @@ app.post('/verify-lawyer', async (req, res) => {
           }
         }
       }
-      
-      // Check for suspension (Sanción Ejecutoriada Permanente)
-      const rowText = firstRow.text();
-      if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
-        return res.json({
-          verified: false,
-          message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
-          details: {
-            rut: cleanRut,
+    
+    // Check for suspension (Sanción Ejecutoriada Permanente)
+    const rowText = firstRow.text();
+    if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
+      return res.json({
+        verified: false,
+        message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
+        details: {
+          rut: cleanRut,
             nombre: nombre,
-            reason: 'Abogado suspendido indefinidamente',
-            suspensionType: 'Permanente',
-            suspensionDate: '30-12-9999'
-          }
-        });
-      }
+          reason: 'Abogado suspendido indefinidamente',
+          suspensionType: 'Permanente',
+          suspensionDate: '30-12-9999'
+        }
+      });
+    }
 
-      // **Check if RUT is already registered by another user**
+    // **Check if RUT is already registered by another user**
       // Moved AFTER PJUD verification for better performance
       // Only check if RUT was found in PJUD
       const rutVariations = [
@@ -399,53 +399,53 @@ app.post('/verify-lawyer', async (req, res) => {
       
       // Try to find existing RUT using a more efficient query
       const { data: existingProfiles, error: dbError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, rut, user_id')
+      .from('profiles')
+      .select('id, first_name, last_name, rut, user_id')
         .in('rut', rutVariations)
         .limit(10);
 
-      if (dbError) {
-        // Continue with verification even if DB check fails
+    if (dbError) {
+      // Continue with verification even if DB check fails
       } else if (existingProfiles && existingProfiles.length > 0) {
         // Double-check by normalizing RUTs (in case of format variations)
         const existingProfile = existingProfiles.find(profile => {
-          if (!profile.rut) return false;
-          const normalizedProfileRut = normalizeRut(profile.rut);
-          return normalizedProfileRut === cleanRut;
+        if (!profile.rut) return false;
+        const normalizedProfileRut = normalizeRut(profile.rut);
+        return normalizedProfileRut === cleanRut;
+      });
+
+      if (existingProfile) {
+        // RUT is already registered
+        const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
+        
+        // Format RUT for display (12.345.678-9)
+        const formatRutForDisplay = (rut) => {
+          const clean = rut.replace(/[^0-9kK]/g, '');
+          if (clean.length < 2) return clean;
+          
+          const body = clean.slice(0, -1);
+          const dv = clean.slice(-1);
+          
+          // Add dots every 3 digits from right to left
+          const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+          return `${formatted}-${dv}`;
+        };
+        
+        const formattedRut = formatRutForDisplay(cleanRut);
+        
+        return res.json({
+          verified: false,
+          message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
+          details: {
+            rut: cleanRut,
+            formattedRut,
+            registeredBy: existingName,
+            reason: 'RUT duplicado'
+          }
         });
-
-        if (existingProfile) {
-          // RUT is already registered
-          const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
-          
-          // Format RUT for display (12.345.678-9)
-          const formatRutForDisplay = (rut) => {
-            const clean = rut.replace(/[^0-9kK]/g, '');
-            if (clean.length < 2) return clean;
-            
-            const body = clean.slice(0, -1);
-            const dv = clean.slice(-1);
-            
-            // Add dots every 3 digits from right to left
-            const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            return `${formatted}-${dv}`;
-          };
-          
-          const formattedRut = formatRutForDisplay(cleanRut);
-          
-          return res.json({
-            verified: false,
-            message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
-            details: {
-              rut: cleanRut,
-              formattedRut,
-              registeredBy: existingName,
-              reason: 'RUT duplicado'
-            }
-          });
-        }
       }
-
+    }
+    
       // Ensure nombre is valid before returning
       if (nombre === 'No disponible' || !nombre || nombre.trim().length < 2) {
         // Try one more time with all columns
@@ -461,20 +461,20 @@ app.post('/verify-lawyer', async (req, res) => {
         }
       }
 
-      let lawyerData = {
-        rut: cleanRut,
+    let lawyerData = {
+      rut: cleanRut,
         nombre: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
         nombreCompleto: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
-        region: cols.length > 2 ? $(cols[2]).text().trim() : '',
-        source: 'Poder Judicial de Chile',
-        verifiedAt: new Date().toISOString()
-      };
+      region: cols.length > 2 ? $(cols[2]).text().trim() : '',
+      source: 'Poder Judicial de Chile',
+      verifiedAt: new Date().toISOString()
+    };
 
-      return res.json({
-        verified: true,
-        message: 'Abogado verificado exitosamente',
-        details: lawyerData
-      });
+    return res.json({
+      verified: true,
+      message: 'Abogado verificado exitosamente',
+      details: lawyerData
+    });
     } catch (axiosError) {
       clearTimeout(timeoutId);
       
@@ -606,17 +606,17 @@ app.post('/create-payment', async (req, res) => {
     let currency = DEFAULT_CURRENCY;
     // Fetch settings safely
     try {
-      const { data: settingsData } = await supabase
-        .from('platform_settings')
-        .select('client_surcharge_percent, platform_fee_percent, currency')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    const { data: settingsData } = await supabase
+      .from('platform_settings')
+      .select('client_surcharge_percent, platform_fee_percent, currency')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (settingsData) {
-        clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
-        platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
-        currency = settingsData.currency ?? currency;
+    if (settingsData) {
+      clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+      platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+      currency = settingsData.currency ?? currency;
       }
     } catch (settingsError) {
       console.warn('Could not fetch platform settings (using defaults):', settingsError.message);
@@ -656,7 +656,7 @@ app.post('/create-payment', async (req, res) => {
       // service_id removed as it does not exist in current DB schema
       metadata: {  // Store additional data in metadata JSON field
         description: description || 'Consulta Legal',
-        appointment_id: appointmentId,
+      appointment_id: appointmentId,
         client_total: clientAmount,  // Actual amount client pays (with surcharge)
         payment_gateway_id: null
       },
@@ -1166,7 +1166,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Build redirect_uri - MUST match exactly what was used in the authorization request
     const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
-
+    
     // Exchange code for access token
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -1236,7 +1236,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     
     // However, we can also save it directly if we have a way to identify the user
     // For security, we'll still redirect with the data but also try to save it server-side if possible
-    
+
     // Redirect to frontend with OAuth data
     const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
     const redirectUrl = new URL(`${frontendUrl}/lawyer/earnings`);
@@ -1434,23 +1434,23 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const id = req.body.id || data?.id;
 
     const handleApprovedPayment = async (payment) => {
-      const bookingId = payment.external_reference;
+        const bookingId = payment.external_reference;
+        
+        // 1. Update booking status
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .update({ 
+            status: 'confirmed', 
+            payment_id: payment.id.toString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookingId)
+          .select()
+          .single();
 
-      // 1. Update booking status
-      const { data: booking, error: bookingError } = await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_id: payment.id.toString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', bookingId)
-        .select()
-        .single();
-
-      if (bookingError) {
-        console.error('Error updating booking:', bookingError);
-      }
+        if (bookingError) {
+          console.error('Error updating booking:', bookingError);
+        }
 
       if (!booking) {
         console.warn('[mp] approved payment but booking not found', {
@@ -1460,150 +1460,155 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         return;
       }
 
-      const userEmail = (booking.user_email || '').trim().toLowerCase();
-      const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
-      const [firstName, ...restName] = userName.split(' ').filter(Boolean);
-      const lastName = restName.length > 0 ? restName.join(' ') : '';
+          const userEmail = (booking.user_email || '').trim().toLowerCase();
+          const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+          const [firstName, ...restName] = userName.split(' ').filter(Boolean);
+          const lastName = restName.length > 0 ? restName.join(' ') : '';
 
-      let userId = null;
+          let userId = null;
 
-      if (userEmail) {
-        // 2. Track payment event for analytics
-        try {
-          await supabase.from('payment_events').insert({
-            event_type: 'success',
-            amount: payment.transaction_amount,
-            status: 'completed',
-            metadata: {
-              payment_id: payment.id,
-              booking_id: bookingId,
-              source: 'webhook'
-            },
-            user_id: null, // Will be updated after user creation
-          });
-          console.log('[analytics] payment event tracked', { paymentId: payment.id, bookingId });
-        } catch (trackingError) {
-          console.error('Failed to track payment event:', trackingError);
-        }
-
-        // 3. Check if user already exists in auth.users
-        try {
-          const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
-          if (authLookupError && authLookupError.message !== 'User not found') {
-            console.error('Error looking up user by email:', authLookupError);
+      // Check if user already exists in auth.users
+          if (userEmail) {
+            try {
+              const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
+              if (authLookupError && authLookupError.message !== 'User not found') {
+                console.error('Error looking up user by email:', authLookupError);
+              }
+              if (authUser?.user) {
+                userId = authUser.user.id;
+              }
+            } catch (lookupError) {
+              console.error('Exception checking existing user:', lookupError);
+            }
           }
-          if (authUser?.user) {
-            userId = authUser.user.id;
-          }
-        } catch (lookupError) {
-          console.error('Exception checking existing user:', lookupError);
-        }
-      }
 
-      // 2. Track payment event for analytics
+      // Track payment event for analytics (after checking for existing user)
       try {
-        await supabase.from('payment_events').insert({
+        const { data: paymentEvent, error: insertError } = await supabase.from('payment_events').insert({
           event_type: 'success',
           amount: payment.transaction_amount,
           status: 'completed',
           metadata: {
             payment_id: payment.id,
             booking_id: bookingId,
-            source: 'webhook'
+            source: 'webhook',
+            user_email: userEmail || null
           },
           user_id: userId || null,
-        });
-        console.log('[analytics] payment event tracked', { paymentId: payment.id, bookingId });
+        }).select().single();
+
+        if (insertError) {
+          console.error('Failed to track payment event:', insertError);
+        } else {
+          console.log('[analytics] payment event tracked', { 
+            paymentId: payment.id, 
+            bookingId,
+            userId: userId || 'null',
+            eventId: paymentEvent?.id 
+          });
+        }
       } catch (trackingError) {
         console.error('Failed to track payment event:', trackingError);
       }
 
-      // 3. Create user if not exists
+          // 3. Create user if not exists
       if (userEmail && !userId) {
-        const tempPassword = crypto.randomBytes(9).toString('hex');
+            const tempPassword = crypto.randomBytes(9).toString('hex');
 
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: userEmail,
-          password: tempPassword,
-          email_confirm: true,
-          user_metadata: {
-            first_name: firstName || userName,
-            last_name,
-            full_name: userName,
-            role: 'client',
-            signup_method: 'booking'
-          }
-        });
+            const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+              email: userEmail,
+              password: tempPassword,
+              email_confirm: true,
+              user_metadata: {
+                first_name: firstName || userName,
+                last_name,
+                full_name: userName,
+                role: 'client',
+                signup_method: 'booking'
+              }
+            });
 
-        if (createError) {
-          console.error('Error creating user:', createError);
-        } else if (newUser?.user?.id) {
-          userId = newUser.user.id;
-        }
-      }
-
-      // 4. Ensure profile exists and is up to date
-      if (userId && userEmail) {
-        try {
-          const { data: existingProfile, error: profileLookupError } = await supabase
-            .from('profiles')
-            .select('user_id')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-          if (profileLookupError) {
-            console.error('Error querying profile:', profileLookupError);
-          }
-
-          const baseProfile = {
-            email: userEmail,
-            first_name: firstName || null,
-            last_name: lastName || null,
-            display_name: userName,
-            role: 'client',
-            updated_at: new Date().toISOString(),
-          };
-
-          if (existingProfile) {
-            const { error: updateProfileError } = await supabase
-              .from('profiles')
-              .update(baseProfile)
-              .eq('user_id', userId);
-
-            if (updateProfileError) {
-              console.error('Error updating profile:', updateProfileError);
+            if (createError) {
+              console.error('Error creating user:', createError);
+            } else if (newUser?.user?.id) {
+              userId = newUser.user.id;
             }
-          } else {
-            const { error: insertProfileError } = await supabase
-              .from('profiles')
-              .insert({
-                ...baseProfile,
-                id: userId,
+          }
+
+          // 4. Ensure profile exists and is up to date
+          if (userId && userEmail) {
+            try {
+              const { data: existingProfile, error: profileLookupError } = await supabase
+                .from('profiles')
+                .select('user_id')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+              if (profileLookupError) {
+                console.error('Error querying profile:', profileLookupError);
+              }
+
+              const baseProfile = {
+                email: userEmail,
+                first_name: firstName || null,
+                last_name: lastName || null,
+                display_name: userName,
+                role: 'client',
+                updated_at: new Date().toISOString(),
+              };
+
+              if (existingProfile) {
+                const { error: updateProfileError } = await supabase
+                  .from('profiles')
+                  .update(baseProfile)
+                  .eq('user_id', userId);
+
+                if (updateProfileError) {
+                  console.error('Error updating profile:', updateProfileError);
+                }
+              } else {
+                const { error: insertProfileError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    ...baseProfile,
+                    id: userId,
+                    user_id: userId,
+                    created_at: new Date().toISOString(),
+                    has_used_free_consultation: false,
+                  });
+
+                if (insertProfileError) {
+                  console.error('Error inserting profile:', insertProfileError);
+                }
+              }
+            } catch (profileError) {
+              console.error('Exception ensuring profile:', profileError);
+            }
+          }
+
+          // 5. Associate booking with user and normalize stored contact data
+          if (userId && userEmail) {
+            await supabase
+              .from('bookings')
+              .update({
                 user_id: userId,
-                created_at: new Date().toISOString(),
-                has_used_free_consultation: false,
-              });
+                user_email: userEmail,
+                user_name: userName,
+              })
+              .eq('id', bookingId);
 
-            if (insertProfileError) {
-              console.error('Error inserting profile:', insertProfileError);
+            // Update payment event with user_id if it was null
+            try {
+              await supabase
+                .from('payment_events')
+                .update({ user_id: userId })
+                .eq('metadata->>booking_id', bookingId)
+                .is('user_id', null);
+              console.log('[analytics] Updated payment event with user_id', { bookingId, userId });
+            } catch (updateError) {
+              console.error('Failed to update payment event with user_id:', updateError);
             }
           }
-        } catch (profileError) {
-          console.error('Exception ensuring profile:', profileError);
-        }
-      }
-
-      // 5. Associate booking with user and normalize stored contact data
-      if (userId && userEmail) {
-        await supabase
-          .from('bookings')
-          .update({
-            user_id: userId,
-            user_email: userEmail,
-            user_name: userName,
-          })
-          .eq('id', bookingId);
-      }
 
       // 6. Ensure appointment exists for lawyer dashboard
       if (userId) {
@@ -1658,49 +1663,49 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
       }
 
-      // Fetch lawyer email to send notification
-      let lawyerEmail = '';
-      try {
-        const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
-        if (lawyerUser?.user) {
+          // Fetch lawyer email to send notification
+          let lawyerEmail = '';
+          try {
+            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
+            if (lawyerUser?.user) {
           lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
-        } else {
-          console.error('Could not find lawyer user for email notification', lawyerError);
-        }
-      } catch (e) {
-        console.error('Error fetching lawyer email:', e);
-      }
-
-      // Generate Magic Link for user auto-login
-      let magicLink = `${appUrl}/login`;
-      if (userEmail) {
-        try {
-          const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: userEmail,
-            options: {
-              redirectTo: `${appUrl}/dashboard/appointments`
+            } else {
+               console.error('Could not find lawyer user for email notification', lawyerError);
             }
-          });
-
-          if (linkData?.properties?.action_link) {
-            magicLink = linkData.properties.action_link;
-          } else if (linkError) {
-            console.error('Error generating magic link:', linkError);
+          } catch (e) {
+            console.error('Error fetching lawyer email:', e);
           }
-        } catch (e) {
-          console.error('Error generating magic link exception:', e);
-        }
-      }
 
-      // Send confirmation email to Client
-      if (resend) {
-        try {
+          // Generate Magic Link for user auto-login
+          let magicLink = `${appUrl}/login`;
+          if (userEmail) {
+            try {
+              const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+                type: 'magiclink',
+                email: userEmail,
+                options: {
+                  redirectTo: `${appUrl}/dashboard/appointments`
+                }
+              });
+              
+              if (linkData?.properties?.action_link) {
+                magicLink = linkData.properties.action_link;
+              } else if (linkError) {
+                  console.error('Error generating magic link:', linkError);
+              }
+            } catch (e) {
+              console.error('Error generating magic link exception:', e);
+            }
+          }
+
+          // Send confirmation email to Client
+          if (resend) {
+            try {
           const userEmailResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
-            to: userEmail,
-            subject: '¡Tu asesoría está confirmada!',
-            html: `
+              to: userEmail,
+              subject: '¡Tu asesoría está confirmada!',
+              html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                   <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
                   <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
@@ -1726,32 +1731,32 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </p>
                 </div>
               `
-          });
+            });
 
           console.log('[booking-email] user confirmation sent', {
             bookingId,
             to: userEmail,
             resendId: userEmailResponse?.data?.id,
           });
-        } catch (emailError) {
+            } catch (emailError) {
           console.error('[booking-email] Error sending user email:', {
             bookingId,
             to: userEmail,
             error: emailError
           });
         }
-      }
+          }
 
-      // Send notification email to Lawyer
-      if (lawyerEmail && resend) {
-        try {
+          // Send notification email to Lawyer
+          if (lawyerEmail && resend) {
+            try {
           console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
 
           const lawyerEmailResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
-            to: lawyerEmail,
-            subject: 'Nueva reserva confirmada',
-            html: `
+                to: lawyerEmail,
+                subject: 'Nueva reserva confirmada',
+                html: `
                   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
                     <p>Has recibido una nueva reserva confirmada.</p>
@@ -1773,14 +1778,14 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                   </div>
                 `
-          });
+              });
 
           console.log('[booking-email] lawyer confirmation sent', {
             bookingId,
             to: lawyerEmail,
             resendId: lawyerEmailResponse?.data?.id,
           });
-        } catch (emailError) {
+            } catch (emailError) {
           console.error('[booking-email] Error sending lawyer email:', {
             bookingId,
             to: lawyerEmail,

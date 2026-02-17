@@ -177,7 +177,7 @@ export default function AnalyticsDashboard() {
   });
 
   // Fetch recent appointments for lists
-  const { data: recentAppointments = [] } = useQuery({
+  const { data: recentAppointments = [], error: appointmentsError } = useQuery({
     queryKey: ['recent-appointments-list'],
     queryFn: async () => {
       // Fetch appointments without joins to avoid PGRST200
@@ -188,20 +188,57 @@ export default function AnalyticsDashboard() {
           created_at,
           status,
           name,
-          lawyer_id
+          lawyer_id,
+          consultation_type,
+          type,
+          appointment_date,
+          appointment_time
         `)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(50);
       
       if (apptsError) {
         console.error("Error fetching recent appointments:", apptsError);
-        return [];
+        // If appointments table doesn't exist or has RLS issues, try bookings table
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        
+        if (bookingsError) {
+          console.error("Error fetching bookings:", bookingsError);
+          return [];
+        }
+        
+        if (!bookings || bookings.length === 0) return [];
+        
+        // Fetch lawyer names separately
+        const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, display_name')
+          .in('id', lawyerIds);
+
+        const profileMap = (profiles || []).reduce((acc: any, p) => {
+          acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
+          return acc;
+        }, {});
+        
+        return bookings.map((b: any) => ({
+          id: b.id,
+          created_at: b.created_at,
+          status: b.status || 'pending',
+          user_name: b.user_name || 'Usuario',
+          lawyer_name: profileMap[b.lawyer_id] || 'Abogado',
+          service_title: 'Cita agendada',
+        })) as any[];
       }
 
       if (!appts || appts.length === 0) return [];
 
       // Fetch lawyer names separately
-      const lawyerIds = [...new Set(appts.map(a => a.lawyer_id).filter(Boolean))];
+      const lawyerIds = [...new Set(appts.map((a: any) => a.lawyer_id).filter(Boolean))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, display_name')
@@ -220,7 +257,8 @@ export default function AnalyticsDashboard() {
         lawyer_name: profileMap[a.lawyer_id] || 'Abogado',
         service_title: a.consultation_type || a.type || 'Servicio',
       })) as any[];
-    }
+    },
+    retry: 1
   });
 
   // Fetch payment events
@@ -230,7 +268,8 @@ export default function AnalyticsDashboard() {
       const { data, error } = await supabase
         .from('payment_events')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1000);
       
       if (error) {
         console.error('Error fetching payment events:', error);
@@ -353,7 +392,7 @@ export default function AnalyticsDashboard() {
   const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
 
   const isLoading = isLoadingStats || isLoadingPayments || isLoadingErrors;
-  const hasError = pageViewsError || paymentEventsError || errorLogsError || statsError;
+  const hasError = pageViewsError || paymentEventsError || errorLogsError || statsError || appointmentsError;
 
   if (isLoading) {
     return (
@@ -364,7 +403,7 @@ export default function AnalyticsDashboard() {
   }
 
   if (hasError) {
-    const errorMessage = pageViewsError?.message || paymentEventsError?.message || errorLogsError?.message || statsError?.message || 'Error desconocido';
+    const errorMessage = pageViewsError?.message || paymentEventsError?.message || errorLogsError?.message || statsError?.message || appointmentsError?.message || 'Error desconocido';
     return (
       <div className="space-y-6">
         <div>
