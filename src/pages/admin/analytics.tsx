@@ -177,11 +177,19 @@ export default function AnalyticsDashboard() {
         throw error;
       }
       
-      // Filter out localhost in production, but keep for development
+      // Filter out localhost/development page views - only count production traffic
       const filtered = (data || []).filter((view: PageView) => {
-        // In production, you might want to filter localhost
-        // For now, we'll keep all views
-        return true;
+        const referrer = view.referrer?.toLowerCase() || '';
+        const path = view.page_path?.toLowerCase() || '';
+        
+        // Exclude localhost URLs (any port from 3000-5174)
+        const isLocalhost = 
+          referrer.includes('localhost') ||
+          referrer.includes('127.0.0.1') ||
+          path.includes('localhost') ||
+          path.includes('127.0.0.1');
+        
+        return !isLocalhost;
       }) as PageView[];
       
       console.log('[Analytics] Page views fetched:', filtered.length, 'views (total:', data?.length || 0, ')');
@@ -457,65 +465,85 @@ export default function AnalyticsDashboard() {
 
   // Fetch comprehensive stats
   const { data: realStats, isLoading: isLoadingStats, error: statsError } = useQuery({
-    queryKey: ['admin-real-stats'],
+    queryKey: ['admin-real-stats', pageViews.length], // Depend on filtered pageViews
     queryFn: async () => {
       const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      // Calculate date ranges in Chile timezone (GMT-3)
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+
       const todayEnd = new Date(todayStart);
       todayEnd.setDate(todayEnd.getDate() + 1);
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const sixtyDaysAgo = new Date();
-      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      todayEnd.setMilliseconds(todayEnd.getMilliseconds() - 1);
 
-      // Total Counts - Check both appointments and bookings
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const sixtyDaysAgo = new Date(now);
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      
+      console.log('[Analytics] Date ranges (Chile timezone):', {
+        now: now.toISOString(),
+        nowLocal: now.toLocaleString('es-CL', { timeZone: 'America/Santiago' }),
+        todayStart: todayStart.toISOString(),
+        todayEnd: todayEnd.toISOString()
+      });
+
+      // Total Counts - Check appointments and bookings (page views already filtered above)
       const [
-        { count: totalViews }, 
         { count: totalAppts }, 
+        { count: apptCurrentPeriod }, 
+        { count: apptPreviousPeriod },
+        { count: apptToday },
         { count: totalBookings },
-        { count: currentViews }, 
-        { count: prevViews }, 
-        { count: currentAppts }, 
-        { count: prevAppts },
-        { count: currentBookings },
-        { count: prevBookings },
-        { count: todayAppts },
-        { count: todayBookings }
+        { count: bookingCurrentPeriod },
+        { count: bookingPreviousPeriod },
+        { count: bookingToday }
       ] = await Promise.all([
-        supabase.from('page_views').select('*', { count: 'exact', head: true }),
         supabase.from('appointments').select('*', { count: 'exact', head: true }),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }),
-        supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
-        supabase.from('page_views').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lte('created_at', todayEnd.toISOString()),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('bookings').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
-        supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lt('created_at', todayEnd.toISOString()),
-        supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lt('created_at', todayEnd.toISOString()),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lte('created_at', todayEnd.toISOString()),
       ]);
 
       // Use bookings if appointments is empty
       const totalAppointments = (totalAppts || 0) + (totalBookings || 0);
-      const currentAppointments = (currentAppts || 0) + (currentBookings || 0);
-      const prevAppointments = (prevAppts || 0) + (prevBookings || 0);
-      const todayAppointments = (todayAppts || 0) + (todayBookings || 0);
+      const currentAppointments = (apptCurrentPeriod || 0) + (bookingCurrentPeriod || 0);
+      const prevAppointments = (apptPreviousPeriod || 0) + (bookingPreviousPeriod || 0);
+      const todayAppointments = (apptToday || 0) + (bookingToday || 0);
       
       console.log('[Analytics] Appointment counts:', {
-        appointments: totalAppts || 0,
-        bookings: totalBookings || 0,
+        appointments: totalAppts,
+        bookings: totalBookings,
         total: totalAppointments,
         current: currentAppointments,
         prev: prevAppointments,
         today: todayAppointments
       });
 
-      // Unique Visitors (Last 30 days) - Approximate if millions, but here we can count
-      const { data: uniqueData } = await supabase.from('page_views').select('user_id').gte('created_at', thirtyDaysAgo.toISOString());
-      const currentUnique = new Set(uniqueData?.map(v => v.user_id)).size;
+      // Calculate unique visitors using filtered page views (excludes localhost)
+      const filteredCurrentViews = pageViews.filter(v => {
+        const created = new Date(v.created_at);
+        return created >= thirtyDaysAgo;
+      });
       
-      const { data: prevUniqueData } = await supabase.from('page_views').select('user_id').lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString());
-      const prevUnique = new Set(prevUniqueData?.map(v => v.user_id)).size;
+      const filteredPrevViews = pageViews.filter(v => {
+        const created = new Date(v.created_at);
+        return created < thirtyDaysAgo && created >= sixtyDaysAgo;
+      });
+      
+      const currentUnique = new Set(filteredCurrentViews.map(v => v.user_id)).size;
+      const prevUnique = new Set(filteredPrevViews.map(v => v.user_id)).size;
+      
+     // Use pageViews.length for total (already filtered to exclude localhost)
+      const totalViews = pageViews.length;
+      const currentViews = filteredCurrentViews.length;
+      const prevViews = filteredPrevViews.length;
 
       // Peak Hours & Avg Duration - Check both appointments and bookings
       const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
@@ -619,14 +647,14 @@ export default function AnalyticsDashboard() {
   const pendingPayments = paymentEvents.filter(e => e.event_type === 'pending').length;
   const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
   
-  // Calculate today's payment stats
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date(todayStart);
-  todayEnd.setDate(todayEnd.getDate() + 1);
+  // Calculate today's payment stats using local timezone (Chile)
+  const now2 = new Date();
+  const todayStart2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate(), 0, 0, 0, 0);
+  const todayEnd2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate(), 23, 59, 59, 999);
+  
   const todayPaymentEvents = paymentEvents.filter(e => {
     const created = new Date(e.created_at);
-    return created >= todayStart && created < todayEnd;
+    return created >= todayStart2 && created <= todayEnd2;
   });
   const todayPayments = todayPaymentEvents.filter(e => e.event_type === 'success').length;
   const todayStartedPayments = todayPaymentEvents.filter(e => e.event_type === 'started').length;
