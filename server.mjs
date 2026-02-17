@@ -1467,15 +1467,20 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
           let userId = null;
 
-      // Check if user already exists in auth.users
+          // Check if user already exists in profiles (synced with auth)
           if (userEmail) {
             try {
-              const { data: authUser, error: authLookupError } = await supabase.auth.admin.getUserByEmail(userEmail);
-              if (authLookupError && authLookupError.message !== 'User not found') {
-                console.error('Error looking up user by email:', authLookupError);
-              }
-              if (authUser?.user) {
-                userId = authUser.user.id;
+              // Replaced deprecated auth.admin.getUserByEmail with profiles lookup
+              const { data: existingProfile, error: profileError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', userEmail)
+                .maybeSingle();
+                
+              if (existingProfile) {
+                userId = existingProfile.id;
+              } else if (profileError) {
+                 console.error('Error looking up user profile:', profileError);
               }
             } catch (lookupError) {
               console.error('Exception checking existing user:', lookupError);
@@ -1855,10 +1860,14 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
 
     if (!clientUserId && userEmail) {
       try {
-        const { data: authUser } = await supabase.auth.admin.getUserByEmail(userEmail);
-        if (authUser?.user?.id) {
-          clientUserId = authUser.user.id;
-        }
+        // Replaced deprecated auth.admin.getUserByEmail with profiles lookup
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', userEmail)
+          .maybeSingle();
+          
+        if (profile) clientUserId = profile.id;
       } catch (e) {
         console.error('Error looking up user by email (reconcile):', e);
       }
