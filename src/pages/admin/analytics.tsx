@@ -166,12 +166,27 @@ export default function AnalyticsDashboard() {
   const { data: pageViews = [], error: pageViewsError } = useQuery({
     queryKey: ['page-views-list'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('page_views').select('*').order('created_at', { ascending: false }).limit(1000);
+      const { data, error } = await supabase
+        .from('page_views')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+      
       if (error) {
         console.error('Error fetching page views:', error);
         throw error;
       }
-      return (data || []) as PageView[];
+      
+      // Filter out localhost in production, but keep for development
+      const filtered = (data || []).filter((view: PageView) => {
+        // In production, you might want to filter localhost
+        // For now, we'll keep all views
+        return true;
+      }) as PageView[];
+      
+      console.log('[Analytics] Page views fetched:', filtered.length, 'views (total:', data?.length || 0, ')');
+      
+      return filtered;
     },
     retry: 1
   });
@@ -180,8 +195,26 @@ export default function AnalyticsDashboard() {
   const { data: recentAppointments = [], error: appointmentsError } = useQuery({
     queryKey: ['recent-appointments-list'],
     queryFn: async () => {
-      // Fetch appointments without joins to avoid PGRST200
-      const { data: appts, error: apptsError } = await supabase
+      // Always check bookings first since that's where new appointments are created
+      const { data: bookings, error: bookingsError, count: bookingsCount } = await supabase
+        .from('bookings')
+        .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time, price', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      console.log('[Analytics] Bookings query result:', {
+        count: bookingsCount,
+        found: bookings?.length || 0,
+        error: bookingsError?.message,
+        today: bookings?.filter((b: any) => {
+          const created = new Date(b.created_at);
+          const today = new Date();
+          return created.toDateString() === today.toDateString();
+        }).length || 0
+      });
+      
+      // Also check appointments
+      const { data: appts, error: apptsError, count: apptsCount } = await supabase
         .from('appointments')
         .select(`
           id,
@@ -193,27 +226,115 @@ export default function AnalyticsDashboard() {
           type,
           appointment_date,
           appointment_time
-        `)
+        `, { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(50);
       
-      if (apptsError) {
-        console.error("Error fetching recent appointments:", apptsError);
-        // If appointments table doesn't exist or has RLS issues, try bookings table
-        const { data: bookings, error: bookingsError } = await supabase
+      console.log('[Analytics] Appointments query result:', {
+        count: apptsCount,
+        found: appts?.length || 0,
+        error: apptsError?.message
+      });
+      
+      // Combine both sources, prioritizing bookings (newer system)
+      const allAppointments: any[] = [];
+      
+      // Add bookings first
+      if (bookings && bookings.length > 0) {
+        const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, display_name')
+          .in('id', lawyerIds);
+
+        const profileMap = (profiles || []).reduce((acc: any, p) => {
+          acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
+          return acc;
+        }, {});
+        
+        bookings.forEach((b: any) => {
+          allAppointments.push({
+            id: b.id,
+            created_at: b.created_at,
+            status: b.status || 'pending',
+            user_name: b.user_name || 'Usuario',
+            lawyer_name: profileMap[b.lawyer_id] || 'Abogado',
+            service_title: 'Cita agendada',
+            source: 'booking'
+          });
+        });
+      }
+      
+      // Add appointments (avoid duplicates by checking ID)
+      if (appts && appts.length > 0 && !apptsError) {
+        const existingIds = new Set(allAppointments.map(a => a.id));
+        const lawyerIds = [...new Set(appts.map((a: any) => a.lawyer_id).filter(Boolean))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, display_name')
+          .in('id', lawyerIds);
+
+        const profileMap = (profiles || []).reduce((acc: any, p) => {
+          acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
+          return acc;
+        }, {});
+        
+        appts.forEach((a: any) => {
+          if (!existingIds.has(a.id)) {
+            allAppointments.push({
+              id: a.id,
+              created_at: a.created_at,
+              status: a.status,
+              user_name: a.name || 'Usuario',
+              lawyer_name: profileMap[a.lawyer_id] || 'Abogado',
+              service_title: a.consultation_type || a.type || 'Servicio',
+              source: 'appointment'
+            });
+          }
+        });
+      }
+      
+      // Sort by created_at descending
+      allAppointments.sort((a, b) => {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      
+      console.log('[Analytics] Combined appointments:', {
+        total: allAppointments.length,
+        fromBookings: allAppointments.filter(a => a.source === 'booking').length,
+        fromAppointments: allAppointments.filter(a => a.source === 'appointment').length
+      });
+      
+      return allAppointments.slice(0, 50) as any[];
+
+      // If no appointments, try bookings table
+      if (!appts || appts.length === 0) {
+        console.log('[Analytics] No appointments found, checking bookings table...');
+        const { data: bookings, error: bookingsError, count: bookingsCount } = await supabase
           .from('bookings')
-          .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time')
+          .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(50);
         
+        console.log('[Analytics] Bookings fallback query result:', {
+          count: bookingsCount,
+          found: bookings?.length || 0,
+          error: bookingsError?.message
+        });
+        
         if (bookingsError) {
-          console.error("Error fetching bookings:", bookingsError);
+          console.error("[Analytics] Error fetching bookings:", bookingsError);
+        return [];
+      }
+
+        if (!bookings || bookings.length === 0) {
+          console.log('[Analytics] No bookings found either');
           return [];
         }
         
-        if (!bookings || bookings.length === 0) return [];
-        
-        // Fetch lawyer names separately
+        console.log('[Analytics] Found', bookings.length, 'bookings');
+
+      // Fetch lawyer names separately
         const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
         const { data: profiles } = await supabase
           .from('profiles')
@@ -235,7 +356,7 @@ export default function AnalyticsDashboard() {
         })) as any[];
       }
 
-      if (!appts || appts.length === 0) return [];
+      console.log('[Analytics] Found', appts.length, 'appointments');
 
       // Fetch lawyer names separately
       const lawyerIds = [...new Set(appts.map((a: any) => a.lawyer_id).filter(Boolean))];
@@ -265,16 +386,51 @@ export default function AnalyticsDashboard() {
   const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
     queryKey: ['payment-events'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, check if we're authenticated as admin
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('[Analytics] Current user:', user?.id, user?.email);
+      
+      // Check admin status
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        console.log('[Analytics] User role:', profile?.role);
+      }
+      
+      const { data, error, count } = await supabase
         .from('payment_events')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(1000);
       
       if (error) {
-        console.error('Error fetching payment events:', error);
+        console.error('[Analytics] Error fetching payment events:', error);
+        console.error('[Analytics] Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
         throw error;
       }
+      
+      // Debug: Log payment events count
+      console.log('[Analytics] Payment events fetched:', data?.length || 0, 'events (total in DB:', count || 0, ')');
+      if (data && data.length > 0) {
+        console.log('[Analytics] Sample payment events:', data.slice(0, 3).map(e => ({
+          id: e.id,
+          type: e.event_type,
+          amount: e.amount,
+          created: e.created_at,
+          user_id: e.user_id
+        })));
+      } else {
+        console.warn('[Analytics] No payment events found in database');
+      }
+      
       return (data || []) as PaymentEvent[];
     },
     retry: 1
@@ -293,7 +449,7 @@ export default function AnalyticsDashboard() {
       if (error) {
         console.error('Error fetching error logs:', error);
         throw error;
-      }
+    }
       return (data || []) as ErrorLog[];
     },
     retry: 1
@@ -304,20 +460,55 @@ export default function AnalyticsDashboard() {
     queryKey: ['admin-real-stats'],
     queryFn: async () => {
       const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(todayStart);
+      todayEnd.setDate(todayEnd.getDate() + 1);
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
-      // Total Counts
-      const [{ count: totalViews }, { count: totalAppts }, { count: currentViews }, { count: prevViews }, { count: currentAppts }, { count: prevAppts }] = await Promise.all([
+      // Total Counts - Check both appointments and bookings
+      const [
+        { count: totalViews }, 
+        { count: totalAppts }, 
+        { count: totalBookings },
+        { count: currentViews }, 
+        { count: prevViews }, 
+        { count: currentAppts }, 
+        { count: prevAppts },
+        { count: currentBookings },
+        { count: prevBookings },
+        { count: todayAppts },
+        { count: todayBookings }
+      ] = await Promise.all([
         supabase.from('page_views').select('*', { count: 'exact', head: true }),
         supabase.from('appointments').select('*', { count: 'exact', head: true }),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }),
         supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('page_views').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString()),
+        supabase.from('appointments').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lt('created_at', todayEnd.toISOString()),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', todayStart.toISOString()).lt('created_at', todayEnd.toISOString()),
       ]);
+
+      // Use bookings if appointments is empty
+      const totalAppointments = (totalAppts || 0) + (totalBookings || 0);
+      const currentAppointments = (currentAppts || 0) + (currentBookings || 0);
+      const prevAppointments = (prevAppts || 0) + (prevBookings || 0);
+      const todayAppointments = (todayAppts || 0) + (todayBookings || 0);
+      
+      console.log('[Analytics] Appointment counts:', {
+        appointments: totalAppts || 0,
+        bookings: totalBookings || 0,
+        total: totalAppointments,
+        current: currentAppointments,
+        prev: prevAppointments,
+        today: todayAppointments
+      });
 
       // Unique Visitors (Last 30 days) - Approximate if millions, but here we can count
       const { data: uniqueData } = await supabase.from('page_views').select('user_id').gte('created_at', thirtyDaysAgo.toISOString());
@@ -326,43 +517,79 @@ export default function AnalyticsDashboard() {
       const { data: prevUniqueData } = await supabase.from('page_views').select('user_id').lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString());
       const prevUnique = new Set(prevUniqueData?.map(v => v.user_id)).size;
 
-      // Peak Hours & Avg Duration
+      // Peak Hours & Avg Duration - Check both appointments and bookings
       const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
+      const { data: bookingData } = await supabase.from('bookings').select('scheduled_time, duration').limit(1000);
       
-      const hourCounts = (apptData || []).reduce((acc: any, curr) => {
+      const hourCounts: Record<string, number> = {};
+      
+      // Process appointments
+      (apptData || []).forEach((curr: any) => {
+        if (curr.appointment_time) {
         const hour = curr.appointment_time.split(':')[0];
-        acc[hour] = (acc[hour] || 0) + 1;
-        return acc;
-      }, {});
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      });
+      
+      // Process bookings
+      (bookingData || []).forEach((curr: any) => {
+        if (curr.scheduled_time) {
+          const hour = curr.scheduled_time.split(':')[0];
+          hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+        }
+      });
       
       const peakHour = Object.entries(hourCounts).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || '--';
-      const avgDuration = apptData?.length ? (apptData.reduce((acc, curr) => acc + (curr.duration || 0), 0) / apptData.length) : 0;
+      
+      // Calculate avg duration from both sources
+      const allDurations = [
+        ...(apptData || []).map((a: any) => a.duration || 0),
+        ...(bookingData || []).map((b: any) => b.duration || 0)
+      ].filter(d => d > 0);
+      const avgDuration = allDurations.length > 0 
+        ? (allDurations.reduce((acc, curr) => acc + curr, 0) / allDurations.length) 
+        : 0;
 
       const calcTrend = (curr: number, prev: number) => {
         if (!prev) return (curr || 0) > 0 ? 100 : 0;
         return (( (curr || 0) - (prev || 0)) / prev) * 100;
       };
 
-      // Status Counts
-      const [{ count: completed }, { count: pending }, { count: cancelled }] = await Promise.all([
+      // Status Counts - Check both appointments and bookings
+      const [
+        { count: apptCompleted }, 
+        { count: apptPending }, 
+        { count: apptCancelled },
+        { count: bookingCompleted },
+        { count: bookingPending },
+        { count: bookingCancelled }
+      ] = await Promise.all([
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
       ]);
+
+      const completed = (apptCompleted || 0) + (bookingCompleted || 0);
+      const pending = (apptPending || 0) + (bookingPending || 0);
+      const cancelled = (apptCancelled || 0) + (bookingCancelled || 0);
 
       return {
         totalViews: totalViews || 0,
-        totalAppts: totalAppts || 0,
-        completed: completed || 0,
-        pending: pending || 0,
-        cancelled: cancelled || 0,
+        totalAppts: totalAppointments,
+        todayAppts: todayAppointments,
+        completed: completed,
+        pending: pending,
+        cancelled: cancelled,
         uniqueVisitors: currentUnique,
         viewsTrend: calcTrend(currentViews, prevViews),
         uniqueTrend: calcTrend(currentUnique, prevUnique),
-        apptsTrend: calcTrend(currentAppts, prevAppts),
+        apptsTrend: calcTrend(currentAppointments, prevAppointments),
         conversionTrend: calcTrend(
-          (currentAppts || 0) / (Math.max(currentViews || 0, 1)),
-          (prevAppts || 0) / (Math.max(prevViews || 0, 1))
+          (currentAppointments || 0) / (Math.max(currentViews || 0, 1)),
+          (prevAppointments || 0) / (Math.max(prevViews || 0, 1))
         ),
         peakHour: peakHour !== '--' ? `${peakHour}:00` : '--',
         avgDuration: avgDuration.toFixed(1)
@@ -389,7 +616,33 @@ export default function AnalyticsDashboard() {
   const startedPayments = paymentEvents.filter(e => e.event_type === 'started').length;
   const successfulPayments = paymentEvents.filter(e => e.event_type === 'success').length;
   const failedPayments = paymentEvents.filter(e => e.event_type === 'failure').length;
+  const pendingPayments = paymentEvents.filter(e => e.event_type === 'pending').length;
   const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
+  
+  // Calculate today's payment stats
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+  const todayPaymentEvents = paymentEvents.filter(e => {
+    const created = new Date(e.created_at);
+    return created >= todayStart && created < todayEnd;
+  });
+  const todayPayments = todayPaymentEvents.filter(e => e.event_type === 'success').length;
+  const todayStartedPayments = todayPaymentEvents.filter(e => e.event_type === 'started').length;
+  
+  // Debug: Log payment funnel stats
+  console.log('[Analytics] Payment funnel stats:', {
+    totalEvents: paymentEvents.length,
+    started: startedPayments,
+    successful: successfulPayments,
+    failed: failedPayments,
+    pending: pendingPayments,
+    successRate: successRate.toFixed(1) + '%',
+    todayPayments: todayPayments,
+    todayStarted: todayStartedPayments,
+    events: paymentEvents.slice(0, 3).map(e => ({ type: e.event_type, amount: e.amount, created: e.created_at }))
+  });
 
   const isLoading = isLoadingStats || isLoadingPayments || isLoadingErrors;
   const hasError = pageViewsError || paymentEventsError || errorLogsError || statsError || appointmentsError;
@@ -461,11 +714,43 @@ export default function AnalyticsDashboard() {
           trendText="respecto al mes pasado"
         />
         <StatCard
+          title="Citas Hoy"
+          value={realStats?.todayAppts || 0}
+          icon={Calendar}
+          trend={0}
+          trendText=""
+        />
+      </div>
+      
+      {/* Today's Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Pagos Exitosos Hoy"
+          value={todayPayments}
+          icon={CheckCircle2}
+          trend={0}
+          trendText=""
+        />
+        <StatCard
+          title="Pagos Iniciados Hoy"
+          value={todayStartedPayments}
+          icon={Timer}
+          trend={0}
+          trendText=""
+        />
+        <StatCard
           title="Tasa de Conversión"
           value={`${realStats?.totalViews ? ((realStats.totalAppts / realStats.totalViews) * 100).toFixed(1) : '0.0'}%`}
           icon={BarChart2}
           trend={realStats?.conversionTrend || 0}
           trendText="respecto al mes pasado"
+        />
+        <StatCard
+          title="Tasa de Éxito Pagos"
+          value={`${successRate.toFixed(1)}%`}
+          icon={BarChart2}
+          trend={0}
+          trendText=""
         />
       </div>
 
