@@ -84,18 +84,18 @@ const BlogArticle = () => {
             Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, feriados pendientes y pagos proporcionales.
           </p>
           
-          <div className="flex items-center gap-4 text-sm text-blue-100 mt-6">
-            <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
+            <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>18 de Febrero, 2026</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>12 min lectura</span>
-            </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
               <span>LegalUp</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>Tiempo de lectura: 12 min</span>
             </div>
           </div>
         </div>

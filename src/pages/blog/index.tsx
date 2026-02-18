@@ -36,7 +36,7 @@ const BlogPage = () => {
       featured: true
     },
     {
-      id: "me-subieron-el-arriendo-que-hago",
+      id: "me-subieron-el-arriendo-que-hago-2026",
       title: "Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)",
       excerpt: "Cuando llega el aviso de que subirá el valor del arriendo, el estrés aparece de inmediato. Pero no siempre el aumento es válido, y en Chile existen reglas claras para proteger al arrendatario.",
       category: "Derecho Inmobiliario",

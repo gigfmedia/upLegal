@@ -100,7 +100,7 @@ const BlogArticle = () => {
           <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>13 de Enero, 2026</span>
+              <span>13 de Febrero, 2026</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />

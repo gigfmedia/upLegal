@@ -79,7 +79,7 @@ const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
 const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 // Blog pages
 const BlogIndex = lazy(() => import('./pages/blog/index'));
-const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago'));
+const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago-2026'));
 const FiniquitoArticle = lazy(() => import('./pages/blog/como-calcular-tu-finiquito-chile-2026'));
 
 // Create a single QueryClient instance
@@ -298,7 +298,7 @@ const AppContent = () => {
               
               {/* Blog Routes */}
               <Route path="/blog" element={<BlogIndex />} />
-              <Route path="/blog/me-subieron-el-arriendo-que-hago" element={<BlogArticle />} />
+              <Route path="/blog/me-subieron-el-arriendo-que-hago-2026" element={<BlogArticle />} />
               <Route path="/blog/como-calcular-tu-finiquito-chile-2026" element={<FiniquitoArticle />} />
              
 
