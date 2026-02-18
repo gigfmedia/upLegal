@@ -32,11 +32,11 @@ serve(async (req) => {
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    // Guardar el token en la base de datos
+    // Guardar el token en la base de datos con un UUID válido
     const { error: tokenError } = await supabaseClient
       .from('review_tokens')
       .insert({
-        appointment_id: 'manual-' + Date.now(), // ID temporal para envío manual
+        appointment_id: crypto.randomUUID(), // UUID válido para envío manual
         token: reviewToken,
         expires_at: expiresAt.toISOString(),
         used: false
