@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const { data: appointments, error } = await supabaseClient
       .from('appointments')
-      .select('id, appointment_date, appointment_time, duration, user_id, lawyer_id, status')
+      .select('id, appointment_date, appointment_time, duration, user_id, lawyer_id, status, name, email')
       .eq('status', 'confirmed')
       .gte('appointment_date', sevenDaysAgoStr)
 
@@ -98,9 +98,12 @@ serve(async (req) => {
           .eq('user_id', appointment.user_id)
           .single()
 
-        // Fallback para el nombre: primero perfil, luego tabla appointments, finalmente "Cliente"
-        const clientFirstName = clientData?.first_name || 
-                                appointment.name?.split(' ')[0] || 
+        // Prioridad: 
+        // 1. Nombre en la cita (lo que escribieron al agendar)
+        // 2. Nombre en el perfil
+        // 3. Display name
+        const clientFirstName = appointment.name?.split(' ')[0] || 
+                                clientData?.first_name || 
                                 clientData?.display_name || 
                                 'Cliente';
 
@@ -133,7 +136,7 @@ serve(async (req) => {
           
           <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
             <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¡Escribe una reseña!</h1>
-            <p style="color: #475569; line-height: 1.6; font-size: 16px;">¡Hola ${clientFirstName}!</p>
+            <p style="color: #475569; line-height: 1.6; font-size: 16px;">Hola ${clientFirstName},</p>
             <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
             <p style="color: #475569; line-height: 1.6;">Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
             <div style="text-align: center; margin: 30px 0;">
@@ -141,7 +144,8 @@ serve(async (req) => {
                 Dejar mi reseña ahora
               </a>
             </div>
-            <p style="color: #666; font-size: 14px;">Este enlace será válido por 7 días.</p>
+            <p style="color: #666; font-size: 14px; text-align: center;">Este enlace será válido por 7 días.</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; margin-top: 20px;">¡Saludos! 👋</p>
             <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Equipo de LegalUp</p>
           </div>
           

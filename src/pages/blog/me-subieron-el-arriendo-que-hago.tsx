@@ -92,8 +92,12 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold mb-6 leading-tight">
             Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)
           </h1>
+
+          <p className="text-xl text-blue-100 max-w-3xl">
+            Cuando llega el aviso de que subirá el valor del arriendo, el estrés aparece de inmediato. Pero no siempre el aumento es válido, y en Chile existen reglas claras para proteger al arrendatario.
+          </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100">
+          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Enero, 2026</span>
@@ -113,22 +117,15 @@ const BlogArticle = () => {
       {/* Article Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="prose prose-lg max-w-none">
-          
-          {/* Introduction */}
-          <div className="bg-white rounded-xl shadow-sm p-8 mb-8">
-            <p className="text-xl text-gray-700 leading-relaxed mb-6 italic">
-              Cuando llega el aviso de que subirá el valor del arriendo, el estrés aparece de inmediato. Pero no siempre el aumento es válido, y en Chile existen reglas claras para proteger al arrendatario.
-            </p>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Aquí te explico qué puedes hacer, cuándo el aumento es legal, cómo negociar, y qué errores evitar, todo en lenguaje simple.
-            </p>
-          </div>
 
           {/* Main Content */}
           <div className="space-y-8">
             
             {/* Section 1: ¿Me pueden subir el arriendo cuando quieran? */}
             <section className="bg-white rounded-xl shadow-sm p-8">
+              <p className="text-lg text-gray-600 leading-relaxed mb-8">
+              Aquí te explico qué puedes hacer, cuándo el aumento es legal, cómo negociar, y qué errores evitar, todo en lenguaje simple.
+            </p>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">
                 ¿Me pueden subir el arriendo cuando quieran?
               </h2>

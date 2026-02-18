@@ -25,6 +25,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "como-calcular-tu-finiquito-chile-2026",
+      title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
+      excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, feriados pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "18 de Febrero, 2026",
+      readTime: "12 min",
+      image: "/images/finiquito-chile-2026.jpg",
+      featured: true
+    },
+    {
       id: "me-subieron-el-arriendo-que-hago",
       title: "Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)",
       excerpt: "Cuando llega el aviso de que subirá el valor del arriendo, el estrés aparece de inmediato. Pero no siempre el aumento es válido, y en Chile existen reglas claras para proteger al arrendatario.",
@@ -33,7 +44,7 @@ const BlogPage = () => {
       date: "13 de Enero, 2026",
       readTime: "8 min",
       image: "/images/arriendo-chile-2026.jpg",
-      featured: true
+      featured: false
     }
   ];
 
@@ -75,7 +86,7 @@ const BlogPage = () => {
                 <div className="md:w-1/3">
                   <div className="h-48 md:h-full flex pl-8 items-center justify-center">
                     <div className="text-white text-center">
-                      <img className="h-full w-full object-cover rounded-xl" src="../assets/arriendo.jpg" alt="Derecho Inmobiliario" />
+                      <img className="h-full w-full object-cover rounded-xl" src="../assets/arriendo.png" alt="Derecho Inmobiliario" />
                       {/* <div className="text-sm font-medium">Derecho Inmobiliario</div> */}
                     </div>
                   </div>
@@ -198,7 +209,7 @@ const BlogPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">{category}</h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {category === "Derecho Inmobiliario" ? "1 artículo" : "Próximamente"}
+                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" ? "1 artículo" : "Próximamente"}
                       </p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />

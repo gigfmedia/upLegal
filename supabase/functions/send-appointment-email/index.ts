@@ -175,7 +175,7 @@ serve(async (req) => {
             <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">
               Si necesitas modificar o cancelar tu cita, por favor hazlo con al menos 24 horas de anticipación.
             </p>
-            <p style="color: #475569; line-height: 1.6; margin: 0;">¡Te esperamos!</p>
+            l 
             <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">El equipo de LegalUp</p>
           </div>
           
