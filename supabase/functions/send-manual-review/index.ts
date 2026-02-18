@@ -53,7 +53,7 @@ serve(async (req) => {
 
     if (tokenError) throw tokenError
 
-    const reviewUrl = `${Deno.env.get('SITE_URL') || 'https://legalup.cl'}/review?token=${reviewToken}`
+    const reviewUrl = `https://legalup.cl/review?token=${reviewToken}`
     
     // Extraer el primer nombre del email
     const clientFirstName = email.split('@')[0].split('.')[0] || 'Cliente'
