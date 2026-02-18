@@ -70,7 +70,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendText, className = '' }
       <div className="text-2xl font-bold">{value}</div>
       {trend && (
         <p className="text-xs text-muted-foreground">
-          {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% {trendText}
+          {trend > 0 ? '↑' : '↓'} {Math.round(Math.abs(trend))}% {trendText}
         </p>
       )}
     </CardContent>
@@ -807,14 +807,14 @@ export default function AnalyticsDashboard() {
         />
         <StatCard
           title="Tasa de Conversión"
-          value={`${realStats?.totalViews ? ((realStats.totalAppts / realStats.totalViews) * 100).toFixed(1) : '0.0'}%`}
+          value={`${realStats?.totalViews ? Math.round((realStats.totalAppts / realStats.totalViews) * 100) : '0'}%`}
           icon={BarChart2}
           trend={realStats?.conversionTrend || 0}
           trendText="respecto al mes pasado"
         />
         <StatCard
           title="Tasa de Éxito Pagos"
-          value={`${successRate.toFixed(1)}%`}
+          value={`${Math.round(successRate)}%`}
           icon={BarChart2}
           trend={0}
           trendText=""

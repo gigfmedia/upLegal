@@ -112,7 +112,7 @@ serve(async (req) => {
         }
 
         const clientEmail = clientData?.email || appointment.email;
-        const reviewUrl = `${Deno.env.get('SITE_URL') || 'https://uplegal.cl'}/review?token=${reviewToken}`
+        const reviewUrl = `${Deno.env.get('SITE_URL') || 'https://legalup.cl'}/review?token=${reviewToken}`
         
         await resend.emails.send({
           from: 'LegalUp <noreply@mg.legalup.cl>',
