@@ -135,13 +135,13 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
           {/* Navigation - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <a
-              href="/consulta"
+              href="/search"
               className={cn(
                 "transition-colors hover:text-blue-600",
-                isActive('/consulta') || pathname.startsWith('/consulta/') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                isActive('/search') || pathname.startsWith('/search/') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
-              Consulta legal hoy – $30.000
+              Encuentra tu abogado
             </a>
             <a
               href="/como-funciona"
@@ -150,7 +150,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 isActive('/como-funciona') ? 'text-blue-600 font-medium' : 'text-gray-600'
               )}
             >
-              Cómo Funciona
+              ¿Cómo funciona?
             </a>
             <a
               href="/about"

@@ -27,17 +27,15 @@ serve(async (req) => {
     const now = new Date()
     const fiveHoursAgo = new Date(now.getTime() - (5 * 60 * 60 * 1000))
     
-    console.log(`Buscando citas entre ${fiveHoursAgo.toISOString()} y ${now.toISOString()}`)
-
-    // Traemos citas de hoy y ayer que estén 'confirmed'
-    const today = now.toISOString().split('T')[0]
-    const yesterday = new Date(now.getTime() - 86400000).toISOString().split('T')[0]
+    // Traemos citas de los últimos 7 días que estén 'confirmed'
+    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000))
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
 
     const { data: appointments, error } = await supabaseClient
       .from('appointments')
       .select('id, appointment_date, appointment_time, duration, user_id, lawyer_id, status')
       .eq('status', 'confirmed')
-      .in('appointment_date', [yesterday, today])
+      .gte('appointment_date', sevenDaysAgoStr)
 
     if (error) throw error
 
@@ -50,11 +48,11 @@ serve(async (req) => {
        const startTime = new Date(startStr)
        const endTime = new Date(startTime.getTime() + (appt.duration || 60) * 60 * 1000)
        
-       // Si terminó hace más de 1 hora pero menos de 24 horas
+       // Si terminó hace más de 1 hora pero menos de 72 horas
        const oneHourAgo = new Date(now.getTime() - (60 * 60 * 1000))
-       const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000))
+       const seventyTwoHoursAgo = new Date(now.getTime() - (72 * 60 * 60 * 1000))
 
-       if (endTime < oneHourAgo && endTime > twentyFourHoursAgo) {
+       if (endTime < oneHourAgo && endTime > seventyTwoHoursAgo) {
           // Verificar si ya tiene token
           const { data: existingToken } = await supabaseClient
             .from('review_tokens')
@@ -96,34 +94,65 @@ serve(async (req) => {
 
         const { data: clientData } = await supabaseClient
           .from('profiles')
-          .select('email, first_name, last_name')
+          .select('email, first_name, last_name, display_name')
           .eq('user_id', appointment.user_id)
           .single()
 
-        if (!lawyerData || !clientData || !clientData.email) {
+        // Fallback para el nombre: primero perfil, luego tabla appointments, finalmente "Cliente"
+        const clientFirstName = clientData?.first_name || 
+                                appointment.name?.split(' ')[0] || 
+                                clientData?.display_name || 
+                                'Cliente';
+
+        if (!lawyerData || (!clientData?.email && !appointment.email)) {
           throw new Error(`Información incompleta para cita ${appointment.id}`)
         }
 
+        const clientEmail = clientData?.email || appointment.email;
         const reviewUrl = `${Deno.env.get('SITE_URL') || 'https://uplegal.cl'}/review?token=${reviewToken}`
         
         await resend.emails.send({
           from: 'LegalUp <noreply@mg.legalup.cl>',
-          to: clientData.email,
+          to: clientEmail,
           subject: '¿Cómo fue tu experiencia con el abogado?',
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2>¡Hola ${clientData.first_name}!</h2>
-              <p>Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
-              <p>Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${reviewUrl}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                  Dejar mi reseña ahora
-                </a>
-              </div>
-              <p style="color: #666; font-size: 14px;">Este enlace será válido por 7 días.</p>
-              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-              <p style="color: #999; font-size: 12px;">Equipo LegalUp</p>
+          <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Califica al Abogado</title>
+      </head>
+      <body>
+        <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
+          <div style="text-align: center; padding: 30px 20px;">
+            <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
+              <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNTYzZWEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1zY2FsZS1pY29uIGx1Y2lkZS1zY2FsZSI+PHBhdGggZD0ibTE2IDE2IDMtOCAzIDhjLS44Ny42NS0xLjkyIDEtMyAxcy0yLjEzLS4zNS0zLTFaIi8+PHBhdGggZD0ibTIgMTYgMy04IDMgOGMtLjg3LjY1LTEuOTIgMS0zIDFzLTIuMTMtLjM1LTMtMVoiLz48cGF0aCBkPSJNNyAyMWgxMCIvPjxwYXRoIGQ9Ik0xMiAzdjE4Ii8+PHBhdGggZD0iTTMgN2gyYzIgMCA1LTEgNy0yIDIgMSA1IDIgNyAyaDIiLz48L3N2Zz4=" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
+              <span style="color: #101820; font-size: 28px; position: relative; top: -2px;">LegalUp</span>
             </div>
+          </div>
+          
+          <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¡Escribe una reseña!</h1>
+            <p style="color: #475569; line-height: 1.6; font-size: 16px;">¡Hola ${clientFirstName}!</p>
+            <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
+            <p style="color: #475569; line-height: 1.6;">Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${reviewUrl}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                Dejar mi reseña ahora
+              </a>
+            </div>
+            <p style="color: #666; font-size: 14px;">Este enlace será válido por 7 días.</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Equipo de LegalUp</p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
+            <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
+            <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+            <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
+          </div>
+        </div>
+      </body>
+      </html>
           `
         })
 

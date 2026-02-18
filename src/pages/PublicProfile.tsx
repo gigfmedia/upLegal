@@ -1016,7 +1016,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           </div>
                         </div>
                       )}
-                      <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-full ring-4 ring-white shadow-md overflow-hidden">
+                      <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-full ring-4 ring-white shadow-md overflow-hidden">
                         <Avatar className="h-full w-full">
                           <AvatarImage 
                             src={lawyer?.avatar_url || ''} 
@@ -1166,7 +1166,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       </div>
                     </div>
                     
-                    {lawyer?.website && (
+                    {/* {lawyer?.website && (
                       <div className="flex items-center">
                         <a 
                           href={lawyer.website.startsWith('http') ? lawyer.website : `https://${lawyer.website}`}
@@ -1178,7 +1178,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       </div>
-                    )}
+                    )} */}
                   </div>
 
                   <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-68 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
@@ -1218,7 +1218,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           <Calendar className="h-4 w-4 mr-2" />
                           Ver disponibilidad
                         </Button>
-                        <Button 
+                        {/* <Button 
                           variant="outline" 
                           className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           onClick={(e) => {
@@ -1231,7 +1231,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
                           Contactar
-                        </Button>
+                        </Button> */}
                       </div>
                       {currentUser?.id === lawyer?.user_id && (
                         <p className="text-xs text-gray-500 text-center mt-1">
