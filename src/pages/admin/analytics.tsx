@@ -206,37 +206,29 @@ export default function AnalyticsDashboard() {
   const { data: pageViews = [], isLoading: isLoadingPageViews, error: pageViewsError } = useQuery({
     queryKey: ['page-views', user?.id, showDevData],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('page_views')
         .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
+        .order('created_at', { ascending: false });
+
+      // Apply server-side filtering for localhost if toggle is off
+      if (!showDevData) {
+        query = query
+          .not('page_path', 'ilike', '%localhost%')
+          .not('page_path', 'ilike', '%127.0.0.1%')
+          .not('referrer', 'ilike', '%localhost%')
+          .not('referrer', 'ilike', '%127.0.0.1%');
+      }
+
+      const { data, error } = await query.limit(5000);
       
       if (error) {
         console.error('Error fetching page views:', error);
-        throw error; // Let react-query handle the error state
+        throw error;
       }
-
-      // Filter logic
-      const filtered = (data || []).filter((view: PageView) => {
-        if (showDevData) return true; // Show everything if toggle is on
-
-        const referrer = view.referrer?.toLowerCase() || '';
-        const path = view.page_path?.toLowerCase() || '';
-        
-        // Exclude localhost URLs (any port from 3000-5174)
-        const isLocalhost = 
-          referrer.includes('localhost') ||
-          referrer.includes('127.0.0.1') ||
-          path.includes('localhost') ||
-          path.includes('127.0.0.1');
-        
-        return !isLocalhost;
-      }) as PageView[];
       
-      console.log('[Analytics] Page views fetched:', filtered.length, 'views (total:', data?.length || 0, ')');
-      
-      return filtered;
+      console.log('[Analytics] Page views fetched:', data?.length || 0, showDevData ? '(includes dev data)' : '(filtered dev data)');
+      return (data || []) as PageView[];
     },
     retry: 1
   });
@@ -516,7 +508,34 @@ export default function AnalyticsDashboard() {
         today: todayAppointments
       });
 
-      // Calculate unique visitors using filtered page views (excludes localhost)
+      // Fetch total counts from server to bypass UI limit
+      let viewsQuery = supabase.from('page_views').select('*', { count: 'exact', head: true });
+      let currentViewsQuery = supabase.from('page_views').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString());
+      let prevViewsQuery = supabase.from('page_views').select('*', { count: 'exact', head: true }).lt('created_at', thirtyDaysAgo.toISOString()).gte('created_at', sixtyDaysAgo.toISOString());
+
+      if (!showDevData) {
+        const applyFilters = (q: any) => q
+          .not('page_path', 'ilike', '%localhost%')
+          .not('page_path', 'ilike', '%127.0.0.1%')
+          .not('referrer', 'ilike', '%localhost%')
+          .not('referrer', 'ilike', '%127.0.0.1%');
+        
+        viewsQuery = applyFilters(viewsQuery);
+        currentViewsQuery = applyFilters(currentViewsQuery);
+        prevViewsQuery = applyFilters(prevViewsQuery);
+      }
+
+      const [
+        { count: totalViewsCount },
+        { count: currentViewsCount },
+        { count: prevViewsCount }
+      ] = await Promise.all([viewsQuery, currentViewsQuery, prevViewsQuery]);
+
+      const totalViews = totalViewsCount || 0;
+      const currentViews = currentViewsCount || 0;
+      const prevViews = prevViewsCount || 0;
+
+      // Unique visitors - Using the fetched pageViews array for the current period (limit 5000 is usually enough for unique calcs)
       const filteredCurrentViews = pageViews.filter(v => {
         const created = new Date(v.created_at);
         return created >= thirtyDaysAgo;
@@ -529,11 +548,6 @@ export default function AnalyticsDashboard() {
       
       const currentUnique = new Set(filteredCurrentViews.map(v => v.user_id)).size;
       const prevUnique = new Set(filteredPrevViews.map(v => v.user_id)).size;
-      
-     // Use pageViews.length for total (already filtered to exclude localhost)
-      const totalViews = pageViews.length;
-      const currentViews = filteredCurrentViews.length;
-      const prevViews = filteredPrevViews.length;
 
       // Peak Hours & Avg Duration - Check both appointments and bookings
       const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
