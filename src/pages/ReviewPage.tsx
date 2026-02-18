@@ -29,10 +29,10 @@ export default function ReviewPage() {
       try {
         const { data, error } = await supabase
           .from('review_tokens')
-          .select('*, appointment:appointment_id(*, lawyer:lawyer_id(*), client:client_id(*))')
+          .select('*')
           .eq('token', token)
           .eq('used', false)
-          .gt('expires_at', new Date().toISOString())
+          .gte('expires_at', new Date().toISOString())
           .single();
 
         if (error || !data) {
@@ -42,9 +42,22 @@ export default function ReviewPage() {
           return;
         }
 
-        setAppointment(data.appointment);
-        setLawyer(data.appointment.lawyer);
-        setClient(data.appointment.client);
+        // Para tokens manuales, no hay cita real asociada
+        if (data.appointment_id && data.appointment_id.startsWith('00000000')) {
+          // Es un token manual, mostrar formulario sin datos de cita
+          setAppointment(null);
+          setLawyer(null);
+          setClient(null);
+        } else if (data.appointment) {
+          setAppointment(data.appointment);
+          setLawyer(data.appointment.lawyer);
+          setClient(data.appointment.client);
+        } else {
+          // Token sin cita asociada
+          setAppointment(null);
+          setLawyer(null);
+          setClient(null);
+        }
         setTokenValid(true);
       } catch (error) {
         console.error('Error validating token:', error);
@@ -59,18 +72,32 @@ export default function ReviewPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tokenValid || !appointment) return;
+    if (!tokenValid) return;
 
     setSubmitting(true);
     try {
+      // Para tokens manuales, no hay cita real asociada
+      const lawyerId = lawyer?.id || null;
+      const clientId = client?.id || null;
+      const appointmentId = appointment?.id || null;
+
+      if (!lawyerId) {
+        toast({
+          title: 'Error',
+          description: 'No se encontró información del abogado para esta reseña.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // 1. Guardar la reseña
       const { error: reviewError } = await supabase
         .from('reviews')
         .insert([
           {
-            lawyer_id: appointment.lawyer_id,
-            client_id: appointment.client_id,
-            appointment_id: appointment.id,
+            lawyer_id: lawyerId,
+            client_id: clientId,
+            appointment_id: appointmentId,
             rating,
             comment: review,
             status: 'approved'
@@ -90,21 +117,23 @@ export default function ReviewPage() {
 
       if (tokenError) throw tokenError;
 
-      // 3. Actualizar el rating promedio del abogado
-      const { data: avgRating } = await supabase
-        .rpc('calculate_lawyer_rating', { lawyer_id: appointment.lawyer_id });
+      // 3. Actualizar el rating promedio del abogado (solo si hay lawyer_id)
+      if (lawyerId) {
+        const { data: avgRating } = await supabase
+          .rpc('calculate_lawyer_rating', { lawyer_id: lawyerId });
 
-      if (avgRating !== null) {
-        await supabase
-          .from('profiles')
-          .update({ rating: avgRating })
-          .eq('id', appointment.lawyer_id);
+        if (avgRating !== null) {
+          await supabase
+            .from('profiles')
+            .update({ rating: avgRating })
+            .eq('id', lawyerId);
+        }
+
+        // 4. Incrementar el contador de reseñas del abogado
+        await supabase.rpc('increment_review_count', { 
+          lawyer_id: lawyerId 
+        });
       }
-
-      // 4. Incrementar el contador de reseñas del abogado
-      await supabase.rpc('increment_review_count', { 
-        lawyer_id: appointment.lawyer_id 
-      });
 
       toast({
         title: '¡Gracias por tu reseña!',
@@ -165,7 +194,10 @@ export default function ReviewPage() {
           <div className="px-4 py-5 sm:px-6 bg-gradient-to-r from-blue-600 to-blue-700">
             <h1 className="text-xl font-semibold text-white">Califica tu experiencia</h1>
             <p className="mt-1 text-sm text-blue-100">
-              Comparte tu opinión sobre la asesoría con {lawyer?.first_name} {lawyer?.last_name}
+              {lawyer?.first_name && lawyer?.last_name 
+                ? `Comparte tu opinión sobre la asesoría con ${lawyer.first_name} ${lawyer.last_name}`
+                : 'Comparte tu opinión sobre la asesoría'
+              }
             </p>
           </div>
           
