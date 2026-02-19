@@ -27,19 +27,18 @@ serve(async (req) => {
 
     const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
-    // Buscar la última cita del cliente (completada)
+    // Buscar la última cita del cliente
     const { data: appointments, error: appointmentError } = await supabaseClient
       .from('appointments')
       .select('*')
       .eq('email', email)
-      .eq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(1)
 
     if (appointmentError) throw appointmentError
 
     if (!appointments || appointments.length === 0) {
-      throw new Error('No se encontraron citas completadas para este cliente')
+      throw new Error('No se encontraron citas para este cliente')
     }
 
     const appointment = appointments[0]
