@@ -79,6 +79,7 @@ serve(async (req) => {
           .from('review_tokens')
           .insert({
             appointment_id: appointment.id,
+            lawyer_id: appointment.lawyer_id,
             token: reviewToken,
             expires_at: expiresAt.toISOString(),
             used: false

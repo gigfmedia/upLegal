@@ -76,6 +76,16 @@ export default function ReviewPage() {
 
           setLawyer(lawyerProfile);
           setClient(clientProfile);
+        } else if (tokenData.lawyer_id) {
+          // Si no pudimos cargar la cita (por RLS), pero tenemos el lawyer_id en el token
+          const { data: lawyerProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', tokenData.lawyer_id)
+            .single();
+          
+          setLawyer(lawyerProfile);
+          // El cliente queda como anónimo o null, lo cual está bien para la reseña
         }
 
         setTokenValid(true);
