@@ -73,8 +73,10 @@ serve(async (req) => {
 
     const reviewUrl = `https://legalup.cl/review?token=${reviewToken}`
     
-    // Extraer el primer nombre del email
-    const clientFirstName = email.split('@')[0].split('.')[0] || 'Cliente'
+    // Prioridad para el nombre: 1. Tabla appointments, 2. Email, 3. "Cliente"
+    const clientFirstName = appointment.name?.split(' ')[0] || 
+                            email.split('@')[0].split('.')[0] || 
+                            'Cliente'
 
     await resend.emails.send({
       from: 'LegalUp <noreply@mg.legalup.cl>',
