@@ -132,7 +132,7 @@ serve(async (req) => {
         <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
           <div style="text-align: center; padding: 30px 20px;">
             <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
-              <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNTYzZWEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1zY2FsZS1pY29uIGx1Y2lkZS1zY2FsZSI+PHBhdGggZD0ibTE2IDE2IDMtOCAzIDhjLS44Ny42NS0xLjkyIDEtMyAxcy0yLjEzLS4zNS0zLTFaIi8+PHBhdGggZD0ibTIgMTYgMy04IDMgOGMtLjg3LjY1LTEuOTIgMS0zIDFzLTIuMTMtLjM1LTMtMVoiLz48cGF0aCBkPSJNNyAyMWgxMCIvPjxwYXRoIGQ9Ik0xMiAzdjE4Ii8+PHBhdGggZD0iTTMgN2gyYzIgMCA1LTEgNy0yIDIgMSA1IDIgNyAyaDIiLz48L3N2Zz4=" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
+              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
               <span style="color: #101820; font-size: 28px; position: relative; top: -2px;">LegalUp</span>
             </div>
           </div>
@@ -143,6 +143,7 @@ serve(async (req) => {
             <p style="color: #475569; line-height: 1.6; margin-bottom: 20px;">Gracias por confiar en LegalUp para tus asesorías legales. Tu cita ha sido confirmada con éxito.</p>
             
             <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 25px 0; border: 1px solid #e2e8f0;">
+              <p style="margin: 10px 0; color: #101820;"><strong>Cliente:</strong> ${clientName}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Abogado:</strong> ${lawyerName}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Tipo de servicio:</strong> ${displayServiceType}</p>
               <p style="margin: 10px 0; color: #101820;"><strong>Fecha:</strong> ${formatDate(appointmentDate)}</p>
@@ -218,8 +219,9 @@ serve(async (req) => {
     if (sendToLawyer && lawyerEmail) {
       // Crear una versión del correo para el abogado
       let lawyerEmailHtml = emailHtml
-        .replace('¡Tu cita ha sido agendada con éxito!', 'Tienes una nueva cita')
-        .replace(`Hola ${clientName}`, `Hola ${lawyerName}`);
+        .replace('¡Tu cita ha sido agendada con éxito!', `Nueva cita con ${clientName}`)
+        .replace(`Hola ${clientName}`, `Hola ${lawyerName}`)
+        .replace('Gracias por confiar en LegalUp para tus asesorías legales. Tu cita ha sido confirmada con éxito.', `Tienes una nueva cita agendada con el cliente **${clientName}**.`);
       
       // Si es una videollamada y hay un meet_link, asegurarse de que el abogado lo vea
       if (contactMethod === 'Videollamada' && meetLink) {
@@ -230,7 +232,7 @@ serve(async (req) => {
       }
       
       await sendEmailWithRetry({
-        from: 'noreply@mg.legalup.cl',  // Usando dominio verificado personalizado
+        from: 'LegalUp <noreply@mg.legalup.cl>',  // Usando dominio verificado personalizado
         to: lawyerEmail,  // Correo real del abogado
         subject: `Nueva cita con ${clientName}`,
         html: lawyerEmailHtml,
