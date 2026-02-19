@@ -29,7 +29,7 @@ export default function ReviewPage() {
       try {
         const { data, error } = await supabase
           .from('review_tokens')
-          .select('*')
+          .select('*, appointment:appointment_id(*, lawyer:lawyer_id(*), client:user_id(*))')
           .eq('token', token)
           .eq('used', false)
           .gte('expires_at', new Date().toISOString())
