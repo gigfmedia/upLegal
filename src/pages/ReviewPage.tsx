@@ -27,37 +27,57 @@ export default function ReviewPage() {
 
     const validateToken = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: tokenData, error: tokenError } = await supabase
           .from('review_tokens')
-          .select('*, appointment:appointment_id(*, lawyer:lawyer_id(*), client:user_id(*))')
+          .select('*')
           .eq('token', token)
           .eq('used', false)
           .gte('expires_at', new Date().toISOString())
           .single();
 
-        if (error || !data) {
-          console.error('Error validating token:', error);
+        if (tokenError || !tokenData) {
+          console.error('Error validating token:', tokenError);
           setTokenValid(false);
           setLoading(false);
           return;
         }
 
-        // Para tokens manuales, no hay cita real asociada
-        if (data.appointment_id && data.appointment_id.startsWith('00000000')) {
-          // Es un token manual, mostrar formulario sin datos de cita
+        // Si es un token manual (empezando con ceros) o no tiene cita, saltar fetch de cita
+        if (!tokenData.appointment_id || tokenData.appointment_id.startsWith('00000000')) {
           setAppointment(null);
           setLawyer(null);
           setClient(null);
-        } else if (data.appointment) {
-          setAppointment(data.appointment);
-          setLawyer(data.appointment.lawyer);
-          setClient(data.appointment.client);
-        } else {
-          // Token sin cita asociada
-          setAppointment(null);
-          setLawyer(null);
-          setClient(null);
+          setTokenValid(true);
+          setLoading(false);
+          return;
         }
+
+        // Cargar cita y perfiles manualmente (evitando errores de join por falta de FK)
+        const { data: apptData, error: apptError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('id', tokenData.appointment_id)
+          .single();
+
+        if (apptError) {
+          console.error('Error fetching appointment:', apptError);
+          // Permitimos que continúe si al menos el token es válido, 
+          // pero mostramos aviso si es crítico
+        }
+
+        if (apptData) {
+          setAppointment(apptData);
+          
+          // Cargar perfiles
+          const [{ data: lawyerProfile }, { data: clientProfile }] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', apptData.lawyer_id).single(),
+            supabase.from('profiles').select('*').eq('user_id', apptData.user_id).single()
+          ]);
+
+          setLawyer(lawyerProfile);
+          setClient(clientProfile);
+        }
+
         setTokenValid(true);
       } catch (error) {
         console.error('Error validating token:', error);
