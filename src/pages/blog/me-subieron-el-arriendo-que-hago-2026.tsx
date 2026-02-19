@@ -23,7 +23,7 @@ const BlogArticle = () => {
       canonicalLink.setAttribute('rel', 'canonical');
       document.head.appendChild(canonicalLink);
     }
-    canonicalLink.setAttribute('href', 'https://legalup.cl/blog/me-subieron-el-arriendo-que-hago');
+    canonicalLink.setAttribute('href', 'https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026');
 
     // Add structured data (JSON-LD)
     const structuredData = {
@@ -47,7 +47,7 @@ const BlogArticle = () => {
       "dateModified": "2026-01-01",
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": "https://legalup.cl/blog/me-subieron-el-arriendo-que-hago"
+        "@id": "https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"
       },
       "image": "https://legalup.cl/images/arriendo-chile-2026.jpg",
       "articleSection": "Derecho Inmobiliario",
