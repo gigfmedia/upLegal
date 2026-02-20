@@ -642,7 +642,7 @@ const SearchResults = () => {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900">Encuentra al abogado ideal para tu caso</h1>
           <p className="mt-2 text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
-          <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros desde $30.000 · Sin llamadas incómodas ni intermediarios</small>
+          <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small>
           
           {/* Search Bar */}
           <div className="mt-6">
