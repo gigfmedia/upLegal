@@ -81,7 +81,7 @@ const BlogArticle = () => {
           </h1>
           
           <p className="text-xl text-blue-100 max-w-3xl">
-            Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, feriados pendientes y pagos proporcionales.
+            Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales.
           </p>
           
           <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">

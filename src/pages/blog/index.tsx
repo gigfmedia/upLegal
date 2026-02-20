@@ -27,7 +27,7 @@ const BlogPage = () => {
     {
       id: "como-calcular-tu-finiquito-chile-2026",
       title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
-      excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, feriados pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
+      excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
       category: "Derecho Laboral",
       author: "LegalUp",
       date: "18 de Febrero, 2026",

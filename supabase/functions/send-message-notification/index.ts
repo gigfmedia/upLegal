@@ -32,14 +32,20 @@ serve(async (req) => {
         to: lawyerEmail,
         subject: subject || `Nuevo mensaje de ${clientName}`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>Has recibido un nuevo mensaje</h2>
-            <p>De: ${clientName}</p>
-            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              ${message.replace(/\n/g, '<br>')}
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #101820;">
+            <div style="text-align: center; padding: 20px 0;">
+              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
+              <span style="color: #101820; font-size: 24px; font-weight: bold; position: relative; top: -2px;">LegalUp</span>
             </div>
-            <p>Puedes responder a este mensaje directamente desde tu panel de control en LegalUp.</p>
-            <p>Saludos,<br>El equipo de upLegal</p>
+            <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <h2 style="color: #101820; margin-top: 0;">Has recibido un nuevo mensaje</h2>
+              <p style="color: #475569;">De: ${clientName}</p>
+              <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+                ${message.replace(/\n/g, '<br>')}
+              </div>
+              <p style="color: #475569;">Puedes responder a este mensaje directamente desde tu panel de control en LegalUp.</p>
+              <p style="color: #475569; font-weight: 500;">Saludos,<br>El equipo de LegalUp</p>
+            </div>
           </div>
         `,
       },

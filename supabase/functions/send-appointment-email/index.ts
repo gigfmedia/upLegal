@@ -221,7 +221,8 @@ serve(async (req) => {
       let lawyerEmailHtml = emailHtml
         .replace('¡Tu cita ha sido agendada con éxito!', `Nueva cita con ${clientName}`)
         .replace(`Hola ${clientName}`, `Hola ${lawyerName}`)
-        .replace('Gracias por confiar en LegalUp para tus asesorías legales. Tu cita ha sido confirmada con éxito.', `Tienes una nueva cita agendada con el cliente **${clientName}**.`);
+        .replace('Gracias por confiar en LegalUp para tus asesorías legales. Tu cita ha sido confirmada con éxito.', `Tienes una nueva cita agendada con el cliente **${clientName}**.`)
+        .replace('dashboard/appointments', 'lawyer/citas');
       
       // Si es una videollamada y hay un meet_link, asegurarse de que el abogado lo vea
       if (contactMethod === 'Videollamada' && meetLink) {

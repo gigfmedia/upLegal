@@ -25,7 +25,7 @@ export function generateGoogleMeetLink(
     meetUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(title)}` +
       `&dates=${startTime}/${endTime}` +
-      `&details=${encodeURIComponent('Reunión programada a través de upLegal')}` +
+      `&details=${encodeURIComponent('Reunión programada a través de LegalUp')}` +
       `&add=google.com`;
   }
   
