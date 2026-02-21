@@ -1,7 +1,9 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import { Navigation, FreeMode, Mousewheel } from 'swiper/modules';
+
+// Import All Swiper styles
 import 'swiper/css';
-import 'swiper/css/navigation';
+import 'swiper/css/bundle';
 
 interface SpecialtiesSliderProps {
   selectedSpecialty: string[];
@@ -14,10 +16,20 @@ export default function SpecialtiesSlider({
 }: SpecialtiesSliderProps) {
   return (
     <Swiper
-      modules={[Navigation]}
+      modules={[Navigation, FreeMode, Mousewheel]}
       spaceBetween={8}
       slidesPerView={'auto'}
       navigation={false}
+      freeMode={{
+        enabled: true,
+        momentumBounce: false,
+      }}
+      mousewheel={{
+        forceToAxis: true,
+        sensitivity: 1,
+      }}
+      watchSlidesProgress={true}
+      grabCursor={true}
       className="py-2 px-2"
       style={{ paddingLeft: '8px', paddingRight: '8px' }}
     >
@@ -65,7 +77,7 @@ export default function SpecialtiesSlider({
 
               onSpecialtyChange(newSpecialties);
             }}
-            className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors select-none ${
               selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
                 ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                 : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'

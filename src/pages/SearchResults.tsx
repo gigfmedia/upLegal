@@ -13,7 +13,7 @@ import type { AuthContextType } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
 import * as React from 'react';
 import { useInView } from 'react-intersection-observer';
-import { debounce } from 'lodash';
+import debounce from 'lodash/debounce';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const SpecialtiesSlider = lazy(() => import('@/components/search/SpecialtiesSlider'));

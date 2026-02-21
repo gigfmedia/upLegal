@@ -24,7 +24,7 @@ export interface Lawyer {
   display_name?: string;
   first_name?: string;
   last_name?: string;
-  specialties: string[];
+  specialties: string[] | string;
   rating: number;
   reviews: number;
   location: string;
@@ -63,6 +63,15 @@ const formatCLP = (amount: number): string => {
   return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+// Utility to optimize image URL for Supabase storage
+const getOptimizedImageUrl = (url: string, width = 256, quality = 80) => {
+  if (!url) return '';
+  
+  // Temporarily disable Supabase transformations to test
+  // This might be causing the zoom/distortion issues
+  return url;
+};
+
 export function LawyerCard({ 
   lawyer, 
   onContactClick, 
@@ -71,6 +80,29 @@ export function LawyerCard({
   onSchedule,
   user
 }: LawyerCardProps & { user?: any }) {
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Handle image load to detect actual dimensions
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const size = { width: img.naturalWidth, height: img.naturalHeight };
+    setImageSize(size);
+    setImageLoaded(true);
+    const needsZoomCondition = size.width < 100 || size.height < 100 || 
+      Math.abs(size.width - size.height) > 20 || Math.min(size.width, size.height) < 80;
+    console.log(`Image loaded for ${lawyer.name}:`, size, 'needsZoom:', needsZoomCondition);
+  };
+  
+  // Calculate if image needs zoom (smaller than container or not square enough)
+  const needsZoom = imageLoaded && (
+    imageSize.width < 100 || 
+    imageSize.height < 100 || 
+    Math.abs(imageSize.width - imageSize.height) > 20 || // Not square (difference > 20px)
+    Math.min(imageSize.width, imageSize.height) < 80
+  );
+  const zoomScale = needsZoom ? 1.5 : 1;
+  
   const displayName = React.useMemo(() => {
     // If we have both first and last name, use them
     if (lawyer.first_name && lawyer.last_name) {
@@ -183,9 +215,15 @@ export function LawyerCard({
                 <div className="relative">
                   <Avatar className="h-16 w-16">
                     <AvatarImage 
-                      src={lawyer.image} 
+                      src={getOptimizedImageUrl(lawyer.image, 256)} 
                       alt={lawyer.name}
-                      className="object-cover"
+                      className="object-contain"
+                      style={{
+                        // Apply zoom only if image is smaller than container
+                        transform: `scale(${zoomScale})`,
+                        transition: 'transform 0.2s ease-in-out'
+                      }}
+                      onLoad={handleImageLoad}
                       loading="lazy"
                     />
                     <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">

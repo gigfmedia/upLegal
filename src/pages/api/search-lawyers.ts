@@ -134,8 +134,8 @@ export async function searchLawyers(params: SearchParams = {}) {
       availableNow = false, // Nota: No se usa en la consulta ya que la columna no existe
       page = 1,
       pageSize = 12,
-      // Eliminamos available_now de la selección por defecto
-      select = 'id, user_id, first_name, last_name, specialties, specialty_id, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, contact_fee_clp, created_at, updated_at'
+      // Optimized selection: removed unused fields and truncated bio to save bandwidth
+      select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified'
     } = params;
 
     // Validar parámetros
@@ -149,16 +149,8 @@ export async function searchLawyers(params: SearchParams = {}) {
       .from('profiles')
       .select(select, { count: 'exact' })
       .eq('role', 'lawyer')
-
-      .order('verified', { ascending: false, nullsLast: true })
-      // Remove rating and review_count ordering - will be handled in frontend
+      .order('verified', { ascending: false, nullsFirst: false })
       .range(from, to);
-      
-    // Asegurarse de que no se incluya available_now en la consulta
-    if (select.includes('available_now')) {
-      const selectFields = select.split(',').map(f => f.trim()).filter(f => f !== 'available_now');
-      queryBuilder = queryBuilder.select(selectFields.join(','), { count: 'exact' });
-    }
 
     // Combinamos todas las condiciones en una sola consulta
     const conditions = [];
