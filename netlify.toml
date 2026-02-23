@@ -2,6 +2,15 @@
   command = "npm run build"
   publish = "dist"
 
+# Only deploy main branch to production
+[context.production]
+  command = "npm run build"
+  publish = "dist"
+
+[context.deploy-preview]
+  command = "npm run build"
+  publish = "dist"
+
 [dev]
   command = "npm run dev"
   port = 8080
