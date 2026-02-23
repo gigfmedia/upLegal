@@ -5,6 +5,8 @@ import { AuthProvider } from '../contexts/AuthContext/clean/AuthContext';
 // Force direct import to prevent export issues
 import * as AuthContextModule from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+// Force supabase module to be included
+import * as SupabaseModule from '@supabase/supabase-js';
 import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,6 +160,8 @@ console.log('PREVIEW MODE: Testing bundle fixes for production');
 console.log('EMERGENCY FIX AT:', new Date().toISOString());
 // Force AuthContext module to be included
 console.log('AuthContext module forced:', AuthContextModule);
+// Force Supabase module to be included
+console.log('Supabase module forced:', SupabaseModule);
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
