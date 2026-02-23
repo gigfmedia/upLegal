@@ -146,6 +146,8 @@ const createSlug = (str: string): string => {
 
 // Force Alert to be included in bundle to prevent tree-shaking issues
 console.log('Alert component loaded:', Alert);
+// Force new bundle hash - v2.0
+console.log('Bundle version: 2.0');
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
