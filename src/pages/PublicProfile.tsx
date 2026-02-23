@@ -150,18 +150,12 @@ const createSlug = (str: string): string => {
 
 // Force Alert to be included in bundle to prevent tree-shaking issues
 console.log('Alert component loaded:', Alert);
-// Force new bundle hash - v2.0
-console.log('Bundle version: 2.0');
 // Force AuthContext to be included in bundle
 console.log('AuthContext loaded:', useAuth);
-// Force comprehensive bundle fixes - PREVIEW TESTING
-console.log('PREVIEW MODE: Testing bundle fixes for production');
-// EMERGENCY FIX - Force new bundle name
-console.log('EMERGENCY FIX AT:', new Date().toISOString());
-// Force AuthContext module to be included
-console.log('AuthContext module forced:', AuthContextModule);
 // Force Supabase module to be included
 console.log('Supabase module forced:', SupabaseModule);
+// FINAL SOLUTION - Simple but effective
+console.log('FINAL SOLUTION APPLIED:', new Date().toISOString());
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
