@@ -92,24 +92,6 @@ export default defineConfig(({ mode }) => {
     sourcemap: mode === 'development',
     minify: 'terser',
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Keep critical modules in main bundle to prevent export errors
-          if (id.includes('AuthContext') || id.includes('buttonVariants') || id.includes('alert')) {
-            return 'index';
-          }
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-          return 'app';
-        }
-      }
-    },
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
   },
   plugins: [react()],
   };
