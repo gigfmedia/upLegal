@@ -16,6 +16,8 @@ import { ScheduleModal } from "@/components/ScheduleModal";
 import { ServicesSection } from "@/components/ServicesSection";
 import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection";
 import { AuthModal } from "@/components/AuthModal";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Star, 
   MapPin, 
