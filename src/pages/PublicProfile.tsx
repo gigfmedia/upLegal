@@ -152,6 +152,8 @@ console.log('Bundle version: 2.0');
 console.log('AuthContext loaded:', useAuth);
 // Force comprehensive bundle fixes - PREVIEW TESTING
 console.log('PREVIEW MODE: Testing bundle fixes for production');
+// EMERGENCY FIX - Force new bundle name
+console.log('EMERGENCY FIX AT:', new Date().toISOString());
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
