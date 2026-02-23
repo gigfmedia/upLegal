@@ -147,6 +147,8 @@ const createSlug = (str: string): string => {
 console.log('Alert component loaded:', Alert);
 // Force new bundle hash - v2.0
 console.log('Bundle version: 2.0');
+// Force AuthContext to be included in bundle
+console.log('AuthContext loaded:', useAuth);
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
