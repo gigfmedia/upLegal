@@ -144,6 +144,9 @@ const createSlug = (str: string): string => {
     .replace(/-+/g, '-');
 };
 
+// Force Alert to be included in bundle to prevent tree-shaking issues
+console.log('Alert component loaded:', Alert);
+
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
   const location = useLocation();
