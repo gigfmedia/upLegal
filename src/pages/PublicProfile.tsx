@@ -23,6 +23,8 @@ import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection"
 import { AuthModal } from "@/components/AuthModal";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+// Force Alert to be included in bundle
+console.log('Alert forced:', Alert);
 import { 
   Star, 
   MapPin, 
