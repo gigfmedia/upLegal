@@ -27,21 +27,5 @@
   to = "/index.html"
   status = 200
 
-# Control cache headers for JS files
-[[headers]]
-  for = "/assets/*.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
-
-# Control cache headers for index files
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
-
 [build.environment]
   NODE_VERSION = "18.0.0"

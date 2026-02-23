@@ -92,25 +92,6 @@ export default defineConfig(({ mode }) => {
     sourcemap: mode === 'development',
     minify: 'terser',
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: {
-          'alert': ['@/components/ui/alert'],
-          'ui': ['@/components/ui/alert-dialog', '@/components/ui/button', '@/components/ui/card'],
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-          query: ['@tanstack/react-query']
-        }
-      }
-    },
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
   },
   plugins: [react()],
   };

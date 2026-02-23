@@ -1,7 +1,12 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext/clean/useAuth';
+import { AuthProvider } from '../contexts/AuthContext/clean/AuthContext';
+// Force direct import to prevent export issues
+import * as AuthContextModule from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+// Force supabase module to be included
+import * as SupabaseModule from '@supabase/supabase-js';
 import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +23,19 @@ import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection"
 import { AuthModal } from "@/components/AuthModal";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+// Force Alert to be included in bundle
+console.log('Alert forced:', Alert);
+
+// Use Alert component to prevent tree-shaking
+const AlertUsage = () => {
+  return (
+    <Alert className="hidden">
+      <AlertDescription>
+        Alert component included to prevent export errors
+      </AlertDescription>
+    </Alert>
+  );
+};
 import { 
   Star, 
   MapPin, 
@@ -145,12 +163,12 @@ const createSlug = (str: string): string => {
 
 // Force Alert to be included in bundle to prevent tree-shaking issues
 console.log('Alert component loaded:', Alert);
-// Force new bundle hash - v2.0
-console.log('Bundle version: 2.0');
 // Force AuthContext to be included in bundle
 console.log('AuthContext loaded:', useAuth);
-// Force comprehensive bundle fixes - PREVIEW TESTING
-console.log('PREVIEW MODE: Testing bundle fixes for production');
+// Force Supabase module to be included
+console.log('Supabase module forced:', SupabaseModule);
+// FINAL SOLUTION - Simple but effective
+console.log('FINAL SOLUTION APPLIED:', new Date().toISOString());
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
