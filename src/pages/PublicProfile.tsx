@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
