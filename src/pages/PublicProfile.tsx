@@ -25,6 +25,17 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 // Force Alert to be included in bundle
 console.log('Alert forced:', Alert);
+
+// Use Alert component to prevent tree-shaking
+const AlertUsage = () => {
+  return (
+    <Alert className="hidden">
+      <AlertDescription>
+        Alert component included to prevent export errors
+      </AlertDescription>
+    </Alert>
+  );
+};
 import { 
   Star, 
   MapPin, 
