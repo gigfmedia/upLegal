@@ -52,9 +52,8 @@ import {
   CheckCircle,
   Heart,
   Gavel,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
-import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface PublicProfileProps {
   userData?: {
