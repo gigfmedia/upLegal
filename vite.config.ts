@@ -94,12 +94,18 @@ export default defineConfig(({ mode }) => {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@radix-ui/react-slot', '@radix-ui/react-dialog'],
-          supabase: ['@supabase/supabase-js'],
-          query: ['@tanstack/react-query']
+        manualChunks: (id) => {
+          // Keep AuthContext in main bundle to prevent export errors
+          if (id.includes('AuthContext')) {
+            return 'index';
+          }
+          if (id.includes('alert')) {
+            return 'ui-alert';
+          }
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+          return 'app';
         }
       }
     },
