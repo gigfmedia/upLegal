@@ -2,6 +2,8 @@ import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "reac
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext/clean/useAuth';
 import { AuthProvider } from '../contexts/AuthContext/clean/AuthContext';
+// Force direct import to prevent export issues
+import * as AuthContextModule from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
@@ -154,6 +156,8 @@ console.log('AuthContext loaded:', useAuth);
 console.log('PREVIEW MODE: Testing bundle fixes for production');
 // EMERGENCY FIX - Force new bundle name
 console.log('EMERGENCY FIX AT:', new Date().toISOString());
+// Force AuthContext module to be included
+console.log('AuthContext module forced:', AuthContextModule);
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();

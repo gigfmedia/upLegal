@@ -97,13 +97,26 @@ export default defineConfig(({ mode }) => {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: {
-          'alert': ['@/components/ui/alert'],
-          'ui': ['@/components/ui/alert-dialog', '@/components/ui/button', '@/components/ui/card'],
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          supabase: ['@supabase/supabase-js'],
-          query: ['@tanstack/react-query']
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('lucide')) {
+              return 'vendor-icons';
+            }
+            return 'vendor';
+          }
+          if (id.includes('alert')) {
+            return 'ui-alert';
+          }
+          if (id.includes('ui/')) {
+            return 'ui-components';
+          }
+          return 'app';
         }
       }
     },
