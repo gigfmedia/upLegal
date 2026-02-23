@@ -8,20 +8,23 @@ const isBrowser = typeof window !== 'undefined';
 // Environment variables are required
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 // Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  const error = new Error('Missing required environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set');
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+  const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
   logger.error('Supabase initialization failed', error, {
     context: 'supabaseClient',
     hasSupabaseUrl: !!supabaseUrl,
     hasSupabaseKey: !!supabaseAnonKey,
+    hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
   });
   throw error;
 }
 
-// Create a singleton instance of the Supabase client
+// Create a singleton instance of Supabase client
 let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
+let supabaseAdminClient: ReturnType<typeof createClient<Database>> | null = null;
 
 // Track initialization state
 let isInitialized = false;
@@ -29,7 +32,7 @@ let isInitialized = false;
 /**
  * Report errors consistently
  */
-const reportError = (error: Error, context: string = 'Supabase Client', extra: Record<string, any> = {}) => {
+const reportError = (error: Error, context: string, extra: Record<string, unknown> = {}) => {
   logger.error(`[${context}] Error occurred`, error, {
     ...extra,
     context,
@@ -39,100 +42,77 @@ const reportError = (error: Error, context: string = 'Supabase Client', extra: R
 };
 
 /**
- * Get or create the Supabase client instance
- * Ensures only one instance is created per request in SSR environments
+ * Get the regular Supabase client (for regular users)
  */
 export const getSupabaseClient = () => {
-  try {
-    if (!supabaseClient || !isInitialized) {
-      logger.debug('Creating new Supabase client instance', {
-        isBrowser,
-        environment: process.env.NODE_ENV,
-      });
-      
-            const options = {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: isBrowser,
-          detectSessionInUrl: false, // Mejor seguridad
-          storage: isBrowser ? {
-            getItem: (key: string) => {
-              logger.debug('Storage getItem:', key);
-              return localStorage.getItem(key);
-            },
-            setItem: (key: string, value: string) => {
-              logger.debug('Storage setItem:', key);
-              localStorage.setItem(key, value);
-            },
-            removeItem: (key: string) => {
-              logger.debug('Storage removeItem:', key);
-              localStorage.removeItem(key);
-            }
-          } : undefined,
-          storageKey: 'sb-auth-token',
-          flowType: 'pkce' as const,
-        },
-        // Habilitar realtime con configuración segura
-        realtime: {
-          params: {
-            // Añadir un ID de cliente único para mejor seguimiento
-            client_id: isBrowser ? 'web-' + Math.random().toString(36).substr(2, 9) : 'server',
-            // Limitar la tasa de eventos por segundo
-            eventsPerSecond: 10
-          }
-        },
-        // Habilitar auto-conexión para características en tiempo real
-        autoConnect: true,
-        // Configuración global
-        global: {
-          headers: {
-            'X-Client-Info': 'uplegal-web/1.0',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          // Manejador de fetch para registrar conexiones
-          fetch: (url: string, options: any) => {
-            if (process.env.NODE_ENV === 'development' && typeof url === 'string' && url.includes('supabase.co')) {
-              logger.debug('Supabase request:', { url, method: options?.method });
-            }
-            return fetch(url, options);
-          }
-        }
-      };
-      
-      supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, options);
-      
-      // Add auth state change listener for debugging
-      if (process.env.NODE_ENV === 'development') {
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-          logger.debug('Auth state changed', { 
-            event, 
-            hasSession: !!session,
-            session: session ? {
-              user: {
-                id: session.user?.id,
-                email: session.user?.email,
-                role: session.user?.role,
-              },
-              expiresAt: session.expires_at
-            } : null
-          });
-        });
-      }
-
-      isInitialized = true;
-    } else {
-      logger.debug('Returning existing Supabase client instance');
-    }
-    
+  if (isInitialized && supabaseClient) {
     return supabaseClient;
-  } catch (error) {
-    reportError(error as Error, 'getSupabaseClient');
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+    const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
+    logger.error('Supabase initialization failed', error, {
+      context: 'supabaseClient',
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseAnonKey,
+      hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
+    });
     throw error;
   }
+
+  const options = {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  };
+
+  supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, options);
+  
+  isInitialized = true;
+  return supabaseClient;
 };
 
-// For backward compatibility
-export const supabase = getSupabaseClient();
+/**
+ * Get Supabase client with service role (for admin operations)
+ */
+export const getSupabaseAdminClient = () => {
+  if (isInitialized && supabaseAdminClient) {
+    return supabaseAdminClient;
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+    const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
+    logger.error('Supabase admin client initialization failed', error, {
+      context: 'supabaseAdminClient',
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseAnonKey,
+      hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
+    });
+    throw error;
+  }
+
+  const options = {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+    // Bypass RLS for admin operations
+    global: {
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceRoleKey}`,
+        'X-Client-Info': 'uplegal-web/1.0-admin'
+      }
+    }
+  };
+
+  supabaseAdminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, options);
+  
+  isInitialized = true;
+  return supabaseAdminClient;
+};
 
 // Initialize any necessary services
 if (isBrowser && process.env.NODE_ENV === 'production') {
@@ -140,5 +120,9 @@ if (isBrowser && process.env.NODE_ENV === 'production') {
   // Example: Sentry.init({ dsn: process.env.SENTRY_DSN });
 }
 
-export { reportError };
+// Create default supabase client for backward compatibility
+const supabase = getSupabaseClient();
+
+// For backward compatibility
+export { supabase, reportError };
 export default supabase;

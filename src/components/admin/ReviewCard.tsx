@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Check, X, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Define the Review type here since we're having issues with the import
@@ -6,6 +6,7 @@ interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  display_name?: string;
   avatar_url?: string | null;
   email?: string;
 }
@@ -28,9 +29,10 @@ interface ReviewCardProps {
   review: Review;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  onEdit?: (review: Review) => void;
 }
 
-export function ReviewCard({ review, onApprove, onReject }: ReviewCardProps) {
+export function ReviewCard({ review, onApprove, onReject, onEdit }: ReviewCardProps) {
   return (
     <div className={`border rounded-lg p-4 ${review.status === 'rejected' ? 'bg-gray-50' : 'bg-white'} shadow-sm`}>
       <div className="flex justify-between items-start">
@@ -38,7 +40,7 @@ export function ReviewCard({ review, onApprove, onReject }: ReviewCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <span className="font-semibold">
-                {review.client?.first_name || 'Usuario'} {review.client?.last_name || 'Anónimo'}
+                {review.client?.display_name || `${review.client?.first_name || 'Usuario'} ${review.client?.last_name || 'Anónimo'}`}
               </span>
               <span className="text-sm text-gray-500 ml-2">(Cliente)</span>
               
@@ -68,7 +70,7 @@ export function ReviewCard({ review, onApprove, onReject }: ReviewCardProps) {
             ))}
           </div>
           
-          <p className="mt-2 text-gray-700">
+          <p className="mt-2 text-gray-700 whitespace-pre-wrap">
             {review.comment}
           </p>
           
@@ -81,6 +83,14 @@ export function ReviewCard({ review, onApprove, onReject }: ReviewCardProps) {
         
         {review.status === 'pending' && (
           <div className="flex space-x-2 ml-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="text-blue-700 border-blue-200 hover:bg-blue-50"
+              onClick={() => onEdit && onEdit(review)}
+            >
+              <Edit className="h-4 w-4 mr-1" /> Editar
+            </Button>
             <Button 
               variant="outline" 
               size="sm"
@@ -97,6 +107,40 @@ export function ReviewCard({ review, onApprove, onReject }: ReviewCardProps) {
             >
               <X className="h-4 w-4 mr-1" /> Rechazar
             </Button>
+          </div>
+        )}
+
+        {/* Always show action buttons for approved/rejected reviews */}
+        {(review.status === 'approved' || review.status === 'rejected') && (
+          <div className="flex space-x-2 ml-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="text-blue-700 border-blue-200 hover:bg-blue-50"
+              onClick={() => onEdit && onEdit(review)}
+            >
+              <Edit className="h-4 w-4 mr-1" /> Editar
+            </Button>
+            {review.status === 'rejected' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-green-700 border-green-200 hover:bg-green-50"
+                onClick={() => onApprove(review.id)}
+              >
+                <Check className="h-4 w-4 mr-1" /> Aprobar
+              </Button>
+            )}
+            {review.status === 'approved' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-red-700 border-red-200 hover:bg-red-50"
+                onClick={() => onReject(review.id)}
+              >
+                <X className="h-4 w-4 mr-1" /> Rechazar
+              </Button>
+            )}
           </div>
         )}
       </div>

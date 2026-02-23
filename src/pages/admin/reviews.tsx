@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
-import { supabase } from '@/lib/supabaseClient';
-import { Loader2, Check, X } from 'lucide-react';
+import { getSupabaseAdminClient } from '@/lib/supabaseClient';
+import { Loader2, Check, X, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ReviewCard } from '@/components/admin/ReviewCard';
+import { EditReviewModal } from '@/components/admin/EditReviewModal';
 import type { Review } from '@/types/review';
 import Header from '@/components/Header';
 
@@ -16,11 +17,15 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
   const { toast } = useToast();
 
   const loadReviews = useCallback(async (isInitialLoad = false) => {
     try {
       setLoading(true);
+      const supabase = getSupabaseAdminClient();
+      
+      // Load all reviews (not filtered by lawyer)
       const { data, error } = await supabase
         .from('reviews')
         .select(`
@@ -80,13 +85,14 @@ export default function AdminReviewsPage() {
 
   const updateReviewStatus = async (reviewId: string, status: 'approved' | 'rejected') => {
     try {
+      const supabase = getSupabaseAdminClient();
       const { error } = await supabase
         .from('reviews')
         .update({ status })
         .eq('id', reviewId);
 
       if (error) throw error;
-
+      
       toast({
         title: 'Éxito',
         description: `Reseña ${status === 'approved' ? 'aprobada' : 'rechazada'} correctamente`,
@@ -99,6 +105,36 @@ export default function AdminReviewsPage() {
       toast({
         title: 'Error',
         description: 'No se pudo actualizar la reseña',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const updateReviewContent = async (reviewId: string, updates: { comment: string }) => {
+    try {
+      const supabase = getSupabaseAdminClient();
+      const { error } = await supabase
+        .from('reviews')
+        .update({ 
+          comment: updates.comment,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reviewId);
+
+      if (error) throw error;
+      
+      toast({
+        title: 'Reseña actualizada',
+        description: 'La reseña ha sido actualizada correctamente',
+      });
+
+      // Refresh list
+      loadReviews();
+    } catch (error) {
+      console.error('Error updating review content:', error);
+      toast({
+        title: 'Error',
+        description: 'No se pudo actualizar el contenido de la reseña',
         variant: 'destructive',
       });
     }
@@ -176,7 +212,15 @@ export default function AdminReviewsPage() {
     }
   ];
 
-  const displayReviews = process.env.NODE_ENV === 'development' ? mockReviews : reviews;
+  const displayReviews = reviews;
+
+  const handleEdit = (review: Review) => {
+    setEditingReview(review);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingReview(null);
+  };
 
   const handleApprove = (reviewId: string) => {
     console.log('Approving review:', reviewId);
@@ -240,12 +284,23 @@ export default function AdminReviewsPage() {
                   review={review} 
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onEdit={handleEdit}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+      
+      {/* Edit Review Modal */}
+      {editingReview && (
+        <EditReviewModal
+          isOpen={true}
+          review={editingReview}
+          onClose={handleCloseEditModal}
+          onUpdate={updateReviewContent}
+        />
+      )}
     </div>
   );
 }

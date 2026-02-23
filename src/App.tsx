@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
@@ -186,6 +186,14 @@ const setupGlobalErrorHandlers = () => {
     window.removeEventListener('error', handleError);
     window.removeEventListener('unhandledrejection', handleRejection);
   };
+};
+
+// Component to handle lawyer redirects
+const LawyerRedirect = () => {
+  const { id } = useParams();
+  // Extract just the ID part in case it's a full URL
+  const lawyerId = id?.split('-').pop();
+  return <Navigate to={`/abogado/abogado-${lawyerId}`} replace />;
 };
 
 const AppContent = () => {
@@ -391,11 +399,7 @@ const AppContent = () => {
               </Route>
               
               {/* Legacy route for backward compatibility */}
-              <Route path="/lawyer/:id" element={({ match }) => {
-                // Extract just the ID part in case it's a full URL
-                const id = match.params.id.split('-').pop();
-                return <Navigate to={`/abogado/abogado-${id}`} replace />;
-              }} />
+              <Route path="/lawyer/:id" element={<LawyerRedirect />} />
               
               {/* 404 Not Found Page - must be last */}
               <Route path="*" element={<NotFound />} />

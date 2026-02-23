@@ -6,6 +6,7 @@ import { WriteReviewModal } from './WriteReviewModal';
 import { ratingService } from '@/services/ratingService';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
 
 interface LawyerReviewsSectionProps {
   lawyerId: string;
@@ -41,7 +42,26 @@ export function LawyerReviewsSection({ lawyerId, lawyerName }: LawyerReviewsSect
 
       if (error) throw error;
       
-      setReviews(reviewsData || []);
+      // Load client data for each review
+      const reviewsWithClients = await Promise.all(
+        (reviewsData || []).map(async (review) => {
+          if (review.client_id) {
+            const { data: client } = await supabase
+              .from('profiles')
+              .select('display_name, avatar_url')
+              .eq('id', review.client_id)
+              .single();
+            
+            return {
+              ...review,
+              user: client || { display_name: 'Usuario', avatar_url: null }
+            };
+          }
+          return review;
+        })
+      );
+
+      setReviews(reviewsWithClients);
 
       // Calculate stats from approved reviews only
       if (reviewsData && reviewsData.length > 0) {

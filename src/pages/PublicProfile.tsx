@@ -1111,12 +1111,19 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 w-full">
                       {lawyer?.review_count > 0 && (
                         <div className="flex items-center w-full sm:w-auto">
-                          <Star className="h-5 w-5 text-yellow-500 mr-1 flex-shrink-0" />
                           <span className="font-semibold whitespace-nowrap">
                             {lawyer.rating ? Number(lawyer.rating).toFixed(1) : 'N/A'}
                           </span>
+                          <div className="flex items-center ml-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star 
+                                key={star} 
+                                className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" 
+                              />
+                            ))}
+                          </div>
                           <span className="text-gray-600 ml-1">
-                            ({lawyer.review_count} reseña{lawyer.review_count !== 1 ? 's' : ''})
+                            ({lawyer.review_count}{lawyer.review_count !== 1 ? 's' : ''})
                           </span>
                         </div>
                       )}

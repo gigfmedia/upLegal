@@ -91,7 +91,6 @@ export function LawyerCard({
     setImageLoaded(true);
     const needsZoomCondition = size.width < 100 || size.height < 100 || 
       Math.abs(size.width - size.height) > 20 || Math.min(size.width, size.height) < 80;
-    console.log(`Image loaded for ${lawyer.name}:`, size, 'needsZoom:', needsZoomCondition);
   };
   
   // Calculate if image needs zoom (smaller than container or not square enough)
@@ -287,7 +286,13 @@ export function LawyerCard({
                         className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/lawyer/${lawyer.id}#reviews-section`);
+                          const nameSlug = (lawyer.name || 'abogado')
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/^-+|-+$/g, '');
+                          navigate(`/abogado/${nameSlug}-${lawyer.id}#reviews-section`);
                         }}
                       >
                         <Star className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" />

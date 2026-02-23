@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ThumbsUp, MessageCircle } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle } from 'lucide-react';
 import { RatingStars } from './RatingStars';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
@@ -25,10 +25,17 @@ interface ReviewCardProps {
 
 export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
   const [isHelpful, setIsHelpful] = useState(false);
+  const [isNotHelpful, setIsNotHelpful] = useState(false);
   
   const handleHelpful = () => {
     setIsHelpful(!isHelpful);
+    setIsNotHelpful(false);
     onHelpful?.(review.id);
+  };
+
+  const handleNotHelpful = () => {
+    setIsNotHelpful(!isNotHelpful);
+    setIsHelpful(false);
   };
 
   const getInitials = (name: string) => {
@@ -50,16 +57,16 @@ export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
       <div className="flex items-start gap-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
-          {review.user.avatar_url ? (
+          {review.user?.avatar_url ? (
             <img
               src={review.user.avatar_url}
-              alt={review.user.display_name}
+              alt={review.user.display_name || 'Usuario'}
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (
             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
               <span className="text-sm font-medium text-blue-600">
-                {getInitials(review.user.display_name)}
+                {getInitials(review.user?.display_name || 'Usuario')}
               </span>
             </div>
           )}
@@ -71,7 +78,7 @@ export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h4 className="font-medium text-gray-900">
-                  {review.user.display_name}
+                  {review.user?.display_name || 'Usuario'}
                 </h4>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                   Verificado
@@ -88,7 +95,7 @@ export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
           </div>
 
           {review.comment && (
-            <p className="text-gray-700 mt-3 leading-relaxed">
+            <p className="text-gray-700 mt-3 leading-relaxed whitespace-pre-wrap">
               {review.comment}
             </p>
           )}
@@ -103,6 +110,15 @@ export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
             >
               <ThumbsUp className={`h-4 w-4 mr-1 ${isHelpful ? 'fill-current' : ''}`} />
               Útil {review.helpful_count ? `(${review.helpful_count})` : ''}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-gray-600 hover:text-gray-900 ${isNotHelpful ? 'text-red-600' : ''}`}
+              onClick={handleNotHelpful}
+            >
+              <ThumbsDown className={`h-4 w-4 mr-1 ${isNotHelpful ? 'fill-current' : ''}`} />
+              No útil
             </Button>
             {onReply && (
               <Button
