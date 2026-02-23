@@ -92,38 +92,6 @@ export default defineConfig(({ mode }) => {
     sourcemap: mode === 'development',
     minify: 'terser',
     chunkSizeWarningLimit: 1000,
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'vendor-react';
-            }
-            if (id.includes('supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('lucide')) {
-              return 'vendor-icons';
-            }
-            return 'vendor';
-          }
-          if (id.includes('alert')) {
-            return 'ui-alert';
-          }
-          if (id.includes('ui/')) {
-            return 'ui-components';
-          }
-          return 'app';
-        }
-      }
-    },
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true,
-    },
   },
   plugins: [react()],
   };

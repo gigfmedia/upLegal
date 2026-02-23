@@ -2,15 +2,6 @@
   command = "npm run build"
   publish = "dist"
 
-# Only deploy main branch to production
-[context.production]
-  command = "npm run build"
-  publish = "dist"
-
-[context.deploy-preview]
-  command = "npm run build"
-  publish = "dist"
-
 [dev]
   command = "npm run dev"
   port = 8080
@@ -35,22 +26,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Control cache headers for JS files
-[[headers]]
-  for = "/assets/*.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
-
-# Control cache headers for index files
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma = "no-cache"
-    Expires = "0"
 
 [build.environment]
   NODE_VERSION = "18.0.0"
