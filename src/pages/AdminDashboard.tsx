@@ -24,6 +24,7 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { PaymentsTable } from '@/components/admin/PaymentsTable';
 import { NotifyLawyersButton } from '@/components/admin/NotifyLawyersButton';
 import AnalyticsDashboard from './admin/analytics';
+import LawyerProfilesPage from './admin/lawyer-profiles';
 
 interface ErrorData {
   id: string;
@@ -174,6 +175,7 @@ const TABS = {
   USERS: 'users',
   PAYMENTS: 'payments',
   NOTIFICATIONS: 'notifications',
+  LAWYER_PROFILES: 'lawyer-profiles',
 } as const;
 
 type TabType = typeof TABS[keyof typeof TABS];
@@ -295,6 +297,16 @@ export default function AdminDashboard() {
                     <AlertCircle className="h-4 w-4" />
                     Notificaciones
                   </button>
+                  <button
+                    onClick={() => setActiveTab(TABS.LAWYER_PROFILES)}
+                    className={`${activeTab === TABS.LAWYER_PROFILES 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                  >
+                    <Users className="h-4 w-4" />
+                    Perfiles Abogados
+                  </button>
                 </nav>
               </div>
             </header>
@@ -363,6 +375,10 @@ export default function AdminDashboard() {
 
               {activeTab === TABS.ANALYTICS && (
                 <AnalyticsDashboard />
+              )}
+
+              {activeTab === TABS.LAWYER_PROFILES && (
+                <LawyerProfilesPage />
               )}
             </div>
           </div>
