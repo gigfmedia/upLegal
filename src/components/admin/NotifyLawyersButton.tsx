@@ -52,7 +52,7 @@ export function NotifyLawyersButton() {
         },
         body: JSON.stringify({ 
           testMode, 
-          testEmail: 'juan.fercommerce@gmail.com' 
+          testEmail: 'juan.fercocommerce@gmail.com' 
         }),
       });
 
