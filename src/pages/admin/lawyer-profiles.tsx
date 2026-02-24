@@ -300,9 +300,9 @@ export default function LawyerProfilesPage() {
           <CardContent>
             <div className="space-y-4">
               {lawyers.map((lawyer) => (
-                <div key={lawyer.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={lawyer.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg gap-4">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center">
                       {lawyer.avatar_url ? (
                         <img 
                           src={lawyer.avatar_url} 
@@ -313,26 +313,26 @@ export default function LawyerProfilesPage() {
                         <User className="w-6 h-6 text-gray-500" />
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-medium">
+                    <div className="min-w-0">
+                      <h3 className="font-medium truncate">
                         {lawyer.first_name} {lawyer.last_name}
                       </h3>
-                      <p className="text-sm text-gray-500">{lawyer.email}</p>
+                      <p className="text-sm text-gray-500 truncate">{lawyer.email}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4">
+                    <div className="text-right flex-shrink-0">
                       <div className={`text-sm font-medium ${getCompletionColor(lawyer.profile_completion || 0)}`}>
                         {lawyer.profile_completion || 0}%
                       </div>
                       <Progress 
                         value={lawyer.profile_completion || 0} 
-                        className="w-32 h-2"
+                        className="w-24 sm:w-32 h-2"
                       />
                     </div>
                     
-                    <Badge variant={getCompletionVariant(lawyer.profile_completion || 0)}>
+                    <Badge variant={getCompletionVariant(lawyer.profile_completion || 0)} className="whitespace-nowrap">
                       {lawyer.profile_completion && lawyer.profile_completion >= 80 
                         ? 'Completo' 
                         : lawyer.profile_completion && lawyer.profile_completion >= 60
@@ -347,6 +347,7 @@ export default function LawyerProfilesPage() {
                         variant="outline"
                         onClick={() => sendReminderEmail(lawyer)}
                         disabled={sendingEmails.includes(lawyer.id)}
+                        className="flex-shrink-0"
                       >
                         {sendingEmails.includes(lawyer.id) ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

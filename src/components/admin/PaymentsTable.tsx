@@ -38,7 +38,7 @@ export function PaymentsTable({ payments, loading }: PaymentsTableProps) {
   }
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
