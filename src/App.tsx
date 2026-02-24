@@ -54,6 +54,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminNotifications = lazy(() => import('./pages/admin/notifications'));
 const AdminReviewsPage = lazy(() => import('./pages/admin/reviews'));
 const AdminAnalyticsPage = lazy(() => import('./pages/admin/analytics'));
+const LawyerProfilesPage = lazy(() => import('./pages/admin/lawyer-profiles'));
 const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
 const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
@@ -368,6 +369,14 @@ const AppContent = () => {
                   element={
                     <RequireAdmin>
                       <AdminAnalyticsPage />
+                    </RequireAdmin>
+                  }
+                />
+                <Route
+                  path="lawyer-profiles"
+                  element={
+                    <RequireAdmin>
+                      <LawyerProfilesPage />
                     </RequireAdmin>
                   }
                 />

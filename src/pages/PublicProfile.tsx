@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from "@/components/ui/use-toast";
 import Header from '../components/Header';
@@ -149,6 +149,8 @@ console.log('Alert component loaded:', Alert);
 console.log('Bundle version: 2.0');
 // Force AuthContext to be included in bundle
 console.log('AuthContext loaded:', useAuth);
+// Force comprehensive bundle fixes - PREVIEW TESTING
+console.log('PREVIEW MODE: Testing bundle fixes for production');
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
