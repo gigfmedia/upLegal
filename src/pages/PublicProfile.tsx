@@ -16,6 +16,8 @@ import { ScheduleModal } from "@/components/ScheduleModal";
 import { ServicesSection } from "@/components/ServicesSection";
 import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection";
 import { AuthModal } from "@/components/AuthModal";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Star, 
   MapPin, 
@@ -50,9 +52,8 @@ import {
   CheckCircle,
   Heart,
   Gavel,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
-import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface PublicProfileProps {
   userData?: {
@@ -141,6 +142,15 @@ const createSlug = (str: string): string => {
     // Replace multiple consecutive hyphens with a single one
     .replace(/-+/g, '-');
 };
+
+// Force Alert to be included in bundle to prevent tree-shaking issues
+console.log('Alert component loaded:', Alert);
+// Force new bundle hash - v2.0
+console.log('Bundle version: 2.0');
+// Force AuthContext to be included in bundle
+console.log('AuthContext loaded:', useAuth);
+// Force comprehensive bundle fixes - PREVIEW TESTING
+console.log('PREVIEW MODE: Testing bundle fixes for production');
 
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();

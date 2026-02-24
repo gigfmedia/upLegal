@@ -86,13 +86,13 @@ export default defineConfig(({ mode }) => {
   preview: {
     port: 8080,
   },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: mode === 'development',
-    minify: 'terser',
-    chunkSizeWarningLimit: 1000,
-  },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      sourcemap: mode === 'development',
+      minify: 'terser',
+      chunkSizeWarningLimit: 1000,
+    },
   plugins: [react()],
   };
 });
