@@ -8,23 +8,18 @@ const isBrowser = typeof window !== 'undefined';
 // Environment variables are required
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
-  const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
-  logger.error('Supabase initialization failed', error, {
+// Validate environment variables (without throwing at module level to avoid crashing the entire app)
+if (!supabaseUrl || !supabaseAnonKey) {
+  logger.error('Supabase initialization failed: Missing required environment variables', new Error('Missing env vars'), {
     context: 'supabaseClient',
     hasSupabaseUrl: !!supabaseUrl,
     hasSupabaseKey: !!supabaseAnonKey,
-    hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
   });
-  throw error;
 }
 
 // Create a singleton instance of Supabase client
 let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
-let supabaseAdminClient: ReturnType<typeof createClient<Database>> | null = null;
 
 // Track initialization state
 let isInitialized = false;
@@ -49,15 +44,8 @@ export const getSupabaseClient = () => {
     return supabaseClient;
   }
 
-  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
-    const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
-    logger.error('Supabase initialization failed', error, {
-      context: 'supabaseClient',
-      hasSupabaseUrl: !!supabaseUrl,
-      hasSupabaseKey: !!supabaseAnonKey,
-      hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
-    });
-    throw error;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing required environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set');
   }
 
   const options = {
@@ -69,49 +57,20 @@ export const getSupabaseClient = () => {
   };
 
   supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, options);
-  
+
   isInitialized = true;
   return supabaseClient;
 };
 
 /**
- * Get Supabase client with service role (for admin operations)
+ * Get Supabase client for admin operations.
+ * NOTE: Admin operations that require bypassing RLS should be done via Supabase Edge Functions
+ * using the service role key server-side. Never expose the service role key in the frontend.
+ * This client uses the anon key but can be used with admin-level RLS policies.
  */
 export const getSupabaseAdminClient = () => {
-  if (isInitialized && supabaseAdminClient) {
-    return supabaseAdminClient;
-  }
-
-  if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
-    const error = new Error('Missing required environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY and VITE_SUPABASE_SERVICE_ROLE_KEY must be set');
-    logger.error('Supabase admin client initialization failed', error, {
-      context: 'supabaseAdminClient',
-      hasSupabaseUrl: !!supabaseUrl,
-      hasSupabaseKey: !!supabaseAnonKey,
-      hasSupabaseServiceRoleKey: !!supabaseServiceRoleKey,
-    });
-    throw error;
-  }
-
-  const options = {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-    // Bypass RLS for admin operations
-    global: {
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceRoleKey}`,
-        'X-Client-Info': 'uplegal-web/1.0-admin'
-      }
-    }
-  };
-
-  supabaseAdminClient = createClient<Database>(supabaseUrl, supabaseServiceRoleKey, options);
-  
-  isInitialized = true;
-  return supabaseAdminClient;
+  // Reuse the same client — admin operations requiring RLS bypass should go through Edge Functions
+  return getSupabaseClient();
 };
 
 // Initialize any necessary services
