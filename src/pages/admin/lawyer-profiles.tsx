@@ -41,13 +41,13 @@ export default function LawyerProfilesPage() {
 
   const calculateProfileCompletion = (lawyer: any): number => {
     const fields = {
-      bio: !!lawyer.bio && lawyer.bio.length > 10,
-      experience: !!lawyer.experience && lawyer.experience.length > 10,
-      education: !!lawyer.education && lawyer.education.length > 10,
+      bio: !!lawyer.bio && lawyer.bio.length > 20,
+      experience: (!!lawyer.experience_years && lawyer.experience_years > 0) || (!!lawyer.experience && lawyer.experience.length > 10),
+      education: (!!lawyer.education && lawyer.education.length > 5) || !!lawyer.university,
       specialties: !!lawyer.specialties && lawyer.specialties.length > 0,
       languages: !!lawyer.languages && lawyer.languages.length > 0,
-      availability: !!lawyer.availability,
-      pricing: !!lawyer.hourly_rate || !!lawyer.consultation_fee,
+      availability: !!lawyer.availability && (lawyer.availability !== '24/7' || !!lawyer.availability),
+      pricing: !!lawyer.hourly_rate_clp || !!lawyer.contact_fee_clp || !!lawyer.hourly_rate || !!lawyer.consultation_fee,
       location: !!lawyer.location || !!lawyer.city,
     };
 
@@ -122,7 +122,7 @@ export default function LawyerProfilesPage() {
 
   const sendBulkReminders = async () => {
     const incompleteLawyers = lawyers.filter(lawyer => 
-      lawyer.profile_completion && lawyer.profile_completion < 60
+      lawyer.profile_completion !== undefined && lawyer.profile_completion < 60
     );
 
     if (incompleteLawyers.length === 0) {
@@ -148,12 +148,22 @@ export default function LawyerProfilesPage() {
         })
       );
 
-      await Promise.all(emailPromises);
+      const results = await Promise.all(emailPromises);
+      const failures = results.filter(r => r.error);
 
-      toast({
-        title: 'Correos enviados',
-        description: `Se enviaron ${incompleteLawyers.length} recordatorios de perfil`,
-      });
+      if (failures.length > 0) {
+        console.error('Some emails failed to send:', failures);
+        toast({
+          title: 'Envío parcial',
+          description: `Se enviaron ${incompleteLawyers.length - failures.length} recordatorios, pero ${failures.length} fallaron.`,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Correos enviados',
+          description: `Se enviaron ${incompleteLawyers.length} recordatorios de perfil correctamente`,
+        });
+      }
     } catch (error) {
       console.error('Error sending bulk reminders:', error);
       toast({
