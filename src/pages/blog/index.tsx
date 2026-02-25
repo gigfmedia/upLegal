@@ -25,6 +25,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "derecho-de-familia-chile-2026",
+      title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
+      excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. En esta Guía 2026, revisamos qué abarca, cuáles son los trámites más comunes, cómo funcionan los juicios y qué puedes hacer en caso de conflicto.",
+      category: "Derecho de Familia",
+      author: "LegalUp",
+      date: "25 de Febrero, 2026",
+      readTime: "15 min",
+      image: "/images/derecho-de-familia-chile-2026.jpg",
+      featured: true
+    },
+    {
       id: "como-calcular-tu-finiquito-chile-2026",
       title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
       excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
@@ -33,7 +44,7 @@ const BlogPage = () => {
       date: "18 de Febrero, 2026",
       readTime: "12 min",
       image: "/images/finiquito-chile-2026.jpg",
-      featured: true
+      featured: false
     },
     {
       id: "me-subieron-el-arriendo-que-hago-2026",
@@ -209,7 +220,7 @@ const BlogPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">{category}</h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" ? "1 artículo" : "Próximamente"}
+                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" || category === "Derecho de Familia" ? "1 artículo" : "Próximamente"}
                       </p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
