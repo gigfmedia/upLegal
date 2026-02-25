@@ -36,7 +36,7 @@ export interface Service {
   updated_at?: string;
 }
 
-interface ProfileFormData {
+export interface ProfileFormData {
   first_name: string;
   last_name: string;
   bio: string;
@@ -57,6 +57,8 @@ interface ProfileFormData {
   rut: string;
   pjud_verified: boolean;
   avatar_url?: string;
+  specialization?: string;
+  zoom_link?: string;
 };
 
 export default function LawyerProfilePage() {
@@ -975,13 +977,14 @@ export default function LawyerProfilePage() {
                                 if (rutError) setRutError(null);
                                 
                                 // Adjust cursor position if we added formatting characters
-                                if (key && /^[0-9kK]$/.test(key)) {
-                                  // If we're adding a digit, move cursor forward if we added a dot or dash
-                                  if (formattedRut.length > inputValue.length) {
-                                    // Count how many formatting characters we've added before the cursor
-                                    const addedFormatting = formattedRut.slice(0, cursorPosition).match(/[.-]/g)?.length || 0;
-                                    newPosition = cursorPosition + addedFormatting;
-                                  }
+                                const input = e.target as HTMLInputElement;
+                                const cursorPosition = input.selectionStart || 0;
+                                let newPosition = cursorPosition;
+
+                                if (formattedRut.length > inputValue.length) {
+                                  // Count how many formatting characters we've added before the cursor
+                                  const addedFormatting = formattedRut.slice(0, cursorPosition).match(/[.-]/g)?.length || 0;
+                                  newPosition = cursorPosition + addedFormatting;
                                 }
                                 
                                 // Ensure cursor stays within bounds

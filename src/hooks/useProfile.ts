@@ -31,34 +31,39 @@ export interface Profile {
   contact_fee_clp: number | null;
   
   // Payment fields
-  payment_method: string | null;
-  payment_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  payment_method?: string | null;
+  payment_status?: 'unverified' | 'pending' | 'verified' | 'rejected' | null;
   
   // Profile metadata
-  response_time: string | null;
-  satisfaction_rate: number | null;
-  languages: string[] | null;
-  availability: string | null;
-  verified: boolean;
-  available_for_hire: boolean;
-  bar_association_number: string | null;
-  zoom_link: string | null;
-  education: Record<string, unknown> | null;
-  certifications: Record<string, unknown> | null;
-  experience_years: number | null;
-  rating: number;
-  review_count: number;
-  has_used_free_consultation: boolean;
+  response_time?: string | null;
+  satisfaction_rate?: number | null;
+  languages?: string[] | null;
+  availability?: string | null;
+  verified?: boolean;
+  available_for_hire?: boolean;
+  bar_association_number?: string | null;
+  zoom_link?: string | null;
+  education?: string | Record<string, unknown> | null;
+  university?: string | null;
+  study_start_year?: number | string | null;
+  study_end_year?: number | string | null;
+  certifications?: string | Record<string, unknown> | null;
+  rut?: string | null;
+  pjud_verified?: boolean;
+  experience_years?: number | null;
+  rating?: number;
+  review_count?: number;
+  has_used_free_consultation?: boolean;
   
   // Settings
-  visibility_settings: {
+  visibility_settings?: {
     profile_visible: boolean;
     show_online_status: boolean;
     allow_direct_messages: boolean;
-  };
+  } | null;
   
   // Verification
-  verification_documents: {
+  verification_documents?: {
     id_verification?: {
       status: 'pending' | 'approved' | 'rejected' | 'not_uploaded';
       rejection_reason?: string | null;
@@ -224,34 +229,39 @@ export function useProfile(userId?: string) {
         // Payment fields
         
         // Profile metadata
-        response_time: data.response_time || null,
-        satisfaction_rate: data.satisfaction_rate || null,
-        languages: data.languages || null,
-        availability: data.availability || null,
-        verified: data.verified || false,
-        available_for_hire: data.available_for_hire || false,
-        bar_association_number: data.bar_association_number || null,
-        zoom_link: data.zoom_link || null,
-        education: data.education || null,
-        certifications: data.certifications || null,
-        experience_years: data.experience_years || null,
-        rating: data.rating || 0,
-        review_count: data.review_count || 0,
-        has_used_free_consultation: data.has_used_free_consultation || false,
+        response_time: data.response_time as string || null,
+        satisfaction_rate: data.satisfaction_rate as number || null,
+        languages: (data.languages as string[]) || [],
+        availability: data.availability as string || null,
+        verified: !!data.verified,
+        available_for_hire: !!data.available_for_hire,
+        bar_association_number: data.bar_association_number as string || null,
+        zoom_link: data.zoom_link as string || null,
+        education: data.education as string | Record<string, unknown> || null,
+        university: data.university as string || null,
+        study_start_year: data.study_start_year as number | string || null,
+        study_end_year: data.study_end_year as number | string || null,
+        certifications: data.certifications as string | Record<string, unknown> || null,
+        rut: data.rut as string || null,
+        pjud_verified: !!data.pjud_verified,
+        experience_years: data.experience_years as number || null,
+        rating: data.rating as number || 0,
+        review_count: data.review_count as number || 0,
+        has_used_free_consultation: !!data.has_used_free_consultation,
         
         // Settings
-        visibility_settings: data.visibility_settings || {
+        visibility_settings: (data.visibility_settings as any) || {
           profile_visible: true,
           show_online_status: true,
           allow_direct_messages: true
         },
         
         // Verification
-        verification_documents: data.verification_documents || null,
+        verification_documents: (data.verification_documents as any) || null,
         
         // Timestamps
-        created_at: data.created_at || new Date().toISOString(),
-        updated_at: data.updated_at || new Date().toISOString()
+        created_at: data.created_at as string || new Date().toISOString(),
+        updated_at: data.updated_at as string || new Date().toISOString()
       };
 
       setProfile(profileData);
@@ -320,18 +330,23 @@ export function useProfile(userId?: string) {
         updated_at: data.updated_at || new Date().toISOString(),
         response_time: null,
         satisfaction_rate: null,
-        languages: data.languages || [],
-        availability: data.availability || null,
-        verified: false,
-        available_for_hire: false,
-        bar_number: data.bar_association_number || null,
-        zoom_link: data.zoom_link || null,
-        education: data.education || null,
-        certifications: data.certifications || null,
-        experience_years: data.experience_years || null,
-        rating: data.rating || 0,
-        review_count: data.review_count || 0,
-        has_used_free_consultation: data.has_used_free_consultation || false
+        languages: (data.languages as string[]) || [],
+        availability: data.availability as string || null,
+        verified: !!data.verified,
+        available_for_hire: !!data.available_for_hire,
+        bar_association_number: data.bar_association_number as string || null,
+        zoom_link: data.zoom_link as string || null,
+        education: data.education as string | Record<string, unknown> || null,
+        university: data.university as string || null,
+        study_start_year: data.study_start_year as number | string || null,
+        study_end_year: data.study_end_year as number | string || null,
+        certifications: data.certifications as string | Record<string, unknown> || null,
+        rut: data.rut as string || null,
+        pjud_verified: !!data.pjud_verified,
+        experience_years: data.experience_years as number || null,
+        rating: data.rating as number || 0,
+        review_count: data.review_count as number || 0,
+        has_used_free_consultation: !!data.has_used_free_consultation
       };
 
       setProfile(updatedProfile);

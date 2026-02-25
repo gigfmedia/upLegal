@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Header from '@/components/Header';
+import { calculateProfileCompletion } from '@/utils/profileCompletion';
 
 interface LawyerProfile {
   id: string;
@@ -41,22 +42,6 @@ export default function LawyerProfilesPage() {
   const [testMode, setTestMode] = useState(true);
   const { toast } = useToast();
 
-  const calculateProfileCompletion = (lawyer: any): number => {
-    const fields = {
-      bio: !!lawyer.bio && lawyer.bio.trim().length >= 100,
-      experience: !!lawyer.experience_years && lawyer.experience_years > 0,
-      education: !!lawyer.education && !!lawyer.university,
-      specialties: !!lawyer.specialties && (Array.isArray(lawyer.specialties) ? lawyer.specialties.length > 0 : !!lawyer.specialties),
-      languages: !!lawyer.languages && (Array.isArray(lawyer.languages) ? lawyer.languages.length > 0 : !!lawyer.languages),
-      pricing: !!lawyer.hourly_rate_clp && lawyer.hourly_rate_clp > 0,
-      location: !!lawyer.location || !!lawyer.city,
-      services: (lawyer.services_count || 0) > 0,
-    };
-
-    const completedFields = Object.values(fields).filter(Boolean).length;
-    const totalFields = Object.keys(fields).length;
-    return Math.round((completedFields / totalFields) * 100);
-  };
 
   const loadLawyers = useCallback(async () => {
     try {
@@ -91,7 +76,10 @@ export default function LawyerProfilesPage() {
         return {
           ...lawyer,
           services_count: servicesCount,
-          profile_completion: calculateProfileCompletion(lawyerWithServices),
+          profile_completion: calculateProfileCompletion({
+            ...lawyer,
+            servicesCount: servicesCount
+          }),
           last_profile_update: lawyer.updated_at || lawyer.created_at,
         };
       });

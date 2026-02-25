@@ -28,7 +28,7 @@ interface DatabaseProfile extends Omit<Profile, 'id' | 'user_id' | 'created_at' 
   updated_at: string;
 }
 
-interface Profile {
+export interface Profile {
   id: string;
   user_id: string;
   first_name: string | null;
