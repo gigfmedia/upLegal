@@ -43,14 +43,14 @@ export default function LawyerProfilesPage() {
 
   const calculateProfileCompletion = (lawyer: any): number => {
     const fields = {
-      bio: !!lawyer.bio && lawyer.bio.length > 20,
-      experience: (!!lawyer.experience_years && lawyer.experience_years > 0) || (!!lawyer.experience && lawyer.experience.length > 10),
-      education: (!!lawyer.education && lawyer.education.length > 5) || !!lawyer.university,
-      specialties: !!lawyer.specialties && lawyer.specialties.length > 0,
-      languages: !!lawyer.languages && lawyer.languages.length > 0,
-      availability: !!lawyer.availability && (lawyer.availability !== '24/7' || !!lawyer.availability),
-      pricing: !!lawyer.hourly_rate_clp || !!lawyer.contact_fee_clp || !!lawyer.hourly_rate || !!lawyer.consultation_fee,
+      bio: !!lawyer.bio && lawyer.bio.trim().length >= 100,
+      experience: !!lawyer.experience_years && lawyer.experience_years > 0,
+      education: !!lawyer.education && !!lawyer.university,
+      specialties: !!lawyer.specialties && (Array.isArray(lawyer.specialties) ? lawyer.specialties.length > 0 : !!lawyer.specialties),
+      languages: !!lawyer.languages && (Array.isArray(lawyer.languages) ? lawyer.languages.length > 0 : !!lawyer.languages),
+      pricing: !!lawyer.hourly_rate_clp && lawyer.hourly_rate_clp > 0,
       location: !!lawyer.location || !!lawyer.city,
+      services: (lawyer.services_count || 0) > 0,
     };
 
     const completedFields = Object.values(fields).filter(Boolean).length;
@@ -63,19 +63,38 @@ export default function LawyerProfilesPage() {
       setLoading(true);
       const supabase = getSupabaseAdminClient();
       
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'lawyer')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (profilesError) throw profilesError;
 
-      const lawyersWithCompletion = (data || []).map(lawyer => ({
-        ...lawyer,
-        profile_completion: calculateProfileCompletion(lawyer),
-        last_profile_update: lawyer.updated_at || lawyer.created_at,
-      }));
+      // Fetch service counts to include in completion logic
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('lawyer_services')
+        .select('lawyer_user_id');
+
+      if (servicesError) {
+        console.error('Error fetching services for completion check:', servicesError);
+      }
+
+      const serviceCounts = (servicesData || []).reduce((acc: Record<string, number>, s) => {
+        acc[s.lawyer_user_id] = (acc[s.lawyer_user_id] || 0) + 1;
+        return acc;
+      }, {});
+
+      const lawyersWithCompletion = (profilesData || []).map(lawyer => {
+        const servicesCount = serviceCounts[lawyer.id] || 0;
+        const lawyerWithServices = { ...lawyer, services_count: servicesCount };
+        return {
+          ...lawyer,
+          services_count: servicesCount,
+          profile_completion: calculateProfileCompletion(lawyerWithServices),
+          last_profile_update: lawyer.updated_at || lawyer.created_at,
+        };
+      });
 
       setLawyers(lawyersWithCompletion);
     } catch (error) {
