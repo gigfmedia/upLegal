@@ -167,7 +167,7 @@ const BlogArticle = () => {
                   </ul>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
                     <p className="text-sm text-blue-800">
-                      <strong>¿Cuánto se paga?</strong> Depende del ingreso del demandado y de las necesidades del menor. Los tribunales suelen usar el estándar de gastos básicos y comprobables.
+                      <strong>¿Cuánto se paga?</strong> Depende del ingreso del demandado y de las necesidades del niño, niña o adolescente. Los tribunales suelen usar el estándar de gastos básicos y comprobables.
                     </p>
                   </div>
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-3">
@@ -186,7 +186,7 @@ const BlogArticle = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Cuidado personal (tuición)</h3>
                   <p className="text-gray-600 mb-3">
-                    Determina con quién vive el menor la mayor parte del tiempo. En Chile existen dos modalidades:
+                    Determina con quién vive el niño, niña o adolescente la mayor parte del tiempo. En Chile existen dos modalidades:
                   </p>
                   <ul className="space-y-2 text-gray-600">
                     <li>• Cuidado personal exclusivo</li>
@@ -344,7 +344,7 @@ const BlogArticle = () => {
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>Certificado de nacimiento del menor</span>
+                <span>Certificado de nacimiento del niño, niña o adolescente</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
@@ -376,7 +376,7 @@ const BlogArticle = () => {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold mb-2">¿Puedo pedir aumento de pensión de alimentos?</h4>
-                <p className="text-gray-600 text-sm">Sí, si han cambiado las necesidades del menor o ingresos del demandado.</p>
+                <p className="text-gray-600 text-sm">Sí, si han cambiado las necesidades del niño, niña o adolescente o ingresos del demandado.</p>
               </div>
               
               <div className="bg-gray-50 rounded-lg p-4">
@@ -386,7 +386,7 @@ const BlogArticle = () => {
               
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold mb-2">¿Puedo cambiar el cuidado personal a compartido?</h4>
-                <p className="text-gray-600 text-sm">Sí, si existen condiciones adecuadas y mejora el bienestar del menor.</p>
+                <p className="text-gray-600 text-sm">Sí, si existen condiciones adecuadas y mejora el bienestar del niño, niña o adolescente.</p>
               </div>
               
               <div className="bg-gray-50 rounded-lg p-4">
