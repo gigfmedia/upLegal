@@ -121,24 +121,35 @@ const Footer = () => {
       <footer className="bg-muted border-t border-border relative z-10">
         <div className="w-full max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
+
+            {/* Copy */}
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span>© 2026 LegalUp. Todos los derechos reservados.</span>
             </div>
-            
+
+            {/* Middle links */}
             <div className="flex items-center space-x-6 text-sm">
-              <a href="/search" className="text-muted-foreground hover:text-foreground transition-colors">Buscar abogados online</a>
+              <a 
+                href="/search" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Buscar abogados
+              </a>
+
               <Link 
                 to="/terminos" 
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 Términos de Servicio
               </Link>
+
               <Link 
                 to="/privacidad" 
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 Política de Privacidad
               </Link>
+
               <a 
                 href="/contacto" 
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -146,10 +157,37 @@ const Footer = () => {
                 Contacto
               </a>
             </div>
-            
-            <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-              <span>Base in Chile</span>
+
+            {/* Redes sociales */}
+            <div className="flex items-center space-x-4">
+              <a 
+                href="https://www.instagram.com/legalupcl" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="Instagram LegalUp"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg fill="currentColor" width="20px" height="20px" viewBox="0 0 24 24"><title>Instagram icon</title>
+                  <path d="M17.34,5.46h0a1.2,1.2,0,1,0,1.2,1.2A1.2,1.2,0,0,0,17.34,5.46Zm4.6,2.42a7.59,7.59,0,0,0-.46-2.43,4.94,4.94,0,0,0-1.16-1.77,4.7,4.7,0,0,0-1.77-1.15,7.3,7.3,0,0,0-2.43-.47C15.06,2,14.72,2,12,2s-3.06,0-4.12.06a7.3,7.3,0,0,0-2.43.47A4.78,4.78,0,0,0,3.68,3.68,4.7,4.7,0,0,0,2.53,5.45a7.3,7.3,0,0,0-.47,2.43C2,8.94,2,9.28,2,12s0,3.06.06,4.12a7.3,7.3,0,0,0,.47,2.43,4.7,4.7,0,0,0,1.15,1.77,4.78,4.78,0,0,0,1.77,1.15,7.3,7.3,0,0,0,2.43.47C8.94,22,9.28,22,12,22s3.06,0,4.12-.06a7.3,7.3,0,0,0,2.43-.47,4.7,4.7,0,0,0,1.77-1.15,4.85,4.85,0,0,0,1.16-1.77,7.59,7.59,0,0,0,.46-2.43c0-1.06.06-1.4.06-4.12S22,8.94,21.94,7.88ZM20.14,16a5.61,5.61,0,0,1-.34,1.86,3.06,3.06,0,0,1-.75,1.15,3.19,3.19,0,0,1-1.15.75,5.61,5.61,0,0,1-1.86.34c-1,.05-1.37.06-4,.06s-3,0-4-.06A5.73,5.73,0,0,1,6.1,19.8,3.27,3.27,0,0,1,5,19.05a3,3,0,0,1-.74-1.15A5.54,5.54,0,0,1,3.86,16c0-1-.06-1.37-.06-4s0-3,.06-4A5.54,5.54,0,0,1,4.21,6.1,3,3,0,0,1,5,5,3.14,3.14,0,0,1,6.1,4.2,5.73,5.73,0,0,1,8,3.86c1,0,1.37-.06,4-.06s3,0,4,.06a5.61,5.61,0,0,1,1.86.34A3.06,3.06,0,0,1,19.05,5,3.06,3.06,0,0,1,19.8,6.1,5.61,5.61,0,0,1,20.14,8c.05,1,.06,1.37.06,4S20.19,15,20.14,16ZM12,6.87A5.13,5.13,0,1,0,17.14,12,5.12,5.12,0,0,0,12,6.87Zm0,8.46A3.33,3.33,0,1,1,15.33,12,3.33,3.33,0,0,1,12,15.33Z"/></svg>
+              </a>
+
+              <a 
+                href="https://www.tiktok.com/@legalupcl" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                aria-label="Tiktok LegalUp"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <svg 
+                  width="16px" 
+                  height="16px"
+                  fill="currentColor"
+                  viewBox="0 0 24 24" 
+                ><title>TikTok icon</title>
+                  <path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+              </a>
             </div>
+
           </div>
         </div>
       </footer>

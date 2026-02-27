@@ -254,7 +254,9 @@ export function LawyerCard({
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {lawyer.availability?.availableToday && (
+                  {lawyer.availability?.availableToday && 
+                   lawyer.consultationPrice > 0 && 
+                   lawyer.hourlyRate > 0 && (
                     <Badge variant="secondary" className="w-fit flex items-center gap-1.5 bg-green-100 text-green-800 hover:bg-green-200 border-none">
                       <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
                       Disponible hoy

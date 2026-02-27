@@ -80,15 +80,15 @@ export function PaymentsTable({ payments, loading }: PaymentsTableProps) {
                 </div>
               </TableCell>
               <TableCell>
-                <div className="font-medium">{payment.service?.title || 'Servicio'}</div>
+                <div className="font-medium">{payment.service?.title || payment.service_description || 'Servicio'}</div>
                 <div className="text-xs text-gray-500">
                   ${payment.service?.price?.toLocaleString('es-CL') || '0'}
                 </div>
               </TableCell>
               <TableCell className="text-right">
-                <div className="font-medium">${payment.amount.toLocaleString('es-CL')}</div>
+                <div className="font-medium">${payment.total_amount?.toLocaleString('es-CL') || payment.amount?.toLocaleString('es-CL') || '0'}</div>
                 <div className="text-xs text-gray-500">
-                  Comisión: ${(payment.platform_fee || 0).toLocaleString('es-CL')}
+                  Comisión: ${Math.round((payment.total_amount || payment.amount || 0) * 0.2).toLocaleString('es-CL')}
                 </div>
               </TableCell>
               <TableCell>

@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { usePlatformSettings } from '@/hooks/usePlatformSettings';
 import { fetchPayoutLogs, triggerManualPayout } from '@/services/payoutLogs';
-import { getAllPayments } from '@/services/paymentService';
+import { getAllPaymentsAndAppointments } from '@/services/paymentService';
 import Header from '@/components/Header';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import { UserManagement } from '@/components/admin/UserManagement';
@@ -213,7 +213,10 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const data = await getAllPayments();
+      console.log('Fetching payments and appointments...');
+      const data = await getAllPaymentsAndAppointments();
+      console.log('Payments and appointments data:', data);
+      console.log('Payments and appointments count:', data.length);
       return data;
     },
     enabled: activeTab === TABS.PAYMENTS,
