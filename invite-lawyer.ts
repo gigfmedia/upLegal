@@ -25,43 +25,43 @@ function generatePassword(length = 12): string {
   return password;
 }
 
-// Función para invitar abogado
-async function inviteLawyer(email: string, lawyerName?: string) {
+// Función para invitar usuario (lawyer o client)
+async function inviteUser(email: string, role: 'lawyer' | 'client', userName?: string) {
   try {
-    console.log(`📧 Enviando invitación a: ${email}`);
+    console.log(`📧 Enviando invitación a: ${email} (rol: ${role})`);
     
     // Generar contraseña genérica por si acaso
     const genericPassword = generatePassword();
     console.log(`🔑 Contraseña generada: ${genericPassword}`);
     
-    // Crear invitación con rol lawyer en user_metadata
+    // Crear invitación con rol especificado en user_metadata
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(
       email,
       {
         data: {
-          role: 'lawyer',
-          full_name: lawyerName || '',
+          role: role,
+          full_name: userName || '',
           invited_at: new Date().toISOString()
         }
       }
     );
 
     if (error) {
-      console.error('❌ Error al invitar abogado:', error);
+      console.error(`❌ Error al invitar ${role}:`, error);
       throw error;
     }
 
     console.log('✅ Invitación enviada exitosamente:', data);
     console.log(`📋 Resumen:`);
     console.log(`   - Email: ${email}`);
-    console.log(`   - Rol: lawyer`);
+    console.log(`   - Rol: ${role}`);
     console.log(`   - Contraseña temporal: ${genericPassword}`);
     console.log(`   - Estado: Pendiente de aceptación`);
     
     return {
       success: true,
       email,
-      role: 'lawyer',
+      role,
       temporaryPassword: genericPassword,
       inviteData: data
     };
@@ -76,6 +76,15 @@ async function inviteLawyer(email: string, lawyerName?: string) {
   }
 }
 
+// Funciones específicas para mantener compatibilidad
+async function inviteLawyer(email: string, lawyerName?: string) {
+  return inviteUser(email, 'lawyer', lawyerName);
+}
+
+async function inviteClient(email: string, clientName?: string) {
+  return inviteUser(email, 'client', clientName);
+}
+
 // Ejemplos de uso
 async function main() {
   // Ejemplo 1: Invitar a un abogado específico
@@ -87,19 +96,28 @@ async function main() {
     console.log('💥 Falló la invitación:', result1.error);
   }
 
-  // Ejemplo 2: Invitar a múltiples abogados
-  const lawyersToInvite = [
-    { email: 'maria.gonzalez@legal.cl', name: 'María González' },
-    { email: 'carlos.rodriguez@abogados.cl', name: 'Carlos Rodríguez' },
-    { email: 'ana.martinez@legal.cl', name: 'Ana Martínez' }
+  // Ejemplo 2: Invitar a un cliente específico
+  const result2 = await inviteClient('nuevo.cliente@ejemplo.com', 'María González');
+  
+  if (result2.success) {
+    console.log('🎉 Cliente invitado correctamente');
+  } else {
+    console.log('💥 Falló la invitación:', result2.error);
+  }
+
+  // Ejemplo 3: Invitar a múltiples usuarios (mix)
+  const usersToInvite = [
+    { email: 'maria.gonzalez@legal.cl', name: 'María González', role: 'client' as const },
+    { email: 'carlos.rodriguez@abogados.cl', name: 'Carlos Rodríguez', role: 'lawyer' as const },
+    { email: 'ana.martinez@legal.cl', name: 'Ana Martínez', role: 'client' as const }
   ];
 
-  console.log('\n📋 Invitando múltiples abogados...');
-  for (const lawyer of lawyersToInvite) {
-    const result = await inviteLawyer(lawyer.email, lawyer.name);
-    console.log(`   ${lawyer.email}: ${result.success ? '✅' : '❌'}`);
+  console.log('\n📋 Invitando múltiples usuarios...');
+  for (const user of usersToInvite) {
+    const result = await inviteUser(user.email, user.role, user.name);
+    console.log(`   ${user.email} (${user.role}): ${result.success ? '✅' : '❌'}`);
   }
 }
 
 // Exportar funciones para uso en otros módulos
-export { inviteLawyer, generatePassword };
+export { inviteLawyer, inviteClient, inviteUser, generatePassword };
