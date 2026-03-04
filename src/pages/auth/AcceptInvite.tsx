@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,8 @@ export default function AcceptInvite() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<'client' | 'lawyer'>('client');
 
@@ -50,7 +52,18 @@ export default function AcceptInvite() {
         setEmail(session.user.email || inviteEmail || '');
         const metadataRole = (session.user.user_metadata?.role as 'client' | 'lawyer' | undefined) || undefined;
         const inviteRoleParam = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
-        setRole(inviteRoleParam === 'lawyer' ? 'lawyer' : inviteRoleParam === 'client' ? 'client' : metadataRole ?? 'client');
+        
+        // Debug logging
+        console.log('🔍 Role Detection Debug:');
+        console.log('  - metadataRole:', metadataRole);
+        console.log('  - inviteRoleParam:', inviteRoleParam);
+        console.log('  - user_metadata:', session.user.user_metadata);
+        
+        // Priorizar el rol del user_metadata (viene de la invitación)
+        // Si no hay rol en metadata, usar el parámetro o default a client
+        const finalRole = metadataRole || inviteRoleParam || 'client';
+        console.log('  - finalRole:', finalRole);
+        setRole(finalRole as 'client' | 'lawyer');
 
         if (inviteType !== 'invite') {
           setStatus('error');
@@ -226,24 +239,56 @@ export default function AcceptInvite() {
 
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Contraseña</Label>
-              <Input
-                type="password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Mínimo 8 caracteres"
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Confirmar contraseña</Label>
-              <Input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                placeholder="Repite la contraseña"
-              />
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Repite la contraseña"
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-500" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             {error && (
