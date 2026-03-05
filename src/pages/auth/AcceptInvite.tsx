@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Check, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Header from '@/components/Header';
 
 type InviteStatus = 'checking' | 'needs_password' | 'success' | 'error';
@@ -24,6 +25,27 @@ export default function AcceptInvite() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<'client' | 'lawyer'>('client');
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSymbol: false
+  });
+
+  // Check password strength and update requirements
+  const checkPasswordStrength = (password: string) => {
+    setPasswordRequirements({
+      length: password.length >= 8 && password.length <= 18,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+/.test(password),
+    });
+  };
+
+  const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
 
   const hashParams = useMemo(() => {
     if (typeof window === 'undefined') return new URLSearchParams();
@@ -52,13 +74,6 @@ export default function AcceptInvite() {
         setEmail(session.user.email || inviteEmail || '');
         const metadataRole = (session.user.user_metadata?.role as 'client' | 'lawyer' | undefined) || undefined;
         const inviteRoleParam = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
-        
-        // Debug logging
-        console.log('🔍 Role Detection Debug:');
-        console.log('  - metadataRole:', metadataRole);
-        console.log('  - inviteRoleParam:', inviteRoleParam);
-        console.log('  - user_metadata:', session.user.user_metadata);
-        
         // Priorizar el rol del user_metadata (viene de la invitación)
         // Si no hay rol en metadata, usar el parámetro o default a client
         const finalRole = metadataRole || inviteRoleParam || 'client';
@@ -88,6 +103,11 @@ export default function AcceptInvite() {
 
     if (password.length < 8) {
       setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setError('La contraseña no cumple con todos los requisitos de seguridad.');
       return;
     }
 
@@ -239,29 +259,83 @@ export default function AcceptInvite() {
 
             <div className="space-y-2">
               <Label className="text-sm font-medium text-gray-700">Contraseña</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  className="pr-10"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-500" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-500" />
-                  )}
-                </Button>
-              </div>
+              <Tooltip open={isPasswordFocused}>
+                <TooltipTrigger asChild>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        checkPasswordStrength(event.target.value);
+                      }}
+                      onFocus={() => setIsPasswordFocused(true)}
+                      onBlur={() => setIsPasswordFocused(false)}
+                      placeholder="Mínimo 8 caracteres"
+                      className="pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="w-64 p-4 space-y-2 text-sm" side="bottom" align="start">
+                  <p className="font-medium mb-2">La contraseña debe contener:</p>
+                  <ul className="space-y-1">
+                    <li className="flex items-center">
+                      {passwordRequirements.length ? (
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                      )}
+                      <span>8-18 caracteres</span>
+                    </li>
+                    <li className="flex items-center">
+                      {passwordRequirements.hasUppercase ? (
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                      )}
+                      <span>1 mayúscula</span>
+                    </li>
+                    <li className="flex items-center">
+                      {passwordRequirements.hasLowercase ? (
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                      )}
+                      <span>1 minúscula</span>
+                    </li>
+                    <li className="flex items-center">
+                      {passwordRequirements.hasNumber ? (
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                      )}
+                      <span>1 número</span>
+                    </li>
+                    <li className="flex items-center">
+                      {passwordRequirements.hasSymbol ? (
+                        <Check className="h-4 w-4 text-green-500 mr-2" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500 mr-2" />
+                      )}
+                      <span>1 símbolo (!@#$%^&*)</span>
+                    </li>
+                  </ul>
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="space-y-2">
