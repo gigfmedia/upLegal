@@ -59,6 +59,7 @@ const TestAnalytics = lazy(() => import('./pages/TestAnalytics'));
 const EmailVerification = lazy(() => import('./pages/auth/EmailVerification'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const ProfileSetupPage = lazy(() => import('./pages/ProfileSetupPage'));
+const LawyerOnboardingPage = lazy(() => import('./pages/LawyerOnboardingPage'));
 const ServicesPage = lazy(() => import('./pages/lawyer/ServicesPage'));
 const ConsultasPage = lazy(() => import('./pages/lawyer/ConsultasPage'));
 const CitasPage = lazy(() => import('./pages/lawyer/CitasPage'));
@@ -332,6 +333,9 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
               </Route>
+
+              {/* Lawyer onboarding wizard — standalone, no sidebar */}
+              <Route path="/lawyer/onboarding" element={<LawyerOnboardingPage />} />
 
               <Route path="/admin">
                 <Route

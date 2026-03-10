@@ -207,6 +207,19 @@ export function useProfile(userId?: string) {
       }
 
       // Convert the database profile to our Profile type
+      // Helper to safely parse JSON strings that might be returned from Supabase
+      const safeParseJsonString = (val: any) => {
+        if (typeof val === 'string') {
+          try {
+            const parsed = JSON.parse(val);
+            if (typeof parsed === 'string') return parsed;
+          } catch {
+            // Not a JSON string or not a string literal
+          }
+        }
+        return val;
+      };
+
       // Convert the database profile to our Profile type with proper type safety
       const profileData: Profile = {
         ...data,
@@ -237,11 +250,11 @@ export function useProfile(userId?: string) {
         available_for_hire: !!data.available_for_hire,
         bar_association_number: data.bar_association_number as string || null,
         zoom_link: data.zoom_link as string || null,
-        education: data.education as string | Record<string, unknown> || null,
+        education: safeParseJsonString(data.education) as string | Record<string, unknown> || null,
         university: data.university as string || null,
         study_start_year: data.study_start_year as number | string || null,
         study_end_year: data.study_end_year as number | string || null,
-        certifications: data.certifications as string | Record<string, unknown> || null,
+        certifications: safeParseJsonString(data.certifications) as string | Record<string, unknown> || null,
         rut: data.rut as string || null,
         pjud_verified: !!data.pjud_verified,
         experience_years: data.experience_years as number || null,
