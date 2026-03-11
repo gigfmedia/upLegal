@@ -199,7 +199,7 @@ const SearchResults = () => {
 
     
     // Trigger search using URL-derived values (avoid stale state + fixes hook deps)
-    const shouldSearch = Boolean(
+    const hasSearchFilters = Boolean(
       urlQuery ||
         (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') ||
         urlCategory ||
@@ -208,7 +208,7 @@ const SearchResults = () => {
         urlMinExperience > 0
     );
 
-    if (shouldSearch) {
+    if (hasSearchFilters) {
       setLoading(true);
       debouncedSearchRef.current({
         page: 1,
@@ -223,8 +223,8 @@ const SearchResults = () => {
         },
         currentPageSize: 12
       });
-    } else if (searchParams.toString() === '') {
-      // Si no hay parámetros, buscar todos los abogados
+    } else {
+      // Si no hay filtros específicos (o solo hay UTMs/parámetros irrelevantes), buscar todos los abogados
       setLoading(true);
       debouncedSearchRef.current({
         page: 1,

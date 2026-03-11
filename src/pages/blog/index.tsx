@@ -25,6 +25,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "derecho-penal-chile-2026",
+      title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
+      excerpt: "Enfrentar una acusación penal puede ser una de las situaciones más difíciles para cualquier persona. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal y qué pasos debes seguir para protegerte legalmente.",
+      category: "Derecho Penal",
+      author: "LegalUp",
+      date: "10 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/images/derecho-penal-chile-2026.jpg",
+      featured: true
+    },
+    {
       id: "derecho-de-familia-chile-2026",
       title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
       excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. En esta Guía 2026, revisamos qué abarca, cuáles son los trámites más comunes, cómo funcionan los juicios y qué puedes hacer en caso de conflicto.",
@@ -33,7 +44,7 @@ const BlogPage = () => {
       date: "25 de Febrero, 2026",
       readTime: "15 min",
       image: "/images/derecho-de-familia-chile-2026.jpg",
-      featured: true
+      featured: false
     },
     {
       id: "como-calcular-tu-finiquito-chile-2026",
@@ -59,7 +70,7 @@ const BlogPage = () => {
     }
   ];
 
-  const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Civil", "Derecho Penal"];
+  const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Penal", "Derecho Civil"];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -220,7 +231,7 @@ const BlogPage = () => {
                     <div>
                       <h3 className="font-semibold text-gray-900">{category}</h3>
                       <p className="text-sm text-gray-500 mt-1">
-                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" || category === "Derecho de Familia" ? "1 artículo" : "Próximamente"}
+                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" || category === "Derecho de Familia" || category === "Derecho Penal" ? "1 artículo" : "Próximamente"}
                       </p>
                     </div>
                     <ChevronRight className="h-5 w-5 text-gray-400" />
