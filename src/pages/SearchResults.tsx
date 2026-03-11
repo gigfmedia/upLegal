@@ -847,8 +847,7 @@ const SearchResults = () => {
                         <Skeleton className="h-4 w-5/6" />
                         <Skeleton className="h-4 w-4/6" />
                       </div>
-                      <div className="mt-6 grid grid-cols-2 gap-2">
-                        <Skeleton className="h-10 w-full rounded-md" />
+                      <div className="mt-6 grid grid-cols-1 gap-2">
                         <Skeleton className="h-10 w-full rounded-md" />
                       </div>
                     </div>

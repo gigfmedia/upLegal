@@ -26,6 +26,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false
 
 # Control cache headers for JS files
 [[headers]]
