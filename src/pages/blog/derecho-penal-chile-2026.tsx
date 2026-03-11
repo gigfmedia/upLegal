@@ -303,10 +303,12 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas un abogado penal?</h2>
-          <p className="text-lg text-gray-700 mb-6">
-            Si enfrentas una investigación o acusación penal, es importante actuar rápidamente.<br></br> Un abogado penalista puede:
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas un abogado penal en Chile?</h2>
+          <p className="text-lg text-gray-700 mb-2">
+            Si enfrentas una investigación o acusación penal, es importante actuar rápidamente.
+Un abogado penalista puede ayudarte a entender tu situación y preparar una defensa adecuada.
           </p>
+          <p className="text-sm text-gray-700 mb-6">Encuentra abogados penales en Chile y recibe orientación legal rápida de profesionales verificados.</p>
 
           <div className="grid gap-3 md:grid-cols-2 mb-6 text-left max-w-2xl mx-auto">
             <div className="flex items-center gap-2">
@@ -334,14 +336,17 @@ const BlogArticle = () => {
             >
               Consultar con Abogado Ahora
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3"
-              onClick={() => window.location.href = '/search?category=Derecho+Penal'}
-            >
-              Ver Abogados Penales
-            </Button>
+            <Link
+              to="/search?category=Derecho+Penal"
+              aria-label="Ver abogados especialistas en derecho penal en Chile">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3"
+              >
+                Ver Abogados Penales
+              </Button>
+            </Link>
           </div>
         </section>
 
