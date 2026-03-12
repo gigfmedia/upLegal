@@ -1,67 +1,42 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
 import Header from "@/components/Header";
+import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
+import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
+import { BlogShare } from "@/components/blog/BlogShare";
 
 const BlogArticle = () => {
-  useEffect(() => {
-    // Set SEO meta tags
-    document.title = "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026 | LegalUp";
-    
-    // Update meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'Enfrentar una acusación penal puede ser difícil. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser imputado, tus derechos y el proceso penal.');
+  const faqs = [
+    {
+      question: "¿Es obligatorio declarar ante carabineros?",
+      answer: "No. Tienes derecho a guardar silencio hasta hablar con un abogado."
+    },
+    {
+      question: "¿Puede ir a la cárcel sin juicio?",
+      answer: "Solo en casos excepcionales mediante prisión preventiva, ordenada por un juez."
+    },
+    {
+      question: "¿Qué pasa si soy inocente?",
+      answer: "El proceso penal permite presentar pruebas y defenderse para demostrarlo."
+    },
+    {
+      question: "¿Cuánto dura una investigación penal?",
+      answer: "Depende del caso, pero puede extenderse desde algunos meses hasta más tiempo en delitos complejos."
     }
-
-    // Update canonical URL
-    let canonicalLink = document.querySelector('link[rel="canonical"]');
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.setAttribute('href', 'https://legalup.cl/blog/derecho-penal-chile-2026');
-
-    // Add structured data (JSON-LD)
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
-      "description": "Enfrentar una acusación penal puede ser difícil. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser imputado, tus derechos y el proceso penal.",
-      "author": {
-        "@type": "Organization",
-        "name": "LegalUp"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "LegalUp",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://legalup.cl/logo.png"
-        }
-      },
-      "datePublished": "2026-03-10",
-      "dateModified": "2026-03-10",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://legalup.cl/blog/derecho-penal-chile-2026"
-      }
-    };
-
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <BlogGrowthHacks
+        title="¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026"
+        description="Enfrentar una acusación penal puede ser difícil. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser imputado, tus derechos y el proceso penal."
+        image="/images/derecho-penal-chile-2026.jpg"
+        url="https://legalup.cl/blog/derecho-penal-chile-2026"
+        datePublished="2026-03-10"
+        dateModified="2026-03-11"
+        faqs={faqs}
+      />
       <Header onAuthClick={() => {}} />
       
       {/* Hero Section */}
@@ -103,7 +78,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm p-8">
-          
+          <BlogShare 
+            title="¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026" 
+            url="https://legalup.cl/blog/derecho-penal-chile-2026" 
+            showBorder={false}
+          />
+
           {/* Section 1 */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">¿Qué es el Derecho Penal?</h2>
@@ -306,11 +286,11 @@ const BlogArticle = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas un abogado penal en Chile?</h2>
           <p className="text-lg text-gray-700 mb-2">
             Si enfrentas una investigación o acusación penal, es importante actuar rápidamente.
-Un abogado penalista puede ayudarte a entender tu situación y preparar una defensa adecuada.
+            Un abogado penalista puede ayudarte a entender tu situación y preparar una defensa adecuada.
           </p>
           <p className="text-sm text-gray-700 mb-6">Encuentra abogados penales en Chile y recibe orientación legal rápida de profesionales verificados.</p>
 
-          <div className="grid gap-3 md:grid-cols-2 mb-6 text-left max-w-2xl mx-auto">
+          <div className="grid gap-3 md:grid-cols-2 mb-8 text-left max-w-2xl mx-auto">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
               <span>Analizar tu caso</span>
@@ -329,20 +309,21 @@ Un abogado penalista puede ayudarte a entender tu situación y preparar una defe
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
-              onClick={() => window.location.href = '/consulta'}
-            >
-              Consultar con Abogado Ahora
-            </Button>
+            <Link to="/consulta">
+              <Button 
+                size="lg" 
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
+              >
+                Consultar con Abogado Ahora
+              </Button>
+            </Link>
             <Link
               to="/search?category=Derecho+Penal"
               aria-label="Ver abogados especialistas en derecho penal en Chile">
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3"
+                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados Penales
               </Button>
@@ -350,8 +331,20 @@ Un abogado penalista puede ayudarte a entender tu situación y preparar una defe
           </div>
         </section>
 
-        {/* Back to Blog */}
-        <div className="mt-12 text-center">
+      </div>
+      
+      <RelatedLawyers category="Derecho Penal" />
+      
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* Compartir - Growth Hack */}
+        <div className="mt-8">
+          <BlogShare 
+            title="¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026" 
+            url="https://legalup.cl/blog/derecho-penal-chile-2026" 
+          />
+        </div>
+
+        <div className="mt-4 text-center">
           <Link 
             to="/blog" 
             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"

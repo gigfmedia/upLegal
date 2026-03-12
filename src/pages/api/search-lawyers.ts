@@ -11,6 +11,7 @@ interface SearchParams {
   page?: number;
   pageSize?: number;
   select?: string;
+  requirePrice?: boolean;
 }
 
 // Mapeo de términos de búsqueda a especialidades
@@ -109,7 +110,22 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'constitucional': ['Derecho Constitucional'],
   'derechos humanos': ['Derechos Humanos'],
   'amparo': ['Derecho Constitucional'],
-  'proteccion derechos': ['Derecho Constitucional']
+  'proteccion derechos': ['Derecho Constitucional'],
+  // Map full names to themselves for robustness
+  'derecho de familia': ['Derecho de Familia'],
+  'derecho laboral': ['Derecho Laboral'],
+  'derecho penal': ['Derecho Penal'],
+  'derecho inmobiliario': ['Derecho Inmobiliario'],
+  'derecho civil': ['Derecho Civil'],
+  'derecho comercial': ['Derecho Comercial'],
+  'derecho tributario': ['Derecho Tributario'],
+  'derecho administrativo': ['Derecho Administrativo'],
+  'derecho constitucional': ['Derecho Constitucional'],
+  'derecho ambiental': ['Derecho Ambiental'],
+  'derecho de salud': ['Derecho de Salud'],
+  'derecho de tránsito': ['Derecho de Tránsito'],
+  'derecho sucesorio': ['Derecho Sucesorio'],
+  'derecho del consumidor': ['Derecho del Consumidor']
 };
 
 // Función para escapar caracteres especiales en búsquedas LIKE
@@ -134,6 +150,7 @@ export async function searchLawyers(params: SearchParams = {}) {
       availableNow = false, // Nota: No se usa en la consulta ya que la columna no existe
       page = 1,
       pageSize = 12,
+      requirePrice = false,
       // Optimized selection: removed unused fields and truncated bio to save bandwidth
       select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified'
     } = params;
@@ -170,16 +187,17 @@ export async function searchLawyers(params: SearchParams = {}) {
         
         // Búsqueda EXACTA en el array de especialidades (formato JSON)
         conditions.push(`specialties.cs.{"${term}"}`);
-        conditions.push(`specialties.cs.{"${lowerTerm}"}`);
         
         // Manejar términos comunes del mapeo
         if (SPECIALTY_MAPPING[lowerTerm]) {
           const mappedTerms = SPECIALTY_MAPPING[lowerTerm];
-          // Agregar cada término mapeado a las condiciones
-          mappedTerms.forEach(term => {
-            conditions.push(`specialties.cs.{"${term}"}`);
+          mappedTerms.forEach(t => {
+            conditions.push(`specialties.cs.{"${t}"}`);
           });
         }
+        
+        // También buscar como término parcial si es necesario
+        conditions.push(`specialties.cs.{"${lowerTerm}"}`);
       }
     }
     
@@ -237,6 +255,11 @@ export async function searchLawyers(params: SearchParams = {}) {
 
     if (minExperience > 0) {
       queryBuilder = queryBuilder.gte('experience_years', minExperience);
+    }
+
+    // Optional price filter
+    if (requirePrice) {
+      queryBuilder = queryBuilder.gt('hourly_rate_clp', 0);
     }
 
     if (availableNow) {

@@ -1,68 +1,42 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
 import Header from "@/components/Header";
+import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
+import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
+import { BlogShare } from "@/components/blog/BlogShare";
 
 const BlogArticle = () => {
-  useEffect(() => {
-    // Set SEO meta tags
-    document.title = "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa | LegalUp";
-    
-    // Update meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 'El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Guía completa 2026 sobre pensión de alimentos, cuidado personal, divorcio y violencia intrafamiliar.');
+  const faqs = [
+    {
+      question: "¿Puedo pedir aumento de pensión de alimentos?",
+      answer: "Sí, si han cambiado las necesidades del niño, niña o adolescente o ingresos del demandado."
+    },
+    {
+      question: "¿Puedo impedir visitas si el padre/madre no paga alimentos?",
+      answer: "No. Son procesos distintos, pero puedes solicitar cumplimiento forzado."
+    },
+    {
+      question: "¿Puedo cambiar el cuidado personal a compartido?",
+      answer: "Sí, si existen condiciones adecuadas y mejora el bienestar del niño, niña o adolescente."
+    },
+    {
+      question: "¿Los mensajes de WhatsApp sirven como prueba?",
+      answer: "Sí, si se presentan correctamente."
     }
-
-    // Update canonical URL
-    let canonicalLink = document.querySelector('link[rel="canonical"]');
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.setAttribute('href', 'https://legalup.cl/blog/derecho-de-familia-chile-2026');
-
-    // Add structured data (JSON-LD)
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "headline": "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
-      "description": "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Guía completa 2026 sobre pensión de alimentos, cuidado personal, divorcio y violencia intrafamiliar.",
-      "author": {
-        "@type": "Organization",
-        "name": "LegalUp"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "LegalUp",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://legalup.cl/logo.png"
-        }
-      },
-      "datePublished": "2026-02-25",
-      "dateModified": "2026-02-25",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://legalup.cl/blog/derecho-de-familia-chile-2026"
-      }
-    };
-
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <BlogGrowthHacks
+        title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa"
+        description="El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Guía completa 2026 sobre pensión de alimentos, cuidado personal, divorcio y violencia intrafamiliar."
+        image="/images/derecho-de-familia-chile-2026.jpg"
+        url="https://legalup.cl/blog/derecho-de-familia-chile-2026"
+        datePublished="2026-02-25"
+        dateModified="2026-03-11"
+        faqs={faqs}
+      />
       <Header onAuthClick={() => {}} />
       
       {/* Hero Section */}
@@ -104,6 +78,13 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm p-8">
+          
+          <BlogShare 
+            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa" 
+            url="https://legalup.cl/blog/derecho-de-familia-chile-2026" 
+            showBorder={false}
+          />
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-8">
             <p className="text-lg text-gray-600 leading-relaxed">
@@ -374,87 +355,102 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold mb-6">Preguntas frecuentes sobre Derecho de Familia (2026)</h2>
             
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">¿Puedo pedir aumento de pensión de alimentos?</h4>
-                <p className="text-gray-600 text-sm">Sí, si han cambiado las necesidades del niño, niña o adolescente o ingresos del demandado.</p>
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo pedir aumento de pensión de alimentos?</h3>
+                <p className="text-gray-700">Sí, si han cambiado las necesidades del niño, niña o adolescente o ingresos del demandado.</p>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">¿Puedo impedir visitas si el padre/madre no paga alimentos?</h4>
-                <p className="text-gray-600 text-sm">No. Son procesos distintos, pero puedes solicitar cumplimiento forzado.</p>
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo impedir visitas si el padre/madre no paga alimentos?</h3>
+                <p className="text-gray-700">No. Son procesos distintos, pero puedes solicitar cumplimiento forzado.</p>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">¿Puedo cambiar el cuidado personal a compartido?</h4>
-                <p className="text-gray-600 text-sm">Sí, si existen condiciones adecuadas y mejora el bienestar del niño, niña o adolescente.</p>
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo cambiar el cuidado personal a compartido?</h3>
+                <p className="text-gray-700">Sí, si existen condiciones adecuadas y mejora el bienestar del niño, niña o adolescente.</p>
               </div>
               
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-semibold mb-2">¿Los mensajes de WhatsApp sirven como prueba?</h4>
-                <p className="text-gray-600 text-sm">Sí, si se presentan correctamente.</p>
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Los mensajes de WhatsApp sirven como prueba?</h3>
+                <p className="text-gray-700">Sí, si se presentan correctamente.</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* CTA Section */}
-          <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas ayuda en un caso de familia?</h2>
-            <p className="text-lg text-gray-700 mb-6">
-              Un abogado especialista puede ayudarte a:
-            </p>
+        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas ayuda en un caso de familia?</h2>
+          <p className="text-lg text-gray-700 mb-6">
+            Un abogado especialista puede ayudarte a:
+          </p>
 
-            <div className="grid gap-3 md:grid-cols-2 mb-6">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Presentar demandas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Revisar acuerdos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Representarte ante el tribunal</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Asegurar el interés superior del niño</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>Proteger tus derechos y los de tus hijos</span>
-              </div>
+          <div className="grid gap-3 md:grid-cols-2 mb-8 max-w-2xl mx-auto text-left">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Presentar demandas</span>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Revisar acuerdos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Representarte ante el tribunal</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Asegurar el interés superior del niño</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Proteger tus derechos y los de tus hijos</span>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/consulta">
               <Button 
                 size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
-                onClick={() => window.location.href = '/consulta'}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Ahora
               </Button>
+            </Link>
+            <Link to="/search?category=Derecho+de+Familia">
               <Button 
                 variant="outline" 
                 size="lg"
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3"
-                onClick={() => window.location.href = '/search?category=Derecho+de+Familia'}
+                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados de Familia
               </Button>
-            </div>
-          </section>
-
-          {/* Back to Blog */}
-          <div className="mt-12 text-center">
-            <Link 
-              to="/blog" 
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Volver al Blog
             </Link>
           </div>
+        </section>
+
+      </div>
+
+      <RelatedLawyers category="Derecho de Familia" />
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* Compartir - Growth Hack */}
+        <div className="mt-8">
+          <BlogShare 
+            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa" 
+            url="https://legalup.cl/blog/derecho-de-familia-chile-2026" 
+          />
+        </div>
+
+        {/* Back to Blog */}
+        <div className="mt-4 text-center">
+          <Link 
+            to="/blog" 
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Volver al Blog
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +33,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "10 de Marzo, 2026",
       readTime: "10 min",
-      image: "/images/derecho-penal-chile-2026.jpg",
+      image: "/assets/derecho-penal-chile-2026.png",
       featured: true
     },
     {
@@ -43,7 +44,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "25 de Febrero, 2026",
       readTime: "15 min",
-      image: "/images/derecho-de-familia-chile-2026.jpg",
+      image: "/assets/derecho-de-familia-chile-2026.png",
       featured: false
     },
     {
@@ -54,7 +55,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "18 de Febrero, 2026",
       readTime: "12 min",
-      image: "/images/finiquito-chile-2026.jpg",
+      image: "/assets/finiquito-chile-2026.png",
       featured: false
     },
     {
@@ -65,12 +66,40 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "13 de Enero, 2026",
       readTime: "8 min",
-      image: "/images/arriendo-chile-2026.jpg",
+      image: "/assets/arriendo-chile-2026.png",
       featured: false
     }
   ];
 
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
   const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Penal", "Derecho Civil"];
+
+  const filteredArticles = useMemo(() => {
+    if (!selectedCategory) return articles;
+    return articles.filter(article => article.category === selectedCategory);
+  }, [selectedCategory, articles]);
+
+  const featuredArticle = useMemo(() => {
+    // If a category is selected, use the first article of that category as "featured" for the view
+    // if it exists, otherwise use the global featured article if its category matches, 
+    // or just don't show a featured section if it doesn't match.
+    if (selectedCategory) {
+      return filteredArticles[0];
+    }
+    return articles.find(article => article.featured);
+  }, [selectedCategory, filteredArticles, articles]);
+
+  const recentArticles = useMemo(() => {
+    if (selectedCategory) {
+      return filteredArticles.slice(1); // Exclude the one used in featured section
+    }
+    return articles.filter(article => !article.featured);
+  }, [selectedCategory, filteredArticles, articles]);
+
+  const getArticleCount = (category: string) => {
+    return articles.filter(a => a.category === category).length;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,78 +130,118 @@ const BlogPage = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
         {/* Featured Article */}
-        {articles.filter(article => article.featured).map(article => (
-          <div key={article.id} className="mb-12">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        {/* Featured Article */}
+        {featuredArticle && (
+          <div key={featuredArticle.id} className="mb-12">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
               <div className="md:flex">
                 <div className="md:w-1/3">
-                  <div className="h-48 md:h-full flex pl-8 items-center justify-center">
-                    <div className="text-white text-center">
-                      <img className="h-full w-full object-cover rounded-xl" src="../assets/arriendo.png" alt="Derecho Inmobiliario" />
-                      {/* <div className="text-sm font-medium">Derecho Inmobiliario</div> */}
-                    </div>
+                  <div className="h-48 md:h-full flex py-8 items-center justify-center pl-8">
+                    <img 
+                      className="h-full w-full object-cover rounded-xl" 
+                      src={featuredArticle.image || "../assets/arriendo.png"} 
+                      alt={featuredArticle.category} 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "../assets/arriendo.png";
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="md:w-2/3 p-8">
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
                     <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-                      {article.category}
+                      {featuredArticle.category}
                     </span>
                     <span>•</span>
-                    <span>Artículo Destacado</span>
+                    <span>{selectedCategory ? "Resultado de búsqueda" : "Artículo Destacado"}</span>
                   </div>
                   
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">
                     <Link 
-                      to={`/blog/${article.id}`}
+                      to={`/blog/${featuredArticle.id}`}
                       className="hover:text-blue-600 transition-colors"
                     >
-                      {article.title}
+                      {featuredArticle.title}
                     </Link>
                   </h2>
                   
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    {article.excerpt}
+                  <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">
+                    {featuredArticle.excerpt}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        <span>{article.date}</span>
+                        <span>{featuredArticle.date}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />
-                        <span>{article.readTime}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span>{article.author}</span>
+                        <span>{featuredArticle.readTime}</span>
                       </div>
                     </div>
                     
-                    <Button 
-                      asChild
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Link to={`/blog/${article.id}`}>
-                        Leer Artículo
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                      </Link>
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button 
+                        asChild
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Link to={`/blog/${featuredArticle.id}`}>
+                          Leer Artículo
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Link>
+                      </Button>
+                      
+                      {selectedCategory && (
+                        <Button
+                          variant="outline"
+                          asChild
+                          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                        >
+                          <Link to={`/search?category=${encodeURIComponent(selectedCategory)}`}>
+                            Ver Abogados especialistas
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+        )}
+
+        {/* Categories Pills */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className={selectedCategory === null ? "bg-blue-600" : ""}
+          >
+            Todos
+          </Button>
+          {categories.map(category => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category)}
+              className={selectedCategory === category ? "bg-blue-600" : ""}
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
 
         {/* Recent Articles */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Artículos Recientes</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            {selectedCategory ? `Artículos en ${selectedCategory}` : "Artículos Recientes"}
+          </h2>
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {articles.filter(article => !article.featured).map(article => (
+            {recentArticles.map(article => (
               <Card key={article.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
@@ -195,15 +264,9 @@ const BlogPage = () => {
                   </p>
                   
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        <span>{article.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{article.readTime}</span>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{article.date}</span>
                     </div>
                     
                     <Link 
@@ -217,28 +280,51 @@ const BlogPage = () => {
               </Card>
             ))}
           </div>
+
+          {filteredArticles.length === 0 && (
+            <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+              <p className="text-gray-500">No hay artículos publicados en esta categoría todavía.</p>
+              <Button 
+                variant="link" 
+                onClick={() => setSelectedCategory(null)}
+                className="mt-2 text-blue-600"
+              >
+                Ver todos los artículos
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Categories */}
+        {/* Explorer Cards */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Explorar por Categorías</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 font-primary">Explorar por Categorías</h2>
           
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {categories.map(category => (
-              <Card key={category} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{category}</h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {category === "Derecho Inmobiliario" || category === "Derecho Laboral" || category === "Derecho de Familia" || category === "Derecho Penal" ? "1 artículo" : "Próximamente"}
-                      </p>
+            {categories.map(category => {
+              const count = getArticleCount(category);
+              return (
+                <Card 
+                  key={category} 
+                  className={`hover:shadow-md transition-all cursor-pointer border-2 ${selectedCategory === category ? 'border-blue-600 bg-blue-50/50' : 'border-transparent'}`}
+                  onClick={() => {
+                    setSelectedCategory(category);
+                    window.scrollTo({ top: 330, behavior: 'smooth' });
+                  }}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{category}</h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {count > 0 ? `${count} artículo${count === 1 ? '' : 's'}` : "Próximamente"}
+                        </p>
+                      </div>
+                      <ChevronRight className={`h-5 w-5 transition-colors ${selectedCategory === category ? 'text-blue-600' : 'text-gray-400'}`} />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
