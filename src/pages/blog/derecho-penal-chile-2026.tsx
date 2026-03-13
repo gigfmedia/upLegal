@@ -31,7 +31,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026"
         description="Enfrentar una acusación penal puede ser difícil. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser imputado, tus derechos y el proceso penal."
-        image="/images/derecho-penal-chile-2026.jpg"
+        image="/assets/derecho-penal-chile-2026.png"
         url="https://legalup.cl/blog/derecho-penal-chile-2026"
         datePublished="2026-03-10"
         dateModified="2026-03-11"
@@ -65,7 +65,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>LegalUp</span>
+              <span>Equipo LegalUp</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -211,21 +211,21 @@ const BlogArticle = () => {
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">¿Qué pasa si eres víctima de un delito?</h2>
             <p className="text-gray-600 mb-4">Si eres víctima, puedes:</p>
-            <ul className="space-y-2 text-gray-600 mb-4">
-              <li className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-600 mb-4">
+              <li className="flex items-center gap-2 p-3 border rounded-lg hover:bg-green-50 transition-all">
+                <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
                 <span>Presentar una denuncia</span>
               </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+              <li className="flex items-center gap-2 p-3 border rounded-lg hover:bg-green-50 transition-all">
+                <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
                 <span>Solicitar medidas de protección</span>
               </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+              <li className="flex items-center gap-2 p-3 border rounded-lg hover:bg-green-50 transition-all">
+                <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
                 <span>Participar en el proceso penal</span>
               </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
+              <li className="flex items-center gap-2 p-3 border rounded-lg hover:bg-green-50 transition-all">
+                <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
                 <span>Exigir reparación del daño</span>
               </li>
             </ul>
@@ -253,30 +253,17 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          {/* FAQ */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre Derecho Penal (2026)</h2>
+          {/* FAQ (SEO structured) */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre derecho penal</h2>
             
             <div className="space-y-4">
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Es obligatorio declarar ante carabineros?</h3>
-                <p className="text-gray-700">No. Tienes derecho a guardar silencio hasta hablar con un abogado.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo ir a la cárcel sin juicio?</h3>
-                <p className="text-gray-700">Solo en casos excepcionales mediante prisión preventiva, ordenada por un juez.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Qué pasa si soy inocente?</h3>
-                <p className="text-gray-700">El proceso penal permite presentar pruebas y defenderse para demostrarlo.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Cuánto dura una investigación penal?</h3>
-                <p className="text-gray-700">Depende del caso, pero puede extenderse desde algunos meses hasta más tiempo en delitos complejos.</p>
-              </div>
+              {faqs.map((faq, i) => (
+                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

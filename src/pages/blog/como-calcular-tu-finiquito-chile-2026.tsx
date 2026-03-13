@@ -27,7 +27,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
         description="Guía completa 2026 para calcular tu finiquito en Chile. Aprende paso a paso cómo calcular indemnizaciones, vacaciones y todos los componentes de tu finiquito."
-        image="/images/finiquito-chile-2026.jpg"
+        image="/assets/finiquito-chile-2026.png"
         url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
         datePublished="2026-02-18"
         dateModified="2026-03-11"
@@ -61,7 +61,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>LegalUp</span>
+              <span>Equipo LegalUp</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -350,6 +350,20 @@ const BlogArticle = () => {
                 <span>Guardar respaldos: liquidaciones, contrato, correos, etc.</span>
               </li>
             </ul>
+          </div>
+
+          {/* FAQ (SEO structured) */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, i) => (
+                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

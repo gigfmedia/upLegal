@@ -26,6 +26,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "me-quieren-desalojar-que-hago-chile-2026",
+      title: "¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)",
+      excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales y el proceso correcto bajo la ley 'Devuélveme mi Casa'.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "13 de Marzo, 2026",
+      readTime: "15 min",
+      image: "/assets/desalojo-chile-2026.png",
+      featured: true
+    },
+    {
       id: "derecho-penal-chile-2026",
       title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
       excerpt: "Enfrentar una acusación penal puede ser una de las situaciones más difíciles para cualquier persona. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal y qué pasos debes seguir para protegerte legalmente.",
@@ -34,7 +45,7 @@ const BlogPage = () => {
       date: "10 de Marzo, 2026",
       readTime: "10 min",
       image: "/assets/derecho-penal-chile-2026.png",
-      featured: true
+      featured: false
     },
     {
       id: "derecho-de-familia-chile-2026",

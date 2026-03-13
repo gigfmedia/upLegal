@@ -31,7 +31,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa"
         description="El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Guía completa 2026 sobre pensión de alimentos, cuidado personal, divorcio y violencia intrafamiliar."
-        image="/images/derecho-de-familia-chile-2026.jpg"
+        image="/assets/derecho-de-familia-chile-2026.png"
         url="https://legalup.cl/blog/derecho-de-familia-chile-2026"
         datePublished="2026-02-25"
         dateModified="2026-03-11"
@@ -65,7 +65,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>LegalUp</span>
+              <span>Equipo LegalUp</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -331,11 +331,7 @@ const BlogArticle = () => {
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                 <span>Certificado de matrimonio (si corresponde)</span>
               </li>
-              <li className="flex items-start gap-3">
-                <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>Comprobantes de gastos (alimentos)</span>
-              </li>
-              <li className="flex items-start gap-3">
+                  <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
                 <span>Certificados de ingresos</span>
               </li>
@@ -350,30 +346,17 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* FAQ */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6">Preguntas frecuentes sobre Derecho de Familia (2026)</h2>
+          {/* FAQ (SEO structured) */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre derecho de familia</h2>
             
             <div className="space-y-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo pedir aumento de pensión de alimentos?</h3>
-                <p className="text-gray-700">Sí, si han cambiado las necesidades del niño, niña o adolescente o ingresos del demandado.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo impedir visitas si el padre/madre no paga alimentos?</h3>
-                <p className="text-gray-700">No. Son procesos distintos, pero puedes solicitar cumplimiento forzado.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puedo cambiar el cuidado personal a compartido?</h3>
-                <p className="text-gray-700">Sí, si existen condiciones adecuadas y mejora el bienestar del niño, niña o adolescente.</p>
-              </div>
-              
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Los mensajes de WhatsApp sirven como prueba?</h3>
-                <p className="text-gray-700">Sí, si se presentan correctamente.</p>
-              </div>
+              {faqs.map((faq, i) => (
+                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -387,23 +370,23 @@ const BlogArticle = () => {
 
           <div className="grid gap-3 md:grid-cols-2 mb-8 max-w-2xl mx-auto text-left">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-blue-500" />
               <span>Presentar demandas</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-blue-500" />
               <span>Revisar acuerdos</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-blue-500" />
               <span>Representarte ante el tribunal</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-blue-500" />
               <span>Asegurar el interés superior del niño</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-blue-500" />
               <span>Proteger tus derechos y los de tus hijos</span>
             </div>
           </div>

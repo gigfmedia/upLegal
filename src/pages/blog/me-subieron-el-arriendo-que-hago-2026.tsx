@@ -27,7 +27,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)"
         description="Guía completa 2026: ¿Qué hacer si te subieron el arriendo en Chile? Aprende cuándo es legal, cómo negociar y proteger tus derechos como arrendatario."
-        image="/images/arriendo-chile-2026.jpg"
+        image="/assets/arriendo-chile-2026.png"
         url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"
         datePublished="2026-02-13"
         dateModified="2026-03-11"
@@ -61,7 +61,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>LegalUp</span>
+              <span>Equipo LegalUp</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -207,6 +207,20 @@ const BlogArticle = () => {
               </section>
             </div>
           </div>
+
+          {/* FAQ (SEO structured) */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre el precio del arriendo</h2>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, i) => (
+                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* CTA Section */}
@@ -235,7 +249,6 @@ const BlogArticle = () => {
             </Link>
           </div>
         </section>
-
       </div>
 
       <RelatedLawyers category="Derecho Inmobiliario" />
