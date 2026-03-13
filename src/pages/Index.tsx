@@ -30,6 +30,7 @@ import { LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
 import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verifiedLawyers";
 import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
+import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -370,8 +371,32 @@ const Index = () => {
     }
   }, []);
 
+  const homePageFaqs = [
+    {
+      question: "¿Cómo funciona LegalUp?",
+      answer: "LegalUp es una plataforma online que conecta personas con abogados verificados en Chile. Los usuarios describen su caso, eligen un abogado especializado y reciben orientación legal de forma rápida y segura."
+    },
+    {
+      question: "¿Qué tipos de servicios legales ofrece LegalUp?",
+      answer: "LegalUp ofrece consultas legales, asesoría jurídica especializada en distintas áreas del derecho, redacción de documentos legales y servicios de representación legal, según disponibilidad del abogado."
+    },
+    {
+      question: "¿Cuánto cuesta una consulta legal en LegalUp?",
+      answer: "El costo de una consulta legal depende del abogado y del tipo de asesoría requerida. Antes de contratar, el usuario puede revisar el valor y las condiciones informadas por cada profesional."
+    },
+    {
+      question: "¿En qué país está disponible LegalUp?",
+      answer: "LegalUp opera en Chile y conecta usuarios con abogados especializados en la legislación chilena."
+    },
+    {
+      question: "¿Cómo se verifica a los abogados en LegalUp?",
+      answer: "Todos los abogados registrados en LegalUp pasan por un proceso de verificación antes de ofrecer sus servicios en la plataforma."
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-t from-blue-400 to-indigo-600">
+      <HomeGrowthHacks faqs={homePageFaqs} />
       
       <Header onAuthClick={handleAuthClick} />
       
@@ -670,7 +695,6 @@ const Index = () => {
                 <LawyerCard
                   key={lawyer.id}
                   lawyer={lawyer}
-                  hideCard={true}
                   onContactClick={() => {
                     if (!user) {
                       setAuthMode('login');
