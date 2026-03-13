@@ -19,6 +19,10 @@ const BlogArticle = () => {
     {
       question: "¿Qué pasa si no tengo contrato de arriendo escrito?",
       answer: "Incluso sin contrato escrito, existe un contrato verbal reconocido por la ley. Si puedes demostrar el pago de rentas (transferencias, recibos), tienes los mismos derechos que un arrendatario con contrato escrito."
+    },
+    {
+      question: "¿Puede el dueño entrar a la casa si vivo ahí?",
+      answer: "No sin tu permiso. Aunque sea el dueño, mientras el contrato esté vigente (o haya ocupación de morada), entrar sin autorización es un delito de violación de morada."
     }
   ];
 
@@ -201,11 +205,6 @@ const BlogArticle = () => {
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
               ))}
-              
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">¿Puede el dueño entrar a la casa si vivo ahí?</h3>
-                <p className="text-gray-700">No sin tu permiso. Aunque sea el dueño, mientras el contrato esté vigente (o haya ocupación de morada), entrar sin autorización es un delito de violación de morada.</p>
-              </div>
             </div>
           </div>
         </div> {/* Closes bg-white rounded-lg shadow-sm p-8 */}
