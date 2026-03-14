@@ -22,7 +22,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
   };
 
   return (
-    <div className={showBorder ? "py-12 mt-12" : "pb-12 mb-12 border-b border-gray-100"}>
+    <div className={showBorder ? "py-12 mt-12 mb-12" : "pb-12 mb-12 border-b border-gray-100"}>
       <div className="flex flex-col gap-6 items-center text-center">
         <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
           Comparte este artículo
