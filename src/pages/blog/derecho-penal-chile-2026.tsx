@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
+import { BlogNavigation } from "@/components/blog/BlogNavigation";
 
 const BlogArticle = () => {
   const faqs = [
@@ -330,6 +331,15 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/derecho-penal-chile-2026" 
           />
         </div>
+
+        <BlogNavigation 
+          prevArticle={{
+            id: "derecho-de-familia-chile-2026",
+            title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
+            excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. En esta Guía 2026, revisamos qué abarca, cuáles son los trámites más comunes, cómo funcionan los juicios y qué puedes hacer en caso de conflicto.",
+            image: "/assets/derecho-de-familia-chile-2026.png"
+          }} 
+        />
 
         <div className="mt-4 text-center">
           <Link 

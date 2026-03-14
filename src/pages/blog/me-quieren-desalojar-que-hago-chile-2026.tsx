@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
+import { BlogNavigation } from "@/components/blog/BlogNavigation";
 
 const BlogArticle = () => {
   const faqs = [
@@ -246,6 +247,15 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026" 
           />
         </div>
+
+        <BlogNavigation 
+          prevArticle={{
+            id: "derecho-penal-chile-2026",
+            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
+            excerpt: "Enfrentar una acusación penal puede ser una de las situaciones más difíciles para cualquier persona. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal y qué pasos debes seguir para protegerte legalmente.",
+            image: "/assets/derecho-penal-chile-2026.png"
+          }} 
+        />
 
         <div className="mt-8 text-center">
           <Link 

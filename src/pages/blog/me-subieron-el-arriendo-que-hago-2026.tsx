@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
+import { BlogNavigation } from "@/components/blog/BlogNavigation";
 
 const BlogArticle = () => {
   const faqs = [
@@ -261,6 +262,15 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026" 
           />
         </div>
+
+        <BlogNavigation 
+          prevArticle={{
+            id: "me-quieren-desalojar-que-hago-chile-2026",
+            title: "¿Me pueden desalojar sin orden judicial en Chile? Guía 2026",
+            excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales y el proceso correcto bajo la ley 'Devuélveme mi Casa'.",
+            image: "/assets/desalojo-chile-2026.png"
+          }} 
+        />
 
         {/* Back to Blog */}
         <div className="mt-4 text-center">

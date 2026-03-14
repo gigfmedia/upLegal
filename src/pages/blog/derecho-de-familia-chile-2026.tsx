@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
+import { BlogNavigation } from "@/components/blog/BlogNavigation";
 
 const BlogArticle = () => {
   const faqs = [
@@ -423,6 +424,15 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/derecho-de-familia-chile-2026" 
           />
         </div>
+
+        <BlogNavigation 
+          prevArticle={{
+            id: "como-calcular-tu-finiquito-chile-2026",
+            title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
+            excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
+            image: "/assets/finiquito-chile-2026.png"
+          }} 
+        />
 
         {/* Back to Blog */}
         <div className="mt-4 text-center">
