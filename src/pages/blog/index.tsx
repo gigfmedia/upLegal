@@ -1,28 +1,19 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 
 const BlogPage = () => {
-  // Set SEO meta tags
-  document.title = "Blog LegalUp - Guías y Artículos de Derecho en Chile";
-  
-  // Update meta description
-  const metaDescription = document.querySelector('meta[name="description"]');
-  if (metaDescription) {
-    metaDescription.setAttribute('content', 'Blog LegalUp: Artículos expertos sobre derecho laboral, civil, familiar e inmobiliario en Chile. Guías prácticas para proteger tus derechos.');
-  }
-
-  // Update canonical URL
-  let canonicalLink = document.querySelector('link[rel="canonical"]');
-  if (!canonicalLink) {
-    canonicalLink = document.createElement('link');
-    canonicalLink.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonicalLink);
-  }
-  canonicalLink.setAttribute('href', 'https://legalup.cl/blog');
+  const helmetData = (
+    <Helmet>
+      <title>Blog LegalUp - Guías y Artículos de Derecho en Chile</title>
+      <meta name="description" content="Blog LegalUp: Artículos expertos sobre derecho laboral, civil, familiar e inmobiliario en Chile. Guías prácticas para proteger tus derechos." />
+      <link rel="canonical" href="https://legalup.cl/blog" />
+    </Helmet>
+  );
 
   const articles = [
     {
@@ -114,6 +105,7 @@ const BlogPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {helmetData}
       <Header onAuthClick={() => {}} />
       
       {/* Hero Section */}
