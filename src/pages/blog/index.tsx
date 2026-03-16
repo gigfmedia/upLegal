@@ -17,6 +17,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "cuanto-demora-juicio-desalojo-chile-2026",
+      title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
+      excerpt: "Descubre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas legales, plazos judiciales y consejos para arrendadores y arrendatarios bajo la ley actual.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "16 de Marzo, 2026",
+      readTime: "15 min",
+      image: "/assets/desalojo-chile-2026.png",
+      featured: true
+    },
+    {
       id: "me-quieren-desalojar-que-hago-chile-2026",
       title: "¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)",
       excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales y el proceso correcto bajo la ley 'Devuélveme mi Casa'.",
@@ -25,7 +36,7 @@ const BlogPage = () => {
       date: "13 de Marzo, 2026",
       readTime: "15 min",
       image: "/assets/desalojo-chile-2026.png",
-      featured: true
+      featured: false
     },
     {
       id: "derecho-penal-chile-2026",

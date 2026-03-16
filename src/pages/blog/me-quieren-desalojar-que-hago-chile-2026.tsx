@@ -250,10 +250,10 @@ const BlogArticle = () => {
 
         <BlogNavigation 
           prevArticle={{
-            id: "derecho-penal-chile-2026",
-            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
-            excerpt: "Enfrentar una acusación penal puede ser una de las situaciones más difíciles para cualquier persona. En esta Guía 2026 de Derecho Penal en Chile, explicamos qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal y qué pasos debes seguir para protegerte legalmente.",
-            image: "/assets/derecho-penal-chile-2026.png"
+            id: "cuanto-demora-juicio-desalojo-chile-2026",
+            title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
+            excerpt: "Descubre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas legales, plazos judiciales y consejos para arrendadores y arrendatarios bajo la ley actual.",
+            image: "/assets/desalojo-chile-2026.png"
           }} 
         />
 
