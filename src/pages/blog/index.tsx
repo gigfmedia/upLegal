@@ -24,7 +24,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "16 de Marzo, 2026",
       readTime: "15 min",
-      image: "/assets/desalojo-chile-2026.png",
+      image: "/assets/desalojo-2-chile-2026.png",
       featured: true
     },
     {
