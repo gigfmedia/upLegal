@@ -853,10 +853,10 @@ app.post('/api/bookings/create', async (req, res) => {
     try {
       const { data: existingBookings, error: existingError } = await supabase
         .from('bookings')
-        .select('id, scheduled_time, duration, status')
+        .select('id, scheduled_time, duration, status, created_at')
         .eq('lawyer_id', lawyer_id)
         .eq('scheduled_date', scheduled_date)
-        .in('status', ['pending', 'confirmed']);
+        .or('status.eq.confirmed,and(status.eq.pending,created_at.gt.' + new Date(Date.now() - 30 * 60 * 1000).toISOString() + ')');
 
       if (existingError) {
         console.error('Error checking existing bookings:', existingError);

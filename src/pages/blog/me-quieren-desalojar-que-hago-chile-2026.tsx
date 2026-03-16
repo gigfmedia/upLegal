@@ -1,44 +1,46 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertTriangle, Scale, ShieldAlert, Gavel, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, Search, MessageSquare, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
+import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
   const faqs = [
     {
       question: "¿Pueden sacarme de mi casa si no pagué el arriendo?",
-      answer: "No inmediatamente. El no pago del arriendo le da derecho al dueño a iniciar un juicio de arrendamiento, pero hasta que un juez no dicte la orden de lanzamiento, tienes derecho a permanecer en la propiedad."
+      answer: "No inmediatamente. El no pago permite al dueño iniciar un juicio, pero solo un juez puede ordenar el desalojo."
     },
     {
       question: "¿Cuánto demora un desalojo en Chile?",
-      answer: "Depende del caso. Con la ley 'Devuélveme mi Casa', el desalojo por rentas impagas puede tardar de 2 a 4 meses. En otros casos, puede demorar varios meses dependiendo de la carga del tribunal."
+      answer: "El tiempo depende del caso. Con los procedimientos actuales, algunos desalojos pueden tardar entre 2 y 6 meses, aunque en casos complejos puede demorar más."
     },
     {
-      question: "¿Qué pasa si no tengo contrato de arriendo escrito?",
-      answer: "Incluso sin contrato escrito, existe un contrato verbal reconocido por la ley. Si puedes demostrar el pago de rentas (transferencias, recibos), tienes los mismos derechos que un arrendatario con contrato escrito."
+      question: "¿Qué pasa si no tengo contrato escrito?",
+      answer: "Incluso sin contrato escrito, la ley reconoce el contrato verbal si existe evidencia de pago de arriendo. Esto significa que igualmente tienes derechos como arrendatario."
     },
     {
       question: "¿Puede el dueño entrar a la casa si vivo ahí?",
-      answer: "No sin tu permiso. Aunque sea el dueño, mientras el contrato esté vigente (o haya ocupación de morada), entrar sin autorización es un delito de violación de morada."
+      answer: "No. Aunque sea el propietario, entrar sin autorización puede constituir violación de morada, que es un delito."
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden desalojar sin orden judicial en Chile? Guía 2026"
-        description="¿Te quieren desalojar? Conoce tus derechos en Chile 2026. Guía sobre desalojos legales, ley Devuélveme mi Casa y qué hacer ante un desalojo forzado ilegal."
+        title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
+        description="Si arriendas una propiedad en Chile, conoce tus derechos. ¿Puede el dueño sacarte a la fuerza? Descubre el proceso legal y cómo protegerte en esta Guía 2026."
         image="/assets/desalojo-chile-2026.png"
         url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"
         datePublished="2026-03-13"
-        dateModified="2026-03-13"
+        dateModified="2026-03-16"
         faqs={faqs}
       />
       <Header onAuthClick={() => {}} />
+      <ReadingProgressBar />
       
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
@@ -55,11 +57,11 @@ const BlogArticle = () => {
             ¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl">
-            Conoce tus derechos como arrendatario y el proceso legal bajo la ley "Devuélveme mi Casa". No permitas que vulneren tu hogar sin el debido proceso.
+          <p className="text-xl text-blue-100 max-w-3xl leading-relaxed">
+            Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
+          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Marzo, 2026</span>
@@ -70,7 +72,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 15 min</span>
+              <span>Tiempo de lectura: 10 min</span>
             </div>
           </div>
         </div>
@@ -80,125 +82,208 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <BlogShare 
-            title="¿Me pueden desalojar sin orden judicial en Chile? Guía 2026" 
+            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)" 
             url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026" 
             showBorder={false}
           />
+          
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
               Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Ya sea por retrasos en el pago del arriendo, desacuerdos sobre mantenciones o simplemente por una mala relación personal, la tensión puede escalar rápidamente.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
-              En estos momentos de crisis, una de las dudas más recurrentes y angustiantes es: <strong>¿me pueden desalojar sin una orden judicial en Chile?</strong> Muchas personas creen erróneamente que, al ser dueños de la propiedad, el arrendador tiene el poder absoluto de entrar a la vivienda, cambiar la cerradura o sacar las pertenencias a la calle. Sin embargo, la legislación chilena protege la morada y establece procesos estrictos para el término de un contrato.
+              En estos momentos de crisis, una de las dudas más recurrentes y angustiantes es: ¿me pueden desalojar sin una orden judicial en Chile? Muchas personas creen erróneamente que, al ser dueños de la propiedad, el arrendador tiene el poder absoluto de entrar a la vivienda, cambiar la cerradura o sacar las pertenencias a la calle. Sin embargo, la legislación chilena protege la morada y establece procesos estrictos para el término de un contrato de arriendo.
+            </p>
+            <p className="text-lg text-gray-600 leading-relaxed text-balance">
+              Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
             </p>
           </div>
 
-          {/* Rule General */}
-          <div className="mb-12 py-2">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              ¿Me pueden desalojar sin orden judicial?
-            </h2>
-            <p className="text-gray-600 mb-4 font-semibold text-lg">
-              La respuesta corta y categórica es NO.
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Proceso judicial obligatorio para desalojar</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.
             </p>
-            <p className="text-gray-600 mb-6">
-              En Chile, nadie puede ser desalojado de una propiedad que habita (incluso si existe una deuda importante) sin una orden emanada expresamente de un tribunal de justicia. El derecho a la vivienda y la inviolabilidad del hogar son principios protegidos por nuestra Constitución y el Código Civil.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <div className="bg-white p-4 rounded-lg border border-red-100 shadow-sm">
-                <h3 className="font-bold text-red-800 mb-2">Proceso Judicial Obligatorio</h3>
-                <p className="text-sm text-gray-600">Para que un desalojo sea legal, el dueño debe iniciar una acción legal ante los tribunales civiles. No basta con una carta o aviso verbal.</p>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Demanda ante tribunal civil</h3>
+                <p className="text-gray-600 mb-4 leading-relaxed">
+                  El primer paso consiste en presentar una demanda de arrendamiento ante un tribunal civil. Generalmente esta acción se presenta cuando existe incumplimiento del contrato, como por ejemplo el no pago de rentas. El tribunal revisa la demanda y luego ordena notificar al arrendatario para que pueda defenderse.
+                </p>
               </div>
-              <div className="bg-white p-4 rounded-lg border border-red-100 shadow-sm">
-                <h3 className="font-bold text-red-800 mb-2">Orden de Lanzamiento</h3>
-                <p className="text-sm text-gray-600">Solo un receptor judicial, a menudo con auxilio de Carabineros, puede ejecutar el desalojo tras una sentencia firme.</p>
+
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Derecho a defensa del arrendatario</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  Una vez notificado, el arrendatario tiene derecho a responder la demanda, presentar pruebas o incluso llegar a un acuerdo con el dueño. Este principio es fundamental dentro del sistema judicial, ya que garantiza que ambas partes puedan ser escuchadas antes de tomar una decisión.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold mb-3 text-gray-900">Orden de lanzamiento</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Si el juez determina que corresponde el desalojo, dictará una sentencia que puede incluir una orden de lanzamiento, que es la orden formal para que el arrendatario abandone la propiedad. Esta orden es ejecutada por un receptor judicial, quien puede solicitar el apoyo de Carabineros si es necesario.
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Illegal Actions */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              ¿Qué pasa si el dueño cambia la cerradura?
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Este es uno de los escenarios más temidos y, lamentablemente, una práctica que algunos dueños intentan para presionar a los arrendatarios. Es fundamental saber que <strong>estas acciones son ilegales</strong>:
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si el dueño cambia la cerradura?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Uno de los escenarios más temidos por los arrendatarios es llegar a la vivienda y encontrar que el dueño cambió la cerradura. Lamentablemente, esta práctica ocurre en algunos casos, pero es importante saber que es ilegal.
             </p>
-            <ul className="space-y-4">
-              <li className="flex items-start gap-4 bg-gray-50 p-4 rounded-lg">
-                <AlertTriangle className="h-6 w-6 text-orange-500 mt-1 flex-shrink-0" />
-                <div>
-                  <span className="font-bold block text-gray-800">Autotutela Ilegal</span>
-                  <span className="text-gray-600">En Chile, el dueño no puede tomar medidas de fuerza por cuenta propia. Hacerlo se considera "justicia por mano propia" y es sancionable.</span>
-                </div>
-              </li>
-              <li className="flex items-start gap-4 bg-gray-50 p-4 rounded-lg">
-                <Gavel className="h-6 w-6 text-orange-500 mt-1 flex-shrink-0" />
-                <div>
-                  <span className="font-bold block text-gray-800">Riesgo de Delitos Penales</span>
-                  <span className="text-gray-600">Si el dueño cambia la cerradura con tus pertenencias dentro, podría incurrir en apropiación indebida o incluso violación de morada si entra sin autorización.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
 
-          {/* When is it Legal? */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Cuándo SÍ pueden desalojarte legalmente</h2>
-            <p className="text-gray-600 mb-6">
-              Existen causales legales claras bajo las cuales un tribunal ordenará el desalojo definitivo de la propiedad:
+            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-8">
+              <h3 className="text-lg font-bold text-red-800 mb-2">Autotutela ilegal</h3>
+              <p className="text-red-800">
+                En Chile, ninguna persona puede hacer justicia por su propia cuenta. Esto se conoce jurídicamente como autotutela. Aunque el dueño sea el propietario del inmueble, no tiene derecho a expulsar al arrendatario mediante la fuerza o sin autorización judicial.
+              </p>
+            </div>
+
+            <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
+              Cambiar cerraduras, cortar servicios básicos o sacar pertenencias a la calle son conductas que pueden ser denunciadas.
             </p>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">Posibles delitos</h3>
+            <p className="text-gray-600 mb-4">Dependiendo de las circunstancias, estas acciones pueden constituir delitos como:</p>
             <div className="grid sm:grid-cols-2 gap-4">
               {[
-                "No pago del arriendo (causal más frecuente)",
-                "Término del plazo del contrato",
-                "Subarriendo sin autorización del dueño",
-                "Destinar la vivienda a usos comerciales no permitidos",
-                "Daños graves a la estructura de la propiedad",
-                "Precario (cuando no existe contrato y solo hay tolerancia)"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-red-50 transition-colors">
-                  <CheckCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  <span className="text-gray-700 text-sm font-medium">{item}</span>
+                "Violación de morada",
+                "Apropiación indebida",
+                "Daños a la propiedad"
+              ].map((crime, i) => (
+                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                  <span className="text-gray-700 font-medium text-base">{crime}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Process Step by Step */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-2">
-              El Proceso Judicial de Desalojo (Ley Chile)
-            </h2>
-            <div className="space-y-8 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-700">
-              <div className="relative pl-10 border-l-0">
-                <div className="absolute left-1.5 top-1 h-5 w-5 rounded-full bg-yellow-500 border-4 border-yellow-900"></div>
-                <h3 className="font-bold">1. Demanda de Arrendamiento</h3>
-                <p className="text-sm text-gray-400 mt-1">El dueño, mediante abogado, presenta la demanda solicitando el término de contrato por no pago o vencimiento.</p>
-              </div>
-              <div className="relative pl-10">
-                <div className="absolute left-1.5 top-1 h-5 w-5 rounded-full bg-yellow-500 border-4 border-yellow-900"></div>
-                <h3 className="font-bold">2. Notificación Legal</h3>
-                <p className="text-sm text-gray-400 mt-1">Un receptor judicial entrega la demanda. Tienes 10 días para responder y presentar tus defensas.</p>
-              </div>
-              <div className="relative pl-10">
-                <div className="absolute left-1.5 top-1 h-5 w-5 rounded-full bg-yellow-500 border-4 border-yellow-900"></div>
-                <h3 className="font-bold">3. Audiencia y Sentencia</h3>
-                <p className="text-sm text-gray-400 mt-1">El juez analiza las pruebas. Si falla a favor del dueño, fijará un plazo de entrega voluntaria.</p>
-              </div>
-              <div className="relative pl-10">
-                <div className="absolute left-1.5 top-1 h-5 w-5 rounded-full bg-red-500 border-4 border-red-900 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
-                <h3 className="font-bold">4. Lanzamiento con Fuerza Pública</h3>
-                <p className="text-sm text-gray-400 mt-1">Si no sales voluntariamente, se autoriza el lanzamiento forzado con apoyo de Carabineros.</p>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué hacer si intentan desalojarte ilegalmente</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Si un arrendador intenta sacarte de la propiedad sin orden judicial, existen varias acciones que puedes realizar para proteger tus derechos.
+            </p>
+            <div className="space-y-4">
+              {[
+                { title: "Contactar a Carabineros", desc: "Si el dueño intenta ingresar a la vivienda por la fuerza o cambiar cerraduras, puedes llamar a Carabineros para dejar constancia de la situación.", icon: <MessageSquare className="h-5 w-5" /> },
+                { title: "Reunir evidencia", desc: "Es importante recopilar pruebas como fotografías, videos, mensajes o correos, y testigos. Estas evidencias pueden ser útiles si decides presentar una acción judicial.", icon: <Search className="h-5 w-5" /> },
+                { title: "Buscar asesoría legal", desc: "Un abogado puede ayudarte a evaluar el caso y determinar qué acciones legales corresponden.", icon: <Shield className="h-5 w-5" /> }
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
+                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <span className="font-bold text-gray-900">{item.title}</span>
+                    <p className="text-base text-gray-600 mt-1">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuándo SÍ pueden desalojarte legalmente</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Aunque no es posible desalojar sin orden judicial, sí existen situaciones en las que un tribunal puede ordenar el abandono de la propiedad. Las causas más comunes son las siguientes:
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              {[
+                { title: "No pago del arriendo", desc: "Es la causa más frecuente de demandas de desalojo." },
+                { title: "Término del contrato", desc: "Si el contrato finalizó y el arrendatario no abandona la propiedad." },
+                { title: "Subarriendo no autorizado", desc: "Incumplimiento contractual por subarrendar sin permiso." },
+                { title: "Uso indebido del inmueble", desc: "Actividades comerciales o ilegales." },
+                { title: "Daños graves a la propiedad", desc: "Si el arrendatario provoca daños importantes al inmueble." },
+                { title: "Ocupación en precario", desc: "Sin contrato ni autorización formal del dueño." }
+              ].map((cause, i) => (
+                <div key={i} className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-gray-900 block">{cause.title}</span>
+                    <span className="text-gray-600 text-base">{cause.desc}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">El proceso judicial de desalojo en Chile</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Aunque cada caso puede ser diferente, el proceso de desalojo generalmente sigue estas etapas:
+            </p>
+            <div className="space-y-4">
+              {[
+                { title: "Presentación de la demanda", desc: "El dueño presenta la demanda ante el tribunal correspondiente con la ayuda de un abogado, solicitando el término del contrato y la restitución del inmueble." },
+                { title: "Notificación", desc: "Un receptor judicial se encarga de notificar al arrendatario en su domicilio. A partir de la notificación comienza el plazo para responder la demanda." },
+                { title: "Audiencia o resolución judicial", desc: "El juez analiza los antecedentes. Si determina que corresponde el desalojo, dictará una sentencia estableciendo el plazo para abandonar la propiedad." },
+                { title: "Lanzamiento con fuerza pública", desc: "Si el arrendatario no abandona voluntariamente, el tribunal puede ordenar el lanzamiento con apoyo de Carabineros. Este es el único momento en que una persona puede ser desalojada físicamente." }
+              ].map((step, i) => (
+                <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
+                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div>
+                    <span className="font-bold text-gray-900">{step.title}</span>
+                    <p className="text-base text-gray-600 mt-1">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué dice la ley “Devuélveme mi Casa”?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              En los últimos años se aprobó una normativa conocida como Ley “Devuélveme mi Casa”, cuyo objetivo es agilizar los procesos de desalojo en casos de incumplimiento de arriendo.
+            </p>
+            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
+              <p className="text-indigo-900 leading-relaxed">
+                Esta ley permite procedimientos más rápidos en situaciones donde la deuda está claramente acreditada, por ejemplo cuando existe contrato firmado ante notario. Gracias a esta normativa, algunos desalojos pueden resolverse en plazos más cortos que antes, aunque igualmente requieren intervención judicial.
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Consejos para arrendatarios</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Para evitar conflictos legales o procesos de desalojo, es recomendable seguir algunas buenas prácticas:</p>
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+              <div className="grid sm:grid-cols-2 gap-4">
+                {[
+                  "Mantener siempre los pagos de arriendo al día",
+                  "Guardar comprobantes de pago",
+                  "Leer cuidadosamente el contrato antes de firmar",
+                  "Comunicar problemas al dueño con anticipación",
+                  "Documentar cualquier reparación o mantención acordada"
+                ].map((tip, i) => (
+                  <div key={i} className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <span className="text-base font-medium">{tip}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* FAQ (SEO structured) */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre desalojos</h2>
-            
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              En Chile, nadie puede ser desalojado de una propiedad sin una orden judicial. Aunque el dueño tenga motivos válidos para recuperar el inmueble, debe seguir el proceso legal establecido por la ley.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Intentar desalojar a un arrendatario por la fuerza, cambiar cerraduras o retirar pertenencias sin autorización judicial son acciones ilegales que pueden tener consecuencias legales. Conocer tus derechos es fundamental para enfrentar correctamente cualquier conflicto de arriendo y evitar abusos.
+            </p>
+            <p className="text-gray-600 font-bold leading-relaxed">
+              Si tienes dudas sobre tu situación o enfrentas un problema legal relacionado con arriendos, buscar asesoría jurídica puede ayudarte a tomar decisiones informadas y proteger tus derechos.
+            </p>
+          </div>
+
+          {/* FAQ */}
+          <div className="mb-6" data-faq-section>
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre desalojos</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-blue-50 rounded-lg p-6">
@@ -208,53 +293,52 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-        </div> {/* Closes bg-white rounded-lg shadow-sm p-8 */}
+        </div>
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas un abogado civil?</h2>
-          <p className="text-lg text-gray-700 mb-6">
-            Si tienes dudas sobre tu contrato, enfrentas amenazas de desalojo o simplemente necesitas que un experto revise tu situación, en LegalUp.cl puedes hablar con un abogado civil verificado en minutos, sin citas presenciales ni trámites complicados.
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Te quieren desalojar o tienes problemas de arriendo?</h2>
+          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
+            Protege tu hogar y tus derechos. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/consulta">
-              <Button 
-                size="lg" 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Consultar con Abogado Ahora
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md">
+                Consultar con Abogado de Arriendo
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Civil">
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Civiles
+            <Link to="/search?category=Arrendamiento">
+              <Button variant="outline" size="lg" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto">
+                Ver Listado de Abogados
               </Button>
             </Link>
           </div>
         </section>
-      </div> {/* Closes max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 */}
+      </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+      <RelatedLawyers category="Arrendamiento" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare 
-            title="¿Me pueden desalojar sin orden judicial en Chile? Guía 2026" 
+            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)" 
             url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026" 
           />
         </div>
 
         <BlogNavigation 
           prevArticle={{
+            id: "me-subieron-el-arriendo-que-hago-2026",
+            title: "Me subieron el arriendo, ¿qué hago? Guía 2026",
+            excerpt: "Entender qué dice tu contrato y cuáles son tus derechos es fundamental para evitar cobros abusivos o arbitrarios.",
+            image: "/assets/arriendo-chile-2026.png"
+          }}
+          nextArticle={{
             id: "cuanto-demora-juicio-desalojo-chile-2026",
-            title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
-            excerpt: "Descubre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas legales, plazos judiciales y consejos para arrendadores y arrendatarios bajo la ley actual.",
+            title: "¿Cuánto demora un juicio de desalojo? Guía 2026",
+            excerpt: "Descubre cuánto tarda realmente un proceso de desalojo y cuáles son los plazos legales en Chile.",
             image: "/assets/desalojo-chile-2026.png"
-          }} 
+          }}
         />
 
         <div className="mt-8 text-center">

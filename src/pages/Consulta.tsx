@@ -15,7 +15,7 @@ export default function Consulta() {
             <p className="text-xl text-muted-foreground">
               Consulta legal online inmediata con un abogado verificado en Chile.
             </p>
-            <p className="text-sm text-muted-foreground">Duración aproximada: 20-30 minutos · Pago único · Videollamada</p>
+            <p className="text-sm text-muted-foreground">Duración aproximada: 30 - 60 minutos · Pago único · Videollamada</p>
             <p className="text-sm text-muted-foreground">La duración puede variar según la complejidad del caso</p>
             <div className="pt-2">
               <Button 
@@ -23,7 +23,7 @@ export default function Consulta() {
                 className="text-lg py-6 px-8 bg-blue-700 hover:bg-blue-800"
                 onClick={() => navigate('/consulta/detalle')}
               >
-                Agendar consulta – $30.000
+                Agendar consulta
               </Button>
               <p className="text-sm text-muted-foreground mt-6">Abogados verificados · 🔒 Pago seguro con MercadoPago</p>
               <p className="text-sm text-muted-foreground mt-4">Después del pago, te contactamos por email para coordinar la videollamada.</p>

@@ -6,6 +6,7 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
+import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
   const faqs = [
@@ -44,6 +45,7 @@ const BlogArticle = () => {
       />
 
       <Header onAuthClick={() => {}} />
+      <ReadingProgressBar />
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
@@ -75,7 +77,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 18 min</span>
+              <span>Tiempo de lectura: 10 min</span>
             </div>
           </div>
         </div>
@@ -141,30 +143,30 @@ const BlogArticle = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Etapa del proceso</th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tiempo aproximado</th>
+                    <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-500 uppercase tracking-wider">Etapa del proceso</th>
+                    <th scope="col" className="px-6 py-4 text-left text-base font-bold text-gray-500 uppercase tracking-wider">Tiempo aproximado</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Presentación de la demanda</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">1 semana</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">Presentación de la demanda</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-600">1 semana</td>
                   </tr>
                   <tr className="bg-gray-50/30">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Notificación al arrendatario</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2 a 4 semanas</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">Notificación al arrendatario</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-600">2 a 4 semanas</td>
                   </tr>
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Tramitación del juicio</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">1 a 3 meses</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">Tramitación del juicio</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-600">1 a 3 meses</td>
                   </tr>
                   <tr className="bg-gray-50/30">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sentencia del tribunal</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2 a 4 semanas</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">Sentencia del tribunal</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-600">2 a 4 semanas</td>
                   </tr>
                   <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ejecución del desalojo</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">2 a 6 semanas</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base font-medium text-gray-900">Ejecución del desalojo</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-base text-gray-600">2 a 6 semanas</td>
                   </tr>
                 </tbody>
               </table>
@@ -235,12 +237,12 @@ const BlogArticle = () => {
 
           <div className="mb-12 py-2">
             <h2 className="text-2xl font-bold mb-6">¿Qué hacer si enfrentas un juicio de desalojo?</h2>
-            <div className="grid md:grid-cols-2 gap-8 mt-6">
+            <div className="grid md:grid-cols-1 gap-8 mt-6">
               <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
                 <h3 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
                   Recomendaciones Arrendadores
                 </h3>
-                <ul className="space-y-3 text-sm text-gray-700">
+                <ul className="space-y-3 text-base text-gray-700">
                   <li>• Reúne todos los documentos que acrediten la deuda.</li>
                   <li>• No intentes acciones de fuerza por cuenta propia.</li>
                   <li>• Busca asesoría legal para una demanda sólida.</li>
@@ -250,29 +252,55 @@ const BlogArticle = () => {
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   Recomendaciones Arrendatarios
                 </h3>
-                <ul className="space-y-3 text-sm text-gray-700">
+                <ul className="space-y-3 text-base text-gray-700 mb-6">
                   <li>• Revisa minuciosamente las condiciones de tu contrato.</li>
                   <li>• Evalúa la posibilidad de pagar o negociar un plazo.</li>
                   <li>• Busca orientación legal para defender tus derechos.</li>
                 </ul>
+                 <div className="mt-8 pt-8 border-t border-gray-100 text-center">
+                  <p className="text-base text-gray-500 mb-4 uppercase font-bold tracking-wider">Lectura Recomendada</p>
+                  <Link 
+                    to="/blog/me-subieron-el-arriendo-que-hago-2026"
+                    className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                  >
+                    👉 Me subieron el arriendo, ¿qué hago?
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mb-12 py-4 border-t border-b border-gray-100">
-            <p className="text-lg text-gray-700 leading-relaxed mb-4">
-              Si quieres profundizar sobre la legalidad de los desalojos directos, revisa también:
+          <div className="mb-12 text-center py-8 border-t border-b border-gray-100">
+            <p className="text-gray-700 font-medium mb-6 italic leading-relaxed">
+              ¿Te están amenazando con un desalojo directo o por la fuerza? Es fundamental que sepas que esto es ilegal en Chile.
             </p>
             <Link 
               to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-              className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline"
+              className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-lg"
             >
-              👉 ¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)
-              <ChevronRight className="h-4 w-4" />
+              👉 Guía: ¿Me pueden desalojar sin orden judicial?
+              <ChevronRight className="h-5 w-5" />
             </Link>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El juicio de desalojo en Chile puede demorar desde algunas semanas hasta varios meses, dependiendo de factores como el tipo de contrato, si existen rentas impagas, la carga del tribunal y si el arrendatario presenta defensa durante el proceso.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Con la implementación de leyes como “Devuélveme mi Casa”, los procedimientos de desalojo por no pago del arriendo se han vuelto más rápidos en comparación con años anteriores. Sin embargo, incluso en estos casos, el desalojo siempre debe realizarse mediante una orden judicial, respetando el debido proceso y los derechos tanto del arrendador como del arrendatario.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed font-semibold">
+              Si enfrentas un conflicto de arriendo, ya sea como dueño o arrendatario, es importante conocer el procedimiento legal y actuar a tiempo para evitar problemas mayores.
+            </p>
+            <p className="text-gray-600 leading-relaxed font-bold">
+              En situaciones complejas, contar con asesoría legal puede ayudarte a entender tus derechos, acelerar el proceso y evitar errores que puedan retrasar el juicio.
+            </p>
+          </div>
+
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre desalojos en Chile</h2>
             <div className="space-y-4">
               {faqs.map((faq, index) => (
