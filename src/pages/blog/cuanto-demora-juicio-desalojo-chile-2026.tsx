@@ -323,6 +323,12 @@ const BlogArticle = () => {
             <Link to="/consulta">
               <Button 
                 size="lg"
+                onClick={() => {
+                  window.gtag?.('event', 'click_consultar_abogado', {
+                    article: window.location.pathname,
+                    location: 'blog_cta_desalojo_duracion_primary',
+                  });
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Ahora
@@ -332,6 +338,12 @@ const BlogArticle = () => {
               <Button 
                 variant="outline" 
                 size="lg"
+                onClick={() => {
+                  window.gtag?.('event', 'click_ver_abogados', {
+                    article: window.location.pathname,
+                    location: 'blog_cta_desalojo_duracion_secondary',
+                  });
+                }}
                 className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados Civiles

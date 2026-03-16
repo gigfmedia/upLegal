@@ -295,12 +295,31 @@ const BlogArticle = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/consulta">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md">
+              <Button
+                size="lg"
+                onClick={() => {
+                  window.gtag?.('event', 'click_consultar_abogado', {
+                    article: window.location.pathname,
+                    location: 'blog_cta_arriendo_aumento_primary',
+                  });
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+              >
                 Consultar con Abogado Ahora
               </Button>
             </Link>
             <Link to="/search?category=Derecho+Inmobiliario">
-              <Button variant="outline" size="lg" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  window.gtag?.('event', 'click_ver_abogados', {
+                    article: window.location.pathname,
+                    location: 'blog_cta_arriendo_aumento_secondary',
+                  });
+                }}
+                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+              >
                 Ver Abogados Inmobiliarios
               </Button>
             </Link>
