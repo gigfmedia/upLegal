@@ -17,6 +17,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "arrendador-puede-cambiar-cerradura-chile-2026",
+      title: "¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)",
+      excerpt: "¿Te cambiaron la cerradura? En Chile, el arrendador no puede hacerlo sin una orden judicial. Descubre qué dice la ley, qué hacer y cómo proteger tus derechos como arrendatario.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "18 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/assets/cerradura-arriendo-chile-2026.png",
+      featured: true
+    },
+    {
       id: "cuanto-demora-juicio-desalojo-chile-2026",
       title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
       excerpt: "Descubre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas legales, plazos judiciales y consejos para arrendadores y arrendatarios bajo la ley actual.",
@@ -25,7 +36,7 @@ const BlogPage = () => {
       date: "16 de Marzo, 2026",
       readTime: "15 min",
       image: "/assets/desalojo-2-chile-2026.png",
-      featured: true
+      featured: false
     },
     {
       id: "me-quieren-desalojar-que-hago-chile-2026",

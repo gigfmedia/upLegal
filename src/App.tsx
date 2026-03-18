@@ -87,6 +87,7 @@ const DerechoFamiliaArticle = lazy(() => import('./pages/blog/derecho-de-familia
 const DerechoPenalArticle = lazy(() => import('./pages/blog/derecho-penal-chile-2026'));
 const DesalojoArticle = lazy(() => import('./pages/blog/me-quieren-desalojar-que-hago-chile-2026'));
 const JuicioDesalojoArticle = lazy(() => import('./pages/blog/cuanto-demora-juicio-desalojo-chile-2026'));
+const CerraduraArticle = lazy(() => import('./pages/blog/arrendador-puede-cambiar-cerradura-chile-2026'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 
 // Create a single QueryClient instance
@@ -183,14 +184,44 @@ const setupGlobalErrorHandlers = () => {
         reason: event.reason,
       },
     });
+
+    // If it's a chunk load error (stale JS after deploy), reload the page
+    const msg = event.reason?.message || '';
+    const isChunkError =
+      msg.includes('Loading chunk') ||
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('error loading dynamically imported module') ||
+      msg.includes('Importing a module script failed');
+
+    if (isChunkError) {
+      window.location.reload();
+    }
+  };
+
+  // When the user comes back to the tab after a new deploy, stale chunks
+  // will fail silently showing a white screen. This forces a reload.
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      // Check if any script requests fail; vite sets a well-known pattern
+      // A lightweight check: if the page has been idle for > 30 min, reload.
+      const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
+      const idleMs = Date.now() - lastActivity;
+      if (idleMs > 30 * 60 * 1000) {
+        window.location.reload();
+      }
+    } else {
+      sessionStorage.setItem('_legalup_last_active', String(Date.now()));
+    }
   };
 
   window.addEventListener('error', handleError);
   window.addEventListener('unhandledrejection', handleRejection);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   return () => {
     window.removeEventListener('error', handleError);
     window.removeEventListener('unhandledrejection', handleRejection);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
 };
 
@@ -319,6 +350,7 @@ const AppContent = () => {
               <Route path="/blog/derecho-penal-chile-2026" element={<DerechoPenalArticle />} />
               <Route path="/blog/me-quieren-desalojar-que-hago-chile-2026" element={<DesalojoArticle />} />
               <Route path="/blog/cuanto-demora-juicio-desalojo-chile-2026" element={<JuicioDesalojoArticle />} />
+              <Route path="/blog/arrendador-puede-cambiar-cerradura-chile-2026" element={<CerraduraArticle />} />
               <Route path="/review" element={<ReviewPage />} />
              
 
