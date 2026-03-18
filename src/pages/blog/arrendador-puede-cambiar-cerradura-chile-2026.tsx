@@ -309,7 +309,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia entre desalojo legal e ilegal</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia entre desalojo legal o no</h2>
             <div className="overflow-x-auto border rounded-xl overflow-hidden shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
