@@ -487,9 +487,9 @@ const Index = () => {
             
             {/* Feature 1 */}
             <div className="group p-6 rounded-2xl border bg-white border-gray-100">
-              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
-                {/* <Search className="w-6 h-6 text-blue-600" /> */}
-              </div>
+              {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                <Search className="w-6 h-6 text-blue-600" />
+              </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Busca según tu problema →
@@ -504,9 +504,9 @@ const Index = () => {
 
             {/* Feature 2 */}
             <div className="group p-6 rounded-2xl border bg-white border-gray-100">
-              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
-                {/* <Scale className="w-6 h-6 text-blue-600" /> */}
-              </div>
+              {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                <Scale className="w-6 h-6 text-blue-600" />
+              </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Compara antes de decidir →
@@ -521,9 +521,9 @@ const Index = () => {
 
             {/* Feature 3 */}
             <div className="group p-6 rounded-2xl border bg-white border-gray-100">
-              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
-                {/* <DollarSign className="w-6 h-6 text-blue-600" /> */}
-              </div>
+              {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                <DollarSign className="w-6 h-6 text-blue-600" />
+              </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Precios claros desde el inicio →
