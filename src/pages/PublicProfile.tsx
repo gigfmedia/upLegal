@@ -1164,10 +1164,10 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                               <p className="text-gray-500">No se ha proporcionado información de experiencia</p>
                             )}
                           </div>
-                          <div className="flex items-center min-w-[160px]">
+                          {/* <div className="flex items-center min-w-[160px]">
                             <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">Responde en {typeof profileData.responseTime === 'string' ? profileData.responseTime : 'poco tiempo'}</span>
-                          </div>
+                          </div> */}
                           {/*<div className="flex items-center min-w-[140px]">
                             <ThumbsUp className="h-4 w-4 mr-1 flex-shrink-0" />
                             <span className="truncate">{profileData.completionRate} éxito en trabajos</span>
@@ -1334,7 +1334,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     <ul className="space-y-2">
                       {profileData.certifications.length > 0 ? (
                         profileData.certifications.map((cert, index) => (
-                          <li key={index} className="text-gray-600">{cert}</li>
+                          <li key={index} className="text-gray-600">· {cert}</li>
                         ))
                       ) : (
                         <li className="text-gray-500">No hay certificaciones registradas</li>

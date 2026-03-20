@@ -338,17 +338,11 @@ const BlogArticle = () => {
         </div>
 
         <BlogNavigation 
-          prevArticle={{
+          nextArticle={{
             id: "como-calcular-tu-finiquito-chile-2026",
             title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
             excerpt: "Calcular el finiquito puede generar dudas. Te explicamos cómo calcularlo correctamente incluyendo indemnizaciones y vacaciones.",
             image: "/assets/finiquito-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "derecho-penal-chile-2026",
-            title: "¿Qué hacer si te acusan de un delito en Chile? Guía 2026",
-            excerpt: "Enfrentar una acusación penal es difícil. Conoce tus derechos y cómo funciona el proceso penal en esta Guía 2026.",
-            image: "/assets/derecho-penal-chile-2026.png"
           }}
         />
 

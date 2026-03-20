@@ -17,6 +17,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "orden-desalojo-chile-2026",
+      title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
+      excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué es el lanzamiento, qué ocurre después y qué hacer si recibes una. Guía legal completa 2026.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "20 de Marzo, 2026",
+      readTime: "8 min",
+      image: "/assets/orden-desalojo-chile-2026.png",
+      featured: true
+    },
+    {
       id: "arrendador-puede-cambiar-cerradura-chile-2026",
       title: "¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)",
       excerpt: "¿Te cambiaron la cerradura? En Chile, el arrendador no puede hacerlo sin una orden judicial. Descubre qué dice la ley, qué hacer y cómo proteger tus derechos como arrendatario.",
@@ -25,7 +36,7 @@ const BlogPage = () => {
       date: "18 de Marzo, 2026",
       readTime: "10 min",
       image: "/assets/cerradura-arriendo-chile-2026.png",
-      featured: true
+      featured: false
     },
     {
       id: "cuanto-demora-juicio-desalojo-chile-2026",

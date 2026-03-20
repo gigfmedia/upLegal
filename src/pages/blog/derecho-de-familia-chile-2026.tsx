@@ -500,6 +500,12 @@ const BlogArticle = () => {
             excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
             image: "/assets/finiquito-chile-2026.png"
           }} 
+          nextArticle={{
+            id: "derecho-penal-chile-2026",
+            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
+            excerpt: "Enfrentar una acusación penal puede ser difícil. Conoce tus derechos, cómo funciona el proceso penal en Chile y qué pasos seguir para tu defensa.",
+            image: "/assets/derecho-penal-chile-2026.png"
+          }}
         />
 
         {/* Back to Blog */}

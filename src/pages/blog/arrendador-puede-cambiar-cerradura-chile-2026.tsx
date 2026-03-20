@@ -433,16 +433,16 @@ const BlogArticle = () => {
 
         <BlogNavigation
           prevArticle={{
-            id: "me-quieren-desalojar-que-hago-chile-2026",
-            title: "¿Me pueden desalojar sin orden judicial en Chile? Guía 2026",
-            excerpt: "Nadie puede ser desalojado sin una orden judicial. Conoce cómo funciona el proceso y tus derechos como arrendatario.",
-            image: "/assets/desalojo-chile-2026.png"
-          }}
-          nextArticle={{
             id: "cuanto-demora-juicio-desalojo-chile-2026",
             title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
             excerpt: "Descubre los plazos reales de un juicio de desalojo en Chile: desde la demanda hasta el lanzamiento.",
             image: "/assets/desalojo-2-chile-2026.png"
+          }}
+          nextArticle={{
+            id: "orden-desalojo-chile-2026",
+            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
+            excerpt: "Descubre qué es una orden de desalojo, cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
+            image: "/assets/orden-desalojo-chile-2026.png"
           }}
         />
 

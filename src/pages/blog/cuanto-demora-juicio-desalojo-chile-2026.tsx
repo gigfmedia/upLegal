@@ -370,6 +370,12 @@ const BlogArticle = () => {
             excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales.",
             image: "/assets/desalojo-chile-2026.png"
           }} 
+          nextArticle={{
+            id: "arrendador-puede-cambiar-cerradura-chile-2026",
+            title: "¿El arrendador puede cambiar la cerradura en Chile? Guía legal 2026",
+            excerpt: "En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Descubre qué dice la ley y cómo proteger tus derechos.",
+            image: "/assets/cerradura-arriendo-chile-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">

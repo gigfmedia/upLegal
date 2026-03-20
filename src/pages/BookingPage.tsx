@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +43,8 @@ export default function BookingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
+  const timeSelectionRef = useRef<HTMLDivElement>(null);
 
   const actualLawyerId = useMemo(() => {
     if (!lawyerId) return '';
@@ -444,10 +446,22 @@ export default function BookingPage() {
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null); // Reset time when date changes
+    
+    // Scroll to time selection on mobile
+    if (window.innerWidth < 768) {
+      setTimeout(() => {
+        timeSelectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
   };
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
+    
+    // Scroll to summary section after state updates and renders
+    setTimeout(() => {
+      summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
     
     // Track time_selected event
     if (window.gtag && lawyer?.user_id && selectedDate) {
@@ -732,7 +746,7 @@ export default function BookingPage() {
               </div>
 
               {/* Time Selection */}
-              <div>
+              <div ref={timeSelectionRef}>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Selecciona un horario:
                 </label>
@@ -781,7 +795,7 @@ export default function BookingPage() {
 
             {/* Summary and Continue */}
             {selectedDate && selectedTime && (
-              <div className="border-t pt-6">
+              <div ref={summaryRef} className="border-t pt-6">
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Fecha:</span>

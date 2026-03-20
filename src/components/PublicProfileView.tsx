@@ -118,7 +118,7 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
                   <div className="flex items-center gap-6 text-sm text-gray-600">
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      <span>Responde en {publicProfile.responseTime}</span>
+                      {/* <span>Responde en {publicProfile.responseTime}</span> */}
                     </div>
                     <div className="flex items-center">
                       <ThumbsUp className="h-4 w-4 mr-1" />
@@ -179,7 +179,7 @@ export function PublicProfileView({ isOpen, onClose, user, stats }: PublicProfil
                   <h4 className="font-semibold mb-3">Certificaciones</h4>
                   <ul className="space-y-2">
                     {publicProfile.certifications.map((cert, index) => (
-                      <li key={index} className="text-gray-600">{cert}</li>
+                      <li key={index} className="text-gray-600">·{cert}</li>
                     ))}
                   </ul>
                 </div>
