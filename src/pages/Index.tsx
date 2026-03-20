@@ -469,47 +469,73 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-blue-50">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
-            ¿Por qué elegir nuestra plataforma?
-          </h2>
+      
+          {/* Header */}
+          <div className="mb-12">
+            <h2 className="text-3xl font-bold text-left text-gray-900 mb-4">
+              Encuentra el abogado correcto, sin perder tiempo
+            </h2>
+            <p className="text-left text-gray-600 mb-12">
+              Busca, compara y decide con información clara, todo en un solo lugar.
+            </p>
+          </div>
+
+          {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center border-none shadow-lg rounded-2xl">
-              <CardHeader>
-                <ShieldCheck className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Profesionales Verificados</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Todos los abogados están verificados con su RUT profesional y registro del Poder Judicial.
-                </p>
-              </CardContent>
-            </Card>
             
-            <Card className="text-center border-none shadow-lg rounded-2xl">
-              <CardHeader>
-                <DollarSign className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Precios Transparentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Precios claros sin tarifas ocultas. Sabes exactamente lo que vas a pagar antes de comenzar.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center border-none shadow-lg rounded-2xl">
-              <CardHeader>
-                <FileText className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <CardTitle>Seguro y Confidencial</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Tus datos y documentos se mantienen protegidos con cifrado y secreto profesional.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Feature 1 */}
+            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                {/* <Search className="w-6 h-6 text-blue-600" /> */}
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Busca según tu problema →
+              </h3>
+
+              <ul className="text-gray-600 text-sm space-y-1">
+                <li>• Filtra por tipo de caso</li>
+                <li>• Encuentra abogados especializados</li>
+                <li>• Resultados en segundos</li>
+              </ul>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                {/* <Scale className="w-6 h-6 text-blue-600" /> */}
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Compara antes de decidir →
+              </h3>
+
+              <ul className="text-gray-600 text-sm space-y-1">
+                <li>• Revisa experiencia</li>
+                <li>• Evalúa enfoque y especialidad</li>
+                <li>• Elige con mejor información</li>
+              </ul>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+              <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
+                {/* <DollarSign className="w-6 h-6 text-blue-600" /> */}
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Precios claros desde el inicio →
+              </h3>
+
+              <ul className="text-gray-600 text-sm space-y-1">
+                <li>• Valores visibles o rangos</li>
+                <li>• Sin “depende del caso”</li>
+                <li>• Sin sorpresas después</li>
+              </ul>
+            </div>
+
           </div>
         </div>
       </section>
