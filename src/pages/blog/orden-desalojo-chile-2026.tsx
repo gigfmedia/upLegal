@@ -104,10 +104,10 @@ const BlogArticle = () => {
               <p className="font-semibold text-blue-900 mb-3">En esta guía te explicamos:</p>
               <ul className="space-y-2">
                 {[
-                  "qué es una orden de desalojo",
-                  "en qué momento del proceso se dicta",
-                  "qué ocurre después (lanzamiento)",
-                  "qué hacer si recibes una orden de desalojo"
+                  "Qué es una orden de desalojo",
+                  "En qué momento del proceso se dicta",
+                  "Qué ocurre después (lanzamiento)",
+                  "Qué hacer si recibes una orden de desalojo"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-blue-800">
                     <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -126,9 +126,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">Esta orden:</p>
             <div className="space-y-3 mb-6">
               {[
-                { text: "no es inmediata", icon: <XCircle className="h-5 w-5 text-red-500" /> },
-                { text: "no la puede dictar el arrendador", icon: <XCircle className="h-5 w-5 text-red-500" /> },
-                { text: "solo puede ser emitida por un juez", icon: <CheckCircle className="h-5 w-5 text-blue-500" /> }
+                { text: "No es inmediata", icon: <XCircle className="h-5 w-5 text-red-500" /> },
+                { text: "No la puede dictar el arrendador", icon: <XCircle className="h-5 w-5 text-red-500" /> },
+                { text: "Solo puede ser emitida por un juez", icon: <CheckCircle className="h-5 w-5 text-blue-500" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   {item.icon}
@@ -151,10 +151,10 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">Esto puede ocurrir cuando:</p>
             <div className="space-y-3 mb-6">
               {[
-                "existe deuda de arriendo",
-                "se incumple el contrato",
-                "el contrato ha terminado",
-                "el arrendatario no abandona el inmueble"
+                "Existe deuda de arriendo",
+                "Se incumple el contrato",
+                "El contrato ha terminado",
+                "El arrendatario no abandona el inmueble"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
@@ -209,9 +209,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">En términos generales:</p>
             <div className="space-y-3 mb-6">
               {[
-                "primero debe tramitarse el juicio",
-                "luego dictarse la sentencia",
-                "finalmente emitirse la orden"
+                "Primero debe tramitarse el juicio",
+                "Luego dictarse la sentencia",
+                "Finalmente emitirse la orden"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0">{i + 1}</div>
@@ -238,9 +238,9 @@ const BlogArticle = () => {
               <p className="text-amber-800 mb-3 leading-relaxed">En esta etapa:</p>
               <ul className="space-y-2 mb-4">
                 {[
-                  "se hace cumplir la resolución judicial",
-                  "el arrendatario debe salir del inmueble",
-                  "puede intervenir la fuerza pública"
+                  "Se hace cumplir la resolución judicial",
+                  "El arrendatario debe salir del inmueble",
+                  "Puede intervenir la fuerza pública"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-amber-800">
                     <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -285,9 +285,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">Acciones como:</p>
             <div className="space-y-3 mb-4">
               {[
-                "cambiar la cerradura",
-                "impedir el acceso",
-                "sacar pertenencias"
+                "Cambiar la cerradura",
+                "Impedir el acceso",
+                "Sacar pertenencias"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100">
                   <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
@@ -318,9 +318,9 @@ const BlogArticle = () => {
             </p>
             <div className="space-y-3 mb-6">
               {[
-                "aumento del arriendo",
-                "deudas acumuladas",
-                "incumplimientos contractuales"
+                "Aumento del arriendo",
+                "Deudas acumuladas",
+                "Incumplimientos contractuales"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
@@ -353,7 +353,7 @@ const BlogArticle = () => {
                 </div>
                 <p className="text-base text-gray-600 mb-3">Lee la orden cuidadosamente y verifica:</p>
                 <ul className="space-y-2 ml-2">
-                  {["qué exige el tribunal", "los plazos establecidos", "las condiciones del desalojo"].map((item, i) => (
+                  {["Qué exige el tribunal", "Los plazos establecidos", "Las condiciones del desalojo"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
                       <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
                       <span className="text-base">{item}</span>
@@ -368,7 +368,7 @@ const BlogArticle = () => {
                 </div>
                 <p className="text-base text-gray-600 mb-3">Dependiendo del caso, podrías:</p>
                 <ul className="space-y-2 ml-2">
-                  {["pagar la deuda", "negociar con el arrendador", "solicitar asesoría legal"].map((item, i) => (
+                  {["Pagar la deuda", "Negociar con el arrendador", "Solicitar asesoría legal"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
                       <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
                       <span className="text-base">{item}</span>
@@ -390,7 +390,7 @@ const BlogArticle = () => {
                 </div>
                 <p className="text-base text-gray-600 mb-3">Un abogado puede ayudarte a:</p>
                 <ul className="space-y-2 ml-2">
-                  {["entender la situación", "evaluar alternativas", "tomar decisiones informadas"].map((item, i) => (
+                  {["Entender la situación", "Evaluar alternativas", "Tomar decisiones informadas"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
                       <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
                       <span className="text-base">{item}</span>
@@ -406,10 +406,10 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">El arrendador puede:</p>
             <div className="space-y-3 mb-6">
               {[
-                "iniciar una demanda",
-                "obtener una sentencia",
-                "solicitar una orden de desalojo",
-                "ejecutar el lanzamiento"
+                "Iniciar una demanda",
+                "Obtener una sentencia",
+                "Solicitar una orden de desalojo",
+                "Ejecutar el lanzamiento"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
@@ -426,10 +426,10 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">Entre los más comunes están:</p>
             <div className="space-y-3 mb-6">
               {[
-                "intentar desalojar sin orden judicial",
-                "cambiar la cerradura",
-                "no seguir el proceso legal",
-                "desconocer los derechos del arrendatario"
+                "Intentar desalojar sin orden judicial",
+                "Cambiar la cerradura",
+                "No seguir el proceso legal",
+                "Desconocer los derechos del arrendatario"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100">
                   <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
