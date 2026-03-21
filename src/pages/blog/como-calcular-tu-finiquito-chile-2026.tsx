@@ -49,7 +49,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6">
             ¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso
           </h1>
           

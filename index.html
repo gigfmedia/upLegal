@@ -41,28 +41,96 @@
     <meta property="twitter:image" content="https://legalup.cl/images/twitter-image.jpg" />
     <meta property="twitter:creator" content="@legalup" />
     
-    <!-- Schema.org markup para AI -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": ["LegalService", "Organization"],
-      "name": "LegalUp",
-      "description": "Plataforma de asesoría legal online en Chile que conecta personas con abogados verificados para resolver consultas jurídicas de forma rápida y confiable.",
-      "url": "https://legalup.cl",
-      "logo": "https://legalup.cl/assets/logo.png",
-      "areaServed": "CL",
-      "serviceType": "Asesoría legal online",
-      "address": {
-        "@type": "PostalAddress",
-        "addressCountry": "CL"
-      },
-      "sameAs": [
-        "https://www.facebook.com/legalup",
-        "https://www.linkedin.com/company/legalup",
-        "https://twitter.com/legalup",
-        "https://instagram.com/legalupcl"
-      ]
-    }
+      {
+        "@context": "https://schema.org",
+        "@type": "LegalService",
+        "name": "LegalUp",
+        "description": "Plataforma de asesoría legal online en Chile que conecta personas con abogados verificados para resolver consultas jurídicas de forma rápida y confiable.",
+        "url": "https://legalup.cl",
+        "logo": "https://legalup.cl/assets/logo.png",
+        "areaServed": {
+          "@type": "Country",
+          "name": "Chile"
+        },
+        "serviceType": "Asesoría legal online",
+        "sameAs": [
+          "https://www.facebook.com/legalup",
+          "https://www.linkedin.com/company/legalup",
+          "https://twitter.com/legalup",
+          "https://instagram.com/legalupcl"
+        ],
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://legalup.cl/buscar?query={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "¿Cómo funciona LegalUp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "LegalUp conecta clientes con abogados verificados en Chile de forma rápida y segura. Puedes buscar por especialidad, revisar perfiles, agendar una consulta online y recibir asesoría legal por videollamada."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Cuánto cuesta una consulta?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "El costo depende del abogado y su especialidad. Cada perfil muestra claramente el precio de la consulta, sin tarifas ocultas, para que sepas exactamente cuánto pagar antes de agendar."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Puedo elegir al abogado?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sí, puedes elegir libremente al abogado que prefieras. Puedes comparar perfiles, experiencia, especialidades y precios antes de tomar una decisión informada."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿En cuánto tiempo me atienden?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Muchos abogados ofrecen disponibilidad inmediata o el mismo día. Puedes revisar horarios disponibles en cada perfil y agendar una consulta en el momento que más te convenga."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿La asesoría es por videollamada o chat?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "La asesoría se realiza principalmente por videollamada. Al agendar, recibirás un enlace en tu correo para conectarte fácilmente a la reunión con el abogado."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Es seguro usar LegalUp?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sí, LegalUp protege tu información con conexiones seguras y procesos de verificación de abogados. Tu información personal y legal se mantiene confidencial en todo momento."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "¿Qué pasa después de la consulta?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Después de la consulta, puedes continuar trabajando con el abogado si lo necesitas. Muchos profesionales ofrecen servicios adicionales como redacción de documentos o representación legal."
+            }
+          }
+        ]
+      }
     </script>
 
     <!-- Título y descripción -->

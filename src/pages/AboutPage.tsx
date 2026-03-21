@@ -10,7 +10,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-b from-blue-50 to-white pt-32 pb-16">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">Acerca de LegalUp</h1>
+          <h1 className="text-4xl font-bold font-serif text-gray-900 mb-6">Acerca de LegalUp</h1>
           <p className="text-lg text-gray-700 mb-12 max-w-3xl">
             Bienvenido a LegalUp, tu puente digital con el mundo del asesoramiento legal profesional. Creamos esta plataforma para personas que buscan soluciones confiables, rápidas y transparentes, con acceso a abogados verificados de distintas especialidades y tarifas, para que puedas elegir la opción que mejor se adapte a tu necesidad.
           </p>
@@ -149,9 +149,9 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section - Full Width */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-600 text-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-3xl font-bold font-serif mb-4">
             ¿Listo para resolver tus asuntos legales?
           </h2>
           <p className="text-xl mb-8 text-white">
@@ -159,9 +159,9 @@ export default function AboutPage() {
           </p>
           <a 
               href="/search"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-blue-600 hover:bg-gray-100"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100"
             >
-              Buscar abogados
+              Buscar abogados →
             </a>
         </div>
       </section>

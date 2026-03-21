@@ -57,7 +57,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
             ¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)
           </h1>
 

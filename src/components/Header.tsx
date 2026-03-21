@@ -286,7 +286,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 <Button 
                   variant="ghost" 
                   onClick={() => handleAuthNavigation('login')}
-                  className="text-gray-600"
+                  className="text-gray-600 border border-solid"
                 >
                   Iniciar Sesión
                 </Button>

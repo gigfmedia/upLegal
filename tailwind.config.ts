@@ -20,6 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['system-ui', 'sans-serif'],
+				serif: ['"Palatino Linotype"', 'Palatino', '"Palatino LT STD"', '"Book Antiqua"', 'Georgia', 'serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',

@@ -640,7 +640,7 @@ const SearchResults = () => {
       {/* Header and Search */}
       <div className="bg-white py-8 pt-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900">Encuentra al abogado ideal para tu caso</h1>
+          <h1 className="text-3xl font-bold font-serif text-gray-900">Encuentra al abogado ideal para tu caso</h1>
           <p className="mt-2 text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
           <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small>
           

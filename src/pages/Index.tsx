@@ -751,7 +751,8 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <p className="border bg-gray-900 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">FAQ</p>
+            <h2 className="text-3xl font-bold font-serif text-gray-900 mb-4">
               Preguntas Frecuentes
             </h2>
             <p className="text-gray-600">
@@ -780,20 +781,31 @@ const Index = () => {
               {
                 question: "¿La asesoría es por videollamada o chat?",
                 answer: "La comunicación con tu abogado es por videollamada. Al agendar, recibirás automáticamente un enlace en tu correo para unirte a la reunión."
+              },
+              {
+                question: "¿Es seguro usar LegalUp?",
+                answer: "Sí, LegalUp utiliza conexiones seguras y protege tu información personal y legal en todo momento. Además, todos los abogados pasan por un proceso de verificación antes de estar disponibles en la plataforma."
+              },
+              {
+                question: "¿Qué pasa después de la consulta?",
+                answer: "Después de la consulta, podrás seguir en contacto con el abogado si necesitas continuar con tu caso. Muchos abogados ofrecen servicios adicionales como redacción de documentos o representación legal, según tu necesidad."
               }
             ].map((faq, index) => (
               <Card 
                 key={index}
-                className="border border-gray-200 hover:border-blue-600 transition-colors cursor-pointer"
+                className="border border-gray-200 hover:border-black transition-colors cursor-pointer"
                 onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
               >
                 <CardHeader className="">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg font-semibold text-gray-900">
-                      {faq.question}
-                    </CardTitle>
+                  <div className="flex justify-between items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="bg-gray-900 p-2 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{index + 1}</div>
+                      <CardTitle className="text-lg font-semibold text-gray-900">
+                        {faq.question}
+                      </CardTitle>
+                    </div>
                     <ChevronDown 
-                      className={`h-5 w-5 text-blue-600 transition-transform duration-200 ${
+                      className={`h-5 w-5 text-black-600 transition-transform duration-200 ${
                         openFaqIndex === index ? 'transform rotate-180' : ''
                       }`}
                     />
@@ -813,7 +825,7 @@ const Index = () => {
             <p className="text-center text-gray-900 font-bold items-center mt-8">¿Tienes otra duda?</p>
             <Button
               onClick={() => navigate('/search')}
-              className="bg-white border border-solid text-gray-900 hover:bg-black hover:text-white items-center mt-4"
+              className="bg-black text-white hover:bg-black hover:text-white items-center mt-4"
             >
               Hablar con un abogado
             </Button>
