@@ -303,7 +303,7 @@ export function LawyerCard({
                       </button>
                     </div>
                   )}
-                  {lawyer.hourlyRate > 60000 && (
+                  {displayName.toLowerCase().includes('jorge') && displayName.toLowerCase().includes('pacheco') && (
                     <div className="text-xs text-gray-500 italic text-[11px]">
                       Casos complejos · Alta experiencia
                     </div>
