@@ -374,23 +374,31 @@ const Index = () => {
   const homePageFaqs = [
     {
       question: "¿Cómo funciona LegalUp?",
-      answer: "LegalUp es una plataforma online que conecta personas con abogados verificados en Chile. Los usuarios describen su caso, eligen un abogado especializado y reciben orientación legal de forma rápida y segura."
+      answer: "LegalUp conecta clientes con abogados verificados en Chile de forma rápida y segura. Puedes buscar por especialidad, revisar perfiles, agendar una consulta online y recibir asesoría legal por videollamada."
     },
     {
-      question: "¿Qué tipos de servicios legales ofrece LegalUp?",
-      answer: "LegalUp ofrece consultas legales, asesoría jurídica especializada en distintas áreas del derecho, redacción de documentos legales y servicios de representación legal, según disponibilidad del abogado."
+      question: "¿Cuánto cuesta una consulta?",
+      answer: "El costo depende del abogado y su especialidad. Cada perfil muestra claramente el precio de la consulta, sin tarifas ocultas, para que sepas exactamente cuánto pagar antes de agendar."
     },
     {
-      question: "¿Cuánto cuesta una consulta legal en LegalUp?",
-      answer: "El costo de una consulta legal depende del abogado y del tipo de asesoría requerida. Antes de contratar, el usuario puede revisar el valor y las condiciones informadas por cada profesional."
+      question: "¿Puedo elegir al abogado?",
+      answer: "Sí, puedes elegir libremente al abogado que prefieras. Puedes comparar perfiles, experiencia, especialidades y precios antes de tomar una decisión informada."
     },
     {
-      question: "¿En qué país está disponible LegalUp?",
-      answer: "LegalUp opera en Chile y conecta usuarios con abogados especializados en la legislación chilena."
+      question: "¿En cuánto tiempo me atienden?",
+      answer: "Muchos abogados ofrecen disponibilidad inmediata o el mismo día. Puedes revisar horarios disponibles en cada perfil y agendar una consulta en el momento que más te convenga."
     },
     {
-      question: "¿Cómo se verifica a los abogados en LegalUp?",
-      answer: "Todos los abogados registrados en LegalUp pasan por un proceso de verificación antes de ofrecer sus servicios en la plataforma."
+      question: "¿La asesoría es por videollamada o chat?",
+      answer: "La asesoría se realiza principalmente por videollamada. Al agendar, recibirás un enlace en tu correo para conectarte fácilmente a la reunión con el abogado."
+    },
+    {
+      question: "¿Es seguro usar LegalUp?",
+      answer: "Sí, LegalUp protege tu información con conexiones seguras y procesos de verificación de abogados. Tu información personal y legal se mantiene confidencial en todo momento."
+    },
+    {
+      question: "¿Qué pasa después de la consulta?",
+      answer: "Después de la consulta, puedes continuar trabajando con el abogado si lo necesitas. Muchos profesionales ofrecen servicios adicionales como redacción de documentos o representación legal."
     }
   ];
 
