@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getPaymentsByUser } from '@/services/paymentService';
+import { Loader2 } from 'lucide-react';
 
 interface Payment {
   id: string;
@@ -135,111 +137,7 @@ const getMethodText = (method: string) => {
   }
 };
 
-const mockPayments: Payment[] = [
-  {
-    id: '1',
-    type: 'consultation',
-    description: 'Consulta sobre Contrato Laboral',
-    amount: 45000,
-    status: 'completed',
-    date: '2024-01-15',
-    method: 'credit_card',
-    relatedService: 'Consulta Legal',
-    invoiceNumber: 'INV-2024-001',
-    lawyerName: 'María González',
-    transactionId: 'TXN-20240115-001'
-  },
-  {
-    id: '2',
-    type: 'appointment',
-    description: 'Cita presencial - Revisión de Contrato',
-    amount: 80000,
-    status: 'completed',
-    date: '2024-01-12',
-    method: 'webpay',
-    relatedService: 'Cita Legal',
-    invoiceNumber: 'INV-2024-002',
-    lawyerName: 'Carlos Rodríguez',
-    transactionId: 'TXN-20240112-002'
-  },
-  {
-    id: '3',
-    type: 'subscription',
-    description: 'Plan Premium - Enero 2024',
-    amount: 25000,
-    status: 'completed',
-    date: '2024-01-01',
-    method: 'credit_card',
-    relatedService: 'Suscripción Premium',
-    invoiceNumber: 'INV-2024-003',
-    transactionId: 'TXN-20240101-003'
-  },
-  {
-    id: '4',
-    type: 'consultation',
-    description: 'Consulta sobre Derecho Familiar',
-    amount: 50000,
-    status: 'pending',
-    date: '2024-01-20',
-    method: 'bank_transfer',
-    relatedService: 'Consulta Legal',
-    invoiceNumber: 'INV-2024-004',
-    lawyerName: 'Ana Martínez',
-    transactionId: 'TXN-20240120-004'
-  },
-  {
-    id: '5',
-    type: 'appointment',
-    description: 'Videollamada - Asesoría Comercial',
-    amount: 60000,
-    status: 'failed',
-    date: '2024-01-18',
-    method: 'debit_card',
-    relatedService: 'Cita Legal',
-    invoiceNumber: 'INV-2024-005',
-    lawyerName: 'Luis Fernández',
-    transactionId: 'TXN-20240118-005'
-  },
-  {
-    id: '6',
-    type: 'refund',
-    description: 'Reembolso - Cita cancelada',
-    amount: -35000,
-    status: 'completed',
-    date: '2024-01-10',
-    method: 'credit_card',
-    relatedService: 'Reembolso',
-    invoiceNumber: 'REF-2024-001',
-    lawyerName: 'Patricia Silva',
-    transactionId: 'TXN-20240110-006'
-  },
-  {
-    id: '7',
-    type: 'consultation',
-    description: 'Consulta sobre Derecho Penal',
-    amount: 55000,
-    status: 'completed',
-    date: '2024-01-08',
-    method: 'webpay',
-    relatedService: 'Consulta Legal',
-    invoiceNumber: 'INV-2024-007',
-    lawyerName: 'Ana Martínez',
-    transactionId: 'TXN-20240108-007'
-  },
-  {
-    id: '8',
-    type: 'appointment',
-    description: 'Cita telefónica - Consulta rápida',
-    amount: 30000,
-    status: 'completed',
-    date: '2024-01-05',
-    method: 'credit_card',
-    relatedService: 'Cita Legal',
-    invoiceNumber: 'INV-2024-008',
-    lawyerName: 'María González',
-    transactionId: 'TXN-20240105-008'
-  }
-];
+// Mock data removed for production implementation
 
 export default function DashboardPayments() {
   const navigate = useNavigate();
@@ -251,22 +149,67 @@ export default function DashboardPayments() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch payments from Supabase
+  useEffect(() => {
+    const fetchPayments = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setIsLoading(true);
+        const data = await getPaymentsByUser(user.id);
+        
+        // Map PaymentWithDetails to UI Payment interface
+        const mappedPayments: Payment[] = data.map(p => ({
+          id: p.id,
+          type: p.service_id ? 'consultation' : 'appointment', // Default mapping
+          description: p.service?.title || (p.service_id ? 'Consulta Legal' : 'Cita Programada'),
+          amount: p.amount,
+          status: p.status === 'succeeded' ? 'completed' : 
+                  p.status === 'pending' ? 'pending' : 
+                  p.status === 'failed' ? 'failed' : 
+                  p.status === 'refunded' ? 'refunded' : 'pending',
+          date: p.created_at,
+          method: 'webpay', // Default as most are via Webpay/MercadoPago
+          relatedService: p.service?.title || 'Legal Service',
+          invoiceNumber: `INV-${p.id.slice(0, 8)}`.toUpperCase(),
+          lawyerName: p.lawyer?.full_name || 'Abogado',
+          transactionId: p.id
+        }));
+        
+        setPayments(mappedPayments);
+      } catch (error) {
+        console.error('Error fetching payments:', error);
+        toast({
+          title: 'Error',
+          description: 'No se pudieron cargar los pagos. Por favor intenta de nuevo.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [user?.id, toast]);
   
   // Calcular totales
-  const totalPaid = mockPayments
+  const totalPaid = payments
     .filter(payment => payment.status === 'completed' && payment.amount > 0)
     .reduce((sum, payment) => sum + payment.amount, 0);
     
-  const pendingAmount = mockPayments
+  const pendingAmount = payments
     .filter(payment => payment.status === 'pending')
     .reduce((sum, payment) => sum + payment.amount, 0);
     
-  const totalRefunded = mockPayments
+  const totalRefunded = payments
     .filter(payment => payment.status === 'refunded')
     .reduce((sum, payment) => sum + Math.abs(payment.amount), 0);
   
   // Filtrar pagos
-  const filteredPayments = mockPayments.filter(payment => {
+  const filteredPayments = payments.filter(payment => {
     const matchesSearch = payment.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          payment.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
@@ -384,7 +327,12 @@ export default function DashboardPayments() {
             <CardTitle className="text-lg">Historial de pagos</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            {filteredPayments.length > 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                <p className="text-gray-500">Cargando pagos...</p>
+              </div>
+            ) : filteredPayments.length > 0 ? (
               <div className="space-y-4">
                 {filteredPayments.map((payment) => (
                   <div 
@@ -523,7 +471,7 @@ export default function DashboardPayments() {
                 {selectedPayment.status === 'completed' && (
                   <Button 
                     onClick={() => handleDownloadInvoice(selectedPayment)}
-                    className="gap-2"
+                    className="gap-2 bg-blue-600 hover:bg-blue-700"
                   >
                     <Download className="h-4 w-4" />
                     Descargar factura

@@ -165,39 +165,53 @@ const LoadingIndicator = () => {
 // Global error handlers
 const setupGlobalErrorHandlers = () => {
   // Handle uncaught errors
-  const handleError = (event: ErrorEvent) => {
+  const handleError = (error: ErrorEvent | string) => {
+    const message = typeof error === 'string' ? error : error.message;
+    
+    // Check for "Failed to load module script" which often happens on stale chunks
+    if (message?.includes('Failed to load module script') || 
+        message?.includes('Expected a JavaScript-or-Wasm module script')) {
+      console.warn('Stale chunk detected via error event, reloading...');
+      window.location.reload();
+      return;
+    }
+
     logError({
       type: 'uncaught_error',
-      message: event.message,
-      details: {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-      },
+      message: message,
+      details: typeof error === 'object' ? {
+        filename: error.filename,
+        lineno: error.lineno,
+        colno: error.colno,
+      } : {},
     });
   };
 
   // Handle unhandled promise rejections
   const handleRejection = (event: PromiseRejectionEvent) => {
-    logError({
-      type: 'unhandled_rejection',
-      message: event.reason?.message || 'Unhandled promise rejection',
-      details: {
-        reason: event.reason,
-      },
-    });
-
     // If it's a chunk load error (stale JS after deploy), reload the page
     const msg = event.reason?.message || '';
     const isChunkError =
       msg.includes('Loading chunk') ||
       msg.includes('Failed to fetch dynamically imported module') ||
       msg.includes('error loading dynamically imported module') ||
-      msg.includes('Importing a module script failed');
+      msg.includes('Importing a module script failed') ||
+      msg.includes('Failed to load module script') ||
+      msg.includes('Expected a JavaScript-or-Wasm module script');
 
     if (isChunkError) {
+      console.warn('Stale chunk detected via rejection, reloading...');
       window.location.reload();
+      return;
     }
+
+    logError({
+      type: 'unhandled_rejection',
+      message: msg || 'Unhandled promise rejection',
+      details: {
+        reason: event.reason,
+      },
+    });
   };
 
   // When the user comes back to the tab after a new deploy, stale chunks
@@ -368,9 +382,9 @@ const AppContent = () => {
                 <Route path="dashboard" element={<LawyerDashboardPage />} />
                 <Route path="services" element={<ServicesPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="consultas" element={<ConsultasPage />} />
+                {/* <Route path="consultas" element={<ConsultasPage />} /> */}
                 <Route path="citas" element={<CitasPage />} />
-                <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} />
+                {/* <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} /> */}
                 <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
@@ -475,7 +489,7 @@ const AppContent = () => {
                   </RequireLawyer>
                 } />
                 <Route path="settings" element={<DashboardSettings />} />
-                <Route path="consultations" element={<DashboardConsultations />} />
+                {/* <Route path="consultations" element={<DashboardConsultations />} /> */}
                 <Route path="appointments" element={<DashboardAppointments />} />
                 <Route path="payments" element={<DashboardPayments />} />
                 <Route path="payment-settings" element={<PaymentSettings />} />

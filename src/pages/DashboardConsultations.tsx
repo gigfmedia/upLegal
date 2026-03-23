@@ -288,7 +288,7 @@ export default function DashboardConsultations() {
         </div>
         <Button 
           onClick={() => setIsNewConsultationOpen(true)}
-          className="mt-4 md:mt-0"
+          className="mt-4 bg-gray-900 text-white hover:bg-green-900 md:mt-0"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nueva Consulta

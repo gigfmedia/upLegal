@@ -108,7 +108,7 @@ function DashboardLayout() {
   // Client navigation items
   const clientNavItems: NavItem[] = [
     { href: '/dashboard', icon: Activity, label: 'Resumen' },
-    { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
+    // { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
     { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
     { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
@@ -134,7 +134,7 @@ function DashboardLayout() {
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios' },
-        { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
+        // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
@@ -222,7 +222,7 @@ function DashboardLayout() {
                           to={href}
                           className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
                             isActive(href, exact)
-                              ? 'bg-blue-50 text-blue-700'
+                              ? 'bg-green-50 text-green-900'
                               : 'text-gray-700 hover:bg-gray-100'
                           }`}
                           onClick={() => setIsSidebarOpen(false)}
@@ -230,7 +230,7 @@ function DashboardLayout() {
                           <Icon
                             className={`mr-3 h-5 w-5 ${
                               isActive(href, exact)
-                                ? 'text-blue-500'
+                                ? 'text-green-500'
                                 : 'text-gray-400 group-hover:text-gray-500'
                             }`}
                             aria-hidden="true"

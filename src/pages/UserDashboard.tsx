@@ -77,13 +77,13 @@ function LawyerDashboardContent() {
       icon: Users,
       iconColor: "text-blue-500",
     },
-    {
-      title: "Consultas",
-      value: "18",
-      change: "+12% desde el mes pasado",
-      icon: MessageCircle,
-      iconColor: "text-purple-500",
-    },
+    // {
+    //   title: "Consultas",
+    //   value: "18",
+    //   change: "+12% desde el mes pasado",
+    //   icon: MessageCircle,
+    //   iconColor: "text-purple-500",
+    // },
     {
       title: "Calificación",
       value: "4.8",
@@ -169,63 +169,7 @@ function LawyerDashboardContent() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Consultas Recientes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentConsultations.length > 0 ? (
-                recentConsultations.map((consultation, index) => (
-                  <div key={index} className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>
-                          {consultation.client.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium leading-none">
-                          {consultation.client}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {consultation.type}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <p className="text-xs text-muted-foreground">{consultation.time}</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                        consultation.status === 'completado' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {consultation.status}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <MessageCircle className="mx-auto h-8 w-8 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No hay consultas recientes</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Comienza una nueva consulta para verla aquí.
-                  </p>
-                  <div className="mt-6">
-                    <Button
-                      onClick={() => navigate('/dashboard/consultations/new')}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <MessageCircle className="-ml-1 mr-2 h-4 w-4" />
-                      Nueva Consulta
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Consultas Recientes removed */}
 
         <Card className="col-span-3">
           <CardHeader>
@@ -277,7 +221,7 @@ function ClientDashboardContent() {
   const [appointments, setAppointments] = useState([]);
   const [stats, setStats] = useState([
     { title: "Casos Activos", value: "0", change: "0 en progreso", icon: FileText, iconColor: "text-blue-500" },
-    { title: "Consultas", value: "0", change: "Este mes", icon: MessageCircle, iconColor: "text-purple-500" },
+    // { title: "Consultas", value: "0", change: "Este mes", icon: MessageCircle, iconColor: "text-purple-500" },
     { title: "Total Gastado", value: "$0", change: "Histórico", icon: DollarSign, iconColor: "text-green-500" },
     { title: "Próxima Cita", value: "Sin citas", change: "No programadas", icon: Clock, iconColor: "text-yellow-500" }
   ]);
@@ -402,7 +346,8 @@ function ClientDashboardContent() {
           .eq('user_id', user?.id)
           .eq('status', 'active');
 
-        // 2. Fetch consultations this month
+        // 2. Fetch consultations this month (removed)
+        /*
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
@@ -412,6 +357,7 @@ function ClientDashboardContent() {
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user?.id)
           .gte('created_at', startOfMonth.toISOString());
+        */
 
         // 3. Fetch total spent
         const { data: payments, error: paymentsError } = await supabase
@@ -441,6 +387,7 @@ function ClientDashboardContent() {
             icon: FileText,
             iconColor: "text-blue-500"
           },
+          /*
           {
             title: "Consultas",
             value: consultationsThisMonth?.toString() || "0",
@@ -448,6 +395,7 @@ function ClientDashboardContent() {
             icon: MessageCircle,
             iconColor: "text-purple-500"
           },
+          */
           {
             title: "Total Gastado",
             value: `$${totalSpent.toLocaleString()}`,
@@ -517,13 +465,14 @@ function ClientDashboardContent() {
             Aquí puedes ver el estado de tus casos y consultas.
           </p>
         </div>
-        <Button onClick={handleFindLawyer}>
+        <Button onClick={handleFindLawyer}
+          className="bg-gray-900 text-white hover:bg-green-900">
           <Search className="mr-2 h-4 w-4" />
           Buscar Abogado
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <Card key={stat.title} className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -544,45 +493,8 @@ function ClientDashboardContent() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Mis Consultas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {myConsultations.length > 0 ? (
-              myConsultations.map((consultation) => (
-                <div key={consultation.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{consultation.title}</p>
-                    <p className="text-sm text-muted-foreground">{consultation.lawyer} • {consultation.date}</p>
-                  </div>
-                  <Badge variant={consultation.status === 'Completado' ? 'default' : 'outline'}>
-                    {consultation.status}
-                  </Badge>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <MessageCircle className="mx-auto h-8 w-8 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes consultas</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Comienza una nueva consulta para verla aquí.
-                </p>
-                <div className="mt-6">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate('/search')}
-                    className="inline-flex items-center"
-                  >
-                    <Search className="-ml-1 mr-2 h-4 w-4" />
-                    Buscar Abogado
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-1">
+        {/* Mis Consultas removed */}
 
         <Card>
           <CardHeader className="pb-2">

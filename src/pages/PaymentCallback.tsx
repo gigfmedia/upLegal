@@ -75,16 +75,16 @@ export function PaymentCallback() {
           localStorage.removeItem('pendingConsultation');
 
           // 4. Redirect to success page or dashboard
-          navigate('/dashboard/consultations?payment=success');
+          navigate('/dashboard?payment=success');
           
         } catch (error) {
           console.error('Error procesando el pago:', error);
-          navigate('/dashboard/consultations?payment=error');
+          navigate('/dashboard?payment=error');
         }
       } else if (status === 'failure') {
-        navigate('/dashboard/consultations?payment=failed');
+        navigate('/dashboard?payment=failed');
       } else {
-        navigate('/dashboard/consultations');
+        navigate('/dashboard');
       }
     };
 

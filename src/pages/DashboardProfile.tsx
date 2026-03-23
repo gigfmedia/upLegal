@@ -156,7 +156,8 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
         </p>
       </div>
       {!isEditing ? (
-        <Button onClick={() => setIsEditing(true)}>
+        <Button onClick={() => setIsEditing(true)}
+          className="bg-gray-900 text-white hover:bg-green-900">
           <Edit className="h-4 w-4 mr-2" />
           Editar Perfil
         </Button>
@@ -166,7 +167,7 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
             <X className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
-          <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
+          <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto bg-gray-900 text-white hover:bg-green-900">
             <Save className="h-4 w-4 mr-2" />
             {isLoading ? 'Guardando...' : 'Guardar Cambios'}
           </Button>

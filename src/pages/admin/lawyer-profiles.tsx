@@ -321,7 +321,7 @@ export default function LawyerProfilesPage() {
               <Button 
                 onClick={sendBulkReminders}
                 disabled={sendingEmails.length > 0}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-gray-900 hover:bg-green-900 text-white"
               >
                 {sendingEmails.length > 0 ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

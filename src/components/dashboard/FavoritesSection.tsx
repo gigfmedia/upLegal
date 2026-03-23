@@ -183,7 +183,8 @@ export function FavoritesSection() {
         <Heart className="h-8 w-8 mx-auto text-gray-400 mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes favoritos guardados</h3>
         <p className="text-gray-500 mb-6">Guarda abogados que te interesen para encontrarlos fácilmente después.</p>
-        <Button onClick={() => navigate('/search')}>
+        <Button onClick={() => navigate('/search')}
+          className="bg-gray-900 text-white hover:bg-green-900">
           Buscar abogados
         </Button>
       </div>
@@ -245,10 +246,10 @@ export function FavoritesSection() {
                     <Briefcase className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
                     <span className="truncate">{formatPrice(lawyer.hourlyRate || 0)}/hora</span>
                   </div>
-                  <div className="flex items-center text-sm">
+                  {/* <div className="flex items-center text-sm">
                     <Clock className="h-4 w-4 mr-1.5 text-gray-400 flex-shrink-0" />
                     <span className="truncate">{formatPrice(lawyer.consultationPrice || 0)} consulta</span>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="mt-auto pt-3 border-t flex gap-2">
