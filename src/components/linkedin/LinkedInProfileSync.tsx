@@ -140,7 +140,7 @@ export function LinkedInProfileSync() {
           <Button 
             onClick={handleSyncAll}
             disabled={isSyncing || syncableFieldsAvailable.length === 0}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-gray-900 hover:bg-green-900"
           >
             {isSyncing ? (
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />

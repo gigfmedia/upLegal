@@ -43,9 +43,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -53,15 +53,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             ¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed">
             Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Marzo, 2026</span>
@@ -175,7 +175,7 @@ const BlogArticle = () => {
                 { title: "Buscar asesoría legal", desc: "Un abogado puede ayudarte a evaluar el caso y determinar qué acciones legales corresponden.", icon: <Shield className="h-5 w-5" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-green-900 p-2 rounded-lg text-green-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
                   <div>
@@ -202,7 +202,7 @@ const BlogArticle = () => {
                 { title: "Ocupación en precario", desc: "Sin contrato ni autorización formal del dueño." }
               ].map((cause, i) => (
                 <div key={i} className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-gray-900 block">{cause.title}</span>
                     <span className="text-gray-600 text-base">{cause.desc}</span>
@@ -225,7 +225,7 @@ const BlogArticle = () => {
                 { title: "Lanzamiento con fuerza pública", desc: "Si el arrendatario no abandona voluntariamente, el tribunal puede ordenar el lanzamiento con apoyo de Carabineros. Este es el único momento en que una persona puede ser desalojada físicamente." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -260,7 +260,7 @@ const BlogArticle = () => {
                   "Documentar cualquier reparación o mantención acordada"
                 ].map((tip, i) => (
                   <div key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                     <span className="text-base font-medium">{tip}</span>
                   </div>
                 ))}
@@ -297,7 +297,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Te quieren desalojar o tienes problemas de arriendo?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te quieren desalojar o tienes problemas de arriendo?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             Protege tu hogar y tus derechos. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
           </p>
@@ -311,7 +311,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_me_quieren_desalojar_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
               >
                 Consultar con Abogado de Arriendo
               </Button>
@@ -326,7 +326,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_me_quieren_desalojar_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="bg-white hover:bg-green-900 text-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
               >
                 Ver Listado de Abogados
               </Button>
@@ -347,10 +347,10 @@ const BlogArticle = () => {
 
         <BlogNavigation 
           prevArticle={{
-            id: "me-subieron-el-arriendo-que-hago-2026",
-            title: "Me subieron el arriendo, ¿qué hago? Guía 2026",
-            excerpt: "Entender qué dice tu contrato y cuáles son tus derechos es fundamental para evitar cobros abusivos o arbitrarios.",
-            image: "/assets/arriendo-chile-2026.png"
+            id: "derecho-penal-chile-2026",
+            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
+            excerpt: "Enfrentar una acusación penal puede ser difícil. Conoce tus derechos, cómo funciona el proceso penal en Chile y qué pasos seguir para tu defensa.",
+            image: "/assets/derecho-penal-chile-2026.png"
           }}
           nextArticle={{
             id: "cuanto-demora-juicio-desalojo-chile-2026",
@@ -363,7 +363,7 @@ const BlogArticle = () => {
         <div className="mt-8 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

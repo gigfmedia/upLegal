@@ -77,7 +77,7 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
   const showCarousel = lawyers.length > 3;
 
   return (
-    <section className="mt-4 bg-blue-50 border-y border-blue-100 w-full py-16">
+    <section className="mt-4 bg-white border-y border-blue-100 w-full py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>

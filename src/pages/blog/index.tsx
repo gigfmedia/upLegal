@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "me-pueden-despedir-sin-motivo-chile-2026",
+      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
+      excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "22 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/assets/despido-sin-motivo-chile-2026.png",
+      featured: true
+    },
+    {
       id: "orden-desalojo-chile-2026",
       title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
       excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué es el lanzamiento, qué ocurre después y qué hacer si recibes una. Guía legal completa 2026.",
@@ -25,7 +36,7 @@ const BlogPage = () => {
       date: "20 de Marzo, 2026",
       readTime: "8 min",
       image: "/assets/orden-desalojo-chile-2026.png",
-      featured: true
+      featured: false
     },
     {
       id: "arrendador-puede-cambiar-cerradura-chile-2026",
@@ -106,6 +117,7 @@ const BlogPage = () => {
     }
   ];
 
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Penal", "Derecho Civil"];
@@ -142,9 +154,9 @@ const BlogPage = () => {
       <Header onAuthClick={() => {}} />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/" className="hover:text-white transition-colors">
               Inicio
             </Link>
@@ -152,11 +164,11 @@ const BlogPage = () => {
             <span>Blog</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             Blog LegalUp
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl">
+          <p className="text-xl text-white max-w-3xl">
             Guías prácticas y artículos expertos para ayudarte a entender tus derechos y tomar mejores decisiones legales en Chile.
           </p>
         </div>
@@ -169,7 +181,10 @@ const BlogPage = () => {
         {/* Featured Article */}
         {featuredArticle && (
           <div key={featuredArticle.id} className="mb-12">
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div 
+              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-xl transition-shadow group"
+              onClick={() => navigate(`/blog/${featuredArticle.id}`)}
+            >
               <div className="md:flex">
                 <div className="md:w-1/3">
                   <div className="h-48 md:h-full flex py-8 items-center justify-center pl-8">
@@ -185,17 +200,17 @@ const BlogPage = () => {
                 </div>
                 <div className="md:w-2/3 p-8">
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
                       {featuredArticle.category}
                     </span>
                     <span>•</span>
                     <span>{selectedCategory ? "Resultado de búsqueda" : "Artículo Destacado"}</span>
                   </div>
                   
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-2xl font-bold text-green-900 mb-4">
                     <Link 
                       to={`/blog/${featuredArticle.id}`}
-                      className="hover:text-blue-600 transition-colors"
+                      className="group-hover:text-green-600 transition-colors"
                     >
                       {featuredArticle.title}
                     </Link>
@@ -220,7 +235,7 @@ const BlogPage = () => {
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Button 
                         asChild
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-gray-900 hover:bg-green-900"
                       >
                         <Link to={`/blog/${featuredArticle.id}`}>
                           Leer Artículo
@@ -232,7 +247,8 @@ const BlogPage = () => {
                         <Button
                           variant="outline"
                           asChild
-                          className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                          className="border-gray-600 text-gray-900 hover:bg-gray-900 hover:text-white"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           <Link to={`/search?category=${encodeURIComponent(selectedCategory)}`}>
                             Ver Abogados especialistas
@@ -253,7 +269,7 @@ const BlogPage = () => {
             variant={selectedCategory === null ? "default" : "outline"}
             size="sm"
             onClick={() => setSelectedCategory(null)}
-            className={selectedCategory === null ? "bg-blue-600" : ""}
+            className={selectedCategory === null ? "bg-gray-900" : ""}
           >
             Todos
           </Button>
@@ -263,7 +279,7 @@ const BlogPage = () => {
               variant={selectedCategory === category ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category ? "bg-blue-600" : ""}
+              className={selectedCategory === category ? "bg-gray-900" : ""}
             >
               {category}
             </Button>
@@ -278,18 +294,32 @@ const BlogPage = () => {
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recentArticles.map(article => (
-              <Card key={article.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
+              <Card 
+                key={article.id} 
+                className="hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group overflow-hidden"
+                onClick={() => navigate(`/blog/${article.id}`)}
+              >
+                <div className="h-48 w-full overflow-hidden">
+                  <img 
+                    src={article.image || "../assets/arriendo.png"} 
+                    alt={article.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "../assets/arriendo.png";
+                    }}
+                  />
+                </div>
+                <CardContent className="p-6 flex flex-col flex-1">
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
                     <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
                       {article.category}
                     </span>
                   </div>
                   
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h3 className="text-lg font-semibold text-green-900 mb-3">
                     <Link 
                       to={`/blog/${article.id}`}
-                      className="hover:text-blue-600 transition-colors"
+                      className="group-hover:text-green-600 transition-colors"
                     >
                       {article.title}
                     </Link>
@@ -299,7 +329,7 @@ const BlogPage = () => {
                     {article.excerpt}
                   </p>
                   
-                  <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>{article.date}</span>
@@ -307,7 +337,7 @@ const BlogPage = () => {
                     
                     <Link 
                       to={`/blog/${article.id}`}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-green-900 hover:text-green-600 font-medium"
                     >
                       Leer →
                     </Link>
@@ -341,7 +371,7 @@ const BlogPage = () => {
               return (
                 <Card 
                   key={category} 
-                  className={`hover:shadow-md transition-all cursor-pointer border-2 ${selectedCategory === category ? 'border-blue-600 bg-blue-50/50' : 'border-transparent'}`}
+                  className={`hover:shadow-md transition-all cursor-pointer border-2 ${selectedCategory === category ? 'border-gray-900 bg-white' : 'border-transparent'}`}
                   onClick={() => {
                     setSelectedCategory(category);
                     window.scrollTo({ top: 330, behavior: 'smooth' });
@@ -355,7 +385,7 @@ const BlogPage = () => {
                           {count > 0 ? `${count} artículo${count === 1 ? '' : 's'}` : "Próximamente"}
                         </p>
                       </div>
-                      <ChevronRight className={`h-5 w-5 transition-colors ${selectedCategory === category ? 'text-blue-600' : 'text-gray-400'}`} />
+                      <ChevronRight className={`h-5 w-5 transition-colors ${selectedCategory === category ? 'text-gray-900' : 'text-gray-400'}`} />
                     </div>
                   </CardContent>
                 </Card>
@@ -366,14 +396,14 @@ const BlogPage = () => {
 
         {/* CTA Section */}
         <div className="bg-white border rounded-xl shadow-sm p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4">¿Necesitas asesoría legal?</h2>
+          <h2 className="text-2xl font-bold font-serif mb-4">¿Necesitas asesoría legal?</h2>
           <p className="mb-6 max-w-2xl mx-auto">
             Conecta con abogados verificados especializados en tu área de necesidad. Consultas online, precios transparentes y disponibilidad inmediata.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-blue-600 text-white hover:bg-blue-700 hover:text-white px-8 py-3"
+              className="bg-gray-900 text-white hover:bg-green-900 hover:text-white px-8 py-3"
               onClick={() => window.location.href = '/consulta'}
             >
               Consultar con Abogado Ahora
@@ -381,7 +411,7 @@ const BlogPage = () => {
             <Button 
               variant="outline" 
               size="lg"
-              className="bg-white border-blue-700 text-blue-600 hover:text-blue-600 hover:bg-blue-100 px-8 py-3"
+              className="bg-white border-gray-900 text-gray-900 hover:text-white hover:bg-green-900 px-8 py-3"
               onClick={() => window.location.href = '/search'}
             >
               Explorar Abogados

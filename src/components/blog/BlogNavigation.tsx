@@ -36,7 +36,7 @@ export const BlogNavigation = ({ prevArticle, nextArticle }: BlogNavigationProps
                     <ArrowLeft className="h-3 w-3" />
                     Anterior
                   </span>
-                  <h4 className="text-gray-900 font-bold leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  <h4 className="text-green-900 font-bold leading-tight line-clamp-2 group-hover:text-green-600 transition-colors">
                     {prevArticle.title}
                   </h4>
                 </div>
@@ -60,11 +60,11 @@ export const BlogNavigation = ({ prevArticle, nextArticle }: BlogNavigationProps
               </div>
               <div className="w-full sm:w-2/3 p-6 flex flex-col justify-between text-right">
                 <div>
-                  <span className="flex items-center justify-end gap-2 text-blue-600 text-xs font-semibold uppercase tracking-wider mb-2">
+                  <span className="flex items-center justify-end gap-2 text-green-600 text-xs font-semibold uppercase tracking-wider mb-2">
                     Siguiente
                     <ArrowRight className="h-3 w-3" />
                   </span>
-                  <h4 className="text-gray-900 font-bold leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  <h4 className="text-green-900 font-bold leading-tight line-clamp-2 group-hover:text-green-600 transition-colors">
                     {nextArticle.title}
                   </h4>
                 </div>

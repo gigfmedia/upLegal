@@ -31,7 +31,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* Email */}
           <button
             onClick={() => window.open(shareLinks.email, '_self')}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Compartir por Email"
           >
             <Mail className="h-6 w-6 md:h-8 md:w-8 stroke-[1.5]" />
@@ -40,7 +40,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* WhatsApp */}
           <button
             onClick={() => window.open(shareLinks.whatsapp, '_blank')}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Compartir en WhatsApp"
           >
             <svg className="h-6 w-6 md:h-8 md:w-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -51,7 +51,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* Facebook - Circular */}
           <button
             onClick={() => window.open(shareLinks.facebook, '_blank')}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Compartir en Facebook"
           >
           <svg className="h-6 w-6 md:h-8 md:w-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -62,7 +62,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* LinkedIn - Square */}
           <button
             onClick={() => window.open(shareLinks.linkedin, '_blank')}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Compartir en LinkedIn"
           >
             <svg className="h-6 w-6 md:h-8 md:w-8 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -72,7 +72,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* X (Twitter) - Custom SVG */}
           <button
             onClick={() => window.open(shareLinks.twitter, '_blank')}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Compartir en X"
           >
             <svg className="h-6 w-6 md:h-8 md:w-8 fill-current" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export const BlogShare = ({ title, url, showBorder = true }: BlogShareProps) => 
           {/* Link */}
           <button
             onClick={copyToClipboard}
-            className="text-gray-900 hover:text-blue-600 transition-colors"
+            className="text-gray-900 hover:text-green-900 transition-colors"
             title="Copiar enlace"
           >
             <Link2 className="h-6 w-6 md:h-8 md:w-8" />

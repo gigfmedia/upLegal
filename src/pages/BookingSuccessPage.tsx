@@ -193,7 +193,7 @@ export default function BookingSuccessPage() {
         <div className="space-y-3">
           <Button
             onClick={() => navigate('/dashboard/appointments')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
+            className="w-full bg-gray-900 hover:bg-green-900 text-lg py-6"
           >
             Ver mi asesoría
             <ArrowRight className="ml-2 h-5 w-5" />

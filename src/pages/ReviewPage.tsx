@@ -284,7 +284,7 @@ export default function ReviewPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-gray-900 hover:bg-green-900"
                 >
                   {submitting ? 'Enviando...' : 'Enviar reseña'}
                 </Button>

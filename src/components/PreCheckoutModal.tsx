@@ -186,7 +186,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
 
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-gray-900 hover:bg-green-900"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

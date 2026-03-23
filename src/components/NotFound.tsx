@@ -10,7 +10,7 @@ export function NotFound() {
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="flex justify-center">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-green-900 flex items-center justify-center">
               <svg 
                 className="h-6 w-6 text-white" 
                 fill="none" 
@@ -40,7 +40,7 @@ export function NotFound() {
         <div className="mt-8">
           <Button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-900 hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver atrás
@@ -50,7 +50,7 @@ export function NotFound() {
             <Button
               variant="ghost"
               onClick={() => navigate('/')}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-gray-900 hover:text-green-900"
             >
               Ir a la página de inicio
             </Button>

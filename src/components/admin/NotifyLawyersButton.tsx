@@ -151,7 +151,7 @@ export function NotifyLawyersButton() {
           <button
             type="button"
             onClick={() => setTestMode(!testMode)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full ${testMode ? 'bg-blue-600' : 'bg-gray-200'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full ${testMode ? 'bg-green-900' : 'bg-gray-200'}`}
           >
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${testMode ? 'translate-x-6' : 'translate-x-1'}`}
@@ -163,7 +163,7 @@ export function NotifyLawyersButton() {
       <Button 
         onClick={handleNotifyLawyers}
         disabled={isLoading}
-        className="bg-blue-600 hover:bg-blue-700"
+        className="bg-gray-900 hover:bg-green-900"
       >
         {isLoading ? (
           <>

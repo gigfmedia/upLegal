@@ -5,22 +5,22 @@ import { Link } from "react-router-dom";
 export default function HowItWorksPage() {
   const steps = [
     {
-      icon: <Search className="h-6 w-6 text-blue-600" />,
+      icon: <Search className="h-6 w-6 text-green-600" />,
       title: "1. Encuentra a tu abogado",
       description: "Busca entre nuestra red de abogados verificados y encuentra al profesional que mejor se adapte a tus necesidades."
     },
     {
-      icon: <MessageCircle className="h-6 w-6 text-blue-600" />,
+      icon: <MessageCircle className="h-6 w-6 text-green-600" />,
       title: "2. Contacta directamente",
       description: "Envía tu consulta inicial y programa una asesoría con el abogado de tu elección."
     },
     {
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      icon: <FileText className="h-6 w-6 text-green-600" />,
       title: "3. Recibe orientación",
       description: "Obtén asesoramiento legal claro y personalizado para entender tus opciones y próximos pasos."
     },
     {
-      icon: <CheckCircle className="h-6 w-6 text-blue-600" />,
+      icon: <CheckCircle className="h-6 w-6 text-green-600" />,
       title: "4. Toma acción",
       description: "Con la información clara, decide cómo proceder con tu caso con la confianza de estar en buenas manos."
     }
@@ -28,17 +28,17 @@ export default function HowItWorksPage() {
 
   const features = [
     {
-      icon: <ShieldCheck className="h-8 w-8 text-blue-600" />,
+      icon: <ShieldCheck className="h-8 w-8 text-green-600" />,
       title: "Abogados Verificados",
       description: "Todos nuestros profesionales pasan por un riguroso proceso de verificación de credenciales."
     },
     {
-      icon: <Clock className="h-8 w-8 text-blue-600" />,
+      icon: <Clock className="h-8 w-8 text-green-600" />,
       title: "Respuesta Rápida",
       description: "Recibe respuestas de abogados en cuestión de horas, no días."
     },
     {
-      icon: <FileText className="h-8 w-8 text-blue-600" />,
+      icon: <FileText className="h-8 w-8 text-green-600" />,
       title: "Documentos Seguros",
       description: "Comparte documentos de forma segura a través de nuestra plataforma encriptada."
     }
@@ -66,10 +66,10 @@ export default function HowItWorksPage() {
               {steps.map((step, index) => (
                 <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 hover:shadow-md transition-shadow">
                   <div className="flex flex-col h-full">
-                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
                       {step.icon}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3">{step.title}</h3>
                     <p className="text-sm text-gray-600">{step.description}</p>
                   </div>
                 </div>
@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
             <div className="grid gap-8 md:grid-cols-3">
               {features.map((feature, index) => (
                 <div key={index} className="bg-white p-8 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
                     {feature.icon}
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>

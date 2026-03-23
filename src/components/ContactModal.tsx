@@ -638,7 +638,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
               <Button 
                 type="submit" 
                 disabled={isLoading}
-                className="min-w-[180px] bg-blue-600 hover:bg-blue-700"
+                className="min-w-[180px] bg-gray-900 hover:bg-green-900"
               >
                 {isLoading ? (
                   <>

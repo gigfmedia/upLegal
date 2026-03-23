@@ -189,7 +189,7 @@ export function WriteReviewModal({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0 || !comment.trim()}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-gray-900 hover:bg-green-900"
           >
             {isSubmitting ? (
               <>

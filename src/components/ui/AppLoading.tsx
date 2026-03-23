@@ -18,9 +18,9 @@ export function AppLoading({ fullScreen = true, className = '' }: AppLoadingProp
         
         {/* Three dots loading animation */}
         <div className="flex space-x-2">
-          <div className="h-3 w-3 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="h-3 w-3 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="h-3 w-3 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          <div className="h-3 w-3 bg-green-900 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="h-3 w-3 bg-green-900 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="h-3 w-3 bg-green-900 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
         </div>
       </div>
     </div>

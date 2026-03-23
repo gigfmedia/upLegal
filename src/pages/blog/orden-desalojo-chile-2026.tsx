@@ -51,23 +51,23 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
           </h1>
 
-          <p className="text-xl text-blue-100 max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed">
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>20 de Marzo, 2026</span>
@@ -128,7 +128,7 @@ const BlogArticle = () => {
               {[
                 { text: "No es inmediata", icon: <XCircle className="h-5 w-5 text-red-500" /> },
                 { text: "No la puede dictar el arrendador", icon: <XCircle className="h-5 w-5 text-red-500" /> },
-                { text: "Solo puede ser emitida por un juez", icon: <CheckCircle className="h-5 w-5 text-blue-500" /> }
+                { text: "Solo puede ser emitida por un juez", icon: <CheckCircle className="h-5 w-5 text-green-600" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   {item.icon}
@@ -181,7 +181,7 @@ const BlogArticle = () => {
                 { title: "Orden de desalojo", desc: "Si la sentencia favorece al arrendador, el tribunal emite la orden formal. La orden es una consecuencia directa de la sentencia." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">{i + 1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -214,7 +214,7 @@ const BlogArticle = () => {
                 "Finalmente emitirse la orden"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0">{i + 1}</div>
+                  <div className="bg-gray-900 text-white rounded-full text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <span className="text-base text-gray-700">{item}</span>
                 </div>
               ))}
@@ -348,14 +348,14 @@ const BlogArticle = () => {
             <div className="space-y-6">
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-blue-100 rounded-lg text-blue-600 font-bold w-9 h-9 flex items-center justify-center flex-shrink-0">1</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">1</div>
                   <span className="font-bold text-gray-900 text-lg">Revisar la resolución</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Lee la orden cuidadosamente y verifica:</p>
                 <ul className="space-y-2 ml-2">
                   {["Qué exige el tribunal", "Los plazos establecidos", "Las condiciones del desalojo"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span className="text-base">{item}</span>
                     </li>
                   ))}
@@ -363,14 +363,14 @@ const BlogArticle = () => {
               </div>
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-blue-100 rounded-lg text-blue-600 font-bold w-9 h-9 flex items-center justify-center flex-shrink-0">2</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">2</div>
                   <span className="font-bold text-gray-900 text-lg">Evaluar opciones</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Dependiendo del caso, podrías:</p>
                 <ul className="space-y-2 ml-2">
                   {["Pagar la deuda", "Negociar con el arrendador", "Solicitar asesoría legal"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span className="text-base">{item}</span>
                     </li>
                   ))}
@@ -378,21 +378,21 @@ const BlogArticle = () => {
               </div>
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-blue-100 rounded-lg text-blue-600 font-bold w-9 h-9 flex items-center justify-center flex-shrink-0">3</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">3</div>
                   <span className="font-bold text-gray-900 text-lg">Actuar dentro del plazo</span>
                 </div>
                 <p className="text-base text-gray-600">Los plazos son clave. No actuar puede llevar a la ejecución del lanzamiento.</p>
               </div>
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-blue-100 rounded-lg text-blue-600 font-bold w-9 h-9 flex items-center justify-center flex-shrink-0">4</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">4</div>
                   <span className="font-bold text-gray-900 text-lg">Buscar asesoría legal</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Un abogado puede ayudarte a:</p>
                 <ul className="space-y-2 ml-2">
                   {["Entender la situación", "Evaluar alternativas", "Tomar decisiones informadas"].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span className="text-base">{item}</span>
                     </li>
                   ))}
@@ -412,7 +412,7 @@ const BlogArticle = () => {
                 "Ejecutar el lanzamiento"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="text-base text-gray-700">{item}</span>
                 </div>
               ))}
@@ -492,7 +492,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Tienes un problema de arriendo o desalojo?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Tienes un problema de arriendo o desalojo?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             Si estás enfrentando un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
@@ -506,7 +506,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_orden_desalojo_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
               >
                 Consultar con Abogado Ahora
               </Button>
@@ -521,7 +521,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_orden_desalojo_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados de Arriendo
               </Button>
@@ -547,12 +547,18 @@ const BlogArticle = () => {
             excerpt: "En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Descubre qué dice la ley y cómo proteger tus derechos.",
             image: "/assets/cerradura-arriendo-chile-2026.png"
           }}
+          nextArticle={{
+            id: "me-pueden-despedir-sin-motivo-chile-2026",
+            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
+            excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
+            image: "/assets/despido-sin-motivo-chile-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

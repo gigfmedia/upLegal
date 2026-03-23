@@ -360,7 +360,7 @@ export function ServicesSection({
 
         {/* Button */}
         <Button 
-          className="w-full mt-6 py-5 text-base font-medium rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="w-full mt-6 py-5 text-base font-medium rounded-lg bg-gray-900 hover:bg-green-900 transition-colors"
           disabled={!service.available || processingServices[service.id]}
           onClick={() => handleServiceSelect(service)}
         >

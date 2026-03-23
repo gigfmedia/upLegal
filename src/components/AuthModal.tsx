@@ -650,7 +650,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Scale className="h-10 w-10 text-blue-600" />
+              <Scale className="h-10 w-10 text-green-900" />
+              <span className="text-2xl font-bold text-gray-900 mt-2">LegalUp</span>
             </div>
             <DialogTitle className="text-2xl">
               Recuperar contraseña
@@ -700,7 +701,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className="w-full bg-gray-900 hover:bg-green-900 text-white"
                 disabled={submitting}
               >
                 {submitting ? (
@@ -714,7 +715,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 <button
                   type="button"
                   onClick={() => setForgotPassword(false)}
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-green-900 hover:text-green-600 font-medium"
                 >
                   ← Volver al inicio de sesión
                 </button>
@@ -742,8 +743,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
         </DialogDescription>
         <DialogHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Scale className="h-10 w-10 text-blue-600" />
+          <div className="flex justify-center mb-8">
+            <Scale className="h-8 w-8 text-green-900" />
+            <span className="text-xl font-bold text-gray-900 mt-1 ml-2">LegalUp</span>
           </div>
           <DialogTitle className="text-2xl">
             {mode === 'login' ? 'Ingresa a tu cuenta' : (
@@ -793,7 +795,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 <div className="space-y-3">
                   <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                     formData.role === 'client' 
-                      ? 'border-blue-500 bg-blue-50' 
+                      ? 'border-green-600 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}>
                     <div className="flex items-center h-5">
@@ -803,7 +805,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                         value="client"
                         checked={formData.role === 'client'}
                         onChange={() => handleInputChange('role', 'client')}
-                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 border-gray-300 text-green-900 focus:ring-green-900"
                       />
                     </div>
                     <div className="ml-3 text-sm">
@@ -813,7 +815,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   
                   <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                     formData.role === 'lawyer' 
-                      ? 'border-blue-500 bg-blue-50' 
+                      ? 'border-green-600 bg-green-50' 
                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   }`}>
                     <div className="flex items-center h-5">
@@ -823,7 +825,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                         value="lawyer"
                         checked={formData.role === 'lawyer'}
                         onChange={() => handleInputChange('role', 'lawyer')}
-                        className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 border-gray-300 text-green-900 focus:ring-green-900"
                       />
                     </div>
                     <div className="ml-3 text-sm">
@@ -1206,7 +1208,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           <div className="space-y-2">
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-gray-900 hover:bg-green-900 text-white"
               disabled={submitting}
             >
               {submitting ? (
@@ -1263,7 +1265,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               <button
                 type="button"
                 onClick={() => setForgotPassword(true)}
-                className="text-sm text-blue-600 hover:underline font-medium"
+                className="text-sm text-green-900 hover:text-green-600 hover:underline font-medium"
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -1278,7 +1280,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               <button
                 type="button"
                 onClick={() => onModeChange('signup')}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-green-900 hover:text-green-600 hover:underline font-medium"
               >
                 Registrarse
               </button>
@@ -1289,7 +1291,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               <button
                 type="button"
                 onClick={() => onModeChange('login')}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-green-900 hover:text-green-600 hover:underline font-medium"
               >
                 Iniciar sesión
               </button>

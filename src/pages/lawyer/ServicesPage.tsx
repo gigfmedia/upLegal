@@ -654,7 +654,7 @@ export default function ServicesPage() {
               <button
                 type="button"
                 onClick={() => setEditingService({...editingService, available: !editingService.available})}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full ${editingService.available ? 'bg-blue-600' : 'bg-gray-200'}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full ${editingService.available ? 'bg-green-900' : 'bg-gray-200'}`}
               >
                 <span className="sr-only">Disponible</span>
                 <span

@@ -48,9 +48,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -58,15 +58,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             ¿Cuánto demora un juicio de desalojo en Chile? (Tiempo real del proceso 2026)
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl">
+          <p className="text-xl max-w-3xl">
             Los conflictos de arriendo son uno de los problemas legales más comunes en Chile. Descubre los plazos reales y el funcionamiento del proceso judicial este 2026.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>16 de Marzo, 2026</span>
@@ -109,19 +109,19 @@ const BlogArticle = () => {
             </p>
             <ul className="grid sm:grid-cols-2 gap-4 mb-8">
               <li className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg text-gray-700">
-                <CheckCircle className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
                 <span>Impago de arriendo por parte del arrendatario.</span>
               </li>
               <li className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg text-gray-700">
-                <CheckCircle className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
                 <span>Incumplimiento de cláusulas del contrato.</span>
               </li>
               <li className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg text-gray-700">
-                <CheckCircle className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
                 <span>Término del contrato sin restitución física.</span>
               </li>
               <li className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg text-gray-700">
-                <CheckCircle className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 text-green-600 mt-1 flex-shrink-0" />
                 <span>Uso indebido o daños grave al inmueble.</span>
               </li>
             </ul>
@@ -175,15 +175,15 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 font-semibold">Factores que influyen en la duración final:</p>
             <ul className="space-y-4 mb-8">
               <li className="flex items-start gap-3 text-gray-600 font-medium">
-                <CheckCircle className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-6 w-6 text-green-600 mt-1 flex-shrink-0" />
                 <span><strong>Tribunal:</strong> La carga de trabajo de los juzgados civiles impacta directamente en las fechas.</span>
               </li>
               <li className="flex items-start gap-3 text-gray-600 font-medium">
-                <CheckCircle className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-6 w-6 text-green-600 mt-1 flex-shrink-0" />
                 <span><strong>Notificaciones:</strong> Ubicar al arrendatario para la notificación oficial es clave para no retrasar el inicio.</span>
               </li>
               <li className="flex items-start gap-3 text-gray-600 font-medium">
-                <CheckCircle className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
+                <CheckCircle className="h-6 w-6 text-green-600 mt-1 flex-shrink-0" />
                 <span><strong>Oposición:</strong> Si el arrendatario contesta y se defiende, el proceso requiere más instancias de prueba.</span>
               </li>
             </ul>
@@ -315,7 +315,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Te enfrentas a un desalojo o necesitas recuperar tu propiedad?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te enfrentas a un desalojo o necesitas recuperar tu propiedad?</h2>
           <p className="text-lg text-gray-700 mb-6">
             Recupera tu tranquilidad de forma legal. En LegalUp te conectamos con abogados especialistas que analizan tu caso y te guían paso a paso.
           </p>
@@ -329,7 +329,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_desalojo_duracion_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Ahora
               </Button>
@@ -344,7 +344,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_desalojo_duracion_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados Civiles
               </Button>
@@ -381,7 +381,7 @@ const BlogArticle = () => {
         <div className="mt-8 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

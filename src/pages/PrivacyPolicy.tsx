@@ -130,7 +130,7 @@ const PrivacyPolicy = () => {
               <li>Solicitar copia de la información entregada.</li>
               <li>Retirar su consentimiento, cuando este sea la base del tratamiento.</li>
             </ul>
-            <p className="mt-2">Solicitudes: <a href="mailto:contacto@legalup.cl" className="text-blue-600 hover:underline">contacto@legalup.cl</a></p>
+            <p className="mt-2">Solicitudes: <a href="mailto:contacto@legalup.cl" className="text-green-900 hover:green-600 underline">contacto@legalup.cl</a></p>
 
             <h2 className="text-xl font-semibold mt-8 mb-4">7. Cookies y tecnologías similares</h2>
             <p>Utilizamos cookies para:</p>
@@ -179,7 +179,7 @@ const PrivacyPolicy = () => {
             <h2 className="text-xl font-semibold mt-8 mb-4">12. Contacto</h2>
             <p>Para consultas o soporte:</p>
             <p>Sitio web: <a href="https://legalup.cl" className="text-primary hover:underline">LegalUp.cl</a></p>
-            <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-blue-600 hover:underline">contacto@legalup.cl</a></p>
+            <p>Correo: <a href="mailto:juan.fercommerce@gmail.com" className="text-green-900 hover:text-green-600 underline">contacto@legalup.cl</a></p>
           </CardContent>
         </Card>
       </div>

@@ -1033,7 +1033,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                             alt={`${lawyer?.first_name || ''} ${lawyer?.last_name || ''}`.trim()}
                             className="object-cover w-full h-full"
                           />
-                          <AvatarFallback className="bg-blue-100 text-blue-700 text-3xl font-medium h-full w-full flex items-center justify-center">
+                          <AvatarFallback className="bg-green-900 text-green-600 text-3xl font-medium h-full w-full flex items-center justify-center">
                             {lawyer?.first_name && lawyer.last_name 
                               ? `${lawyer.first_name[0]}${lawyer.last_name[0]}`.toUpperCase() 
                               : 'AB'}
@@ -1211,7 +1211,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     <div className="space-y-3 w-full">
                       <div className="flex flex-col gap-3 w-full">
                         <Button 
-                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-blue-600 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'}`}
+                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-gray-900 hover:bg-green-900' : 'bg-gray-900 hover:bg-green-900'}`}
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id && lawyer) {
@@ -1284,7 +1284,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   <div>
                     <h4 className="font-semibold mb-3">Educación</h4>
                     <div className="space-y-4">
-                      <div className="relative pl-4 border-l-2 border-blue-500">
+                      <div className="relative pl-4 border-l-2 border-green-600">
                         <div className="space-y-1">
                           {lawyer?.education ? (
                             <p className="font-medium text-gray-900">
@@ -1317,7 +1317,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           ).map((lang, index) => (
                             <span 
                               key={index} 
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-green-900"
                             >
                               {lang}
                             </span>

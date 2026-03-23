@@ -43,9 +43,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -53,15 +53,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
             ¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl">
+          <p className="text-xl max-w-3xl">
             El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. En esta Guía completa 2026 de Derecho de Familia, revisamos qué abarca esta área del derecho, cuáles son los trámites más comunes en los tribunales de familia y qué puedes hacer si enfrentas un conflicto familiar.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>16 de Marzo, 2026</span>
@@ -139,36 +139,36 @@ const BlogArticle = () => {
             <ul className="space-y-2 text-gray-600">
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>relaciones de pareja</span>
+                <span>Relaciones de pareja</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>relaciones entre padres e hijos</span>
+                <span>Relaciones entre padres e hijos</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>obligaciones económicas dentro de la familia</span>
+                <span>Obligaciones económicas dentro de la familia</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>protección de niños, niñas y adolescentes</span>
+                <span>Protección de niños, niñas y adolescentes</span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle className="h-6 w-6 text-green-500 mt-1 flex-shrink-0" />
-                <span>resolución de conflictos familiares</span>
+                <span>Resolución de conflictos familiares</span>
               </li>
             </ul>
             <p className="text-gray-600 mt-4">
               Dentro de esta área se incluyen diversos temas legales como:
             </p>
             <ul className="space-y-2 text-gray-600 mt-2">
-              <li>• pensión de alimentos</li>
-              <li>• cuidado personal de hijos</li>
-              <li>• régimen de visitas</li>
-              <li>• divorcio</li>
-              <li>• violencia intrafamiliar</li>
-              <li>• adopción</li>
-              <li>• bienes familiares</li>
+              <li>• Pensión de alimentos</li>
+              <li>• Cuidado personal de hijos</li>
+              <li>• Régimen de visitas</li>
+              <li>• Divorcio</li>
+              <li>• Violencia intrafamiliar</li>
+              <li>• Adopción</li>
+              <li>• Bienes familiares</li>
             </ul>
             <p className="text-base text-gray-500 mt-4">
               Debido a la naturaleza sensible de estos conflictos, los tribunales de familia aplican criterios especiales orientados a proteger el bienestar de los menores y promover acuerdos entre las partes.
@@ -193,12 +193,12 @@ const BlogArticle = () => {
                   Este dinero busca asegurar el bienestar del niño o adolescente y cubrir gastos esenciales como:
                 </p>
                 <ul className="grid grid-cols-2 gap-2 text-gray-600 mb-4">
-                  <li>• alimentación</li>
-                  <li>• educación</li>
-                  <li>• salud</li>
-                  <li>• vivienda</li>
-                  <li>• vestuario</li>
-                  <li>• transporte</li>
+                  <li>• Alimentación</li>
+                  <li>• Educación</li>
+                  <li>• Salud</li>
+                  <li>• Vivienda</li>
+                  <li>• Vestuario</li>
+                  <li>• Transporte</li>
                 </ul>
                 <p className="text-gray-600 mb-4">
                   La obligación de pagar alimentos existe independientemente de si los padres están casados, separados o nunca convivieron.
@@ -208,8 +208,8 @@ const BlogArticle = () => {
                   <h4 className="font-bold mb-2">¿Cuánto se paga de pensión de alimentos?</h4>
                   <p className="text-gray-700 mb-2">No existe una cifra fija. El monto depende principalmente de dos factores:</p>
                   <ul className="list-disc ml-5 text-gray-700 mb-2">
-                    <li>necesidades del niño o adolescente</li>
-                    <li>capacidad económica del padre o madre que paga</li>
+                    <li>Necesidades del niño o adolescente</li>
+                    <li>Capacidad económica del padre o madre que paga</li>
                   </ul>
                   <p className="text-gray-700">Los tribunales de familia suelen analizar: ingresos del demandado, gastos del menor, nivel de vida previo y número de hijos.</p>
                 </div>
@@ -218,12 +218,12 @@ const BlogArticle = () => {
                   <h4 className="font-bold text-red-900 mb-2">¿Qué pasa si no se paga la pensión?</h4>
                   <p className="text-red-800 mb-2">En Chile existen diversas medidas para obligar el pago. Entre las más comunes están:</p>
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-1 text-red-800">
-                    <li>• retención del sueldo</li>
-                    <li>• retención de devolución de impuestos</li>
-                    <li>• retención del seguro de cesantía</li>
-                    <li>• suspensión de licencia de conducir</li>
-                    <li>• prohibición de salir del país</li>
-                    <li>• arresto nocturno o arresto completo</li>
+                    <li>• Retención del sueldo</li>
+                    <li>• Retención de devolución de impuestos</li>
+                    <li>• Retención del seguro de cesantía</li>
+                    <li>• Suspensión de licencia de conducir</li>
+                    <li>• Prohibición de salir del país</li>
+                    <li>• Arresto nocturno o arresto completo</li>
                   </ul>
                   <p className="text-red-800 mt-2 text-base">En los últimos años, la ley ha incorporado herramientas adicionales para mejorar el cumplimiento de las pensiones alimenticias.</p>
                 </div>
@@ -261,11 +261,11 @@ const BlogArticle = () => {
                 </p>
                 <p className="text-gray-600 mb-4">Este régimen puede incluir:</p>
                 <ul className="grid grid-cols-2 gap-2 text-gray-600 mb-4">
-                  <li>• visitas presenciales</li>
-                  <li>• fines de semana alternados</li>
-                  <li>• vacaciones compartidas</li>
-                  <li>• feriados especiales</li>
-                  <li>• videollamadas o contacto digital</li>
+                  <li>• Visitas presenciales</li>
+                  <li>• Fines de semana alternados</li>
+                  <li>• Vacaciones compartidas</li>
+                  <li>• Feriados especiales</li>
+                  <li>• Videollamadas o contacto digital</li>
                 </ul>
                 <p className="text-gray-600 mb-4 italic">El objetivo es mantener el vínculo afectivo entre el niño y ambos padres.</p>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-5">
@@ -302,17 +302,17 @@ const BlogArticle = () => {
                 <h3 className="text-xl font-bold text-red-900 mb-4">5. Violencia intrafamiliar (VIF)</h3>
                 <p className="text-gray-700 mb-4">La violencia intrafamiliar incluye cualquier tipo de maltrato dentro del núcleo familiar. Puede manifestarse de diferentes formas:</p>
                 <ul className="grid grid-cols-2 gap-2 text-gray-700 mb-6">
-                  <li>• violencia física</li>
-                  <li>• violencia psicológica</li>
-                  <li>• violencia económica</li>
-                  <li>• violencia sexual</li>
+                  <li>• Violencia física</li>
+                  <li>• Violencia psicológica</li>
+                  <li>• Violencia económica</li>
+                  <li>• Violencia sexual</li>
                 </ul>
                 <p className="text-gray-700 mb-4">Cuando se presenta una denuncia por violencia intrafamiliar, el tribunal puede dictar medidas de protección inmediatas como:</p>
                 <ul className="space-y-2 text-gray-700">
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> prohibición de acercamiento</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> salida del agresor del hogar</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> protección policial</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> tratamientos obligatorios</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> Prohibición de acercamiento</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> Salida del agresor del hogar</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> Protección policial</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-red-500" /> Tratamientos obligatorios</li>
                 </ul>
                 <p className="mt-4 font-semibold text-red-900">El objetivo es proteger a la víctima y prevenir nuevas situaciones de violencia.</p>
               </div>
@@ -359,7 +359,7 @@ const BlogArticle = () => {
                 }
               ].map((step, idx) => (
                 <div key={idx} className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gray-900 text-white flex items-center justify-center text-sm">
                     {idx + 1}
                   </div>
                   <div>
@@ -375,12 +375,12 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold mb-6">Documentos frecuentes en causas de familia</h2>
             <p className="text-gray-600 mb-6">Para iniciar un proceso en tribunales de familia generalmente se requieren ciertos documentos. Entre los más comunes se encuentran:</p>
             <div className="grid md:grid-cols-2 gap-4 text-gray-700">
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> certificado de nacimiento del niño o adolescente</div>
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> certificado de matrimonio (si corresponde)</div>
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> certificados de ingresos</div>
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> acta de mediación frustrada</div>
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> documentos que acrediten convivencia o separación</div>
-              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /> antecedentes de gastos del menor</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Certificado de nacimiento del niño o adolescente</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Certificado de matrimonio (si corresponde)</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Certificados de ingresos</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Acta de mediación frustrada</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Documentos que acrediten convivencia o separación</div>
+              <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Antecedentes de gastos del menor</div>
             </div>
             <p className="mt-6 text-base text-gray-500 italic">Contar con estos documentos facilita el desarrollo del proceso judicial.</p>
           </div>
@@ -420,30 +420,30 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas ayuda en un caso de familia?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas ayuda en un caso de familia?</h2>
           <p className="text-lg text-gray-700 mb-6">
             Un abogado especialista puede ayudarte a:
           </p>
 
           <div className="grid gap-3 md:grid-cols-2 mb-8 max-w-2xl mx-auto text-left">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Presentar demandas</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Revisar acuerdos</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Representarte ante el tribunal</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Asegurar el interés superior del niño</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-blue-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Proteger tus derechos y los de tus hijos</span>
             </div>
           </div>
@@ -457,7 +457,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_derecho_familia_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Ahora
               </Button>
@@ -472,7 +472,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_derecho_familia_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Abogados de Familia
               </Button>
@@ -512,7 +512,7 @@ const BlogArticle = () => {
         <div className="mt-4 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

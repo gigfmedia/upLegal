@@ -330,7 +330,7 @@ export const MercadoPagoConnect: React.FC = () => {
 
             <Button
               onClick={handleConnect}
-              className="w-full bg-blue-500 hover:bg-blue-600"
+              className="w-full bg-gray-900 hover:bg-green-900"
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               Conectar con MercadoPago

@@ -94,7 +94,7 @@ const AttorneyDashboard = () => {
               <div className="flex items-center space-x-4 mb-4 lg:mb-0">
                 <Avatar className="h-16 w-16">
                   <AvatarImage src="/placeholder.svg" alt={user.name} />
-                  <AvatarFallback className="bg-blue-600 text-white text-xl">
+                  <AvatarFallback className="bg-green-900 text-white text-xl">
                     {user.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -120,7 +120,7 @@ const AttorneyDashboard = () => {
                   <Eye className="h-4 w-4 mr-2" />
                   Ver Perfil Público
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-gray-900 hover:bg-green-900">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Mensajes
                 </Button>

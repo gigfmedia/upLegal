@@ -395,7 +395,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-t from-blue-400 to-indigo-600">
+    <div className="min-h-screen bg-gray-100">
       <HomeGrowthHacks faqs={homePageFaqs} />
       
       <Header onAuthClick={handleAuthClick} />
@@ -403,13 +403,16 @@ const Index = () => {
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="border border-white rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4">Abogados verificados en todo Chile</p>
-          <h1 className="text-3xl sm:text-5xl leading-[1.4] sm:leading-[1.2] font-bold text-white mb-8 mt-8">
+          <p className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
+            <span className="w-1 h-1 bg-green-400 rounded-full"></span>
+            Abogados verificados en todo Chile
+          </p>
+          <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold text-gray-900 font-serif mb-8 mt-8">
             Asesoría legal online con&nbsp;
-            <span className="text-white underline underline-offset-8">Abogados verificados.</span> 
+            <span className="text-green-900 underline underline-offset-8 font-serif">Abogados verificados.</span> 
             <br />Rápido, seguro y sin complicaciones.
           </h1>
-          <p className="text-m sm:text-xl text-white mb-12 max-w-3xl mx-auto">
+          <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
             Conecta con un abogado experto según tu caso.<br /> Videollamada, precios claros y disponibilidad inmediata.
           </p>
           {/* Search Section */}
@@ -432,11 +435,11 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto mt-24">
             <div className="text-center">
               <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-white mb-2">
+                <div className="text-3xl font-bold text-green-900 mb-2">
                   +10
                 </div>
               </div>
-              <div className="text-white">Áreas legales disponibles</div>
+              <div className="text-gray-900">Áreas legales disponibles</div>
             </div>
             
             {/*<div className="text-center">
@@ -454,27 +457,46 @@ const Index = () => {
               <div className="text-gray-600">Calificación Promedio</div>
             </div> */}
             <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-2">24/7</div>
-              <div className="text-white">Soporte disponible</div>
+              <div className="text-3xl font-bold text-green-900 mb-2">24/7</div>
+              <div className="text-gray-900">Soporte disponible</div>
             </div>
           </div>
-          <p className="mt-12 text-white font-bold">¿No sabes qué abogado elegir?</p>
-          <a 
-            href="/asesoria-legal-online" 
-            className="text-white underline underline-offset-4 inline-flex items-center gap-1 hover:underline transition-colors"
-          >
-            Agenda una asesoría legal online →
-          </a>
+          <div className="mt-12">
+            <p className="text-gray-900 font-bold mb-4">Búsqueda rápida por especialidad:</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                "Despido",
+                "Divorcio", 
+                "Pensión alimentos",
+                "Deudas",
+                "Herencias",
+                "Arriendo",
+                "Desalojo",
+                "Accidente laboral"
+              ].map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    // Navigate to search page with the query parameter
+                    navigate(`/search?query=${encodeURIComponent(tag)}`);
+                  }}
+                  className="border border-gray-900 hover:bg-gray-900 text-gray-900 hover:text-white px-3 py-1 rounded-full text-sm transition-colors"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
       
           {/* Header */}
           <div className="mb-12">
-            <h2 className="text-3xl font-bold text-left text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold font-serif text-left text-gray-900 mb-4">
               Encuentra el abogado correcto, sin perder tiempo
             </h2>
             <p className="text-left text-gray-600 mb-12">
@@ -486,7 +508,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Feature 1 */}
-            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <Search className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -503,7 +525,7 @@ const Index = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <Scale className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -520,7 +542,7 @@ const Index = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="group p-6 rounded-2xl border bg-white border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <DollarSign className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -543,10 +565,10 @@ const Index = () => {
       {/* Categorías de Práctica */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <p className="text-left text-blue-600 mb-2">
+          <p className="text-left text-green-900 mb-2">
             Directorio de Abogados
           </p>
-          <h2 className="text-3xl font-bold text-left text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold font-serif text-left text-gray-900 mb-4">
             Busca abogados por área de práctica
           </h2>
           <p className="text-left text-gray-600 mb-12">
@@ -556,12 +578,12 @@ const Index = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {/* Derecho Laboral */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Laboral')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Briefcase className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Briefcase className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Laboral</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Tutela Laboral, Despidos Injustificados, Despido Indirecto, Nulidad del despido, Acoso Laboral, entre otros.</p>
@@ -570,12 +592,12 @@ const Index = () => {
 
             {/* Derecho de Familia */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+de+Familia')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Users className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Users className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho de Familia</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Divorcios, Relación Directa y Regular, Filiación, Alimentos, Cuidado Personal, Medidas de Protección, Violencia Intrafamiliar, Autorización para salir del país, Adopción, Cumplimiento de Alimentos, entre otros.</p>
@@ -584,12 +606,12 @@ const Index = () => {
 
             {/* Derecho Civil */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Civil')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Scale className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Scale className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Civil</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Nulidad de Contrato, Incumplimiento de contrato, Indemnización de Perjuicios, Juicio Ejecutivo, Juicio de Arrendamiento, Juicio de Precario, Cambio de Nombre, Interdicción, entre otros.</p>
@@ -598,12 +620,12 @@ const Index = () => {
 
             {/* Derecho Penal */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Penal')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Shield className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Shield className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Penal</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Defensa penal en detenciones, formalizaciones y audiencias; representación de víctimas y presentación de querellas; asesoría en casos de delitos comunes; orientación frente a citaciones e investigaciones de Fiscalía; y gestión  salidas alternativas como acuerdos reparatorios o suspensiones condicionales, entre otros.</p>
@@ -612,12 +634,12 @@ const Index = () => {
 
             {/* Derecho Comercial */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Comercial')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Building2 className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Building2 className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Derecho Comercial</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Constitución de Sociedades, Modificación de Sociedades, Asesoramiento de empresas, Procedimiento de Reliquidación de Personas, entre otros.</p>
@@ -640,12 +662,12 @@ const Index = () => {
 
             {/* Derecho Inmobiliario */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+de+Propiedad+Intelectual')}
             >
               <CardContent className="p-6">
-                <div className="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Lightbulb className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Lightbulb className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Propiedad intelectual</h3>
                 <p className="text-sm text-gray-600 line-clamp-3">Registro de marcas comerciales ante INAPI, renovación y vigilancia de marcas, oposiciones y defensas en procedimientos administrativos, asesoría en derechos de autor, protección de nombres comerciales y logotipos, entre otros.</p>
@@ -654,12 +676,12 @@ const Index = () => {
 
             {/* Ver todas las especialidades */}
             <Card 
-              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-blue-500 hover:-translate-y-1 h-full border-2 border-dashed border-gray-300 hover:border-blue-500"
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full border-2 border-dashed border-gray-300 hover:border-gray-500"
               onClick={() => navigate('/search')}
             >
               <CardContent className="p-6 flex flex-col items-center justify-center h-full">
-                <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Search className="h-6 w-6 text-blue-600" />
+                <div className="bg-green-900 w-12 h-12 rounded-full flex items-center justify-center mb-4 transition-colors">
+                  <Search className="h-6 w-6 text-green-500" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 text-center">Ver todas las especialidades</h3>
                 <p className="text-sm text-gray-600 text-center">Explora todas nuestras categorías de práctica legal.</p>
@@ -670,10 +692,10 @@ const Index = () => {
       </section>
 
       {/* Lista de Abogados */}
-      <section id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-3xl font-bold font-serif text-gray-900">
               Abogados destacados
             </h2>
             <Button variant="outline" onClick={() => navigate('/search')}>
@@ -825,7 +847,7 @@ const Index = () => {
             <p className="text-center text-gray-900 font-bold items-center mt-8">¿Tienes otra duda?</p>
             <Button
               onClick={() => navigate('/search')}
-              className="bg-black text-white hover:bg-black hover:text-white items-center mt-4"
+              className="bg-gray-900 text-white hover:bg-green-900 hover:text-white items-center mt-4"
             >
               Hablar con un abogado
             </Button>
@@ -834,29 +856,29 @@ const Index = () => {
       </section>
 
       {/* Dual CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-blue-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-3xl font-bold font-serif text-center text-gray-900 mb-12">
             Comienza hoy mismo
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* CTA para Clientes - Principal */}
-            <Card className="border-none shadow-2xl z-10 relative bg-blue-600">
+            <Card className="border border-solid shadow-2xl z-10 relative">
               <CardContent className="p-10">
                 <div className="text-center">
-                  <div className="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Users className="h-8 w-8 text-blue-600" />
+                  <div className="bg-green-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Users className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-4">
+                  <h3 className="text-2xl font-bold mb-4">
                     ¿Necesitas un Abogado?
                   </h3>
-                  <p className="text-white mb-8">
+                  <p className="mb-8">
                     Encuentra al abogado perfecto para tu caso. Asesoría legal profesional, rápida y segura.
                   </p>
                   <Button 
                     size="lg" 
-                    className="w-full bg-white hover:bg-blue-800 text-blue-600 hover:text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                    className="w-full bg-gray-900 hover:bg-green-900 text-white font-bold shadow-lg hover:shadow-xl transition-all"
                     onClick={() => navigate('/search')}
                   >
                     Buscar Abogados
@@ -866,11 +888,11 @@ const Index = () => {
             </Card>
 
             {/* CTA para Abogados - Secundario */}
-            <Card className="border-none shadow-lg bg-white/90 backdrop-blur">
+            <Card className="border border-solid shadow-lg bg-white/90 backdrop-blur">
               <CardContent className="p-10">
                 <div className="text-center">
                   <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Briefcase className="h-8 w-8 text-gray-600" />
+                    <Briefcase className="h-8 w-8 text-green-900" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     ¿Eres Abogado?
@@ -881,7 +903,7 @@ const Index = () => {
                   <Button 
                     size="lg" 
                     variant="outline"
-                    className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-semibold"
+                    className="w-full border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold"
                     onClick={() => handleAuthClick('signup', 'lawyer')}
                     disabled={user?.user_metadata?.role === 'lawyer'}
                   >

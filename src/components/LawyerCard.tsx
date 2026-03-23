@@ -191,7 +191,7 @@ export function LawyerCard({
   return (
     <>
       <Card 
-        className="hover:shadow-lg transition-shadow duration-300 border-0 shadow-md flex flex-col h-full cursor-pointer"
+        className="hover:shadow-lg transition-shadow duration-300 border border-solid shadow-md flex flex-col h-full cursor-pointer"
         onClick={(e) => {
           // Don't navigate if clicking on the schedule button or its children
           if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
@@ -225,7 +225,7 @@ export function LawyerCard({
                       onLoad={handleImageLoad}
                       loading="lazy"
                     />
-                    <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-medium">
+                    <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
                       {(() => {
                         const nameParts = lawyer.name.split(' ').filter(n => n);
                         if (nameParts.length === 0) return '?';
@@ -421,10 +421,10 @@ export function LawyerCard({
             </Button> */}
             <Button
               variant="default"
-              className={`flex-1 bg-blue-600 ${
+              className={`flex-1 bg-gray-900 ${
                 buttonsDisabled 
                   ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:bg-blue-700'
+                  : 'hover:bg-green-900'
               }`}
               onClick={(e) => {
                 e.stopPropagation();

@@ -651,7 +651,7 @@ export default function BookingPage() {
                   onClick={() => setDuration(30)}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     duration === 30
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-green-900 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -667,7 +667,7 @@ export default function BookingPage() {
                   onClick={() => setDuration(60)}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     duration === 60
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-green-900 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -683,7 +683,7 @@ export default function BookingPage() {
                   onClick={() => setDuration(90)}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     duration === 90
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-green-900 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -699,7 +699,7 @@ export default function BookingPage() {
                   onClick={() => setDuration(120)}
                   className={`p-4 border-2 rounded-lg transition-all ${
                     duration === 120
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-green-900 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -727,7 +727,7 @@ export default function BookingPage() {
                       onClick={() => handleDateSelect(date)}
                       className={`p-3 border-2 rounded-lg transition-all text-center ${
                         selectedDate?.toDateString() === date.toDateString()
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-green-900 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -771,7 +771,7 @@ export default function BookingPage() {
                           disabled={!slot.available || isLoadingSlots}
                           className={`p-3 border-2 rounded-lg transition-all ${
                             selectedTime === slot.time
-                              ? 'border-blue-600 bg-blue-50'
+                              ? 'border-green-900 bg-green-50'
                               : slot.available
                               ? 'border-gray-200 hover:border-gray-300'
                               : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
@@ -824,7 +824,7 @@ export default function BookingPage() {
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                     <span>Total a pagar:</span>
-                    <span className="text-blue-600">${totalPrice.toLocaleString('es-CL')}</span>
+                    <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     * Incluye 10% de recargo por servicio app.
@@ -833,7 +833,7 @@ export default function BookingPage() {
 
                 <Button
                   onClick={handleContinue}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-sm py-6"
+                  className="w-full bg-gray-900 hover:bg-green-900 text-sm py-6"
                   disabled={isProcessingPayment}
                 >
                   {isProcessingPayment ? (

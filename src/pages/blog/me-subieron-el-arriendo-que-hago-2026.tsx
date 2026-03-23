@@ -43,9 +43,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -53,15 +53,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl leading-relaxed">
+          <p className="text-xl text-white max-w-3xl leading-relaxed">
             Entender qué dice tu contrato y cuáles son tus derechos es fundamental para proteger tu presupuesto y evitar cobros abusivos.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 text-white mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Enero, 2026</span>
@@ -133,7 +133,7 @@ const BlogArticle = () => {
                 { title: "Método de cálculo", desc: "Es importante verificar cómo se calcula exactamente el aumento para asegurar que sea el monto correcto." }
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                  <div className="bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mb-4">{i+1}</div>
+                  <div className="bg-gray-900 w-7 h-7 rounded-full flex items-center justify-center text-white mb-4">{i+1}</div>
                   <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-base text-gray-600">{item.desc}</p>
                 </div>
@@ -153,7 +153,7 @@ const BlogArticle = () => {
                 "Se aplica en la periodicidad establecida"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="text-base text-gray-700">{item}</span>
                 </div>
               ))}
@@ -213,7 +213,7 @@ const BlogArticle = () => {
                 { title: "Intenta negociar", desc: "En algunos casos es posible negociar un reajuste menor o acordar una transición gradual. Muchos arrendadores prefieren mantener a un arrendatario responsable.", icon: <Shield className="h-5 w-5" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-green-900 p-2 rounded-lg text-green-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
                   <div>
@@ -252,7 +252,7 @@ const BlogArticle = () => {
                   "Pedir asesoría legal si es necesario"
                 ].map((tip, i) => (
                   <div key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                     <span className="text-base font-medium">{tip}</span>
                   </div>
                 ))}
@@ -289,7 +289,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Necesitas asesoría legal por tu arriendo?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas asesoría legal por tu arriendo?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             No permitas cobros abusivos. Conectamos a arrendatarios con abogados expertos en derecho inmobiliario para revisar contratos y defender tus derechos.
           </p>
@@ -303,12 +303,12 @@ const BlogArticle = () => {
                     location: 'blog_cta_arriendo_aumento_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
               >
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Inmobiliario">
+            <Link to="/search?category=Derecho+Civil">
               <Button
                 variant="outline"
                 size="lg"
@@ -318,16 +318,16 @@ const BlogArticle = () => {
                     location: 'blog_cta_arriendo_aumento_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
               >
-                Ver Abogados Inmobiliarios
+                Ver Abogados Civiles
               </Button>
             </Link>
           </div>
         </section>
       </div>
 
-      <RelatedLawyers category="Derecho Inmobiliario" />
+      <RelatedLawyers category="Derecho Civil" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
@@ -349,7 +349,7 @@ const BlogArticle = () => {
         <div className="mt-8 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

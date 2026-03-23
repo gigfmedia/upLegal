@@ -21,7 +21,7 @@ export function WizardStepIndicators({ currentStep, steps }: WizardStepIndicator
               s.id < currentStep
                 ? 'bg-green-500 text-white'
                 : s.id === currentStep
-                ? 'bg-blue-600 text-white'
+                ? 'bg-green-900 text-white'
                 : 'bg-gray-200 text-gray-500'
             }`}
           >

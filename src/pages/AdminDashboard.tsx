@@ -464,7 +464,7 @@ function FeeSettingsCard() {
             <span>Actualizado: {lastUpdate}</span>
           </div>
           <div className="flex gap-3">
-            <Button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" disabled={isSaving} className="bg-gray-900 hover:bg-green-900">
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Guardar cambios
             </Button>

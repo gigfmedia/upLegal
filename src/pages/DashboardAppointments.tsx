@@ -783,7 +783,7 @@ export default function DashboardAppointments() {
               }
             </p>
             <Button 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-gray-900 hover:bg-green-900"
               onClick={() => setIsScheduleModalOpen(true)}
             >
               <Calendar className="h-4 w-4 mr-2" />
@@ -973,7 +973,7 @@ export default function DashboardAppointments() {
             <Button 
               onClick={handleConfirmReschedule}
               disabled={!rescheduleDate || !rescheduleTime}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-gray-900 hover:bg-green-900"
             >
               <Calendar className="h-4 w-4 mr-1" />
               Confirmar reagendamiento

@@ -128,8 +128,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             )}
             onClick={() => handleNavigation('/')}
           >
-            <Scale className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">LegalUp</span>
+            <Scale className="h-8 w-8 text-green-900" />
+            <span className="text-xl font-bold text-green-900">LegalUp</span>
           </div>
 
           {/* Navigation - Centered */}
@@ -137,8 +137,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/search"
               className={cn(
-                "transition-colors hover:text-blue-600",
-                isActive('/search') || pathname.startsWith('/search/') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                "transition-colors hover:text-green-900",
+                isActive('/search') || pathname.startsWith('/search/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
               Encuentra tu abogado
@@ -146,8 +146,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/como-funciona"
               className={cn(
-                "transition-colors hover:text-blue-600",
-                isActive('/como-funciona') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                "transition-colors hover:text-green-900",
+                isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
               ¿Cómo funciona?
@@ -155,8 +155,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/about"
               className={cn(
-                "transition-colors hover:text-blue-600",
-                isActive('/about') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                "transition-colors hover:text-green-900",
+                isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
               Acerca de
@@ -164,8 +164,8 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/blog"
               className={cn(
-                "transition-colors hover:text-blue-600",
-                isActive('/blog') || pathname.startsWith('/blog/') ? 'text-blue-600 font-medium' : 'text-gray-600'
+                "transition-colors hover:text-green-900",
+                isActive('/blog') || pathname.startsWith('/blog/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
               Blog
@@ -292,7 +292,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 </Button>
                 <Button 
                   onClick={() => handleAuthNavigation('signup')}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-gray-900 hover:bg-green-900"
                 >
                   Registrarse
                 </Button>
@@ -362,7 +362,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 </Button>
                 <Button
                   onClick={() => handleAuthNavigation('signup')}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-gray-900 hover:bg-green-900"
                 >
                   Registrarse
                 </Button>

@@ -155,7 +155,7 @@ export default function CalendarField({ formData, setFormData, lawyerAvailabilit
                 "h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-md flex items-center justify-center",
                 "hover:bg-blue-100 hover:text-blue-900 transition-colors duration-200"
               ),
-              day_selected: "bg-blue-500 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-500 focus:text-white",
+              day_selected: "bg-gray-900 text-white hover:bg-green-900 hover:text-white focus:bg-blue-500 focus:text-white",
               day_today: "bg-accent text-accent-foreground",
               day_outside: "text-muted-foreground opacity-50",
               day_disabled: "text-muted-foreground opacity-50",

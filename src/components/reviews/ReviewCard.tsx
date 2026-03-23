@@ -64,8 +64,8 @@ export function ReviewCard({ review, onHelpful, onReply }: ReviewCardProps) {
               className="h-10 w-10 rounded-full object-cover"
             />
           ) : (
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-sm font-medium text-blue-600">
+            <div className="h-10 w-10 rounded-full bg-green-900 flex items-center justify-center">
+              <span className="text-sm font-medium text-green-600">
                 {getInitials(review.user?.display_name || 'Usuario')}
               </span>
             </div>

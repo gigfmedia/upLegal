@@ -16,13 +16,13 @@ const Slider = React.forwardRef<
     {...props}
   >
     <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-gray-200">
-      <SliderPrimitive.Range className="absolute h-full bg-blue-500" />
+      <SliderPrimitive.Range className="absolute h-full bg-green-600" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-blue-500 bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center justify-center">
-      <div className="h-2 w-2 rounded-full bg-blue-500" />
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-900 bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center justify-center">
+      <div className="h-2 w-2 rounded-full bg-green-900" />
     </SliderPrimitive.Thumb>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-blue-500 bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center justify-center">
-      <div className="h-2 w-2 rounded-full bg-blue-500" />
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-green-900 bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 flex items-center justify-center">
+      <div className="h-2 w-2 rounded-full bg-green-900" />
     </SliderPrimitive.Thumb>
   </SliderPrimitive.Root>
 ))

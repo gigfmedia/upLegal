@@ -236,7 +236,7 @@ export function SearchFilters({
                     onClick={() => handleSpecialtyToggle('all')}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                       selectedSpecialty.includes('all')
-                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        ? 'bg-green-900 text-green-600 border border-green-200'
                         : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
                     }`}
                   >
@@ -249,7 +249,7 @@ export function SearchFilters({
                       onClick={() => handleSpecialtyToggle(specialty)}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                         selectedSpecialty.includes(specialty)
-                          ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                          ? 'bg-green-900 text-green-600 border border-green-200'
                           : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
                       }`}
                     >
@@ -328,7 +328,7 @@ export function SearchFilters({
                       onClick={() => setMinExperience(years)}
                       className={`px-2 py-2 text-sm rounded-md border ${
                         minExperience === years
-                          ? 'bg-blue-50 border-blue-500 text-blue-700'
+                          ? 'bg-green-50 border-green-900 text-green-900'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
@@ -393,7 +393,7 @@ export function SearchFilters({
                   Limpiar filtros
                 </Button>
                 <Button 
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-gray-900 hover:bg-green-900"
                   onClick={handleApplyFilters}
                 >
                   Aplicar filtros

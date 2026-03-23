@@ -321,7 +321,7 @@ export function LawyerReviewsSection({ lawyerId, lawyerName }: LawyerReviewsSect
             <Button
               onClick={() => setShowWriteReview(true)}
               disabled={!canWriteReview}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-gray-900 hover:bg-green-900 text-white"
             >
               Escribir Reseña
             </Button>

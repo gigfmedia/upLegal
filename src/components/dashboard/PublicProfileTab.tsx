@@ -117,7 +117,7 @@ export function PublicProfileTab({ user, stats }: PublicProfileTabProps) {
             <div className="flex flex-col items-center md:items-start">
               <Avatar className="h-24 w-24 mb-4">
                 <AvatarImage src="/placeholder.svg" alt={user.name} />
-                <AvatarFallback className="bg-blue-600 text-white text-2xl">
+                <AvatarFallback className="bg-green-900 text-white text-2xl">
                   {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -176,7 +176,7 @@ export function PublicProfileTab({ user, stats }: PublicProfileTabProps) {
                 ${publicProfile.hourlyRate}/hr
               </div>
               <div className="space-y-2">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button className="w-full bg-gray-900 hover:bg-green-900">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Contact Me
                 </Button>

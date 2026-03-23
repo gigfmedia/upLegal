@@ -1527,7 +1527,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               </Button>
               <Button 
                 type="submit" 
-                className="bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 disabled:opacity-70"
+                className="bg-gray-900 hover:bg-green-900 focus:ring-blue-500 disabled:opacity-70"
                 disabled={isProcessing || !formData.date || !formData.time}
               >
                 {isProcessing 

@@ -79,7 +79,7 @@ export default function SpecialtiesSlider({
             }}
             className={`px-4 py-2 text-sm font-medium rounded-full whitespace-nowrap transition-colors select-none ${
               selectedSpecialty.includes(specialty === 'Todas' ? 'all' : specialty)
-                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                ? 'bg-gray-900 text-green-600 hover:bg-green-900'
                 : 'bg-white text-gray-900 hover:bg-gray-50 border border-gray-200'
             }`}
             style={{

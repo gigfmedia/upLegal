@@ -73,7 +73,7 @@ export function ProfileSettings() {
                 src={linkedInProfile?.profile_picture_url || "/placeholder.svg"} 
                 alt={user.name} 
               />
-              <AvatarFallback className="bg-blue-600 text-white text-lg">
+              <AvatarFallback className="bg-green-900 text-white text-lg">
                 {user.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>

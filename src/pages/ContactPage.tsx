@@ -20,7 +20,6 @@ export default function ContactPage() {
     message: ""
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -60,9 +59,9 @@ export default function ContactPage() {
       case 'name':
         return value.trim().length >= 2;
       case 'subject':
-        return value.trim().length >= 5;
+        return value.trim().length >= 3; // Reduced from 5 to 3
       case 'message':
-        return value.trim().length >= 10;
+        return value.trim().length >= 5; // Reduced from 10 to 5
       default:
         return value.length > 0;
     }
@@ -79,15 +78,18 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid()) return;
+    if (!isFormValid()) {
+      toast({
+        title: "Formulario incompleto",
+        description: "Por favor, completa todos los campos correctamente antes de enviar.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsLoading(true);
     
     try {
-      // Here you would typically send the form data to your backend
-      // For now, we'll simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       // Send email notification or save to database
       const { error } = await supabase
         .from('contact_messages')
@@ -103,24 +105,12 @@ export default function ContactPage() {
       
       if (error) throw error;
       
-      setIsSubmitted(true);
       toast({
         title: "¡Mensaje enviado!",
         description: "Hemos recibido tu mensaje y nos pondremos en contacto contigo pronto.",
       });
       
-      // Reset form
-      setFormData({
-        name: user ? formData.name : "",
-        email: user ? formData.email : "",
-        subject: "",
-        message: ""
-      });
-      
-      // Optionally redirect after a delay
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      navigate('/');
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -170,32 +160,19 @@ export default function ContactPage() {
             </div>
           )}
         </div>
+        {!isValid && value.length > 0 && (
+          <p className="text-xs text-red-500 mt-1">
+            {field === 'email' ? 'Correo inválido' : 
+             field === 'subject' ? 'Asunto muy corto (mín. 3 caracteres)' :
+             field === 'message' ? 'Mensaje muy corto (mín. 5 caracteres)' :
+             'Campo inválido'}
+          </p>
+        )}
       </div>
     );
   };
 
-  if (isSubmitted) {
-    return (
-      <div className="min-h-[calc(100vh-200px)] flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <Check className="h-6 w-6 text-green-600" />
-            </div>
-            <CardTitle className="text-center text-2xl font-bold">¡Mensaje enviado!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-gray-600">
-              Hemos recibido tu mensaje y nos pondremos en contacto contigo a la brevedad.
-            </p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Volver al inicio
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -203,7 +180,7 @@ export default function ContactPage() {
       <div className="container mx-auto px-4 pt-24 pb-12 flex-1">
         <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-serif sm:text-4xl">
             Contáctanos
           </h1>
           <p className="mt-4 text-lg text-gray-600">
@@ -222,8 +199,8 @@ export default function ContactPage() {
 
             <div className="space-y-4">
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 bg-blue-100 p-2 rounded-full">
-                  <Mail className="h-5 w-5 text-blue-600" />
+                <div className="flex-shrink-0 bg-green-900 p-2 rounded-full">
+                  <Mail className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-medium">Correo electrónico</h3>
@@ -232,8 +209,8 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 bg-blue-100 p-2 rounded-full">
-                  <Phone className="h-5 w-5 text-blue-600" />
+                <div className="flex-shrink-0 bg-green-900 p-2 rounded-full">
+                  <Phone className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-medium">Teléfono</h3>
@@ -242,14 +219,13 @@ export default function ContactPage() {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 bg-blue-100 p-2 rounded-full">
-                  <MapPin className="h-5 w-5 text-blue-600" />
+                <div className="flex-shrink-0 bg-green-900 p-2 rounded-full">
+                  <MapPin className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-medium">Dirección</h3>
                   <p className="text-sm text-gray-600">
-                    Av. Apoquindo 4775, Oficina 1802,<br />
-                    Las Condes, Santiago, Chile
+                    Pichilemu, Chile
                   </p>
                 </div>
               </div>
@@ -270,8 +246,8 @@ export default function ContactPage() {
                 <div className="pt-2">
                   <Button 
                     type="submit" 
-                    className="w-full" 
-                    disabled={!isFormValid() || isLoading}
+                    className="w-full bg-gray-900 hover:bg-green-900" 
+                    disabled={isLoading}
                   >
                     {isLoading ? (
                       <>

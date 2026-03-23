@@ -76,7 +76,7 @@ export default function AsesoriaLegalOnlinePage() {
           </p>
           <Link
             to="/search"
-            className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 text-white text-lg font-semibold rounded-full shadow-lg hover:bg-green-900 transition-colors"
           >
             Agendar asesoría ahora
           </Link>
@@ -193,7 +193,7 @@ export default function AsesoriaLegalOnlinePage() {
           </p>
           <Link
             to="/search"
-            className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-full shadow-lg transition-colors"
+            className="inline-flex items-center justify-center px-8 py-4 bg-gray-900 hover:bg-green-900 text-white text-lg font-semibold rounded-full shadow-lg transition-colors"
           >
             Agendar asesoría ahora
           </Link>

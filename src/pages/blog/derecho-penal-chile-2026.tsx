@@ -43,9 +43,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -53,15 +53,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed">
             Enfrentar una acusación penal es una de las situaciones más difíciles. Conocer tus derechos y el sistema es vital para proteger tu situación legal.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>10 de Marzo, 2026</span>
@@ -122,7 +122,7 @@ const BlogArticle = () => {
                 "Derecho a un juicio justo"
               ].map((right, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <Shield className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <Shield className="h-5 w-5 text-green-600 flex-shrink-0" />
                    <span className="text-gray-700 text-base">{right}</span>
                 </div>
               ))}
@@ -142,7 +142,7 @@ const BlogArticle = () => {
                 { title: "Juicio oral", desc: "Instancia donde se presentan pruebas ante un tribunal. El juez decide si el acusado es absuelto o condenado según el mérito de la evidencia." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                   <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                      <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -165,7 +165,7 @@ const BlogArticle = () => {
                 { title: "Cumplir las medidas cautelares", desc: "Si el juez dicta medidas como firma mensual o arraigo, respétalas estrictamente para evitar agravar tu situación.", icon: <AlertCircle className="h-5 w-5" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                   <div className="bg-blue-100 p-2 rounded-lg text-blue-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
+                   <div className="bg-green-900 p-2 rounded-lg text-green-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
                   <div>
@@ -191,7 +191,7 @@ const BlogArticle = () => {
                   "Exigir reparación del daño"
                 ].map((step, i) => (
                   <div key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                      <span className="text-base font-medium">{step}</span>
                   </div>
                 ))}
@@ -225,7 +225,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Te acusan de un delito o fuiste víctima?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te acusan de un delito o fuiste víctima?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             Protege tu libertad y tus derechos. Conectamos a personas con abogados penalistas expertos para preparar tu defensa o querella de forma inmediata y profesional.
           </p>
@@ -239,7 +239,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_derecho_penal_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
               >
                 Consultar con Abogado Penalista
               </Button>
@@ -254,7 +254,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_derecho_penal_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
               >
                 Ver Listado de Abogados
               </Button>
@@ -291,7 +291,7 @@ const BlogArticle = () => {
         <div className="mt-8 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

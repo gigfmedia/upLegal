@@ -91,7 +91,7 @@ export function LinkedInIntegration({ userId }: LinkedInIntegrationProps) {
           <Button 
             onClick={handleConnect} 
             disabled={isConnecting}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-gray-900 hover:bg-green-900"
           >
             <Linkedin className="h-4 w-4 mr-2" />
             {isConnecting ? 'Connecting...' : 'Connect LinkedIn'}
@@ -131,7 +131,7 @@ export function LinkedInIntegration({ userId }: LinkedInIntegrationProps) {
         <div className="flex items-start gap-4">
           <Avatar className="h-16 w-16">
             <AvatarImage src={profile.profile_picture_url || "/placeholder.svg"} alt={`${profile.first_name} ${profile.last_name}`} />
-            <AvatarFallback className="bg-blue-600 text-white text-lg">
+            <AvatarFallback className="bg-green-900 text-white text-lg">
               {profile.first_name?.[0]}{profile.last_name?.[0]}
             </AvatarFallback>
           </Avatar>

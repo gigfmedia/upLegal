@@ -12,15 +12,14 @@ export default function AboutPage() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold font-serif text-gray-900 mb-6">Acerca de LegalUp</h1>
           <p className="text-lg text-gray-700 mb-12 max-w-3xl">
-            Bienvenido a LegalUp, tu puente digital con el mundo del asesoramiento legal profesional. Creamos esta plataforma para personas que buscan soluciones confiables, rápidas y transparentes, con acceso a abogados verificados de distintas especialidades y tarifas, para que puedas elegir la opción que mejor se adapte a tu necesidad.
+            Bienvenido a LegalUp, tu puente digital con el mundo del asesoramiento legal profesional. Creamos esta plataforma para personas que buscan soluciones confiables, rápidas y transparentes. Aquí puedes acceder fácilmente a abogados verificados, comparar alternativas y tomar decisiones informadas según tu caso.
           </p>
           
           {/* Mission Section */}
           <section className="mb-16 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Nuestra misión</h2>
             <p className="text-gray-700 text-lg leading-relaxed">
-              Empoderarte con acceso directo y transparente a abogados capacitados, sin complicaciones ni barreras.
-              Creemos que el asesoramiento legal no debe ser un lujo, sino un derecho, por eso conectamos a las personas con abogados de distintas especialidades y tarifas, para que cada quien elija la opción que mejor se ajuste a su necesidad.
+              Empoderarte con acceso directo y transparente a asesoría legal de calidad, sin complicaciones ni barreras. Creemos que el apoyo jurídico no debe ser un privilegio, sino una herramienta accesible para todos. Por eso, facilitamos la conexión entre personas y profesionales del derecho, adaptándonos a distintas necesidades, presupuestos y situaciones.
             </p>
           </section>
 
@@ -29,16 +28,16 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">¿Qué hacemos?</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <Scale className="h-6 w-6 text-blue-600" />
+                <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                  <Scale className="h-6 w-6 text-green-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Conexión Especializada</h3>
                 <p className="text-gray-600 text-sm">Conectamos usuarios con abogados especializados según el área legal requerida.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
@@ -47,8 +46,8 @@ export default function AboutPage() {
               </div>
               
               <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
@@ -57,8 +56,8 @@ export default function AboutPage() {
               </div>
               
               <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                  <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                  <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
@@ -80,8 +79,8 @@ export default function AboutPage() {
                 </div>
               }>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <ShieldCheck className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <ShieldCheck className="h-6 w-6 text-green-600" />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">Confianza</h3>
                   <p className="text-gray-600 text-sm">
@@ -98,8 +97,8 @@ export default function AboutPage() {
                 </div>
               }>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <Eye className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <Eye className="h-6 w-6 text-green-600" />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">Transparencia</h3>
                   <p className="text-gray-600 text-sm">
@@ -116,8 +115,8 @@ export default function AboutPage() {
                 </div>
               }>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <Heart className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <Heart className="h-6 w-6 text-green-600" />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">Empatía</h3>
                   <p className="text-gray-600 text-sm">
@@ -134,8 +133,8 @@ export default function AboutPage() {
                 </div>
               }>
                 <div className="bg-white p-6 rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
-                  <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4">
-                    <Zap className="h-6 w-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                    <Zap className="h-6 w-6 text-green-600" />
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">Innovación</h3>
                   <p className="text-gray-600 text-sm">

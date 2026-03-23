@@ -39,9 +39,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-blue-100 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog
             </Link>
@@ -49,15 +49,15 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             ¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso
           </h1>
           
-          <p className="text-xl text-blue-100 max-w-3xl">
+          <p className="text-xl max-w-3xl">
             Calcular el finiquito en Chile puede generar muchas dudas, especialmente porque intervienen distintos factores como indemnizaciones, vacaciones pendientes, pagos proporcionales y otros beneficios laborales.
           </p>
           
-          <div className="flex flex-wrap items-center gap-4 text-blue-100 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>18 de Febrero, 2026</span>
@@ -156,7 +156,7 @@ const BlogArticle = () => {
                 "Despido por incumplimiento grave"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="text-gray-700 text-sm">{item}</span>
                 </div>
               ))}
@@ -176,7 +176,7 @@ const BlogArticle = () => {
             <div className="space-y-12">
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">1</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span>
                   Remuneraciones pendientes
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -197,7 +197,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">2</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
                   Indemnización sustitutiva del aviso previo
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -212,7 +212,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">3</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
                   Indemnización por años de servicio (IAS)
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -243,7 +243,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">4</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">4</span>
                   Feriado proporcional y vacaciones pendientes
                 </h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
@@ -264,7 +264,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">5</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">5</span>
                   Indemnización por necesidades de la empresa
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -280,7 +280,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-base">6</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">6</span>
                   Cotizaciones previsionales impagas
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -405,7 +405,7 @@ const BlogArticle = () => {
                   "Correos electrónicos"
                 ].map((doc, i) => (
                   <div key={doc} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                     <span className="text-base font-medium">{doc}</span>
                   </div>
                 ))}
@@ -444,7 +444,7 @@ const BlogArticle = () => {
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Te deben tu finiquito o es incorrecto?</h2>
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te deben tu finiquito o es incorrecto?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             Protege tus derechos laborales. Si tienes dudas sobre tu finiquito, necesitas que un abogado revise los cálculos o quieres iniciar un reclamo, contacta a un especialista ahora.
           </p>
@@ -458,7 +458,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_finiquito_primary',
                   });
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 w-full sm:w-auto"
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Laboral
               </Button>
@@ -473,7 +473,7 @@ const BlogArticle = () => {
                     location: 'blog_cta_finiquito_secondary',
                   });
                 }}
-                className="border-blue-600 text-blue-600 hover:text-blue-600 hover:bg-blue-50 px-8 py-3 w-full sm:w-auto"
+                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
               >
                 Ver Listado de Abogados
               </Button>
@@ -496,23 +496,23 @@ const BlogArticle = () => {
 
         <BlogNavigation 
           prevArticle={{
+            id: "me-subieron-el-arriendo-que-hago-2026",
+            title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
+            excerpt: "Conoce tus derechos y qué hacer si el dueño de la propiedad decide aumentar el valor del arriendo.",
+            image: "/assets/arriendo-chile-2026.png"
+          }} 
+          nextArticle={{
             id: "derecho-de-familia-chile-2026",
             title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
             excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Revisa qué abarca y cómo funcionan los juicios.",
             image: "/assets/derecho-de-familia-chile-2026.png"
-          }} 
-          nextArticle={{
-            id: "derecho-penal-chile-2026",
-            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
-            excerpt: "Enfrentar una acusación penal puede ser difícil. Conoce tus derechos, cómo funciona el proceso penal en Chile y qué pasos seguir para tu defensa.",
-            image: "/assets/derecho-penal-chile-2026.png"
           }}
         />
 
         <div className="mt-4 text-center">
           <Link 
             to="/blog" 
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver al Blog

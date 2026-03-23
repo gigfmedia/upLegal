@@ -267,8 +267,25 @@ export async function searchLawyers(params: SearchParams = {}) {
 
     // Ejecutar la consulta
     
+    console.log('🔍 Search Query Debug:', {
+      conditions: conditions.length > 0 ? [...new Set(conditions)].join(',') : 'No conditions',
+      location,
+      minRating,
+      minExperience,
+      page: validatedPage,
+      pageSize: validatedPageSize,
+      select
+    });
+    
     const { data: lawyers, error, count } = await queryBuilder;
     const queryTime = Date.now() - startTime;
+    
+    console.log('📊 Search Results Debug:', {
+      lawyersCount: lawyers?.length || 0,
+      totalCount: count,
+      queryTime,
+      error: error?.message
+    });
 
     if (error) {
       console.error('❌ Error en la búsqueda de abogados:', error);

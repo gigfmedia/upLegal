@@ -20,25 +20,51 @@ const SpecialtiesSlider = lazy(() => import('@/components/search/SpecialtiesSlid
 
 const specialties = [
   "Derecho Civil",
-  "Derecho Penal",
-  "Derecho Laboral",
-  "Derecho de Familia",
-  "Derecho Comercial",
-  "Derecho Tributario",
-  "Derecho Inmobiliario",
-  "Derecho de Salud",
-  "Derecho Ambiental",
-  "Derecho de Consumidor",
-  "Derecho Administrativo",
-  "Derecho Procesal",
-  "Derecho de Propiedad Intelectual",
-  "Derecho de Seguridad Social",
-  "Derecho Minero",
-  "Derecho Aduanero",
-  "Derecho Marítimo",
-  "Derecho Aeronáutico",
-  "Derecho Deportivo"
+  "Penal",
+  "Laboral",
+  "Familia",
+  "Comercial",
+  "Tributario",
+  "Inmobiliario",
+  "Salud",
+  "Ambiental",
+  "Consumidor",
+  "Administrativo",
+  "Procesal",
+  "Propiedad Intelectual",
+  "Seguridad Social",
+  "Minero",
+  "Aduanero",
+  "Marítimo",
+  "Aeronáutico",
+  "Deportivo"
 ];
+
+// Helper to normalize specialty names from long format to short format
+const normalizeSpecialty = (s: string | null): string => {
+  if (!s) return 'all';
+  const lower = s.toLowerCase();
+  if (lower.includes('familia')) return 'Familia';
+  if (lower.includes('laboral')) return 'Laboral';
+  if (lower.includes('penal')) return 'Penal';
+  if (lower.includes('inmobiliario')) return 'Inmobiliario';
+  if (lower.includes('comercial')) return 'Comercial';
+  if (lower.includes('tributario')) return 'Tributario';
+  if (lower.includes('civil')) return 'Derecho Civil';
+  if (lower.includes('salud')) return 'Salud';
+  if (lower.includes('ambiental')) return 'Ambiental';
+  if (lower.includes('consumidor')) return 'Consumidor';
+  if (lower.includes('administrativo')) return 'Administrativo';
+  if (lower.includes('procesal')) return 'Procesal';
+  if (lower.includes('propiedad intelectual')) return 'Propiedad Intelectual';
+  if (lower.includes('seguridad social')) return 'Seguridad Social';
+  if (lower.includes('minero')) return 'Minero';
+  if (lower.includes('aduanero')) return 'Aduanero';
+  if (lower.includes('marítimo')) return 'Marítimo';
+  if (lower.includes('aeronáutico')) return 'Aeronáutico';
+  if (lower.includes('deportivo')) return 'Deportivo';
+  return s;
+};
 
 const chileanLocations = [
   // Región de Arica y Parinacota
@@ -99,7 +125,7 @@ const SearchResults = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   
   // Get search parameters from URL
-  const initialQuery = searchParams.get('q') || '';
+  const initialQuery = searchParams.get('query') || '';
   const categoryFromUrl = searchParams.get('category');
   
   // Handle multiple specialty params
@@ -107,9 +133,27 @@ const SearchResults = () => {
   let initialSpecialties: string[] = [];
   
   if (categoryFromUrl) {
-    initialSpecialties = [categoryFromUrl];
+    initialSpecialties = [normalizeSpecialty(categoryFromUrl)];
   } else if (specialtyParams.length > 0) {
-    initialSpecialties = specialtyParams;
+    initialSpecialties = specialtyParams.map(s => normalizeSpecialty(s));
+  } else if (initialQuery) {
+    const queryLower = initialQuery.toLowerCase();
+    const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
+    const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela', 'accidente laboral'];
+    const civilKeywords = ['civil', 'herencia', 'testamento', 'arriendo', 'contrato', 'promesa'];
+    const inmobiliarioKeywords = ['inmobiliario', 'propiedad', 'bien raiz', 'desalojo', 'loteo', 'copropiedad'];
+    
+    if (familyKeywords.some(k => queryLower.includes(k))) {
+      initialSpecialties = ['Familia'];
+    } else if (laborKeywords.some(k => queryLower.includes(k))) {
+      initialSpecialties = ['Laboral'];
+    } else if (civilKeywords.some(k => queryLower.includes(k))) {
+      initialSpecialties = ['Derecho Civil'];
+    } else if (inmobiliarioKeywords.some(k => queryLower.includes(k))) {
+      initialSpecialties = ['Inmobiliario'];
+    } else {
+      initialSpecialties = ['all'];
+    }
   } else {
     initialSpecialties = ['all'];
   }
@@ -167,7 +211,7 @@ const SearchResults = () => {
 
   // Sync local state with URL parameters when they change
   useEffect(() => {
-    const urlQuery = searchParams.get('q') || '';
+    const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
@@ -178,9 +222,27 @@ const SearchResults = () => {
     // Determine specialties from URL
     let newSpecialties: string[] = [];
     if (urlCategory) {
-      newSpecialties = [urlCategory];
+      newSpecialties = [normalizeSpecialty(urlCategory)];
     } else if (urlSpecialties.length > 0) {
-      newSpecialties = urlSpecialties;
+      newSpecialties = urlSpecialties.map(s => normalizeSpecialty(s));
+    } else if (urlQuery) {
+      const queryLower = urlQuery.toLowerCase();
+      const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
+      const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela', 'accidente laboral'];
+      const civilKeywords = ['civil', 'herencia', 'testamento', 'arriendo', 'contrato', 'promesa'];
+      const inmobiliarioKeywords = ['inmobiliario', 'propiedad', 'bien raiz', 'desalojo', 'loteo', 'copropiedad'];
+      
+      if (familyKeywords.some(k => queryLower.includes(k))) {
+        newSpecialties = ['Familia'];
+      } else if (laborKeywords.some(k => queryLower.includes(k))) {
+        newSpecialties = ['Laboral'];
+      } else if (civilKeywords.some(k => queryLower.includes(k))) {
+        newSpecialties = ['Derecho Civil'];
+      } else if (inmobiliarioKeywords.some(k => queryLower.includes(k))) {
+        newSpecialties = ['Inmobiliario'];
+      } else {
+        newSpecialties = ['all'];
+      }
     } else {
       newSpecialties = ['all'];
     }
@@ -294,6 +356,22 @@ const SearchResults = () => {
           availableNow: availableNow || false,
           page,
           pageSize: currentPageSize
+        });
+        
+        // Debug logging
+        console.log('🔍 Search Debug:', {
+          query,
+          specialty,
+          location,
+          page,
+          currentPageSize,
+          response: response ? {
+            lawyersCount: response.lawyers?.length || 0,
+            total: response.total,
+            hasMore: response.hasMore,
+            queryTime: response.queryTime,
+            error: response.error
+          } : 'No response'
         });
         
         if (response) {
@@ -443,19 +521,19 @@ const SearchResults = () => {
     const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
     const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela'];
     
-    if (familyKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Derecho de Familia')) {
+    if (familyKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Familia')) {
       // If searching for family keywords, ensure it's selected (replacing 'all' if present)
       const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
-      if (!newSpecialties.includes('Derecho de Familia')) {
-        newSpecialties.push('Derecho de Familia');
+      if (!newSpecialties.includes('Familia')) {
+        newSpecialties.push('Familia');
       }
       setSelectedSpecialty(newSpecialties);
       newSpecialties.forEach(s => params.append('specialty', s));
-    } else if (laborKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Derecho Laboral')) {
+    } else if (laborKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Laboral')) {
        // If searching for labor keywords
       const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
-      if (!newSpecialties.includes('Derecho Laboral')) {
-        newSpecialties.push('Derecho Laboral');
+      if (!newSpecialties.includes('Laboral')) {
+        newSpecialties.push('Laboral');
       }
       setSelectedSpecialty(newSpecialties);
       newSpecialties.forEach(s => params.append('specialty', s));
@@ -465,7 +543,7 @@ const SearchResults = () => {
     
     // Only add search term if it's not empty
     if (searchTerm.trim()) {
-      params.set('q', searchTerm.trim());
+      params.set('query', searchTerm.trim());
     }
     
     if (location) params.set('location', location);
@@ -641,7 +719,7 @@ const SearchResults = () => {
       <div className="bg-white py-8 pt-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold font-serif text-gray-900">Encuentra al abogado ideal para tu caso</h1>
-          <p className="mt-2 text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
+          <p className="text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
           <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small>
           
           {/* Search Bar */}
@@ -701,7 +779,7 @@ const SearchResults = () => {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-gray-500">Filtros activos:</span>
                   {selectedSpecialty.filter(s => s !== 'all').map((specialty) => (
-                    <div key={specialty} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full text-sm font-medium">
+                    <div key={specialty} className="inline-flex items-center gap-1 bg-gray-50 text-green-900 border border-green-600 hover:bg-green-100 px-3 py-1 rounded-full text-sm font-medium">
                       {specialty}
                       <button 
                         onClick={(e) => {
@@ -738,7 +816,7 @@ const SearchResults = () => {
                           // Then update the state
                           setSelectedSpecialty(updatedSpecialties);
                         }}
-                        className="ml-1 text-blue-500 hover:text-blue-700 rounded-full focus:outline-none hover:bg-blue-200 p-0.5 transition-colors"
+                        className="ml-1 text-green-500 hover:text-green-700 rounded-full focus:outline-none hover:bg-green-200 p-0.5 transition-colors"
                         type="button"
                         aria-label={`Remover filtro ${specialty}`}
                       >
@@ -769,14 +847,14 @@ const SearchResults = () => {
                       </button>
                     </div>
                   )}
-                  {(selectedSpecialty !== 'all' || location) && (
+                  {(selectedSpecialty[0] !== 'all' || location) && (
                     <button 
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         clearFilters();
                       }}
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline ml-1 focus:outline-none font-medium"
+                      className="text-sm text-green-900 hover:text-green-600 hover:underline ml-1 focus:outline-none font-medium"
                       type="button"
                     >
                       Limpiar todo
@@ -857,8 +935,8 @@ const SearchResults = () => {
             </div>
           ) : searchResult.lawyers.length === 0 && !searchParams.toString() ? (
             <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-              <div className="mx-auto h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                <Search className="h-8 w-8 text-blue-600" />
+              <div className="mx-auto h-16 w-16 bg-green-900 rounded-full flex items-center justify-center mb-4">
+                <Search className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Realiza una búsqueda para encontrar abogados</h3>
               <p className="text-gray-500">Ingresa un término de búsqueda o selecciona una especialidad para comenzar</p>
@@ -867,9 +945,6 @@ const SearchResults = () => {
             <div className="w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
                 {filteredLawyers.map((lawyer) => {
-                  const handleContact = () => handleContactClick(lawyer);
-                  const handleSchedule = () => handleScheduleClick(lawyer);
-                  
                   return (
                     <div key={lawyer.id} className="w-full h-full">
                       <LawyerCard
