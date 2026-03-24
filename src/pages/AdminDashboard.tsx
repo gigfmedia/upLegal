@@ -184,11 +184,11 @@ export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabType;
   
-  // Use URL param as initial state, fallback to DASHBOARD
+  // Use URL param as initial state, fallback to ANALYTICS
   const initialTab = useMemo(() => {
     return (Object.values(TABS) as string[]).includes(tabParam) 
       ? tabParam 
-      : TABS.DASHBOARD;
+      : TABS.ANALYTICS;
   }, [tabParam]);
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
@@ -248,7 +248,17 @@ export default function AdminDashboard() {
               </p>
               
               <div className="border-b border-gray-200 mt-4 mb-4">
-                <nav className="-mb-px flex space-x-8">
+                <nav className="-mb-px flex space-x-8 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveTab(TABS.ANALYTICS)}
+                    className={`${activeTab === TABS.ANALYTICS 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                  >
+                    <BarChart2 className="h-4 w-4" />
+                    Analytics
+                  </button>
                   <button
                     onClick={() => setActiveTab(TABS.DASHBOARD)}
                     className={`${activeTab === TABS.DASHBOARD 
@@ -279,17 +289,6 @@ export default function AdminDashboard() {
                     <Users className="h-4 w-4" />
                     Usuarios
                   </button>
-                  <button
-                    onClick={() => setActiveTab(TABS.ANALYTICS)}
-                    className={`${activeTab === TABS.ANALYTICS 
-                      ? 'border-blue-500 text-blue-600' 
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
-                  >
-                    <BarChart2 className="h-4 w-4" />
-                    Analytics
-                  </button>
-
                   <button
                     onClick={() => setActiveTab(TABS.NOTIFICATIONS)}
                     className={`${activeTab === TABS.NOTIFICATIONS 
@@ -406,7 +405,11 @@ function FeeSettingsCard() {
     const platformPercent = parseFloat(formData.get('platformFee') as string) / 100;
 
     try {
-      await save({ client_surcharge_percent: clientPercent, platform_fee_percent: platformPercent });
+      await save({ 
+        ...settings,
+        client_surcharge_percent: clientPercent, 
+        platform_fee_percent: platformPercent 
+      });
       toast.success('Configuración guardada exitosamente');
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -481,7 +484,7 @@ function FeeSettingsCard() {
 interface PayoutLog {
   id: string;
   created_at: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: string; // Changed from enum to string to match service return type
   total_amount?: number;
   error?: string;
   metadata?: {
@@ -556,7 +559,7 @@ function TransferStatusCard() {
           <Button 
             onClick={handleManualTrigger} 
             disabled={isTriggering}
-            className="flex items-center gap-2"
+            className="flex items-center bg-gray-900 hover:bg-green-900 text-white gap-2"
           >
             {isTriggering ? (
               <>

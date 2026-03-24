@@ -31,6 +31,7 @@ import Header from "@/components/Header";
 import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verifiedLawyers";
 import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
+import { detectEspecialidad } from "@/utils/askLLM";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -326,24 +327,12 @@ const Index = () => {
       // Set search term parameter if it exists and is not empty
       if (searchTerm && searchTerm.trim()) {
         const searchTermValue = searchTerm.trim();
-        params.set('q', searchTermValue);
+        params.set('query', searchTermValue); // Pass the raw natural language query
         
-        // Check if search term contains specialty keywords and set category parameter
-        const searchTermLower = searchTermValue.toLowerCase();
-        if (searchTermLower.includes('familia')) {
-          params.set('category', 'Derecho de Familia');
-        } else if (searchTermLower.includes('laboral')) {
-          params.set('category', 'Derecho Laboral');
-        } else if (searchTermLower.includes('penal')) {
-          params.set('category', 'Derecho Penal');
-        } else if (searchTermLower.includes('civil')) {
-          params.set('category', 'Derecho Civil');
-        } else if (searchTermLower.includes('comercial')) {
-          params.set('category', 'Derecho Comercial');
-        } else if (searchTermLower.includes('inmobiliario')) {
-          params.set('category', 'Derecho Inmobiliario');
-        } else if (searchTermLower.includes('tributario')) {
-          params.set('category', 'Derecho Tributario');
+        // Check if search term contains specialty keywords and set category parameter using the NLP heuristic
+        const detectedCategory = detectEspecialidad(searchTermValue);
+        if (detectedCategory) {
+          params.set('category', detectedCategory);
         }
       }
       
@@ -424,7 +413,7 @@ const Index = () => {
             Conecta con un abogado experto según tu caso.<br /> Videollamada, precios claros y disponibilidad inmediata.
           </p>
           {/* Search Section */}
-          <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-6 mb-12">
+          <div className="max-w-2xl mx-auto mb-12">
             <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
@@ -435,7 +424,7 @@ const Index = () => {
               showMobileFilters={false}
               buttonWidth="1/3"
               className="h-10"
-              placeholder="Despido injustificado..."
+              placeholder="Describe tu problema, ej: Me quieren subir el arriendo sin aviso, ¿es legal?"
             />
           </div>
 

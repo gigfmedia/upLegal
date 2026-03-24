@@ -157,19 +157,21 @@ function generateDocumentResponse(docType: string, prompt: string): string {
 }
 
 // Enhanced legal specialty detection with context awareness
-function detectEspecialidad(text: string): string {
+export function detectEspecialidad(text: string): string {
   const lowerText = text.toLowerCase();
   
   const specialties = [
-    { terms: ['penal', 'crimen', 'delito', 'robo', 'hurto', 'homicidio'], value: 'penal' },
-    { terms: ['civil', 'contrato', 'daños', 'responsabilidad'], value: 'civil' },
-    { terms: ['laboral', 'trabajo', 'despido', 'finiquito'], value: 'laboral' },
-    { terms: ['familiar', 'divorcio', 'hijo', 'pensión', 'alimentos'], value: 'familiar' },
-    { terms: ['mercantil', 'empresa', 'sociedad', 'comercio'], value: 'mercantil' },
-    { terms: ['administrativo', 'gobierno', 'público', 'municipal'], value: 'administrativo' },
-    { terms: ['tributario', 'impuesto', 'sii', 'tributo'], value: 'tributario' },
-    { terms: ['inmobiliario', 'bienes raíces', 'propiedad', 'hipoteca'], value: 'inmobiliario' },
-    { terms: ['propiedad intelectual', 'marca', 'patente', 'derechos de autor'], value: 'propiedad intelectual' }
+    { terms: ['penal', 'crimen', 'delito', 'robo', 'hurto', 'homicidio', 'asalto', 'estafa', 'violencia', 'amenazas', 'detenido', 'carcel', 'preso', 'denuncia', 'querella', 'abuso', 'violacion', 'drogas', 'microtrafico', 'pdi', 'fiscalia', 'formalizado', 'medida cautelar', 'prision preventiva', 'estafaron', 'me estafaron', 'me robaron', 'me asaltaron', 'me detuvieron'], value: 'Derecho Penal' },
+    { terms: ['civil', 'contrato', 'daños', 'responsabilidad', 'herencia', 'testamento', 'sucesion', 'posesion efectiva', 'pagare', 'cheque', 'cobranza', 'demanda civil', 'arriendo', 'desalojo', 'meses de garantia', 'subir el arriendo', 'me quieren subir el arriendo', 'casa', 'departamento', 'promesa', 'corredor', 'precario', 'deuda', 'embargo', 'bienes', 'dicom', 'indemnizacion', 'choque', 'accidente', 'tuve un accidente', 'me chocaron', 'me chocaron el auto', 'no me pagan', 'debo plata', 'quieren echar', 'me quieren echar de la casa', 'me van a echar de la casa', 'me van a echar del depto', 'me van a echar del departamento', 'me quieren echar del departamento'], value: 'Derecho Civil' },
+    { terms: ['laboral', 'trabajo', 'despido', 'finiquito', 'sueldo', 'empleador', 'jefe', 'licencia', 'accidente', 'mutal', 'inspeccion', 'sindicato', 'huelga', 'fuerza mayor', 'necesidades de la empresa', 'fuero', 'maternal', 'acoso laboral', 'tutela', 'despidieron', 'me echaron', 'no me pagaron', 'no me pagaron mi sueldo', 'no me pagaron el sueldo', 'renuncia', 'despido injustificado', 'autodespido', 'honorarios', 'subcontratacion', 'gratificacion', 'vacaciones', 'feriado', 'horas extras'], value: 'Derecho Laboral' },
+    { terms: ['familiar', 'divorcio', 'hijo', 'pensión', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'pension', 'separacion', 'matrimonio', 'pareja', 'conyuge', 'esposo', 'esposa', 'marido', 'mujer', 'pololo', 'conviviente', 'violencia intrafamiliar', 'vif', 'adopcion', 'paternidad', 'adn', 'mediacion', 'cese de convivencia', 'regulacion de visitas', 'no me deja ver', 'no me deja ver a mi hijo', 'tuve un problema con mi pareja', 'problemas con mi pareja', 'papa de mi hijo', 'mama de mi hijo'], value: 'Derecho de Familia' },
+    { terms: ['mercantil', 'empresa', 'sociedad', 'comercio', 'quiebra', 'socios', 'acciones', 'pyme', 'emprendimiento', 'sii', 'rut', 'constitucion', 'estatutos', 'fusion', 'adquisicion', 'franquicia', 'marca', 'comercial', 'factura', 'letra de cambio'], value: 'Derecho Comercial' },
+    { terms: ['administrativo', 'gobierno', 'público', 'municipal', 'estado', 'licitacion', 'sumario', 'contraloria', 'empleado publico', 'estatuto administrativo', 'mercado publico', 'recurso de proteccion', 'expropiacion'], value: 'Derecho Administrativo' },
+    { terms: ['tributario', 'impuesto', 'sii', 'tributo', 'iva', 'renta', 'declaracion', 'factura', 'evasion', 'elusion', 'tesoreria', 'tgr', 'tesoreria general', 'reclamacion tributaria', 'beneficio tributario'], value: 'Derecho Tributario' },
+    { terms: ['inmobiliario', 'bienes raíces', 'propiedad', 'hipoteca', 'subdivision', 'loteo', 'copropiedad', 'gastos comunes', 'comite de administracion', 'conservador de bienes raices', 'cbr', 'estudio de titulos', 'promesa de compraventa', 'dominio vigente', 'gravamenes', 'prohibiciones'], value: 'Derecho Inmobiliario' },
+    { terms: ['propiedad intelectual', 'marca', 'patente', 'derechos de autor', 'inapi', 'invento', 'cancion', 'logo', 'plagio', 'software', 'derechos conexos', 'registro de marca', 'derecho de autor'], value: 'Propiedad Intelectual' },
+    { terms: ['salud', 'isapre', 'fonasa', 'negligencia', 'medica', 'hospital', 'clinica', 'auge', 'ges', 'licencia rechazada', 'compin', 'suseso', 'alza plan', 'mala praxis', 'error medico', 'prestaciones'], value: 'Derecho de Salud' },
+    { terms: ['extranjeria', 'migracion', 'visa', 'visa temporaria', 'tengo problemas con mi visa', 'residencia', 'rut', 'pdi', 'refugio', 'nacionalidad', 'deportacion', 'me van a deportar', 'tengo problemas con deportacion', 'expulsion', 'tengo problemas con expulsion', 'permanencia definitiva', 'turismo', 'frontera', 'sernmig'], value: 'Derecho Migratorio' }
   ];
   
   const matchedSpecialty = specialties.find(({ terms }) => 

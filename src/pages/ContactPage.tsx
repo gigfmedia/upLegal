@@ -178,22 +178,20 @@ export default function ContactPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <div className="container mx-auto px-4 pt-24 pb-12 flex-1">
-        <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 font-serif sm:text-4xl">
-            Contáctanos
-          </h1>
-          <p className="mt-4 text-lg text-gray-600">
-            ¿Tienes alguna pregunta o comentario? Estamos aquí para ayudarte.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">Información de contacto</h2>
+        <div className="max-w-4xl mx-auto pt-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <div className="mb-2">
+                  <p className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl w-fit px-2 mt-4 items-start gap-2">
+                  Contacto
+                </p>
+                  <h1 className="text-4xl font-bold tracking-tight text-gray-900 font-serif sm:text-4xl">
+                    ¿Tienes alguna pregunta o comentario? Estamos aquí para ayudarte.
+                  </h1>
+                </div>
               <p className="text-gray-600">
-                Completa el formulario y nos pondremos en contacto contigo lo antes posible.
+                Rellena el formulario y te contactaremos pronto.
               </p>
             </div>
 
@@ -234,7 +232,7 @@ export default function ContactPage() {
 
           <Card className="border border-gray-200 rounded-lg shadow-sm">
             <CardHeader>
-              <CardTitle>Envíanos un mensaje</CardTitle>
+              <CardTitle></CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -246,7 +244,7 @@ export default function ContactPage() {
                 <div className="pt-2">
                   <Button 
                     type="submit" 
-                    className="w-full bg-gray-900 hover:bg-green-900" 
+                    className="w-full bg-gray-900 hover:bg-green-900 mb-4" 
                     disabled={isLoading}
                   >
                     {isLoading ? (

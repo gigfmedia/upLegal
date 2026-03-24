@@ -70,21 +70,20 @@ export default {
 					900: '#06392F'
 				}
 			},
-			animation: {
-				slide: 'slide 1.5s ease-in-out infinite',
-			},
-			keyframes: {
-				slide: {
-					'0%': { transform: 'translateX(-100%)' },
-					'100%': { transform: 'translateX(200%)' },
-				},
-			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
 			keyframes: {
+				'border-spin': {
+					'from': { transform: 'rotate(0deg)' },
+					'to': { transform: 'rotate(360deg)' },
+				},
+				slide: {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(200%)' },
+				},
 				'accordion-down': {
 					from: {
 						height: '0'
@@ -103,6 +102,8 @@ export default {
 				}
 			},
 			animation: {
+				slide: 'slide 6s ease-in-out infinite',
+				'spin-slow': 'border-spin 30s linear infinite',
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			}

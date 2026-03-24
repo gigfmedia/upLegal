@@ -15,54 +15,39 @@ import * as React from 'react';
 import { useInView } from 'react-intersection-observer';
 import debounce from 'lodash/debounce';
 import { Skeleton } from "@/components/ui/skeleton";
+import { detectEspecialidad } from "@/utils/askLLM";
 
 const SpecialtiesSlider = lazy(() => import('@/components/search/SpecialtiesSlider'));
 
 const specialties = [
   "Derecho Civil",
-  "Penal",
-  "Laboral",
-  "Familia",
-  "Comercial",
-  "Tributario",
-  "Inmobiliario",
-  "Salud",
-  "Ambiental",
-  "Consumidor",
-  "Administrativo",
-  "Procesal",
+  "Derecho Penal",
+  "Derecho Laboral",
+  "Derecho de Familia",
+  "Derecho Comercial",
+  "Derecho Administrativo",
+  "Derecho Tributario",
+  "Derecho Inmobiliario",
   "Propiedad Intelectual",
-  "Seguridad Social",
-  "Minero",
-  "Aduanero",
-  "Marítimo",
-  "Aeronáutico",
-  "Deportivo"
+  "Derecho de Salud",
+  "Derecho Migratorio"
 ];
 
 // Helper to normalize specialty names from long format to short format
 const normalizeSpecialty = (s: string | null): string => {
   if (!s) return 'all';
   const lower = s.toLowerCase();
-  if (lower.includes('familia')) return 'Familia';
-  if (lower.includes('laboral')) return 'Laboral';
-  if (lower.includes('penal')) return 'Penal';
-  if (lower.includes('inmobiliario')) return 'Inmobiliario';
-  if (lower.includes('comercial')) return 'Comercial';
-  if (lower.includes('tributario')) return 'Tributario';
+  if (lower.includes('familia')) return 'Derecho de Familia';
+  if (lower.includes('laboral')) return 'Derecho Laboral';
+  if (lower.includes('penal')) return 'Derecho Penal';
+  if (lower.includes('inmobiliario')) return 'Derecho Inmobiliario';
+  if (lower.includes('comercial')) return 'Derecho Comercial';
+  if (lower.includes('tributario')) return 'Derecho Tributario';
   if (lower.includes('civil')) return 'Derecho Civil';
-  if (lower.includes('salud')) return 'Salud';
-  if (lower.includes('ambiental')) return 'Ambiental';
-  if (lower.includes('consumidor')) return 'Consumidor';
-  if (lower.includes('administrativo')) return 'Administrativo';
-  if (lower.includes('procesal')) return 'Procesal';
+  if (lower.includes('salud')) return 'Derecho de Salud';
+  if (lower.includes('administrativo')) return 'Derecho Administrativo';
   if (lower.includes('propiedad intelectual')) return 'Propiedad Intelectual';
-  if (lower.includes('seguridad social')) return 'Seguridad Social';
-  if (lower.includes('minero')) return 'Minero';
-  if (lower.includes('aduanero')) return 'Aduanero';
-  if (lower.includes('marítimo')) return 'Marítimo';
-  if (lower.includes('aeronáutico')) return 'Aeronáutico';
-  if (lower.includes('deportivo')) return 'Deportivo';
+  if (lower.includes('migracion') || lower.includes('migratorio') || lower.includes('extranjeria')) return 'Derecho Migratorio';
   return s;
 };
 
@@ -137,20 +122,9 @@ const SearchResults = () => {
   } else if (specialtyParams.length > 0) {
     initialSpecialties = specialtyParams.map(s => normalizeSpecialty(s));
   } else if (initialQuery) {
-    const queryLower = initialQuery.toLowerCase();
-    const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
-    const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela', 'accidente laboral'];
-    const civilKeywords = ['civil', 'herencia', 'testamento', 'arriendo', 'contrato', 'promesa'];
-    const inmobiliarioKeywords = ['inmobiliario', 'propiedad', 'bien raiz', 'desalojo', 'loteo', 'copropiedad'];
-    
-    if (familyKeywords.some(k => queryLower.includes(k))) {
-      initialSpecialties = ['Familia'];
-    } else if (laborKeywords.some(k => queryLower.includes(k))) {
-      initialSpecialties = ['Laboral'];
-    } else if (civilKeywords.some(k => queryLower.includes(k))) {
-      initialSpecialties = ['Derecho Civil'];
-    } else if (inmobiliarioKeywords.some(k => queryLower.includes(k))) {
-      initialSpecialties = ['Inmobiliario'];
+    const detected = detectEspecialidad(initialQuery);
+    if (detected) {
+      initialSpecialties = [normalizeSpecialty(detected)];
     } else {
       initialSpecialties = ['all'];
     }
@@ -226,20 +200,9 @@ const SearchResults = () => {
     } else if (urlSpecialties.length > 0) {
       newSpecialties = urlSpecialties.map(s => normalizeSpecialty(s));
     } else if (urlQuery) {
-      const queryLower = urlQuery.toLowerCase();
-      const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
-      const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela', 'accidente laboral'];
-      const civilKeywords = ['civil', 'herencia', 'testamento', 'arriendo', 'contrato', 'promesa'];
-      const inmobiliarioKeywords = ['inmobiliario', 'propiedad', 'bien raiz', 'desalojo', 'loteo', 'copropiedad'];
-      
-      if (familyKeywords.some(k => queryLower.includes(k))) {
-        newSpecialties = ['Familia'];
-      } else if (laborKeywords.some(k => queryLower.includes(k))) {
-        newSpecialties = ['Laboral'];
-      } else if (civilKeywords.some(k => queryLower.includes(k))) {
-        newSpecialties = ['Derecho Civil'];
-      } else if (inmobiliarioKeywords.some(k => queryLower.includes(k))) {
-        newSpecialties = ['Inmobiliario'];
+      const detected = detectEspecialidad(urlQuery);
+      if (detected) {
+        newSpecialties = [normalizeSpecialty(detected)];
       } else {
         newSpecialties = ['all'];
       }
@@ -514,29 +477,19 @@ const SearchResults = () => {
       return;
     }
     
-    const searchTermLower = searchTerm.toLowerCase();
-    
-    // Handle specialty logic
-    // Handle specialty logic
-    const familyKeywords = ['familia', 'divorcio', 'pension', 'alimentos', 'visitas', 'tuicion', 'cuidado personal', 'separacion'];
-    const laborKeywords = ['despido', 'laboral', 'trabajo', 'finiquito', 'tutela'];
-    
-    if (familyKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Familia')) {
-      // If searching for family keywords, ensure it's selected (replacing 'all' if present)
-      const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
-      if (!newSpecialties.includes('Familia')) {
-        newSpecialties.push('Familia');
+    // Handle specialty logic intelligently with natural language mapping
+    const detected = detectEspecialidad(searchTerm);
+    if (detected) {
+      const normalizedDetected = normalizeSpecialty(detected);
+      if (!selectedSpecialty.includes(normalizedDetected)) {
+        // If detected specialty is not selected, add it (replacing 'all' if present)
+        const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
+        newSpecialties.push(normalizedDetected);
+        setSelectedSpecialty(newSpecialties);
+        newSpecialties.forEach(s => params.append('specialty', s));
+      } else {
+        selectedSpecialty.forEach(s => params.append('specialty', s));
       }
-      setSelectedSpecialty(newSpecialties);
-      newSpecialties.forEach(s => params.append('specialty', s));
-    } else if (laborKeywords.some(k => searchTermLower.includes(k)) && !selectedSpecialty.includes('Laboral')) {
-       // If searching for labor keywords
-      const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
-      if (!newSpecialties.includes('Laboral')) {
-        newSpecialties.push('Laboral');
-      }
-      setSelectedSpecialty(newSpecialties);
-      newSpecialties.forEach(s => params.append('specialty', s));
     } else if (selectedSpecialty.length > 0 && selectedSpecialty[0] !== 'all') {
       selectedSpecialty.forEach(s => params.append('specialty', s));
     }
