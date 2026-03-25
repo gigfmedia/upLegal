@@ -129,13 +129,6 @@ const Footer = () => {
 
             {/* Middle links */}
             <div className="flex items-center space-x-6 text-sm">
-              <a 
-                href="/search" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Buscar abogados
-              </a>
-
               <Link 
                 to="/terminos" 
                 className="text-muted-foreground hover:text-foreground transition-colors"

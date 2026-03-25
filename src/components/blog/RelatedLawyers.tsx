@@ -67,7 +67,7 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
       </div>
     );
   }

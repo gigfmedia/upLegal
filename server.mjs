@@ -713,15 +713,15 @@ app.post('/create-payment', async (req, res) => {
         name: userName || 'Cliente LegalUp'
       },
       back_urls: {
-        success: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
-        failure: failureUrl || `${process.env.FRONTEND_URL}/payment/failure`,
-        pending: pendingUrl || `${process.env.FRONTEND_URL}/payment/pending`
+        success: successUrl || `${appUrl}/payment/success`,
+        failure: failureUrl || `${appUrl}/payment/failure`,
+        pending: pendingUrl || `${appUrl}/payment/pending`
       },
       auto_return: 'approved',
       binary_mode: true,
       external_reference: paymentId,
       statement_descriptor: 'LEGALUP',
-      notification_url: process.env.VITE_MERCADOPAGO_WEBHOOK_URL
+      ...(mercadoPagoWebhookUrl ? { notification_url: mercadoPagoWebhookUrl } : {})
     };
     
     // Create preference using raw fetch to bypass any SDK potential issues
@@ -1434,29 +1434,85 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const id = req.body.id || data?.id;
 
     const handleApprovedPayment = async (payment) => {
-        const bookingId = payment.external_reference;
-        
-        // 1. Update booking status
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed', 
-            payment_id: payment.id.toString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', bookingId)
-          .select()
-          .single();
+      const externalReference = payment.external_reference?.toString?.() || String(payment.external_reference || '');
 
-        if (bookingError) {
-          console.error('Error updating booking:', bookingError);
+      // First, try booking flow (external_reference = booking.id)
+      const { data: booking, error: bookingUpdateError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_id: payment.id.toString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', externalReference)
+        .select()
+        .maybeSingle();
+
+      if (bookingUpdateError) {
+        console.error('Error updating booking:', bookingUpdateError);
+      }
+
+      // If no booking found, try payments flow (external_reference = payments.id)
+      if (!booking) {
+        const { data: paymentRow, error: paymentFetchError } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('id', externalReference)
+          .maybeSingle();
+
+        if (paymentFetchError) {
+          console.error('[mp] error fetching payment row', paymentFetchError);
         }
 
-      if (!booking) {
-        console.warn('[mp] approved payment but booking not found', {
-          paymentId: payment.id,
-          external_reference: bookingId,
-        });
+        if (!paymentRow) {
+          console.warn('[mp] approved payment but no booking/payment found for external_reference', {
+            paymentId: payment.id,
+            external_reference: externalReference,
+          });
+          return;
+        }
+
+        const { error: paymentUpdateError } = await supabase
+          .from('payments')
+          .update({
+            status: 'succeeded',
+            metadata: {
+              ...(paymentRow.metadata || {}),
+              payment_gateway_id: payment.id?.toString?.() || payment.id,
+              mp_status: payment.status,
+              mp_status_detail: payment.status_detail,
+              mp_payment_type_id: payment.payment_type_id,
+              mp_transaction_amount: payment.transaction_amount,
+              mp_last_webhook: new Date().toISOString(),
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', paymentRow.id);
+
+        if (paymentUpdateError) {
+          console.error('[mp] failed to update payments row', paymentUpdateError);
+        }
+
+        try {
+          const { error: eventInsertError } = await supabase.from('payment_events').insert({
+            event_type: 'success',
+            amount: payment.transaction_amount,
+            status: 'completed',
+            metadata: {
+              payment_id: payment.id,
+              external_reference: externalReference,
+              source: 'webhook',
+            },
+            user_id: paymentRow.user_id || null,
+          });
+
+          if (eventInsertError) {
+            console.error('[analytics] failed to insert payment event (payments flow)', eventInsertError);
+          }
+        } catch (eventError) {
+          console.error('[analytics] exception inserting payment event (payments flow)', eventError);
+        }
+
         return;
       }
 
@@ -1495,7 +1551,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           status: 'completed',
           metadata: {
             payment_id: payment.id,
-            booking_id: bookingId,
+            booking_id: booking.id,
             source: 'webhook',
             user_email: userEmail || null
           },
@@ -1507,7 +1563,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         } else {
           console.log('[analytics] payment event tracked', { 
             paymentId: payment.id, 
-            bookingId,
+            bookingId: booking.id,
             userId: userId || 'null',
             eventId: paymentEvent?.id 
           });
@@ -1600,16 +1656,16 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 user_email: userEmail,
                 user_name: userName,
               })
-              .eq('id', bookingId);
+              .eq('id', booking.id);
 
             // Update payment event with user_id if it was null
             try {
               await supabase
                 .from('payment_events')
                 .update({ user_id: userId })
-                .eq('metadata->>booking_id', bookingId)
+                .eq('metadata->>booking_id', booking.id)
                 .is('user_id', null);
-              console.log('[analytics] Updated payment event with user_id', { bookingId, userId });
+              console.log('[analytics] Updated payment event with user_id', { bookingId: booking.id, userId });
             } catch (updateError) {
               console.error('Failed to update payment event with user_id:', updateError);
             }
@@ -1842,17 +1898,91 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
       });
     }
 
-    const bookingId = payment.external_reference;
+    const externalReference = payment.external_reference?.toString?.() || String(payment.external_reference || '');
+
+    // 1) Try booking flow first (external_reference = booking.id)
     const { data: booking, error: bookingFetchError } = await supabase
       .from('bookings')
       .select('*')
-      .eq('id', bookingId)
+      .eq('id', externalReference)
       .maybeSingle();
     if (bookingFetchError) {
       console.error('Error fetching booking for reconcile:', bookingFetchError);
       return res.status(500).json({ error: 'Failed to fetch booking' });
     }
-    if (!booking) return res.status(404).json({ error: 'Booking not found', bookingId });
+
+    // 2) If no booking, try payments flow (external_reference = payments.id)
+    if (!booking) {
+      const { data: paymentRow, error: paymentFetchError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('id', externalReference)
+        .maybeSingle();
+
+      if (paymentFetchError) {
+        console.error('Error fetching payment for reconcile:', paymentFetchError);
+        return res.status(500).json({ error: 'Failed to fetch payment' });
+      }
+
+      if (!paymentRow) {
+        return res.status(404).json({
+          error: 'No booking/payment found for external_reference',
+          external_reference: externalReference,
+        });
+      }
+
+      const { error: paymentUpdateError } = await supabase
+        .from('payments')
+        .update({
+          status: 'succeeded',
+          metadata: {
+            ...(paymentRow.metadata || {}),
+            payment_gateway_id: payment.id?.toString?.() || payment.id,
+            mercadopago_payment_id: payment.id,
+            mp_status: payment.status,
+            mp_status_detail: payment.status_detail,
+            mp_payment_type_id: payment.payment_type_id,
+            mp_transaction_amount: payment.transaction_amount,
+            mp_last_reconcile: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', paymentRow.id);
+
+      if (paymentUpdateError) {
+        console.error('Error updating payment (reconcile payments flow):', paymentUpdateError);
+        return res.status(500).json({ error: 'Failed to update payment' });
+      }
+
+      try {
+        const { error: eventInsertError } = await supabase.from('payment_events').insert({
+          event_type: 'success',
+          amount: payment.transaction_amount,
+          status: 'completed',
+          metadata: {
+            payment_id: payment.id,
+            external_reference: externalReference,
+            source: 'reconcile',
+          },
+          user_id: paymentRow.user_id || null,
+        });
+
+        if (eventInsertError) {
+          console.error('[analytics] failed to insert payment event (reconcile payments flow)', eventInsertError);
+        }
+      } catch (eventError) {
+        console.error('[analytics] exception inserting payment event (reconcile payments flow)', eventError);
+      }
+
+      return res.json({
+        success: true,
+        paymentId: payment.id,
+        external_reference: externalReference,
+        paymentUpdated: true,
+      });
+    }
+
+    const bookingId = booking.id;
 
     let clientUserId = booking.user_id;
     const userEmail = (booking.user_email || '').trim().toLowerCase();

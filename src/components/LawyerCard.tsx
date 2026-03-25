@@ -191,7 +191,7 @@ export function LawyerCard({
   return (
     <>
       <Card 
-        className="hover:shadow-lg transition-shadow duration-300 border border-solid shadow-md flex flex-col h-full cursor-pointer"
+        className="hover:shadow-lg transition-shadow duration-300 border border-solid flex flex-col h-full cursor-pointer"
         onClick={(e) => {
           // Don't navigate if clicking on the schedule button or its children
           if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
