@@ -17,6 +17,17 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "ley-devuelveme-mi-casa-chile-2026",
+      title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
+      excerpt:
+        "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "25 de Marzo, 2026",
+      readTime: "14 min",
+      image: "/assets/ley-devuelveme-mi-casa-2026.png"
+    },
+    {
       id: "me-pueden-despedir-sin-motivo-chile-2026",
       title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
       excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
@@ -24,8 +35,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "22 de Marzo, 2026",
       readTime: "10 min",
-      image: "/assets/despido-sin-motivo-chile-2026.png",
-      featured: true
+      image: "/assets/despido-sin-motivo-chile-2026.png"
     },
     {
       id: "orden-desalojo-chile-2026",
@@ -35,8 +45,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "20 de Marzo, 2026",
       readTime: "8 min",
-      image: "/assets/orden-desalojo-chile-2026.png",
-      featured: false
+      image: "/assets/orden-desalojo-chile-2026.png"
     },
     {
       id: "arrendador-puede-cambiar-cerradura-chile-2026",
@@ -46,8 +55,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "18 de Marzo, 2026",
       readTime: "10 min",
-      image: "/assets/cerradura-arriendo-chile-2026.png",
-      featured: false
+      image: "/assets/cerradura-arriendo-chile-2026.png"
     },
     {
       id: "cuanto-demora-juicio-desalojo-chile-2026",
@@ -57,8 +65,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "16 de Marzo, 2026",
       readTime: "15 min",
-      image: "/assets/desalojo-2-chile-2026.png",
-      featured: false
+      image: "/assets/desalojo-2-chile-2026.png"
     },
     {
       id: "me-quieren-desalojar-que-hago-chile-2026",
@@ -68,8 +75,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "13 de Marzo, 2026",
       readTime: "15 min",
-      image: "/assets/desalojo-chile-2026.png",
-      featured: false
+      image: "/assets/desalojo-chile-2026.png"
     },
     {
       id: "derecho-penal-chile-2026",
@@ -79,8 +85,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "10 de Marzo, 2026",
       readTime: "10 min",
-      image: "/assets/derecho-penal-chile-2026.png",
-      featured: false
+      image: "/assets/derecho-penal-chile-2026.png"
     },
     {
       id: "derecho-de-familia-chile-2026",
@@ -90,8 +95,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "25 de Febrero, 2026",
       readTime: "15 min",
-      image: "/assets/derecho-de-familia-chile-2026.png",
-      featured: false
+      image: "/assets/derecho-de-familia-chile-2026.png"
     },
     {
       id: "como-calcular-tu-finiquito-chile-2026",
@@ -101,8 +105,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "18 de Febrero, 2026",
       readTime: "12 min",
-      image: "/assets/finiquito-chile-2026.png",
-      featured: false
+      image: "/assets/finiquito-chile-2026.png"
     },
     {
       id: "me-subieron-el-arriendo-que-hago-2026",
@@ -112,8 +115,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "13 de Enero, 2026",
       readTime: "8 min",
-      image: "/assets/arriendo-chile-2026.png",
-      featured: false
+      image: "/assets/arriendo-chile-2026.png"
     }
   ];
 
@@ -127,21 +129,19 @@ const BlogPage = () => {
     return articles.filter(article => article.category === selectedCategory);
   }, [selectedCategory, articles]);
 
+  // `articles` debe mantenerse ordenado del más reciente al más antiguo: el destacado es siempre el primero.
   const featuredArticle = useMemo(() => {
-    // If a category is selected, use the first article of that category as "featured" for the view
-    // if it exists, otherwise use the global featured article if its category matches, 
-    // or just don't show a featured section if it doesn't match.
     if (selectedCategory) {
       return filteredArticles[0];
     }
-    return articles.find(article => article.featured);
+    return articles[0];
   }, [selectedCategory, filteredArticles, articles]);
 
   const recentArticles = useMemo(() => {
     if (selectedCategory) {
-      return filteredArticles.slice(1); // Exclude the one used in featured section
+      return filteredArticles.slice(1);
     }
-    return articles.filter(article => !article.featured);
+    return articles.slice(1);
   }, [selectedCategory, filteredArticles, articles]);
 
   const getArticleCount = (category: string) => {
@@ -187,9 +187,9 @@ const BlogPage = () => {
             >
               <div className="md:flex">
                 <div className="md:w-1/3">
-                  <div className="h-48 md:h-full flex py-8 items-center justify-center pl-8">
+                  <div className="h-48 md:h-full flex md:py-8 items-center justify-center md:pl-8">
                     <img 
-                      className="h-full w-full object-cover rounded-xl" 
+                      className="h-full w-full object-cover rounded-t-xl md:rounded-xl" 
                       src={featuredArticle.image || "../assets/arriendo.png"} 
                       alt={featuredArticle.category} 
                       onError={(e) => {

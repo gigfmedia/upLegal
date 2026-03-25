@@ -154,7 +154,7 @@ const Footer = () => {
                 href="/contacto" 
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Contacto
+                Contáctanos
               </a>
             </div>
 

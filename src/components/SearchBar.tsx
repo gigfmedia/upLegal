@@ -62,7 +62,7 @@ export function SearchBar({
         <button 
           type="button"
           onClick={onSearch}
-          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-black text-white rounded-full flex items-center justify-end group/btn h-10 w-10 hover:w-[100px] transition-all duration-300 ease-in-out overflow-hidden shadow-md"
+          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 hover:w-[100px] transition-all duration-300 ease-in-out overflow-hidden shadow-md"
           title="Buscar"
         >
           <span className="text-sm font-medium whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-all duration-300 delay-75 transform -translate-x-2 group-hover/btn:translate-x-0 absolute right-10">

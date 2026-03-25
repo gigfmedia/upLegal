@@ -137,7 +137,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/search"
               className={cn(
-                "transition-colors hover:text-green-900",
+                "transition-colors hover:text-green-900 text-sm",
                 isActive('/search') || pathname.startsWith('/search/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
@@ -146,7 +146,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/como-funciona"
               className={cn(
-                "transition-colors hover:text-green-900",
+                "transition-colors hover:text-green-900 text-sm",
                 isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
@@ -155,7 +155,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/about"
               className={cn(
-                "transition-colors hover:text-green-900",
+                "transition-colors hover:text-green-900 text-sm",
                 isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
@@ -164,11 +164,20 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             <a
               href="/blog"
               className={cn(
-                "transition-colors hover:text-green-900",
+                "transition-colors hover:text-green-900 text-sm",
                 isActive('/blog') || pathname.startsWith('/blog/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
               )}
             >
               Blog
+            </a>
+            <a
+              href="/contacto"
+              className={cn(
+                "transition-colors hover:text-green-900 text-sm",
+                isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground'
+              )}
+            >
+              Contáctanos
             </a>
           </nav>
 
@@ -329,6 +338,17 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
               Cómo Funciona
             </button>
             <button
+              onClick={() => handleNavigation('/about')}
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors",
+                isActive('/about')
+                  ? 'bg-blue-50 text-blue-600 font-medium'
+                  : 'text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              Acerca de
+            </button>
+            <button
               onClick={() => handleNavigation('/blog')}
               className={cn(
                 "text-left px-4 py-3 rounded-lg transition-colors",
@@ -340,15 +360,15 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
               Blog
             </button>
             <button
-              onClick={() => handleNavigation('/about')}
+              onClick={() => handleNavigation('/contacto')}
               className={cn(
                 "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/about')
+                isActive('/contacto')
                   ? 'bg-blue-50 text-blue-600 font-medium'
                   : 'text-gray-700 hover:bg-gray-50'
               )}
             >
-              Acerca de
+              Contáctanos
             </button>
 
             {!user && (

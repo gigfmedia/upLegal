@@ -90,6 +90,7 @@ const JuicioDesalojoArticle = lazy(() => import('./pages/blog/cuanto-demora-juic
 const CerraduraArticle = lazy(() => import('./pages/blog/arrendador-puede-cambiar-cerradura-chile-2026'));
 const OrdenDesalojoArticle = lazy(() => import('./pages/blog/orden-desalojo-chile-2026'));
 const DespidoSinMotivoArticle = lazy(() => import('./pages/blog/me-pueden-despedir-sin-motivo-chile-2026'));
+const LeyDevuelvemeMiCasaArticle = lazy(() => import('./pages/blog/ley-devuelveme-mi-casa-chile-2026'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 
 // Create a single QueryClient instance
@@ -369,6 +370,7 @@ const AppContent = () => {
               <Route path="/blog/arrendador-puede-cambiar-cerradura-chile-2026" element={<CerraduraArticle />} />
               <Route path="/blog/orden-desalojo-chile-2026" element={<OrdenDesalojoArticle />} />
               <Route path="/blog/me-pueden-despedir-sin-motivo-chile-2026" element={<DespidoSinMotivoArticle />} />
+              <Route path="/blog/ley-devuelveme-mi-casa-chile-2026" element={<LeyDevuelvemeMiCasaArticle />} />
               <Route path="/review" element={<ReviewPage />} />
              
 

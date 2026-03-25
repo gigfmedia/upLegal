@@ -33,7 +33,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
         description="Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado."
-        image="/assets/despido-sin-motivo-chile-2026.png"
+        image="/assets/ley-devuelveme-mi-casa-2026.png"
         url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
         datePublished="2026-03-23"
         dateModified="2026-03-23"
@@ -403,8 +403,14 @@ const BlogArticle = () => {
           prevArticle={{
             id: "orden-desalojo-chile-2026",
             title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
-            excerpt: "Descubre qué es una orden de desalojo, cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
+            excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
             image: "/assets/orden-desalojo-chile-2026.png"
+          }}
+          nextArticle={{
+            id: "ley-devuelveme-mi-casa-chile-2026",
+            title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
+            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
+            image: "/assets/ley-devuelveme-mi-casa-2026.png"
           }}
         />
 
