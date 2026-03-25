@@ -217,28 +217,82 @@ const setupGlobalErrorHandlers = () => {
 
   // When the user comes back to the tab after a new deploy, stale chunks
   // will fail silently showing a white screen. This forces a reload.
+  // Mobile Safari aggressively kills processes in background, so we need
+  // shorter thresholds and additional checks for mobile.
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
       // Check if any script requests fail; vite sets a well-known pattern
       // A lightweight check: if the page has been idle for > 30 min, reload.
       const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
       const idleMs = Date.now() - lastActivity;
-      if (idleMs > 30 * 60 * 1000) {
+      
+      // Mobile devices: reload after 2 minutes of inactivity (Safari kills processes aggressively)
+      // Desktop: keep the 30 minute threshold
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const thresholdMs = isMobile ? 2 * 60 * 1000 : 30 * 60 * 1000;
+      
+      if (idleMs > thresholdMs) {
+        console.log(`[visibility] App was idle for ${Math.round(idleMs / 1000)}s, reloading...`);
         window.location.reload();
+        return;
+      }
+      
+      // Mobile Safari specific: check if React is still responsive
+      if (isMobile) {
+        // Set a flag that we can check - if the page was frozen, this won't execute
+        // until the page becomes responsive again
+        setTimeout(() => {
+          document.body.classList.add('app-responsive');
+        }, 100);
       }
     } else {
       sessionStorage.setItem('_legalup_last_active', String(Date.now()));
+      document.body.classList.remove('app-responsive');
+    }
+  };
+  
+  // Page Lifecycle API: handle frozen state (Safari specific)
+  const handlePageTransition = (event: Event) => {
+    const type = (event as TransitionEvent).type;
+    if (type === 'freeze') {
+      // Page is being frozen - save state if needed
+      console.log('[lifecycle] Page frozen');
+    } else if (type === 'resume') {
+      // Page is resuming from frozen state - force reload on mobile
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        console.log('[lifecycle] Page resumed on mobile, checking health...');
+        // Check if we need to reload by testing React responsiveness
+        const testStart = Date.now();
+        setTimeout(() => {
+          const testEnd = Date.now();
+          // If the timer fired much later than expected, the page was frozen
+          if (testEnd - testStart > 500) {
+            console.log('[lifecycle] Page was frozen, reloading...');
+            window.location.reload();
+          }
+        }, 50);
+      }
     }
   };
 
   window.addEventListener('error', handleError);
   window.addEventListener('unhandledrejection', handleRejection);
   document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // Page Lifecycle API for mobile Safari
+  if ('onfreeze' in document) {
+    document.addEventListener('freeze', handlePageTransition);
+    document.addEventListener('resume', handlePageTransition);
+  }
 
   return () => {
     window.removeEventListener('error', handleError);
     window.removeEventListener('unhandledrejection', handleRejection);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+    if ('onfreeze' in document) {
+      document.removeEventListener('freeze', handlePageTransition);
+      document.removeEventListener('resume', handlePageTransition);
+    }
   };
 };
 
