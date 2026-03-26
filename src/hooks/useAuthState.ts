@@ -52,7 +52,9 @@ export const useAuthState = (): AuthState => {
   // Check and refresh the current session
   const checkSession = useCallback(async (): Promise<boolean> => {
     try {
-      updateState({ isLoading: true, error: null });
+      // Don't set isLoading to true unconditionally to avoid unmounting components on background check.
+      // The initial load state is handled by the default state of the hook.
+      updateState({ error: null });
       
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       

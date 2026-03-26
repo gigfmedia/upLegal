@@ -39,7 +39,14 @@ class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): State {
     const chunkError = isChunkLoadError(error);
     // If it's a chunk error, trigger an immediate reload instead of showing an error UI
+    // But only if there's no modal open
     if (chunkError) {
+      const hasOpenModal = document.querySelector('[data-modal="open"]');
+      if (hasOpenModal) {
+        console.warn('[ErrorBoundary] Chunk error detected but modal is open, skipping reload');
+        // Return state without reloading - let the error boundary handle it
+        return { hasError: true, error, isChunkError: chunkError };
+      }
       window.location.reload();
     }
     return { hasError: true, error, isChunkError: chunkError };

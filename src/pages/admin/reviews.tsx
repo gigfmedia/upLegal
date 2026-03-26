@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { getSupabaseAdminClient } from '@/lib/supabaseClient';
-import { Loader2, Check, X, Edit } from 'lucide-react';
+import { Loader2, Check, X, Edit, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ReviewCard } from '@/components/admin/ReviewCard';
 import { EditReviewModal } from '@/components/admin/EditReviewModal';
+import { IncompleteProfileEmail } from '@/components/admin/IncompleteProfileEmail';
 import type { Review } from '@/types/review';
 import Header from '@/components/Header';
 
@@ -18,6 +19,7 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const { toast } = useToast();
 
   const loadReviews = useCallback(async (isInitialLoad = false) => {
@@ -260,15 +262,32 @@ export default function AdminReviewsPage() {
                   Monitorea las reseñas hacia los abogados, aprueba o rechaza.
                 </p>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleRefreshClick}
-                disabled={loading}
-                className="mt-2"
-              >
-                {loading ? 'Cargando...' : 'Actualizar'}
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // Close edit modal if open
+                    if (editingReview) {
+                      setEditingReview(null);
+                    }
+                    setShowEmailModal(true);
+                  }}
+                  className="mt-2"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email Perfiles Incompletos
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleRefreshClick}
+                  disabled={loading}
+                  className="mt-2"
+                >
+                  {loading ? 'Cargando...' : 'Actualizar'}
+                </Button>
+              </div>
             </div>
           </div>
           
@@ -293,13 +312,24 @@ export default function AdminReviewsPage() {
       </div>
       
       {/* Edit Review Modal */}
-      {editingReview && (
+      {editingReview && !showEmailModal && (
         <EditReviewModal
           isOpen={true}
           review={editingReview}
           onClose={handleCloseEditModal}
           onUpdate={updateReviewContent}
         />
+      )}
+      
+      {/* Incomplete Profile Email Modal */}
+      {showEmailModal && (
+        <div data-modal="open" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <IncompleteProfileEmail 
+              onClose={() => setShowEmailModal(false)} 
+            />
+          </div>
+        </div>
       )}
     </div>
   );

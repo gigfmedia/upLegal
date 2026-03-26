@@ -172,6 +172,12 @@ const setupGlobalErrorHandlers = () => {
     // Check for "Failed to load module script" which often happens on stale chunks
     if (message?.includes('Failed to load module script') || 
         message?.includes('Expected a JavaScript-or-Wasm module script')) {
+      // Don't reload if modal is open
+      const hasOpenModal = document.querySelector('[data-modal="open"]');
+      if (hasOpenModal) {
+        console.warn('[error] Stale chunk detected but modal is open, skipping reload');
+        return;
+      }
       console.warn('Stale chunk detected via error event, reloading...');
       window.location.reload();
       return;
@@ -201,6 +207,12 @@ const setupGlobalErrorHandlers = () => {
       msg.includes('Expected a JavaScript-or-Wasm module script');
 
     if (isChunkError) {
+      // Don't reload if modal is open
+      const hasOpenModal = document.querySelector('[data-modal="open"]');
+      if (hasOpenModal) {
+        console.warn('[rejection] Chunk error detected but modal is open, skipping reload');
+        return;
+      }
       console.warn('Stale chunk detected via rejection, reloading...');
       window.location.reload();
       return;
@@ -221,15 +233,25 @@ const setupGlobalErrorHandlers = () => {
   // shorter thresholds and additional checks for mobile.
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
-      // Check if any script requests fail; vite sets a well-known pattern
-      // A lightweight check: if the page has been idle for > 30 min, reload.
+      // Check if any modal is open - look for multiple indicators
+      const hasOpenModal = 
+        document.querySelector('[data-modal="open"]') ||
+        document.querySelector('[role="dialog"]') ||
+        document.querySelector('[aria-modal="true"]') ||
+        document.querySelector('.fixed.inset-0') ||
+        document.querySelector('.fixed.inset-0.bg-black');
+      
+      if (hasOpenModal) {
+        sessionStorage.setItem('_legalup_last_active', String(Date.now()));
+        return;
+      }
+      
       const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
       const idleMs = Date.now() - lastActivity;
-      
-      // Mobile devices: reload after 2 minutes of inactivity (Safari kills processes aggressively)
-      // Desktop: keep the 30 minute threshold
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const thresholdMs = isMobile ? 2 * 60 * 1000 : 30 * 60 * 1000;
+      
+      console.log(`[visibility] Idle for ${Math.round(idleMs / 1000)}s, threshold: ${thresholdMs / 1000}s`);
       
       if (idleMs > thresholdMs) {
         console.log(`[visibility] App was idle for ${Math.round(idleMs / 1000)}s, reloading...`);
@@ -237,10 +259,7 @@ const setupGlobalErrorHandlers = () => {
         return;
       }
       
-      // Mobile Safari specific: check if React is still responsive
       if (isMobile) {
-        // Set a flag that we can check - if the page was frozen, this won't execute
-        // until the page becomes responsive again
         setTimeout(() => {
           document.body.classList.add('app-responsive');
         }, 100);
@@ -254,19 +273,32 @@ const setupGlobalErrorHandlers = () => {
   // Page Lifecycle API: handle frozen state (Safari specific)
   const handlePageTransition = (event: Event) => {
     const type = (event as TransitionEvent).type;
+    console.log(`[lifecycle] Event: ${type}`);
     if (type === 'freeze') {
-      // Page is being frozen - save state if needed
       console.log('[lifecycle] Page frozen');
     } else if (type === 'resume') {
-      // Page is resuming from frozen state - force reload on mobile
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         console.log('[lifecycle] Page resumed on mobile, checking health...');
-        // Check if we need to reload by testing React responsiveness
+        
+        const hasOpenModal = 
+          document.querySelector('[data-modal="open"]') ||
+          document.querySelector('[role="dialog"]') ||
+          document.querySelector('[aria-modal="true"]') ||
+          document.querySelector('.fixed.inset-0');
+        
+        console.log('[lifecycle] Modal check:', hasOpenModal ? 'YES' : 'NO');
+        
+        if (hasOpenModal) {
+          console.log('[lifecycle] Modal is open, skipping reload');
+          return;
+        }
+        
         const testStart = Date.now();
         setTimeout(() => {
           const testEnd = Date.now();
-          // If the timer fired much later than expected, the page was frozen
-          if (testEnd - testStart > 500) {
+          const delay = testEnd - testStart;
+          console.log(`[lifecycle] Timer delay: ${delay}ms`);
+          if (delay > 500) {
             console.log('[lifecycle] Page was frozen, reloading...');
             window.location.reload();
           }
