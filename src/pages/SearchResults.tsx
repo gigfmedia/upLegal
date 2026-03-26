@@ -921,15 +921,15 @@ const SearchResults = () => {
             </div>
           ) : (
             <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-              <div className="mx-auto h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                <Search className="h-8 w-8 text-blue-600" />
+              <div className="mx-auto h-16 w-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+                <Search className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron abogados</h3>
               <p className="text-gray-500 mb-6 max-w-md mx-auto">No hay resultados que coincidan con tu búsqueda. Intenta con otros términos o ajusta los filtros.</p>
               <Button 
                 variant="outline"
                 onClick={clearFilters}
-                className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                className="border-green-900 text-gray-900 hover:bg-green-900 hover:text-white"
               >
                 Limpiar filtros
               </Button>

@@ -308,6 +308,7 @@ const Index = () => {
 
   // Add a ref to track if a search is in progress
   const isSearching = useRef(false);
+  const [isSearchingState, setIsSearchingState] = useState(false);
   
   const handleSearch = useCallback((category?: string) => {
     // Prevent multiple rapid searches
@@ -315,6 +316,7 @@ const Index = () => {
     
     try {
       isSearching.current = true;
+      setIsSearchingState(true);
       
       // If both search term and location are empty, show all lawyers
       if (!searchTerm.trim() && !location.trim()) {
@@ -347,6 +349,7 @@ const Index = () => {
       // Reset the flag after a short delay to prevent rapid searches
       setTimeout(() => {
         isSearching.current = false;
+        setIsSearchingState(false);
       }, 1000);
     }
   }, [navigate, searchTerm, location]); // Added dependency array
@@ -425,6 +428,7 @@ const Index = () => {
               buttonWidth="1/3"
               className="h-10"
               placeholder="Describe tu problema, ej: Me quieren subir el arriendo sin aviso, ¿es legal?"
+              isLoading={isSearchingState}
             />
           </div>
 

@@ -1,4 +1,4 @@
-import { Search, MapPin, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, ArrowRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ interface SearchBarProps {
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  isLoading?: boolean;
 }
 
 export function SearchBar({
@@ -29,6 +30,7 @@ export function SearchBar({
   className = '',
   placeholder = "Describe tu problema, ej: Me quieren subir el arriendo sin aviso, ¿es legal?",
   autoFocus = false,
+  isLoading = false,
 }: SearchBarProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
@@ -62,15 +64,29 @@ export function SearchBar({
         <button 
           type="button"
           onClick={onSearch}
-          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 hover:w-[100px] transition-all duration-300 ease-in-out overflow-hidden shadow-md"
+          disabled={isLoading}
+          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 md:hover:w-[100px] transition-all duration-300 ease-in-out overflow-hidden shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
           title="Buscar"
         >
-          <span className="text-sm font-medium whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-all duration-300 delay-75 transform -translate-x-2 group-hover/btn:translate-x-0 absolute right-10">
-            Buscar
-          </span>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-transparent">
-            <ArrowRight className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
+          {isLoading ? (
+            <>
+              <span className="hidden md:inline text-sm font-medium whitespace-nowrap opacity-0 md:group-hover/btn:opacity-100 transition-all duration-300 delay-75">
+                Buscando...
+              </span>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                <Loader2 className="w-5 h-5 text-white animate-spin" strokeWidth={2.5} />
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="hidden md:inline text-sm font-medium whitespace-nowrap opacity-0 md:group-hover/btn:opacity-100 transition-all duration-300 delay-75">
+                Buscar
+              </span>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                <ArrowRight className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
+            </>
+          )}
         </button>
       </div>
     </div>
