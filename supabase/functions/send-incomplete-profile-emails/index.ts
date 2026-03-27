@@ -64,38 +64,50 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const emailHtml = `
+    // Send emails using Resend
+    const emailPromises = emails.map(async (email) => {
+      try {
+        console.log(`Sending incomplete profile email to ${email} (testMode=${testMode})`)
+
+        const lawyer = lawyers.find(l => l.email === email);
+        const nameToUse = lawyer?.first_name 
+            ? `${lawyer.first_name} ${lawyer.last_name || ''}`.trim() 
+            : lawyer?.display_name;
+            
+        let personalizedMessage = message;
+        if (nameToUse && nameToUse.trim() !== '') {
+          personalizedMessage = message.replace('Estimado/a abogado/a,', `Estimado/a ${nameToUse},`);
+        }
+
+        const emailHtml = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${testMode ? 'TEST - ' : ''}Completa tu perfil</title>
+        <title>Completa tu perfil</title>
       </head>
       <body>
         <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
           <div style="text-align: center; padding: 30px 20px;">
             <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
-              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
-              <span style="color: #101820; font-size: 28px; position: relative; top: -2px;">LegalUp</span>
+              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 50px; vertical-align: middle;" />
+              <span style="color: #101820; font-size: 28px; position: relative; top: 2px;">LegalUp</span>
             </div>
           </div>
 
           <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
-            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">${testMode ? 'T' : ''}Completa tu perfil para recibir más clientes</h1>
-            <p style="color: #475569; line-height: 1.6; font-size: 16px;">
-              ${testMode ? 'mailing.' : ''}
-            </p>
+            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">Completa tu perfil para recibir más clientes</h1>
 
-            <div style="white-space: pre-wrap; font-family: 'Inter', Arial, sans-serif; color: #101820; margin: 20px 0; line-height: 1.6; font-size: 16px;">${message}</div>
+            <div style="white-space: pre-wrap; font-family: 'Inter', Arial, sans-serif; color: #101820; margin: 20px 0; line-height: 1.6; font-size: 16px;">${personalizedMessage}</div>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://legalup.cl/lawyer/profile" style="display: inline-block; background-color: #110d27; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 10px 0;">
                 Ir a mi perfil
               </a>
             </div>
-            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Si tienes alguna duda, estamos para ayudarte.</p>
-            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Saludos,</p>
-            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">El equipo de LegalUp</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Si tienes alguna duda, estamos para ayudarte.</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Saludos,</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Equipo de LegalUp</p>
           </div>
 
           <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
@@ -108,15 +120,10 @@ serve(async (req) => {
       </html>
     `
 
-    // Send emails using Resend
-    const emailPromises = emails.map(async (email) => {
-      try {
-        console.log(`Sending incomplete profile email to ${email} (testMode=${testMode})`)
-
         const { data, error } = await resend.emails.send({
           from: 'LegalUp <noreply@mg.legalup.cl>',
           to: email,
-          subject: testMode ? 'TEST - Completa tu perfil en LegalUp' : 'Completa tu perfil en LegalUp',
+          subject: 'Completa tu perfil en LegalUp',
           html: emailHtml,
         })
 

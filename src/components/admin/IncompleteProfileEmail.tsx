@@ -146,37 +146,51 @@ export function IncompleteProfileEmail({ onClose }: IncompleteProfileEmailProps)
         : selectedLawyersData.map(l => l.email); // Production: real lawyer emails
 
       // Message template
+      const hasReviews = selectedLawyersData.some(l => l.review_count && l.review_count > 0);
+      const totalReviews = selectedLawyersData.reduce((sum, l) => sum + (l.review_count || 0), 0);
+      const reviewsText = totalReviews === 1 ? '1 reseña' : `${totalReviews} reseñas`;
+
+      const missingFieldsText = selectedLawyersData.map(lawyer => {
+        const missing = [];
+        if (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0) missing.push('• Tarifa por hora');
+        if (!lawyer.bio) missing.push('• Biografía');
+        if (!lawyer.specialties || lawyer.specialties.length === 0) missing.push('• Especialidades');
+        if (!lawyer.avatar_url) missing.push('• Foto de perfil');
+        
+        if (selectedLawyersData.length === 1) {
+          return missing.join('\n');
+        } else {
+          return `${lawyer.display_name || lawyer.email}:\n${missing.map(m => `• ${m}`).join('\n')}`;
+        }
+      }).join('\n\n');
+
       const defaultMessage = `Estimado/a abogado/a,
 
-Hemos notado que tu perfil en LegalUp está incompleto. Esto está afectando tu visibilidad y la posibilidad de que clientes contraten tus servicios.
+${hasReviews 
+? `<strong>¡Buenas noticias!</strong> Tienes una nueva reseña en tu perfil de LegalUp.
+Actualmente cuentas con ${reviewsText} de clientes satisfechos, lo que aumenta tu credibilidad y puede ayudarte a cerrar más consultas.
 
-<strong>¿Qué falta por completar?</strong>
-${selectedLawyersData.map(lawyer => {
-  const missing = [];
-  if (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0) missing.push('Tarifa por hora');
-  if (!lawyer.bio) missing.push('Biografía');
-  if (!lawyer.specialties || lawyer.specialties.length === 0) missing.push('Especialidades');
-  if (!lawyer.avatar_url) missing.push('Foto de perfil');
-  
-  return `${lawyer.display_name || lawyer.email}: ${missing.join(', ')}`;
-}).join('\n')}
+Para aprovechar este impulso al máximo, te recomendamos completar tu perfil. Hoy detectamos que aún tienes información pendiente:` 
+: `Hoy detectamos que aún tienes información pendiente en tu perfil de LegalUp. Para aprovechar la plataforma al máximo, te recomendamos completarlo:`}
 
-<strong>¿Por qué es importante completar tu perfil?</strong>
-• Los clientes no pueden contratar servicios sin precio establecido
-• Tu perfil aparece más bajo en los resultados de búsqueda
-• Pierdes oportunidades de conseguir nuevos clientes
+Información por completar:
+${missingFieldsText}
 
-Para completar tu perfil, ingresa a:
-https://legalup.cl/lawyer/profile
+Siguientes pasos:
+• Ingresa a tu perfil
+• Completa los datos faltantes
+• Publica tu perfil actualizado
 
-¡No dejes pasar más clientes! Tu perfil completo es tu mejor herramienta de marketing.
+👉 https://legalup.cl/lawyer/profile
 
-${selectedLawyersData.some(l => l.review_count && l.review_count > 0) ? `<p>Por otro lado:</p><strong>¡Tienes nuevas reseñas en tu perfil!</strong>
-Actualmente tienes ${
-  selectedLawyersData.length === 1 
-    ? (selectedLawyersData[0].review_count === 1 ? '1 reseña' : `${selectedLawyersData[0].review_count} reseñas`) 
-    : 'reseñas'
-} de clientes satisfechos. Completa tu perfil ahora para aprovechar estas recomendaciones, generar más confianza y conseguir nuevos clientes.\n\n` : ''}`;
+<strong>¿Por qué es clave hacerlo ahora?</strong>
+• Los clientes no pueden contratarte sin un precio definido
+• Un perfil completo aparece mejor posicionado en búsquedas
+• Generas más confianza y aumentas tus conversiones
+
+${hasReviews
+? 'No dejes pasar esta oportunidad: ya tienes prueba social, ahora conviértela en nuevos clientes.'
+: 'No dejes pasar esta oportunidad de destacar tu perfil y conseguir nuevos clientes.'}`;
 
       const finalMessage = customMessage || defaultMessage;
 
