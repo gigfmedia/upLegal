@@ -120,7 +120,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Es válido un arriendo sin contrato en Chile?</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed font-bold text-xl text-green-700">Sí.</p>
+            <p className="text-gray-900 mb-6 leading-relaxed font-bold text-xl">Sí.</p>
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, un arriendo no necesita estar por escrito para ser válido. Esto significa que un acuerdo verbal entre arrendador y arrendatario sí tiene valor legal. Este tipo de acuerdo se conoce como:
             </p>
