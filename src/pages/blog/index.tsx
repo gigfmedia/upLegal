@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
+      title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
+      excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "26 de Marzo, 2026",
+      readTime: "8 min",
+      image: "/assets/sin-contrato-arriendo-2026.png"
+    },
+    {
       id: "ley-devuelveme-mi-casa-chile-2026",
       title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
       excerpt:

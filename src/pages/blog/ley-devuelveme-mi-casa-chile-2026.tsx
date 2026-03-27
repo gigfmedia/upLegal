@@ -591,6 +591,12 @@ const BlogArticle = () => {
             excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
             image: "/assets/despido-sin-motivo-chile-2026.png"
           }}
+          nextArticle={{
+            id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
+            title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
+            excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos.",
+            image: "/assets/sin-contrato-arriendo-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">

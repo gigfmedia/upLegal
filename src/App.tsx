@@ -83,6 +83,7 @@ const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 const BlogIndex = lazy(() => import('./pages/blog/index'));
 const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago-2026'));
 const FiniquitoArticle = lazy(() => import('./pages/blog/como-calcular-tu-finiquito-chile-2026'));
+const QuePasaSiNoTengoContratoDeArriendoChile2026 = lazy(() => import("@/pages/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"));
 const DerechoFamiliaArticle = lazy(() => import('./pages/blog/derecho-de-familia-chile-2026'));
 const DerechoPenalArticle = lazy(() => import('./pages/blog/derecho-penal-chile-2026'));
 const DesalojoArticle = lazy(() => import('./pages/blog/me-quieren-desalojar-que-hago-chile-2026'));
@@ -451,6 +452,7 @@ const AppContent = () => {
               <Route path="/blog/como-calcular-tu-finiquito-chile-2026" element={<FiniquitoArticle />} />
               <Route path="/blog/derecho-de-familia-chile-2026" element={<DerechoFamiliaArticle />} />
               <Route path="/blog/derecho-penal-chile-2026" element={<DerechoPenalArticle />} />
+              <Route path="/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" element={<QuePasaSiNoTengoContratoDeArriendoChile2026 />} />
               <Route path="/blog/me-quieren-desalojar-que-hago-chile-2026" element={<DesalojoArticle />} />
               <Route path="/blog/cuanto-demora-juicio-desalojo-chile-2026" element={<JuicioDesalojoArticle />} />
               <Route path="/blog/arrendador-puede-cambiar-cerradura-chile-2026" element={<CerraduraArticle />} />
