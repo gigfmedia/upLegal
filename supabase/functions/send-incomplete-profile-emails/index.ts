@@ -81,19 +81,20 @@ serve(async (req) => {
           </div>
 
           <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
-            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">${testMode ? 'TEST - ' : ''}Completa tu perfil para recibir más clientes</h1>
+            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">${testMode ? 'T' : ''}Completa tu perfil para recibir más clientes</h1>
             <p style="color: #475569; line-height: 1.6; font-size: 16px;">
-              ${testMode ? 'Este es un correo de prueba para validar el sistema de mailing.' : ''}
+              ${testMode ? 'mailing.' : ''}
             </p>
 
-            <div style="white-space: pre-wrap; font-family: 'Inter', Arial, sans-serif; color: #101820; margin: 25px 0; line-height: 1.6; font-size: 16px;">${message}</div>
+            <div style="white-space: pre-wrap; font-family: 'Inter', Arial, sans-serif; color: #101820; margin: 20px 0; line-height: 1.6; font-size: 16px;">${message}</div>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="https://legalup.cl/lawyer/profile" style="display: inline-block; background-color: #110d27; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 10px 0;">
                 Ir a mi perfil
               </a>
             </div>
-
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Si tienes alguna duda, estamos para ayudarte.</p>
+            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Saludos,</p>
             <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">El equipo de LegalUp</p>
           </div>
 
