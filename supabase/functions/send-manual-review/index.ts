@@ -59,7 +59,8 @@ serve(async (req) => {
     const clientFirstName = email.split('@')[0].split('.')[0] || 'Cliente'
 
     await resend.emails.send({
-      from: 'LegalUp <noreply@mg.legalup.cl>',
+      from: 'LegalUp <hola@legalup.cl>',
+      reply_to: 'hola@legalup.cl',
       to: email,
       subject: '¿Cómo fue tu experiencia con el abogado?',
       html: `

@@ -63,14 +63,12 @@ function createErrorResponse(message: string, status: number = 500, details?: an
 }
 
 export const post: APIRoute = async ({ request }) => {
-  console.log('=== Starting notify-lawyers API call ===');
   
   // Check for test mode
   let testMode = false;
   try {
     const body = await request.json();
     testMode = body.testMode === true;
-    console.log(`Running in ${testMode ? 'TEST' : 'PRODUCTION'} mode`);
   } catch (e) {
     console.error('Error parsing request body:', e);
     return createErrorResponse('Invalid request body', 400, e);
@@ -80,17 +78,13 @@ export const post: APIRoute = async ({ request }) => {
     
     if (testMode) {
       // In test mode, use only the test email
-      console.log('Running in TEST MODE - Sending to test email only');
       lawyers = [{
         email: 'juan.fercocommerce@gmail.com',
         first_name: 'Juan',
         last_name: 'Test'
       }];
-      
-      console.log('Using test lawyer:', lawyers[0]);
     } else {
       // In production, get all lawyers who haven't added services yet
-      console.log('Fetching lawyers from Supabase...');
       try {
         const { data, error } = await supabaseAdmin
           .from('profiles')
@@ -102,8 +96,6 @@ export const post: APIRoute = async ({ request }) => {
           console.error('Supabase query error:', error);
           return createErrorResponse('Error al obtener la lista de abogados', 500, error);
         }
-        
-        console.log(`Found ${data?.length || 0} lawyers total`);
         
         // Filter out lawyers who already have services
         const lawyersWithoutServices = [];
@@ -133,7 +125,6 @@ export const post: APIRoute = async ({ request }) => {
           }
         }
         
-        console.log(`Found ${lawyersWithoutServices.length} lawyers without services`);
         lawyers = lawyersWithoutServices;
       } catch (error) {
         console.error('Unexpected error fetching lawyers:', error);
@@ -147,11 +138,8 @@ export const post: APIRoute = async ({ request }) => {
       const BATCH_SIZE = 5;
       const results: NotificationResult[] = [];
       
-      console.log(`Starting to process ${lawyers.length} lawyers in batches of ${BATCH_SIZE}`);
-      
       for (let i = 0; i < lawyers.length; i += BATCH_SIZE) {
         const batch = lawyers.slice(i, i + BATCH_SIZE);
-        console.log(`Processing batch ${Math.floor(i/BATCH_SIZE) + 1} of ${Math.ceil(lawyers.length/BATCH_SIZE)}`);
         
         const batchResults = await Promise.all(
           batch.map(async (lawyer) => {
@@ -171,10 +159,9 @@ export const post: APIRoute = async ({ request }) => {
 
               const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado/a';
               
-              console.log(`[${new Date().toISOString()}] Sending email to ${lawyer.email} (${lawyerName})`);
-              
               const emailResponse = await resend.emails.send({
-                from: 'LegalUp <servicios@mg.legalup.cl>',
+                from: 'Juan de LegalUp <hola@legalup.cl>',
+                reply_to: 'hola@legalup.cl',
                 to: [lawyer.email],
                 subject: '¡Completa tu perfil en LegalUp!',
                 html: getLawyerServicesEmail(lawyerName),
@@ -186,7 +173,6 @@ export const post: APIRoute = async ({ request }) => {
               }
 
               result.success = true;
-              console.log(`[${new Date().toISOString()}] ✅ Email sent successfully to ${lawyer.email}`);
               
             } catch (error) {
               const errorMsg = error instanceof Error ? error.message : 'Error desconocido al enviar el correo';
@@ -203,7 +189,6 @@ export const post: APIRoute = async ({ request }) => {
         // Add a small delay between batches if there are more to process
         if (i + BATCH_SIZE < lawyers.length) {
           const delay = 1000; // 1 second
-          console.log(`Waiting ${delay}ms before next batch...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -224,9 +209,6 @@ export const post: APIRoute = async ({ request }) => {
           successRate: results.length > 0 ? Math.round((successCount / results.length) * 100) : 0
         }
       };
-      
-      console.log('=== Email sending completed ===');
-      console.log('Summary:', response.summary);
       
       if (failedCount > 0) {
         console.warn('Failed emails:', results.filter(r => !r.success).map(r => ({

@@ -209,9 +209,10 @@ serve(async (req) => {
 
     // Send email to client
     const emailResponse = await sendEmailWithRetry({
-      from: 'LegalUp <noreply@mg.legalup.cl>',  // Usando dominio verificado personalizado
-      to: clientEmail,  // Correo real del cliente
-      subject: `Confirmación de cita con ${lawyerName}`,
+      from: 'Juan de LegalUp <hola@legalup.cl>',
+      reply_to: 'hola@legalup.cl',
+      to: clientEmail,
+      subject: `Tu cita con ${lawyerName} está confirmada`,
       html: emailHtml,
     });
 
@@ -233,9 +234,10 @@ serve(async (req) => {
       }
       
       await sendEmailWithRetry({
-        from: 'LegalUp <noreply@mg.legalup.cl>',  // Usando dominio verificado personalizado
-        to: lawyerEmail,  // Correo real del abogado
-        subject: `Nueva cita con ${clientName}`,
+        from: 'Juan de LegalUp <hola@legalup.cl>',
+        reply_to: 'hola@legalup.cl',
+        to: lawyerEmail,
+        subject: `Tienes una nueva cita con ${clientName}`,
         html: lawyerEmailHtml,
       });
     }

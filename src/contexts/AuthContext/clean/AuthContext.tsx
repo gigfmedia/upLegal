@@ -375,7 +375,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           filter: `id=eq.${user.id}`
         },
         async () => {
-          console.log('Profile deleted, signing out...');
           // Use the existing logout function
           await logout();
           
@@ -542,15 +541,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Add fetchProfile function to handle profile fetching with proper error handling
   const fetchProfile = useCallback(async (userId: string | undefined) => {
-    console.log('fetchProfile called with userId:', userId);
-    
+
     if (!userId) {
       console.error('No user ID provided to fetchProfile. Stack trace:', new Error().stack);
       return null;
     }
 
     try {
-      console.log('Fetching profile for user ID:', userId);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('first_name, profile_setup_completed, role, user_id, avatar_url')
@@ -559,14 +556,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         if (error.code === 'PGRST116') { // No rows returned
-          console.log('No profile found for user ID:', userId);
           return null;
         }
         console.error('Error fetching profile:', error);
         throw error;
       }
-
-      console.log('Successfully fetched profile:', profile);
       return profile;
     } catch (error) {
       console.error('Error in fetchProfile:', {
@@ -579,7 +573,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error.message.includes('JWT') || 
           error.message.includes('invalid input syntax for type uuid') ||
           error.code === '22P02') {
-        console.log('Auth error detected, signing out...');
         await supabase.auth.signOut();
         setUser(null);
       }

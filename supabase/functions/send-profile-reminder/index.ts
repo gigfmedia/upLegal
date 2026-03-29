@@ -141,10 +141,6 @@ serve(async (req) => {
     let emailSent = false
     let emailMessage = 'Email logged (no RESEND_API_KEY configured)'
 
-    console.log('=== send-profile-reminder ===')
-    console.log('To:', toEmail, '| testMode:', testMode, '| completion:', resolvedPercentage)
-    console.log('RESEND_API_KEY available:', !!resendApiKey)
-
     if (resendApiKey) {
       try {
         const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -154,9 +150,10 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'LegalUp <servicios@mg.legalup.cl>',
+            from: 'Juan de LegalUp <hola@legalup.cl>',
+            reply_to: 'hola@legalup.cl',
             to: [toEmail],
-            subject: `Importante: Completa tu perfil de abogado en LegalUp`,
+            subject: `Completa tu perfil y empieza a recibir clientes`,
             html: buildEmailHtml(resolvedName, resolvedPercentage),
           }),
         })
@@ -166,7 +163,6 @@ serve(async (req) => {
         if (emailResponse.ok) {
           emailSent = true
           emailMessage = `Email sent via Resend (ID: ${resendResult.id})`
-          console.log('✅ Email sent:', resendResult)
         } else {
           emailMessage = `Resend error: ${resendResult?.message || emailResponse.status}`
           console.error('❌ Resend API error:', resendResult)

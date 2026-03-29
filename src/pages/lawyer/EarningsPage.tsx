@@ -134,9 +134,6 @@ export default function EarningsPage() {
         }
       }
 
-      console.log('Raw payments:', payments);
-      console.log('Appointments map size:', appointmentsMap.size);
-
       // 4. Merge data
       const formattedTransactions: Transaction[] = (payments || [])
         .filter(payment => {
@@ -161,8 +158,6 @@ export default function EarningsPage() {
             type: 'consultation'
           };
         });
-
-      console.log('Formatted transactions:', formattedTransactions);
       setTransactions(formattedTransactions);
       
     } catch (error) {

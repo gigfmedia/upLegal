@@ -941,7 +941,6 @@ app.post('/api/bookings/create', async (req, res) => {
         },
         user_id: null, // User not logged in yet
       });
-      console.log('[analytics] payment started tracked', { bookingId: booking.id });
     } catch (trackingError) {
       console.error('Failed to track payment start:', trackingError);
     }
@@ -1561,12 +1560,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         if (insertError) {
           console.error('Failed to track payment event:', insertError);
         } else {
-          console.log('[analytics] payment event tracked', { 
-            paymentId: payment.id, 
-            bookingId: booking.id,
-            userId: userId || 'null',
-            eventId: paymentEvent?.id 
-          });
+          // console.log('[analytics] payment event tracked', { 
+          //   paymentId: payment.id, 
+          //   bookingId: booking.id,
+          //   userId: userId || 'null',
+          //   eventId: paymentEvent?.id 
+          // });
         }
       } catch (trackingError) {
         console.error('Failed to track payment event:', trackingError);
@@ -1665,7 +1664,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 .update({ user_id: userId })
                 .eq('metadata->>booking_id', booking.id)
                 .is('user_id', null);
-              console.log('[analytics] Updated payment event with user_id', { bookingId: booking.id, userId });
             } catch (updateError) {
               console.error('Failed to update payment event with user_id:', updateError);
             }
@@ -1710,13 +1708,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             if (insertAppointmentError) {
               console.error('Error inserting appointment:', insertAppointmentError);
             } else {
-              console.log('[booking->appointment] appointment created', {
-                bookingId,
-                lawyerId: booking.lawyer_id,
-                userId,
-                appointment_date: booking.scheduled_date,
-                appointment_time: booking.scheduled_time,
-              });
+              // console.log('[booking->appointment] appointment created', {
+              //   lawyerId: booking.lawyer_id,
+              //   userId,
+              //   appointment_date: booking.scheduled_date,
+              //   appointment_time: booking.scheduled_time,
+              // });
             }
           }
         } catch (appointmentError) {
@@ -1763,9 +1760,10 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           if (resend) {
             try {
           const userEmailResponse = await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
-              to: userEmail,
-              subject: '¡Tu asesoría está confirmada!',
+            from: 'LegalUp <hola@legalup.cl>',
+            reply_to: 'hola@legalup.cl',
+            to: userEmail,
+            subject: 'Tu asesoría está confirmada',
               html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                   <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
@@ -1794,11 +1792,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               `
             });
 
-          console.log('[booking-email] user confirmation sent', {
-            bookingId,
-            to: userEmail,
-            resendId: userEmailResponse?.data?.id,
-          });
+          // console.log('[booking-email] user confirmation sent', {
+          //   bookingId,
+          //   to: userEmail,
+          //   resendId: userEmailResponse?.data?.id,
+          // });
             } catch (emailError) {
           console.error('[booking-email] Error sending user email:', {
             bookingId,
@@ -1811,12 +1809,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           // Send notification email to Lawyer
           if (lawyerEmail && resend) {
             try {
-          console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
 
           const lawyerEmailResponse = await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
-                to: lawyerEmail,
-                subject: 'Nueva reserva confirmada',
+           from: 'LegalUp <hola@legalup.cl>',
+            reply_to: 'hola@legalup.cl',
+            to: lawyerEmail,
+            subject: 'Tienes una nueva reserva confirmada',
                 html: `
                   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
@@ -1841,11 +1839,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 `
               });
 
-          console.log('[booking-email] lawyer confirmation sent', {
-            bookingId,
-            to: lawyerEmail,
-            resendId: lawyerEmailResponse?.data?.id,
-          });
+          // console.log('[booking-email] lawyer confirmation sent', {
+          //   bookingId,
+          //   to: lawyerEmail,
+          //   resendId: lawyerEmailResponse?.data?.id,
+          // });
             } catch (emailError) {
           console.error('[booking-email] Error sending lawyer email:', {
             bookingId,
@@ -2203,9 +2201,10 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado/a';
         
         await resend.emails.send({
-          from: 'LegalUp <hola@mg.legalup.cl>',
+          from: 'LegalUp <hola@legalup.cl>',
+          reply_to: 'hola@legalup.cl',
           to: lawyer.email,
-          subject: '¡Aún no has cargado servicios en tu perfil!',
+          subject: 'Aún no has agregado tus servicios',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <div style="text-align: center; margin-bottom: 20px;">

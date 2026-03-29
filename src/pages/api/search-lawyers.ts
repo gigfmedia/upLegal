@@ -152,7 +152,7 @@ export async function searchLawyers(params: SearchParams = {}) {
       pageSize = 12,
       requirePrice = false,
       // Optimized selection: removed unused fields and truncated bio to save bandwidth
-      select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified'
+      select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, experience_years, verified, pjud_verified, blocked'
     } = params;
 
     // Validar parámetros
@@ -267,25 +267,8 @@ export async function searchLawyers(params: SearchParams = {}) {
 
     // Ejecutar la consulta
     
-    console.log('🔍 Search Query Debug:', {
-      conditions: conditions.length > 0 ? [...new Set(conditions)].join(',') : 'No conditions',
-      location,
-      minRating,
-      minExperience,
-      page: validatedPage,
-      pageSize: validatedPageSize,
-      select
-    });
-    
     const { data: lawyers, error, count } = await queryBuilder;
     const queryTime = Date.now() - startTime;
-    
-    console.log('📊 Search Results Debug:', {
-      lawyersCount: lawyers?.length || 0,
-      totalCount: count,
-      queryTime,
-      error: error?.message
-    });
 
     if (error) {
       console.error('❌ Error en la búsqueda de abogados:', error);

@@ -63,7 +63,6 @@ export const getMercadoPagoAuthUrl = (): string => {
   authUrl.searchParams.append('state', state);
   authUrl.searchParams.append('redirect_uri', `${appUrl}/api/mercadopago/oauth/callback`);
   
-  console.log('MercadoPago Auth URL:', authUrl.toString());
   return authUrl.toString();
 };
 
@@ -105,8 +104,6 @@ export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
     const normalizedBaseUrl = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
     const endpoint = `${normalizedBaseUrl}/create-payment`;
 
-    console.log('Creating payment at endpoint:', endpoint);
-
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -122,7 +119,6 @@ export const createMercadoPagoPayment = async (params: CreatePaymentParams) => {
     }
 
     const data = await response.json();
-    console.log('Payment created successfully:', data);
     return data;
   } catch (error) {
     console.error('Error in createMercadoPagoPayment:', error);

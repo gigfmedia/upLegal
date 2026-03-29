@@ -426,18 +426,18 @@ ${hasReviews
 
     {/* Confirmation Dialog for Production Mode */}
     <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-      <AlertDialogContent>
+      <AlertDialogContent className="z-[10000]">
         <AlertDialogHeader>
           <AlertDialogTitle>¿Confirmar envío de emails?</AlertDialogTitle>
           <AlertDialogDescription>
             Estás a punto de enviar emails reales a {selectedLawyers.length} abogado(s) con perfiles incompletos.
             <br /><br />
             <strong>Abogados seleccionados:</strong>
-            <ul className="mt-2 space-y-1">
+            <div className="mt-2 space-y-1">
               {lawyers.filter(l => selectedLawyers.includes(l.id)).map(l => (
-                <li key={l.id} className="text-sm">• {l.display_name || `${l.first_name} ${l.last_name}`} ({l.email})</li>
+                <div key={l.id} className="text-sm">• {l.display_name || `${l.first_name} ${l.last_name}`} ({l.email})</div>
               ))}
-            </ul>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

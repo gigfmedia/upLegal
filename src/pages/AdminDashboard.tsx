@@ -213,10 +213,7 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      console.log('Fetching payments and appointments...');
       const data = await getAllPaymentsAndAppointments();
-      console.log('Payments and appointments data:', data);
-      console.log('Payments and appointments count:', data.length);
       return data;
     },
     enabled: activeTab === TABS.PAYMENTS,

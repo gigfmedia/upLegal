@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { ReviewCard } from '@/components/admin/ReviewCard';
 import { EditReviewModal } from '@/components/admin/EditReviewModal';
 import { IncompleteProfileEmail } from '@/components/admin/IncompleteProfileEmail';
+import { CustomerMarketingEmail } from '@/components/admin/CustomerMarketingEmail';
 import type { Review } from '@/types/review';
 import Header from '@/components/Header';
 
@@ -20,6 +21,7 @@ export default function AdminReviewsPage() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showCustomerEmailModal, setShowCustomerEmailModal] = useState(false);
   const { toast } = useToast();
 
   const loadReviews = useCallback(async (isInitialLoad = false) => {
@@ -67,12 +69,6 @@ export default function AdminReviewsPage() {
                    user.role === 'admin';
     
     if (!isAdmin) {
-      console.log('User is not admin, redirecting to home. User data:', {
-        email: user.email,
-        is_admin: user.is_admin,
-        user_metadata: user.user_metadata,
-        role: user.role
-      });
       toast({
         title: 'Acceso denegado',
         description: 'No tienes permisos de administrador',
@@ -225,12 +221,10 @@ export default function AdminReviewsPage() {
   };
 
   const handleApprove = (reviewId: string) => {
-    console.log('Approving review:', reviewId);
     updateReviewStatus(reviewId, 'approved');
   };
 
   const handleReject = (reviewId: string) => {
-    console.log('Rejecting review:', reviewId);
     updateReviewStatus(reviewId, 'rejected');
   };
   
@@ -267,7 +261,20 @@ export default function AdminReviewsPage() {
                   variant="outline" 
                   size="sm"
                   onClick={() => {
-                    // Close edit modal if open
+                    if (editingReview) {
+                      setEditingReview(null);
+                    }
+                    setShowCustomerEmailModal(true);
+                  }}
+                  className="mt-2"
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email Marketing Clientes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
                     if (editingReview) {
                       setEditingReview(null);
                     }
@@ -327,6 +334,17 @@ export default function AdminReviewsPage() {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
             <IncompleteProfileEmail 
               onClose={() => setShowEmailModal(false)} 
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Customer Marketing Email Modal */}
+      {showCustomerEmailModal && (
+        <div data-modal="open" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
+            <CustomerMarketingEmail 
+              onClose={() => setShowCustomerEmailModal(false)} 
             />
           </div>
         </div>

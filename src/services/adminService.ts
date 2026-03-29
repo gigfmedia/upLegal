@@ -70,5 +70,34 @@ export const adminService = {
         error: error.message || 'Failed to fetch users' 
       };
     }
+  },
+
+  async toggleBlockUser(userId: string, blocked: boolean): Promise<{ success?: boolean; error?: string }> {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Authentication error:', userError);
+        return { error: 'Not authenticated. Please log in again.' };
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ blocked })
+        .eq('id', userId)
+        .select('id, blocked');
+
+      if (error) {
+        console.error('Database error:', error);
+        return { error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error in adminService.toggleBlockUser:', error);
+      return { 
+        error: error instanceof Error ? error.message : 'Failed to update user status' 
+      };
+    }
   }
 };

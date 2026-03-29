@@ -66,8 +66,6 @@ serve(async (req) => {
        }
     }
 
-    console.log(`Citas candidatas para reseña: ${appointmentsToRequest.length}`)
-
     // 3. Procesar envíos
     const results = await Promise.allSettled(
       appointmentsToRequest.map(async (appointment) => {
@@ -116,7 +114,8 @@ serve(async (req) => {
         const reviewUrl = `https://legalup.cl/review?token=${reviewToken}`
         
         await resend.emails.send({
-          from: 'LegalUp <noreply@mg.legalup.cl>',
+          from: 'LegalUp <hola@legalup.cl>',
+          reply_to: 'hola@legalup.cl',
           to: clientEmail,
           subject: '¿Cómo fue tu experiencia con el abogado?',
           html: `

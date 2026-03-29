@@ -92,7 +92,6 @@ export const getPaymentsByUser = async (userId: string): Promise<PaymentWithDeta
 };
 
 export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetails[]> => {
-  console.log('getAllPaymentsAndAppointments: Starting to fetch...');
   
   // Use service role key for admin operations to bypass RLS
   const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
@@ -117,9 +116,6 @@ export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetail
     .select('*')
     .order('created_at', { ascending: false });
 
-  console.log('Payments data:', payments);
-  console.log('Payments error:', paymentsError);
-
   // Get all paid appointments that don't have payments
   const { data: paidAppointments, error: appointmentsError } = await adminClient
     .from('appointments')
@@ -128,9 +124,6 @@ export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetail
     .eq('status', 'confirmed')
     .is('amount', null)
     .order('created_at', { ascending: false });
-
-  console.log('Paid appointments without payments:', paidAppointments);
-  console.log('Appointments error:', appointmentsError);
 
   if (paymentsError) {
     console.error('Error fetching payments:', paymentsError);
@@ -160,22 +153,12 @@ export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetail
     return !hasMatchingPayment;
   });
 
-  console.log('Payment external_reference IDs:', Array.from(paymentExternalIds));
-  console.log('Paid appointments IDs:', (paidAppointments || []).map(a => a.id));
-  console.log('Appointments filtered (without existing payments):', appointmentsWithoutPayments);
-
   const allTransactions = [...(payments || []), ...appointmentsWithoutPayments];
-  
-  console.log('Total transactions:', allTransactions.length);
 
   // Get unique user and lawyer IDs
   const userIds = [...new Set(allTransactions.map(p => p.user_id).filter(Boolean))] as string[];
   const lawyerIds = [...new Set(allTransactions.map(p => p.lawyer_id).filter(Boolean))] as string[];
   const serviceIds = allTransactions.map(p => p.service_id).filter(Boolean) as string[];
-
-  console.log('userIds:', userIds);
-  console.log('lawyerIds:', lawyerIds);
-  console.log('serviceIds:', serviceIds);
 
   // Function to fetch user data from profiles (auth.users is not accessible from the frontend)
   const fetchUserData = async (ids: string[]) => {
@@ -262,12 +245,6 @@ export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetail
 
   // Combine data for all transactions
   return allTransactions.map((transaction, index) => {
-    console.log(`Processing transaction ${index}:`, {
-      id: transaction.id,
-      name: transaction.name,
-      email: transaction.email,
-      isAppointment: !!(transaction.name && transaction.email)
-    });
     
     // Handle appointments differently
     if (transaction.name && transaction.email) {
@@ -307,14 +284,6 @@ export const getAllPaymentsAndAppointments = async (): Promise<PaymentWithDetail
       };
     } else {
       // This is a regular payment
-      console.log(`Processing regular payment ${index}:`, {
-        id: transaction.id,
-        user_id: transaction.user_id,
-        lawyer_id: transaction.lawyer_id,
-        amount: transaction.amount,
-        total_amount: transaction.total_amount
-      });
-      
       const user = usersMap.get(transaction.user_id);
       const lawyer = lawyersMap.get(transaction.lawyer_id);
       const service = transaction.service_id ? servicesMap.get(transaction.service_id) || null : null;

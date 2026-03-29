@@ -28,11 +28,8 @@ function generatePassword(length = 12): string {
 // Función para invitar usuario (lawyer o client)
 async function inviteUser(email: string, role: 'lawyer' | 'client', userName?: string) {
   try {
-    console.log(`📧 Enviando invitación a: ${email} (rol: ${role})`);
-    
     // Generar contraseña genérica por si acaso
     const genericPassword = generatePassword();
-    console.log(`🔑 Contraseña generada: ${genericPassword}`);
     
     // Crear invitación con rol especificado en user_metadata
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(
@@ -50,13 +47,6 @@ async function inviteUser(email: string, role: 'lawyer' | 'client', userName?: s
       console.error(`❌ Error al invitar ${role}:`, error);
       throw error;
     }
-
-    console.log('✅ Invitación enviada exitosamente:', data);
-    console.log(`📋 Resumen:`);
-    console.log(`   - Email: ${email}`);
-    console.log(`   - Rol: ${role}`);
-    console.log(`   - Contraseña temporal: ${genericPassword}`);
-    console.log(`   - Estado: Pendiente de aceptación`);
     
     return {
       success: true,
@@ -91,18 +81,18 @@ async function main() {
   const result1 = await inviteLawyer('nuevo.abogado@ejemplo.com', 'Juan Pérez');
   
   if (result1.success) {
-    console.log('🎉 Abogado invitado correctamente');
+    //console.log('🎉 Abogado invitado correctamente');
   } else {
-    console.log('💥 Falló la invitación:', result1.error);
+    //console.log('💥 Falló la invitación:', result1.error);
   }
 
   // Ejemplo 2: Invitar a un cliente específico
   const result2 = await inviteClient('nuevo.cliente@ejemplo.com', 'María González');
   
   if (result2.success) {
-    console.log('🎉 Cliente invitado correctamente');
+    //console.log('🎉 Cliente invitado correctamente');
   } else {
-    console.log('💥 Falló la invitación:', result2.error);
+    //console.log('💥 Falló la invitación:', result2.error);
   }
 
   // Ejemplo 3: Invitar a múltiples usuarios (mix)
@@ -112,10 +102,8 @@ async function main() {
     { email: 'ana.martinez@legal.cl', name: 'Ana Martínez', role: 'client' as const }
   ];
 
-  console.log('\n📋 Invitando múltiples usuarios...');
   for (const user of usersToInvite) {
     const result = await inviteUser(user.email, user.role, user.name);
-    console.log(`   ${user.email} (${user.role}): ${result.success ? '✅' : '❌'}`);
   }
 }
 

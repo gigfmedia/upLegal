@@ -753,6 +753,7 @@ export type Database = {
           bar_association_number: string | null
           bar_number: string | null
           bio: string | null
+          blocked: boolean | null
           certifications: Json | null
           contact_fee_clp: number | null
           created_at: string
@@ -795,6 +796,7 @@ export type Database = {
           bar_association_number?: string | null
           bar_number?: string | null
           bio?: string | null
+          blocked?: boolean | null
           certifications?: Json | null
           contact_fee_clp?: number | null
           created_at?: string
@@ -837,6 +839,7 @@ export type Database = {
           bar_association_number?: string | null
           bar_number?: string | null
           bio?: string | null
+          blocked?: boolean | null
           certifications?: Json | null
           contact_fee_clp?: number | null
           created_at?: string

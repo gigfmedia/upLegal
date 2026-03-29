@@ -39,7 +39,6 @@ export function NotifyLawyersButton() {
     setResults([]);
 
     try {
-      console.log('Sending test notification to:', 'juan.fercommerce@gmail.com');
       
       // Use the full URL to your Render backend
       const apiUrl = 'https://uplegal-service.onrender.com/api/admin/notify-lawyers';
@@ -61,7 +60,6 @@ export function NotifyLawyersButton() {
       
       try {
         const result = await response.json();
-        console.log('Response data:', result);
 
         if (!response.ok) {
           throw new Error(result.message || 'Error al enviar notificaciones');

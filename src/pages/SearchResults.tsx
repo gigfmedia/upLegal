@@ -321,21 +321,6 @@ const SearchResults = () => {
           pageSize: currentPageSize
         });
         
-        // Debug logging
-        console.log('🔍 Search Debug:', {
-          query,
-          specialty,
-          location,
-          page,
-          currentPageSize,
-          response: response ? {
-            lawyersCount: response.lawyers?.length || 0,
-            total: response.total,
-            hasMore: response.hasMore,
-            queryTime: response.queryTime,
-            error: response.error
-          } : 'No response'
-        });
         
         if (response) {
           // First, format all lawyers
@@ -352,7 +337,8 @@ const SearchResults = () => {
             consultationPrice: lawyer.hourly_rate_clp || 0,
             image: lawyer.avatar_url || '',
             bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
-            verified: Boolean(lawyer.verified), // Ensure proper boolean conversion
+            verified: Boolean(lawyer.verified),
+            blocked: lawyer.blocked || false,
             availability: {
               availableToday: true,
               availableThisWeek: true,
@@ -364,8 +350,8 @@ const SearchResults = () => {
             quickResponse: true,
             emergencyConsultations: true,
             experience_years: lawyer.experience_years || 0,
-            // For backward compatibility with any components that might use experienceYears
-            experienceYears: lawyer.experience_years || 0
+            experienceYears: lawyer.experience_years || 0,
+            availability_config: lawyer.availability || undefined
           }));
 
           // Then sort them by profile completeness and rating
@@ -662,7 +648,27 @@ const SearchResults = () => {
 
 
 
-  // clearFilters function is now defined above
+  // Scroll to lawyer cards when coming from category click
+  useEffect(() => {
+    // Check if we have a category parameter (coming from category click on homepage)
+    const hasCategoryParam = searchParams.get('category');
+    
+    if (hasCategoryParam && !loading && filteredLawyers.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const afterSpecialties = document.getElementById('after-specialties');
+        if (afterSpecialties) {
+          const isMobile = window.innerWidth < 768;
+          const offset = isMobile ? 80 : 0; // Offset para mobile para dejar espacio visual
+          const elementPosition = afterSpecialties.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({
+            top: elementPosition - offset,
+            behavior: 'smooth'
+          });
+        }
+      }, 150); // Delay ligeramente mayor para asegurar render completo en mobile
+    }
+  }, [loading, filteredLawyers.length, searchParams]);
   
   return (
     <div className="min-h-screen bg-gray-50 relative">
@@ -705,6 +711,7 @@ const SearchResults = () => {
                 )}
               </div>
             </div>
+            <div id="after-specialties" />
           </div>
         </div>
       </div>
@@ -725,7 +732,7 @@ const SearchResults = () => {
       <div className="bg-muted min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Filtros y ordenamiento */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div id="filters-section" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             {/* Active Filters (Left Side) */}
             <div className="w-full md:flex-1">
               {(selectedSpecialty.some(s => s !== 'all') || location) ? (
@@ -895,7 +902,7 @@ const SearchResults = () => {
               <p className="text-gray-500">Ingresa un término de búsqueda o selecciona una especialidad para comenzar</p>
             </div>
           ) : filteredLawyers.length > 0 ? (
-            <div className="w-full">
+            <div className="w-full" id="lawyer-cards-section">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
                 {filteredLawyers.map((lawyer) => {
                   return (

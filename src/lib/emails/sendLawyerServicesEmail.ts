@@ -21,12 +21,12 @@ interface SendEmailResponse {
 }
 
 export async function sendLawyerServicesEmail(to: string, lawyerName: string): Promise<SendEmailResponse> {
-  console.log(`Attempting to send email to: ${to}`);
 
   try {
     const resend = new Resend(getResendApiKey());
     const { data, error } = await resend.emails.send({
-      from: 'LegalUp <servicios@mg.legalup.cl>',
+      from: 'Juan de LegalUp <hola@legalup.cl>',
+      reply_to: 'hola@legalup.cl',
       to: [to],
       subject: '¡Completa tu perfil en LegalUp!',
       html: getLawyerServicesEmail(lawyerName),
@@ -40,7 +40,6 @@ export async function sendLawyerServicesEmail(to: string, lawyerName: string): P
       };
     }
 
-    console.log('✅ Email sent successfully to:', to);
     return {
       success: true,
       data,

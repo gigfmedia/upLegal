@@ -32,12 +32,6 @@ serve(async (req) => {
       }
     );
 
-    // Verify the webhook signature (you should implement this)
-    // const signature = req.headers.get('x-signature');
-    // if (!verifySignature(signature, await req.text())) {
-    //   return new Response('Invalid signature', { status: 401 });
-    // }
-
     const webhookData: WebhookData = await req.json();
     
     if (webhookData.type === 'payment') {
@@ -78,12 +72,6 @@ serve(async (req) => {
       if (error) {
         console.error('Error updating payment:', error);
         throw new Error('Failed to update payment status');
-      }
-
-      // If payment is approved, you might want to trigger other actions here
-      if (payment.status === 'approved') {
-        // Example: Send confirmation email, create appointment, etc.
-        //console.log('Payment approved:', payment.id);
       }
     }
 

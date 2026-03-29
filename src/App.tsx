@@ -252,10 +252,7 @@ const setupGlobalErrorHandlers = () => {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       const thresholdMs = isMobile ? 2 * 60 * 1000 : 30 * 60 * 1000;
       
-      console.log(`[visibility] Idle for ${Math.round(idleMs / 1000)}s, threshold: ${thresholdMs / 1000}s`);
-      
       if (idleMs > thresholdMs) {
-        console.log(`[visibility] App was idle for ${Math.round(idleMs / 1000)}s, reloading...`);
         window.location.reload();
         return;
       }
@@ -274,12 +271,10 @@ const setupGlobalErrorHandlers = () => {
   // Page Lifecycle API: handle frozen state (Safari specific)
   const handlePageTransition = (event: Event) => {
     const type = (event as TransitionEvent).type;
-    console.log(`[lifecycle] Event: ${type}`);
     if (type === 'freeze') {
-      console.log('[lifecycle] Page frozen');
+      //console.log('[lifecycle] Page frozen');
     } else if (type === 'resume') {
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        console.log('[lifecycle] Page resumed on mobile, checking health...');
         
         const hasOpenModal = 
           document.querySelector('[data-modal="open"]') ||
@@ -287,10 +282,7 @@ const setupGlobalErrorHandlers = () => {
           document.querySelector('[aria-modal="true"]') ||
           document.querySelector('.fixed.inset-0');
         
-        console.log('[lifecycle] Modal check:', hasOpenModal ? 'YES' : 'NO');
-        
         if (hasOpenModal) {
-          console.log('[lifecycle] Modal is open, skipping reload');
           return;
         }
         
@@ -298,9 +290,7 @@ const setupGlobalErrorHandlers = () => {
         setTimeout(() => {
           const testEnd = Date.now();
           const delay = testEnd - testStart;
-          console.log(`[lifecycle] Timer delay: ${delay}ms`);
           if (delay > 500) {
-            console.log('[lifecycle] Page was frozen, reloading...');
             window.location.reload();
           }
         }, 50);

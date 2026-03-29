@@ -28,7 +28,6 @@ export default function ConsultaDetalle() {
     setError(null);
     
     try {
-      console.log('Iniciando proceso de pago...');
       const consultationId = `consulta-${Date.now()}`;
       
       const paymentParams = {
@@ -43,14 +42,9 @@ export default function ConsultaDetalle() {
         userEmail: formData.email || user?.email,
         userName: formData.name
       };
-
-      console.log('Parámetros del pago:', paymentParams);
       
       // Use the MercadoPago service
-      console.log('Creando pago con MercadoPago...');
       const response = await createMercadoPagoPayment(paymentParams);
-      
-      console.log('Respuesta de MercadoPago:', response);
       
       // Backend returns 'payment_link', not 'init_point'
       const paymentUrl = response?.payment_link || response?.init_point;
@@ -60,7 +54,6 @@ export default function ConsultaDetalle() {
       }
       
       // Redirect to MercadoPago
-      console.log('Redirigiendo a MercadoPago:', paymentUrl);
       window.location.href = paymentUrl;
 
     } catch (error) {

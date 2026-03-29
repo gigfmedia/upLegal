@@ -143,15 +143,6 @@ const createSlug = (str: string): string => {
     .replace(/-+/g, '-');
 };
 
-// Force Alert to be included in bundle to prevent tree-shaking issues
-console.log('Alert component loaded:', Alert);
-// Force new bundle hash - v2.0
-console.log('Bundle version: 2.0');
-// Force AuthContext to be included in bundle
-console.log('AuthContext loaded:', useAuth);
-// Force comprehensive bundle fixes - PREVIEW TESTING
-console.log('PREVIEW MODE: Testing bundle fixes for production');
-
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
   const location = useLocation();

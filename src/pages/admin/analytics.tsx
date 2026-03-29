@@ -170,9 +170,6 @@ export default function AnalyticsDashboard() {
   const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
     queryKey: ['payment-events', user?.id],
     queryFn: async () => {
-      // Use the user from auth context that we know is authenticated
-      console.log('[Analytics] Current user from context:', user?.id, user?.email);
-      
       if (!user) {
         console.warn('[Analytics] No user found in context, returning empty data');
         return []; 
@@ -184,7 +181,6 @@ export default function AnalyticsDashboard() {
         .select('role')
         .eq('user_id', user.id)
         .single();
-      console.log('[Analytics] User role:', profile?.role);
       
       const { data, error, count } = await supabase
         .from('payment_events')
@@ -195,8 +191,7 @@ export default function AnalyticsDashboard() {
         console.error('Error fetching payment events:', error);
         throw error;
       }
-      
-      console.log('[Analytics] Payment events fetched:', data?.length || 0, 'events (total in DB:', count, ')');
+
       return data as PaymentEvent[];
     },
     retry: 1
@@ -226,8 +221,7 @@ export default function AnalyticsDashboard() {
         console.error('Error fetching page views:', error);
         throw error;
       }
-      
-      console.log('[Analytics] Page views fetched:', data?.length || 0, showDevData ? '(includes dev data)' : '(filtered dev data)');
+
       return (data || []) as PageView[];
     },
     retry: 1
@@ -243,17 +237,6 @@ export default function AnalyticsDashboard() {
         .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time, price', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(50);
-      
-      console.log('[Analytics] Bookings query result:', {
-        count: bookingsCount,
-        found: bookings?.length || 0,
-        error: bookingsError?.message,
-        today: bookings?.filter((b: any) => {
-          const created = new Date(b.created_at);
-          const today = new Date();
-          return created.toDateString() === today.toDateString();
-        }).length || 0
-      });
       
       // Also check appointments
       const { data: appts, error: apptsError, count: apptsCount } = await supabase
@@ -271,12 +254,6 @@ export default function AnalyticsDashboard() {
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(50);
-      
-      console.log('[Analytics] Appointments query result:', {
-        count: apptsCount,
-        found: appts?.length || 0,
-        error: apptsError?.message
-      });
       
       // Combine both sources, prioritizing bookings (newer system)
       const allAppointments: any[] = [];
@@ -341,28 +318,15 @@ export default function AnalyticsDashboard() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
-      console.log('[Analytics] Combined appointments:', {
-        total: allAppointments.length,
-        fromBookings: allAppointments.filter(a => a.source === 'booking').length,
-        fromAppointments: allAppointments.filter(a => a.source === 'appointment').length
-      });
-      
       return allAppointments.slice(0, 50) as any[];
 
       // If no appointments, try bookings table
       if (!appts || appts.length === 0) {
-        console.log('[Analytics] No appointments found, checking bookings table...');
         const { data: bookings, error: bookingsError, count: bookingsCount } = await supabase
           .from('bookings')
           .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(50);
-        
-        console.log('[Analytics] Bookings fallback query result:', {
-          count: bookingsCount,
-          found: bookings?.length || 0,
-          error: bookingsError?.message
-        });
         
         if (bookingsError) {
           console.error("[Analytics] Error fetching bookings:", bookingsError);
@@ -370,11 +334,8 @@ export default function AnalyticsDashboard() {
       }
 
         if (!bookings || bookings.length === 0) {
-          console.log('[Analytics] No bookings found either');
           return [];
         }
-        
-        console.log('[Analytics] Found', bookings.length, 'bookings');
 
       // Fetch lawyer names separately
         const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
@@ -397,8 +358,6 @@ export default function AnalyticsDashboard() {
           service_title: 'Cita agendada',
         })) as any[];
       }
-
-      console.log('[Analytics] Found', appts.length, 'appointments');
 
       // Fetch lawyer names separately
       const lawyerIds = [...new Set(appts.map((a: any) => a.lawyer_id).filter(Boolean))];
@@ -464,13 +423,6 @@ export default function AnalyticsDashboard() {
       
       const sixtyDaysAgo = new Date(now);
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-      
-      console.log('[Analytics] Date ranges (Chile timezone):', {
-        now: now.toISOString(),
-        nowLocal: now.toLocaleString('es-CL', { timeZone: 'America/Santiago' }),
-        todayStart: todayStart.toISOString(),
-        todayEnd: todayEnd.toISOString()
-      });
 
       // Total Counts - Check appointments and bookings (page views already filtered above)
       const [
@@ -498,15 +450,6 @@ export default function AnalyticsDashboard() {
       const currentAppointments = (apptCurrentPeriod || 0) + (bookingCurrentPeriod || 0);
       const prevAppointments = (apptPreviousPeriod || 0) + (bookingPreviousPeriod || 0);
       const todayAppointments = (apptToday || 0) + (bookingToday || 0);
-      
-      console.log('[Analytics] Appointment counts:', {
-        appointments: totalAppts,
-        bookings: totalBookings,
-        total: totalAppointments,
-        current: currentAppointments,
-        prev: prevAppointments,
-        today: todayAppointments
-      });
 
       // Fetch total counts from server to bypass UI limit
       let viewsQuery = supabase.from('page_views').select('*', { count: 'exact', head: true });
@@ -662,19 +605,6 @@ export default function AnalyticsDashboard() {
   });
   const todayPayments = todayPaymentEvents.filter(e => e.event_type === 'success').length;
   const todayStartedPayments = todayPaymentEvents.filter(e => e.event_type === 'started').length;
-  
-  // Debug: Log payment funnel stats
-  console.log('[Analytics] Payment funnel stats:', {
-    totalEvents: paymentEvents.length,
-    started: startedPayments,
-    successful: successfulPayments,
-    failed: failedPayments,
-    pending: pendingPayments,
-    successRate: successRate.toFixed(1) + '%',
-    todayPayments: todayPayments,
-    todayStarted: todayStartedPayments,
-    events: paymentEvents.slice(0, 3).map(e => ({ type: e.event_type, amount: e.amount, created: e.created_at }))
-  });
 
   const isLoading = isLoadingStats || isLoadingPayments || isLoadingErrors;
   const hasError = pageViewsError || paymentEventsError || errorLogsError || statsError || appointmentsError;

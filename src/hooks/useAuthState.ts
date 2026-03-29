@@ -282,7 +282,6 @@ export const useAuthState = (): AuthState => {
         // Add visibility listener to refresh session when tab becomes visible
         const handleVisibilityChange = async () => {
           if (!document.hidden && mounted) {
-            console.log('App became visible, checking session...');
             await checkSession();
           }
         };

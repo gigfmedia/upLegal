@@ -149,11 +149,6 @@ export default function PaymentFailure() {
 
   const createPaymentForAppointment = async (appointment: any) => {
     try {
-      console.log('Creating payment for appointment:', { 
-        appointmentId: appointment.id,
-        amount: appointment.amount || appointment.price,
-        lawyerId: appointment.lawyer_id
-      });
 
       const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
@@ -174,11 +169,6 @@ export default function PaymentFailure() {
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
 
-      console.log('Sending payment request:', {
-        url: FUNCTION_URL,
-        params: { ...paymentParams, userName: '...' } // Ocultamos el nombre de usuario en los logs
-      });
-
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -188,11 +178,6 @@ export default function PaymentFailure() {
       });
 
       const responseText = await response.text();
-      console.log('Payment API response:', {
-        status: response.status,
-        statusText: response.statusText,
-        response: responseText
-      });
 
       if (!response.ok) {
         console.error('Payment API error:', {
@@ -212,7 +197,6 @@ export default function PaymentFailure() {
       }
       
       if (paymentResult.payment_link) {
-        console.log('Redirecting to payment link:', paymentResult.payment_link);
         window.location.href = paymentResult.payment_link;
       } else {
         console.error('No payment link in response:', paymentResult);
@@ -230,11 +214,6 @@ export default function PaymentFailure() {
 
   const createPaymentForConsultation = async (consultation: any) => {
     try {
-      console.log('Creating payment for consultation:', { 
-        consultationId: consultation.id,
-        amount: consultation.price,
-        lawyerId: consultation.lawyer_id
-      });
 
       const API_BASE_URL = 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
@@ -255,11 +234,6 @@ export default function PaymentFailure() {
         userName: user!.user_metadata?.full_name || user!.email?.split('@')[0] || 'Usuario'
       };
 
-      console.log('Sending payment request for consultation:', {
-        url: FUNCTION_URL,
-        params: { ...paymentParams, userName: '...' } // Ocultamos el nombre de usuario en los logs
-      });
-
       const response = await fetch(FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -269,11 +243,6 @@ export default function PaymentFailure() {
       });
 
       const responseText = await response.text();
-      console.log('Payment API response for consultation:', {
-        status: response.status,
-        statusText: response.statusText,
-        response: responseText
-      });
 
       if (!response.ok) {
         console.error('Payment API error for consultation:', {
@@ -293,7 +262,6 @@ export default function PaymentFailure() {
       }
       
       if (paymentResult.payment_link) {
-        console.log('Redirecting to payment link for consultation:', paymentResult.payment_link);
         window.location.href = paymentResult.payment_link;
       } else {
         console.error('No payment link in response for consultation:', paymentResult);

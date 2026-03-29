@@ -36,6 +36,7 @@ export interface Lawyer {
   bio: string;
   verified: boolean;
   pjud_verified?: boolean;
+  blocked?: boolean;
   availability: {
     availableToday: boolean;
     availableThisWeek: boolean;
@@ -48,6 +49,7 @@ export interface Lawyer {
   emergencyConsultations?: boolean;
   experience_years?: number;
   review_count?: number;
+  availability_config?: Record<string, boolean[]>; // Raw availability config from DB
 }
 
 interface LawyerCardProps {
@@ -157,6 +159,54 @@ export function LawyerCard({
   
   const navigate = useNavigate();
 
+  // Helper to normalize day names for availability lookup
+  const normalizeDayKey = (key: string) =>
+    key
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+  // Check if lawyer has availability for a specific day
+  const hasAvailabilityForDay = (dayName: string): boolean => {
+    if (!lawyer.availability_config) return false;
+    
+    const normalizedTarget = normalizeDayKey(dayName);
+    
+    for (const [key, value] of Object.entries(lawyer.availability_config)) {
+      if (normalizeDayKey(key) === normalizedTarget && Array.isArray(value)) {
+        return value.some(hour => hour === true);
+      }
+    }
+    return false;
+  };
+
+  // Determine availability text based on current day
+  const getAvailabilityDisplay = (): { text: string; showPulse: boolean } => {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    
+    // Monday (1) to Friday (5): always show "disponible hoy"
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+      return { text: 'Disponible hoy', showPulse: true };
+    }
+    
+    // Saturday (6): show "disponible hoy" ONLY if lawyer has Saturday configured
+    if (dayOfWeek === 6) {
+      const hasSaturday = hasAvailabilityForDay('Sábado');
+      return hasSaturday 
+        ? { text: 'Disponible hoy', showPulse: true }
+        : { text: 'Disponible lunes', showPulse: false };
+    }
+    
+    // Sunday (0): always show "disponible" without pulse
+    return { text: 'Disponible lunes', showPulse: false };
+  };
+
+  const availabilityDisplay = getAvailabilityDisplay();
+  const shouldShowAvailabilityBadge = lawyer.availability?.availableToday && 
+    lawyer.consultationPrice > 0 && 
+    lawyer.hourlyRate > 0;
+
   // Handle contact button click
   const handleContactClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -191,8 +241,13 @@ export function LawyerCard({
   return (
     <>
       <Card 
-        className="hover:shadow-lg transition-shadow duration-300 border border-solid flex flex-col h-full cursor-pointer"
+        className={`hover:shadow-lg transition-shadow duration-300 border border-solid flex flex-col h-full cursor-pointer ${lawyer.blocked ? 'opacity-50 bg-gray-50 cursor-not-allowed' : ''}`}
         onClick={(e) => {
+          // Don't navigate if lawyer is blocked
+          if (lawyer.blocked) {
+            e.preventDefault();
+            return;
+          }
           // Don't navigate if clicking on the schedule button or its children
           if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
             return;
@@ -254,12 +309,10 @@ export function LawyerCard({
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {lawyer.availability?.availableToday && 
-                   lawyer.consultationPrice > 0 && 
-                   lawyer.hourlyRate > 0 && (
-                    <Badge variant="secondary" className="w-fit flex items-center gap-1.5 bg-green-100 text-green-800 hover:bg-green-200 border-none">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
-                      Disponible hoy
+                  {shouldShowAvailabilityBadge && (
+                    <Badge variant="secondary" className={`w-fit flex items-center gap-1.5 ${availabilityDisplay.showPulse ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-green-100 text-green-800 hover:bg-green-200'} border-none`}>
+                      {availabilityDisplay.showPulse && <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />}
+                      {availabilityDisplay.text}
                     </Badge>
                   )}
                   
@@ -421,10 +474,10 @@ export function LawyerCard({
             </Button> */}
             <Button
               variant="default"
-              className={`flex-1 bg-gray-900 ${
+              className={`flex-1 bg-gray-900 text-white dark:bg-gray-900 dark:text-white [color-scheme:light] font-medium shadow-sm transition ${
                 buttonsDisabled 
                   ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:bg-green-900'
+                  : 'hover:bg-green-900 active:scale-[0.98]'
               }`}
               onClick={(e) => {
                 e.stopPropagation();

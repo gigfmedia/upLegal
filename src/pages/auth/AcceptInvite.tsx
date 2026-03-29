@@ -77,7 +77,6 @@ export default function AcceptInvite() {
         // Priorizar el rol del user_metadata (viene de la invitación)
         // Si no hay rol en metadata, usar el parámetro o default a client
         const finalRole = metadataRole || inviteRoleParam || 'client';
-        console.log('  - finalRole:', finalRole);
         setRole(finalRole as 'client' | 'lawyer');
 
         if (inviteType !== 'invite') {

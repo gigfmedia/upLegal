@@ -230,7 +230,7 @@ const BlogArticle = () => {
             
             <div className="grid sm:grid-cols-1 gap-6 mb-8">
               {[
-                { title: "1. Poner término al arriendo", desc: "Al no haber plazo fijo, generalmente se considera un arriendo indefinido. El arrendador puede: Solicitar la restitución del inmueble o Dar aviso previo." },
+                { title: "1. Poner término al arriendo", desc: "Al no haber plazo fijo, generalmente se considera un arriendo indefinido. El arrendador puede: Solicitar la restitución del inmueble o dar aviso previo." },
                 { title: "2. Demandar judicialmente", desc: "Puede iniciar un juicio para: Recuperar la propiedad, Cobrar deudas o Formalizar el término del arriendo." },
                 { title: "3. Usar la Ley 21.461", desc: "Incluso sin contrato, puede intentar aplicar el procedimiento monitorio si logra probar la relación de arriendo." }
               ].map((cause, i) => (

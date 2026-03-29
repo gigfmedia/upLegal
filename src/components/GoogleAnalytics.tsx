@@ -17,14 +17,14 @@ const GoogleAnalytics = () => {
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
     if (gaId) {
       if (import.meta.env.DEV) {
-        console.log(`GA Init: ${gaId}`);
+        //console.log(`GA Init: ${gaId}`);
       }
       ReactGA.initialize(gaId);
 
       const originalGtag = window.gtag?.bind(window);
       window.gtag = (...args) => {
         if (import.meta.env.DEV) {
-          console.log("gtag call", args);
+          //console.log("gtag call", args);
         }
 
         if (typeof originalGtag === "function") {
@@ -43,7 +43,7 @@ const GoogleAnalytics = () => {
   useEffect(() => {
     if (initialized) {
       if (import.meta.env.DEV) {
-        console.log(`GA Pageview: ${location.pathname + location.search}`);
+        //console.log(`GA Pageview: ${location.pathname + location.search}`);
       }
       ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
     }

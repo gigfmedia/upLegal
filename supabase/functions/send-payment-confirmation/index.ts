@@ -98,9 +98,10 @@ serve(async (req) => {
     `;
     
     const response = await resend.emails.send({
-      from: 'LegalUp <noreply@mg.legalup.cl>',
+      from: 'LegalUp <hola@legalup.cl>',
+      reply_to: 'hola@legalup.cl',
       to: clientEmail,
-      subject: `Pago confirmado - ${formatCurrency(amount)}`,
+      subject: `Recibimos tu pago ${formatCurrency(amount)}`,
       html: emailHtml,
     });
 

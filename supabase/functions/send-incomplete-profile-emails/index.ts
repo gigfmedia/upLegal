@@ -67,8 +67,6 @@ serve(async (req) => {
     // Send emails using Resend
     const emailPromises = emails.map(async (email) => {
       try {
-        console.log(`Sending incomplete profile email to ${email} (testMode=${testMode})`)
-
         const lawyer = lawyers.find(l => l.email === email);
         const nameToUse = lawyer?.first_name 
             ? `${lawyer.first_name} ${lawyer.last_name || ''}`.trim() 
@@ -121,7 +119,8 @@ serve(async (req) => {
     `
 
         const { data, error } = await resend.emails.send({
-          from: 'LegalUp <noreply@mg.legalup.cl>',
+          from: 'LegalUp <hola@legalup.cl>',
+          reply_to: 'hola@legalup.cl',
           to: email,
           subject: 'Completa tu perfil en LegalUp',
           html: emailHtml,
@@ -129,7 +128,6 @@ serve(async (req) => {
 
         if (error) throw error
 
-        console.log('Email sent successfully:', data)
         return { success: true, email, data }
       } catch (error) {
         console.error(`Failed to send email to ${email}:`, error)

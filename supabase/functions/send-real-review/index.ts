@@ -80,9 +80,10 @@ serve(async (req) => {
                             'Cliente'
 
     await resend.emails.send({
-      from: 'LegalUp <noreply@mg.legalup.cl>',
+      from: 'Juan de LegalUp <hola@legalup.cl>',
+      reply_to: 'hola@legalup.cl',
       to: email,
-      subject: '¿Cómo fue tu experiencia con el abogado?',
+      subject: 'Cuéntanos cómo fue tu experiencia',
       html: `
       <!DOCTYPE html>
       <html>
