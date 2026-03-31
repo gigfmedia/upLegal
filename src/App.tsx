@@ -167,6 +167,43 @@ const LoadingIndicator = () => {
 
 // Global error handlers
 const setupGlobalErrorHandlers = () => {
+  const isWhiteScreen = () => {
+    const root = document.getElementById('root');
+    if (!root) return false;
+    return root.innerHTML.trim() === '';
+  };
+
+  const reloadIfWhiteScreen = (reason: string) => {
+    // Don't reload if modal is open - look for multiple indicators
+    const hasOpenModal =
+      document.querySelector('[data-modal="open"]') ||
+      document.querySelector('[role="dialog"]') ||
+      document.querySelector('[aria-modal="true"]') ||
+      document.querySelector('.fixed.inset-0') ||
+      document.querySelector('.fixed.inset-0.bg-black');
+
+    if (hasOpenModal) {
+      return;
+    }
+
+    // Avoid reload loops
+    const key = '_legalup_whitescreen_reload_ts';
+    const last = Number(sessionStorage.getItem(key) || 0);
+    const now = Date.now();
+    if (now - last < 30_000) {
+      return;
+    }
+
+    // Give React a brief chance to paint
+    setTimeout(() => {
+      if (isWhiteScreen()) {
+        sessionStorage.setItem(key, String(Date.now()));
+        console.warn(`[recovery] White screen detected (${reason}), reloading...`);
+        window.location.reload();
+      }
+    }, 300);
+  };
+
   // Handle uncaught errors
   const handleError = (error: ErrorEvent | string) => {
     const message = typeof error === 'string' ? error : error.message;
@@ -235,37 +272,10 @@ const setupGlobalErrorHandlers = () => {
   // shorter thresholds and additional checks for mobile.
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
-      // Check if any modal is open - look for multiple indicators
-      const hasOpenModal = 
-        document.querySelector('[data-modal="open"]') ||
-        document.querySelector('[role="dialog"]') ||
-        document.querySelector('[aria-modal="true"]') ||
-        document.querySelector('.fixed.inset-0') ||
-        document.querySelector('.fixed.inset-0.bg-black');
-      
-      if (hasOpenModal) {
-        sessionStorage.setItem('_legalup_last_active', String(Date.now()));
-        return;
-      }
-      
-      const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
-      const idleMs = Date.now() - lastActivity;
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const thresholdMs = isMobile ? 2 * 60 * 1000 : 30 * 60 * 1000;
-      
-      if (idleMs > thresholdMs) {
-        window.location.reload();
-        return;
-      }
-      
-      if (isMobile) {
-        setTimeout(() => {
-          document.body.classList.add('app-responsive');
-        }, 100);
-      }
+      sessionStorage.setItem('_legalup_last_active', String(Date.now()));
+      reloadIfWhiteScreen('visibilitychange');
     } else {
       sessionStorage.setItem('_legalup_last_active', String(Date.now()));
-      document.body.classList.remove('app-responsive');
     }
   };
   
@@ -276,25 +286,7 @@ const setupGlobalErrorHandlers = () => {
       //console.log('[lifecycle] Page frozen');
     } else if (type === 'resume') {
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        
-        const hasOpenModal = 
-          document.querySelector('[data-modal="open"]') ||
-          document.querySelector('[role="dialog"]') ||
-          document.querySelector('[aria-modal="true"]') ||
-          document.querySelector('.fixed.inset-0');
-        
-        if (hasOpenModal) {
-          return;
-        }
-        
-        const testStart = Date.now();
-        setTimeout(() => {
-          const testEnd = Date.now();
-          const delay = testEnd - testStart;
-          if (delay > 500) {
-            window.location.reload();
-          }
-        }, 50);
+        reloadIfWhiteScreen('resume');
       }
     }
   };
