@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
+      title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)",
+      excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Guía 2026 sobre cálculo de indemnización, topes legales y qué hacer si no te pagan.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "30 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/assets/anos-de-servicio-chile-2026.png"
+    },
+    {
       id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
       title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
       excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026.",

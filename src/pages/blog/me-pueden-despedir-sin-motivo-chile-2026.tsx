@@ -124,55 +124,71 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Causales de despido en Chile</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">Las principales causales se dividen en tres grupos:</p>
             <div className="space-y-6">
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span>
-                  Necesidades de la empresa
-                </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">Es la más utilizada. Puede aplicarse cuando:</p>
-                <ul className="space-y-2 mb-4">
-                  {["Hay cambios en la empresa", "Disminuyen las ventas", "Existe reorganización", "Se eliminan cargos"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-gray-600 font-bold">En estos casos, el trabajador tiene derecho a indemnización.</p>
-              </section>
+              <div className="flex items-start gap-4 p-6 border rounded-xl hover:bg-blue-50/30 transition-colors">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0">1</div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-4 text-gray-900 items-center gap-2">
+                    Necesidades de la empresa
+                  </h3>
+                  <p className="text-gray-600 mb-4 leading-relaxed font-normal">Es la más utilizada. Puede aplicarse cuando:</p>
+                  <ul className="space-y-2 mb-4">
+                    {["Hay cambios en la empresa", "Disminuyen las ventas", "Existe reorganización", "Se eliminan cargos"].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-base font-normal">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-gray-600 font-bold mb-4">En estos casos, el trabajador tiene derecho a indemnización.</p>
+                  <p className="text-gray-600 mb-4 leading-relaxed font-normal">Calcula cuánto dinero te corresponde por tus años trabajados:</p>
+                  <div className="text-center py-4 border-t border-b border-gray-100">
+                    <Link
+                      to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
+                      className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                    >
+                      👉 ¿Cuánto me corresponde por años de servicio? Guía 2026
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
 
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
-                  Despido por conducta del trabajador
-                </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">Incluye situaciones como:</p>
-                <ul className="space-y-2 mb-4">
-                  {["Incumplimiento grave del contrato", "Faltas reiteradas", "Conductas indebidas"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-gray-600 font-bold">En estos casos, generalmente no hay indemnización.</p>
-              </section>
+              <div className="flex items-start gap-4 p-6 border rounded-xl hover:bg-blue-50/30 transition-colors">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0">2</div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-4 text-gray-900 items-center gap-2">
+                    Despido por conducta del trabajador
+                  </h3>
+                  <p className="text-gray-600 mb-4 leading-relaxed font-normal">Incluye situaciones como:</p>
+                  <ul className="space-y-2 mb-4">
+                    {["Incumplimiento grave del contrato", "Faltas reiteradas", "Conductas indebidas"].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-base font-normal">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-gray-600 font-bold">En estos casos, generalmente no hay indemnización.</p>
+                </div>
+              </div>
 
-              <section>
-                <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
-                  Otras causales legales
-                </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">También existen otras causales como:</p>
-                <ul className="space-y-2">
-                  {["Vencimiento del contrato", "Renuncia del trabajador", "Mutuo acuerdo"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <div className="flex items-start gap-4 p-6 border rounded-xl hover:bg-blue-50/30 transition-colors">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0">3</div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold mb-4 text-gray-900 items-center gap-2">
+                    Otras causales legales
+                  </h3>
+                  <p className="text-gray-600 mb-4 leading-relaxed font-normal">También existen otras causales como:</p>
+                  <ul className="space-y-2">
+                    {["Vencimiento del contrato", "Renuncia del trabajador", "Mutuo acuerdo"].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-gray-600">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-base font-normal">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -235,7 +251,7 @@ const BlogArticle = () => {
             <div className="space-y-6">
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">1</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal">1</div>
                   <span className="font-bold text-gray-900 text-lg">Revisar la carta de despido</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">El empleador debe entregar una carta que indique:</p>
@@ -251,7 +267,7 @@ const BlogArticle = () => {
 
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">2</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal">2</div>
                   <span className="font-bold text-gray-900 text-lg">Evaluar si el despido es legal</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Es importante analizar:</p>
@@ -267,7 +283,7 @@ const BlogArticle = () => {
 
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">3</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal">3</div>
                   <span className="font-bold text-gray-900 text-lg">Guardar documentos</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Reúne:</p>
@@ -283,7 +299,7 @@ const BlogArticle = () => {
 
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">4</div>
+                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal">4</div>
                   <span className="font-bold text-gray-900 text-lg">Buscar asesoría legal</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Un abogado puede ayudarte a:</p>
@@ -313,6 +329,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Después del despido, el empleador debe pagar el finiquito. Si quieres saber cómo calcularlo, revisa nuestra guía completa.
             </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">¿Quieres saber si tu finiquito está bien calculado?</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <Link
                 to="/blog/como-calcular-tu-finiquito-chile-2026"

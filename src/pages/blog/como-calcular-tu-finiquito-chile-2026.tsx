@@ -157,13 +157,23 @@ const BlogArticle = () => {
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-gray-700 text-sm">{item}</span>
+                  <span className="text-gray-700 font-normal text-sm">{item}</span>
                 </div>
               ))}
             </div>
             <p className="text-gray-600 leading-relaxed font-medium">
               Dependiendo de la causal de término, el trabajador puede tener derecho a indemnizaciones adicionales. Por ejemplo, el despido por necesidades de la empresa (artículo 161 del Código del Trabajo) suele generar el pago de indemnización por años de servicio.
             </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Si tienes dudas sobre la legalidad de tu término de contrato, lee esto:</p>
+            <div className="text-center py-4 border-t border-b border-gray-100">
+              <Link
+                to="/blog/me-pueden-despedir-sin-motivo-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+              >
+                👉 ¿Me pueden despedir sin motivo en Chile? Guía 2026
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           {/* Elements Included */}
@@ -176,20 +186,27 @@ const BlogArticle = () => {
             <div className="space-y-12">
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">1</span>
                   Remuneraciones pendientes
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   El primer elemento del finiquito corresponde a los pagos pendientes del trabajador.
                 </p>
-                <div className="bg-gray-50 p-4 rounded-lg border mb-6">
-                  <p className="text-gray-700 text-base mb-3 font-semibold">Esto puede incluir:</p>
-                  <ul className="grid sm:grid-cols-2 gap-2 text-base text-gray-600">
-                    <li className="flex items-center gap-2">• Sueldo del último mes</li>
-                    <li className="flex items-center gap-2">• Sueldo proporcional</li>
-                    <li className="flex items-center gap-2">• Horas extra devengadas</li>
-                    <li className="flex items-center gap-2">• Comisiones pendientes</li>
-                    <li className="flex items-center gap-2">• Bonos acumulados</li>
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8">
+                  <p className="text-gray-900 font-bold mb-4 text-lg">Además de estas remuneraciones, se pagan:</p>
+                  <ul className="grid sm:grid-cols-2 gap-3">
+                    {[
+                      "Sueldo del último mes",
+                      "Sueldo proporcional",
+                      "Horas extra devengadas",
+                      "Comisiones pendientes",
+                      "Bonos acumulados"
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-center gap-2 text-gray-700 font-normal">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="text-base">{item}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
                 <p className="text-gray-600 text-base italic">Todos estos montos deben pagarse en el finiquito si aún no han sido liquidados.</p>
@@ -197,7 +214,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">2</span>
                   Indemnización sustitutiva del aviso previo
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -212,15 +229,26 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">3</span>
                   Indemnización por años de servicio (IAS)
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   La indemnización por años de servicio es uno de los pagos más importantes del finiquito. Se paga cuando el contrato termina por necesidades de la empresa o desahucio del empleador.
                 </p>
-                <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
+                <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6 text-center">
                   <p className="text-indigo-900 font-bold text-lg mb-2">El cálculo corresponde a:</p>
                   <p className="text-indigo-800">1 mes de sueldo por cada año trabajado.</p>
+                </div>
+                
+                <p className="text-gray-600 mb-4 leading-relaxed">Revisa el detalle de cómo cobrar tus años de servicio:</p>
+                <div className="text-center py-4 border-t border-b border-gray-100">
+                  <Link
+                    to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
+                    className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                  >
+                    👉 ¿Cuánto corresponde por años de servicio? Guía 2026
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
                 </div>
                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
                   <h4 className="font-bold text-gray-900 mb-3">Reglas importantes del cálculo:</h4>
@@ -243,7 +271,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">4</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">4</span>
                   Feriado proporcional y vacaciones pendientes
                 </h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
@@ -264,7 +292,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">5</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">5</span>
                   Indemnización por necesidades de la empresa
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
@@ -280,7 +308,7 @@ const BlogArticle = () => {
 
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">6</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">6</span>
                   Cotizaciones previsionales impagas
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">

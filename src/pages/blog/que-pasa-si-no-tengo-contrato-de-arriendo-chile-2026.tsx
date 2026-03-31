@@ -192,6 +192,7 @@ const BlogArticle = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   Para desalojarte, el dueño debe iniciar un juicio. Puedes revisar cómo funciona aquí:
                 </p>
+                <p className="text-gray-600 mb-4 leading-relaxed">Entiende los plazos y protecciones legales ante un desalojo:</p>
                 <div className="text-center py-4 border-t border-b border-gray-100">
                   <Link
                     to="/blog/orden-desalojo-chile-2026"
@@ -316,6 +317,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               Puedes revisar más sobre esto en nuestro artículo especial:
             </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Pasos críticos si el dueño te pide la propiedad sin orden judicial:</p>
             <div className="text-center py-4 border-t border-b border-gray-100 mb-6">
               <Link
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026"
@@ -391,7 +393,7 @@ const BlogArticle = () => {
                 { title: "Buscar asesoría legal", desc: "Especialmente si: Hay amenaza de desalojo, problemas de pago o conflictos con el dueño." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white w-7 h-7 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-gray-900 p-2 rounded-lg text-white w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal text-sm">
                     {i+1}
                   </div>
                   <div>
@@ -493,9 +495,15 @@ const BlogArticle = () => {
           />
         </div>
         <BlogNavigation 
+          nextArticle={{
+            id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
+            title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo 2026)",
+            excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Cálculo, topes legales y qué hacer.",
+            image: "/assets/anos-de-servicio-chile-2026.png"
+          }}
           prevArticle={{
             id: "ley-devuelveme-mi-casa-chile-2026",
-            title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
+            title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Recupera tu propiedad',
             excerpt: "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble. Guía 2026 para propietarios en Chile.",
             image: "/assets/ley-devuelveme-mi-casa-2026.png"
           }}
