@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -174,6 +176,11 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+            
+            <InArticleCTA 
+              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
+              category="Derecho Laboral"
+            />
           </div>
 
           {/* Elements Included */}
@@ -241,7 +248,7 @@ const BlogArticle = () => {
                 </div>
                 
                 <p className="text-gray-600 mb-4 leading-relaxed">Revisa el detalle de cómo cobrar tus años de servicio:</p>
-                <div className="text-center py-4 border-t border-b border-gray-100">
+                <div className="text-center py-4 border-t border-b border-gray-100 mb-8">
                   <Link
                     to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
                     className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
@@ -323,8 +330,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* Cómo calcular */}
           <div className="mb-12">
+            <InArticleCTA 
+              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
+              category="Derecho Laboral"
+            />
+            
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile (2026)</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
               A continuación revisamos una forma simple de estimar tu finiquito paso a paso.
@@ -547,6 +558,8 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      
+      <BlogConversionPopup category="Derecho Laboral" topic="finiquito" />
     </div>
   );
 };

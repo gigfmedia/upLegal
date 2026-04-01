@@ -31,74 +31,85 @@ function generateEmailHtml(customerName?: string): string {
   <title>LegalUp - Soluciones Legales</title>
 </head>
 <body>
-  <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
-    <div style="text-align: center; padding: 30px 20px;">
-      <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
+  <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820; padding-bottom: 40px;">
+    <div style="text-align: center; padding: 40px 20px;">
+      <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 20px;">
         <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 50px; vertical-align: middle;" />
-        <span style="color: #101820; font-size: 28px; position: relative; top: 2px;">LegalUp</span>
+        <span style="color: #101820; font-size: 28px; position: relative; top: 2px; font-family: 'Outfit', sans-serif;">LegalUp</span>
       </div>
     </div>
 
-    <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
-      <p style="font-size: 16px; color: #444; line-height: 1.5; margin: 0 0 20px 0;">${greeting}</p>
+    <div style="background-color: #ffffff; padding: 40px; border-radius: 8px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+      <p style="font-size: 16px; color: #64748b; line-height: 1.5; margin: 0 0 24px 0;">${greeting}</p>
 
-      <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¿Tienes un problema legal y no sabes por dónde empezar?</h1>
+      <h1 style="color: #0f172a; margin: 0 0 20px 0; font-size: 24px; font-weight: 800; line-height: 1.3;">¿Tienes un problema legal y no sabes por dónde empezar?</h1>
 
-      <p style="font-size: 16px; color: #475569; line-height: 1.6; margin: 0 0 25px 0;">
-        Hablar con un abogado no debería ser complicado ni caro.  
-        En LegalUp puedes hacerlo fácil, rápido y online.
+      <p style="font-size: 17px; color: #334155; line-height: 1.6; margin: 0 0 16px 0;">
+        La mayoría de las personas espera demasiado… y termina pagando más caro o perdiendo opciones.
       </p>
 
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://legalup.cl/consulta" style="display: inline-block; background-color: #110d27; color: white; padding: 14px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;">
+      <p style="font-size: 17px; color: #334155; line-height: 1.6; margin: 0 0 32px 0;">
+        Hablar con un abogado no debería ser complicado ni incierto.<br>
+        Con LegalUp puedes hacerlo <strong>rápido, claro y 100% online.</strong>
+      </p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="https://legalup.cl/consulta" style="display: inline-block; background-color: #110d27; color: white; padding: 18px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em;">
           Hablar con un abogado ahora
         </a>
       </div>
 
-      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+      <div style="background-color: #f8fafc; padding: 24px; border-radius: 8px; margin: 40px 0;">
+        <h2 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0;">¿Por qué usar LegalUp?</h2>
+        
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 6px 0; font-size: 16px; color: #475569;">• <strong>Respuesta rápida</strong> de abogados verificados</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 16px; color: #475569;">• <strong>Precios claros</strong> desde el inicio</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 16px; color: #475569;">• <strong>Especialistas</strong> en arriendos, despidos, deudas, familia y más</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 16px; color: #475569;">• <strong>Sin trámites</strong> ni vueltas</td>
+          </tr>
+        </table>
+      </div>
 
-      <h2 style="font-size: 18px; font-weight: bold; color: #101820; margin: 0 0 15px 0;">¿Por qué usar LegalUp?</h2>
-      
-      <p style="font-size: 16px; color: #475569; line-height: 1.8; margin: 0 0 20px 0;">
-        • Respuestas rápidas de abogados verificados<br>
-        • Precios claros desde el inicio<br>
-        • Especialistas en arriendos, despidos, deudas, familia y más<br>
-        • 100% online
-      </p>
-
-      <p style="font-size: 16px; color: #101820; font-weight: bold; margin: 20px 0 10px 0;">
+      <p style="font-size: 18px; color: #0f172a; font-weight: 800; margin: 32px 0 12px 0;">
         Empieza antes de que el problema crezca
       </p>
       
-      <p style="font-size: 16px; color: #64748b; line-height: 1.5; margin: 0 0 20px 0;">
-        La mayoría de los problemas legales se vuelven más caros y complejos con el tiempo.  
-        Resolverlo hoy puede ahorrarte dinero y estrés.
+      <p style="font-size: 16px; color: #64748b; line-height: 1.6; margin: 0 0 32px 0;">
+        Mientras antes actúes, más opciones tienes y <strong>menos te cuesta resolverlo.</strong>
       </p>
 
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="https://legalup.cl" style="display: inline-block; background-color: #110d27; color: white; padding: 14px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 16px;">
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="https://legalup.cl" style="color: #111827; text-decoration: underline; font-weight: 600; font-size: 15px;">
           Ver cómo funciona
         </a>
       </div>
 
-      <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+      <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 40px 0;">
 
-      <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Si tienes alguna duda, estamos para ayudarte.</p>
-      <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Saludos,</p>
-      <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Equipo de LegalUp</p>
+      <p style="color: #94a3b8; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Si tienes alguna duda, estamos para ayudarte.</p>
+      <p style="color: #94a3b8; line-height: 1.6; margin: 0; font-weight: 500; font-size: 14px">Equipo de LegalUp</p>
     </div>
 
-    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
+    <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
       <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.</p>
       <p style="margin: 5px 0;">Todos los derechos reservados.</p>
-      <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
+      <p style="margin: 5px 0; font-size: 11px;">Este es un correo automático, por favor no respondas a este mensaje.</p>
     </div>
   </div>
 </body>
 </html>`
 }
 
-serve(async (req) => {
+
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -131,8 +142,8 @@ serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'Juan de LegalUp <hola@legalup.cl>',
-              reply_to: 'hola@legalup.cl',
+              from: 'Juan de LegalUp <hola@mg.legalup.cl>',
+              reply_to: 'hola@mg.legalup.cl',
               to: email,
               subject: subject,
               html: html,

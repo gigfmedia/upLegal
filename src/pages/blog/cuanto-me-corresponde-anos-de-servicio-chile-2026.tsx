@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -200,6 +202,11 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            
+            <InArticleCTA 
+              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
+              category="Derecho Laboral"
+            />
           </div>
 
           {/* Section 3 */}
@@ -220,9 +227,8 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* Section 4: Calculation */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula la indemnización por años de servicio?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula la indemnización por años de servicio??</h2>
             <p className="text-gray-600 mb-6">La fórmula base es:</p>
             <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-8 text-center text-xl font-bold text-indigo-900">
                1 sueldo mensual × años trabajados
@@ -306,6 +312,11 @@ const BlogArticle = () => {
                 <p className="font-bold text-blue-900 mt-2">Resultado: $5.250.000</p>
               </div>
             </div>
+
+            <InArticleCTA 
+              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
+              category="Derecho Laboral"
+            />
           </div>
 
           {/* Additional Info */}
@@ -549,6 +560,8 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      
+      <BlogConversionPopup category="Derecho Laboral" topic="finiquito" />
     </div>
   );
 };

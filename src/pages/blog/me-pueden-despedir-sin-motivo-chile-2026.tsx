@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -190,6 +192,11 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            
+            <InArticleCTA 
+              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
+              category="Derecho Laboral"
+            />
           </div>
 
           <div className="mb-12">
@@ -322,6 +329,11 @@ const BlogArticle = () => {
                 El trabajador tiene un plazo de: <strong>60 días hábiles</strong> para presentar una demanda desde la fecha del despido.
               </p>
             </div>
+
+            <InArticleCTA 
+              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
+              category="Derecho Laboral"
+            />
           </div>
 
           <div className="mb-12">
@@ -441,6 +453,8 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      
+      <BlogConversionPopup category="Derecho Laboral" topic="despido" />
     </div>
   );
 };

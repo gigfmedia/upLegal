@@ -144,7 +144,13 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
 
       const selectedCustomersData = customers.filter(c => selectedCustomers.includes(c.email));
 
-      const { error } = await supabase.functions.invoke('send-customer-marketing-emails', {
+      console.log('Enviando petición a Edge Function...', {
+        emails: targetEmails,
+        subject: emailSubject,
+        testMode: isTestMode
+      });
+
+      const { data, error } = await supabase.functions.invoke('send-customer-marketing-emails', {
         body: {
           emails: targetEmails,
           subject: emailSubject,
@@ -153,9 +159,17 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
         }
       });
 
+      console.log('Respuesta de Edge Function:', { data, error });
+
       if (error) {
-        console.error('Edge Function error:', error);
-        throw new Error(typeof error === 'string' ? error : error.message || 'Error desconocido');
+        console.error('Edge Function error object:', error);
+        throw new Error(typeof error === 'string' ? error : error.message || 'Error de conexión con la función');
+      }
+
+      if (data?.failed > 0) {
+        const firstError = data.results?.find((r: any) => !r.success)?.error || 'Error desconocido en el proveedor de email';
+        console.error('Errores en el envío:', data.results);
+        throw new Error(`Fallo en el envío: ${firstError}`);
       }
 
       toast({
@@ -168,10 +182,10 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
       onClose?.();
 
     } catch (error: any) {
-      console.error('Error sending emails:', error);
+      console.error('Error sending emails (Catch block):', error);
       toast({
-        title: 'Error',
-        description: error?.message || `No se pudo enviar el email${isTestMode ? ' de prueba' : ''}`,
+        title: 'Error de envío',
+        description: error?.message || `No se pudo completar la operación`,
         variant: 'destructive',
       });
     } finally {

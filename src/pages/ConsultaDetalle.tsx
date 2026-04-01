@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { createMercadoPagoPayment } from '@/services/mercadopagoService';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,31 @@ import Header from '@/components/Header';
 export default function ConsultaDetalle() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location_nav = useLocation();
+  const queryParams = new URLSearchParams(location_nav.search);
+  const rawCategory = queryParams.get('category') || '';
+  
+  // Normalize category names from the blog (Derecho Laboral -> Laboral)
+  const normalizeCategory = (cat: string) => {
+    const lower = cat.toLowerCase();
+    if (lower.includes('laboral')) return 'Laboral';
+    if (lower.includes('inmobiliario') || lower.includes('arriendo')) return 'Civil';
+    if (lower.includes('familia')) return 'Familia';
+    if (lower.includes('civil')) return 'Civil';
+    if (lower.includes('penal')) return 'Penal';
+    return cat;
+  };
+
+  const initialCategory = normalizeCategory(rawCategory);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: user?.user_metadata?.name || user?.profile?.first_name ? 
       `${user?.profile?.first_name} ${user?.profile?.last_name || ''}`.trim() : '',
     email: user?.email || '',
-    category: '',
+    category: initialCategory,
     description: ''
   });
 
@@ -122,17 +140,17 @@ export default function ConsultaDetalle() {
               <SelectValue placeholder="¿Qué tipo de problema legal tienes?" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Familia">
-                Familia (divorcio, pensión, hijos)
-              </SelectItem>
               <SelectItem value="Laboral">
                 Laboral (despido, finiquito)
               </SelectItem>
               <SelectItem value="Civil">
-                Civil (contratos, deudas)
+                Civil (contratos, deudas, arriendo)
               </SelectItem>
               <SelectItem value="Penal">
                 Penal (denuncias, defensa)
+              </SelectItem>
+              <SelectItem value="Familia">
+                Familia (divorcio, pensión, hijos)
               </SelectItem>
             </SelectContent>
           </Select>
@@ -165,7 +183,7 @@ export default function ConsultaDetalle() {
         <div className="pt-4">
           <Button 
             type="submit" 
-            className="w-full py-6 text-sm bg-blue-700 hover:bg-blue-800"
+            className="w-full py-6 text-sm bg-gray-900 hover:bg-green-900"
             disabled={isLoading || !formData.category}
           >
             {isLoading ? 'Procesando pago...' : 'Pagar $30.000'}
