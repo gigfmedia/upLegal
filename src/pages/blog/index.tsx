@@ -24,7 +24,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "1 de Abril, 2026",
       readTime: "12 min",
-      image: "/assets/despido-sin-motivo-chile-2026.png"
+      image: "/assets/despido-injustificado-chile-2026.png"
     },
     {
       id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",

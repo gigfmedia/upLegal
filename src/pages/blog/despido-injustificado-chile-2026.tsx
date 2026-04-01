@@ -39,7 +39,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
         description="Guía 2026 sobre el despido injustificado en Chile: qué es, cuándo se puede demandar, cuánto puedes ganar, plazos y errores que debes evitar para reclamar tu indemnización."
-        image="/assets/ley-devuelveme-mi-casa-2026.png"
+        image="/assets/despido-injustificado-chile-2026.png"
         url="https://legalup.cl/blog/despido-injustificado-chile-2026"
         datePublished="2026-04-01"
         dateModified="2026-04-01"
@@ -274,6 +274,16 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+
+            <p className="text-gray-600 mb-6 leading-relaxed text-sm">
+              Para calcular el monto exacto según tu sueldo y años trabajados, revisa nuestra guía completa:{" "}
+              <Link
+                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
+                className="text-blue-600 font-semibold hover:underline"
+              >
+                ¿Cuánto me corresponde por años de servicio en Chile? →
+              </Link>
+            </p>
 
             <InArticleCTA
               message="¿Quieres saber cuánto te corresponde exactamente? Un abogado puede calcularlo contigo."

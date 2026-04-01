@@ -547,7 +547,13 @@ const BlogArticle = () => {
             title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
             excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026.",
             image: "/assets/sin-contrato-arriendo-2026.png"
-          }} 
+          }}
+          nextArticle={{
+            id: "despido-injustificado-chile-2026",
+            title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
+            excerpt: "Si te despidieron sin causa válida, tienes derecho a indemnización y hasta un 100% de recargo adicional. Guía 2026 con plazos, pasos y ejemplo de cálculo real.",
+            image: "/assets/despido-injustificado-chile-2026.png"
+          }}
         />
 
         <div className="mt-4 text-center">
