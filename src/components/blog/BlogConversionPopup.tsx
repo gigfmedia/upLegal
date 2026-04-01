@@ -158,7 +158,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
                 <div className="w-full pt-2">
                   <Link to={targetUrl}>
                     <Button className="w-full bg-gray-900 hover:bg-green-900 text-white rounded-xl h-12 text-base font-bold shadow-md active:scale-95 transition-all">
-                      👉 Hablar con abogado ahora
+                      Hablar con abogado ahora
                     </Button>
                   </Link>
                 </div>
@@ -225,7 +225,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
                 <div className="space-y-4 pt-1 w-full">
                   <Link to={targetUrl}>
                     <Button className="w-full bg-gray-900 hover:bg-green-900 text-white rounded-md h-12 text-sm font-bold shadow-md transition-all active:scale-95">
-                      👉 Hablar con abogado ahora
+                      Hablar con abogado ahora
                     </Button>
                   </Link>
 

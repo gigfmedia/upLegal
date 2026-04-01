@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "despido-injustificado-chile-2026",
+      title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
+      excerpt: "Si te despidieron sin causa válida, tienes derecho a indemnización y hasta un 100% de recargo adicional. Guía 2026 con plazos, pasos y ejemplo de cálculo real.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "1 de Abril, 2026",
+      readTime: "12 min",
+      image: "/assets/despido-sin-motivo-chile-2026.png"
+    },
+    {
       id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
       title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)",
       excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Guía 2026 sobre cálculo de indemnización, topes legales y qué hacer si no te pagan.",
