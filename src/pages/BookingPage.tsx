@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,8 @@ export default function BookingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [searchParams] = useSearchParams();
+  const prefillRef = useRef<{ date?: string; time?: string; duration?: number; applied: boolean }>({ applied: false });
   const summaryRef = useRef<HTMLDivElement>(null);
   const timeSelectionRef = useRef<HTMLDivElement>(null);
 
@@ -113,6 +115,25 @@ export default function BookingPage() {
     fetchLawyer();
   }, [lawyerId, actualLawyerId, navigate]);
 
+  useEffect(() => {
+    const dateParam = searchParams.get('date');
+    const timeParam = searchParams.get('time');
+    const durationParam = searchParams.get('duration');
+
+    if (dateParam) {
+      prefillRef.current.date = dateParam;
+    }
+    if (timeParam) {
+      prefillRef.current.time = timeParam;
+    }
+    if (durationParam) {
+      const d = Number(durationParam);
+      if ([30, 60, 90, 120].includes(d)) {
+        prefillRef.current.duration = d as 30 | 60 | 90 | 120;
+      }
+    }
+  }, [searchParams]);
+
   // Track booking_start event when lawyer data is loaded
   useEffect(() => {
     if (lawyer?.user_id && window.gtag) {
@@ -122,6 +143,42 @@ export default function BookingPage() {
       });
     }
   }, [lawyer]);
+
+  // Apply deep link prefill once lawyer is loaded and slots are ready
+  useEffect(() => {
+    if (!lawyer || prefillRef.current.applied) return;
+
+    const { date, time, duration: dur } = prefillRef.current;
+
+    if (dur && [30, 60, 90, 120].includes(dur)) {
+      setDuration(dur as 30 | 60 | 90 | 120);
+    }
+
+    if (date) {
+      const parsedDate = parseISO(date);
+      const today = startOfDay(new Date());
+      if (!isBefore(parsedDate, today) && parsedDate.getDay() !== 0) {
+        setSelectedDate(parsedDate);
+      }
+    }
+
+    prefillRef.current.applied = true;
+  }, [lawyer]);
+
+  // Apply prefill time once slots are loaded
+  useEffect(() => {
+    if (!availableSlots.length || !prefillRef.current.time) return;
+
+    const prefillTime = prefillRef.current.time;
+    const slotExists = availableSlots.some(s => s.time === prefillTime && s.available);
+
+    if (slotExists && !selectedTime) {
+      setSelectedTime(prefillTime);
+      setTimeout(() => {
+        summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    }
+  }, [availableSlots, selectedTime]);
 
   // Constants mapping indices to hours for availability JSON
   // ManageAvailability.tsx: const HOURS = Array.from({ length: 10 }, (_, i) => 9 + i); // 09:00–20:00 (Check: 9+9=18, so 09:00 to 18:00 start times)
