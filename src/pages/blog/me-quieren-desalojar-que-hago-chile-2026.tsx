@@ -25,14 +25,22 @@ const BlogArticle = () => {
     {
       question: "¿Puede el dueño entrar a la casa si vivo ahí?",
       answer: "No. Aunque sea el propietario, entrar sin autorización puede constituir violación de morada, que es un delito."
+    },
+    {
+      question: "¿Me pueden desalojar si tengo niños?",
+      answer: "Tener hijos menores no suspende automáticamente un proceso de desalojo en Chile. Sin embargo, el tribunal puede considerar la situación al fijar plazos. Si estás en esta situación, es importante contar con asesoría legal para explorar todas las opciones disponibles."
+    },
+    {
+      question: "¿Pueden desalojarme sin orden judicial?",
+      answer: "No. En Chile todo desalojo debe estar respaldado por una resolución judicial. Si el arrendador intenta sacarte por la fuerza, cambiar la cerradura o cortar servicios básicos sin orden judicial, está cometiendo un acto ilegal que puedes denunciar."
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
-        description="Si arriendas una propiedad en Chile, conoce tus derechos. ¿Puede el dueño sacarte a la fuerza? Descubre el proceso legal y cómo protegerte en esta Guía 2026."
+        title="¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero"
+        description="Para desalojarte, el arrendador debe seguir un proceso legal que puede tomar meses. Conoce los plazos, tus derechos y cuándo un desalojo sin orden judicial es ilegal. Consulta en LegalUp."
         image="/assets/desalojo-chile-2026.png"
         url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"
         datePublished="2026-03-13"
@@ -54,7 +62,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)
+            ¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero
           </h1>
           
           <p className="text-xl max-w-3xl leading-relaxed">

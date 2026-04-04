@@ -11,6 +11,10 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 const BlogArticle = () => {
   const faqs = [
     {
+      question: "¿Cuánto demora un juicio de desalojo en Chile?",
+      answer: "Un juicio de desalojo en Chile puede tardar entre 3 y 12 meses, dependiendo de la carga del tribunal, si el arrendatario contesta la demanda y si hay apelaciones. El procedimiento comienza con la demanda, sigue con la notificación al arrendatario, la audiencia y finalmente la sentencia. Si el arrendatario no paga ni se opone, el proceso puede resolverse en menos tiempo."
+    },
+    {
       question: "¿Cuántos meses de arriendo deben deberse para iniciar un desalojo?",
       answer: "La ley no establece un número exacto de meses. En general, el arrendador puede iniciar acciones judiciales cuando existe incumplimiento del contrato de arriendo, usualmente tras un mes de mora."
     },
@@ -35,8 +39,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks 
-        title="¿Cuánto demora un juicio de desalojo en Chile? Tiempo real 2026"
-        description="Guía completa sobre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas, plazos legales y consejos para recuperar tu propiedad."
+        title="¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley"
+        description="Un desalojo en Chile puede tardar entre 3 meses y más de un año, dependiendo del tribunal y si hay oposición. Conoce las etapas, los plazos reales y cuándo conviene actuar con un abogado."
         image="/assets/desalojo-chile-2026.png"
         url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026"
         datePublished="2026-03-16"
@@ -59,7 +63,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Cuánto demora un juicio de desalojo en Chile? (Tiempo real del proceso 2026)
+            ¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley
           </h1>
           
           <p className="text-xl max-w-3xl">

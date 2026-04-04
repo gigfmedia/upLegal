@@ -23,14 +23,22 @@ const BlogArticle = () => {
     {
       question: "¿Qué indemnizaciones incluye el finiquito por necesidades de la empresa?",
       answer: "Generalmente incluye: indemnización por años de servicio, indemnización sustitutiva del aviso previo y feriado proporcional."
+    },
+    {
+      question: "¿Cómo se calcula el finiquito en Chile paso a paso?",
+      answer: "Se suman tres conceptos: (1) indemnización por años de servicio, equivalente a un mes de remuneración por cada año trabajado; (2) mes de aviso, si el empleador no dio 30 días de anticipación; y (3) vacaciones proporcionales, según los días acumulados y no tomados en el año. El total depende de la causa de término del contrato."
+    },
+    {
+      question: "¿Cuánto pagan en un finiquito si renuncio?",
+      answer: "Si renuncias voluntariamente, solo te corresponde el feriado proporcional (vacaciones acumuladas no tomadas). No hay indemnización por años de servicio ni mes de aviso, salvo que el contrato o un acuerdo con el empleador establezca lo contrario."
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
-        description="Calcular el finiquito en Chile puede generar muchas dudas, especialmente porque intervienen distintos factores como indemnizaciones, vacaciones pendientes, pagos proporcionales y otros beneficios laborales."
+        title="¿Cuánto te deben pagar en el finiquito? Calculadora 2026 + fórmula paso a paso"
+        description="Calcula tu finiquito en Chile 2026 gratis: indemnización, vacaciones proporcionales y mes de aviso. Si tienes dudas, un abogado laboral de LegalUp responde en 24 horas."
         image="/assets/finiquito-chile-2026.png"
         url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
         datePublished="2026-02-18"
@@ -52,7 +60,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
-            ¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso
+            ¿Cuánto te deben pagar en el finiquito? Calculadora 2026 + fórmula paso a paso
           </h1>
           
           <p className="text-xl max-w-3xl">

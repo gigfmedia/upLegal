@@ -9,30 +9,38 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
-  const faqs = [
-    {
-      question: "¿Me pueden subir el arriendo si no está en el contrato?",
-      answer: "No. Si el contrato no establece una cláusula de reajuste, el valor del arriendo debe mantenerse igual durante la vigencia del contrato."
-    },
-    {
-      question: "¿Qué pasa si el dueño quiere subir el arriendo de forma repentina?",
-      answer: "Puedes solicitar la base contractual del aumento. Si no existe cláusula de reajuste, el aumento no corresponde."
-    },
-    {
-      question: "¿El arriendo puede subir todos los meses?",
-      answer: "Solo si el contrato establece un reajuste mensual, lo cual no es muy común. La mayoría de los contratos utiliza reajustes anuales."
-    },
-    {
-      question: "¿Qué pasa si no acepto el aumento al renovar contrato?",
-      answer: "El arrendador puede decidir no renovar el contrato y buscar otro arrendatario. En ese caso deberás entregar la propiedad cuando corresponda."
-    }
-  ];
+ const faqs = [
+  {
+    question: "¿Cuánto pueden subir el arriendo legalmente en Chile?",
+    answer: "En Chile no existe un tope legal fijo para el reajuste del arriendo. El monto del aumento depende de lo que establezca el contrato. Lo más común es que los contratos vinculen el reajuste al IPC (Índice de Precios al Consumidor). Si el contrato no tiene cláusula de reajuste, el valor no puede modificarse durante su vigencia sin acuerdo de ambas partes."
+  },
+  {
+    question: "¿Me pueden subir el arriendo si no está en el contrato?",
+    answer: "No. Si el contrato no establece una cláusula de reajuste, el valor del arriendo debe mantenerse igual durante la vigencia del contrato."
+  },
+  {
+    question: "¿Qué pasa si el dueño quiere subir el arriendo de forma repentina?",
+    answer: "Puedes solicitar la base contractual del aumento. Si no existe cláusula de reajuste, el aumento no corresponde."
+  },
+  {
+    question: "¿El arriendo puede subir todos los meses?",
+    answer: "Solo si el contrato establece un reajuste mensual, lo cual no es muy común. La mayoría de los contratos utiliza reajustes anuales."
+  },
+  {
+    question: "¿Qué pasa si no acepto el aumento al renovar contrato?",
+    answer: "El arrendador puede decidir no renovar el contrato y buscar otro arrendatario. En ese caso deberás entregar la propiedad cuando corresponda."
+  },
+  {
+    question: "¿Qué puedo hacer si me subieron el arriendo más del IPC?",
+    answer: "Si tu contrato establece reajuste según IPC y el arrendador cobró más, tienes derecho a reclamar la diferencia. Puedes hacerlo directamente con el arrendador mostrando el contrato, o acudir a un abogado para evaluar una demanda por cobro indebido."
+  }
+];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026"
-        description="¿Te subieron el arriendo? Conoce tus derechos en Chile 2026. Cuándo es legal el aumento, cómo negociar y qué hacer ante un cobro arbitrario."
+        title="¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron"
+        description="En Chile el arriendo puede subir según el IPC, pero hay condiciones. Si te subieron más de lo permitido o sin aviso, tienes derechos. Abogado disponible en LegalUp — consulta hoy."
         image="/assets/arriendo-chile-2026.png"
         url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"
         datePublished="2026-01-13"
@@ -54,7 +62,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)
+            ¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron
           </h1>
           
           <p className="text-xl text-white max-w-3xl leading-relaxed">
