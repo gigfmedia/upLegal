@@ -6,6 +6,7 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -239,6 +240,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <InArticleCTA
+            message="¿Necesitas iniciar un proceso de desalojo o te están demandando? Un abogado puede decirte en qué etapa estás y cuánto puede tomar tu caso."
+            buttonText="Hablar con abogado de arriendo"
+            category="Derecho Arrendamiento"
+          />
+
           <div className="mb-12 py-2">
             <h2 className="text-2xl font-bold mb-6">¿Qué hacer si enfrentas un juicio de desalojo?</h2>
             <div className="grid md:grid-cols-1 gap-8 mt-6">
@@ -287,6 +294,12 @@ const BlogArticle = () => {
               <ChevronRight className="h-5 w-5" />
             </Link>
           </div>
+
+          <InArticleCTA
+            message="Cada caso de desalojo es distinto. Si quieres saber exactamente cuánto puede demorar el tuyo, consulta hoy con un abogado especialista."
+            buttonText="Evaluar mi caso de desalojo"
+            category="Derecho Arrendamiento"
+          />
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>

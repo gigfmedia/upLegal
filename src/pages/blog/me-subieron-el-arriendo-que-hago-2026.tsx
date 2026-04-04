@@ -6,6 +6,7 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -171,6 +172,12 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <InArticleCTA
+            message="¿No sabes si el aumento que te están cobrando es legal según tu contrato? Un abogado puede revisarlo y orientarte en 24 horas."
+            buttonText="Revisar si el aumento es legal"
+            category="Derecho Arrendamiento"
+          />
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo NO es legal subir el arriendo?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -267,6 +274,12 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA
+            message="Si el aumento no está respaldado por tu contrato, tienes derechos. Habla con un abogado de arriendo y aclara tu situación hoy."
+            buttonText="Consultar sobre mi arriendo"
+            category="Derecho Arrendamiento"
+          />
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>

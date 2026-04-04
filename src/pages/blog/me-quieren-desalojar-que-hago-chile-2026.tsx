@@ -6,6 +6,7 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -195,6 +196,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <InArticleCTA
+            message="Si te están presionando para que salgas o crees que el proceso no está siguiendo la ley, un abogado puede orientarte hoy mismo."
+            buttonText="Quiero saber mis derechos"
+            category="Derecho Arrendamiento"
+          />
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuándo SÍ pueden desalojarte legalmente</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -275,6 +282,12 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA
+            message="Enfrentar un desalojo sin asesoría legal es arriesgado. Un abogado puede revisar tu situación y decirte qué opciones tienes."
+            buttonText="Hablar con abogado ahora"
+            category="Derecho Arrendamiento"
+          />
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>

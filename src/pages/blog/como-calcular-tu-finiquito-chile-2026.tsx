@@ -185,8 +185,9 @@ const BlogArticle = () => {
               </Link>
             </div>
             
-            <InArticleCTA 
-              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
+            <InArticleCTA
+              message="¿No estás seguro si el monto que te ofrecen es correcto? Un abogado laboral puede revisar tu finiquito antes de que lo firmes."
+              buttonText="Revisar mi finiquito con un abogado"
               category="Derecho Laboral"
             />
           </div>
@@ -339,8 +340,9 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <InArticleCTA 
-              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
+            <InArticleCTA
+              message="Si tienes dudas sobre tu liquidación o crees que te están pagando menos de lo que corresponde, consulta con un abogado laboral ahora."
+              buttonText="Consultar sobre mi finiquito"
               category="Derecho Laboral"
             />
             
