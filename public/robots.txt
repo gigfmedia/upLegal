@@ -11,6 +11,7 @@ User-agent: facebookexternalhit
 Allow: /
 
 User-agent: *
+Disallow: /search?*
 Allow: /
 
 Sitemap: https://legalup.cl/sitemap.xml

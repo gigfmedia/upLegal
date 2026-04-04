@@ -7,6 +7,13 @@
   port = 8080
   targetPort = 8080
 
+# Redirect www to non-www
+[[redirects]]
+  from = "https://www.legalup.cl/*"
+  to = "https://legalup.cl/:splat"
+  status = 301
+  force = true
+
 # Redirect API requests to Netlify Functions
 [[redirects]]
   from = "/api/*"

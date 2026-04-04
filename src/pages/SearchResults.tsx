@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
 import { X, SlidersHorizontal, Search } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Lawyer } from "@/components/LawyerCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -672,6 +673,9 @@ const SearchResults = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      <Helmet>
+        <link rel="canonical" href="https://legalup.cl/search" />
+      </Helmet>
       <Header />
       
       {/* Header and Search */}
