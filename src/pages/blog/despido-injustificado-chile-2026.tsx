@@ -275,15 +275,16 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <p className="text-gray-600 mb-6 leading-relaxed text-sm">
-              Para calcular el monto exacto según tu sueldo y años trabajados, revisa nuestra guía completa:{" "}
-              <Link
-                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
-                className="text-blue-600 font-semibold hover:underline"
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Para calcular el monto exacto, revisa nuestra guía completa:</p>
+              <Link 
+                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" 
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                ¿Cuánto me corresponde por años de servicio en Chile? →
+                👉 ¿Cuánto me corresponde por años de servicio en Chile?
+                <ChevronRight className="h-4 w-4" />
               </Link>
-            </p>
+            </div>
 
             <InArticleCTA
               message="¿Quieres saber cuánto te corresponde exactamente? Un abogado puede calcularlo contigo."
@@ -558,11 +559,17 @@ const BlogArticle = () => {
         </div>
 
         <BlogNavigation
+          nextArticle={{
+            id: "reajuste-arriendo-ipc-chile-2026",
+            title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
+            excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
+            image: "/assets/reajuste-arriendo-ipc-2026.png"
+          }}
           prevArticle={{
-            id: "me-pueden-despedir-sin-motivo-chile-2026",
-            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026)",
-            excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
-            image: "/assets/despido-sin-motivo-chile-2026.png"
+            id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
+            title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)",
+            excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Guía 2026 sobre cálculo de indemnización, topes legales y qué hacer si no te pagan.",
+            image: "/assets/anos-de-servicio-chile-2026.png"
           }}
         />
 

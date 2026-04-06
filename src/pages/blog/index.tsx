@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "reajuste-arriendo-ipc-chile-2026",
+      title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
+      excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "06 de Abril, 2026",
+      readTime: "10 min",
+      image: "/assets/reajuste-arriendo-ipc-2026.png"
+    },
+    {
       id: "despido-injustificado-chile-2026",
       title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
       excerpt: "Si te despidieron sin causa válida, tienes derecho a indemnización y hasta un 100% de recargo adicional. Guía 2026 con plazos, pasos y ejemplo de cálculo real.",

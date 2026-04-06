@@ -21,6 +21,7 @@ interface LawyerProfile {
   role: string;
   profile_completion?: number;
   last_profile_update?: string;
+  hourly_rate_clp?: number;
   profile_fields?: {
     bio: boolean;
     experience: boolean;
@@ -108,6 +109,7 @@ export default function LawyerProfilesPage() {
           lawyerEmail: lawyer.email,
           lawyerName: `${lawyer.first_name} ${lawyer.last_name}`,
           completionPercentage: lawyer.profile_completion,
+          isMissingPriceOnly: (lawyer.profile_completion || 0) >= 70 && (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0),
           testMode,
         },
       });
@@ -132,7 +134,8 @@ export default function LawyerProfilesPage() {
 
   const sendBulkReminders = async () => {
     const incompleteLawyers = lawyers.filter(lawyer => 
-      lawyer.profile_completion !== undefined && lawyer.profile_completion < 60
+      (lawyer.profile_completion !== undefined && lawyer.profile_completion < 80) || 
+      (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0)
     );
 
     if (incompleteLawyers.length === 0) {
@@ -154,6 +157,7 @@ export default function LawyerProfilesPage() {
             lawyerEmail: lawyer.email,
             lawyerName: `${lawyer.first_name} ${lawyer.last_name}`,
             completionPercentage: lawyer.profile_completion,
+            isMissingPriceOnly: (lawyer.profile_completion || 0) >= 70 && (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0),
             testMode,
           },
         })
@@ -208,7 +212,8 @@ export default function LawyerProfilesPage() {
   };
 
   const incompleteLawyers = lawyers.filter(lawyer => 
-    lawyer.profile_completion && lawyer.profile_completion < 60
+    (lawyer.profile_completion && lawyer.profile_completion < 80) || 
+    (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0)
   );
 
   if (loading) {
@@ -386,20 +391,29 @@ export default function LawyerProfilesPage() {
                       }
                     </Badge>
 
-                    {lawyer.profile_completion && lawyer.profile_completion < 60 && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => sendReminderEmail(lawyer)}
-                        disabled={sendingEmails.includes(lawyer.id)}
-                        className="flex-shrink-0"
-                      >
-                        {sendingEmails.includes(lawyer.id) ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Mail className="h-4 w-4" />
+                    {((lawyer.profile_completion && lawyer.profile_completion < 80) || 
+                       !lawyer.hourly_rate_clp || 
+                       lawyer.hourly_rate_clp === 0) && (
+                      <div className="flex items-center gap-2">
+                        {(!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0) && (
+                           <div className="flex items-center text-amber-600 mr-1" title="Falta precio por hora">
+                             <AlertTriangle className="h-4 w-4" />
+                           </div>
                         )}
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => sendReminderEmail(lawyer)}
+                          disabled={sendingEmails.includes(lawyer.id)}
+                          className="flex-shrink-0"
+                        >
+                          {sendingEmails.includes(lawyer.id) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
