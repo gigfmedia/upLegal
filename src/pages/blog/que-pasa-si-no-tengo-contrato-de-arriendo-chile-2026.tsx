@@ -532,7 +532,7 @@ const BlogArticle = () => {
         </div>
       </div>
       
-      <BlogConversionPopup category="Derecho Inmobiliario" topic="arriendo" />
+      <BlogConversionPopup category="Derecho Inmobiliario" topic="sin-contrato" />
     </div>
   );
 };

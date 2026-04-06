@@ -39,9 +39,21 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
         };
       case 'arriendo':
         return {
+          title: "¿Tienes dudas con tu contrato de arriendo?",
+          message: "Un abogado puede revisar tu caso y proteger tus derechos.",
+          priceLabel: "Consulta desde $30.000"
+        };
+      case 'sin-contrato':
+        return {
           title: "¿Tienes problemas con tu arriendo sin contrato?",
           message: "Un abogado puede orientarte según tu caso específico.",
           priceLabel: "Consulta desde $30.000"
+        };
+      case 'ipc':
+        return {
+          title: "¿Crees que el reajuste de tu arriendo es incorrecto?",
+          message: "Un abogado puede calcular el monto exacto según el IPC oficial.",
+          priceLabel: "Desde $30.000"
         };
       default:
         return {

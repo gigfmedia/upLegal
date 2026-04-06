@@ -128,6 +128,17 @@ const BlogArticle = () => {
                 Por lo tanto, antes de aceptar cualquier aumento, lo primero que debes hacer es revisar cuidadosamente el contrato que firmaste.
               </p>
             </div>
+
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Para calcular el monto exacto, revisa nuestra guía completa:</p>
+              <Link 
+                to="/blog/reajuste-arriendo-ipc-chile-2026" 
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 ¿Cómo calcular y aplicar el reajuste según IPC? (Guía 2026)
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           <div className="mb-12">
