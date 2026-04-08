@@ -523,6 +523,12 @@ const BlogArticle = () => {
             excerpt: "Guía 2026 sobre el despido injustificado en Chile: qué es, cuándo se puede demandar, cuánto puedes ganar.",
             image: "/assets/despido-injustificado-chile-2026.png"
           }}
+          nextArticle={{
+            id: "no-devuelven-garantia-arriendo-chile-2026",
+            title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
+            excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
+            image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">

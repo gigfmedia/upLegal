@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "no-devuelven-garantia-arriendo-chile-2026",
+      title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
+      excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "8 de Abril, 2026",
+      readTime: "11 min",
+      image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
+    },
+    {
       id: "reajuste-arriendo-ipc-chile-2026",
       title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
       excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",

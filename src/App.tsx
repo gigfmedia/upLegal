@@ -95,6 +95,7 @@ const DespidoSinMotivoArticle = lazy(() => import('./pages/blog/me-pueden-desped
 const AniosDeServicioArticle = lazy(() => import('./pages/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026'));
 const LeyDevuelvemeMiCasaArticle = lazy(() => import('./pages/blog/ley-devuelveme-mi-casa-chile-2026'));
 const DespidoInjustificadoArticle = lazy(() => import('./pages/blog/despido-injustificado-chile-2026'));
+const GarantiaArriendoArticle = lazy(() => import('./pages/blog/no-devuelven-garantia-arriendo-chile-2026'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 
 // Create a single QueryClient instance
@@ -447,6 +448,7 @@ const AppContent = () => {
               <Route path="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" element={<AniosDeServicioArticle />} />
               <Route path="/blog/ley-devuelveme-mi-casa-chile-2026" element={<LeyDevuelvemeMiCasaArticle />} />
               <Route path="/blog/despido-injustificado-chile-2026" element={<DespidoInjustificadoArticle />} />
+              <Route path="/blog/no-devuelven-garantia-arriendo-chile-2026" element={<GarantiaArriendoArticle />} />
               <Route path="/review" element={<ReviewPage />} />
              
 
