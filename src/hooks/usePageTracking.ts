@@ -11,6 +11,14 @@ export function usePageTracking() {
 
     const trackPageView = async () => {
       try {
+        // Get or create persistent visitor ID
+        let visitorId = localStorage.getItem('legalup_visitor_id');
+        if (!visitorId) {
+          visitorId = window.crypto?.randomUUID?.() || 
+                      Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('legalup_visitor_id', visitorId);
+        }
+
         // Get user ID if logged in
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -26,6 +34,7 @@ export function usePageTracking() {
             page_path: pagePath,
             page_title: pageTitle,
             user_id: user?.id || null,
+            visitor_id: visitorId,
             user_agent: userAgent,
             referrer: referrer
           }

@@ -16,6 +16,7 @@ type PageView = {
   page_path: string;
   page_title: string;
   user_id: string | null;
+  visitor_id: string | null;
   created_at: string;
   user_agent: string;
   referrer: string | null;
@@ -215,7 +216,7 @@ export default function AnalyticsDashboard() {
           .not('referrer', 'ilike', '%127.0.0.1%');
       }
 
-      const { data, error } = await query.limit(5000);
+      const { data, error } = await query.limit(10000);
       
       if (error) {
         console.error('Error fetching page views:', error);
@@ -489,8 +490,8 @@ export default function AnalyticsDashboard() {
         return created < thirtyDaysAgo && created >= sixtyDaysAgo;
       });
       
-      const currentUnique = new Set(filteredCurrentViews.map(v => v.user_id)).size;
-      const prevUnique = new Set(filteredPrevViews.map(v => v.user_id)).size;
+      const currentUnique = new Set(filteredCurrentViews.map(v => v.visitor_id || v.user_id)).size;
+      const prevUnique = new Set(filteredPrevViews.map(v => v.visitor_id || v.user_id)).size;
 
       // Peak Hours & Avg Duration - Check both appointments and bookings
       const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
