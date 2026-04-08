@@ -99,7 +99,7 @@ const Footer = () => {
   return (
     <div className="relative">
       {/* WhatsApp Button - Fixed at bottom right */}
-      <div className="fixed bottom-6 right-6 z-50 group">
+      <div className={`fixed bottom-6 right-6 z-50 group ${location.pathname === '/cae' ? 'hidden md:block' : ''}`}>
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-3 w-max max-w-[200px] bg-[#101820] text-white text-xs py-2 px-3 rounded-lg shadow-xl opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-y-0 md:translate-y-2 md:group-hover:translate-y-0">
           <h3>¿No sabes qué abogado elegir? Te ayudamos</h3>
