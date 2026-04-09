@@ -72,12 +72,11 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   const avatarInitials = deriveInitials() || 'U';
 
   const isActive = (path: string) => {
-    return location.pathname === path || 
-           (path === '/search' && location.pathname.startsWith('/search')) ||
-           (path === '/abogados' && location.pathname.startsWith('/abogados'));
+    return pathname === path || 
+           (path === '/search' && pathname.startsWith('/search')) ||
+           (path === '/abogados' && pathname.startsWith('/abogados'));
   };
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [servicesOpen, setServicesOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -98,306 +97,120 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50 h-16 flex items-center px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-7xl mx-auto">
-        <div className="relative flex items-center justify-between h-full w-full">
-          {/* Mobile Menu Button - use prop if provided, otherwise show default hamburger */}
-          {mobileMenuButton ? (
-            <div className="md:hidden flex items-center">{mobileMenuButton}</div>
-          ) : (
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6 text-gray-700" />
-              ) : (
-                <Menu className="h-6 w-6 text-gray-700" />
-              )}
-            </button>
-          )}
+    <div className="fixed top-0 left-0 right-0 z-50">
+      {/* Top Bar */}
+      <div 
+        className="h-10 bg-[#111827] flex items-center justify-center px-4 cursor-pointer hover:bg-black transition-colors border-b border-gray-800"
+        onClick={() => handleNavigation('/cae')}
+      >
+        <p className="text-white text-[13px] sm:text-sm font-medium text-center">
+          ¿Tienes deuda CAE? Revísalo antes de pagar <span className="ml-1">→</span>
+        </p>
+      </div>
 
-          {/* Logo - Centered on mobile */}
-          <div
-            className={cn(
-              "flex items-center space-x-2 cursor-pointer transition-colors",
-              centerLogoOnMobile || !mobileMenuButton
-                ? "absolute left-1/2 -translate-x-1/2 md:relative md:left-auto md:translate-x-0"
-                : ""
+      {/* Main Header */}
+      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16 flex items-center px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="relative flex items-center justify-between h-full w-full">
+            {/* Mobile Menu Button */}
+            {mobileMenuButton ? (
+              <div className="md:hidden flex items-center">{mobileMenuButton}</div>
+            ) : (
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6 text-gray-700" />
+                ) : (
+                  <Menu className="h-6 w-6 text-gray-700" />
+                )}
+              </button>
             )}
-            onClick={() => handleNavigation('/')}
-          >
-            <Scale className="h-8 w-8 text-green-900" />
-            <span className="text-xl font-bold text-green-900">LegalUp</span>
-          </div>
 
-          {/* Navigation - Centered */}
-          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-            <a
-              href="/search"
+            {/* Logo */}
+            <div
               className={cn(
-                "transition-colors hover:text-green-900 text-sm",
-                isActive('/search') || pathname.startsWith('/search/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
+                "flex items-center space-x-2 cursor-pointer transition-colors",
+                centerLogoOnMobile || !mobileMenuButton
+                  ? "absolute left-1/2 -translate-x-1/2 md:relative md:left-auto md:translate-x-0"
+                  : ""
               )}
+              onClick={() => handleNavigation('/')}
             >
-              Encuentra tu abogado
-            </a>
-            <a
-              href="/como-funciona"
-              className={cn(
-                "transition-colors hover:text-green-900 text-sm",
-                isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground'
-              )}
-            >
-              ¿Cómo funciona?
-            </a>
-            <a
-              href="/about"
-              className={cn(
-                "transition-colors hover:text-green-900 text-sm",
-                isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground'
-              )}
-            >
-              Acerca de
-            </a>
-            <a
-              href="/blog"
-              className={cn(
-                "transition-colors hover:text-green-900 text-sm",
-                isActive('/blog') || pathname.startsWith('/blog/') ? 'text-green-900 font-medium' : 'text-muted-foreground'
-              )}
-            >
-              Blog
-            </a>
-            <a
-              href="/contacto"
-              className={cn(
-                "transition-colors hover:text-green-900 text-sm",
-                isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground'
-              )}
-            >
-              Contáctanos
-            </a>
-          </nav>
+              <Scale className="h-8 w-8 text-green-900" />
+              <span className="text-xl font-bold text-green-900">LegalUp</span>
+            </div>
 
-          {/* Auth Section */}
-          <div className="flex items-center gap-2 h-full">
-            {/* Notifications temporarily hidden
-            {user && (
-              <div className="flex items-center h-full px-1">
-                <NotificationDropdown />
-              </div>
-            )}
-            */}
-            {user ? (
-              <div className="flex items-center h-full px-1">
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
+              <a href="/search" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Encuentra tu abogado</a>
+              <a href="/como-funciona" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>¿Cómo funciona?</a>
+              <a href="/about" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Acerca de</a>
+              <a href="/blog" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/blog') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Blog</a>
+              <a href="/contacto" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Contáctanos</a>
+            </nav>
+
+            {/* Auth Section */}
+            <div className="flex items-center gap-2">
+              {user ? (
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      className="h-10 w-10 p-0 rounded-full relative hover:bg-gray-100 transition-colors"
-                    >
+                    <Button variant="ghost" className="h-10 w-10 p-0 rounded-full relative hover:bg-gray-100 transition-colors">
                       <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
-                        <AvatarImage 
-                          src={user.user_metadata?.avatar_url ?? undefined}
-                          alt={userName || user?.email || 'Usuario'} 
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
-                          {avatarInitials}
-                        </AvatarFallback>
+                        <AvatarImage src={user.user_metadata?.avatar_url ?? undefined} alt={userName || user?.email || 'Usuario'} className="object-cover" />
+                        <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">{avatarInitials}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    className="w-56 mt-1" 
-                    align="end"
-                    sideOffset={8}
-                  >
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">
-                            {userName || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'}
-                          </p>
-                          <p className="text-xs leading-none text-muted-foreground truncate max-w-[200px]">
-                            {user.email}
-                          </p>
-                          <Badge 
-                            variant={userRole === 'lawyer' ? 'default' : 'secondary'}
-                            className="w-fit text-xs mt-1"
-                          >
-                            {userRole === 'lawyer' ? 'Abogado' : 'Cliente'}
-                          </Badge>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      
-                      <DropdownMenuItem 
-                        onSelect={(e) => {
-                          e.preventDefault();
-                          const path = userRole === 'lawyer' ? '/lawyer-dashboard' : '/dashboard';
-                          handleNavigation(path);
-                        }}
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Ir al Panel</span>
-                      </DropdownMenuItem>
-
-                      {(userRole === 'admin' || 
-                        user?.user_metadata?.is_admin === true || 
-                        user?.is_admin === true ||
-                        user?.email?.toLowerCase() === 'gigfmedia@icloud.com') && (
-                        <DropdownMenuItem 
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            handleNavigation('/admin/reviews');
-                          }}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          <span>Admin Reviews</span>
-                        </DropdownMenuItem>
-                      )}
-
-                      {userRole === 'lawyer' && (
-                        <>
-                          <DropdownMenuItem 
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              handleNavigation(`/lawyer/${user.id}`);
-                            }}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>Ver Perfil</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      <DropdownMenuItem 
-                        className="text-red-600 focus:text-red-700 focus:bg-red-50"
-                        onClick={async () => {
-                          try {
-                            await logout();
-                            navigate('/');
-                          } catch (error) {
-                            console.error('Error during logout:', error);
-                          }
-                        }}
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>Cerrar Sesión</span>
-                      </DropdownMenuItem>
+                  <DropdownMenuContent className="w-56 mt-1" align="end" sideOffset={8}>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{userName || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuario'}</p>
+                        <p className="text-xs leading-none text-muted-foreground truncate max-w-[200px]">{user.email}</p>
+                        <Badge variant={userRole === 'lawyer' ? 'default' : 'secondary'} className="w-fit text-xs mt-1">{userRole === 'lawyer' ? 'Abogado' : 'Cliente'}</Badge>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => handleNavigation(userRole === 'lawyer' ? '/lawyer-dashboard' : '/dashboard')}><User className="mr-2 h-4 w-4" /><span>Ir al Panel</span></DropdownMenuItem>
+                    {(userRole === 'admin' || user?.user_metadata?.is_admin || user?.email?.toLowerCase() === 'gigfmedia@icloud.com') && (
+                      <DropdownMenuItem onSelect={() => handleNavigation('/admin/reviews')}><Eye className="mr-2 h-4 w-4" /><span>Admin Reviews</span></DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem className="text-red-600 focus:text-red-700 focus:bg-red-50" onClick={async () => { await logout(); navigate('/'); }}><LogOut className="mr-2 h-4 w-4" /><span>Cerrar Sesión</span></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-            ) : (
-              <div className="hidden md:flex items-center space-x-3 h-16">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => handleAuthNavigation('login')}
-                  className="text-gray-600 border border-solid"
-                >
-                  Iniciar Sesión
-                </Button>
-                <Button 
-                  onClick={() => handleAuthNavigation('signup')}
-                  className="bg-gray-900 hover:bg-green-900"
-                >
-                  Registrarse
-                </Button>
-              </div>
-            )}
+              ) : (
+                <div className="hidden md:flex items-center space-x-3 h-16">
+                  <Button variant="ghost" onClick={() => handleAuthNavigation('login')} className="text-gray-600 border border-solid">Iniciar Sesión</Button>
+                  <Button onClick={() => handleAuthNavigation('signup')} className="bg-gray-900 hover:bg-green-900">Registrarse</Button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown - only show when no mobileMenuButton (not logged in) */}
+      {/* Mobile Menu Dropdown */}
       {!mobileMenuButton && isMobileMenuOpen && (
-        <div className="md:hidden fixed top-16 left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
+        <div className="md:hidden fixed top-[104px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
           <nav className="flex flex-col p-4 space-y-3">
-            <button
-              onClick={() => handleNavigation('/search')}
-              className={cn(
-                "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/search')
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Explorar Servicios
-            </button>
-            <button
-              onClick={() => handleNavigation('/como-funciona')}
-              className={cn(
-                "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/como-funciona')
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Cómo Funciona
-            </button>
-            <button
-              onClick={() => handleNavigation('/about')}
-              className={cn(
-                "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/about')
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Acerca de
-            </button>
-            <button
-              onClick={() => handleNavigation('/blog')}
-              className={cn(
-                "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/blog') || pathname.startsWith('/blog/')
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Blog
-            </button>
-            <button
-              onClick={() => handleNavigation('/contacto')}
-              className={cn(
-                "text-left px-4 py-3 rounded-lg transition-colors",
-                isActive('/contacto')
-                  ? 'bg-blue-50 text-blue-600 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
-              )}
-            >
-              Contáctanos
-            </button>
-
+            <button onClick={() => handleNavigation('/search')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/search') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Explorar Servicios</button>
+            <button onClick={() => handleNavigation('/como-funciona')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/como-funciona') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Cómo Funciona</button>
+            <button onClick={() => handleNavigation('/about')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/about') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Acerca de</button>
+            <button onClick={() => handleNavigation('/blog')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/blog') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Blog</button>
+            <button onClick={() => handleNavigation('/contacto')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/contacto') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Contáctanos</button>
             {!user && (
               <div className="pt-3 border-t border-gray-200 space-y-2">
-                <Button
-                  onClick={() => handleAuthNavigation('login')}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Iniciar Sesión
-                </Button>
-                <Button
-                  onClick={() => handleAuthNavigation('signup')}
-                  className="w-full bg-gray-900 hover:bg-green-900"
-                >
-                  Registrarse
-                </Button>
+                <Button onClick={() => handleAuthNavigation('login')} variant="outline" className="w-full">Iniciar Sesión</Button>
+                <Button onClick={() => handleAuthNavigation('signup')} className="w-full bg-gray-900 hover:bg-green-900">Registrarse</Button>
               </div>
             )}
           </nav>
         </div>
       )}
-      
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} onModeChange={setAuthMode} />
     </div>
   );
 }

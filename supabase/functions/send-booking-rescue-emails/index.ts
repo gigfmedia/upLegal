@@ -67,9 +67,9 @@ serve(async (req) => {
     const now = new Date();
 
     const windows: Array<{ step: RescueStep; minMinutes: number; maxMinutes: number }> = [
-      { step: '30m_help', minMinutes: 30, maxMinutes: 45 },
-      { step: '6h_soft', minMinutes: 6 * 60, maxMinutes: 6 * 60 + 60 },
-      { step: '24h_urgent', minMinutes: 24 * 60, maxMinutes: 24 * 60 + 2 * 60 },
+      { step: '30m_help', minMinutes: 30, maxMinutes: 90 }, // Ampliado para cubrir ejecuciones horarias o retrasos
+      { step: '6h_soft', minMinutes: 6 * 60, maxMinutes: 8 * 60 }, // Ventana de 2 horas para mayor fiabilidad
+      { step: '24h_urgent', minMinutes: 24 * 60, maxMinutes: 28 * 60 }, // Ventana de 4 horas para asegurar captura
     ];
 
     const results: Array<{ bookingId: string; step: RescueStep; status: string; error?: string }> = [];
@@ -87,8 +87,11 @@ serve(async (req) => {
         .limit(200);
 
       if (bookingsError) {
+        console.error(`[Rescue] Failed to fetch bookings for ${w.step}:`, bookingsError);
         return jsonResponse({ error: `Failed to fetch bookings: ${bookingsError.message}` }, 500);
       }
+
+      console.log(`[Rescue] Found ${(bookings ?? []).length} bookings for step ${w.step}`);
 
       for (const booking of (bookings ?? []) as BookingRow[]) {
         // 1) Dedupe: attempt to create tracking row (unique on booking_id + step)
@@ -135,8 +138,10 @@ serve(async (req) => {
             deepLink,
           });
 
+          console.log(`[Rescue] Sending ${w.step} email to ${booking.user_email}`);
+
           await resend.emails.send({
-            from: 'LegalUp <hola@legalup.cl>',
+            from: 'LegalUp <hola@mg.legalup.cl>',
             reply_to: 'hola@legalup.cl',
             to: booking.user_email,
             subject,
@@ -152,6 +157,7 @@ serve(async (req) => {
 
           results.push({ bookingId: booking.id, step: w.step, status: 'sent' });
         } catch (err) {
+          console.error(`[Rescue] Error sending email ${w.step} to ${booking.user_email}:`, err);
           const message = err instanceof Error ? err.message : String(err);
 
           if (tracking?.id) {

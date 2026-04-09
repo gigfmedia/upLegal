@@ -57,7 +57,7 @@ export const CAEPopup = () => {
 
             <div className="space-y-3">
               <Button 
-                className="w-full bg-gray-900 hover:bg-green-900 text-white font-bold h-12 text-base rounded-xl transition-all"
+                className="w-full bg-gray-900 hover:bg-green-900 text-white h-12 rounded-xl transition-all"
                 onClick={() => {
                   setShow(false);
                   const form = document.getElementById("lead-form");

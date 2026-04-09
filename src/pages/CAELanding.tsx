@@ -180,7 +180,7 @@ const CAELanding = () => {
               </div>
               <Button 
                 variant="outline" 
-                className="mt-10 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white px-8 py-4 rounded-xl font-bold h-12"
+                className="mt-10 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white px-8 py-4 rounded-xl h-12"
                 onClick={scrollToForm}
               >
                 Revisar mi caso
@@ -302,7 +302,7 @@ const CAELanding = () => {
                     Puedes estar a tiempo de revisar antes de que el cobro pase a instancias más complejas.
                   </p>
                   <Button 
-                    className="w-full bg-gray-900 hover:bg-green-900 font-bold h-12 rounded-xl"
+                    className="w-full bg-gray-900 hover:bg-green-900 h-12 rounded-xl"
                     onClick={() => {
                       setFormData(prev => ({ ...prev, stage: "Banco" }));
                       scrollToForm();
@@ -330,7 +330,7 @@ const CAELanding = () => {
                     Hay decisiones que impactan directamente tu situación financiera y retenciones actuales.
                   </p>
                   <Button 
-                    className="w-full bg-gray-900 hover:bg-green-900 font-bold h-12 rounded-xl"
+                    className="w-full bg-gray-900 hover:bg-green-900 h-12 rounded-xl"
                     onClick={() => {
                       setFormData(prev => ({ ...prev, stage: "TGR" }));
                       scrollToForm();
@@ -358,7 +358,7 @@ const CAELanding = () => {
                     Es clave actuar a tiempo y entender en qué etapa judicial te encuentras exactamente.
                   </p>
                   <Button 
-                    className="w-full bg-gray-900 hover:bg-green-900 font-bold h-12 rounded-xl"
+                    className="w-full bg-gray-900 hover:bg-green-900 h-12 rounded-xl"
                     onClick={() => {
                       setFormData(prev => ({ ...prev, stage: "Demanda" }));
                       scrollToForm();
