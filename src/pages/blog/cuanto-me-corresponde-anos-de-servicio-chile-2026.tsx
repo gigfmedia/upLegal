@@ -480,7 +480,7 @@ const BlogArticle = () => {
             
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
