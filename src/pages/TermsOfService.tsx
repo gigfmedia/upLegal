@@ -18,7 +18,7 @@ const TermsOfService = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 pt-24 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 pt-32 px-4 sm:px-6 lg:px-8">
       <Helmet>
         <title>Términos de Servicio - LegalUp.cl</title>
         <meta name="description" content="Términos y condiciones de uso de LegalUp.cl" />

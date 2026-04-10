@@ -86,7 +86,7 @@ const AttorneyDashboard = () => {
     <div className="min-h-screen">
       <Header onAuthClick={handleAuthClick} />
       
-      <div className="pt-20 px-4 sm:px-6 lg:px-8">
+      <div className="pt-28 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* Dashboard Header */}
           <div className="mb-8">

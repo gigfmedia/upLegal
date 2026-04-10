@@ -205,7 +205,7 @@ const BlogPage = () => {
       
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/" className="hover:text-white transition-colors">
               Inicio

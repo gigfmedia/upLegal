@@ -210,7 +210,7 @@ export default function PaymentSuccess() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 pt-24">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 pt-32">
       <Card className="w-full max-w-md p-6 text-center">
         <div className="mb-4 flex justify-center">
           <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">

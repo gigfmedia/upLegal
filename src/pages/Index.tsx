@@ -32,6 +32,7 @@ import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verif
 import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -492,26 +493,20 @@ const Index = () => {
       </section>
 
       {/* CAE High Conversion Section */}
-      <section className="py-12 bg-green-900 border-y border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full min-h-[140px]">
-            <div className="text-left">
-              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-green-600 mb-3">
-                ¿Tienes deuda CAE y no sabes qué hacer?
-              </h2>
-              <p className="text-white text-lg">
-                Revisa tu caso antes de pagar o que el proceso avance.
-              </p>
-            </div>
-            <div className="shrink-0">
-              <Button 
-                onClick={() => navigate('/cae')}
-                className="bg-white hover:bg-gray-100 text-gray-900 h-14 px-8 rounded-xl text-lg font-bold transition-all hover:scale-105"
-              >
-                Revisar mi caso
-              </Button>
-            </div>
-          </div>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold font-serif text-green-600 mb-4">
+            ¿Tienes deuda CAE y no sabes qué hacer?
+          </h2>
+          <p className="text-xl mb-8 text-white">
+            Revisa tu caso antes de pagar o que el proceso avance.
+          </p>
+          <button 
+              onClick={() => navigate('/cae')}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100"
+            >
+              Revisar mi caso →
+            </button>
         </div>
       </section>
 
@@ -793,6 +788,9 @@ const Index = () => {
           )}
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* FAQ Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">

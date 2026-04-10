@@ -44,7 +44,7 @@ const BlogArticle = () => {
       
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
               Blog

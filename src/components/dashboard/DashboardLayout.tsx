@@ -204,12 +204,12 @@ function DashboardLayout() {
         }
       />
       
-      <div className="flex-1 pt-16">
+      <div className="flex-1 pt-28">
         <div className="max-w-7xl mx-auto">
           <div className="flex">
             {/* Sidebar */}
             <aside
-              className={`fixed lg:sticky top-16 h-[calc(100vh-64px)] z-50 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
+              className={`fixed lg:sticky top-28 h-[calc(100vh-112px)] z-40 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
               } lg:translate-x-0 transition-transform duration-200 ease-in-out`}
             >

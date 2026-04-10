@@ -161,7 +161,7 @@ export default function AcceptInvite() {
 
   if (status === 'checking') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-28">
         <div className="text-center">
           <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
           <p className="text-gray-600">Verificando tu invitación...</p>
@@ -172,7 +172,7 @@ export default function AcceptInvite() {
 
   if (status === 'success') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-28">
         <Header />
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow">
           <div className="flex flex-col items-center text-center space-y-4">

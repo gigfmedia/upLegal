@@ -227,7 +227,7 @@ export default function LawyerProfilesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6 pt-28">
         <div className="flex justify-between items-start mb-8">
           <div>
             <h2 className="text-2xl font-bold tracking-tight mb-2">

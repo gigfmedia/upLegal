@@ -30,7 +30,7 @@ export default function LawyerOnboardingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="py-10 px-4 pt-24">
+      <div className="py-10 px-4 pt-32">
 
         <Suspense
           fallback={

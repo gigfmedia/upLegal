@@ -43,7 +43,7 @@ const LawyerDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-6 pt-28 sm:px-6 lg:px-8">
         {/* Tabs */}
         <div className="flex space-x-2 border-b mb-6">
           <button

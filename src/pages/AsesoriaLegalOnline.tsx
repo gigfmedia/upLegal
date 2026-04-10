@@ -63,7 +63,7 @@ export default function AsesoriaLegalOnlinePage() {
     <div className="w-full bg-white">
       <Header />
 
-      <section className="bg-gradient-to-b from-blue-50 to-white pt-32 pb-16"> 
+      <section className="bg-gradient-to-b from-blue-50 to-white pt-36 pb-16"> 
         <div className="w-full max-w-7xl mx-auto px-4 text-center space-y-6">
           <h1 className="text-4xl font-bold text-gray-900">
             Asesoría legal online en Chile

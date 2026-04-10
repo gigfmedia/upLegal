@@ -280,7 +280,7 @@ export default function PaymentFailure() {
   return (
     <>
       <Header />
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-24">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-32">
       <PaymentFailureComponent 
         onRetry={handleRetry}
         onBack={handleBack}

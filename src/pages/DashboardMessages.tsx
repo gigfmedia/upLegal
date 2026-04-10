@@ -140,7 +140,7 @@ export default function DashboardMessages() {
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Mensajes</h1>
         <div className="bg-white rounded-lg border shadow-sm">
-          <div className="flex flex-col md:flex-row h-[calc(100vh-200px)]">
+          <div className="flex flex-col md:flex-row h-[calc(100vh-248px)]">
             {/* Conversation List */}
             <div className="w-full md:w-80 border-r flex flex-col">
               <div className="p-4 border-b">

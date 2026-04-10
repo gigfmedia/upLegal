@@ -949,7 +949,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="bg-muted pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="bg-muted pt-32 px-4 sm:px-6 lg:px-8 pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
             <ProfileHeaderSkeleton />
             <AboutSectionSkeleton />
@@ -987,7 +987,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="bg-muted pt-24 px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="bg-muted pt-32 px-4 sm:px-6 lg:px-8 pb-8">
         <div className="max-w-7xl mx-auto">
           <div className="space-y-8">
             {/* Profile Header */}
@@ -1049,6 +1049,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                             {lawyer ? `${lawyer.first_name} ${lawyer.last_name}` : 'Cargando...'}
                           </h2>
+                          {lawyer && `${lawyer.first_name} ${lawyer.last_name}`.toLowerCase().includes('jorge') && `${lawyer.first_name} ${lawyer.last_name}`.toLowerCase().includes('pacheco') && (
+                            <div className="text-sm text-gray-500 italic">
+                              Casos complejos · Alta experiencia
+                            </div>
+                          )}
                         </div>
                         
                         {/* Desktop verified badge next to name */}

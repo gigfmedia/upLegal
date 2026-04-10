@@ -49,7 +49,7 @@ export default function HowItWorksPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-blue-50 to-white pt-32 pb-16">
+      <section className="bg-gradient-to-b from-blue-50 to-white pt-36 pb-16">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold font-serif text-gray-900 mb-6">¿Cómo funciona LegalUp?</h1>
           <p className="text-lg text-gray-700 mb-12 max-w-3xl">

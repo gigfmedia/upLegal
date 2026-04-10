@@ -177,7 +177,7 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container mx-auto px-4 pt-24 pb-12 flex-1">
+      <div className="container mx-auto px-4 pt-32 pb-12 flex-1">
         <div className="max-w-4xl mx-auto pt-8">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">

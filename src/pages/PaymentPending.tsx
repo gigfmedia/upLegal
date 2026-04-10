@@ -8,7 +8,7 @@ export default function PaymentPending() {
   return (
     <>
       <Header />
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-24">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4 pt-32">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">

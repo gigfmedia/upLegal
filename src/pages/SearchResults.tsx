@@ -679,7 +679,7 @@ const SearchResults = () => {
       <Header />
       
       {/* Header and Search */}
-      <div className="bg-white py-8 pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white py-8 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold font-serif text-gray-900">Encuentra al abogado ideal para tu caso</h1>
           <p className="text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>

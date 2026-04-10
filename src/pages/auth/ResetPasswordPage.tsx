@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="w-full">
       <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-28">
           <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
             <div className="text-center">
               <AlertCircle className="mx-auto h-12 w-12 text-yellow-500" />
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="w-full">
       <Header />
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 pt-28">
           <div className="max-w-md w-full space-y-8 text-center p-8 bg-white rounded-lg shadow">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
               <Check className="h-8 w-8 text-green-600" />

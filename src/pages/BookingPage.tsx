@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2 } from 'lucide-react';
+import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -30,6 +31,92 @@ interface LawyerProfile {
 interface TimeSlot {
   time: string;
   available: boolean;
+}
+
+// Testimonials by legal specialty for social proof
+const TESTIMONIALS: Record<string, { quote: string; author: string; extra: string }> = {
+  'Laboral': {
+    quote: "Me orientó sobre mi despido y qué pasos seguir.",
+    author: "Carolina H.",
+    extra: "Ingeniera Civil"
+  },
+  'Derecho Laboral': {
+    quote: "Me orientó sobre mi despido y qué pasos seguir.",
+    author: "Carolina H.",
+    extra: "Ingeniera Civil"
+  },
+  'Familia': {
+    quote: "Me explicó claramente el proceso de divorcio y mis opciones.",
+    author: "María José R.",
+    extra: "Empresaria"
+  },
+  'Derecho de Familia': {
+    quote: "Me explicó claramente el proceso de divorcio y mis opciones.",
+    author: "María José R.",
+    extra: "Empresaria"
+  },
+  'Civil': {
+    quote: "Me explicó claramente mi contrato de arriendo y qué hacer.",
+    author: "Felipe A.",
+    extra: "Arquitecto"
+  },
+  'Derecho Civil': {
+    quote: "Me explicó claramente mi contrato de arriendo y qué hacer.",
+    author: "Felipe A.",
+    extra: "Arquitecto"
+  },
+  'Penal': {
+    quote: "Entendí exactamente mi situación legal y los pasos a seguir.",
+    author: "Juan Pablo M.",
+    extra: "Contador"
+  },
+  'Derecho Penal': {
+    quote: "Entendí exactamente mi situación legal y los pasos a seguir.",
+    author: "Juan Pablo M.",
+    extra: "Contador"
+  },
+  'Default': {
+    quote: "Entendió mi caso rápidamente y me dio una orientación clara y concreta.",
+    author: "Marcela O.",
+    extra: "Médico Psiquiatra"
+  }
+};
+
+// Minimalist testimonial component for booking page
+function BookingTestimonial({ specialties }: { specialties: string[] }) {
+  // Find matching testimonial or fallback to default
+  const testimonial = useMemo(() => {
+    for (const specialty of specialties) {
+      const normalized = specialty.trim();
+      if (TESTIMONIALS[normalized]) {
+        return TESTIMONIALS[normalized];
+      }
+    }
+    return TESTIMONIALS['Default'];
+  }, [specialties]);
+
+  return (
+    <div className="bg-green-50/50 border border-green-100 rounded-lg p-4 mb-4">
+      <div className="flex items-start gap-3">
+        <Quote className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            "{testimonial.quote}"
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+              ))}
+            </div>
+            <span className="text-xs text-gray-500">
+              — {testimonial.author}, {testimonial.extra}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 type BusySlot = {
@@ -633,7 +720,7 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="py-8 px-4 pt-24">
+        <div className="py-8 px-4 pt-32">
           <div className="max-w-4xl mx-auto">
             <BookingSkeleton />
           </div>
@@ -649,18 +736,23 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="py-8 px-4 pt-24">
+      <div className="py-8 px-4 pt-32">
       <div className="max-w-4xl mx-auto">
 
         {/* Lawyer Info Card */}
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <img
-                src={lawyer.avatar_url || '/default-avatar.png'}
-                alt={`${lawyer.first_name} ${lawyer.last_name}`}
-                className="w-20 h-20 rounded-full object-cover"
-              />
+              <Avatar className="w-20 h-20">
+                <AvatarImage
+                  src={lawyer.avatar_url || ''}
+                  alt={`${lawyer.first_name} ${lawyer.last_name}`}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
+                  {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
                 <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
                   <h1 className="text-2xl font-bold text-gray-900">
@@ -887,6 +979,9 @@ export default function BookingPage() {
                     * Incluye 10% de recargo por servicio app.
                   </p>
                 </div>
+
+                {/* Testimonial social proof */}
+                <BookingTestimonial specialties={lawyer.specialties} />
 
                 <Button
                   onClick={handleContinue}
