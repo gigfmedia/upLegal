@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "dicom-deuda-arriendo-chile-2026",
+      title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)",
+      excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "10 de Abril, 2026",
+      readTime: "12 min",
+      image: "/assets/dicom-arriendo-chile-2026.png"
+    },
+    {
       id: "no-devuelven-garantia-arriendo-chile-2026",
       title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
       excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",

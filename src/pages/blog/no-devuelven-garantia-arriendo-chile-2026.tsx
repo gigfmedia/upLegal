@@ -534,6 +534,12 @@ const BlogArticle = () => {
             excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
             image: "/assets/reajuste-arriendo-ipc-2026.png"
           }}
+          nextArticle={{
+            id: "dicom-deuda-arriendo-chile-2026",
+            title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)",
+            excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp.",
+            image: "/assets/dicom-arriendo-chile-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">
