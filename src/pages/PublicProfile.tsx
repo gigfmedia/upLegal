@@ -50,7 +50,6 @@ import {
   Building2,
   DollarSign,
   CheckCircle,
-  Heart,
   Gavel,
   UserCheck,
 } from "lucide-react";
@@ -993,17 +992,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             {/* Profile Header */}
             <Card className="overflow-hidden shadow-sm relative">
               <CardContent className="p-6 md:p-8">
-                {/* Mobile favorite button */}
-                {lawyer && (
-                  <div className="absolute top-4 right-4 sm:hidden z-10">
-                    <FavoriteButton 
-                      lawyerId={lawyer.id} 
-                      showText={false}
-                      onAuthRequired={() => setIsAuthModalOpen(true)}
-                      className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full p-2"
-                    />
-                  </div>
-                )}
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex flex-col items-center relative">
                       {/* Mobile-only verified badge */}
@@ -1067,23 +1055,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         )}
                       </div>
                       {lawyer && (
-                        <div className="sm:hidden absolute top-4 right-4">
-                          <FavoriteButton 
-                            lawyerId={lawyer.id} 
-                            showText={false}
-                            onAuthRequired={() => setIsAuthModalOpen(true)}
-                            className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full p-2"
-                          />
-                        </div>
-                      )}
-                      {lawyer && (
                         <div className="hidden sm:flex items-center">
-                          <FavoriteButton 
-                            lawyerId={lawyer.id} 
-                            showText={false}
-                            onAuthRequired={() => setIsAuthModalOpen(true)}
-                            className="text-gray-500 hover:text-red-500 hover:bg-gray-50 rounded-full"
-                          />
+                          {/* Favorite button moved to booking CTA row */}
                         </div>
                       )}
                     </div>
@@ -1205,9 +1178,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     </div>
 
                     <div className="space-y-3 w-full">
-                      <div className="flex flex-col gap-3 w-full">
+                      <div className="flex gap-3 w-full">
                         <Button 
-                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-gray-900 hover:bg-green-900' : 'bg-gray-900 hover:bg-green-900'}`}
+                          className={`flex-1 h-11 ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-gray-900 hover:bg-green-900' : 'bg-gray-900 hover:bg-green-900'}`}
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id && lawyer) {
@@ -1231,20 +1204,17 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           <Calendar className="h-4 w-4 mr-2" />
                           Ver disponibilidad
                         </Button>
-                        {/* <Button 
-                          variant="outline" 
-                          className={`w-full ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            if (currentUser?.id !== lawyer?.user_id) {
-                              handleAuthRequired('contact');
-                            }
-                          }}
-                          disabled={currentUser?.id === lawyer?.user_id}
-                        >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          Contactar
-                        </Button> */}
+
+                        {lawyer && (
+                          <FavoriteButton
+                            lawyerId={lawyer.id}
+                            showText={false}
+                            size="icon"
+                            variant="outline"
+                            onAuthRequired={() => setIsAuthModalOpen(true)}
+                            className="h-11 w-11 rounded-lg border border-gray-900 text-gray-900 hover:bg-green-900 hover:text-white"
+                          />
+                        )}
                       </div>
                       {currentUser?.id === lawyer?.user_id && (
                         <p className="text-xs text-gray-500 text-center mt-1">

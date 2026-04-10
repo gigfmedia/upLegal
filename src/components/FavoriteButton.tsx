@@ -1,8 +1,14 @@
-import { Heart, Loader2 } from 'lucide-react';
+import { Bookmark, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useFavorites } from '../hooks/useFavorites';
 import { useToast } from './ui/use-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "./ui/tooltip";
 
 interface FavoriteButtonProps {
   lawyerId: string;
@@ -43,35 +49,44 @@ export function FavoriteButton({
       });
     } else {
       toast({
-        title: isFavorite ? 'Eliminado de favoritos' : 'Añadido a favoritos',
+        title: isFavorite ? 'Eliminado de guardados' : 'Abogado guardado',
         description: isFavorite 
-          ? 'El abogado ha sido eliminado de tus favoritos' 
-          : 'El abogado ha sido añadido a tus favoritos',
+          ? 'El abogado ha sido eliminado de tus elementos guardados' 
+          : 'El abogado ha sido guardado exitosamente',
       });
     }
   };
 
   return (
-    <Button
-      variant={variant}
-      size={size}
-      onClick={handleClick}
-      disabled={isLoading}
-      className={`group ${className} ${isFavorite ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'}`}
-      aria-label={isFavorite ? 'Eliminar de favoritos' : 'Añadir a favoritos'}
-    >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Heart 
-          className={`h-4 w-4 ${isFavorite ? 'fill-current' : 'group-hover:fill-red-500'}`} 
-        />
-      )}
-      {showText && (
-        <span className="ml-2">
-          {isFavorite ? 'Eliminar de favoritos' : 'Añadir a favoritos'}
-        </span>
-      )}
-    </Button>
+    <TooltipProvider>
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <Button
+            variant={variant}
+            size={size}
+            onClick={handleClick}
+            disabled={isLoading}
+            className={`group transition-all duration-200 ${isFavorite ? 'text-green-900 hover:bg-green-50' : 'text-gray-400 hover:text-green-900 hover:bg-gray-100'} ${className}`}
+            aria-label={isFavorite ? 'Eliminar de guardados' : 'Guardar abogado'}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Bookmark 
+                className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} 
+              />
+            )}
+            {showText && (
+              <span className="ml-2">
+                {isFavorite ? 'Eliminado de guardados' : 'Guardar abogado'}
+              </span>
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{isFavorite ? 'Eliminar de guardados' : 'Guardar Abogado'}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
