@@ -586,10 +586,10 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <p className="text-left text-green-900 mb-2">
-            Directorio de Abogados
+            Explora por especialidad
           </p>
           <h2 className="text-3xl font-bold font-serif text-left text-gray-900 mb-4">
-            Busca abogados por área de práctica
+            Elige el área legal que necesitas
           </h2>
           <p className="text-left text-gray-600 mb-12">
           Al buscar asesoría y representación, las personas a menudo buscan abogados que se especialicen en el área del derecho más adecuada para sus necesidades.
