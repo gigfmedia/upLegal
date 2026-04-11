@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, Search, MessageSquare, AlertCircle, XCircle } from "lucide-react";
@@ -11,6 +12,24 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
+  const [rentValue, setRentValue] = useState<string>("500000");
+  const [ipcPercent, setIpcPercent] = useState<string>("5");
+
+  const parsed = useMemo(() => {
+    const rent = Number(String(rentValue).replace(/[^0-9]/g, ""));
+    const ipc = Number(String(ipcPercent).replace(/[^0-9.,-]/g, "").replace(",", "."));
+    const ipcDecimal = Number.isFinite(ipc) ? ipc / 100 : NaN;
+    const newRent = Number.isFinite(rent) && Number.isFinite(ipcDecimal) ? Math.round(rent * (1 + ipcDecimal)) : NaN;
+    const diff = Number.isFinite(rent) && Number.isFinite(newRent) ? newRent - rent : NaN;
+    const pct = Number.isFinite(rent) && rent > 0 && Number.isFinite(diff) ? (diff / rent) * 100 : NaN;
+    return { rent, ipc, ipcDecimal, newRent, diff, pct };
+  }, [rentValue, ipcPercent]);
+
+  const formatClp = (n: number) => {
+    if (!Number.isFinite(n)) return "—";
+    return n.toLocaleString("es-CL");
+  };
+
   const faqs = [
     {
       question: "¿Cuánto pueden subir el arriendo según el IPC en Chile 2026?",
@@ -37,8 +56,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo"
-        description="El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026."
+        title="Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo"
+        description="Calculadora de reajuste de arriendo por IPC (ejemplo 5%) + guía legal 2026: fórmula, pasos del cálculo y qué hacer si te cobran mal."
         image="/assets/reajuste-arriendo-ipc-2026.png"
         url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
         datePublished="2026-04-06"
@@ -60,7 +79,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance leading-tight">
-            Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo
+            Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo
           </h1>
           
           <p className="text-xl max-w-3xl leading-relaxed">
@@ -88,7 +107,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <BlogShare 
-            title="Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo" 
+            title="Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo" 
             url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026" 
             showBorder={false}
           />
@@ -212,6 +231,75 @@ const BlogArticle = () => {
                     <span className="font-bold text-gray-900 line-clamp-2 mt-2">Ese es el nuevo arriendo correcto.</span>
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Calculadora IPC arriendo 2026</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Ingresa tu arriendo actual y el IPC acumulado del período que indica tu contrato (dato del INE). Esta calculadora usa un ejemplo referencial (5%) para que puedas probar el cálculo.
+            </p>
+
+            <div className="border border-gray-200 bg-gray-50 rounded-xl p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-900">Arriendo actual (CLP)</label>
+                  <input
+                    inputMode="numeric"
+                    value={rentValue}
+                    onChange={(e) => setRentValue(e.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
+                    placeholder="Ej: 500000"
+                    aria-label="Arriendo actual"
+                  />
+                  <p className="text-xs text-gray-500">Ejemplo: {formatClp(parsed.rent)}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-900">IPC acumulado (%)</label>
+                  <input
+                    inputMode="decimal"
+                    value={ipcPercent}
+                    onChange={(e) => setIpcPercent(e.target.value)}
+                    className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
+                    placeholder="Ej: 5"
+                    aria-label="IPC acumulado"
+                  />
+                  <p className="text-xs text-gray-500">Ejemplo referencial: 5%</p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Nuevo arriendo</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">${formatClp(parsed.newRent)}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Aumento</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">${formatClp(parsed.diff)}</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Porcentaje</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">{Number.isFinite(parsed.pct) ? `${parsed.pct.toFixed(2)}%` : '—'}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col sm:flex-row gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  className="h-11 border-gray-900 text-gray-900 hover:bg-green-900 hover:text-white"
+                  onClick={() => {
+                    setRentValue("500000");
+                    setIpcPercent("5");
+                  }}
+                >
+                  Restaurar ejemplo
+                </Button>
+              </div>
+
+              <div className="mt-5 text-xs text-gray-500 leading-relaxed">
+                El cálculo es una aproximación para fines informativos. Para evitar errores, usa el IPC acumulado exacto del período indicado en tu contrato y el dato oficial del INE.
               </div>
             </div>
           </div>

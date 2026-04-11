@@ -822,83 +822,81 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
   // Skeleton component for the reviews section
   const ReviewsSectionSkeleton = () => (
-    <Card className="border shadow-sm">
-      <CardContent className="p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <Skeleton className="h-7 w-64 mb-2" />
-          <Skeleton className="h-4 w-80" />
-        </div>
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <Skeleton className="h-7 w-64 mb-2" />
+        <Skeleton className="h-4 w-80" />
+      </div>
 
-        {/* Rating Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-200">
-          {/* Average Rating */}
-          <div className="flex flex-col items-center justify-center text-center">
-            <Skeleton className="h-16 w-24 mb-2" />
-            <div className="flex gap-1 mb-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Skeleton key={star} className="h-5 w-5" />
-              ))}
-            </div>
-            <Skeleton className="h-4 w-40" />
-          </div>
-
-          {/* Rating Distribution */}
-          <div className="space-y-2">
-            {[5, 4, 3, 2, 1].map(rating => (
-              <div key={rating} className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-2 flex-1 rounded-full" />
-                <Skeleton className="h-4 w-8" />
-              </div>
+      {/* Rating Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-gray-200">
+        {/* Average Rating */}
+        <div className="flex flex-col items-center justify-center text-center">
+          <Skeleton className="h-16 w-24 mb-2" />
+          <div className="flex gap-1 mb-2">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Skeleton key={star} className="h-5 w-5" />
             ))}
           </div>
+          <Skeleton className="h-4 w-40" />
         </div>
 
-        {/* Reviews List */}
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="border-b border-gray-200 pb-6 last:border-0">
-              <div className="flex items-start gap-4">
-                {/* Avatar */}
-                <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Skeleton className="h-5 w-32" />
-                        <Skeleton className="h-5 w-20 rounded" />
-                      </div>
-                      <Skeleton className="h-4 w-40" />
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Skeleton key={star} className="h-3 w-3" />
-                        ))}
-                      </div>
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6 mb-2" />
-                  <Skeleton className="h-4 w-4/5" />
-                  
-                  {/* Actions */}
-                  <div className="flex items-center gap-4 mt-4">
-                    <Skeleton className="h-8 w-20" />
-                    <Skeleton className="h-8 w-24" />
-                  </div>
-                </div>
-              </div>
+        {/* Rating Distribution */}
+        <div className="space-y-2">
+          {[5, 4, 3, 2, 1].map((rating) => (
+            <div key={rating} className="flex items-center gap-3">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-2 flex-1 rounded-full" />
+              <Skeleton className="h-4 w-8" />
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Reviews List */}
+      <div className="space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="border-b border-gray-200 pb-6 last:border-0">
+            <div className="flex items-start gap-4">
+              {/* Avatar */}
+              <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-5 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Skeleton key={star} className="h-3 w-3" />
+                      ))}
+                    </div>
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-5/6 mb-2" />
+                <Skeleton className="h-4 w-4/5" />
+
+                {/* Actions */}
+                <div className="flex items-center gap-4 mt-4">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-24" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 
   // Skeleton component for the services section
@@ -1089,7 +1087,25 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 w-full">
                       {lawyer?.review_count > 0 && (
-                        <div className="flex items-center w-full sm:w-auto">
+                        <div
+                          className="flex items-center w-full sm:w-auto cursor-pointer select-none"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            document
+                              .getElementById('reviews-section')
+                              ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              document
+                                .getElementById('reviews-section')
+                                ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                          aria-label="Ir a la sección de reseñas"
+                        >
                           <span className="font-semibold whitespace-nowrap">
                             {lawyer.rating ? Number(lawyer.rating).toFixed(1) : 'N/A'}
                           </span>
@@ -1340,10 +1356,12 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
             {/* Reviews Section */}
             {lawyer && (
-              <LawyerReviewsSection 
-                lawyerId={lawyer.id}
-                lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
-              />
+              <div id="reviews-section" className="scroll-mt-28">
+                <LawyerReviewsSection 
+                  lawyerId={lawyer.id}
+                  lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
+                />
+              </div>
             )}
 
             
