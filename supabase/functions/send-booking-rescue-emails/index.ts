@@ -67,9 +67,9 @@ serve(async (req) => {
     const now = new Date();
 
     const windows: Array<{ step: RescueStep; minMinutes: number; maxMinutes: number }> = [
-      { step: '30m_help', minMinutes: 30, maxMinutes: 90 }, // Ampliado para cubrir ejecuciones horarias o retrasos
-      { step: '6h_soft', minMinutes: 6 * 60, maxMinutes: 8 * 60 }, // Ventana de 2 horas para mayor fiabilidad
-      { step: '24h_urgent', minMinutes: 24 * 60, maxMinutes: 28 * 60 }, // Ventana de 4 horas para asegurar captura
+      { step: '30m_help', minMinutes: 30, maxMinutes: 90 },
+      { step: '6h_soft', minMinutes: 6 * 60, maxMinutes: 8 * 60 },
+      { step: '24h_urgent', minMinutes: 24 * 60, maxMinutes: 28 * 60 },
     ];
 
     const results: Array<{ bookingId: string; step: RescueStep; status: string; error?: string }> = [];
@@ -94,7 +94,6 @@ serve(async (req) => {
       console.log(`[Rescue] Found ${(bookings ?? []).length} bookings for step ${w.step}`);
 
       for (const booking of (bookings ?? []) as BookingRow[]) {
-        // 1) Dedupe: attempt to create tracking row (unique on booking_id + step)
         const { data: tracking, error: trackingError } = await supabase
           .from('booking_rescue_emails')
           .insert({
@@ -107,7 +106,6 @@ serve(async (req) => {
           .maybeSingle();
 
         if (trackingError) {
-          // Unique violation means already sent (or in progress)
           results.push({ bookingId: booking.id, step: w.step, status: 'skipped' });
           continue;
         }
@@ -125,7 +123,7 @@ serve(async (req) => {
           }
 
           const lawyerProfile = lawyer as LawyerProfile;
-          const lawyerName = `${lawyerProfile.first_name ?? ''} ${lawyerProfile.last_name ?? ''}`.trim() || 'abogado';
+          const lawyerName = `${lawyerProfile.first_name ?? ''} ${lawyerProfile.last_name ?? ''}`.trim() || 'tu abogado';
 
           const deepLink = `${appUrl}/booking/${booking.lawyer_id}?date=${encodeURIComponent(booking.scheduled_date)}&time=${encodeURIComponent(booking.scheduled_time)}&duration=${encodeURIComponent(String(booking.duration))}`;
 
@@ -181,14 +179,8 @@ serve(async (req) => {
 
 function validateSecret(req: Request) {
   const configuredSecret = Deno.env.get('BOOKING_RESCUE_CRON_SECRET');
-
-  if (!configuredSecret) {
-    // Allow running without auth if not configured
-    return;
-  }
-
+  if (!configuredSecret) return;
   const headerSecret = req.headers.get('x-cron-secret');
-
   if (!headerSecret || headerSecret !== configuredSecret) {
     throw new Error('Unauthorized: missing or invalid cron secret');
   }
@@ -204,90 +196,94 @@ function buildEmail(params: {
 }) {
   const { step, clientName, lawyerName, date, time, deepLink } = params;
 
+  const firstName = clientName ? clientName.split(' ')[0] : '';
+
+  const logo = `
+    <div style="text-align:center;margin-bottom:28px;">
+      <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+    </div>`;
+
+  const bookingCard = `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;">
+      <div style="font-size:12px;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Tu reserva</div>
+      <div style="font-size:15px;font-weight:600;color:#111827;margin-bottom:4px;">${lawyerName}</div>
+      <div style="font-size:14px;color:#374151;">${date} · ${time}</div>
+    </div>`;
+
+  const ctaButton = (text: string) => `
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${deepLink}" style="display:inline-block;background:#111827;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${text}</a>
+    </div>`;
+
+  const footer = `
+    <p style="font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+      LegalUp · Abogados desde $30.000 · <a href="https://legalup.cl" style="color:#9ca3af;text-decoration:none;">legalup.cl</a>
+    </p>`;
+
+  const wrapper = (content: string) => `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:16px;background:#f9fafb;">
+  <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+    ${logo}
+    ${content}
+    ${footer}
+  </div>
+</body>
+</html>`;
+
+  // ─── 30m: tono útil, puede haber sido un problema técnico ───
   if (step === '30m_help') {
     return {
       subject: '¿Tuviste un problema al agendar?',
-      html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body>
-  <div style="max-width:600px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#101820;">
-    <p>Hola${clientName ? ` ${clientName}` : ''},</p>
-    <p>Vimos que estuviste a punto de agendar con un abogado, pero no terminaste la reserva.</p>
-    <p><strong>Tu hora aún podría estar disponible:</strong></p>
-    <p style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
-      <strong>Abogado:</strong> ${lawyerName}<br/>
-      <strong>Día:</strong> ${date}<br/>
-      <strong>Hora:</strong> ${time}
-    </p>
-    <p>Puedes retomarla en menos de 30 segundos aquí:</p>
-    <p><a href="${deepLink}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Retomar reserva</a></p>
-    <p style="margin-top:16px;">Si tuviste dudas antes de pagar, responde este correo y te ayudamos.</p>
-    <p>— Equipo LegalUp</p>
-    <p style="font-size:12px;color:#6b7280;">Abogados disponibles desde $30.000 · Respuesta rápida, sin compromiso inicial</p>
-  </div>
-</body>
-</html>`,
+      html: wrapper(`
+        <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
+        <p style="margin:0 0 12px;">Vimos que seleccionaste una hora con un abogado pero no completaste el pago. A veces pasan problemas técnicos — si fue eso, tu hora podría seguir disponible.</p>
+        ${bookingCard}
+        ${ctaButton('Retomar reserva')}
+        <p style="margin:0;font-size:14px;color:#6b7280;">Si tuviste dudas antes de pagar, responde este correo y te ayudamos antes de que confirmes.</p>
+        <p style="margin:20px 0 0;">— Equipo LegalUp</p>
+      `),
     };
   }
 
-  if (step === '24h_urgent') {
+  // ─── 6h: social proof, mostrar que otros resolvieron ───
+  if (step === '6h_soft') {
     return {
-      subject: `Tu hora con ${lawyerName} está a punto de liberarse`,
-      html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body>
-  <div style="max-width:600px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#101820;">
-    <p>Hola${clientName ? ` ${clientName}` : ''},</p>
-    <p><strong>Tu hora con el abogado ${lawyerName} está a punto de liberarse.</strong></p>
-    <p style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
-      <strong>${date}</strong> a las <strong>${time}</strong>
-    </p>
-    <p>Si aún necesitas ayuda legal, este es el momento:</p>
-    <p><a href="${deepLink}" style="display:inline-block;background:#111827;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Agendar ahora</a></p>
-    <p>Las horas disponibles se llenan rápido.</p>
-    <p>— LegalUp</p>
-    <p style="font-size:12px;color:#6b7280;">Abogados disponibles desde $30.000 · Respuesta rápida, sin compromiso inicial</p>
-  </div>
-</body>
-</html>`,
+      subject: `${firstName ? `${firstName}, t` : 'T'}u hora sigue disponible`,
+      html: wrapper(`
+        <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
+        <p style="margin:0 0 12px;">Tu hora con <strong>${lawyerName}</strong> sigue reservada, pero no por mucho más tiempo.</p>
+        ${bookingCard}
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;margin:16px 0;">
+          <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:10px;">Lo que otros resolvieron esta semana con LegalUp</div>
+          <div style="font-size:13px;color:#15803d;margin-bottom:6px;padding-left:8px;border-left:2px solid #86efac;">Arrendatario que no sabía si el desalojo era legal — caso resuelto en 1 consulta</div>
+          <div style="font-size:13px;color:#15803d;margin-bottom:6px;padding-left:8px;border-left:2px solid #86efac;">Trabajador al que no le pagaron el finiquito correcto — recuperó la diferencia</div>
+          <div style="font-size:13px;color:#15803d;padding-left:8px;border-left:2px solid #86efac;">Pareja que no sabía cómo iniciar el divorcio — proceso claro en 30 minutos</div>
+        </div>
+        ${ctaButton('Confirmar mi hora')}
+        <p style="margin:0;font-size:14px;color:#6b7280;">¿Tienes dudas antes de pagar? Responde este correo y te ayudamos.</p>
+        <p style="margin:20px 0 0;">— Equipo LegalUp</p>
+      `),
     };
   }
 
-  // 6h_soft
+  // ─── 24h: escasez real, último aviso ───
   return {
-    subject: 'Tu hora sigue reservada (por poco tiempo)',
-    html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"></head>
-<body>
-  <div style="max-width:600px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#101820;">
-    <p>Hola${clientName ? ` ${clientName}` : ''},</p>
-    <p>Vimos que estuviste a punto de agendar con un abogado, pero no terminaste la reserva.</p>
-    <p><strong>La hora que seleccionaste aún podría estar disponible:</strong></p>
-    <p style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;">
-      <strong>Abogado:</strong> ${lawyerName}<br/>
-      <strong>Día:</strong> ${date}<br/>
-      <strong>Hora:</strong> ${time}
-    </p>
-    <p>Puedes retomarla en menos de 30 segundos aquí:</p>
-    <p><a href="${deepLink}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Retomar reserva</a></p>
-    <p><strong>¿Por qué agendar ahora?</strong></p>
-    <div style="margin:8px 0 0 0;">
-      <div>Evitas que otro tome tu horario</div>
-      <div>Recibes respuesta clara y directa a tu caso</div>
-      <div>Precios transparentes desde el inicio</div>
-    </div>
-    <p style="margin-top:16px;">Si tienes dudas antes de pagar, puedes responder este correo y te ayudamos.</p>
-    <p>— Equipo LegalUp</p>
-    <p style="font-size:12px;color:#6b7280;">Abogados disponibles desde $30.000 · Respuesta rápida, sin compromiso inicial</p>
-  </div>
-</body>
-</html>`,
+    subject: `Último aviso: la hora del ${date} a las ${time} se libera hoy`,
+    html: wrapper(`
+      <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
+      <p style="margin:0 0 12px;">Hace 24 horas seleccionaste una hora con <strong>${lawyerName}</strong>. Si no confirmas hoy, la hora queda disponible para otros usuarios.</p>
+      ${bookingCard}
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin:16px 0;font-size:14px;color:#991b1b;">
+        Esta es la última vez que te avisamos sobre esta reserva.
+      </div>
+      ${ctaButton('Confirmar antes de que se libere')}
+      <p style="margin:0;font-size:14px;color:#6b7280;">Si ya no necesitas la consulta, no tienes que hacer nada.</p>
+      <p style="margin:20px 0 0;">— Equipo LegalUp</p>
+    `),
   };
 }
 
