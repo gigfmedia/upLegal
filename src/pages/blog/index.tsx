@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = useMemo(() => [
     {
+      id: "tacita-reconduccion-chile-2026",
+      title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
+      excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "13 de Abril, 2026",
+      readTime: "10 min",
+      image: "/assets/tacita-reconduccion-chile-2026.png"
+    },
+    {
       id: "dicom-deuda-arriendo-chile-2026",
       title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)",
       excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp.",

@@ -449,6 +449,7 @@ const BlogArticle = () => {
               <li>No pago de arriendo</li>
               <li>Desalojos</li>
               <li>Garantía de arriendo</li>
+              <li>Tácita reconducción</li>
             </ul>
             <p className="text-gray-600 mb-4 leading-relaxed">Puedes revisar:</p>
             
@@ -478,6 +479,18 @@ const BlogArticle = () => {
             
             {/* Cluster link 3 */}
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <Link 
+                to="/blog/tacita-reconduccion-chile-2026" 
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            {/* Cluster link 4 */}
+            <div className="text-center py-4 border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link 
                 to="/blog/reajuste-arriendo-ipc-chile-2026" 
@@ -572,6 +585,12 @@ const BlogArticle = () => {
             title: "No me devuelven la garantía de arriendo en Chile",
             excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
             image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
+          }}
+          nextArticle={{
+            id: "tacita-reconduccion-chile-2026",
+            title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
+            excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica.",
+            image: "/assets/tacita-reconduccion-chile-2026.png"
           }}
         />
         
