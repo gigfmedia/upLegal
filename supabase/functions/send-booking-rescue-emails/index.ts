@@ -8,7 +8,11 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-type RescueStep = '30m_help' | '6h_soft' | '24h_urgent';
+type RescueStep =
+  | 'early_intent'
+  | 'pre_event_urgency'
+  | 'missed_booking_recovery'
+  | 'post_missed_followup';
 
 type BookingRow = {
   id: string;
@@ -41,13 +45,7 @@ serve(async (req) => {
   try {
     validateSecret(req);
   } catch (error) {
-    return jsonResponse(
-      {
-        error: 'Unauthorized',
-        message: error instanceof Error ? error.message : 'Invalid authentication',
-      },
-      401,
-    );
+    return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
   try {
@@ -56,135 +54,129 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (!resendApiKey) {
-      return jsonResponse({ error: 'RESEND_API_KEY is not configured' }, 500);
-    }
-    const resend = new Resend(resendApiKey);
-
+    const resend = new Resend(Deno.env.get('RESEND_API_KEY')!);
     const appUrl = Deno.env.get('APP_URL') || 'https://legalup.cl';
 
     const now = new Date();
 
-    const windows: Array<{ step: RescueStep; minMinutes: number; maxMinutes: number }> = [
-      { step: '30m_help', minMinutes: 30, maxMinutes: 90 },
-      { step: '6h_soft', minMinutes: 6 * 60, maxMinutes: 8 * 60 },
-      { step: '24h_urgent', minMinutes: 24 * 60, maxMinutes: 28 * 60 },
-    ];
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('status', 'pending')
+      .limit(200);
 
-    const results: Array<{ bookingId: string; step: RescueStep; status: string; error?: string }> = [];
+    if (error) {
+      return jsonResponse({ error: error.message }, 500);
+    }
 
-    for (const w of windows) {
-      const minTs = new Date(now.getTime() - w.maxMinutes * 60 * 1000).toISOString();
-      const maxTs = new Date(now.getTime() - w.minMinutes * 60 * 1000).toISOString();
+    const results: any[] = [];
 
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('id, lawyer_id, user_email, user_name, scheduled_date, scheduled_time, duration, status, payment_status, created_at')
-        .eq('status', 'pending')
-        .gte('created_at', minTs)
-        .lte('created_at', maxTs)
-        .limit(200);
+    for (const booking of (bookings ?? []) as BookingRow[]) {
+      if (!booking.created_at) continue;
 
-      if (bookingsError) {
-        console.error(`[Rescue] Failed to fetch bookings for ${w.step}:`, bookingsError);
-        return jsonResponse({ error: `Failed to fetch bookings: ${bookingsError.message}` }, 500);
+      const bookingDateTime = new Date(`${booking.scheduled_date}T${booking.scheduled_time}`);
+      const createdAt = new Date(booking.created_at);
+
+      const minutesSinceCreated = (now.getTime() - createdAt.getTime()) / 60000;
+      const minutesToBooking = (bookingDateTime.getTime() - now.getTime()) / 60000;
+
+      let step: RescueStep | null = null;
+
+      // BEFORE BOOKING
+      if (minutesToBooking > 0) {
+        if (minutesSinceCreated >= 15 && minutesSinceCreated <= 45) {
+          step = 'early_intent';
+        } else if (minutesToBooking <= 120 && minutesToBooking >= 30) {
+          step = 'pre_event_urgency';
+        }
       }
 
-      console.log(`[Rescue] Found ${(bookings ?? []).length} bookings for step ${w.step}`);
+      // JUST MISSED
+      if (minutesToBooking <= 0 && minutesToBooking >= -60) {
+        step = 'missed_booking_recovery';
+      }
 
-      for (const booking of (bookings ?? []) as BookingRow[]) {
-        const { data: tracking, error: trackingError } = await supabase
-          .from('booking_rescue_emails')
-          .insert({
-            booking_id: booking.id,
-            step: w.step,
-            status: 'sending',
-            sent_to: booking.user_email,
-          })
-          .select('id')
-          .maybeSingle();
+      // AFTER MISSED
+      if (minutesToBooking < -60 && minutesToBooking >= -1440) {
+        step = 'post_missed_followup';
+      }
 
-        if (trackingError) {
-          results.push({ bookingId: booking.id, step: w.step, status: 'skipped' });
-          continue;
+      if (!step) continue;
+
+      // evitar duplicados
+      const { data: existing } = await supabase
+        .from('booking_rescue_emails')
+        .select('id')
+        .eq('booking_id', booking.id)
+        .eq('step', step)
+        .maybeSingle();
+
+      if (existing) continue;
+
+      const { data: tracking } = await supabase
+        .from('booking_rescue_emails')
+        .insert({
+          booking_id: booking.id,
+          step,
+          status: 'sending',
+          sent_to: booking.user_email,
+        })
+        .select('id')
+        .maybeSingle();
+
+      try {
+        const { data: lawyer } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('user_id', booking.lawyer_id)
+          .single();
+
+        const lawyerName =
+          `${lawyer?.first_name ?? ''} ${lawyer?.last_name ?? ''}`.trim() || 'tu abogado';
+
+        const deepLink = `${appUrl}/booking/${booking.lawyer_id}?date=${booking.scheduled_date}&time=${booking.scheduled_time}`;
+
+        const { subject, html } = buildEmail({
+          step,
+          clientName: booking.user_name,
+          lawyerName,
+          date: booking.scheduled_date,
+          time: booking.scheduled_time,
+          deepLink,
+        });
+
+        await resend.emails.send({
+          from: 'LegalUp <hola@mg.legalup.cl>',
+          to: booking.user_email,
+          subject,
+          html,
+        });
+
+        if (tracking?.id) {
+          await supabase
+            .from('booking_rescue_emails')
+            .update({ status: 'sent', sent_at: new Date().toISOString() })
+            .eq('id', tracking.id);
         }
 
-        try {
-          const { data: lawyer, error: lawyerError } = await supabase
-            .from('profiles')
-            .select('user_id, first_name, last_name')
-            .eq('user_id', booking.lawyer_id)
-            .eq('role', 'lawyer')
-            .single();
-
-          if (lawyerError || !lawyer) {
-            throw new Error(`Lawyer not found for booking ${booking.id}`);
-          }
-
-          const lawyerProfile = lawyer as LawyerProfile;
-          const lawyerName = `${lawyerProfile.first_name ?? ''} ${lawyerProfile.last_name ?? ''}`.trim() || 'tu abogado';
-
-          const deepLink = `${appUrl}/booking/${booking.lawyer_id}?date=${encodeURIComponent(booking.scheduled_date)}&time=${encodeURIComponent(booking.scheduled_time)}&duration=${encodeURIComponent(String(booking.duration))}`;
-
-          const { subject, html } = buildEmail({
-            step: w.step,
-            clientName: booking.user_name,
-            lawyerName,
-            date: booking.scheduled_date,
-            time: booking.scheduled_time,
-            deepLink,
-          });
-
-          console.log(`[Rescue] Sending ${w.step} email to ${booking.user_email}`);
-
-          await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
-            reply_to: 'hola@legalup.cl',
-            to: booking.user_email,
-            subject,
-            html,
-          });
-
-          if (tracking?.id) {
-            await supabase
-              .from('booking_rescue_emails')
-              .update({ status: 'sent', sent_at: new Date().toISOString(), error: null })
-              .eq('id', tracking.id);
-          }
-
-          results.push({ bookingId: booking.id, step: w.step, status: 'sent' });
-        } catch (err) {
-          console.error(`[Rescue] Error sending email ${w.step} to ${booking.user_email}:`, err);
-          const message = err instanceof Error ? err.message : String(err);
-
-          if (tracking?.id) {
-            await supabase
-              .from('booking_rescue_emails')
-              .update({ status: 'error', error: message })
-              .eq('id', tracking.id);
-          }
-
-          results.push({ bookingId: booking.id, step: w.step, status: 'error', error: message });
+        results.push({ bookingId: booking.id, step, status: 'sent' });
+      } catch (err) {
+        if (tracking?.id) {
+          await supabase
+            .from('booking_rescue_emails')
+            .update({ status: 'error', error: String(err) })
+            .eq('id', tracking.id);
         }
+
+        results.push({ bookingId: booking.id, step, status: 'error' });
       }
     }
 
-    return jsonResponse({ ok: true, processed: results });
+    return jsonResponse({ ok: true, results });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unexpected error';
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: String(error) }, 500);
   }
 });
-
-function validateSecret(req: Request) {
-  const configuredSecret = Deno.env.get('BOOKING_RESCUE_CRON_SECRET');
-  if (!configuredSecret) return;
-  const headerSecret = req.headers.get('x-cron-secret');
-  if (!headerSecret || headerSecret !== configuredSecret) {
-    throw new Error('Unauthorized: missing or invalid cron secret');
-  }
-}
 
 function buildEmail(params: {
   step: RescueStep;
@@ -195,8 +187,7 @@ function buildEmail(params: {
   deepLink: string;
 }) {
   const { step, clientName, lawyerName, date, time, deepLink } = params;
-
-  const firstName = clientName ? clientName.split(' ')[0] : '';
+  const firstName = clientName?.split(' ')[0] ?? '';
 
   const logo = `
     <div style="text-align:center;margin-bottom:28px;">
@@ -204,87 +195,97 @@ function buildEmail(params: {
       <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
     </div>`;
 
-  const bookingCard = `
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;">
-      <div style="font-size:12px;color:#6b7280;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Tu reserva</div>
-      <div style="font-size:15px;font-weight:600;color:#111827;margin-bottom:4px;">${lawyerName}</div>
-      <div style="font-size:14px;color:#374151;">${date} · ${time}</div>
-    </div>`;
-
-  const ctaButton = (text: string) => `
-    <div style="text-align:center;margin:28px 0;">
-      <a href="${deepLink}" style="display:inline-block;background:#111827;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">${text}</a>
-    </div>`;
-
   const footer = `
-    <p style="font-size:12px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
-      LegalUp · Abogados desde $30.000 · <a href="https://legalup.cl" style="color:#9ca3af;text-decoration:none;">legalup.cl</a>
+    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+      © ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
+      Todos los derechos reservados.<br />
+      Este es un correo automático, por favor no respondas a este mensaje.
     </p>`;
 
   const wrapper = (content: string) => `
-<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:16px;background:#f9fafb;">
-  <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
-    ${logo}
-    ${content}
-    ${footer}
-  </div>
-</body>
-</html>`;
-
-  // ─── 30m: tono útil, puede haber sido un problema técnico ───
-  if (step === '30m_help') {
-    return {
-      subject: '¿Tuviste un problema al agendar?',
-      html: wrapper(`
-        <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
-        <p style="margin:0 0 12px;">Vimos que seleccionaste una hora con un abogado pero no completaste el pago. A veces pasan problemas técnicos — si fue eso, tu hora podría seguir disponible.</p>
-        ${bookingCard}
-        ${ctaButton('Retomar reserva')}
-        <p style="margin:0;font-size:14px;color:#6b7280;">Si tuviste dudas antes de pagar, responde este correo y te ayudamos antes de que confirmes.</p>
-        <p style="margin:20px 0 0;">— Equipo LegalUp</p>
-      `),
-    };
-  }
-
-  // ─── 6h: social proof, mostrar que otros resolvieron ───
-  if (step === '6h_soft') {
-    return {
-      subject: `${firstName ? `${firstName}, t` : 'T'}u hora sigue disponible`,
-      html: wrapper(`
-        <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
-        <p style="margin:0 0 12px;">Tu hora con <strong>${lawyerName}</strong> sigue reservada, pero no por mucho más tiempo.</p>
-        ${bookingCard}
-        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px 16px;margin:16px 0;">
-          <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:10px;">Lo que otros resolvieron esta semana con LegalUp</div>
-          <div style="font-size:13px;color:#15803d;margin-bottom:6px;padding-left:8px;border-left:2px solid #86efac;">Arrendatario que no sabía si el desalojo era legal — caso resuelto en 1 consulta</div>
-          <div style="font-size:13px;color:#15803d;margin-bottom:6px;padding-left:8px;border-left:2px solid #86efac;">Trabajador al que no le pagaron el finiquito correcto — recuperó la diferencia</div>
-          <div style="font-size:13px;color:#15803d;padding-left:8px;border-left:2px solid #86efac;">Pareja que no sabía cómo iniciar el divorcio — proceso claro en 30 minutos</div>
-        </div>
-        ${ctaButton('Confirmar mi hora')}
-        <p style="margin:0;font-size:14px;color:#6b7280;">¿Tienes dudas antes de pagar? Responde este correo y te ayudamos.</p>
-        <p style="margin:20px 0 0;">— Equipo LegalUp</p>
-      `),
-    };
-  }
-
-  // ─── 24h: escasez real, último aviso ───
-  return {
-    subject: `Último aviso: la hora del ${date} a las ${time} se libera hoy`,
-    html: wrapper(`
-      <p style="margin:0 0 12px;">Hola${firstName ? ` ${firstName}` : ''},</p>
-      <p style="margin:0 0 12px;">Hace 24 horas seleccionaste una hora con <strong>${lawyerName}</strong>. Si no confirmas hoy, la hora queda disponible para otros usuarios.</p>
-      ${bookingCard}
-      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin:16px 0;font-size:14px;color:#991b1b;">
-        Esta es la última vez que te avisamos sobre esta reserva.
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+    <body style="margin:0;padding:16px;background:#f9fafb;">
+      <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+        ${content}
       </div>
-      ${ctaButton('Confirmar antes de que se libere')}
-      <p style="margin:0;font-size:14px;color:#6b7280;">Si ya no necesitas la consulta, no tienes que hacer nada.</p>
-      <p style="margin:20px 0 0;">— Equipo LegalUp</p>
+    </body>
+    </html>`;
+
+  const cta = (text: string) => `
+    <div style="text-align:center;margin:24px 0;">
+      <a href="${deepLink}" style="background:#111;color:#fff;padding:14px 24px;border-radius:8px;text-decoration:none;">
+        ${text}
+      </a>
+    </div>`;
+
+  const bookingCard = `
+    <div style="border:1px solid #eee;padding:12px;border-radius:8px;">
+      <b>${lawyerName}</b><br/>
+      ${date} · ${time}
+    </div>`;
+
+  if (step === 'early_intent') {
+    return {
+      subject: 'Tu hora con el abogado sigue disponible',
+      html: wrapper(`
+        ${logo}
+        <p>Hola ${firstName},</p>
+        <p>Tu hora sigue disponible.</p>
+        ${bookingCard}
+        ${cta('Confirmar y pagar')}
+        ${footer}
+      `),
+    };
+  }
+
+  if (step === 'pre_event_urgency') {
+    return {
+      subject: `Tu hora es a las ${time}`,
+      html: wrapper(`
+        ${logo}
+        <p>Hola ${firstName},</p>
+        <p><b>Tu abogado te estaba esperando.</b></p>
+        ${bookingCard}
+        ${cta('Confirmar ahora')}
+        ${footer}
+      `),
+    };
+  }
+
+  if (step === 'missed_booking_recovery') {
+    return {
+      subject: 'Perdiste tu hora, reagenda aquí',
+      html: wrapper(`
+        ${logo}
+        <p>Hola ${firstName},</p>
+        <p>Tu hora ya pasó.</p>
+        ${bookingCard}
+        ${cta('Reagendar')}
+        ${footer}
+      `),
+    };
+  }
+
+  return {
+    subject: '¿Sigues necesitando ayuda legal?',
+    html: wrapper(`
+      ${logo}
+      <p>Hola ${firstName},</p>
+      <p>Puedes reagendar o hablar con otro abogado.</p>
+      ${cta('Ver opciones')}
+      ${footer}
     `),
   };
+}
+
+function validateSecret(req: Request) {
+  const secret = Deno.env.get('BOOKING_RESCUE_CRON_SECRET');
+  if (!secret) return;
+  if (req.headers.get('x-cron-secret') !== secret) {
+    throw new Error('Unauthorized');
+  }
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
