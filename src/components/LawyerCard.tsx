@@ -166,36 +166,94 @@ export function LawyerCard({
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
 
-  // Check if lawyer has availability for a specific day
+  // Helper to check if lawyer has any slots for a given day
   const hasAvailabilityForDay = (dayName: string): boolean => {
     if (!lawyer.availability_config) return false;
-    
-    const normalizedTarget = normalizeDayKey(dayName);
-    
-    for (const [key, value] of Object.entries(lawyer.availability_config)) {
-      if (normalizeDayKey(key) === normalizedTarget && Array.isArray(value)) {
-        return value.some(hour => hour === true);
+    try {
+      const schedule = lawyer.availability_config;
+      const normalizedDay = normalizeDayKey(dayName);
+      const dayKey = Object.keys(schedule).find(k => normalizeDayKey(k) === normalizedDay);
+      
+      if (dayKey && Array.isArray(schedule[dayKey])) {
+        return schedule[dayKey].some((slot: boolean) => slot === true);
       }
+    } catch (e) {
+      console.error('Error checking availability:', e);
+    }
+    return false;
+  };
+
+  // Helper to check if lawyer has slots left for the current day (future hours)
+  const hasFutureSlotsToday = (): boolean => {
+    if (!lawyer.availability_config) return false;
+    try {
+      const today = new Date();
+      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      const todayName = dayNames[today.getDay()];
+      const normalizedDay = normalizeDayKey(todayName);
+      
+      const schedule = lawyer.availability_config;
+      const dayKey = Object.keys(schedule).find(k => normalizeDayKey(k) === normalizedDay);
+      
+      if (dayKey && Array.isArray(schedule[dayKey])) {
+        const currentHour = today.getHours();
+        // Slots are 9:00 (index 0) to 18:00 (index 9)
+        return schedule[dayKey].some((slot: boolean, index: number) => {
+          if (!slot) return false;
+          const slotHour = 9 + index;
+          return slotHour > currentHour; // Only count future slots
+        });
+      }
+    } catch (e) {
+      console.error('Error checking future slots:', e);
     }
     return false;
   };
 
   // Determine availability text based on current day and availability flag
   const getAvailabilityDisplay = (): { text: string; showPulse: boolean; shouldShow: boolean } => {
-    // Only show if lawyer has configured prices
-    if (!(lawyer.consultationPrice > 0 && lawyer.hourlyRate > 0)) {
+    // Only show if lawyer has configured at least one price
+    if (!(lawyer.consultationPrice > 0 || lawyer.hourlyRate > 0)) {
+      return { text: '', showPulse: false, shouldShow: false };
+    }
+
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const todayName = dayNames[dayOfWeek];
+
+    // Fallback logic for lawyers without a specific availability_config
+    if (!lawyer.availability_config) {
+      if (lawyer.verified) {
+        // Assume default availability for verified lawyers if no config is set
+        if ([1, 2, 3, 4, 5].includes(dayOfWeek)) {
+          // Mon-Fri
+          return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
+        } else {
+          // Weekend
+          return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
+        }
+      }
       return { text: '', showPulse: false, shouldShow: false };
     }
 
     // If the system directly reports they are available today (have future hours)
-    if (lawyer.availability?.availableToday || lawyer.availableToday) {
+    // Or if we can verify they have future availability today from the config
+    if (lawyer.availability?.availableToday || lawyer.availableToday || hasFutureSlotsToday()) {
+      // If it's late (after 6 PM), or if we don't have future slots today but have tomorrow
+      const currentHour = today.getHours();
+      const tomorrowIndex = (dayOfWeek + 1) % 7;
+      const tomorrowName = dayNames[tomorrowIndex];
+      const hasTomorrow = hasAvailabilityForDay(tomorrowName);
+      
+      if (currentHour >= 18 && hasTomorrow) {
+        return { text: 'Disponible mañana', showPulse: false, shouldShow: true };
+      }
+      
       return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
     }
 
     // If today is over or they weren't available today, check tomorrow
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     const tomorrowIndex = (dayOfWeek + 1) % 7;
     const tomorrowName = dayNames[tomorrowIndex];
 

@@ -335,24 +335,36 @@ const SearchResults = () => {
             location: lawyer.location || 'Sin ubicación',
             cases: 0,
             hourlyRate: lawyer.hourly_rate_clp || 0,
-            consultationPrice: lawyer.hourly_rate_clp || 0,
+            consultationPrice: lawyer.contact_fee_clp || lawyer.hourly_rate_clp || 0,
             image: lawyer.avatar_url || '',
             bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
             verified: Boolean(lawyer.verified),
             blocked: lawyer.blocked || false,
             availability: {
-              availableToday: true,
-              availableThisWeek: true,
+              availableToday: Boolean(lawyer.available_today),
+              availableThisWeek: Boolean(lawyer.available_this_week),
               quickResponse: true,
               emergencyConsultations: true
             },
-            availableToday: true,
-            availableThisWeek: true,
+            availableToday: Boolean(lawyer.available_today),
+            availableThisWeek: Boolean(lawyer.available_this_week),
             quickResponse: true,
             emergencyConsultations: true,
             experience_years: lawyer.experience_years || 0,
             experienceYears: lawyer.experience_years || 0,
-            availability_config: lawyer.availability || undefined
+            availability_config: (() => {
+              if (!lawyer.availability) return undefined;
+              if (typeof lawyer.availability === 'object') return lawyer.availability;
+              if (typeof lawyer.availability === 'string' && lawyer.availability.trim() !== '') {
+                try {
+                  return JSON.parse(lawyer.availability);
+                } catch (e) {
+                  console.error('Error parsing availability for lawyer:', lawyer.id, e);
+                  return undefined;
+                }
+              }
+              return undefined;
+            })()
           }));
 
           // Then sort them by profile completeness and rating
