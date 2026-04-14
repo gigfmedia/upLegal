@@ -128,15 +128,15 @@ export function ServicesSection({
           }
         },
         back_urls: {
-          success: 'https://uplegal.netlify.app/payment/success',
-          failure: 'https://uplegal.netlify.app/payment/failure',
-          pending: 'https://uplegal.netlify.app/payment/pending'
+          success: `${window.location.origin}/payment/success`,
+          failure: `${window.location.origin}/payment/failure`,
+          pending: `${window.location.origin}/payment/pending`
         },
         auto_return: 'approved',
         binary_mode: true,
         statement_descriptor: 'UpLegal',
         external_reference: JSON.stringify(referenceData),
-        notification_url: 'https://uplegal.netlify.app/api/mercadopago/webhook',
+        notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL || `${window.location.origin}/api/mercadopago/webhook`,
         payment_methods: {
           excluded_payment_methods: [
             {
@@ -193,13 +193,13 @@ export function ServicesSection({
           }
         },
         back_urls: {
-          success: 'https://uplegal.netlify.app/payment/success',
-          failure: 'https://uplegal.netlify.app/payment/failure',
-          pending: 'https://uplegal.netlify.app/payment/pending'
+          success: `${window.location.origin}/payment/success`,
+          failure: `${window.location.origin}/payment/failure`,
+          pending: `${window.location.origin}/payment/pending`
         },
         auto_return: 'approved',
         binary_mode: true,
-        notification_url: 'https://uplegal.netlify.app/api/mercadopago/webhook',
+        notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL || `${window.location.origin}/api/mercadopago/webhook`,
         statement_descriptor: 'UPLEGAL',
         external_reference: JSON.stringify({
           client_id: user.id,

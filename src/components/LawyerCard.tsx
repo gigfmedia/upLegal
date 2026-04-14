@@ -180,32 +180,48 @@ export function LawyerCard({
     return false;
   };
 
-  // Determine availability text based on current day
-  const getAvailabilityDisplay = (): { text: string; showPulse: boolean } => {
+  // Determine availability text based on current day and availability flag
+  const getAvailabilityDisplay = (): { text: string; showPulse: boolean; shouldShow: boolean } => {
+    // Only show if lawyer has configured prices
+    if (!(lawyer.consultationPrice > 0 && lawyer.hourlyRate > 0)) {
+      return { text: '', showPulse: false, shouldShow: false };
+    }
+
+    // If the system directly reports they are available today (have future hours)
+    if (lawyer.availability?.availableToday || lawyer.availableToday) {
+      return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
+    }
+
+    // If today is over or they weren't available today, check tomorrow
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    
-    // Monday (1) to Friday (5): always show "disponible hoy"
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      return { text: 'Disponible hoy', showPulse: true };
+    const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const tomorrowIndex = (dayOfWeek + 1) % 7;
+    const tomorrowName = dayNames[tomorrowIndex];
+
+    const hasTomorrow = hasAvailabilityForDay(tomorrowName);
+
+    if (hasTomorrow) {
+      return { text: 'Disponible mañana', showPulse: false, shouldShow: true };
     }
-    
-    // Saturday (6): show "disponible hoy" ONLY if lawyer has Saturday configured
-    if (dayOfWeek === 6) {
-      const hasSaturday = hasAvailabilityForDay('Sábado');
-      return hasSaturday 
-        ? { text: 'Disponible hoy', showPulse: true }
-        : { text: 'Disponible lunes', showPulse: false };
+
+    // If not available tomorrow, and it's Fri/Sat/Sun, check Monday
+    if ([5, 6, 0].includes(dayOfWeek)) {
+      if (hasAvailabilityForDay('Lunes')) {
+        return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
+      }
     }
-    
-    // Sunday (0): always show "disponible" without pulse
-    return { text: 'Disponible lunes', showPulse: false };
+
+    // If they have any availability this week as a fallback
+    if (lawyer.availability?.availableThisWeek || lawyer.availableThisWeek) {
+      return { text: 'Disponible esta semana', showPulse: false, shouldShow: true };
+    }
+
+    return { text: '', showPulse: false, shouldShow: false };
   };
 
   const availabilityDisplay = getAvailabilityDisplay();
-  const shouldShowAvailabilityBadge = lawyer.availability?.availableToday && 
-    lawyer.consultationPrice > 0 && 
-    lawyer.hourlyRate > 0;
+  const shouldShowAvailabilityBadge = availabilityDisplay.shouldShow;
 
   // Handle contact button click
   const handleContactClick = (e: React.MouseEvent) => {

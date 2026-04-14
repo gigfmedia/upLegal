@@ -12,7 +12,7 @@ export default function PaymentFailure() {
   const { user } = useAuth();
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const appointmentId = searchParams.get('appointmentId');
+  const appointmentId = searchParams.get('appointmentId') || searchParams.get('booking_id');
 
   useState(() => {
     // Log initial failure event when landing on this page

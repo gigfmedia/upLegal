@@ -906,9 +906,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           appointmentId: appointment.id,
           description: `Consulta legal con ${selectedLawyerData?.name || lawyerName}`,
           // Use fallback base URL if window.location.origin is empty
-          successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${appointment.id}`,
-          failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${appointment.id}`,
-          pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${appointment.id}`,
+          successUrl: `${window.location.origin}/payment/success?appointmentId=${appointment.id}`,
+          failureUrl: `${window.location.origin}/payment/failure?appointmentId=${appointment.id}`,
+          pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${appointment.id}`,
           userEmail: user?.email || formData.email,
           userName: user?.user_metadata?.full_name || formData.name
         };
@@ -919,7 +919,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         }
         
         // USAR NETLIFY FUNCTIONS - ENDPOINT CORRECTO
-        const API_BASE_URL = 'https://uplegal.netlify.app';
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
         const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
         
         // Test the function with OPTIONS request

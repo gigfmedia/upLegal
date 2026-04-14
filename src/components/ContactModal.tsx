@@ -342,7 +342,8 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
 
   const createPayment = async (paymentParams: CreatePaymentParams) => {
     try {
-      const BACKEND_URL = 'https://uplegal.netlify.app/.netlify/functions/create-payment';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+      const BACKEND_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
       
       const response = await fetch(BACKEND_URL, {
         method: 'POST',
@@ -414,9 +415,9 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
           ? `Consulta: ${service.title} con ${lawyerName}`
           : `Consulta legal con ${lawyerName}`,
         // Use fallback base URL if window.location.origin is empty
-        successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${consultation.id}`,
-        failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${consultation.id}`,
-        pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${consultation.id}`,
+        successUrl: `${window.location.origin}/payment/success?appointmentId=${consultation.id}`,
+        failureUrl: `${window.location.origin}/payment/failure?appointmentId=${consultation.id}`,
+        pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${consultation.id}`,
         userEmail: user.email || formData.email,
         userName: formData.name
       };

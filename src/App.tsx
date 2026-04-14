@@ -427,6 +427,8 @@ const AppContent = () => {
               <Route path="/privacidad" element={<PrivacyPolicy />} />
               
               {/* Booking Routes */}
+              <Route path="/booking/failure" element={<PaymentFailure />} />
+              <Route path="/booking/pending" element={<PaymentSuccess />} />
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 

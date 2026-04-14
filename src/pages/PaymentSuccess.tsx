@@ -47,7 +47,7 @@ export default function PaymentSuccess() {
     }
   }, []);
 
-  const appointmentId = searchParams.get('appointmentId');
+  const appointmentId = searchParams.get('appointmentId') || searchParams.get('booking_id');
 
   useEffect(() => {
     const verifyPayment = async () => {

@@ -46,7 +46,8 @@ type CreatePreferenceData = {
   external_reference?: string;
 };
 
-// Force production mode
+// Environment variables
+const isProduction = import.meta.env.PROD;
 const accessToken = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
 
 if (!accessToken) {
@@ -59,15 +60,14 @@ export const mercadopago = new MercadoPagoConfig({
   accessToken,
   options: {
     timeout: 5000,
-    idempotencyKey: 'some-idempotency-key',
-    environment: 'production' // Force production environment
+    idempotencyKey: 'some-idempotency-key'
   },
 });
 
 // Test MercadoPago API connection
 async function testMercadoPagoAPI() {
   try {
-    const baseUrl = 'https://uplegal.netlify.app'; // Production URL
+    const baseUrl = window.location.origin || 'https://legalup.cl'; // Dynamic URL with fallback
     
     const response = await fetch(`${baseUrl}/api/payment-methods`, {
       method: 'GET',
