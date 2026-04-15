@@ -128,6 +128,8 @@
     <lastmod>2026-04-08</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
+  </url>
+
   <url>
     <loc>https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026</loc>
     <lastmod>2026-04-10</lastmod>
@@ -138,6 +140,13 @@
   <url>
     <loc>https://legalup.cl/blog/tacita-reconduccion-chile-2026</loc>
     <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/blog/derecho-arrendamiento-chile-guia-completa-2026</loc>
+    <lastmod>2026-04-14</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>

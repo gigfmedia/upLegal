@@ -98,6 +98,7 @@ const DespidoInjustificadoArticle = lazy(() => import('./pages/blog/despido-inju
 const GarantiaArriendoArticle = lazy(() => import('./pages/blog/no-devuelven-garantia-arriendo-chile-2026'));
 const DicomDeudaArriendoArticle = lazy(() => import('./pages/blog/dicom-deuda-arriendo-chile-2026'));
 const TacitaReconduccionArticle = lazy(() => import('./pages/blog/tacita-reconduccion-chile-2026'));
+const DerechoArrendamientoArticle = lazy(() => import('./pages/blog/derecho-arrendamiento-chile-guia-completa-2026'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 
@@ -456,6 +457,7 @@ const AppContent = () => {
               <Route path="/blog/no-devuelven-garantia-arriendo-chile-2026" element={<GarantiaArriendoArticle />} />
               <Route path="/blog/dicom-deuda-arriendo-chile-2026" element={<DicomDeudaArriendoArticle />} />
               <Route path="/blog/tacita-reconduccion-chile-2026" element={<TacitaReconduccionArticle />} />
+              <Route path="/blog/derecho-arrendamiento-chile-guia-completa-2026" element={<DerechoArrendamientoArticle />} />
               <Route path="/cae" element={<CAELanding />} />
               <Route path="/review" element={<ReviewPage />} />
              

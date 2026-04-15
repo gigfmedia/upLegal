@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = useMemo(() => [
     {
+      id: "derecho-arrendamiento-chile-guia-completa-2026",
+      title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
+      excerpt: "El arriendo de propiedades en Chile es una de las relaciones legales más frecuentes. Todo lo que necesitas saber sobre contratos, desalojos, garantías e IPC en esta guía completa 2026.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "15 de Abril, 2026",
+      readTime: "16 min",
+      image: "/assets/derecho-arrendamiento-chile-2026.png"
+    },
+    {
       id: "tacita-reconduccion-chile-2026",
       title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
       excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica.",

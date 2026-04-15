@@ -603,6 +603,12 @@ const BlogArticle = () => {
             excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile.",
             image: "/assets/dicom-arriendo-chile-2026.png"
           }}
+          nextArticle={{
+            id: "derecho-arrendamiento-chile-guia-completa-2026",
+            title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
+            excerpt: "Todo lo que necesitas saber sobre el arrendamiento en Chile en esta guía completa 2026.",
+            image: "/assets/derecho-arrendamiento-chile-2026.png"
+          }}
         />
 
         <div className="mt-8 text-center">

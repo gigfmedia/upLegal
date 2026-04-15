@@ -132,10 +132,6 @@ const Index = () => {
     setShowScheduleModal(true);
   }, []);
 
-
-
-
-
   // Efecto para cargar los contadores (sin suscripciones en tiempo real para mejor performance)
   useEffect(() => {
     const loadInitialCounts = async () => {
@@ -273,7 +269,6 @@ const Index = () => {
     "Defensa DUI",
     "Divorcio"
   ];
-
 
   const handleAuthClick = (mode: 'login' | 'signup', role: 'client' | 'lawyer' = 'client') => {
     setAuthMode(mode);
@@ -782,8 +777,6 @@ const Index = () => {
                   user={user}
                 />
               ))}
-              
-              {/* Mock lawyers removed to show only real data */}
             </div>
           )}
         </div>
