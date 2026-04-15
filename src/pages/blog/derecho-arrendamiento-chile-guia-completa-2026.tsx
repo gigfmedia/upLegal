@@ -156,7 +156,7 @@ const BlogArticle = () => {
 
             <h3 className="text-xl font-bold mb-4 text-gray-800">Derecho a usar la propiedad sin interferencias</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Es fundamental entender que una vez que firmas el contrato, la propiedad pasa a ser tu morada legal. Esto significa que el arrendador no tiene el derecho de entrar cuando quiera, incluso si es el dueño. Muitas personas creen que por ser los propietarios pueden revisar el estado de la casa en cualquier momento sin avisar, pero la ley chilena protege la privacidad del hogar. 
+              Es fundamental entender que una vez que firmas el contrato, la propiedad pasa a ser tu morada legal. Esto significa que el arrendador no tiene el derecho de entrar cuando quiera, incluso si es el dueño. Muchas personas creen que por ser los propietarios pueden revisar el estado de la casa en cualquier momento sin avisar, pero la ley chilena protege la privacidad del hogar. 
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Entrar sin autorización podría incluso constituir un delito de violación de morada en ciertos contextos. Además, prácticas comunes pero indebidas como las que verás a continuación, son totalmente contrarias a la ley:
@@ -373,7 +373,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Desalojo en Chile: ¿cómo funciona realmente el proceso legal?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 pt-4">Desalojo en Chile: ¿cómo funciona realmente el proceso legal?</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
               Uno de los mitos más grandes en el derecho de arrendamiento es que el dueño de casa puede sacar a un arrendatario que no paga de un día para otro. Muchas personas se ven enfrentadas a amenazas de que les van a sacar las cosas a la calle o les van a cambiar la chapa "mañana mismo".
             </p>
