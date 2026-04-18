@@ -204,6 +204,17 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-sm text-gray-500 mb-3 leading-relaxed">El desalojo es solo una parte del sistema. Para entender todo el contexto legal del arriendo, revisa esta</p>
+            <Link
+              to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía completa de derecho de arrendamiento en Chile
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Etapas detalladas de un juicio de desalojo</h2>
             

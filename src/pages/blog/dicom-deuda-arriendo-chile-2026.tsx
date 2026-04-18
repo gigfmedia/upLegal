@@ -288,7 +288,6 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <p className="text-gray-600 mb-4 leading-relaxed">Esto lo puedes revisar en:</p>
             <p className="text-gray-600 mb-4 leading-relaxed">Entiende los plazos y protecciones legales ante un desalojo:</p>
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -324,6 +323,17 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/reajuste-arriendo-ipc-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Reajuste de arriendo por IPC en Chile: Todo lo que necesitas saber 2026
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué hacer si te amenazan con DICOM?</h2>
             <div className="space-y-4">
@@ -345,6 +355,17 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-sm text-gray-500 mb-3 leading-relaxed">Las deudas de arriendo son solo uno de los conflictos posibles. Puedes ver todos los escenarios en esta</p>
+            <Link
+              to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía completa de arriendo en Chile
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
           <div className="mb-12">
@@ -391,6 +412,17 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/no-devuelven-garantia-arriendo-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 ¿No te devuelven la garantía de arriendo? Qué hacer legalmente en Chile 2026
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo dura una deuda en DICOM?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -425,6 +457,17 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 ¿Cuánto demora un juicio de desalojo en Chile? Plazos legales 2026
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Casos frecuentes en Chile</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -443,63 +486,14 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Relación con otros problemas de arriendo</h2>
-            <p className="text-gray-600 mb-4">Este tema se conecta con:</p>
-            <ul className="list-disc list-inside text-gray-600 space-y-2 mb-6">
-              <li>No pago de arriendo</li>
-              <li>Desalojos</li>
-              <li>Garantía de arriendo</li>
-              <li>Tácita reconducción</li>
-            </ul>
-            <p className="text-gray-600 mb-4 leading-relaxed">Puedes revisar:</p>
-            
-            {/* Cluster link 1 */}
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/no-devuelven-garantia-arriendo-chile-2026" 
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿No te devuelven la garantía de arriendo? Qué hacer legalmente en Chile 2026
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            
-            {/* Cluster link 2 */}
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/cuanto-demora-juicio-desalojo-chile-2026" 
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Cuánto demora un juicio de desalojo en Chile? Plazos legales 2026
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            
-            {/* Cluster link 3 */}
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/tacita-reconduccion-chile-2026" 
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            
-            {/* Cluster link 4 */}
-            <div className="text-center py-4 border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/reajuste-arriendo-ipc-chile-2026" 
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 Reajuste de arriendo por IPC en Chile: Todo lo que necesitas saber 2026
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/tacita-reconduccion-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
           {/* FAQs */}
@@ -518,10 +512,12 @@ const BlogArticle = () => {
           {/* Conclusion */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
+            <p className="text-lg text-gray-600 leading-relaxed mb-4">
               Una deuda de arriendo no va automáticamente a DICOM, pero en ciertos casos sí puede ser informada si cumple requisitos legales. Lo importante es entender tu situación real y no actuar solo por miedo. Con la información correcta, puedes evitar problemas mayores o resolverlos a tiempo.
             </p>
           </div>
+
+
 
         </div>
       </div>

@@ -532,6 +532,17 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-sm text-gray-500 mb-3 leading-relaxed">El reajuste por IPC es solo una parte del contrato de arriendo. Para entender el panorama completo, revisa esta</p>
+            <Link
+              to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía completa de derecho de arrendamiento en Chile
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <InArticleCTA
             message="¿Tienes dudas sobre si el reajuste de tu arriendo es correcto? Consulta con un abogado de arriendo y aclara tu situación hoy."
             buttonText="Consultar sobre mi arriendo"
