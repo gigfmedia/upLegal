@@ -43,6 +43,12 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
           message: "Un abogado puede revisar tu caso y proteger tus derechos.",
           priceLabel: "Consulta desde $30.000"
         };
+      case 'contrato-arriendo':
+        return {
+          title: "¿Vas a firmar un contrato de arriendo?",
+          message: "Un experto puede redactar o revisar tu contrato para evitar problemas legales a futuro.",
+          priceLabel: "Desde $30.000"
+        };
       case 'sin-contrato':
         return {
           title: "¿Tienes problemas con tu arriendo sin contrato?",

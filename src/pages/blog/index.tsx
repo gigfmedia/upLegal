@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = useMemo(() => [
     {
+      id: "contrato-de-arriendo-chile-2026",
+      title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
+      excerpt: "Firmar un contrato de arriendo en Chile es uno de los pasos más importantes al arrendar una propiedad. Descubre qué debe incluir, qué cláusulas son ilegales, errores comunes y un modelo base gratuito.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "18 de Abril, 2026",
+      readTime: "13 min",
+      image: "/assets/contrato-arriendo-chile-2026.png"
+    },
+    {
       id: "derecho-arrendamiento-chile-guia-completa-2026",
       title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
       excerpt: "El arriendo de propiedades en Chile es una de las relaciones legales más frecuentes. Todo lo que necesitas saber sobre contratos, desalojos, garantías e IPC en esta guía completa 2026.",

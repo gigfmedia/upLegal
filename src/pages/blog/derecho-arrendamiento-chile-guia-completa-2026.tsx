@@ -71,7 +71,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-600 font-serif text-balance">
             Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)
           </h1>
 
@@ -282,6 +282,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-8 leading-relaxed">
               Tener un contrato escrito no solo formaliza el acuerdo, sino que sirve como prueba irrefutable ante cualquier tribunal en caso de conflicto. Sin un papel firmado, cualquier disputa sobre el valor, los arreglos o las fechas de término se convierte en un problema de 'tu palabra contra la mía'.
             </p>
+
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <Link
+                to="/blog/contrato-de-arriendo-chile-2026"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 Contrato de arriendo en Chile: modelo gratis y cláusulas clave
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
 
             <h3 className="text-xl font-bold mb-4 text-gray-800">Qué debe incluir un contrato de arriendo</h3>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold italic">Un contrato bien hecho debería contener:</p>
@@ -810,6 +821,12 @@ const BlogArticle = () => {
             title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
             excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos.",
             image: "/assets/tacita-reconduccion-chile-2026.png"
+          }}
+          nextArticle={{
+            id: "contrato-de-arriendo-chile-2026",
+            title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
+            excerpt: "Firmar un contrato de arriendo es uno de los pasos más importantes al arrendar en Chile. Descubre qué debe incluir y qué errores evitar.",
+            image: "/assets/contrato-arriendo-chile-2026.png"
           }}
         />
 
