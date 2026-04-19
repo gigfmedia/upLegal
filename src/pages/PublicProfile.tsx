@@ -1004,7 +1004,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex flex-col items-center relative">
                       {/* Mobile-only verified badge */}
-                      {(lawyer?.verified || lawyer?.pjud_verified) && (
+                      {lawyer?.verified && (
                         <div className="sm:hidden absolute -top-1 -left-1 z-10">
                           <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
                             <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
@@ -1054,7 +1054,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         </div>
                         
                         {/* Desktop verified badge next to name */}
-                        {(lawyer?.verified || lawyer?.pjud_verified) && (
+                        {lawyer?.verified && (
                           <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full self-start mt-2">
                             <ShieldCheck className="h-3.5 w-3.5" />
                             <span className="text-xs font-medium">
