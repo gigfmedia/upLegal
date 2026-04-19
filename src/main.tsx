@@ -43,6 +43,9 @@ if (!container) throw new Error('Failed to find the root element');
 // Crear la raíz de la aplicación
 const root = createRoot(container);
 
+// Limpiar contador de recargas por activos fallidos si la app montó exitosamente
+sessionStorage.removeItem('asset_reload_count');
+
 // Renderizar la aplicación
 root.render(
   <StrictMode>

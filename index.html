@@ -11,6 +11,24 @@
     <!-- Hotjar-->
     <!-- <script src="https://t.contentsquare.net/uxa/8e593ddd9c70c.js"></script> -->
 
+    <script>
+      // Global error handler to catch main bundle load failures (stale index.html)
+      window.addEventListener('error', function(e) {
+        var target = e.target;
+        if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+          var src = target.getAttribute('src') || target.getAttribute('href');
+          if (src && src.match(/\/assets\/.*\.(js|css)$/)) {
+            console.warn("Failed to load asset: " + src + ". Possible stale cache. Reloading...");
+            var reloadCount = parseInt(sessionStorage.getItem('asset_reload_count') || '0', 10);
+            if (reloadCount < 2) {
+              sessionStorage.setItem('asset_reload_count', String(reloadCount + 1));
+              window.location.reload(true);
+            }
+          }
+        }
+      }, true);
+    </script>
+
     <script type="text/javascript">
       (function(c,l,a,r,i,t,y){
           c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
