@@ -2,8 +2,25 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
+import { useEffect } from "react";
+
 export function NotFound() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Hide footer on 404 page
+    const footer = document.querySelector('footer');
+    if (footer) {
+      footer.style.display = 'none';
+    }
+
+    // Show footer again when leaving 404 page
+    return () => {
+      if (footer) {
+        footer.style.display = 'block';
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">

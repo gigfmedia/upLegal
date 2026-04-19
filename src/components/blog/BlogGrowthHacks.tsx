@@ -33,18 +33,19 @@ export const BlogGrowthHacks = ({
       "image": `${window.location.origin}${image}`,
       "author": {
         "@type": "Organization",
-        "name": "LegalUp"
+        "name": "LegalUp",
+        "url": "https://legalup.cl"
       },
       "publisher": {
         "@type": "Organization",
         "name": "LegalUp",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://legalup.cl/logo.png"
+          "url": "https://legalup.cl/assets/logo.png"
         }
       },
-      "datePublished": datePublished,
-      "dateModified": dateModified,
+      "datePublished": `${datePublished}T00:00:00Z`,
+      "dateModified": `${dateModified}T00:00:00Z`,
       "mainEntityOfPage": {
         "@type": "WebPage",
         "@id": url

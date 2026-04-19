@@ -8,10 +8,23 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Hide footer on 404 page
+    const footer = document.querySelector('footer');
+    if (footer) {
+      footer.style.display = 'none';
+    }
+
     console.error(
       "404 Error: User attempted to access non-existent route:",
       location.pathname
     );
+
+    // Show footer again when leaving 404 page
+    return () => {
+      if (footer) {
+        footer.style.display = 'block';
+      }
+    };
   }, [location.pathname]);
 
   return (
@@ -19,7 +32,7 @@ const NotFound = () => {
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="flex justify-center">
           <div className="flex items-center space-x-2">
-            <Scale className="h-8 w-8 text-blue-600" />
+            <Scale className="h-8 w-8 text-green-900" />
             <span className="text-2xl font-bold text-gray-900">LegalUp</span>
           </div>
         </div>
@@ -45,7 +58,7 @@ const NotFound = () => {
             <Button
               variant="ghost"
               onClick={() => navigate('/')}
-              className="text-blue-600 hover:text-blue-800"
+              className="text-green-900 hover:text-green-600"
             >
               Ir a la página de inicio
             </Button>

@@ -13,32 +13,32 @@ import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Siempre puedo demandar?",
-      answer: "Sí, pero debes hacerlo dentro del plazo. Tienes 60 días hábiles desde el despido para presentar la demanda. Si haces reclamo en la Inspección del Trabajo, ese plazo puede ampliarse hasta 90 días."
+      question: "¿Qué es el despido injustificado en Chile?",
+      answer: "El despido injustificado ocurre cuando el empleador termina el contrato sin una causa legal válida, o cuando la causa invocada no puede probarse. En Chile, las causales válidas de despido están establecidas en el Código del Trabajo. Si el empleador no las acredita ante el tribunal, el despido se declara injustificado y debe pagar indemnizaciones adicionales."
     },
     {
-      question: "¿Necesito abogado?",
-      answer: "No es obligatorio, pero es altamente recomendable. Un abogado laboral puede evaluar tu caso, calcular correctamente las indemnizaciones y representarte ante el tribunal, aumentando significativamente tus posibilidades de éxito."
+      question: "¿Cuánto me deben pagar si me despiden injustificadamente?",
+      answer: "Si el despido es declarado injustificado, el empleador debe pagar: indemnización por años de servicio (un mes de remuneración por año trabajado), indemnización sustitutiva del aviso previo si no avisaron con 30 días de anticipación, y un recargo de entre 30% y 100% sobre la indemnización por años de servicio según la causal invocada."
     },
     {
-      question: "¿Puedo negociar antes de demandar?",
-      answer: "Sí, muchas veces se logra un acuerdo. Puedes ir primero a la Inspección del Trabajo para intentar una conciliación con el empleador antes de iniciar un proceso judicial."
+      question: "¿Cuánto tiempo tengo para demandar por despido injustificado?",
+      answer: "Tienes 60 días hábiles desde la fecha del despido para presentar la demanda ante el Juzgado del Trabajo. Si presentas un reclamo en la Inspección del Trabajo dentro de ese plazo, el tiempo se suspende y se amplía hasta 90 días hábiles desde el despido."
     },
     {
-      question: "¿Cuánto dura el juicio?",
-      answer: "Puede tomar varios meses. Los juicios laborales en Chile tienen plazos establecidos, pero la duración real depende de la carga del tribunal y la complejidad del caso."
+      question: "¿Puedo negociar antes de ir a juicio?",
+      answer: "Sí. Puedes concurrir a la Inspección del Trabajo para intentar una conciliación con el empleador antes de demandar. Si se llega a acuerdo, se evita el juicio. Si no hay acuerdo, el plazo para demandar se reactiva desde ahí."
     },
     {
-      question: "¿Qué pasa si pierdo?",
-      answer: "No recibes indemnización adicional. Por eso es importante evaluar bien el caso antes de demandar, preferiblemente con la orientación de un abogado laboral."
+      question: "¿Cuánto dura un juicio por despido injustificado en Chile?",
+      answer: "Un juicio laboral por despido injustificado en Chile puede durar entre 3 y 8 meses dependiendo de la carga del tribunal y la complejidad del caso. El procedimiento laboral tiene audiencias fijas, pero los tiempos reales varían según el juzgado."
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
-        description="Guía 2026 sobre el despido injustificado en Chile: qué es, cuándo se puede demandar, cuánto puedes ganar, plazos y errores que debes evitar para reclamar tu indemnización."
+        title="Despido injustificado en Chile 2026: qué te corresponde y cómo reclamar"
+        description="Si te despidieron sin causa justificada en Chile, tienes derecho a indemnización. Conoce los montos, plazos y pasos para reclamar. Abogado laboral disponible en LegalUp."
         image="/assets/despido-injustificado-chile-2026.png"
         url="https://legalup.cl/blog/despido-injustificado-chile-2026"
         datePublished="2026-04-01"
@@ -58,7 +58,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)
+            Despido injustificado en Chile 2026: qué te corresponde y cómo reclamar
           </h1>
 
           <p className="text-xl max-w-3xl leading-relaxed">
