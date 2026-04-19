@@ -649,9 +649,36 @@ export default function BookingPage() {
     }
   };
 
-  const lawyerFee = calculateLawyerFee();
-  const serviceFee = Math.round(lawyerFee * 0.10); // 10% service fee
-  const totalPrice = lawyerFee + serviceFee;
+  const clientSurchargePercent = 0.1;
+
+  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
+  const roundToThousands = (amount: number): number => {
+    return Math.round(amount / 1000) * 1000;
+  };
+
+  const getClientPriceForDuration = (minutes: 30 | 60 | 90 | 120) => {
+    if (!lawyer) return 0;
+
+    let base = lawyer.hourly_rate_clp;
+    switch (minutes) {
+      case 30:
+        base = Math.round(lawyer.hourly_rate_clp / 2);
+        break;
+      case 60:
+        base = lawyer.hourly_rate_clp;
+        break;
+      case 90:
+        base = Math.round(lawyer.hourly_rate_clp * 1.5);
+        break;
+      case 120:
+        base = lawyer.hourly_rate_clp * 2;
+        break;
+    }
+
+    return roundToThousands(base * (1 + clientSurchargePercent));
+  };
+
+  const totalPrice = getClientPriceForDuration(duration);
 
   const BookingSkeleton = () => (
     <div className="space-y-6">
@@ -809,7 +836,7 @@ export default function BookingPage() {
                     <span className="font-medium">30 minutos</span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    ${Math.round(lawyer.hourly_rate_clp / 2).toLocaleString('es-CL')}
+                    ${getClientPriceForDuration(30).toLocaleString('es-CL')}
                   </div>
                 </button>
                 <button
@@ -825,7 +852,7 @@ export default function BookingPage() {
                     <span className="font-medium">60 minutos</span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    ${lawyer.hourly_rate_clp.toLocaleString('es-CL')}
+                    ${getClientPriceForDuration(60).toLocaleString('es-CL')}
                   </div>
                 </button>
                 <button
@@ -841,7 +868,7 @@ export default function BookingPage() {
                     <span className="font-medium">90 minutos</span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    ${Math.round(lawyer.hourly_rate_clp * 1.5).toLocaleString('es-CL')}
+                    ${getClientPriceForDuration(90).toLocaleString('es-CL')}
                   </div>
                 </button>
                 <button
@@ -857,7 +884,7 @@ export default function BookingPage() {
                     <span className="font-medium">120 minutos</span>
                   </div>
                   <div className="text-sm text-gray-600 mt-1">
-                    ${(lawyer.hourly_rate_clp * 2).toLocaleString('es-CL')}
+                    ${getClientPriceForDuration(120).toLocaleString('es-CL')}
                   </div>
                 </button>
               </div>
@@ -961,23 +988,13 @@ export default function BookingPage() {
                     <span className="font-medium">{duration} minutos</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Honorarios abogado:</span>
-                    <span className="font-medium">${lawyerFee.toLocaleString('es-CL')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center">
-                      <span className="text-gray-600">Tarifa por servicio</span>
-                      <span className="ml-1 text-xs text-gray-500">*</span>
-                    </div>
-                    <span className="font-medium text-gray-600">+${serviceFee.toLocaleString('es-CL')}</span>
+                    <span className="text-gray-600">Precio abogado:</span>
+                    <span className="font-medium">${totalPrice.toLocaleString('es-CL')}</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                     <span>Total a pagar:</span>
                     <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    * Incluye 10% de recargo por servicio app.
-                  </p>
                 </div>
 
                 {/* Testimonial social proof */}

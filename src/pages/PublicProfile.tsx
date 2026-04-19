@@ -183,6 +183,17 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const clientSurchargePercent = 0.1;
+
+  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
+  const roundToThousands = (amount: number): number => {
+    return Math.round(amount / 1000) * 1000;
+  };
+
+  const displayHourlyRate = lawyer?.hourly_rate_clp !== null && lawyer?.hourly_rate_clp !== undefined
+    ? roundToThousands(lawyer.hourly_rate_clp * (1 + clientSurchargePercent))
+    : lawyer?.hourly_rate_clp;
   const [authAction, setAuthAction] = useState<(() => void) | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
@@ -1185,8 +1196,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                   <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-68 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
                     <div className="text-3xl font-bold text-primary mb-4 text-center md:text-left">
-                      {lawyer?.hourly_rate_clp !== undefined && lawyer?.hourly_rate_clp !== null 
-                        ? formatPrice(lawyer.hourly_rate_clp)
+                      {displayHourlyRate !== undefined && displayHourlyRate !== null 
+                        ? formatPrice(displayHourlyRate)
                         : 'Consultar precio'}
                       {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
                       <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>

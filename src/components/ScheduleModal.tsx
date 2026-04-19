@@ -1492,16 +1492,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 <span className="font-medium">{formatCurrency(estimatedCost)}</span>
               </div>
 
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center">
-                  <span className="text-gray-600">Tarifa por servicio</span>
-                  <span className="ml-1 text-xs text-gray-500">*</span>
-                </div>
-                <span className="text-gray-600">
-                  +{formatCurrency(clientSurcharge)}
-                </span>
-              </div>
-
               <div className="border-t border-gray-200 my-2"></div>
               
               <div className="flex justify-between items-center font-semibold text-lg">
@@ -1509,10 +1499,6 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
               </div>
             </div>
-
-              <p className="text-xs text-gray-500 mt-2">
-                * Incluye 10% de recargo por servicio app.
-              </p>
             
             </div>
             

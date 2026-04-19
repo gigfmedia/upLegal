@@ -159,6 +159,15 @@ export function LawyerCard({
   
   const navigate = useNavigate();
 
+  const clientSurchargePercent = 0.1;
+
+  // Redondear a miles: < 500 → abajo, ≥ 500 → arriba
+  const roundToThousands = (amount: number): number => {
+    return Math.round(amount / 1000) * 1000;
+  };
+
+  const displayHourlyRate = roundToThousands(lawyer.hourlyRate * (1 + clientSurchargePercent));
+
   // Helper to normalize day names for availability lookup
   const normalizeDayKey = (key: string) =>
     key
@@ -518,7 +527,7 @@ export function LawyerCard({
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-2xl font-bold text-gray-900">
-                    ${formatCLP(lawyer.hourlyRate)}
+                    ${formatCLP(displayHourlyRate)}
                   </span>
                   {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
                   <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>

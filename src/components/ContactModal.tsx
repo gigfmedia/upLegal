@@ -596,17 +596,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
                   <span className="font-medium">{formatCLP(pricing.subtotal)}</span>
                 </div>
 
-                {/* Tarifa de servicio */}
-                <div className="flex justify-between items-center text-sm">
-                  <div className="flex items-center">
-                    <span className="text-gray-600">Tarifa por servicio</span>
-                    <span className="ml-1 text-xs text-gray-500">*</span>
-                  </div>
-                  <span className="text-gray-600">
-                    +{formatCLP(pricing.serviceFee)}
-                  </span>
-                </div>
-
                 {/* Total a pagar */}
                 <div className="border-t border-gray-200 my-1"></div>
 
@@ -616,11 +605,6 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
                     {formatCLP(pricing.total)}
                   </span>
                 </div>
-
-                {/* Nota de recargo */}
-                <p className="text-xs text-gray-500 mt-2">
-                  * Incluye 10% de recargo por servicio app.
-                </p>
 
                 {pricing.isFirstConsultation && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
