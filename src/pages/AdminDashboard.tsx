@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Play, Users, CreditCard, DollarSign, BarChart2, Calendar, Eye, Clock, Database, AlertCircle } from 'lucide-react';
+import { Loader2, RefreshCw, Play, Users, CreditCard, DollarSign, BarChart2, Calendar, Eye, Clock, Database, AlertCircle, Mail } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
@@ -25,6 +25,7 @@ import { PaymentsTable } from '@/components/admin/PaymentsTable';
 import { NotifyLawyersButton } from '@/components/admin/NotifyLawyersButton';
 import AnalyticsDashboard from './admin/analytics';
 import LawyerProfilesPage from './admin/lawyer-profiles';
+import { CAELeadsTab } from '@/components/admin/CAELeadsTab';
 
 interface ErrorData {
   id: string;
@@ -176,6 +177,7 @@ const TABS = {
   PAYMENTS: 'payments',
   NOTIFICATIONS: 'notifications',
   LAWYER_PROFILES: 'lawyer-profiles',
+  CAE: 'cae',
 } as const;
 
 type TabType = typeof TABS[keyof typeof TABS];
@@ -306,6 +308,16 @@ export default function AdminDashboard() {
                     <Users className="h-4 w-4" />
                     Perfiles Abogados
                   </button>
+                  <button
+                    onClick={() => setActiveTab(TABS.CAE)}
+                    className={`${activeTab === TABS.CAE 
+                      ? 'border-blue-500 text-blue-600' 
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                  >
+                    <Mail className="h-4 w-4" />
+                    CAE Leads
+                  </button>
                 </nav>
               </div>
             </header>
@@ -378,6 +390,10 @@ export default function AdminDashboard() {
 
               {activeTab === TABS.LAWYER_PROFILES && (
                 <LawyerProfilesPage />
+              )}
+
+              {activeTab === TABS.CAE && (
+                <CAELeadsTab />
               )}
             </div>
           </div>

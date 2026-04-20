@@ -1760,8 +1760,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           if (resend) {
             try {
           const userEmailResponse = await resend.emails.send({
-            from: 'LegalUp <hola@legalup.cl>',
-            reply_to: 'hola@legalup.cl',
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            reply_to: 'hola@mg.legalup.cl',
             to: userEmail,
             subject: 'Tu asesoría está confirmada',
               html: `
@@ -1811,8 +1811,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             try {
 
           const lawyerEmailResponse = await resend.emails.send({
-           from: 'LegalUp <hola@legalup.cl>',
-            reply_to: 'hola@legalup.cl',
+           from: 'LegalUp <hola@mg.legalup.cl>',
+            reply_to: 'hola@mg.legalup.cl',
             to: lawyerEmail,
             subject: 'Tienes una nueva reserva confirmada',
                 html: `
@@ -2099,7 +2099,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+              <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
               <h1 style="color: #101820; margin-bottom: 10px;">º</h1>
             </div>
             
@@ -2126,7 +2126,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
             </p>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
-              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+              <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
+                Todos los derechos reservados.</p>
               <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                 Si ya has cargado tus servicios, por favor ignora este mensaje.
               </p>
@@ -2208,7 +2209,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+                <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
                 <h1 style="color: #101820; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
               </div>
               
@@ -2235,7 +2236,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
               </p>
 
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
-                <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+                <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
+                Todos los derechos reservados.</p>
                 <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                   Si ya has cargado tus servicios, por favor ignora este mensaje.
                 </p>
@@ -2291,7 +2293,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
             ` : ''}
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
-              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+              <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
+                Todos los derechos reservados.</p>
             </div>
           </div>
         `
@@ -2317,6 +2320,49 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
       message: 'Error al procesar la solicitud',
       error: error.message
     });
+  }
+});
+
+// Send CAE Reply Email
+app.post('/send-cae-email', async (req, res) => {
+  try {
+    const { email, subject, message } = req.body || {};
+
+    if (!email || !subject || !message) {
+      return res.status(400).json({ error: 'Missing required fields: email, subject, message' });
+    }
+
+    if (!resend) {
+      return res.status(500).json({ error: 'Resend API key is not configured' });
+    }
+
+    await resend.emails.send({
+      from: 'LegalUp <hola@mg.legalup.cl>',
+      reply_to: 'juan.fercommerce@gmail.com',
+      to: email,
+      subject: subject,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+          </div>
+          
+          <div style="color: #101820; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; font-size: 16px;">
+            ${message}
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px; text-align: center;">
+            <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
+                Todos los derechos reservados.</p>
+          </div>
+        </div>
+      `
+    });
+
+    return res.json({ success: true, message: 'Correo enviado correctamente' });
+  } catch (error) {
+    console.error('Error al enviar correo CAE:', error);
+    return res.status(500).json({ error: 'Error al enviar correo', details: error.message });
   }
 });
 
