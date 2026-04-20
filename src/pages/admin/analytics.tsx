@@ -59,7 +59,7 @@ type ErrorLog = {
 
 import { useAuth } from '@/contexts/AuthContext';
 // Helper Components
-const StatCard = ({ title, value, icon: Icon, trend, trendText, className = '' }) => (
+const StatCard = ({ title, value, icon: Icon, trend, trendText, className = '' }: { title: string, value: string | number, icon: any, trend?: number, trendText?: string, className?: string }) => (
   <Card className={className}>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -166,6 +166,7 @@ const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: bool
 export default function AnalyticsDashboard() {
   const { user } = useAuth();
   const [showDevData, setShowDevData] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Fetch payment events
   const { data: paymentEvents = [], isLoading: isLoadingPayments, error: paymentEventsError } = useQuery({
@@ -193,7 +194,7 @@ export default function AnalyticsDashboard() {
         throw error;
       }
 
-      return data as PaymentEvent[];
+      return data as unknown as PaymentEvent[];
     },
     retry: 1
   });
@@ -400,7 +401,7 @@ export default function AnalyticsDashboard() {
         console.error('Error fetching error logs:', error);
         throw error;
     }
-      return (data || []) as ErrorLog[];
+      return (data || []) as unknown as ErrorLog[];
     },
     retry: 1
   });
@@ -662,6 +663,39 @@ export default function AnalyticsDashboard() {
     );
   }
 
+  // Calculate Financials - Strictly deduplicate by payment_id or appointment_id to ensure only unique successful payments are counted
+  const successfulPaymentsList = paymentEvents.filter(e => e.event_type === 'success');
+  const uniqueSuccessfulPayments = new Map();
+  successfulPaymentsList.forEach(p => {
+    // Filtrar pagos que provienen de migraciones o el ID de pago duplicado específico
+    if (
+      p.metadata?.source === 'migration' || 
+      p.payment_id === '146509806436' || 
+      p.metadata?.payment_id === '146509806436'
+    ) {
+      return; // Skip this event
+    }
+
+    const key = p.payment_id || p.appointment_id || p.id;
+    if (!uniqueSuccessfulPayments.has(key)) {
+      uniqueSuccessfulPayments.set(key, p);
+    }
+  });
+
+  const totalPagado = Array.from(uniqueSuccessfulPayments.values()).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const originalPriceSum = totalPagado / 1.1;
+  const totalRetenido20 = originalPriceSum * 0.2;
+  const totalRecargo10 = originalPriceSum * 0.1;
+
+  const formatCLP = (value: number) => {
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value || 0);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -686,6 +720,30 @@ export default function AnalyticsDashboard() {
                 </label>
             </div>
         </div>
+      </div>
+
+      {/* Financials Grid */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard
+          title="Total de Pagos"
+          value={formatCLP(totalPagado)}
+          icon={Landmark}
+        />
+        <StatCard
+          title="Ingreso Total (30%)"
+          value={formatCLP(totalRetenido20 + totalRecargo10)}
+          icon={Landmark}
+        />
+        <StatCard
+          title="Comisión Plataforma (20%)"
+          value={formatCLP(totalRetenido20)}
+          icon={Landmark}
+        />
+        <StatCard
+          title="Recargo Adicional (10%)"
+          value={formatCLP(totalRecargo10)}
+          icon={Landmark}
+        />
       </div>
 
       {/* Stats Grid */}
@@ -715,8 +773,6 @@ export default function AnalyticsDashboard() {
           title="Citas Hoy"
           value={realStats?.todayAppts || 0}
           icon={Calendar}
-          trend={0}
-          trendText=""
         />
       </div>
       
@@ -726,15 +782,11 @@ export default function AnalyticsDashboard() {
           title="Pagos Exitosos Hoy"
           value={todayPayments}
           icon={CheckCircle2}
-          trend={0}
-          trendText=""
         />
         <StatCard
           title="Pagos Iniciados Hoy"
           value={todayStartedPayments}
           icon={Timer}
-          trend={0}
-          trendText=""
         />
         <StatCard
           title="Tasa de Conversión"
@@ -752,7 +804,7 @@ export default function AnalyticsDashboard() {
         />
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="pages">Páginas</TabsTrigger>
@@ -798,7 +850,7 @@ export default function AnalyticsDashboard() {
                     variant="outline" 
                     size="sm" 
                     className="w-full mt-2"
-                    onClick={() => document.querySelector('[data-value="payments"]')?.click()}
+                    onClick={() => setActiveTab('payments')}
                   >
                     Ver detalles del embudo
                   </Button>

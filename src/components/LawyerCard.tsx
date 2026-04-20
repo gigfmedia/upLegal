@@ -228,8 +228,14 @@ export function LawyerCard({
 
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const currentHour = today.getHours();
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const todayName = dayNames[dayOfWeek];
+    
+    // Check various days
+    const tomorrowIndex = (dayOfWeek + 1) % 7;
+    const tomorrowName = dayNames[tomorrowIndex];
+    const hasTomorrow = hasAvailabilityForDay(tomorrowName);
+    const hasMonday = hasAvailabilityForDay('Lunes');
 
     // Fallback logic for lawyers without a specific availability_config
     if (!lawyer.availability_config) {
@@ -237,7 +243,13 @@ export function LawyerCard({
         // Assume default availability for verified lawyers if no config is set
         if ([1, 2, 3, 4, 5].includes(dayOfWeek)) {
           // Mon-Fri
-          return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
+          if (currentHour < 18) {
+            return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
+          } else {
+             // After 6 PM on weekday -> Available tomorrow (or monday if friday)
+             if (dayOfWeek === 5) return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
+             return { text: `Disponible ${dayNames[(dayOfWeek + 1) % 7].toLowerCase()}`, showPulse: false, shouldShow: true };
+          }
         } else {
           // Weekend
           return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
@@ -246,40 +258,40 @@ export function LawyerCard({
       return { text: '', showPulse: false, shouldShow: false };
     }
 
-    // If the system directly reports they are available today (have future hours)
-    // Or if we can verify they have future availability today from the config
-    if (lawyer.availability?.availableToday || lawyer.availableToday || hasFutureSlotsToday()) {
-      // If it's late (after 6 PM), or if we don't have future slots today but have tomorrow
-      const currentHour = today.getHours();
-      const tomorrowIndex = (dayOfWeek + 1) % 7;
-      const tomorrowName = dayNames[tomorrowIndex];
-      const hasTomorrow = hasAvailabilityForDay(tomorrowName);
-      
-      if (currentHour >= 18 && hasTomorrow) {
-        return { text: 'Disponible mañana', showPulse: false, shouldShow: true };
-      }
-      
+    // Rule 1: "disponible hoy" if they have future slots today
+    // Include current hour in the check for better UX
+    const isActuallyAvailableToday = lawyer.availability?.availableToday || lawyer.availableToday || hasFutureSlotsToday();
+    if (isActuallyAvailableToday && currentHour < 18) {
       return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
     }
 
-    // If today is over or they weren't available today, check tomorrow
-    const tomorrowIndex = (dayOfWeek + 1) % 7;
-    const tomorrowName = dayNames[tomorrowIndex];
-
-    const hasTomorrow = hasAvailabilityForDay(tomorrowName);
-
-    if (hasTomorrow) {
-      return { text: 'Disponible mañana', showPulse: false, shouldShow: true };
-    }
-
-    // If not available tomorrow, and it's Fri/Sat/Sun, check Monday
-    if ([5, 6, 0].includes(dayOfWeek)) {
-      if (hasAvailabilityForDay('Lunes')) {
+    // Rule 2: Saturday and Sunday pointing to Monday
+    if (dayOfWeek === 6 || dayOfWeek === 0) {
+      if (hasMonday) {
         return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
       }
     }
 
-    // If they have any availability this week as a fallback
+    // Rule 3: Friday pointing to tomorrow (Saturday)
+    if (dayOfWeek === 5 && hasTomorrow) {
+      return { text: 'Disponible mañana', showPulse: false, shouldShow: true };
+    }
+
+    // Rule 4: Weekdays (Mon-Thu) pointing to tomorrow or later
+    if (dayOfWeek >= 1 && dayOfWeek <= 4) {
+      if (hasTomorrow) {
+        // Strict interpretation: user says "disponible mañana" only for Friday
+        // So for Mon-Thu we could use "Disponible martes/miércoles/etc"
+        return { text: `Disponible ${tomorrowName.toLowerCase()}`, showPulse: false, shouldShow: true };
+      }
+    }
+
+    // Fallback: If not available tomorrow, check Monday for everyone (esp. Fri/Sat/Sun)
+    if (hasMonday) {
+      return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
+    }
+
+    // Ultimate fallback: any availability this week
     if (lawyer.availability?.availableThisWeek || lawyer.availableThisWeek) {
       return { text: 'Disponible esta semana', showPulse: false, shouldShow: true };
     }

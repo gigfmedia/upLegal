@@ -479,10 +479,10 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       experience_years: typeof profile.experience_years === 'number' ? profile.experience_years : null,
       verified: !!profile.verified,
       languages: Array.isArray(profile.languages) ? profile.languages : [],
-      education: profile.education || 'Derecho',
-      university: profile.university || 'Universidad de Chile',
-      study_start_year: profile.study_start_year || 2010,
-      study_end_year: profile.study_end_year || 2016,
+      education: profile.education,
+      university: profile.university,
+      study_start_year: profile.study_start_year,
+      study_end_year: profile.study_end_year,
     };
 
     setLawyer(lawyerProfile);
@@ -614,13 +614,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         educationStr += `, ${lawyerWithViews.university}`;
       }
       if (lawyerWithViews.study_start_year || lawyerWithViews.study_end_year) {
-        const startYear = lawyerWithViews.study_start_year || 'Año';
-        const endYear = lawyerWithViews.study_end_year || 'Año';
+        const startYear = lawyerWithViews.study_start_year || '-';
+        const endYear = lawyerWithViews.study_end_year || '-';
         educationStr += ` (${startYear} - ${endYear})`;
       }
       education.push(educationStr);
-    } else {
-      education.push('Título en Derecho');
     }
     
     return {
@@ -1207,7 +1205,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     <div className="space-y-3 w-full">
                       <div className="flex gap-3 w-full">
                         <Button 
-                          className={`flex-1 h-11 ${(currentUser?.id === lawyer?.user_id) ? 'opacity-50 cursor-not-allowed bg-gray-900 hover:bg-green-900' : 'bg-gray-900 hover:bg-green-900'}`}
+                          className={`flex-1 h-11 ${(currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp) ? 'opacity-50 cursor-not-allowed' : ''} bg-gray-900 hover:bg-green-900`}
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id && lawyer) {
@@ -1226,7 +1224,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                               navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
                             }
                           }}
-                          disabled={currentUser?.id === lawyer?.user_id}
+                          disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
                           Ver disponibilidad
@@ -1275,35 +1273,38 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                 
                 <div className="grid md:grid-cols-2 gap-6 mt-8">
                   <div>
-                    <h4 className="font-semibold mb-3">Educación</h4>
-                    <div className="space-y-4">
-                      <div className="relative pl-4 border-l-2 border-green-600">
-                        <div className="space-y-1">
-                          {lawyer?.education ? (
-                            <p className="font-medium text-gray-900">
-                              {lawyer.education}
-                            </p>
-                          ) : (
-                            <p className="font-medium text-gray-900">Derecho</p>
-                          )}
-                          {lawyer?.university && (
-                            <p className="text-gray-500">
-                              {lawyer.university}
-                            </p>
-                          )}
-                          <p className="text-gray-500 text-sm">
-                            {lawyer?.study_start_year || '2010'} - {lawyer?.study_end_year || '2016'}
-                          </p>
+                    {/* Educación Section */}
+                    {(lawyer?.education || lawyer?.university) && (
+                      <div className="mb-6">
+                        <h4 className="font-semibold mb-3">Educación</h4>
+                        <div className="space-y-4">
+                          <div className="relative pl-4 border-l-2 border-green-600">
+                            <div className="space-y-1">
+                              {lawyer?.education && (
+                                <p className="font-medium text-gray-900">
+                                  {lawyer.education}
+                                </p>
+                              )}
+                              <p className="text-gray-500">
+                                {lawyer?.university || 'No hay Universidad registrada'}
+                              </p>
+                              {(lawyer?.study_start_year || lawyer?.study_end_year) && (
+                                <p className="text-gray-500 text-sm">
+                                  {lawyer?.study_start_year || ''} {lawyer?.study_start_year && lawyer?.study_end_year ? '-' : ''} {lawyer?.study_end_year || ''}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                     
                     {/* Languages Section */}
-                    <div className="mt-6">
+                    <div>
                       <h4 className="font-semibold mb-3">Idiomas</h4>
                       {lawyer?.languages && lawyer.languages.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-{lawyer.languages.flatMap(lang => 
+                          {lawyer.languages.flatMap(lang => 
                             typeof lang === 'string' 
                               ? lang.split(',').map(l => l.trim()).filter(Boolean)
                               : []

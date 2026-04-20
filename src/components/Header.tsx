@@ -145,7 +145,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-              <a href="/search" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Encuentra tu abogado</a>
+              <a href="/search" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Match con abogado</a>
               <a href="/como-funciona" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>¿Cómo funciona?</a>
               <a href="/about" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Acerca de</a>
               <a href="/blog" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/blog') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Blog</a>

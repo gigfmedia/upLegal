@@ -235,8 +235,8 @@ export default function AdminDashboard() {
     <div className="w-full">
       <Header />
       <RequireAdmin>
-        <div className="min-h-screen bg-slate-50 pt-28 pb-10">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <div className="min-h-screen bg-slate-50 pt-32 pb-10">
+          <div className="w-full max-w-7xl mx-auto space-y-6">
             <header>
               <Badge variant="outline" className="mb-2">
                 Panel interno
