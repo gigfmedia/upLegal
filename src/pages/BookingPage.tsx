@@ -572,11 +572,38 @@ export default function BookingPage() {
   };
 
   const availableDates = useMemo(() => {
-    const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(new Date()), i));
+    const now = new Date();
+    const todayStr = format(now, 'yyyy-MM-dd');
+    const currentHour = now.getHours();
+    
+    const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(now), i));
 
     return dates
-      .filter(date => date.getDay() !== 0)
+      .filter(date => date.getDay() !== 0) // Hide Sundays
       .filter(date => {
+        const isToday = format(date, 'yyyy-MM-dd') === todayStr;
+        
+        // If it's today, check if there's any time left
+        if (isToday) {
+          // If no config, default to 18:00 cutoff
+          if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
+            return currentHour < 18;
+          }
+          
+          // If has config, check if there are any slots left today
+          const dayName = getDayName(date);
+          const dayAvailability = getAvailabilityForDay(lawyerAvailability, dayName);
+          
+          if (Array.isArray(dayAvailability)) {
+            return dayAvailability.some((slot, index) => {
+              const slotHour = 9 + index;
+              return slot && slotHour > currentHour;
+            });
+          }
+          return false;
+        }
+
+        // For future days, just check if they have any availability configured
         if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
           return true;
         }
