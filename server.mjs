@@ -2324,7 +2324,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 });
 
 // Send CAE Reply Email
-app.post('/send-cae-email', async (req, res) => {
+app.post('/api/send-cae-email', async (req, res) => {
   try {
     const { email, subject, message } = req.body || {};
 
