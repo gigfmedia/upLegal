@@ -33,14 +33,26 @@ const BlogArticle = () => {
         "Sí, especialmente antes de la demanda o durante el juicio, dependiendo del caso. Actuar temprano aumenta las opciones de negociación y acuerdo.",
     },
     {
-      question: "¿Una deuda de arriendo puede ir a DICOM?",
-      answer:
-        "No automáticamente. Normalmente debe existir juicio, sentencia u otro respaldo exigible. Sin eso, no pueden reportarte directamente.",
-    },
-    {
       question: "¿Me pueden desalojar si no tengo contrato de arriendo escrito?",
       answer:
         "Sí, pero el proceso es más complejo para el arrendador. Sin contrato escrito, debe probar la existencia de la relación de arriendo ante el tribunal. Igualmente, el desalojo siempre requiere orden judicial — el arrendador no puede actuar por su cuenta aunque no haya contrato.",
+    },
+    {
+      question: "¿Pueden desalojarme si debo solo días de atraso?",
+      answer: "Depende del contrato. Técnicamente existe incumplimiento desde el primer día de atraso, pero en la práctica rara vez se inicia una demanda judicial por pocos días. Sin embargo, el arrendador puede cobrar intereses y multas pactadas.",
+    },
+    {
+      question: "¿El contrato influye en el desalojo?",
+      answer: "Sí. Las cláusulas pueden definir intereses, plazos de gracia y condiciones específicas de terminación que afectan directamente el proceso y la estrategia de defensa.",
+    },
+    {
+      question: "¿Qué pasa si abandono la propiedad sin terminar formalmente el arriendo?",
+      answer: "El arrendador puede iniciar acciones legales igualmente para recuperar deudas pendientes y regularizar la situación del inmueble. Abandonar la propiedad no elimina la deuda acumulada ni la responsabilidad contractual.",
+    },
+    {
+      question: "¿Una deuda de arriendo puede ir a DICOM?",
+      answer:
+        "No automáticamente. Normalmente debe existir juicio, sentencia u otro respaldo exigible. Sin eso, no pueden reportarte directamente.",
     },
   ];
 
@@ -109,7 +121,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 14 min</span>
+              <span>Tiempo de lectura: 15 min</span>
             </div>
           </div>
         </div>
@@ -253,6 +265,38 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿El arrendador puede esperar más meses antes de demandar?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Sí. Aunque la ley permite demandar desde el primer mes de deuda, en la práctica muchos arrendadores esperan antes de iniciar acciones legales.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Esto ocurre por varias razones:</p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              {[
+                { text: "Intento de acuerdo amistoso", icon: <MessageSquare className="h-5 w-5" /> },
+                { text: "Evitar costos legales", icon: <MessageSquare className="h-5 w-5" /> },
+                { text: "Esperar regularización del pago", icon: <MessageSquare className="h-5 w-5" /> },
+                { text: "Falta de asesoría legal", icon: <MessageSquare className="h-5 w-5" /> },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <div className="text-blue-600 flex-shrink-0">{item.icon}</div>
+                  <span className="text-gray-700 font-medium text-base">{item.text}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Sin embargo, esto no es una obligación. El arrendador puede decidir demandar en cualquier momento desde el primer incumplimiento.
+            </p>
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-8">
+              <p className="text-amber-900 font-bold text-lg mb-2 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Importante
+              </p>
+              <p className="text-amber-800 leading-relaxed">
+                Que no te hayan demandado aún no significa que no puedan hacerlo en cualquier momento. Muchos arrendatarios cometen el error de confiarse cuando pasan 2 o 3 meses sin demanda, pero el riesgo sigue existiendo.
+              </p>
+            </div>
+          </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué dice la ley en Chile sobre el no pago del arriendo?</h2>
@@ -377,6 +421,38 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si no respondes la demanda de arriendo?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si el arrendatario no responde la demanda dentro del plazo legal, el proceso puede avanzar sin su defensa. Esto se conoce como rebeldía y es una de las situaciones más peligrosas para el ocupante.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Esto puede generar consecuencias graves:</p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              {[
+                { title: "Sentencia rápida en contra", desc: "El juez puede dictar fallo basándose solo en la versión del dueño.", icon: <FileText className="h-5 w-5" /> },
+                { title: "Orden de desalojo sin oposición", desc: "No hay argumentos que frenen la orden de lanzamiento.", icon: <AlertCircle className="h-5 w-5" /> },
+                { title: "Cobro completo de la deuda", desc: "Se aceptan los montos señalados por el demandante sin cuestionar.", icon: <Gavel className="h-5 w-5" /> },
+                { title: "Menor margen para negociar", desc: "Pierdes la ventaja estratégica para llegar a un acuerdo.", icon: <MessageSquare className="h-5 w-5" /> },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                  <div className="text-red-900 flex-shrink-0 mt-1">{item.icon}</div>
+                  <div>
+                    <p className="text-gray-900 font-bold leading-tight">{item.title}</p>
+                    <p className="text-gray-600 text-sm mt-1">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-green-900 text-white rounded-2xl p-8">
+              <p className="text-lg font-bold mb-2 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-400" />
+                Dato clave
+              </p>
+              <p className="text-green-200 leading-relaxed">
+                Muchos desalojos se aceleran no por la deuda, sino por la falta de respuesta del arrendatario. Responder a tiempo puede cambiar completamente el resultado del juicio y darte el tiempo necesario para regularizar tu situación.
+              </p>
+            </div>
+          </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Te pueden desalojar inmediatamente?</h2>
@@ -418,6 +494,33 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          </div>
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Impacto real de una deuda de arriendo en tu situación</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Más allá del riesgo inminente de desalojo, una deuda de arriendo acumulada puede generar consecuencias importantes que afectarán tu futuro financiero y habitacional.
+            </p>
+            <div className="space-y-4 mb-8">
+              {[
+                { title: "Acumulación de deuda mensual", desc: "A los meses impagos se suman intereses, multas del contrato y gastos comunes." },
+                { title: "Costas judiciales", desc: "Si pierdes el juicio, el tribunal puede obligarte a pagar los honorarios del abogado del dueño." },
+                { title: "Dificultad para arrendar nuevamente", desc: "Los dueños suelen pedir certificados de antecedentes de arriendo y referencias." },
+                { title: "Impacto en historial comercial", desc: "Una sentencia judicial por deuda puede quedar registrada en boletines comerciales." },
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="bg-white p-2 rounded-lg shadow-sm text-green-900 border border-gray-100">
+                    <CheckCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-lg leading-tight">{item.title}</p>
+                    <p className="text-base text-gray-600 mt-1 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-gray-600 leading-relaxed italic">
+              Esto significa que el problema no termina el día que entregas las llaves. Evitar que la bola de nieve crezca es la mejor forma de proteger tu patrimonio y tu tranquilidad a futuro.
+            </p>
           </div>
 
           <div className="mb-12">

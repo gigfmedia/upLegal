@@ -23,7 +23,7 @@ const BlogPage = () => {
       category: "Derecho Civil",
       author: "LegalUp",
       date: "20 de Abril, 2026",
-      readTime: "14 min",
+      readTime: "15 min",
       image: "/assets/desalojo-3-chile-2026.png"
     },
     {
