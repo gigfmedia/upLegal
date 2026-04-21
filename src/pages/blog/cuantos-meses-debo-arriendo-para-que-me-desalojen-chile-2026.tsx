@@ -49,7 +49,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)"
         description="¿Con cuántos meses de deuda te pueden desalojar en Chile? Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitarlo."
-        image="/assets/desalojo-2-chile-2026.png"
+        image="/assets/desalojo-3-chile-2026.png"
         url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
         datePublished="2026-04-20"
         dateModified="2026-04-20"
@@ -604,16 +604,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           prevArticle={{
-            id: "orden-desalojo-chile-2026",
-            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
-            excerpt: "Descubre qué es una orden de desalojo, cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
-            image: "/assets/orden-desalojo-chile-2026.png",
-          }}
-          nextArticle={{
-            id: "derecho-arrendamiento-chile-guia-completa-2026",
-            title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
-            excerpt: "Todo lo que necesitas saber sobre contratos, desalojos, garantías e IPC en esta guía completa 2026.",
-            image: "/assets/derecho-arrendamiento-chile-2026.png",
+            id: "contrato-de-arriendo-chile-2026",
+            title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
+            excerpt: "Descubre qué debe incluir tu contrato, qué cláusulas son ilegales y descarga un modelo base gratuito.",
+            image: "/assets/contrato-arriendo-chile-2026.png",
           }}
         />
 

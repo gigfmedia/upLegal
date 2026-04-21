@@ -24,7 +24,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "20 de Abril, 2026",
       readTime: "14 min",
-      image: "/assets/desalojo-2-chile-2026.png"
+      image: "/assets/desalojo-3-chile-2026.png"
     },
     {
       id: "contrato-de-arriendo-chile-2026",
