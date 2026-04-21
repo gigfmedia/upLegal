@@ -173,10 +173,10 @@ const BlogArticle = () => {
                   desc: "La demanda es prácticamente inevitable. Se solicita el término del contrato y la restitución forzada. El proceso judicial se vuelve complejo.",
                 },
               ].map((item, i) => (
-                <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-gray-50 transition-colors">
+                  {/* <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0 mt-0.5">
                     {i + 1}
-                  </div>
+                  </div> */}
                   <div>
                     <p className="text-lg font-bold text-gray-900 mb-1 leading-tight">{item.title}</p>
                     <p className="text-base text-gray-600 leading-relaxed">{item.desc}</p>
@@ -202,7 +202,7 @@ const BlogArticle = () => {
                 { title: "Lanzamiento", desc: "Ejecución forzada con auxilio de la fuerza pública si es necesario.", icon: <Shield className="h-5 w-5" /> },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-green-900 p-2 rounded-lg text-green-600 w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
                   <div>
@@ -312,7 +312,7 @@ const BlogArticle = () => {
                 { title: "Demanda", desc: "Acción legal para recuperar el inmueble y liquidar deuda." },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                  <div className="bg-gray-900 text-white w-7 h-7 rounded-2xl flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
                     {i + 1}
                   </div>
                   <div>
@@ -396,6 +396,11 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+
+            <InArticleCTA
+              message="¿Te notificaron demanda o ya debes 2 meses o más? Actuar a tiempo puede evitar un lanzamiento y reducir el daño económico." 
+              category="Desalojo"
+            />
           </div>
 
           <div className="mb-12">
@@ -467,13 +472,13 @@ const BlogArticle = () => {
                 { title: "Paso 1: Enfrentar la situación", desc: "No ignores las notificaciones ni las llamadas del arrendador." },
                 { title: "Paso 2: Revisar tu contrato", desc: "Busca cláusulas de salida, plazos de gracia o multas pactadas." },
                 { title: "Paso 3: Reunir pruebas", desc: "Estado de cuenta, comprobantes y cualquier comunicación previa." },
-                { title: "Paso 4: Intentar acuerdo", desc: "La mediación es la vía más rápida para evitar un juicio desalojador." },
+                { title: "Paso 4: Intentar acuerdo", desc: "La mediación es la vía más rápida para evitar un juicio de desalojo." },
                 { title: "Paso 5: Asesoría legal", desc: "Un abogado especialista protegerá tus derechos procesales." },
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                  <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
+                  {/* <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">
                     {i + 1}
-                  </div>
+                  </div> */}
                   <div>
                     <span className="font-bold text-gray-900 text-lg">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1 leading-relaxed">{step.desc}</p>
@@ -492,11 +497,6 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-
-          <InArticleCTA
-            message="¿Te notificaron demanda o ya debes 2 meses o más? Actuar a tiempo puede evitar un lanzamiento y reducir el daño económico." 
-            category="Desalojo"
-          />
 
           <div className="mb-8 pt-4">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
