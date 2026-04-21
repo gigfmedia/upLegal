@@ -166,7 +166,7 @@ const BlogArticle = () => {
               to="/blog/me-subieron-el-arriendo-que-hago-2026" 
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Te subieron el arriendo inesperadamente? Qué hacer (Guía 2026)
+              👉 ¿Te subieron el arriendo? Qué hacer hoy
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -408,25 +408,31 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si no acepto el reajuste?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed text-lg font-medium">Depende de si el reajuste está respaldado por el contrato o no.</p>
             <div className="space-y-4 mb-6">
-              <div className="flex items-start gap-4 p-5 bg-blue-50/50 rounded-xl border border-blue-100">
-                <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-gray-800">
-                  <p className="font-bold mb-1">Si el reajuste está en el contrato:</p>
-                  <p className="text-gray-700">estás obligado a pagarlo. Negarte puede configurar incumplimiento contractual y el arrendador podría iniciar un proceso de desalojo por no pago.</p>
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8">
+                <div className="flex items-start gap-4">
+                  <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-gray-900 mb-1 text-lg">Si el reajuste está en el contrato:</p>
+                    <p className="text-gray-600 leading-relaxed">Estás obligado a pagarlo. Negarte puede configurar incumplimiento contractual y el arrendador podría iniciar un proceso de desalojo por no pago.</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-5 bg-blue-50/50 rounded-xl border border-blue-100">
-                <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-gray-800">
-                  <p className="font-bold mb-1">Si el reajuste no está en el contrato:</p>
-                  <p className="text-gray-700">tienes derecho a rechazarlo. Hazlo por escrito — correo electrónico o mensaje con registro — explicando que el contrato no contempla esa cláusula. Guarda esa comunicación.</p>
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8">
+                <div className="flex items-start gap-4">
+                  <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-gray-900 mb-1 text-lg">Si el reajuste NO está en el contrato:</p>
+                    <p className="text-gray-600 leading-relaxed">Tienes derecho a rechazarlo. Hazlo por escrito —correo electrónico o mensaje con registro— explicando que el contrato no contempla esa cláusula.</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start gap-4 p-5 bg-blue-50/50 rounded-xl border border-blue-100">
-                <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
-                <div className="text-gray-800">
-                  <p className="font-bold mb-1">Si el cálculo es incorrecto:</p>
-                  <p className="text-gray-700">puedes pagar el monto que corresponde según el IPC correcto y notificar la diferencia por escrito. No es necesario pagar el monto equivocado.</p>
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8">
+                <div className="flex items-start gap-4">
+                  <Info className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-gray-900 mb-1 text-lg">Si el cálculo es incorrecto:</p>
+                    <p className="text-gray-600 leading-relaxed">Puedes pagar el monto que corresponde según el IPC correcto y notificar la diferencia por escrito. No es necesario pagar el monto equivocado.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -533,12 +539,12 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">El reajuste por IPC es solo una parte del contrato de arriendo. Para entender el panorama completo, revisa esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de derecho de arrendamiento en Chile
+              👉 Guía legal: Todo sobre arriendos en Chile
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>

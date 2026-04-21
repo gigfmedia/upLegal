@@ -114,9 +114,11 @@ const BlogArticle = () => {
             <p>
               En esta guía completa 2026 te explicamos todo lo que necesitas saber sobre el derecho de arrendamiento en Chile: cómo funciona el contrato, cuándo pueden desalojarte, qué pasa si no pagas, cómo se aplica el IPC y qué hacer ante los problemas más comunes.
             </p>
-            <p className="mt-4 border-l-4 border-green-500 pl-4 py-2 bg-green-50/50 rounded-r-lg font-medium text-gray-900 pr-4">
-              Contar con información clara y actuar a tiempo es la mejor forma de evitar procesos judiciales largos y costosos que afecten tu tranquilidad y tu patrimonio.
-            </p>
+            <div className="bg-green-50/50 border border-green-100 rounded-2xl p-8 mb-8 my-8">
+              <p className="text-gray-900 font-bold leading-relaxed italic">
+                Contar con información clara y actuar a tiempo es la mejor forma de evitar procesos judiciales largos y costosos que afecten tu tranquilidad y tu patrimonio.
+              </p>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -141,9 +143,9 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 italic">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-700 leading-relaxed font-medium">
-                En Chile, este tipo de contrato está regulado por normas civiles que buscan equilibrar los derechos de ambas partes, protegiendo tanto el derecho de propiedad del dueño como el derecho a la vivienda de quien arrienda. Es una relación legal que va más allá de un simple intercambio de dinero por espacio.
+                En Chile, este tipo de contrato está regulado por normas civiles que buscan equilibrar los derechos de ambas partes, protegiendo tanto el derecho de propiedad del dueño como el derecho a la vivienda de quien arrienda.
               </p>
             </div>
           </div>
@@ -173,14 +175,17 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <p className="text-gray-600 mb-6 leading-relaxed italic border-l-4 border-red-500 pl-4">
-              Si el arrendador intenta sacarte por la fuerza o limitar tus suministros para presionar un pago, está cometiendo una acción ilegal que puedes denunciar ante Carabineros o tribunales.
-            </p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+              <p className="text-red-900 font-bold uppercase tracking-widest text-xs mb-3">Acciones Prohibidas</p>
+              <p className="text-gray-700 leading-relaxed font-medium italic">
+                Si el arrendador intenta sacarte por la fuerza o limitar tus suministros para presionar un pago, está cometiendo una acción ilegal que puedes denunciar ante Carabineros o tribunales.
+              </p>
+            </div>
             
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/arrendador-puede-cambiar-cerradura-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 ¿El arrendador puede cambiar la cerradura en Chile?
+                👉 ¿El arrendador puede cambiar la cerradura?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -210,7 +215,7 @@ const BlogArticle = () => {
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/me-quieren-desalojar-que-hago-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 ¿Me pueden desalojar sin orden judicial en Chile?
+                👉 Guía práctica: ¿Qué hacer si te quieren desalojar?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -249,9 +254,10 @@ const BlogArticle = () => {
               ))}
             </div>
             
-            <div className="border-l-4 border-amber-500 pl-4 py-3 bg-amber-50 rounded-r-lg mb-8">
-              <p className="text-gray-800 font-medium leading-relaxed">
-                Es fundamental que el arrendador entregue siempre un comprobante de pago o recibo, para evitar confusiones y acreditar que se ha cumplido con esta obligación.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+              <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Nota para el arrendador</p>
+              <p className="text-gray-700 font-medium leading-relaxed">
+                Es fundamental entregar siempre un comprobante de pago o recibo oficial para acreditar el cumplimiento de la obligación y evitar disputas futuras sobre el estado de la cuenta.
               </p>
             </div>
 
@@ -326,18 +332,22 @@ const BlogArticle = () => {
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-center h-16">Procesos judiciales mucho más largos y complejos</div>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-12">
-              <div className="bg-green-50 px-6 py-3 border-b border-green-100 uppercase tracking-widest text-xs font-bold text-green-900">
-                EJEMPLO REAL
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
+              <div className="bg-green-50 px-6 py-3 border-b border-gray-100 uppercase tracking-widest text-xs font-bold text-green-900">
+                Evidencia de arriendo
               </div>
               <div className="p-8">
-                <p className="text-gray-600 font-bold mb-4 text-lg">Caso común:</p>
-                <ul className="space-y-2 mb-6">
-                    <li className="flex items-center gap-2">❌ Arriendo sin contrato</li>
-                    <li className="flex items-center gap-2">❌ Pago en efectivo</li>
-                    <li className="flex items-center gap-2">❌ Conflicto al terminar</li>
-                </ul>
-                <p className="text-gray-900 font-bold bg-gray-50 p-4 rounded-xl inline-block">Resultado: difícil recuperar garantía o defender derechos.</p>
+                <p className="text-gray-700 font-medium italic mb-6">
+                  "Si no existe contrato por escrito, se presumirá que la renta es la que declare el arrendatario." — Riesgo crítico para el dueño.
+                </p>
+                <div className="space-y-3">
+                  {["Guarda transferencias bancarias", "Mantén registros de WhatsApp", "Pide recibos siempre"].map((t, i) => (
+                    <div key={i} className="flex items-center gap-3 text-gray-700 font-bold">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span>{t}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -377,7 +387,7 @@ const BlogArticle = () => {
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/tacita-reconduccion-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 Tácita reconducción en Chile
+                👉 Tácita reconducción: Riesgos y soluciones
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -393,9 +403,12 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Es vital saber que cualquier intento de desalojo por cuenta propia es totalmente ilegal en Chile. El desalojo —o lanzamiento, como se le conoce jurídicamente— solo puede ser ejecutado mediante el auxilio de Carabineros y con una orden firmada por un juez. Ningún dueño, por mucha razón que tenga en la deuda, puede entrar a la fuerza.
             </p>
-            <div className="bg-red-50 p-4 rounded-r-lg border-l-4 border-red-500 mb-8">
-                <p className="text-red-900 font-bold uppercase tracking-widest text-xs mb-1">DATO CLAVE</p>
-                <p className="text-red-800 font-bold">La autotutela (justicia por mano propia) está prohibida y el dueño podría terminar siendo el demandado si actúa agresivamente.</p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+                <p className="text-red-900 font-bold uppercase tracking-widest text-xs mb-3">Riesgo de autotutela</p>
+                <p className="text-gray-700 font-bold text-lg leading-tight mb-2">La justicia por mano propia está prohibida.</p>
+                <p className="text-gray-600 leading-relaxed font-medium">
+                  El dueño podría terminar siendo el demandado o enfrentar cargos penales si actúa de forma agresiva o impide el acceso sin orden de un tribunal.
+                </p>
             </div>
 
             <h3 className="text-xl font-bold mb-6 text-gray-900">El proceso judicial paso a paso</h3>
@@ -436,22 +449,31 @@ const BlogArticle = () => {
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/cuanto-demora-juicio-desalojo-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 ¿Cuánto demora un juicio de desalojo?
+                👉 Tiempos reales: ¿Cuánto demora un desalojo?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-12">
-               <div className="bg-amber-50 px-6 py-3 border-b border-amber-100 uppercase tracking-widest text-xs font-bold text-amber-900">
-                  EJEMPLO REAL
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
+               <div className="bg-amber-50 px-6 py-3 border-b border-gray-100 uppercase tracking-widest text-xs font-bold text-amber-900">
+                  Línea de tiempo judicial
                </div>
                <div className="p-8">
-                  <ul className="space-y-4 italic font-medium text-gray-600">
-                    <li>✓ Arrendatario deja de pagar</li>
-                    <li>✓ Arrendador demanda</li>
-                    <li>✓ Proceso demora meses</li>
-                  </ul>
-                    <p className="mt-6 bg-red-50 p-3 rounded-lg text-red-600 font-bold inline-block">No es inmediato ni automático.</p>
+                  <div className="space-y-4">
+                    {[
+                      "Etapa 1: Notificación formal de la demanda",
+                      "Etapa 2: Audiencia de prueba y defensa",
+                      "Etapa 3: Sentencia judicial definitiva"
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-center gap-3 text-gray-700 italic font-medium">
+                        <Clock className="h-5 w-5 text-amber-600" />
+                        <span>{step}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-8 bg-white border border-red-100 p-4 rounded-xl text-red-600 font-bold text-sm">
+                    ⚠️ El proceso NO es inmediato ni automático. Requiere orden judicial.
+                  </p>
                </div>
             </div>
           </div>
@@ -479,21 +501,22 @@ const BlogArticle = () => {
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/reajuste-arriendo-ipc-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 Reajuste de arriendo según IPC en Chile
+                👉 Reajuste por IPC: Cómo se calcula legalmente
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-12">
-               <div className="bg-green-50 px-6 py-3 border-b border-green-100 uppercase tracking-widest text-xs font-bold text-green-900">
-                  EJEMPLO REAL
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
+               <div className="bg-green-50 px-6 py-3 border-b border-gray-100 uppercase tracking-widest text-xs font-bold text-green-900">
+                  Legalidad del reajuste
                </div>
                <div className="p-8">
-                  <ul className="space-y-2 mb-6 italic">
-                    <li>✓ Contrato establece reajuste anual</li>
-                    <li>✓ Arrendador aplica IPC</li>
-                  </ul>
-                  <p className="bg-green-50 p-3 rounded-lg text-green-800 font-bold inline-block">Correcto</p>
+                  <p className="text-gray-700 font-medium italic mb-4">
+                    Para que el reajuste sea válido, debe estar estipulado en el contrato original.
+                  </p>
+                  <p className="bg-green-50 p-4 rounded-xl text-green-800 font-bold inline-block">
+                    ✓ Respaldo contractual = Reajuste legal
+                  </p>
                </div>
             </div>
           </div>
@@ -535,16 +558,17 @@ const BlogArticle = () => {
               </Link>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-6">
-               <div className="bg-amber-50 px-6 py-3 border-b border-amber-100 uppercase tracking-widest text-xs font-bold text-amber-900">
-                  EJEMPLO REAL
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
+               <div className="bg-amber-50 px-6 py-3 border-b border-gray-100 uppercase tracking-widest text-xs font-bold text-amber-900">
+                  Uso de la garantía
                </div>
                <div className="p-8">
-                  <ul className="mb-6 space-y-2 italic">
-                    <li>✓ Propiedad en buen estado</li>
-                    <li>✓ Arrendador descuenta sin justificar</li>
-                  </ul>
-                  <p className="bg-red-50 p-3 rounded-lg text-red-600 font-bold inline-block">Posible abuso</p>
+                  <p className="text-gray-700 font-medium italic mb-4">
+                    La garantía solo puede usarse para daños comprobables o deudas de servicios pendientes.
+                  </p>
+                  <p className="bg-red-50 p-4 rounded-xl text-red-600 font-bold inline-block">
+                    ⚠️ Retenerla sin respaldo es una práctica ilegal.
+                  </p>
                </div>
             </div>
           </div>
@@ -577,7 +601,7 @@ const BlogArticle = () => {
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/dicom-deuda-arriendo-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
-                👉 ¿Me pueden meter a DICOM por arriendo?
+                👉 ¿Puedes ir a DICOM? Lo que dice la ley en 2026
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -592,16 +616,21 @@ const BlogArticle = () => {
                 ))}
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-12">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
                <div className="bg-gray-900 px-6 py-3 border-b border-gray-800 uppercase tracking-widest text-xs font-bold text-white">
-                  EJEMPLO REAL
+                  Consecuencia del no pago
                </div>
                <div className="p-8">
-                  <ul className="mb-6 italic">
-                    <li>✓ Arrendatario deja de pagar</li>
-                    <li>✓ Arrendador demanda</li>
-                  </ul>
-                  <p className="bg-gray-900 p-3 rounded-lg text-white font-bold inline-block">Proceso judicial</p>
+                  <p className="text-gray-700 font-medium italic mb-6">
+                    El atraso recurrente habilita al dueño a pedir el término del contrato y el desalojo forzado.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {["Corte de suministros (ilegal)", "Demanda judicial (legal)", "Notificación de deuda"].map((t, i) => (
+                      <div key={i} className="bg-white p-3 rounded-xl border border-gray-100 text-gray-700 font-bold text-sm">
+                        {t}
+                      </div>
+                    ))}
+                  </div>
                </div>
             </div>
           </div>
@@ -635,14 +664,20 @@ const BlogArticle = () => {
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">Desgaste natural → No corresponde cobrar</div>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden mb-12">
-               <div className="bg-green-50 px-6 py-3 border-b border-green-100 uppercase tracking-widest text-xs font-bold text-green-900">
-                  EJEMPLO
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden mb-12 my-8">
+               <div className="bg-green-50 px-6 py-3 border-b border-gray-100 uppercase tracking-widest text-xs font-bold text-green-900">
+                  Responsabilidad por daños
                </div>
                <div className="p-8">
-                  <div className="space-y-4 italic text-gray-600">
-                    <p>• Daño menor → no debería cobrarse excesivamente</p>
-                    <p>• Daño grave → sí corresponde</p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                      <p className="text-gray-400 uppercase tracking-widest text-[10px] font-bold mb-2">ARRENDADOR</p>
+                      <p className="text-gray-900 font-bold text-sm">Desgaste natural y mantenciones estructurales.</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border border-gray-100">
+                      <p className="text-gray-400 uppercase tracking-widest text-[10px] font-bold mb-2">ARRENDATARIO</p>
+                      <p className="text-gray-900 font-bold text-sm">Daños por mal uso, negligencia o accidentes.</p>
+                    </div>
                   </div>
                </div>
             </div>

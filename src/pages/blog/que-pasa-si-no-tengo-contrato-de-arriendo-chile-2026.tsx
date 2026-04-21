@@ -101,9 +101,9 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed">
               Pero cuando surgen problemas —como no pago, aumento del arriendo o desalojo— aparece la gran duda: ¿Qué pasa legalmente si no hay contrato de arriendo?
             </p>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-6 mt-6">
-              <p className="font-semibold text-blue-900 mb-3">En esta guía 2026 te explicamos:</p>
-              <ul className="space-y-2 list-none p-0 m-0">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="font-bold text-gray-900 mb-4 text-xl">En esta guía 2026 te explicamos:</p>
+              <ul className="space-y-3 p-0 m-0">
                 {[
                   "Si el arriendo es válido sin contrato",
                   "Qué derechos tiene el arrendatario",
@@ -111,9 +111,9 @@ const BlogArticle = () => {
                   "Cómo se resuelven conflictos",
                   "Qué hacer en caso de problemas"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-blue-800">
-                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                    <span className="text-base">{item}</span>
+                  <li key={i} className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-base font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -126,9 +126,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, un arriendo no necesita estar por escrito para ser válido. Esto significa que un acuerdo verbal entre arrendador y arrendatario sí tiene valor legal. Este tipo de acuerdo se conoce como:
             </p>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Contrato verbal o tácito</h3>
-              <p className="text-gray-700 mt-2">Pero hay un problema importante: Es mucho más difícil de probar.</p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Contrato verbal o tácito</h3>
+              <p className="text-gray-700 leading-relaxed font-medium">Aunque legalmente tiene validez, recuerda que en caso de conflicto es mucho más difícil de probar ante un tribunal.</p>
             </div>
             
             <h2 className="text-2xl font-bold mb-4 text-gray-900 mt-8">¿Qué implica no tener contrato escrito?</h2>
@@ -179,13 +179,23 @@ const BlogArticle = () => {
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   El arrendador no puede sacarte por la fuerza. Esto incluye:
                 </p>
-                <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-4">
-                  <ul className="list-disc pl-6 space-y-1 text-red-800 font-medium mb-3">
-                    <li>Cambiar la cerradura</li>
-                    <li>Botar tus pertenencias</li>
-                    <li>Cortar servicios</li>
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+                  <p className="text-gray-900 font-bold mb-4">Está prohibido por ley:</p>
+                  <ul className="space-y-3 mb-4">
+                    <li className="flex items-center gap-3 text-gray-700">
+                      <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      <span>Cambiar la cerradura sin orden judicial</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-gray-700">
+                      <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      <span>Sacar pertenencias por la fuerza</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-gray-700">
+                      <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      <span>Cortar servicios básicos (agua, luz)</span>
+                    </li>
                   </ul>
-                  <p className="text-red-900 font-bold">Todo esto es ilegal.</p>
+                  <p className="text-gray-900 font-bold italic">Todo esto constituye una acción ilegal y puede ser denunciado.</p>
                 </div>
               </div>
 
@@ -195,13 +205,14 @@ const BlogArticle = () => {
                   Para desalojarte, el dueño debe iniciar un juicio. Puedes revisar cómo funciona aquí:
                 </p>
                 <p className="text-gray-600 mb-4 leading-relaxed">Entiende los plazos y protecciones legales ante un desalojo:</p>
-                <div className="text-center py-4 border-t border-b border-gray-100">
+                <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
                   <Link
                     to="/blog/orden-desalojo-chile-2026"
-                    className="inline-flex flex-wrap justify-center items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                    className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
                   >
-                    👉 Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona
-                    <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                    👉 Guía completa: ¿Qué es una orden de desalojo?
+                    <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
               </div>
@@ -259,15 +270,23 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En tribunales, puedes probar el arriendo con:
             </p>
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-              <ul className="list-disc pl-6 space-y-2 text-indigo-900 mb-4 font-medium">
-                <li>Transferencias bancarias periódicas</li>
-                <li>Comprobantes de pago</li>
-                <li>Conversaciones (WhatsApp, correo)</li>
-                <li>Testigos</li>
-                <li>Cuentas de servicios asociadas</li>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Pruebas fundamentales</h3>
+              <ul className="space-y-3 mb-6">
+                {[
+                  "Transferencias bancarias periódicas",
+                  "Comprobantes de pago de servicios",
+                  "Conversaciones (WhatsApp, correo)",
+                  "Testimonios de vecinos",
+                  "Cuentas que llegan a tu nombre"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-base font-medium">{item}</span>
+                  </li>
+                ))}
               </ul>
-              <p className="text-indigo-900 font-bold">Mientras más pruebas tengas, mejor.</p>
+              <p className="text-gray-900 font-bold">Sin contrato escrito, la prueba es tu mejor defensa ante tribunales.</p>
             </div>
 
             <InArticleCTA 
@@ -330,13 +349,14 @@ const BlogArticle = () => {
               Puedes revisar más sobre esto en nuestro artículo especial:
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Pasos críticos si el dueño te pide la propiedad sin orden judicial:</p>
-            <div className="text-center py-4 border-t border-b border-gray-100 mb-6">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-                className="inline-flex flex-wrap justify-center items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿Me pueden desalojar sin orden judicial en Chile?
-                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                👉 ¿Te quieren desalojar sin orden judicial?
+                <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

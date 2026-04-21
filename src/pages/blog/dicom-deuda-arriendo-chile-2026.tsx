@@ -138,19 +138,19 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-              <p className="text-gray-700 leading-relaxed font-medium">
-                Pero no cualquier deuda puede ser publicada. Es fundamental entender los requisitos legales antes de alarmarse.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-700 leading-relaxed font-bold">
+                Pero no cualquier deuda puede ser publicada. Es fundamental entender los requisitos legales antes de alarmarse por una amenaza de este tipo.
               </p>
             </div>
           </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Una deuda de arriendo va automáticamente a DICOM?</h2>
-            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-8">
-              <h3 className="text-lg font-bold text-red-800 mb-2">No</h3>
-              <p className="text-red-800">
-                Una deuda de arriendo NO se informa automáticamente a DICOM. A diferencia de créditos bancarios, tarjetas de crédito o casas comerciales, el arriendo es una relación civil, no financiera directa.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-900 font-bold text-lg mb-2 leading-relaxed">👉 No es automático.</p>
+              <p className="text-gray-600 leading-relaxed">
+                Una deuda de arriendo NO se informa automáticamente a DICOM. A diferencia de créditos bancarios o tarjetas, el arriendo es una relación civil que requiere validación previa.
               </p>
             </div>
           </div>
@@ -295,7 +295,7 @@ const BlogArticle = () => {
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Me quieren desalojar, ¿qué hago? Guía paso a paso 2026
+                👉 ¿Te quieren desalojar? Qué hacer paso a paso
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -329,7 +329,7 @@ const BlogArticle = () => {
               to="/blog/reajuste-arriendo-ipc-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Reajuste de arriendo por IPC en Chile: Todo lo que necesitas saber 2026
+              👉 ¿Cómo se calcula el reajuste por IPC?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -358,12 +358,12 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">Las deudas de arriendo son solo uno de los conflictos posibles. Puedes ver todos los escenarios en esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de arriendo en Chile
+              👉 Guía legal 2026: Todo sobre arriendos en Chile
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -430,13 +430,10 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Me pueden meter a DICOM sin avisar?</h2>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-              <p className="text-gray-700 leading-relaxed font-medium">
-                En muchos casos debería existir notificación, pero no siempre ocurre correctamente.
-              </p>
-            </div>
+          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+            <p className="text-gray-700 leading-relaxed font-bold">
+              En muchos casos debería existir notificación previa, pero para evitar sorpresas, es recomendable revisar tu informe comercial regularmente.
+            </p>
           </div>
 
           <div className="mb-12">
@@ -463,7 +460,7 @@ const BlogArticle = () => {
               to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Cuánto demora un juicio de desalojo en Chile? Plazos legales 2026
+              👉 ¿Cuánto demora un juicio de desalojo en Chile?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -485,13 +482,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <div className="mb-12">
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/tacita-reconduccion-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato
+              👉 Tácita reconducción: ¿Qué pasa si el contrato ya venció?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>

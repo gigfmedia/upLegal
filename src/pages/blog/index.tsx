@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = useMemo(() => [
     {
+      id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
+      title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)",
+      excerpt: "¿Con cuántos meses de deuda te pueden desalojar en Chile? Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitarlo.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "20 de Abril, 2026",
+      readTime: "14 min",
+      image: "/assets/desalojo-2-chile-2026.png"
+    },
+    {
       id: "contrato-de-arriendo-chile-2026",
       title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
       excerpt: "Firmar un contrato de arriendo en Chile es uno de los pasos más importantes al arrendar una propiedad. Descubre qué debe incluir, qué cláusulas son ilegales, errores comunes y un modelo base gratuito.",

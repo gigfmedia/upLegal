@@ -120,8 +120,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Un contrato de arriendo es un acuerdo legal entre el <strong>arrendador</strong> (dueño) y el <strong>arrendatario</strong> (quien arrienda), donde se regula el uso de un inmueble a cambio de un pago mensual.
             </p>
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-6">
-              <p className="text-blue-800 font-medium">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+              <p className="text-gray-900 font-bold text-lg leading-relaxed mb-4">Base legal del arriendo</p>
+              <p className="text-gray-700 leading-relaxed font-medium">
                 En Chile, un contrato de arriendo debe incluir monto, duración, forma de pago, condiciones de uso y término del contrato. Este documento es la base de cualquier acción legal en caso de conflicto.
               </p>
             </div>
@@ -145,12 +146,12 @@ const BlogArticle = () => {
 
           {/* Link pilar */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">Si quieres entender el contexto completo del arriendo en Chile, revisa esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de derecho de arrendamiento en Chile
+              👉 Guía 2026: Todo sobre el Arrendamiento en Chile
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -184,7 +185,7 @@ const BlogArticle = () => {
               to="/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Qué pasa si no tienes contrato de arriendo en Chile? (Guía 2026)
+              👉 ¿Qué pasa si no tienes contrato de arriendo?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -209,16 +210,16 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
-              <h3 className="font-bold text-indigo-900 mb-3">Recomendación práctica</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-indigo-800">
-                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-base">Arriendos simples → puede ser contrato privado</span>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Recomendación práctica</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <p className="text-gray-700 font-medium">Arriendos de bajo monto → El contrato privado es suficiente.</p>
                 </div>
-                <div className="flex items-center gap-2 text-indigo-800">
-                  <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-base">Arriendos de alto monto o conflictivos → mejor ante notario</span>
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  <p className="text-gray-700 font-medium">Arriendos de alto valor o comerciales → Siempre ante notario para mayor seguridad.</p>
                 </div>
               </div>
             </div>
@@ -324,7 +325,7 @@ const BlogArticle = () => {
               to="/blog/reajuste-arriendo-ipc-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Reajuste de arriendo por IPC en Chile: cómo calcularlo correctamente (Guía 2026)
+              👉 Reajuste por IPC: Cómo calcularlo en 2026
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -335,7 +336,7 @@ const BlogArticle = () => {
               to="/blog/tacita-reconduccion-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Tácita reconducción en Chile: qué pasa si sigues pagando sin contrato vigente
+              👉 Tácita reconducción: ¿Qué es y cómo afecta?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -430,7 +431,7 @@ const BlogArticle = () => {
               to="/blog/me-quieren-desalojar-que-hago-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Me quieren desalojar, ¿qué hago? Guía paso a paso Chile 2026
+              👉 Me quieren desalojar: Guía paso a paso
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -506,9 +507,9 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg">
-              <p className="text-blue-800 font-medium">
-                Este tipo de situaciones es extremadamente común en Chile. La mayoría de los conflictos por garantía no ocurren por mala fe, sino por contratos mal redactados y falta de documentación.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 mt-6">
+              <p className="text-gray-700 leading-relaxed font-medium">
+                Este tipo de situaciones es extremadamente común en Chile. La mayoría de los conflictos por garantía no ocurren por mala fe, sino por contratos mal redactados y falta de documentación rigurosa al inicio.
               </p>
             </div>
           </div>
@@ -520,7 +521,7 @@ const BlogArticle = () => {
               to="/blog/no-devuelven-garantia-arriendo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿No te devuelven la garantía de arriendo en Chile? Qué hacer (Guía 2026)
+              👉 Garantía de arriendo: Cómo recuperarla hoy
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -554,7 +555,7 @@ const BlogArticle = () => {
               to="/blog/orden-desalojo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
+              👉 Orden de desalojo: Todo lo que debes saber
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -565,7 +566,7 @@ const BlogArticle = () => {
               to="/blog/dicom-deuda-arriendo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Me pueden meter a DICOM por deuda de arriendo? (Guía 2026)
+              👉 DICOM por deudas de arriendo: Realidad 2026
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>

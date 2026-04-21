@@ -11,25 +11,30 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Puedo desalojar a un arrendatario inmediatamente?",
-      answer: "No. Siempre necesitas una orden judicial."
+      question: "¿Qué es la Ley 21.461 o Ley Devuélveme Mi Casa?",
+      answer:
+        "La Ley 21.461, conocida como 'Devuélveme Mi Casa', fue promulgada en Chile para agilizar los procesos de desalojo. Redujo los plazos judiciales en casos de no pago de arriendo y ocupación ilegal, permitiendo a los propietarios recuperar sus inmuebles más rápidamente que con el procedimiento anterior.",
     },
     {
-      question: "¿Qué pasa si no hay contrato escrito?",
-      answer: "El contrato verbal también puede ser válido, pero deberás probar su existencia."
+      question: "¿Puedo desalojar a un arrendatario de inmediato con esta ley?",
+      answer:
+        "No. La ley agilizó el proceso pero no elimina la necesidad de un juicio. Siempre se requiere presentar una demanda, notificar al arrendatario y obtener una orden judicial de desalojo. Lo que cambió es que los plazos son más cortos que antes de la reforma.",
     },
     {
-      question: "¿Se puede recuperar la propiedad si deben varios meses?",
-      answer: "Sí. Puedes demandar el desalojo y el pago de la deuda."
+      question: "¿Qué pasa si no tengo contrato escrito con el arrendatario?",
+      answer:
+        "El contrato verbal también puede ser válido en Chile, pero deberás probar su existencia ante el tribunal con otros medios: transferencias de pago, mensajes, testigos u otros documentos. Sin contrato escrito el proceso es más complejo, por lo que es recomendable contar con asesoría legal desde el inicio.",
     },
     {
-      question: "¿La ley aplica a todas las propiedades?",
-      answer: "Principalmente a contratos de arriendo, especialmente de uso habitacional."
+      question: "¿Se puede demandar el desalojo y el pago de la deuda al mismo tiempo?",
+      answer:
+        "Sí. Puedes demandar tanto el término del contrato y el desalojo como el cobro de las rentas adeudadas en el mismo proceso judicial. Esto permite recuperar el inmueble y exigir el pago de la deuda acumulada sin necesidad de dos juicios separados.",
     },
     {
-      question: "¿Qué pasa si el arrendatario se niega a salir?",
-      answer: "El tribunal puede ordenar el desalojo con apoyo de Carabineros."
-    }
+      question: "¿Qué pasa si el arrendatario se niega a salir después de la sentencia?",
+      answer:
+        "Si el tribunal dicta la orden de desalojo y el arrendatario se niega a abandonar el inmueble, se puede solicitar el lanzamiento con auxilio de la fuerza pública. Carabineros puede intervenir para ejecutar la orden judicial y permitir al propietario recuperar el inmueble.",
+    },
   ];
 
 
@@ -78,7 +83,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 14 min</span>
+              <span>Tiempo de lectura: 15 min</span>
             </div>
           </div>
         </div>
@@ -97,9 +102,9 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed mb-4">
               Si tienes una vivienda arrendada y el arrendatario dejó de pagar o no quiere desalojar, esta ley permite acelerar el proceso de recuperación del inmueble mediante un procedimiento judicial más rápido.
             </p>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-6">
-              <p className="font-semibold text-blue-900 mb-3">En esta guía 2026 te explicamos:</p>
-              <ul className="space-y-2 list-none p-0 m-0">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="font-bold text-gray-900 mb-4">En esta guía 2026 te explicamos:</p>
+              <ul className="space-y-3 list-none p-0 m-0">
                 {[
                   "Qué es la Ley 21.461",
                   "Cuándo se aplica",
@@ -107,9 +112,9 @@ const BlogArticle = () => {
                   "Cuánto demora recuperar tu propiedad",
                   "Qué hacer paso a paso"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-blue-800">
-                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                    <span className="text-base">{item}</span>
+                  <li key={i} className="flex items-center gap-3 text-gray-700 leading-relaxed">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-base font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -199,22 +204,24 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto podría ser ilegal y perjudicarte judicialmente, siempre necesitas un proceso judicial.</p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres profundizar en esto, revisa:</p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Me pueden desalojar sin orden judicial en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
             <p className="text-gray-600 mb-4 mt-8 leading-relaxed">Sobre cambiar la cerradura sin orden judicial:</p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/arrendador-puede-cambiar-cerradura-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)
+                👉 ¿El arrendador puede cambiar la cerradura en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -246,12 +253,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 mt-6 leading-relaxed">
               Si quieres entender qué es una orden de desalojo y cuándo ocurre en el proceso, revisa también:
             </p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/orden-desalojo-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
+                👉 Orden de desalojo en Chile: Guía 2026
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -356,10 +364,11 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mb-4 leading-relaxed">Antes podía tardar más de un año.</p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres entender cuánto demora todo este proceso, revisa también:</p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cuánto demora un juicio de desalojo en Chile?
                 <ChevronRight className="h-4 w-4" />
@@ -391,22 +400,22 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Errores comunes de los propietarios</h2>
-            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg">
-              <p className="text-red-900 font-medium mb-6 leading-relaxed">
-                Evita estos errores, son más comunes de lo que crees:
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 my-8">
+              <p className="text-gray-900 font-bold text-lg mb-6 leading-relaxed">
+                Evita estos errores comunes para asegurar la recuperación legal de tu inmueble:
               </p>
               <div className="space-y-5">
                 {[
-                  { title: "Intentar desalojar por la fuerza", desc: "Puede ser ilegal y jugar en tu contra." },
-                  { title: "No tener contrato de arriendo", desc: "Dificulta el proceso (aunque igual puedes demandar)." },
-                  { title: "No documentar la deuda", desc: "Siempre guarda comprobantes." },
-                  { title: "Esperar demasiado", desc: "Mientras más tiempo pasa, más difícil recuperar dinero." }
+                  { title: "Intentar desalojar por la fuerza", desc: "Es ilegal y perjudica seriamente tu posición judicial." },
+                  { title: "No tener contrato de arriendo escrito", desc: "Dificulta comprobar la relación, aunque no impide demandar." },
+                  { title: "No documentar la deuda", desc: "Es vital guardar comprobantes y comunicaciones." },
+                  { title: "Esperar meses antes de actuar", desc: "Mientras más tiempo pasa, es más costoso recuperar la renta." }
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <XCircle className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-red-900">{item.title}</p>
-                      <p className="text-red-800 text-base mt-1 leading-relaxed">{item.desc}</p>
+                      <p className="font-bold text-gray-900">{item.title}</p>
+                      <p className="text-gray-600 text-base mt-1 leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -500,12 +509,13 @@ const BlogArticle = () => {
               ))}
             </div>
             <p className="text-gray-600 mb-4 leading-relaxed">Si estás enfrentando un problema de este tipo, también puede interesarte:</p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/me-subieron-el-arriendo-que-hago-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Me subieron el arriendo, ¿qué hago?
+                👉 ¿Me subieron el arriendo? Qué hacer hoy
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -514,10 +524,16 @@ const BlogArticle = () => {
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) representa un cambio importante en Chile, permitiendo a los propietarios recuperar sus inmuebles de forma más rápida y efectiva.
+              La Ley "Devuélveme Mi Casa" (Ley 21.461) representa un cambio concreto para los propietarios en Chile: redujo los plazos del juicio de desalojo y simplificó el proceso en casos de no pago y ocupación ilegal. Antes de esta ley, recuperar un inmueble podía tomar años. Hoy el proceso es más rápido, aunque sigue siendo judicial.
             </p>
-            <p className="text-gray-600 leading-relaxed">
-              Sin embargo, el proceso sigue siendo judicial, por lo que es clave actuar correctamente desde el inicio para evitar errores que retrasen el desalojo.
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Eso es lo más importante que debes entender: más rápido no significa inmediato. Todavía necesitas presentar una demanda, notificar al arrendatario y esperar la resolución del tribunal. No hay atajos legales para recuperar tu propiedad sin pasar por ese proceso.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Lo que sí cambia es que actuar bien desde el inicio — con la documentación correcta y asesoría legal adecuada — puede hacer la diferencia entre un proceso de 3 meses y uno de 12. Los errores en la demanda, las notificaciones mal hechas o los plazos vencidos son las razones más comunes por las que estos juicios se alargan innecesariamente.
+            </p>
+            <p className="text-gray-600 mb-4 font-bold leading-relaxed">
+              Si eres propietario y necesitas recuperar tu inmueble, o si eres arrendatario y te acaban de notificar una demanda bajo esta ley, el momento de actuar es ahora.
             </p>
           </div>
 

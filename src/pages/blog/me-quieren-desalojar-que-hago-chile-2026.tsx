@@ -123,9 +123,9 @@ const BlogArticle = () => {
                 </p>
               </div>
 
-              <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                <h3 className="text-xl font-bold mb-3 text-gray-900">Derecho a defensa del arrendatario</h3>
-                <p className="text-gray-700 leading-relaxed">
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 my-8">
+                <h3 className="text-xl font-bold mb-4 text-gray-900">Derecho a defensa del arrendatario</h3>
+                <p className="text-gray-700 leading-relaxed font-medium">
                   Una vez notificado, el arrendatario tiene derecho a responder la demanda, presentar pruebas o incluso llegar a un acuerdo con el dueño. Este principio es fundamental dentro del sistema judicial, ya que garantiza que ambas partes puedan ser escuchadas antes de tomar una decisión.
                 </p>
               </div>
@@ -145,9 +145,9 @@ const BlogArticle = () => {
               Uno de los escenarios más temidos por los arrendatarios es llegar a la vivienda y encontrar que el dueño cambió la cerradura. Lamentablemente, esta práctica ocurre en algunos casos, pero es importante saber que es ilegal.
             </p>
 
-            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-8">
-              <h3 className="text-lg font-bold text-red-800 mb-2">Autotutela ilegal</h3>
-              <p className="text-red-800">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Autotutela ilegal</h3>
+              <p className="text-gray-700 leading-relaxed font-medium">
                 En Chile, ninguna persona puede hacer justicia por su propia cuenta. Esto se conoce jurídicamente como autotutela. Aunque el dueño sea el propietario del inmueble, no tiene derecho a expulsar al arrendatario mediante la fuerza o sin autorización judicial.
               </p>
             </div>
@@ -255,8 +255,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               En los últimos años se aprobó una normativa conocida como Ley “Devuélveme mi Casa”, cuyo objetivo es agilizar los procesos de desalojo en casos de incumplimiento de arriendo.
             </p>
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-              <p className="text-indigo-900 leading-relaxed">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-700 leading-relaxed font-bold">
                 Esta ley permite procedimientos más rápidos en situaciones donde la deuda está claramente acreditada, por ejemplo cuando existe contrato firmado ante notario. Gracias a esta normativa, algunos desalojos pueden resolverse en plazos más cortos que antes, aunque igualmente requieren intervención judicial.
               </p>
             </div>

@@ -7,29 +7,35 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Qué pasa si debo arriendo?",
-      answer: "Aunque exista deuda, el arrendador no puede cambiar la cerradura sin orden judicial. Debe iniciar un proceso legal."
+      question: "¿Puede el arrendador cambiar la cerradura si no pago el arriendo?",
+      answer:
+        "No. Aunque exista deuda de arriendo, el arrendador no puede cambiar la cerradura ni impedir el acceso al inmueble sin una orden judicial. Hacerlo constituye un acto ilegal que puede ser denunciado ante Carabineros o el tribunal. El único camino legal para recuperar el inmueble es iniciar un juicio de desalojo.",
     },
     {
-      question: "¿El arrendador puede sacar mis cosas?",
-      answer: "En general, no. Sin una orden judicial, esto puede ser ilegal y generar consecuencias para el arrendador."
+      question: "¿Qué pasa si el arrendador ya cambió la cerradura?",
+      answer:
+        "Puedes llamar a Carabineros de inmediato y denunciar que te están impidiendo el acceso a tu domicilio. Carabineros puede intervenir ante una situación de este tipo. Además, puedes presentar una denuncia formal y buscar asesoría legal para exigir el reingreso al inmueble y evaluar acciones legales contra el arrendador.",
     },
     {
-      question: "¿Puedo entrar si cambiaron la cerradura?",
-      answer: "Depende del caso. Es recomendable actuar con asesoría legal para evitar problemas mayores."
+      question: "¿Puede el arrendador sacar mis cosas del inmueble?",
+      answer:
+        "No sin orden judicial. Si el arrendador retira tus pertenencias sin autorización del tribunal, está cometiendo un acto ilegal. En ese caso puedes denunciar el hecho ante Carabineros y presentar una demanda por los daños ocasionados.",
     },
     {
-      question: "¿Carabineros puede intervenir?",
-      answer: "Puede intervenir dependiendo de la situación, especialmente si existe un conflicto o denuncia formal."
+      question: "¿Puede el arrendador cortar la luz o el agua para que me vaya?",
+      answer:
+        "No. Cortar servicios básicos como agua, luz o gas como medida de presión para que el arrendatario abandone el inmueble es ilegal en Chile, independientemente de si existe deuda. Esta conducta puede ser denunciada y tiene consecuencias legales para el arrendador.",
     },
     {
-      question: "¿Se puede evitar un desalojo?",
-      answer: "En algunos casos sí, por ejemplo: pagando la deuda, llegando a un acuerdo o negociando plazos con el arrendador."
-    }
+      question: "¿Cómo puede el arrendador recuperar el inmueble legalmente?",
+      answer:
+        "El único camino legal es iniciar un juicio de desalojo ante el tribunal civil competente. El proceso incluye presentar la demanda, notificar al arrendatario y esperar la resolución judicial. Solo con una orden de lanzamiento dictada por el juez se puede proceder al desalojo con apoyo de la fuerza pública si es necesario.",
+    },
   ];
 
   return (
@@ -83,7 +89,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white rounded-lg shadow-sm p-8">
           <BlogShare
             title="¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)"
@@ -99,8 +105,10 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed">
               Esto suele ocurrir cuando existen deudas de arriendo o conflictos entre las partes. Sin embargo, la gran pregunta es: <strong>¿puede el arrendador cambiar la cerradura en Chile?</strong>
             </p>
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mt-10">
-              <p className="text-blue-800 font-bold text-lg">La respuesta, en la mayoría de los casos, es no.</p>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 my-10">
+              <p className="text-gray-700 font-bold text-lg leading-relaxed">
+                La respuesta, en la mayoría de los casos, es no.
+              </p>
             </div>
           </div>
 
@@ -168,11 +176,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="text-center py-6 border-t border-b border-gray-100">
-              <p className="text-gray-700 mb-4 font-medium">Si quieres entender cuánto demora este proceso, revisa también:</p>
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cuánto demora un juicio de desalojo en Chile?
                 <ChevronRight className="h-4 w-4" />
@@ -227,6 +235,12 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
+          <InArticleCTA
+            message="¿Tu arrendador cambió la cerradura o te está presionando para que salgas? Un abogado puede orientarte sobre cómo actuar hoy mismo."
+            buttonText="Hablar con un abogado ahora"
+            category="Derecho Arrendamiento"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo denunciar si el arrendador cambió la cerradura?</h2>
@@ -340,36 +354,46 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <div className="mb-12 text-center py-8 border-t border-b border-gray-100">
-            <p className="text-gray-700 mb-4 font-medium">
-              Cambiar la cerradura no reemplaza un proceso judicial. Para entender cuándo pueden sacarte de una propiedad, revisa también:
-            </p>
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-              className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-lg"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
               👉 ¿Me pueden desalojar sin orden judicial en Chile?
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+
+          <InArticleCTA
+            message="No enfrentes esta situación sin asesoría. Un abogado especialista puede revisar tu caso y defender tus derechos de arrendatario inmediatamente."
+            buttonText="Hablar con un abogado ahora"
+            category="Derecho Arrendamiento"
+          />
 
           {/* Conclusion */}
           <div className="mb-12 pt-4">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial en la mayoría de los casos.
+              En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Sin excepciones.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Aunque existan deudas o conflictos, la ley exige que el desalojo se realice mediante un proceso judicial. Actuar fuera de este marco puede generar consecuencias legales tanto para arrendadores como arrendatarios.
+              Aunque existan deudas o conflictos, la ley exige que cualquier desalojo se realice mediante un proceso judicial. El arrendador que actúa por su cuenta — cambiando cerraduras, sacando pertenencias o cortando servicios básicos — está cometiendo un acto ilegal, independientemente de si tienes deuda o no.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Muchos arrendatarios no saben esto y ceden ante la presión sin que el arrendador tenga ningún respaldo legal para actuar así. Conocer tus derechos es lo que te permite responder correctamente en el momento.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si el proceso ya llegó a tribunales, el desalojo puede demorar meses. Ese tiempo existe precisamente para que puedas buscar alternativas: pagar la deuda, negociar un plazo con el arrendador o preparar una salida ordenada. Usarlo bien marca la diferencia.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              Si tienes un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te ayuden a tomar la mejor decisión.
+              Si el arrendador ya cambió la cerradura, te está amenazando o no sabes en qué etapa del proceso estás, lo más importante es actuar rápido y con información correcta.
             </p>
           </div>
 
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Otras preguntas frecuentes</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">

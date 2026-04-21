@@ -130,9 +130,10 @@ const BlogArticle = () => {
                 <span>Uso indebido o daños grave al inmueble.</span>
               </li>
             </ul>
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-8">
-              <p className="text-blue-800 font-medium italic">
-                IMPORTANTE: En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
+              <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Marco legal del desalojo</p>
+              <p className="text-gray-700 leading-relaxed font-medium">
+                <strong>IMPORTANTE:</strong> En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal. La autotutela es ilegal.
               </p>
             </div>
           </div>
@@ -205,12 +206,12 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">El desalojo es solo una parte del sistema. Para entender todo el contexto legal del arriendo, revisa esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de derecho de arrendamiento en Chile
+              👉 Derecho de arrendamiento: Guía completa 2026
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -279,30 +280,28 @@ const BlogArticle = () => {
                   <li>• Evalúa la posibilidad de pagar o negociar un plazo.</li>
                   <li>• Busca orientación legal para defender tus derechos.</li>
                 </ul>
-                 <div className="mt-8 pt-8 border-t border-gray-100 text-center">
-                  <p className="text-base text-gray-500 mb-4 uppercase font-bold tracking-wider">Lectura Recomendada</p>
-                  <Link 
-                    to="/blog/me-subieron-el-arriendo-que-hago-2026"
-                    className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
-                  >
-                    👉 Me subieron el arriendo, ¿qué hago?
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </div>
+                  <div className="text-center py-4 border-t border-b border-gray-100 mt-8">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+                    <Link 
+                      to="/blog/me-subieron-el-arriendo-que-hago-2026"
+                      className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                    >
+                      👉 Me subieron el arriendo: ¿Cómo defenderme?
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </div>
               </div>
             </div>
           </div>
 
-          <div className="mb-12 text-center py-8 border-t border-b border-gray-100">
-            <p className="text-gray-700 font-medium mb-6 italic leading-relaxed">
-              ¿Te están amenazando con un desalojo directo o por la fuerza? Es fundamental que sepas que esto es ilegal en Chile.
-            </p>
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link 
               to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-              className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-lg"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía: ¿Me pueden desalojar sin orden judicial?
-              <ChevronRight className="h-5 w-5" />
+              👉 Desalojo sin orden judicial: Tus derechos
+              <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
 

@@ -143,10 +143,11 @@ const BlogArticle = () => {
                   </ul>
                   <p className="text-gray-600 font-bold mb-4">En estos casos, el trabajador tiene derecho a indemnización.</p>
                   <p className="text-gray-600 mb-4 leading-relaxed font-normal">Calcula cuánto dinero te corresponde por tus años trabajados:</p>
-                  <div className="text-center py-4 border-t border-b border-gray-100">
+                  <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
                     <Link
                       to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
-                      className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                      className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
                     >
                       👉 ¿Cuánto me corresponde por años de servicio? Guía 2026
                       <ChevronRight className="h-4 w-4" />
@@ -342,10 +343,11 @@ const BlogArticle = () => {
               Después del despido, el empleador debe pagar el finiquito. Si quieres saber cómo calcularlo, revisa nuestra guía completa.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">¿Quieres saber si tu finiquito está bien calculado?</p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link
                 to="/blog/como-calcular-tu-finiquito-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso
                 <ChevronRight className="h-4 w-4" />

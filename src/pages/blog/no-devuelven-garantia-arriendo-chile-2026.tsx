@@ -137,7 +137,7 @@ const BlogArticle = () => {
               to="/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía 2026)
+              👉 ¿Sin contrato escrito? Descubre tus derechos
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -194,8 +194,8 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-8">
-              <p className="text-blue-800 font-medium">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-700 leading-relaxed font-bold">
                 Importante: El arrendador debe justificar cualquier descuento con respaldo documental. No puede retener dinero de forma arbitraria.
               </p>
             </div>
@@ -208,22 +208,21 @@ const BlogArticle = () => {
               El plazo depende de lo que establezca el contrato de arriendo. En muchos casos se fija un plazo de 30 días desde la entrega del inmueble. Si el contrato no dice nada al respecto, la garantía debe devolverse en un plazo razonable.
             </p>
 
-            <div className="bg-amber-50 border border-amber-200 p-6 rounded-xl mb-6">
-              <h3 className="font-bold text-amber-900 mb-3">Problema común en Chile</h3>
-              <p className="text-amber-800 mb-3 leading-relaxed">Muchos arrendadores incumplen estas condiciones:</p>
-              <div className="space-y-2">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="font-bold text-gray-900 mb-4 text-xl">Problema común en Chile</h3>
+              <p className="text-gray-700 mb-4 leading-relaxed font-medium">Muchos arrendadores incumplen estas condiciones:</p>
+              <div className="space-y-3">
                 {[
                   "No devuelven la garantía sin justificación",
                   "Inventan descuentos sin respaldo",
                   "No entregan comprobantes ni boletas"
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-amber-800">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <div key={i} className="flex items-center gap-3 text-gray-700">
+                    <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
                     <span className="text-base">{item}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-amber-800 font-medium mt-3">Esto es más frecuente de lo que parece.</p>
             </div>
           </div>
 
@@ -234,7 +233,7 @@ const BlogArticle = () => {
               to="/blog/me-subieron-el-arriendo-que-hago-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 ¿Te subieron el arriendo en Chile? Qué hacer y cuáles son tus derechos
+              👉 ¿Te subieron el arriendo? Qué hacer hoy
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -323,10 +322,10 @@ const BlogArticle = () => {
               ))}
             </div>
 
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-              <h3 className="font-bold text-indigo-900 mb-3">¿Necesito abogado para demandar?</h3>
-              <p className="text-indigo-800 leading-relaxed">
-                En la mayoría de los casos, sí. Un abogado puede evaluar el caso, determinar si corresponde demandar, redactar la demanda correctamente y representarte ante el tribunal, aumentando significativamente tus posibilidades de éxito.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="font-bold text-gray-900 mb-4 text-xl">¿Necesito abogado para demandar?</h3>
+              <p className="text-gray-700 leading-relaxed font-bold">
+                En la mayoría de los casos, sí. Un abogado puede evaluar el caso, redactar la demanda correctamente y representarte adecuadamente, aumentando significativamente tus posibilidades de recuperar el dinero.
               </p>
             </div>
 
@@ -357,7 +356,7 @@ const BlogArticle = () => {
               to="/blog/orden-desalojo-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
+              👉 Orden de desalojo: Guía completa 2026
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -387,13 +386,10 @@ const BlogArticle = () => {
           {/* Sin contrato */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si no hay contrato de arriendo?</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Aunque no tengas contrato escrito, también puedes reclamar la devolución de la garantía. Sin embargo, la situación es más compleja porque es más difícil probar las condiciones pactadas y necesitarás evidencia adicional.
-            </p>
-
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-6">
-              <p className="text-blue-800 font-medium mb-3">Pruebas que sirven cuando no hay contrato:</p>
-              <div className="grid sm:grid-cols-2 gap-2">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <h3 className="font-bold text-gray-900 mb-4 text-xl">¿Qué pasa si no hay contrato de arriendo escrito?</h3>
+              <p className="text-gray-700 leading-relaxed mb-6 font-medium">Aunque no tengas contrato escrito, también puedes reclamar la devolución de la garantía. Pruebas que sirven:</p>
+              <div className="grid sm:grid-cols-2 gap-4">
                 {[
                   "Transferencias bancarias de pago",
                   "Mensajes de WhatsApp o correos",
@@ -401,9 +397,9 @@ const BlogArticle = () => {
                   "Fotografías y videos del inmueble",
                   "Recibos de pago de arriendo"
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-blue-700">
-                    <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                    <span className="text-base">{item}</span>
+                  <div key={i} className="flex items-center gap-3 text-gray-700">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <span className="text-base text-gray-700">{item}</span>
                   </div>
                 ))}
               </div>
@@ -438,7 +434,7 @@ const BlogArticle = () => {
               to="/blog/reajuste-arriendo-ipc-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Reajuste de arriendo por IPC en Chile: cómo calcularlo correctamente (Guía 2026)
+              👉 ¿Cómo calcular el reajuste por IPC?
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -464,12 +460,12 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">La devolución de la garantía es uno de los conflictos más comunes dentro del arriendo. Puedes ver todos los derechos y obligaciones en esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de arriendo en Chile
+              👉 Guía legal 2026: Todo sobre arriendos en Chile
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>

@@ -123,19 +123,19 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               La relación entre arrendador y arrendatario está regulada por el contrato de arriendo, que funciona como la principal referencia legal para definir derechos y obligaciones de ambas partes.
             </p>
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-8">
-              <p className="text-blue-800 font-medium italic">
-                Por lo tanto, antes de aceptar cualquier aumento, lo primero que debes hacer es revisar cuidadosamente el contrato que firmaste.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 mt-10">
+              <p className="text-gray-700 font-bold text-lg leading-relaxed">
+                Antes de aceptar cualquier aumento, lo primero que debes hacer es revisar cuidadosamente el contrato que firmaste.
               </p>
             </div>
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Para calcular el monto exacto, revisa nuestra guía completa:</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link 
                 to="/blog/reajuste-arriendo-ipc-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿Cómo calcular y aplicar el reajuste según IPC? (Guía 2026)
+                👉 ¿Cómo calcular el reajuste según IPC? (Guía 2026)
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -213,12 +213,12 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-sm text-gray-500 mb-3 leading-relaxed">Si quieres entender en profundidad cómo funcionan los contratos, reajustes y derechos en este tipo de situaciones, revisa esta</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
-              👉 Guía completa de arriendo en Chile
+              👉 Guía completa de arriendo en Chile: Ley 2026
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -228,9 +228,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Cuando el contrato de arriendo finaliza, la situación cambia un poco. En muchos casos ocurre lo que se conoce como prórroga automática o tácita reconducción. Esto significa que el contrato continúa funcionando bajo las mismas condiciones mientras ninguna de las partes manifieste lo contrario.
             </p>
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-6">
-              <p className="text-indigo-900 leading-relaxed">
-                En este escenario, el arrendador puede proponer un nuevo valor de arriendo para renovar el contrato. Sin embargo, esto debe hacerse respetando ciertas condiciones. Generalmente se requiere: aviso previo (habitualmente 30 días), acuerdo entre ambas partes y firma de un nuevo contrato o anexo.
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-700 leading-relaxed font-bold">
+                En este escenario, el arrendador puede proponer un nuevo valor de arriendo para renovar el contrato, pero debe existir aviso previo y mutuo acuerdo.
               </p>
             </div>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -270,9 +270,12 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               El arrendador no puede desalojarte simplemente porque no aceptaste un aumento de arriendo que no está contemplado en el contrato. Un desalojo solo puede ocurrir por motivos legales como: no pago del arriendo, término del contrato o incumplimiento grave del contrato.
             </p>
-            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mb-8">
-              <p className="text-red-800 font-medium">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
+              <p className="text-gray-900 font-bold text-lg mb-2 leading-relaxed">
                 Cualquier desalojo debe realizarse mediante un proceso judicial, no por decisión unilateral del dueño.
+              </p>
+              <p className="text-gray-600 leading-relaxed">
+                No permitas que te presionen ilegalmente para salir sin una orden judicial firme.
               </p>
             </div>
           </div>

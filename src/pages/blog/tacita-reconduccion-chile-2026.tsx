@@ -109,11 +109,11 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed font-bold">
               Aquí es donde aparece un concepto clave:
             </p>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-6 mt-6">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 mt-6">
               <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-3">
                 La tácita reconducción
               </h3>
-              <p className="text-blue-800 text-base">En esta guía 2026 te explicamos qué significa, cómo funciona en Chile y cuáles son tus derechos como arrendatario o arrendador.</p>
+              <p className="text-gray-700 leading-relaxed font-medium">En esta guía 2026 te explicamos qué significa, cómo funciona en Chile y cuáles son tus derechos como arrendatario o arrendador cuando el contrato vence pero la relación continúa.</p>
             </div>
           </div>
 
@@ -218,17 +218,13 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 mt-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Ejemplo práctico</h3>
-              <p className="text-gray-700 font-medium mb-2">Contrato por 12 meses.</p>
-              <ul className="list-disc pl-6 space-y-1 text-gray-700 mb-4">
-                <li>Termina en enero</li>
-                <li>El arrendatario sigue viviendo</li>
-                <li>El arrendador sigue recibiendo el pago</li>
-              </ul>
-              <div className="pt-3 border-t border-gray-300">
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 mt-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Ejemplo práctico</h3>
+              <p className="text-gray-700 mb-4 leading-relaxed font-medium">Imagina un contrato por 12 meses que termina en enero. El arrendatario sigue viviendo en la propiedad y el arrendador sigue recibiendo el pago sin objeciones.</p>
+              <div className="pt-4 border-t border-gray-100">
                 <p className="font-bold text-gray-900 flex items-center gap-2">
-                  Resultado: Se configura la tácita reconducción.
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Resultado: Se configura legalmente la tácita reconducción.
                 </p>
               </div>
             </div>
@@ -271,7 +267,7 @@ const BlogArticle = () => {
                 to="/blog/orden-desalojo-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona
+                👉 Guía: ¿Cómo funciona el desalojo en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -306,7 +302,7 @@ const BlogArticle = () => {
                 to="/blog/reajuste-arriendo-ipc-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Reajuste de arriendo por IPC en Chile: Todo lo que necesitas saber 2026
+                👉 Reajuste por IPC: Todo lo que debes saber
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -336,7 +332,7 @@ const BlogArticle = () => {
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿Me pueden desalojar sin orden judicial en Chile? Guía 2026
+                👉 ¿Desalojo sin orden judicial? Entiende tus derechos
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -433,7 +429,7 @@ const BlogArticle = () => {
                 to="/blog/no-devuelven-garantia-arriendo-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿No te devuelven la garantía de arriendo? Qué hacer legalmente en Chile
+                👉 ¿No te devuelven la garantía? Cómo recuperarla
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -461,7 +457,7 @@ const BlogArticle = () => {
                 to="/blog/cuanto-demora-juicio-desalojo-chile-2026" 
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿Cuánto demora un juicio de desalojo en Chile? Plazos legales 2026
+                👉 Juicio de desalojo: Tiempos y plazos reales
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
