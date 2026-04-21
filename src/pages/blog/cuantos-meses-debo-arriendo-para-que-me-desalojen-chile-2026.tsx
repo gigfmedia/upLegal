@@ -73,7 +73,7 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-3xl mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen ejecutivo</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
