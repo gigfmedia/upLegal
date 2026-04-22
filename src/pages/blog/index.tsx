@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = useMemo(() => [
     {
+      id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
+      title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)",
+      excerpt: "Sí: te pueden demandar con 1 mes de deuda. Conoce qué incluye una demanda (desalojo + cobro), cuánto demora el proceso y cómo defenderte.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "22 de Abril, 2026",
+      readTime: "14 min",
+      image: "/assets/demanda-arriendo-chile-2026.png"
+    },
+    {
       id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
       title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)",
       excerpt: "¿Con cuántos meses de deuda te pueden desalojar en Chile? Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitarlo.",

@@ -88,19 +88,19 @@ const BlogArticle = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-600 font-bold">✓</span>
                 <span className="text-base">1 mes de deuda habilita demanda</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-600 font-bold">✓</span>
                 <span className="text-base">No existe mínimo legal de meses</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-600 font-bold">✓</span>
                 <span className="text-base">Desalojo SIEMPRE requiere juicio</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-600 font-bold">✓</span>
                 <span className="text-base">Demora real: 3 a 12 meses</span>
               </div>
             </div>
@@ -146,6 +146,9 @@ const BlogArticle = () => {
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 my-8">
               <p className="text-gray-700 font-bold text-lg leading-relaxed">
                 Con 1 mes de deuda ya pueden iniciar un proceso de desalojo.
+              </p>
+              <p className="text-gray-600 mt-4 leading-relaxed">
+                Esto ocurre porque el no pago es el incumplimiento principal del contrato, como explicamos en 👉 <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="text-blue-600 font-bold hover:underline">qué pasa si no pagas el arriendo en Chile</Link>
               </p>
             </div>
             <p className="text-lg text-gray-600 leading-relaxed mt-6">
@@ -223,7 +226,17 @@ const BlogArticle = () => {
                   </div>
                 </div>
               ))}
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <Link
+                to="/blog/orden-desalojo-chile-2026"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 ¿Qué es y cómo funciona una orden de desalojo?
+                <ChevronRight className="h-4 w-4" />
+              </Link>
             </div>
+          </div>
           </div>
 
           <div className="mb-12">
@@ -615,9 +628,24 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En cambio, actuar a tiempo —ya sea negociando, regularizando la deuda o buscando asesoría legal— puede marcar una diferencia significativa en el resultado. En muchos casos, una acción oportuna permite evitar el desalojo o, al menos, reducir el impacto económico y legal.
             </p>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-gray-600 mb-4 leading-relaxed">
               Si estás enfrentando atrasos en el arriendo o ya existe riesgo de desalojo, lo peor que puedes hacer es esperar. <strong>Tomar decisiones informadas desde el inicio es la mejor forma de proteger tu situación, tu historial y tu tranquilidad.</strong>
             </p>
+
+            <div className="bg-gray-50 rounded-2xl p-8 mb-12 border border-gray-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">También te puede interesar</h3>
+              <div className="grid gap-4">
+                <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
+                  👉 ¿Qué pasa si no pago el arriendo en Chile?
+                </Link>
+                <Link to="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
+                  👉 ¿Cuántos meses debo para que me desalojen?
+                </Link>
+                <Link to="/blog/orden-desalojo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
+                  👉 Orden de desalojo en Chile
+                </Link>
+              </div>
+            </div>
           </div>
 
           <div className="mb-6" data-faq-section>
@@ -711,6 +739,12 @@ const BlogArticle = () => {
             title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
             excerpt: "Descubre qué debe incluir tu contrato, qué cláusulas son ilegales y descarga un modelo base gratuito.",
             image: "/assets/contrato-arriendo-chile-2026.png",
+          }}
+          nextArticle={{
+            id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
+            title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Guía 2026 real)",
+            excerpt: "Descubre qué pasa si dejas de pagar, cómo es el proceso legal y cómo defenderte de una demanda.",
+            image: "/assets/demanda-arriendo-chile-2026.png",
           }}
         />
 
