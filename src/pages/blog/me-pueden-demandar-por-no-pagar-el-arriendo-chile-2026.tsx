@@ -293,6 +293,13 @@ const BlogArticle = () => {
                 </ul>
               </div>
             </div>
+
+            <InArticleCTA
+                message="¿Recibiste una orden de desalojo o necesitas iniciar un proceso? Un abogado puede explicarte los plazos y opciones según tu situación."
+                buttonText="Consultar sobre orden de desalojo"
+                category="Derecho Arrendamiento"
+              />
+
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres ver cómo funciona realmente:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -578,7 +585,8 @@ const BlogArticle = () => {
 
           <InArticleCTA
             message="¿Estás atrasado en el arriendo o en riesgo de desalojo? No esperes a que llegue la demanda."
-            category="Derecho Civil"
+            buttonText="Consultar mi situación ahora"
+            category="Derecho Arrendamiento"
           />
 
           <div className="mb-2">
