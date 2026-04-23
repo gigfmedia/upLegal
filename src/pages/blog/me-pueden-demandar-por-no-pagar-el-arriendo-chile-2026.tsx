@@ -586,7 +586,7 @@ const BlogArticle = () => {
           <InArticleCTA
             message="¿Estás atrasado en el arriendo o en riesgo de desalojo? No esperes a que llegue la demanda."
             buttonText="Consultar mi situación ahora"
-            category="Derecho Arrendamiento"
+            category="Derecho Civil"
           />
 
           <div className="mb-2">
