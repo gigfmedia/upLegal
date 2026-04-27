@@ -230,7 +230,7 @@ const BlogArticle = () => {
             Protege tu libertad y tus derechos. Conectamos a personas con abogados penalistas expertos para preparar tu defensa o querella de forma inmediata y profesional.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

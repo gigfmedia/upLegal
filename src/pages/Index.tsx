@@ -474,6 +474,10 @@ const Index = () => {
                 <button
                   key={tag}
                   onClick={() => {
+                    window.gtag?.('event', 'cta_click', {
+                      location: 'hero',
+                      text: tag,
+                    });
                     // Navigate to search page with the query parameter
                     navigate(`/search?query=${encodeURIComponent(tag)}`);
                   }}
@@ -862,7 +866,13 @@ const Index = () => {
           <div className="text-center mb-12">
             <p className="text-center text-gray-900 font-bold items-center mt-8">¿Tienes otra duda?</p>
             <Button
-              onClick={() => navigate('/search')}
+              onClick={() => {
+                window.gtag?.('event', 'cta_click', {
+                  location: 'home',
+                  text: 'Hablar con un abogado',
+                });
+                navigate('/search');
+              }}
               className="bg-gray-900 text-white hover:bg-green-900 hover:text-white items-center mt-4"
             >
               Hablar con un abogado
@@ -892,13 +902,23 @@ const Index = () => {
                   <p className="mb-8">
                     Encuentra al abogado perfecto para tu caso. Asesoría legal profesional, rápida y segura.
                   </p>
-                  <Button 
-                    size="lg" 
-                    className="w-full bg-gray-900 hover:bg-green-900 text-white font-bold shadow-lg hover:shadow-xl transition-all"
-                    onClick={() => navigate('/search')}
-                  >
-                    Buscar Abogados
-                  </Button>
+                    <Button 
+                      size="lg" 
+                      className="w-full bg-gray-900 hover:bg-green-900 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                      onClick={() => {
+                        window.gtag?.('event', 'cta_click', {
+                          location: 'home',
+                          text: 'Buscar Abogados',
+                        });
+                        window.gtag?.('event', 'click_buscar_abogado_home', {
+                          event_category: 'engagement',
+                          event_label: 'home_cta_client'
+                        });
+                        navigate('/search');
+                      }}
+                    >
+                      Buscar Abogados
+                    </Button>
                 </div>
               </CardContent>
             </Card>
@@ -916,15 +936,21 @@ const Index = () => {
                   <p className="text-gray-600 mb-8">
                     Únete a nuestra plataforma y conecta con clientes. Impulsa el crecimiento de tu estudio.
                   </p>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold"
-                    onClick={() => handleAuthClick('signup', 'lawyer')}
-                    disabled={user?.user_metadata?.role === 'lawyer'}
-                  >
-                    {user?.user_metadata?.role === 'lawyer' ? 'Ya eres Abogado' : 'Comenzar como Abogado'}
-                  </Button>
+                    <Button 
+                      size="lg" 
+                      variant="outline"
+                      className="w-full border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold"
+                      onClick={() => {
+                        window.gtag?.('event', 'click_comenzar_como_abogado_home', {
+                          event_category: 'engagement',
+                          event_label: 'home_cta_lawyer'
+                        });
+                        handleAuthClick('signup', 'lawyer');
+                      }}
+                      disabled={user?.user_metadata?.role === 'lawyer'}
+                    >
+                      {user?.user_metadata?.role === 'lawyer' ? 'Ya eres Abogado' : 'Comenzar como Abogado'}
+                    </Button>
                 </div>
               </CardContent>
             </Card>

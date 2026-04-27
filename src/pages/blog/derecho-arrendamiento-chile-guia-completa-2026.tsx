@@ -827,10 +827,16 @@ const BlogArticle = () => {
             Habla con un abogado experto y recibe orientación clara sobre tu caso hoy mismo. En LegalUp conectamos a personas con abogados especialistas para resolver conflictos de forma inmediata.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                onClick={() => {
+                  window.gtag?.('event', 'click_consultar_abogado', {
+                    'category': 'Derecho Inmobiliario',
+                    'label': 'Derecho de arrendamiento en Chile: guía completa 2026'
+                  });
+                }}
               >
                 Consultar con Abogado Ahora
               </Button>

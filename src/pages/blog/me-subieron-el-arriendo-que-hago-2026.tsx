@@ -340,7 +340,7 @@ const BlogArticle = () => {
             No permitas cobros abusivos. Conectamos a arrendatarios con abogados expertos en derecho inmobiliario para revisar contratos y defender tus derechos.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

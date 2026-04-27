@@ -327,6 +327,11 @@ export function LawyerCard({
   // Handle schedule button click
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    window.gtag?.('event', 'select_lawyer', {
+      lawyer_id: lawyer.user_id || lawyer.id,
+    });
+
     // New flow: Redirect to booking page without auth check
     const lawyerName = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
     const nameSlug = lawyerName ? createSlug(lawyerName) : 'abogado';

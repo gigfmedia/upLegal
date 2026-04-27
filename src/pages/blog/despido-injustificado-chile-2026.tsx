@@ -515,7 +515,7 @@ const BlogArticle = () => {
             Habla con un abogado laboral, evalúa tu caso y entiende cuánto puedes reclamar. En LegalUp encuentras especialistas que trabajan en esto todos los días.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

@@ -529,7 +529,7 @@ const BlogArticle = () => {
             Habla con un abogado especializado y revisa tu situación antes de que escale. En LegalUp conectamos a personas con abogados que analizan tu caso de forma inmediata.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

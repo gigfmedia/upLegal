@@ -484,7 +484,7 @@ const BlogArticle = () => {
               Habla con un abogado y entiende cuáles son tus opciones legales. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/consulta">
+              <Link to="/consultar">
                 <Button
                   size="lg"
                   onClick={() => {

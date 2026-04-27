@@ -14,10 +14,7 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   buttonText = "Hablar con abogado ahora",
   category = "Derecho Laboral"
 }) => {
-  const isLaboral = category.toLowerCase().includes('laboral');
-  const targetUrl = isLaboral 
-    ? `/search?category=${encodeURIComponent(category)}`
-    : `/consulta/detalle?category=${encodeURIComponent(category)}`;
+  const targetUrl = `/consultar?category=${encodeURIComponent(category)}`;
 
   return (
     <div className="my-8 py-8 border rounded-md px-6 text-center group">

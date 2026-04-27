@@ -29,6 +29,26 @@ import RequireLawyer from '@/components/auth/RequireLawyer';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import Footer from '@/components/Footer';
 
+function RedirectToSearch() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search || '');
+  const category = params.get('category');
+  if (category) {
+    const lower = category.toLowerCase();
+    if (
+      lower.includes('desalojo') ||
+      lower.includes('arriendo') ||
+      lower.includes('arrendamiento') ||
+      lower.includes('inmobiliario')
+    ) {
+      params.set('category', 'Derecho Civil');
+    }
+  }
+
+  const search = params.toString();
+  return <Navigate to={`/search${search ? `?${search}` : ''}`} replace />;
+}
+
 // Lazy load all pages for code splitting
 const Index = lazy(() => import('./pages/Index'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
@@ -422,6 +442,7 @@ const AppContent = () => {
           }>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/consultar" element={<RedirectToSearch />} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contacto" element={<ContactPage />} />
@@ -437,8 +458,8 @@ const AppContent = () => {
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 
               {/* Consultation Routes - Temporarily disabled */}
-              <Route path="/consulta" element={<Consulta />} />
-              <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
+              <Route path="/consulta" element={<RedirectToSearch />} />
+              <Route path="/consulta/detalle" element={<RedirectToSearch />} />
               <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
               
               {/* Blog Routes */}

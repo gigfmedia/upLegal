@@ -500,7 +500,7 @@ const BlogArticle = () => {
             Protege tus derechos laborales. Si tienes dudas sobre tu finiquito, necesitas que un abogado revise los cálculos o quieres iniciar un reclamo, contacta a un especialista ahora.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button 
                 size="lg" 
                 onClick={() => {

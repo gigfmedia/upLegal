@@ -71,14 +71,14 @@ const BlogArticle = () => {
             Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-3xl mb-8">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <p className="text-sm sm:text-base text-white">
               Una orden de desalojo en Chile es una resolución judicial que obliga al arrendatario a entregar el inmueble. Solo puede dictarse tras un juicio y, si no se cumple voluntariamente, se ejecuta con auxilio de la fuerza pública. El proceso completo suele tardar entre 3 y 12 meses.
             </p>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl leading-relaxed">
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
 
@@ -558,7 +558,7 @@ const BlogArticle = () => {
             Si estás enfrentando un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

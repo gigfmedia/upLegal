@@ -496,7 +496,7 @@ const BlogArticle = () => {
             Protege tus derechos laborales. Habla con un abogado laboral y revisa tu finiquito antes de firmar para asegurarte de que recibes lo que te corresponde.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button 
                 size="lg" 
                 onClick={() => {

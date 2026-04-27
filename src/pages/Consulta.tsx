@@ -21,7 +21,12 @@ export default function Consulta() {
               <Button 
                 size="lg" 
                 className="text-lg py-6 px-8 bg-gray-900 hover:bg-green-900"
-                onClick={() => navigate('/consulta/detalle')}
+                onClick={() => {
+                  window.gtag?.('event', 'flow_start', {
+                    entry_point: 'consulta',
+                  });
+                  navigate('/consulta/detalle');
+                }}
               >
                 Agendar consulta
               </Button>

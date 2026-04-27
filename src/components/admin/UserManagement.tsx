@@ -95,12 +95,17 @@ export function UserManagement() {
     if (user.email?.toLowerCase() === 'gabignaciagomez@gmail.com') {
       return false;
     }
-    
+
     return (
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  // Separate users by role
+  const adminUsers = filteredUsers.filter(user => user.role === 'admin');
+  const lawyerUsers = filteredUsers.filter(user => user.role === 'lawyer');
+  const clientUsers = filteredUsers.filter(user => user.role === 'client' || user.role === 'user' || !user.role);
 
   if (isLoading) {
     return (
@@ -125,20 +130,26 @@ export function UserManagement() {
         </div>
       </div>
 
-      <div className="rounded-md border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Usuario</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Registro</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
+      {/* Admins Section */}
+      {adminUsers.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Badge variant="default">ADMIN</Badge>
+            <span>Administradores ({adminUsers.length})</span>
+          </h3>
+          <div className="rounded-md border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Registro</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+            {adminUsers.map((user) => (
                 <TableRow 
                   key={user.id} 
                   className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
@@ -194,17 +205,177 @@ export function UserManagement() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                  No se encontraron usuarios
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Lawyers Section */}
+      {lawyerUsers.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Badge className="bg-blue-600">ABOGADO</Badge>
+            <span>Abogados ({lawyerUsers.length})</span>
+          </h3>
+          <div className="rounded-md border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Registro</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+              {lawyerUsers.map((user) => (
+                <TableRow
+                  key={user.id}
+                  className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
+                      {user.blocked && (
+                        <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
+                      )}
+                      <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-blue-600 border-blue-600">{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.created_at).toLocaleDateString('es-CL')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mr-2">
+                        <Switch
+                          checked={!user.blocked}
+                          onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
+                          disabled={user.id === currentUser?.id || blockingUserId === user.id}
+                          title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                        />
+                        <span className="text-xs text-gray-500">
+                          {blockingUserId === user.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin inline" />
+                          ) : user.blocked ? (
+                            'Bloqueado'
+                          ) : (
+                            'Activo'
+                          )}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setUserToDelete(user)}
+                        disabled={user.id === currentUser?.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* Clients Section */}
+      {clientUsers.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Badge variant="outline" className="text-green-600 border-green-600">CLIENTE</Badge>
+            <span>Clientes ({clientUsers.length})</span>
+          </h3>
+          <div className="rounded-md border bg-white">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Registro</TableHead>
+                  <TableHead>Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+              {clientUsers.map((user) => (
+                <TableRow
+                  key={user.id}
+                  className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-500" />
+                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
+                      {user.blocked && (
+                        <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
+                      )}
+                      <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-green-600 border-green-600">{user.role || 'client'}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.created_at).toLocaleDateString('es-CL')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mr-2">
+                        <Switch
+                          checked={!user.blocked}
+                          onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
+                          disabled={user.id === currentUser?.id || blockingUserId === user.id}
+                          title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                        />
+                        <span className="text-xs text-gray-500">
+                          {blockingUserId === user.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin inline" />
+                          ) : user.blocked ? (
+                            'Bloqueado'
+                          ) : (
+                            'Activo'
+                          )}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setUserToDelete(user)}
+                        disabled={user.id === currentUser?.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {/* No results message */}
+      {adminUsers.length === 0 && lawyerUsers.length === 0 && clientUsers.length === 0 && (
+        <div className="rounded-md border bg-white py-8 text-center text-gray-500">
+          No se encontraron usuarios
+        </div>
+      )}
 
       <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <DialogContent>

@@ -387,7 +387,7 @@ const BlogArticle = () => {
             Si crees que tu despido fue injustificado, puedes recibir orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

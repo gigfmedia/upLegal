@@ -80,7 +80,7 @@ const BlogArticle = () => {
             ¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 max-w-3xl">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
             <div className="space-y-3 text-white/90">
               {[
@@ -97,7 +97,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed mt-6">
+          <p className="text-xl leading-relaxed mt-6">
             Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse qué puede pasar realmente.
           </p>
 
@@ -550,175 +550,54 @@ const BlogArticle = () => {
                   ))}
                 </div>
               </div>
-              
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="font-bold text-gray-900 mb-2">Paso 3 — Reúne evidencia</p>
-                <div className="grid sm:grid-cols-2 gap-2">
-                  {["Pagos", "Conversaciones", "Situación económica"].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-gray-700">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="font-bold text-gray-900 mb-2">Paso 4 — Intenta acuerdo</p>
-                <p className="text-gray-600">Muchos conflictos se resuelven sin juicio.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="font-bold text-gray-900 mb-2">Paso 5 — Asesoría legal</p>
-                <p className="text-gray-600 mb-3">Esto puede:</p>
-                <div className="grid sm:grid-cols-2 gap-2">
-                  {["Evitar errores", "Reducir deuda", "Evitar desalojo"].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-green-600" />
-                      <span className="text-gray-700">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
-          </div>
 
-          <InArticleCTA
-            message="¿Estás atrasado en el arriendo o en riesgo de desalojo? No esperes a que llegue la demanda."
-            buttonText="Consultar mi situación ahora"
-            category="Derecho Civil"
-          />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/consultar">
+                <Button 
+                  size="lg" 
+                  onClick={() => {
+                    window.gtag?.('event', 'cta_click', {
+                      location: 'blog_cta',
+                      text: 'Habla con un abogado ahora',
+                    });
+                    window.gtag?.("event", "click_consultar_abogado", {
+                      article: window.location.pathname,
+                      location: "blog_cta_demanda_arriendo_primary",
+                    });
+                  }}
+                  className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+                >
+                  Habla con un abogado ahora
+                </Button>
+              </Link>
 
-          <div className="mb-2">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo debes actuar urgente?</h2>
-            <div className="grid sm:grid-cols-2 gap-4 mb-6">
-              {[
-                "Debes 2 meses o más de arriendo",
-                "Recibiste una notificación judicial",
-                "Existen amenazas directas de desalojo",
-                "El arrendador cortó la comunicación",
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm relative overflow-hidden">
-                  <div className="absolute left-0 top-0 w-1 h-full"></div>
-                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  <span className="text-gray-700 font-medium text-sm leading-tight">{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="bg-red-50/50 border border-red-100 p-6 rounded-2xl flex gap-4 items-center">
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0 animate-pulse">
-                <Shield className="h-6 w-6" />
-              </div>
-              <p className="text-red-900 font-bold leading-tight">
-                Estás en zona de alto riesgo. Cada día sin defensa técnica reduce tus probabilidades de evitar el desalojo.
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-12 pt-4">
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link
-                to="/blog/orden-desalojo-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 Proceso completo: de la orden judicial al lanzamiento
-                <ChevronRight className="h-4 w-4" />
+              <Link to="/search?category=Derecho+Civil">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    window.gtag?.('event', 'cta_click', {
+                      location: 'blog_cta',
+                      text: 'Encontrar abogado',
+                    });
+                    window.gtag?.("event", "click_ver_abogados", {
+                      article: window.location.pathname,
+                      location: "blog_cta_demanda_arriendo_secondary",
+                    });
+                  }}
+                  className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
+                >
+                  Ver Abogados Civiles
+                </Button>
               </Link>
             </div>
-
-            <div className="bg-gray-50 rounded-2xl p-8 mb-12 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">También te puede interesar</h3>
-              <div className="grid gap-4">
-                <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Qué pasa si no pago el arriendo en Chile?
-                </Link>
-                <Link to="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Cuántos meses debo para que me desalojen?
-                </Link>
-                <Link to="/blog/orden-desalojo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 Orden de desalojo en Chile
-                </Link>
-              </div>
-            </div>
-
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              No pagar el arriendo en Chile no es un problema que "explota" de un día para otro, pero tampoco es algo que puedas dejar pasar sin consecuencias.
+            <p className="text-sm text-gray-500 mt-4">
+              Evalúa tu caso y toma una decisión antes de que el problema escale.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              La ley es clara: con un solo mes de deuda el arrendador ya puede iniciar acciones legales. Sin embargo, lo que realmente determina el resultado no es solo la deuda, sino cómo evoluciona la situación desde ese primer incumplimiento.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En la práctica, el desalojo es un proceso que toma tiempo —generalmente entre 3 y 12 meses—, pero ese plazo no es una oportunidad para ignorar el problema, sino una ventana para actuar estratégicamente. Durante ese período puedes negociar, pagar, defenderte o buscar alternativas que reduzcan el impacto.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El error más común no es dejar de pagar: es no hacer nada después. Ignorar la deuda, evitar la comunicación o no responder una demanda suele acelerar el conflicto y aumentar significativamente las consecuencias legales y económicas.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Por el contrario, quienes actúan temprano —ya sea regularizando la deuda, llegando a acuerdos o asesorándose legalmente— tienen muchas más probabilidades de evitar el desalojo o, al menos, minimizar el daño.
-            </p>
-            <p className="text-gray-600 leading-relaxed">
-              Si estás en esta situación, el enfoque correcto no es preguntarte solo "qué va a pasar", sino <strong>qué puedes hacer hoy para cambiar el resultado.</strong>
-            </p>
-          </div>
-
-          <div className="mb-6" data-faq-section>
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
-            <div className="space-y-4">
-              {faqs.map((faq, i) => (
-                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
-                  <p className="text-gray-700">{faq.answer}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
-
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Estás atrasado en el arriendo o en riesgo de desalojo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            No esperes a que llegue la demanda.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.("event", "click_consultar_abogado", {
-                    article: window.location.pathname,
-                    location: "blog_cta_demanda_arriendo_primary",
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Habla con un abogado ahora
-              </Button>
-            </Link>
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.("event", "click_ver_abogados", {
-                    article: window.location.pathname,
-                    location: "blog_cta_demanda_arriendo_secondary",
-                  });
-                }}
-                className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Civiles
-              </Button>
-            </Link>
-          </div>
-          <p className="text-sm text-gray-500 mt-4">
-            Evalúa tu caso y toma una decisión antes de que el problema escale.
-          </p>
-        </div>
-      </section>
 
       <RelatedLawyers category="Derecho Civil" />
 

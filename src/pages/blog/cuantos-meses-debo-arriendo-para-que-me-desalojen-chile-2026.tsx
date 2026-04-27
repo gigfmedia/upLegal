@@ -84,7 +84,7 @@ const BlogArticle = () => {
             ¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-3xl mb-8">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl leading-relaxed">
             Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse cuántos meses debes para que te desalojen. En esta guía te explicamos qué pasa desde el primer mes impago, cómo funciona el juicio y qué hacer para evitar errores.
           </p>
 
@@ -690,7 +690,7 @@ const BlogArticle = () => {
             No esperes a que el problema escale. Un error en este momento puede significar aumentar la deuda o enfrentar un juicio. Habla con un abogado y evalúa tu caso antes de que sea tarde.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/consultar">
               <Button
                 size="lg"
                 onClick={() => {

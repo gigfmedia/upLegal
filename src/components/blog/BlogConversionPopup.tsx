@@ -17,10 +17,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
   const [isExitingTension, setIsExitingTension] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isLaboral = category.toLowerCase().includes('laboral');
-  const targetUrl = isLaboral 
-    ? `/search?category=${encodeURIComponent(category)}`
-    : `/consulta/detalle?category=${encodeURIComponent(category)}`;
+  const targetUrl = `/consultar?category=${encodeURIComponent(category)}`;
 
   // Content Mapping
   const getTopicContent = () => {
@@ -66,7 +63,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
           title: "¿Te está pasando esto ahora?",
           message: "Habla con un experto en minutos.",
           messageSub: "Conecta con un abogado disponible y resuelve tus dudas hoy.",
-          priceLabel: isLaboral ? "" : "Desde $30.000"
+          priceLabel: "Desde $30.000"
         };
     }
   };

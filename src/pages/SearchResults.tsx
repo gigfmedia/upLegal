@@ -109,6 +109,8 @@ const SearchResults = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+
+  const viewLawyersTrackedRef = useRef<string | null>(null);
   
   // Get search parameters from URL
   const initialQuery = searchParams.get('query') || '';
@@ -682,6 +684,24 @@ const SearchResults = () => {
       }, 150); // Delay ligeramente mayor para asegurar render completo en mobile
     }
   }, [loading, filteredLawyers.length, searchParams]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (filteredLawyers.length === 0) return;
+
+    const dedupeKey = `${searchParams.toString()}|${filteredLawyers.length}`;
+    if (viewLawyersTrackedRef.current === dedupeKey) return;
+    viewLawyersTrackedRef.current = dedupeKey;
+
+    const specialty = selectedSpecialty?.length
+      ? selectedSpecialty.filter((s) => s !== 'all').join(',') || 'all'
+      : 'all';
+
+    window.gtag?.('event', 'view_lawyers', {
+      results_count: filteredLawyers.length,
+      specialty,
+    });
+  }, [loading, filteredLawyers.length, searchParams, selectedSpecialty]);
   
   return (
     <div className="min-h-screen bg-gray-50 relative">
