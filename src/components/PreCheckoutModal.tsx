@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 
 interface BookingData {
   lawyer_id: string;
