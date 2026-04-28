@@ -108,7 +108,7 @@ const Footer = () => {
         </div>
         
         <a 
-          href="https://wa.me/56950913358?text=Hola,%20necesito%20ayuda%20con%20una%20consulta%20legal" 
+          href="https://wa.me/56942896593?text=Hola,%20necesito%20ayuda%20con%20una%20consulta%20legal" 
           target="_blank" 
           rel="noopener noreferrer"
           aria-label="Chat on WhatsApp"

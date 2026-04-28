@@ -908,13 +908,18 @@ const SearchResults = () => {
                       <div className="flex items-start gap-4">
                         <Skeleton className="h-16 w-16 rounded-full" />
                         <div className="flex-1 space-y-2">
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-6 w-100" />
                           <div className="flex gap-2">
                             <Skeleton className="h-6 w-20 rounded-full" />
                             <Skeleton className="h-6 w-20 rounded-full" />
                           </div>
+                          <Skeleton className="h-4 w-1/2" />
                         </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {[...Array(2)].map((_, i) => (
+                          <Skeleton key={i} className="h-6 w-20 rounded-full" />
+                        ))}
                       </div>
                       <div className="mt-4 space-y-2">
                         <Skeleton className="h-4 w-full" />

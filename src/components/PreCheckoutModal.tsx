@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookingData {
   lawyer_id: string;
@@ -26,7 +27,25 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Pre-fill fields and capture user_id if the user is already authenticated
+  useEffect(() => {
+    const loadSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setSessionUserId(session.user.id);
+        if (!email) setEmail(session.user.email || '');
+        if (!name) {
+          const meta = session.user.user_metadata;
+          const fullName = meta?.full_name || `${meta?.first_name || ''} ${meta?.last_name || ''}`.trim();
+          if (fullName) setName(fullName);
+        }
+      }
+    };
+    if (isOpen) loadSession();
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +81,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         },
         body: JSON.stringify({
           lawyer_id: bookingData.lawyer_id,
+          user_id: sessionUserId || undefined,  // link to authenticated user if available
           user_email: email,
           user_name: name,
           scheduled_date: bookingData.scheduled_date,

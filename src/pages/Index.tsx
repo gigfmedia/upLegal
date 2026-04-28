@@ -730,26 +730,25 @@ const Index = () => {
                     <div className="flex items-start space-x-4">
                       <Skeleton className="h-16 w-16 rounded-full" />
                       <div className="space-y-2 flex-1">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-6 w-100" />
                         <div className="flex space-x-2">
-                          <Skeleton className="h-4 w-16" />
-                          <Skeleton className="h-4 w-16" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
                         </div>
+                        <Skeleton className="h-4 w-1/2" />
                       </div>
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-4/6" />
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {[...Array(2)].map((_, i) => (
                         <Skeleton key={i} className="h-6 w-20 rounded-full" />
                       ))}
                     </div>
+                    <div className="mt-4 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-4/6" />
+                    </div>
                     <div className="mt-6 flex flex-col space-y-2">
-                      <Skeleton className="h-10 w-full rounded-md" />
                       <Skeleton className="h-10 w-full rounded-md" />
                     </div>
                   </CardContent>
@@ -794,7 +793,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <p className="border bg-gray-900 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">FAQ</p>
-            <h2 className="text-3xl font-bold font-serif text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold font-serif text-gray-900 mb-2">
               Preguntas Frecuentes
             </h2>
             <p className="text-gray-600">
@@ -882,11 +881,17 @@ const Index = () => {
       </section>
 
       {/* Dual CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold font-serif text-center text-gray-900 mb-12">
-            Comienza hoy mismo
-          </h2>
+          <div className="text-center mb-12">
+            <p className="bg-green-600 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">START</p>
+            <h2 className="text-3xl font-bold font-serif text-center text-green-600 mb-2">
+              Comienza hoy mismo
+            </h2>
+            <p className="text-white">
+              Resuelve tus dudas sobre cómo funciona nuestra plataforma
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* CTA para Clientes - Principal */}
@@ -933,13 +938,13 @@ const Index = () => {
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
                     ¿Eres Abogado?
                   </h3>
-                  <p className="text-gray-600 mb-8">
+                  <p className="mb-8">
                     Únete a nuestra plataforma y conecta con clientes. Impulsa el crecimiento de tu estudio.
                   </p>
                     <Button 
                       size="lg" 
                       variant="outline"
-                      className="w-full border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold"
+                      className="w-full bg-gray-100 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold"
                       onClick={() => {
                         window.gtag?.('event', 'click_comenzar_como_abogado_home', {
                           event_category: 'engagement',

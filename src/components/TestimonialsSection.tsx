@@ -42,7 +42,8 @@ export const TestimonialsSection = () => {
     <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50/50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold font-serif text-gray-900 mb-4">
+          <p className="border bg-gray-900 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">TESTIMONIALS</p>
+          <h2 className="text-3xl font-bold font-serif text-gray-900 mb-2">
             Lo que dicen nuestros usuarios
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">

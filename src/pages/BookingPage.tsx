@@ -504,6 +504,7 @@ export default function BookingPage() {
         },
         body: JSON.stringify({
           lawyer_id: lawyer.user_id,
+          user_id: user?.id || undefined,  // link authenticated user to booking
           user_email: userEmail,
           user_name: userName,
           scheduled_date: format(selectedDate, 'yyyy-MM-dd'),

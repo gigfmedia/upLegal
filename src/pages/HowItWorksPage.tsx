@@ -98,9 +98,9 @@ export default function HowItWorksPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold font-serif mb-4">
+          <h2 className="text-3xl font-bold font-serif mb-4 text-green-600">
             ¿Listo para comenzar?
           </h2>
           <p className="text-xl mb-8 text-white">
