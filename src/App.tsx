@@ -92,6 +92,7 @@ const OrdenDesalojoArticle = lazy(() => import('./pages/blog/orden-desalojo-chil
 const DespidoSinMotivoArticle = lazy(() => import('./pages/blog/me-pueden-despedir-sin-motivo-chile-2026'));
 const LeyDevuelvemeMiCasaArticle = lazy(() => import('./pages/blog/ley-devuelveme-mi-casa-chile-2026'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const DeudaPensionArticle = lazy(() => import('./pages/blog/deuda-pension-alimentos-chile-2026'));
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -371,6 +372,7 @@ const AppContent = () => {
               <Route path="/blog/orden-desalojo-chile-2026" element={<OrdenDesalojoArticle />} />
               <Route path="/blog/me-pueden-despedir-sin-motivo-chile-2026" element={<DespidoSinMotivoArticle />} />
               <Route path="/blog/ley-devuelveme-mi-casa-chile-21461-2026" element={<LeyDevuelvemeMiCasaArticle />} />
+              <Route path="/blog/deuda-pension-alimentos-chile-2026" element={<DeudaPensionArticle />} />
               <Route path="/review" element={<ReviewPage />} />
              
 

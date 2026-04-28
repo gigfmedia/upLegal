@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "deuda-pension-alimentos-chile-2026",
+      title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)",
+      excerpt: "Si no recibes la pensión de alimentos o existe deuda acumulada, existen herramientas legales efectivas: liquidación judicial, retención de sueldo, embargo y arresto. Aprende cómo cobrarla paso a paso.",
+      category: "Derecho de Familia",
+      author: "LegalUp",
+      date: "28 de Abril, 2026",
+      readTime: "10 min",
+      image: "/assets/derecho-de-familia-chile-2026.png"
+    },
+    {
       id: "ley-devuelveme-mi-casa-chile-21461-2026",
       title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
       excerpt:
