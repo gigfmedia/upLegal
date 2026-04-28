@@ -27,15 +27,134 @@ const BlogPage = () => {
       image: "/assets/derecho-de-familia-chile-2026.png"
     },
     {
+      id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
+      title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Guía 2026)",
+      excerpt: "Si dejas de pagar el arriendo en Chile, el arrendador puede demandarte. Conoce qué puede pasar, cuáles son tus derechos y cómo enfrentar esta situación.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "22 de Abril, 2026",
+      readTime: "10 min",
+      image: "/assets/demanda-arriendo-chile-2026.png"
+    },
+    {
+      id: "contrato-de-arriendo-chile-2026",
+      title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
+      excerpt: "Aprende qué debe incluir un contrato de arriendo en Chile, cómo redactarlo correctamente, qué cláusulas son esenciales y cuáles errores comunes debes evitar.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "19 de Abril, 2026",
+      readTime: "12 min",
+      image: "/assets/contrato-arriendo-chile-2026.png"
+    },
+    {
+      id: "derecho-arrendamiento-chile-guia-completa-2026",
+      title: "Derecho de arrendamiento en Chile: guía completa 2026",
+      excerpt: "Todo lo que necesitas saber sobre el derecho de arriendo en Chile: obligaciones del arrendador y arrendatario, desalojo, garantías y modificaciones al contrato.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "15 de Abril, 2026",
+      readTime: "15 min",
+      image: "/assets/derecho-arriendo-chile-2026.png"
+    },
+    {
+      id: "tacita-reconduccion-chile-2026",
+      title: "Tácita reconducción en Chile: qué es y cómo afecta tu contrato de arriendo (Guía 2026)",
+      excerpt: "La tácita reconducción ocurre cuando el contrato de arriendo se renueva automáticamente. Descubre cómo funciona, cuándo aplica y cómo evitar problemas.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "13 de Abril, 2026",
+      readTime: "9 min",
+      image: "/assets/arriendo-chile-2026.png"
+    },
+    {
+      id: "reajuste-arriendo-ipc-chile-2026",
+      title: "Reajuste de arriendo según IPC en Chile: cómo funciona y qué puedes hacer (Guía 2026)",
+      excerpt: "El reajuste del arriendo en Chile puede hacerse según el IPC. Aprende cómo se calcula, cuándo aplica y qué puedes hacer si el aumento es abusivo.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "12 de Abril, 2026",
+      readTime: "9 min",
+      image: "/assets/arriendo-chile-2026.png"
+    },
+    {
+      id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
+      title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026)",
+      excerpt: "Descubre cuántos meses de arriendo impago se necesitan para iniciar un desalojo en Chile, cómo funciona el proceso y qué derechos tienes como arrendatario.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "10 de Abril, 2026",
+      readTime: "10 min",
+      image: "/assets/desalojo-chile-2026.png"
+    },
+    {
+      id: "dicom-deuda-arriendo-chile-2026",
+      title: "DICOM por deuda de arriendo en Chile: cuándo ocurre y cómo salir (Guía 2026)",
+      excerpt: "¿Puedes quedar en DICOM por no pagar el arriendo? Descubre cuándo ocurre, cómo afecta tu historial crediticio y qué puedes hacer para salir.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "9 de Abril, 2026",
+      readTime: "8 min",
+      image: "/assets/dicom-arriendo-chile-2026.png"
+    },
+    {
+      id: "no-devuelven-garantia-arriendo-chile-2026",
+      title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
+      excerpt: "Si el arrendador no te devuelve la garantía, tienes derechos. Conoce los plazos legales, cómo exigir la devolución y qué acciones legales puedes tomar en Chile.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "8 de Abril, 2026",
+      readTime: "9 min",
+      image: "/assets/garantia-arriendo-chile-2026.png"
+    },
+    {
+      id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
+      title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía 2026)",
+      excerpt: "Arrendar sin contrato escrito en Chile tiene consecuencias legales para ambas partes. Descubre qué derechos y obligaciones existen en estos casos.",
+      category: "Derecho Inmobiliario",
+      author: "LegalUp",
+      date: "5 de Abril, 2026",
+      readTime: "8 min",
+      image: "/assets/arriendo-chile-2026.png"
+    },
+    {
+      id: "despido-injustificado-chile-2026",
+      title: "Despido injustificado en Chile: qué es, indemnización y qué hacer (Guía 2026)",
+      excerpt: "Si te despidieron sin una causa válida en Chile, tienes derecho a indemnización. Conoce qué es el despido injustificado, cuánto corresponde y cómo reclamarlo.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "1 de Abril, 2026",
+      readTime: "11 min",
+      image: "/assets/despido-injustificado-chile-2026.png"
+    },
+    {
+      id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
+      title: "¿Cuánto me corresponde por años de servicio en Chile? Guía 2026",
+      excerpt: "Calcula cuánto te corresponde por años de servicio al terminar tu relación laboral en Chile. Aprende cómo funciona la indemnización y en qué casos aplica.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "30 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/assets/finiquito-chile-2026.png"
+    },
+    {
       id: "ley-devuelveme-mi-casa-chile-21461-2026",
-      title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
-      excerpt:
-        "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
+      title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
+      excerpt: "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
       category: "Derecho Civil",
       author: "LegalUp",
       date: "24 de Marzo, 2026",
       readTime: "14 min",
       image: "/assets/desalojo-chile-2026.png"
+    },
+    {
+      id: "me-pueden-despedir-sin-motivo-chile-2026",
+      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
+      excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "22 de Marzo, 2026",
+      readTime: "10 min",
+      image: "/assets/despido-sin-motivo-chile-2026.png"
     },
     {
       id: "me-pueden-despedir-sin-motivo-chile-2026",
@@ -126,128 +245,8 @@ const BlogPage = () => {
       date: "13 de Enero, 2026",
       readTime: "8 min",
       image: "/assets/arriendo-chile-2026.png"
-    },
-    {
-      id: "me-pueden-despedir-sin-motivo-chile-2026",
-      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
-      excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "22 de Marzo, 2026",
-      readTime: "10 min",
-      image: "/assets/despido-sin-motivo-chile-2026.png"
-    },
-    {
-      id: "derecho-arrendamiento-chile-guia-completa-2026",
-      title: "Derecho de arrendamiento en Chile: guía completa 2026",
-      excerpt: "Todo lo que necesitas saber sobre el derecho de arriendo en Chile: obligaciones del arrendador y arrendatario, desalojo, garantías y modificaciones al contrato.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "15 de Abril, 2026",
-      readTime: "15 min",
-      image: "/assets/derecho-arriendo-chile-2026.png"
-    },
-    {
-      id: "contrato-de-arriendo-chile-2026",
-      title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
-      excerpt: "Aprende qué debe incluir un contrato de arriendo en Chile, cómo redactarlo correctamente, qué cláusulas son esenciales y cuáles errores comunes debes evitar.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "19 de Abril, 2026",
-      readTime: "12 min",
-      image: "/assets/contrato-arriendo-chile-2026.png"
-    },
-    {
-      id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
-      title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026)",
-      excerpt: "Descubre cuántos meses de arriendo impago se necesitan para iniciar un desalojo en Chile, cómo funciona el proceso y qué derechos tienes como arrendatario.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "10 de Abril, 2026",
-      readTime: "10 min",
-      image: "/assets/desalojo-chile-2026.png"
-    },
-    {
-      id: "no-devuelven-garantia-arriendo-chile-2026",
-      title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
-      excerpt: "Si el arrendador no te devuelve la garantía, tienes derechos. Conoce los plazos legales, cómo exigir la devolución y qué acciones legales puedes tomar en Chile.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "8 de Abril, 2026",
-      readTime: "9 min",
-      image: "/assets/garantia-arriendo-chile-2026.png"
-    },
-    {
-      id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
-      title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Guía 2026)",
-      excerpt: "Si dejas de pagar el arriendo en Chile, el arrendador puede demandarte. Conoce qué puede pasar, cuáles son tus derechos y cómo enfrentar esta situación.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "22 de Abril, 2026",
-      readTime: "10 min",
-      image: "/assets/demanda-arriendo-chile-2026.png"
-    },
-    {
-      id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
-      title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía 2026)",
-      excerpt: "Arrendar sin contrato escrito en Chile tiene consecuencias legales para ambas partes. Descubre qué derechos y obligaciones existen en estos casos.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "5 de Abril, 2026",
-      readTime: "8 min",
-      image: "/assets/arriendo-chile-2026.png"
-    },
-    {
-      id: "reajuste-arriendo-ipc-chile-2026",
-      title: "Reajuste de arriendo según IPC en Chile: cómo funciona y qué puedes hacer (Guía 2026)",
-      excerpt: "El reajuste del arriendo en Chile puede hacerse según el IPC. Aprende cómo se calcula, cuándo aplica y qué puedes hacer si el aumento es abusivo.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "12 de Abril, 2026",
-      readTime: "9 min",
-      image: "/assets/arriendo-chile-2026.png"
-    },
-    {
-      id: "tacita-reconduccion-chile-2026",
-      title: "Tácita reconducción en Chile: qué es y cómo afecta tu contrato de arriendo (Guía 2026)",
-      excerpt: "La tácita reconducción ocurre cuando el contrato de arriendo se renueva automáticamente. Descubre cómo funciona, cuándo aplica y cómo evitar problemas.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "13 de Abril, 2026",
-      readTime: "9 min",
-      image: "/assets/arriendo-chile-2026.png"
-    },
-    {
-      id: "dicom-deuda-arriendo-chile-2026",
-      title: "DICOM por deuda de arriendo en Chile: cuándo ocurre y cómo salir (Guía 2026)",
-      excerpt: "¿Puedes quedar en DICOM por no pagar el arriendo? Descubre cuándo ocurre, cómo afecta tu historial crediticio y qué puedes hacer para salir.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "9 de Abril, 2026",
-      readTime: "8 min",
-      image: "/assets/dicom-arriendo-chile-2026.png"
-    },
-    {
-      id: "despido-injustificado-chile-2026",
-      title: "Despido injustificado en Chile: qué es, indemnización y qué hacer (Guía 2026)",
-      excerpt: "Si te despidieron sin una causa válida en Chile, tienes derecho a indemnización. Conoce qué es el despido injustificado, cuánto corresponde y cómo reclamarlo.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "1 de Abril, 2026",
-      readTime: "11 min",
-      image: "/assets/despido-injustificado-chile-2026.png"
-    },
-    {
-      id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
-      title: "¿Cuánto me corresponde por años de servicio en Chile? Guía 2026",
-      excerpt: "Calcula cuánto te corresponde por años de servicio al terminar tu relación laboral en Chile. Aprende cómo funciona la indemnización y en qué casos aplica.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "30 de Marzo, 2026",
-      readTime: "10 min",
-      image: "/assets/finiquito-chile-2026.png"
     }
-  ];
+  ]
 
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
