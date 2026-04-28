@@ -6,42 +6,34 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
-import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
-import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Qué es una orden de desalojo en Chile?",
-      answer:
-        "Una orden de desalojo es una resolución judicial que obliga al arrendatario a abandonar el inmueble. Solo puede ser dictada por un tribunal civil competente después de un proceso judicial. Sin esta orden, el arrendador no puede obligarte a salir ni recuperar el inmueble por sus propios medios.",
+      question: "¿Cuánto tiempo tengo para salir después de la orden?",
+      answer: "Depende de lo que establezca el tribunal en la resolución."
     },
     {
-      question: "¿Cuánto tiempo tengo para salir después de la orden de desalojo?",
-      answer:
-        "El plazo lo fija el tribunal en la misma resolución. Generalmente se otorgan algunos días hábiles para abandonar el inmueble voluntariamente. Si no lo haces dentro del plazo, el arrendador puede solicitar el lanzamiento con apoyo de Carabineros.",
+      question: "¿Puedo evitar el desalojo?",
+      answer: "En algunos casos sí, especialmente si actúas antes de la ejecución del lanzamiento."
     },
     {
-      question: "¿Puedo evitar el desalojo después de la orden judicial?",
-      answer:
-        "Es difícil pero no imposible. Puedes presentar recursos legales, solicitar plazos adicionales al tribunal o intentar llegar a un acuerdo con el arrendador antes de que se ejecute el lanzamiento. Mientras antes actúes y con asesoría legal, más opciones tienes.",
+      question: "¿Carabineros puede desalojar?",
+      answer: "Solo puede intervenir cuando existe una orden judicial."
     },
     {
-      question: "¿Carabineros puede intervenir en un desalojo?",
-      answer:
-        "Sí, pero solo cuando existe una orden judicial de desalojo y el arrendatario no la cumple voluntariamente. En ese caso el arrendador puede solicitar el lanzamiento con auxilio de la fuerza pública. Sin orden judicial, Carabineros no puede intervenir para desalojar a nadie.",
+      question: "¿Qué pasa con mis pertenencias?",
+      answer: "Deben ser retiradas conforme al procedimiento legal."
     },
     {
-      question: "¿Qué pasa con mis pertenencias durante el desalojo?",
-      answer:
-        "Si se ejecuta el lanzamiento, tus pertenencias deben ser retiradas del inmueble conforme al procedimiento legal. Lo recomendable es retirarlas antes de la fecha fijada para evitar complicaciones. Si quedan en el inmueble durante el lanzamiento, el proceso puede ser más complejo y costoso.",
+      question: "¿Qué pasa si no cumplo la orden?",
+      answer: "Si no se cumple voluntariamente, el tribunal puede ordenar el lanzamiento."
     },
     {
       question: "¿Se puede suspender una orden de desalojo?",
-      answer:
-        "En casos excepcionales sí. Es posible presentar recursos ante el tribunal, solicitar plazos adicionales por razones justificadas o llegar a un acuerdo con el arrendador que detenga el proceso. Estas opciones dependen de la etapa del juicio y de la situación específica — un abogado puede evaluar si aplica en tu caso.",
-    },
+      answer: "En algunos casos excepcionales, es posible: presentar recursos, solicitar plazos, intentar acuerdos. Esto dependerá de la situación específica."
+    }
   ];
 
   return (
@@ -60,7 +52,7 @@ const BlogArticle = () => {
 
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
           <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
@@ -71,21 +63,14 @@ const BlogArticle = () => {
             Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
-            <p className="text-sm sm:text-base text-white">
-              Una orden de desalojo en Chile es una resolución judicial que obliga al arrendatario a entregar el inmueble. Solo puede dictarse tras un juicio y, si no se cumple voluntariamente, se ejecuta con auxilio de la fuerza pública. El proceso completo suele tardar entre 3 y 12 meses.
-            </p>
-          </div>
-
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed">
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>22 de Abril, 2026</span>
+              <span>20 de Marzo, 2026</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -93,7 +78,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <span>Tiempo de lectura: 8 min</span>
             </div>
           </div>
         </div>
@@ -108,31 +93,25 @@ const BlogArticle = () => {
             showBorder={false}
           />
 
+          {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
-
+            <p className="text-lg text-gray-600 leading-relaxed mb-4">
+              Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
+            </p>
+            <p className="text-lg text-gray-600 leading-relaxed mb-4">Entonces surge la duda:</p>
             <p className="text-lg text-gray-600 leading-relaxed mb-6 font-semibold">¿Qué es una orden de desalojo en Chile y cuándo puede aplicarse?</p>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link
-                to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Qué pasa si no pagas el arriendo en Chile?
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
-              <p className="font-bold text-gray-900 mb-4 text-xl">En esta guía te explicamos:</p>
-              <ul className="space-y-3">
+            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+              <p className="font-semibold text-blue-900 mb-3">En esta guía te explicamos:</p>
+              <ul className="space-y-2">
                 {[
                   "Qué es una orden de desalojo",
                   "En qué momento del proceso se dicta",
                   "Qué ocurre después (lanzamiento)",
                   "Qué hacer si recibes una orden de desalojo"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                    <span className="text-base font-medium">{item}</span>
+                  <li key={i} className="flex items-center gap-2 text-blue-800">
+                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                    <span className="text-base">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -157,9 +136,9 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
-              <p className="text-gray-700 leading-relaxed font-bold">
-                Es importante entender que la orden de desalojo es el resultado de un proceso judicial previo, no una decisión unilateral del arrendador.
+            <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded-r-lg">
+              <p className="text-indigo-900 leading-relaxed">
+                Es importante entender que la orden de desalojo es el <strong>resultado de un proceso judicial previo</strong>, no una decisión unilateral.
               </p>
             </div>
           </div>
@@ -186,16 +165,6 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               Es decir, la orden aparece cuando el conflicto ya ha sido analizado por un tribunal.
             </p>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link
-                to="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Cuántos meses deben pasar para un desalojo?
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
           </div>
 
           <div className="mb-12">
@@ -220,13 +189,13 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Si quieres entender cuánto demora todo este proceso, revisa también:</p>
+            <div className="text-center py-4 border-t border-b border-gray-100">
               <Link
-                to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
-                👉 Cómo defenderte de una demanda de arriendo
+                👉 ¿Cuánto demora un juicio de desalojo en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -253,16 +222,6 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed italic">
               En la práctica, esto significa que la orden puede tardar varios meses en obtenerse.
             </p>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link
-                to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Cuánto demora un juicio de desalojo en Chile?
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
           </div>
 
           <div className="mb-12">
@@ -273,22 +232,23 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si no lo hace voluntariamente, se procede al lanzamiento.
             </p>
-            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
-              <h3 className="font-bold text-gray-900 text-xl mb-4">¿Qué es el lanzamiento?</h3>
-              <p className="text-gray-700 mb-6 leading-relaxed font-medium">El lanzamiento es la ejecución física de la orden de desalojo.</p>
-              <ul className="space-y-3 mb-6">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+              <h3 className="font-bold text-amber-900 text-xl mb-3">¿Qué es el lanzamiento?</h3>
+              <p className="text-amber-800 mb-4 leading-relaxed">El lanzamiento es la ejecución de la orden de desalojo.</p>
+              <p className="text-amber-800 mb-3 leading-relaxed">En esta etapa:</p>
+              <ul className="space-y-2 mb-4">
                 {[
                   "Se hace cumplir la resolución judicial",
                   "El arrendatario debe salir del inmueble",
-                  "Intervención de la fuerza pública (si es necesario)"
+                  "Puede intervenir la fuerza pública"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-gray-700">
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <li key={i} className="flex items-center gap-2 text-amber-800">
+                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
                     <span className="text-base">{item}</span>
                   </li>
                 ))}
               </ul>
-              <p className="text-gray-900 font-bold">Es el momento en que el desalojo se materializa legalmente.</p>
+              <p className="text-amber-900 font-bold">Es el momento en que el desalojo se materializa.</p>
             </div>
           </div>
 
@@ -336,13 +296,13 @@ const BlogArticle = () => {
               ))}
             </div>
             <p className="text-gray-600 mb-6 leading-relaxed">pueden ser ilegales.</p>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Si quieres profundizar en esto, revisa:</p>
+            <div className="text-center py-4 border-t border-b border-gray-100">
               <Link
                 to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
-                👉 ¿Me pueden desalojar sin orden judicial?
+                👉 ¿Me pueden desalojar sin orden judicial en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -368,13 +328,13 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <p className="text-gray-600 mb-4 leading-relaxed">Si estás enfrentando un problema de este tipo, también puede interesarte:</p>
+            <div className="text-center py-4 border-t border-b border-gray-100">
               <Link
                 to="/blog/me-subieron-el-arriendo-que-hago-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
-                👉 Me subieron el arriendo: ¿Qué hacer?
+                👉 Me subieron el arriendo, ¿qué hago?
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -480,50 +440,29 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">Evitar estos errores es clave para resolver el conflicto correctamente.</p>
           </div>
 
-          <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 mt-12">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 font-serif">Ejemplo de caso típico</h3>
-            <p className="text-gray-700 leading-relaxed mb-3">Un arrendatario deja de pagar el arriendo durante varios meses.</p>
-            <p className="text-gray-700 leading-relaxed mb-3">El arrendador decide iniciar una demanda judicial mediante abogados.</p>
-            <p className="text-gray-700 leading-relaxed mb-3">Después del proceso, el tribunal dicta una orden de desalojo formal.</p>
-            <p className="text-gray-700 leading-relaxed font-bold italic">Si no existe abandono voluntario, se ejecuta el lanzamiento con Carabineros.</p>
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso típico en Chile</h2>
+            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
+              <p className="text-indigo-900 leading-relaxed mb-3">Un arrendatario deja de pagar el arriendo durante varios meses.</p>
+              <p className="text-indigo-900 leading-relaxed mb-3">El arrendador decide iniciar una demanda judicial.</p>
+              <p className="text-indigo-900 leading-relaxed mb-3">Después del proceso, el tribunal dicta una orden de desalojo.</p>
+              <p className="text-indigo-900 leading-relaxed mb-3">Si el arrendatario no abandona el inmueble, se ejecuta el lanzamiento.</p>
+              <p className="text-indigo-900 leading-relaxed font-bold">Este es uno de los escenarios más comunes en Chile.</p>
+            </div>
           </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La orden de desalojo en Chile es una resolución judicial que solo puede dictarse después de un proceso legal completo. No es inmediata, no es automática y el arrendador no puede ejecutarla por su cuenta — siempre requiere la intervención de un tribunal y, si es necesario, el apoyo de Carabineros para el lanzamiento.
+              La orden de desalojo en Chile es una resolución judicial que se dicta después de un proceso legal.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Entender cómo funciona este proceso es clave tanto si eres arrendador como arrendatario. Si eres arrendador, saber los pasos correctos te permite actuar eficientemente y evitar errores que retrasen la recuperación del inmueble. Si eres arrendatario, conocer el proceso te da tiempo y herramientas para defender tus derechos, negociar o preparar una salida ordenada.
+              No es inmediata ni automática, y requiere la intervención de un tribunal.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Lo más importante en ambos casos es no esperar. Los errores más comunes — no responder la demanda, no buscar asesoría a tiempo, intentar actuar fuera del marco legal — son los que convierten un proceso manejable en uno largo y costoso para ambas partes.
+            <p className="text-gray-600 font-bold leading-relaxed">
+              Comprender cómo funciona este proceso es fundamental para proteger tus derechos como arrendador o arrendatario.
             </p>
-            <p className="text-gray-600 leading-relaxed">
-              Si estás enfrentando una orden de desalojo o iniciando un proceso, actuar con información correcta desde el principio marca la diferencia.
-            </p>
-
-            <InArticleCTA
-              message="¿Recibiste una orden de desalojo o necesitas iniciar un proceso? Un abogado puede explicarte los plazos y opciones según tu situación."
-              buttonText="Consultar sobre orden de desalojo"
-              category="Derecho Arrendamiento"
-            />
-
-            <div className="bg-gray-50 rounded-2xl p-8 mb-12 border border-gray-100 mt-12">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">También te puede interesar</h3>
-              <div className="grid gap-4">
-                <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Qué pasa si no pago el arriendo en Chile?
-                </Link>
-                <Link to="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Cuántos meses debo para que me desalojen?
-                </Link>
-                <Link to="/blog/orden-desalojo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 Orden de desalojo en Chile
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Consulta con un abogado */}
@@ -542,7 +481,7 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Otras preguntas frecuentes sobre orden de desalojo</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                <div key={i} className="bg-blue-50 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
@@ -558,7 +497,7 @@ const BlogArticle = () => {
             Si estás enfrentando un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/consulta">
               <Button
                 size="lg"
                 onClick={() => {
@@ -626,8 +565,6 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-
-      <BlogConversionPopup category="Arrendamiento" topic="orden-desalojo" />
     </div>
   );
 };

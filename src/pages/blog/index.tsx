@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft, Search } from "lucide-react";
+import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 
 const BlogPage = () => {
@@ -15,127 +15,17 @@ const BlogPage = () => {
     </Helmet>
   );
 
-  const articles = useMemo(() => [
+  const articles = [
     {
-      id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
-      title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)",
-      excerpt: "Sí: te pueden demandar con 1 mes de deuda. Conoce qué incluye una demanda (desalojo + cobro), cuánto demora el proceso y cómo defenderte.",
-      category: "Derecho Civil",
-      author: "LegalUp",
-      date: "22 de Abril, 2026",
-      readTime: "14 min",
-      image: "/assets/demanda-arriendo-chile-2026.png"
-    },
-    {
-      id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
-      title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)",
-      excerpt: "¿Con cuántos meses de deuda te pueden desalojar en Chile? Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitarlo.",
-      category: "Derecho Civil",
-      author: "LegalUp",
-      date: "20 de Abril, 2026",
-      readTime: "15 min",
-      image: "/assets/desalojo-3-chile-2026.png"
-    },
-    {
-      id: "contrato-de-arriendo-chile-2026",
-      title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
-      excerpt: "Firmar un contrato de arriendo en Chile es uno de los pasos más importantes al arrendar una propiedad. Descubre qué debe incluir, qué cláusulas son ilegales, errores comunes y un modelo base gratuito.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "18 de Abril, 2026",
-      readTime: "13 min",
-      image: "/assets/contrato-arriendo-chile-2026.png"
-    },
-    {
-      id: "derecho-arrendamiento-chile-guia-completa-2026",
-      title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
-      excerpt: "El arriendo de propiedades en Chile es una de las relaciones legales más frecuentes. Todo lo que necesitas saber sobre contratos, desalojos, garantías e IPC en esta guía completa 2026.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "15 de Abril, 2026",
-      readTime: "16 min",
-      image: "/assets/derecho-arrendamiento-chile-2026.png"
-    },
-    {
-      id: "tacita-reconduccion-chile-2026",
-      title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
-      excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "13 de Abril, 2026",
-      readTime: "10 min",
-      image: "/assets/tacita-reconduccion-chile-2026.png"
-    },
-    {
-      id: "dicom-deuda-arriendo-chile-2026",
-      title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)",
-      excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "10 de Abril, 2026",
-      readTime: "12 min",
-      image: "/assets/dicom-arriendo-chile-2026.png"
-    },
-    {
-      id: "no-devuelven-garantia-arriendo-chile-2026",
-      title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
-      excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "8 de Abril, 2026",
-      readTime: "11 min",
-      image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
-    },
-    {
-      id: "reajuste-arriendo-ipc-chile-2026",
-      title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
-      excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "06 de Abril, 2026",
-      readTime: "10 min",
-      image: "/assets/reajuste-arriendo-ipc-2026.png"
-    },
-    {
-      id: "despido-injustificado-chile-2026",
-      title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
-      excerpt: "Si te despidieron sin causa válida, tienes derecho a indemnización y hasta un 100% de recargo adicional. Guía 2026 con plazos, pasos y ejemplo de cálculo real.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "1 de Abril, 2026",
-      readTime: "12 min",
-      image: "/assets/despido-injustificado-chile-2026.png"
-    },
-    {
-      id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
-      title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)",
-      excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Guía 2026 sobre cálculo de indemnización, topes legales y qué hacer si no te pagan.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "30 de Marzo, 2026",
-      readTime: "10 min",
-      image: "/assets/anos-de-servicio-chile-2026.png"
-    },
-    {
-      id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
-      title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
-      excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026.",
-      category: "Derecho Inmobiliario",
-      author: "LegalUp",
-      date: "26 de Marzo, 2026",
-      readTime: "8 min",
-      image: "/assets/sin-contrato-arriendo-2026.png"
-    },
-    {
-      id: "ley-devuelveme-mi-casa-chile-2026",
+      id: "ley-devuelveme-mi-casa-chile-21461-2026",
       title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
       excerpt:
         "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
       category: "Derecho Civil",
       author: "LegalUp",
-      date: "25 de Marzo, 2026",
+      date: "24 de Marzo, 2026",
       readTime: "14 min",
-      image: "/assets/ley-devuelveme-mi-casa-2026.png"
+      image: "/assets/desalojo-chile-2026.png"
     },
     {
       id: "me-pueden-despedir-sin-motivo-chile-2026",
@@ -227,34 +117,20 @@ const BlogPage = () => {
       readTime: "8 min",
       image: "/assets/arriendo-chile-2026.png"
     }
-  ], []);
+  ];
 
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Penal", "Derecho Civil"];
 
   const filteredArticles = useMemo(() => {
-    let result = articles;
-    if (selectedCategory) {
-      result = result.filter(article => article.category === selectedCategory);
-    }
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        article =>
-          article.title.toLowerCase().includes(query) ||
-          article.excerpt.toLowerCase().includes(query) ||
-          article.category.toLowerCase().includes(query)
-      );
-    }
-    return result;
-  }, [selectedCategory, searchQuery, articles]);
+    if (!selectedCategory) return articles;
+    return articles.filter(article => article.category === selectedCategory);
+  }, [selectedCategory, articles]);
 
   // `articles` debe mantenerse ordenado del más reciente al más antiguo: el destacado es siempre el primero.
   const featuredArticle = useMemo(() => {
-    // La búsqueda no afecta el destacado, siempre mostramos el primero (de categoría si hay, o general)
     if (selectedCategory) {
       return filteredArticles[0];
     }
@@ -262,14 +138,11 @@ const BlogPage = () => {
   }, [selectedCategory, filteredArticles, articles]);
 
   const recentArticles = useMemo(() => {
-    if (searchQuery.trim()) {
-      return filteredArticles; // Mostrar todos los resultados de búsqueda en la sección de abajo
-    }
     if (selectedCategory) {
       return filteredArticles.slice(1);
     }
     return articles.slice(1);
-  }, [selectedCategory, searchQuery, filteredArticles, articles]);
+  }, [selectedCategory, filteredArticles, articles]);
 
   const getArticleCount = (category: string) => {
     return articles.filter(a => a.category === category).length;
@@ -282,7 +155,7 @@ const BlogPage = () => {
       
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
           <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/" className="hover:text-white transition-colors">
               Inicio
@@ -314,9 +187,9 @@ const BlogPage = () => {
             >
               <div className="md:flex">
                 <div className="md:w-1/3">
-                  <div className="h-48 md:h-full flex md:py-8 items-center justify-center md:pl-8">
+                  <div className="h-48 md:h-full flex py-8 items-center justify-center pl-8">
                     <img 
-                      className="h-full w-full object-cover rounded-t-xl md:rounded-xl" 
+                      className="h-full w-full object-cover rounded-xl" 
                       src={featuredArticle.image || "../assets/arriendo.png"} 
                       alt={featuredArticle.category} 
                       onError={(e) => {
@@ -390,65 +263,28 @@ const BlogPage = () => {
           </div>
         )}
 
-        {/* Search and Categories */}
-        <div className="mb-8 space-y-4">
-          {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar artículos..."
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent"
-            />
-          </div>
-
-          {/* Categories Pills */}
-          <div className="flex flex-wrap gap-2">
+        {/* Categories Pills */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className={selectedCategory === null ? "bg-gray-900" : ""}
+          >
+            Todos
+          </Button>
+          {categories.map(category => (
             <Button
-              variant={selectedCategory === null ? "default" : "outline"}
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
               size="sm"
-              onClick={() => setSelectedCategory(null)}
-              className={selectedCategory === null ? "bg-gray-900" : ""}
+              onClick={() => setSelectedCategory(category)}
+              className={selectedCategory === category ? "bg-gray-900" : ""}
             >
-              Todos
+              {category}
             </Button>
-            {categories.map(category => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className={selectedCategory === category ? "bg-gray-900" : ""}
-              >
-                {category}
-              </Button>
-            ))}
-          </div>
+          ))}
         </div>
-
-        {/* Results count */}
-        {(searchQuery || selectedCategory) && (
-          <div className="mb-6 text-sm text-gray-600">
-            {filteredArticles.length === 0 ? (
-              <span>No se encontraron artículos</span>
-            ) : (
-              <span>{filteredArticles.length} artículo{filteredArticles.length !== 1 ? 's' : ''} encontrado{filteredArticles.length !== 1 ? 's' : ''}</span>
-            )}
-            {(searchQuery || selectedCategory) && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedCategory(null);
-                }}
-                className="ml-2 text-green-700 hover:underline font-medium"
-              >
-                Limpiar filtros
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Recent Articles */}
         <div className="mb-12">

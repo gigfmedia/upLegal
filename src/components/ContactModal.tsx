@@ -342,8 +342,7 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
 
   const createPayment = async (paymentParams: CreatePaymentParams) => {
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-      const BACKEND_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
+      const BACKEND_URL = 'https://uplegal.netlify.app/.netlify/functions/create-payment';
       
       const response = await fetch(BACKEND_URL, {
         method: 'POST',
@@ -415,9 +414,9 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
           ? `Consulta: ${service.title} con ${lawyerName}`
           : `Consulta legal con ${lawyerName}`,
         // Use fallback base URL if window.location.origin is empty
-        successUrl: `${window.location.origin}/payment/success?appointmentId=${consultation.id}`,
-        failureUrl: `${window.location.origin}/payment/failure?appointmentId=${consultation.id}`,
-        pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${consultation.id}`,
+        successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${consultation.id}`,
+        failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${consultation.id}`,
+        pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${consultation.id}`,
         userEmail: user.email || formData.email,
         userName: formData.name
       };
@@ -596,6 +595,17 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
                   <span className="font-medium">{formatCLP(pricing.subtotal)}</span>
                 </div>
 
+                {/* Tarifa de servicio */}
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center">
+                    <span className="text-gray-600">Tarifa por servicio</span>
+                    <span className="ml-1 text-xs text-gray-500">*</span>
+                  </div>
+                  <span className="text-gray-600">
+                    +{formatCLP(pricing.serviceFee)}
+                  </span>
+                </div>
+
                 {/* Total a pagar */}
                 <div className="border-t border-gray-200 my-1"></div>
 
@@ -605,6 +615,11 @@ export function ContactModal({ isOpen, onClose, lawyerName, lawyerId, service, c
                     {formatCLP(pricing.total)}
                   </span>
                 </div>
+
+                {/* Nota de recargo */}
+                <p className="text-xs text-gray-500 mt-2">
+                  * Incluye 10% de recargo por servicio app.
+                </p>
 
                 {pricing.isFirstConsultation && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">

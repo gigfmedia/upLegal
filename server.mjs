@@ -32,6 +32,15 @@ const mercadoPagoWebhookUrl =
 const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+const resolveWebhookUrl = (req) => {
+  if (mercadoPagoWebhookUrl) return mercadoPagoWebhookUrl;
+  const forwardedProto = req.get('x-forwarded-proto');
+  const protocol = forwardedProto || req.protocol || 'https';
+  const host = req.get('x-forwarded-host') || req.get('host');
+  if (!host) return '';
+  return `${protocol}://${host}/api/mercadopago/webhook`;
+};
+
 if (!resend) {
   console.warn('⚠️ RESEND_API_KEY is not configured. Emails will NOT be sent.');
 }
@@ -699,6 +708,7 @@ app.post('/create-payment', async (req, res) => {
     }
 
     // Create MercadoPago preference data
+    const webhookUrl = resolveWebhookUrl(req);
     const preferenceData = {
       items: [{
         id: paymentId,
@@ -713,15 +723,15 @@ app.post('/create-payment', async (req, res) => {
         name: userName || 'Cliente LegalUp'
       },
       back_urls: {
-        success: successUrl || `${appUrl}/payment/success`,
-        failure: failureUrl || `${appUrl}/payment/failure`,
-        pending: pendingUrl || `${appUrl}/payment/pending`
+        success: successUrl || `${process.env.FRONTEND_URL}/payment/success`,
+        failure: failureUrl || `${process.env.FRONTEND_URL}/payment/failure`,
+        pending: pendingUrl || `${process.env.FRONTEND_URL}/payment/pending`
       },
       auto_return: 'approved',
       binary_mode: true,
       external_reference: paymentId,
       statement_descriptor: 'LEGALUP',
-      ...(mercadoPagoWebhookUrl ? { notification_url: mercadoPagoWebhookUrl } : {})
+      ...(webhookUrl ? { notification_url: webhookUrl } : {})
     };
     
     // Create preference using raw fetch to bypass any SDK potential issues
@@ -821,6 +831,7 @@ app.post('/api/bookings/create', async (req, res) => {
   try {
     const {
       lawyer_id,
+      user_id,
       user_email,
       user_name,
       scheduled_date,
@@ -853,10 +864,10 @@ app.post('/api/bookings/create', async (req, res) => {
     try {
       const { data: existingBookings, error: existingError } = await supabase
         .from('bookings')
-        .select('id, scheduled_time, duration, status, created_at')
+        .select('id, scheduled_time, duration, status')
         .eq('lawyer_id', lawyer_id)
         .eq('scheduled_date', scheduled_date)
-        .or('status.eq.confirmed,and(status.eq.pending,created_at.gt.' + new Date(Date.now() - 30 * 60 * 1000).toISOString() + ')');
+        .in('status', ['pending', 'confirmed']);
 
       if (existingError) {
         console.error('Error checking existing bookings:', existingError);
@@ -912,6 +923,7 @@ app.post('/api/bookings/create', async (req, res) => {
       .from('bookings')
       .insert({
         lawyer_id,
+        user_id: user_id || null,
         user_email,
         user_name,
         scheduled_date,
@@ -939,13 +951,15 @@ app.post('/api/bookings/create', async (req, res) => {
           lawyer_id,
           source: 'booking_create'
         },
-        user_id: null, // User not logged in yet
+        user_id: user_id || null,
       });
+      console.log('[analytics] payment started tracked', { bookingId: booking.id });
     } catch (trackingError) {
       console.error('Failed to track payment start:', trackingError);
     }
 
     // Create MercadoPago preference
+    const webhookUrl = resolveWebhookUrl(req);
     const preferenceData = {
       items: [{
         id: booking.id,
@@ -969,6 +983,7 @@ app.post('/api/bookings/create', async (req, res) => {
       metadata: {
         booking_id: booking.id,
         lawyer_id,
+        user_id: user_id || null,
         user_email,
         user_name,
         duration,
@@ -976,7 +991,7 @@ app.post('/api/bookings/create', async (req, res) => {
         scheduled_time
       },
       statement_descriptor: 'LEGALUP',
-      ...(mercadoPagoWebhookUrl ? { notification_url: mercadoPagoWebhookUrl } : {})
+      ...(webhookUrl ? { notification_url: webhookUrl } : {})
     };
 
     // Create preference using MercadoPago API
@@ -1433,85 +1448,30 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const id = req.body.id || data?.id;
 
     const handleApprovedPayment = async (payment) => {
-      const externalReference = payment.external_reference?.toString?.() || String(payment.external_reference || '');
-
-      // First, try booking flow (external_reference = booking.id)
-      const { data: booking, error: bookingUpdateError } = await supabase
-        .from('bookings')
-        .update({
-          status: 'confirmed',
-          payment_id: payment.id.toString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', externalReference)
-        .select()
-        .maybeSingle();
-
-      if (bookingUpdateError) {
-        console.error('Error updating booking:', bookingUpdateError);
-      }
-
-      // If no booking found, try payments flow (external_reference = payments.id)
-      if (!booking) {
-        const { data: paymentRow, error: paymentFetchError } = await supabase
-          .from('payments')
-          .select('*')
-          .eq('id', externalReference)
-          .maybeSingle();
-
-        if (paymentFetchError) {
-          console.error('[mp] error fetching payment row', paymentFetchError);
-        }
-
-        if (!paymentRow) {
-          console.warn('[mp] approved payment but no booking/payment found for external_reference', {
-            paymentId: payment.id,
-            external_reference: externalReference,
-          });
-          return;
-        }
-
-        const { error: paymentUpdateError } = await supabase
-          .from('payments')
-          .update({
-            status: 'succeeded',
-            metadata: {
-              ...(paymentRow.metadata || {}),
-              payment_gateway_id: payment.id?.toString?.() || payment.id,
-              mp_status: payment.status,
-              mp_status_detail: payment.status_detail,
-              mp_payment_type_id: payment.payment_type_id,
-              mp_transaction_amount: payment.transaction_amount,
-              mp_last_webhook: new Date().toISOString(),
-            },
-            updated_at: new Date().toISOString(),
+        const bookingId = payment.external_reference;
+        
+        // 1. Update booking status
+        const { data: booking, error: bookingError } = await supabase
+          .from('bookings')
+          .update({ 
+            status: 'confirmed', 
+            payment_status: 'approved',
+            payment_id: payment.id.toString(),
+            updated_at: new Date().toISOString()
           })
-          .eq('id', paymentRow.id);
+          .eq('id', bookingId)
+          .select()
+          .single();
 
-        if (paymentUpdateError) {
-          console.error('[mp] failed to update payments row', paymentUpdateError);
+        if (bookingError) {
+          console.error('Error updating booking:', bookingError);
         }
 
-        try {
-          const { error: eventInsertError } = await supabase.from('payment_events').insert({
-            event_type: 'success',
-            amount: payment.transaction_amount,
-            status: 'completed',
-            metadata: {
-              payment_id: payment.id,
-              external_reference: externalReference,
-              source: 'webhook',
-            },
-            user_id: paymentRow.user_id || null,
-          });
-
-          if (eventInsertError) {
-            console.error('[analytics] failed to insert payment event (payments flow)', eventInsertError);
-          }
-        } catch (eventError) {
-          console.error('[analytics] exception inserting payment event (payments flow)', eventError);
-        }
-
+      if (!booking) {
+        console.warn('[mp] approved payment but booking not found', {
+          paymentId: payment.id,
+          external_reference: bookingId,
+        });
         return;
       }
 
@@ -1550,7 +1510,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           status: 'completed',
           metadata: {
             payment_id: payment.id,
-            booking_id: booking.id,
+            booking_id: bookingId,
             source: 'webhook',
             user_email: userEmail || null
           },
@@ -1560,12 +1520,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         if (insertError) {
           console.error('Failed to track payment event:', insertError);
         } else {
-          // console.log('[analytics] payment event tracked', { 
-          //   paymentId: payment.id, 
-          //   bookingId: booking.id,
-          //   userId: userId || 'null',
-          //   eventId: paymentEvent?.id 
-          // });
+          console.log('[analytics] payment event tracked', { 
+            paymentId: payment.id, 
+            bookingId,
+            userId: userId || 'null',
+            eventId: paymentEvent?.id 
+          });
         }
       } catch (trackingError) {
         console.error('Failed to track payment event:', trackingError);
@@ -1655,15 +1615,16 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 user_email: userEmail,
                 user_name: userName,
               })
-              .eq('id', booking.id);
+              .eq('id', bookingId);
 
             // Update payment event with user_id if it was null
             try {
               await supabase
                 .from('payment_events')
                 .update({ user_id: userId })
-                .eq('metadata->>booking_id', booking.id)
+                .eq('metadata->>booking_id', bookingId)
                 .is('user_id', null);
+              console.log('[analytics] Updated payment event with user_id', { bookingId, userId });
             } catch (updateError) {
               console.error('Failed to update payment event with user_id:', updateError);
             }
@@ -1708,12 +1669,13 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             if (insertAppointmentError) {
               console.error('Error inserting appointment:', insertAppointmentError);
             } else {
-              // console.log('[booking->appointment] appointment created', {
-              //   lawyerId: booking.lawyer_id,
-              //   userId,
-              //   appointment_date: booking.scheduled_date,
-              //   appointment_time: booking.scheduled_time,
-              // });
+              console.log('[booking->appointment] appointment created', {
+                bookingId,
+                lawyerId: booking.lawyer_id,
+                userId,
+                appointment_date: booking.scheduled_date,
+                appointment_time: booking.scheduled_time,
+              });
             }
           }
         } catch (appointmentError) {
@@ -1761,9 +1723,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             try {
           const userEmailResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
-            reply_to: 'hola@mg.legalup.cl',
-            to: userEmail,
-            subject: 'Tu asesoría está confirmada',
+              to: userEmail,
+              subject: '¡Tu asesoría está confirmada!',
               html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                   <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
@@ -1792,11 +1753,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               `
             });
 
-          // console.log('[booking-email] user confirmation sent', {
-          //   bookingId,
-          //   to: userEmail,
-          //   resendId: userEmailResponse?.data?.id,
-          // });
+          console.log('[booking-email] user confirmation sent', {
+            bookingId,
+            to: userEmail,
+            resendId: userEmailResponse?.data?.id,
+          });
             } catch (emailError) {
           console.error('[booking-email] Error sending user email:', {
             bookingId,
@@ -1809,12 +1770,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           // Send notification email to Lawyer
           if (lawyerEmail && resend) {
             try {
+          console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
 
           const lawyerEmailResponse = await resend.emails.send({
-           from: 'LegalUp <hola@mg.legalup.cl>',
-            reply_to: 'hola@mg.legalup.cl',
-            to: lawyerEmail,
-            subject: 'Tienes una nueva reserva confirmada',
+            from: 'LegalUp <hola@mg.legalup.cl>',
+                to: lawyerEmail,
+                subject: 'Nueva reserva confirmada',
                 html: `
                   <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
@@ -1839,11 +1800,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 `
               });
 
-          // console.log('[booking-email] lawyer confirmation sent', {
-          //   bookingId,
-          //   to: lawyerEmail,
-          //   resendId: lawyerEmailResponse?.data?.id,
-          // });
+          console.log('[booking-email] lawyer confirmation sent', {
+            bookingId,
+            to: lawyerEmail,
+            resendId: lawyerEmailResponse?.data?.id,
+          });
             } catch (emailError) {
           console.error('[booking-email] Error sending lawyer email:', {
             bookingId,
@@ -1896,91 +1857,17 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
       });
     }
 
-    const externalReference = payment.external_reference?.toString?.() || String(payment.external_reference || '');
-
-    // 1) Try booking flow first (external_reference = booking.id)
+    const bookingId = payment.external_reference;
     const { data: booking, error: bookingFetchError } = await supabase
       .from('bookings')
       .select('*')
-      .eq('id', externalReference)
+      .eq('id', bookingId)
       .maybeSingle();
     if (bookingFetchError) {
       console.error('Error fetching booking for reconcile:', bookingFetchError);
       return res.status(500).json({ error: 'Failed to fetch booking' });
     }
-
-    // 2) If no booking, try payments flow (external_reference = payments.id)
-    if (!booking) {
-      const { data: paymentRow, error: paymentFetchError } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('id', externalReference)
-        .maybeSingle();
-
-      if (paymentFetchError) {
-        console.error('Error fetching payment for reconcile:', paymentFetchError);
-        return res.status(500).json({ error: 'Failed to fetch payment' });
-      }
-
-      if (!paymentRow) {
-        return res.status(404).json({
-          error: 'No booking/payment found for external_reference',
-          external_reference: externalReference,
-        });
-      }
-
-      const { error: paymentUpdateError } = await supabase
-        .from('payments')
-        .update({
-          status: 'succeeded',
-          metadata: {
-            ...(paymentRow.metadata || {}),
-            payment_gateway_id: payment.id?.toString?.() || payment.id,
-            mercadopago_payment_id: payment.id,
-            mp_status: payment.status,
-            mp_status_detail: payment.status_detail,
-            mp_payment_type_id: payment.payment_type_id,
-            mp_transaction_amount: payment.transaction_amount,
-            mp_last_reconcile: new Date().toISOString(),
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', paymentRow.id);
-
-      if (paymentUpdateError) {
-        console.error('Error updating payment (reconcile payments flow):', paymentUpdateError);
-        return res.status(500).json({ error: 'Failed to update payment' });
-      }
-
-      try {
-        const { error: eventInsertError } = await supabase.from('payment_events').insert({
-          event_type: 'success',
-          amount: payment.transaction_amount,
-          status: 'completed',
-          metadata: {
-            payment_id: payment.id,
-            external_reference: externalReference,
-            source: 'reconcile',
-          },
-          user_id: paymentRow.user_id || null,
-        });
-
-        if (eventInsertError) {
-          console.error('[analytics] failed to insert payment event (reconcile payments flow)', eventInsertError);
-        }
-      } catch (eventError) {
-        console.error('[analytics] exception inserting payment event (reconcile payments flow)', eventError);
-      }
-
-      return res.json({
-        success: true,
-        paymentId: payment.id,
-        external_reference: externalReference,
-        paymentUpdated: true,
-      });
-    }
-
-    const bookingId = booking.id;
+    if (!booking) return res.status(404).json({ error: 'Booking not found', bookingId });
 
     let clientUserId = booking.user_id;
     const userEmail = (booking.user_email || '').trim().toLowerCase();
@@ -2019,6 +1906,7 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
       .from('bookings')
       .update({
         status: 'confirmed',
+        payment_status: 'approved',
         payment_id: payment.id.toString(),
         user_id: clientUserId,
         user_email: userEmail,
@@ -2099,7 +1987,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
             <div style="text-align: center; margin-bottom: 20px;">
-              <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+              <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
               <h1 style="color: #101820; margin-bottom: 10px;">º</h1>
             </div>
             
@@ -2126,8 +2014,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
             </p>
 
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
-              <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
-                Todos los derechos reservados.</p>
+              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
               <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                 Si ya has cargado tus servicios, por favor ignora este mensaje.
               </p>
@@ -2202,14 +2089,13 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado/a';
         
         await resend.emails.send({
-          from: 'LegalUp <hola@legalup.cl>',
-          reply_to: 'hola@legalup.cl',
+          from: 'LegalUp <hola@mg.legalup.cl>',
           to: lawyer.email,
-          subject: 'Aún no has agregado tus servicios',
+          subject: '¡Aún no has cargado servicios en tu perfil!',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
               <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
+                <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
                 <h1 style="color: #101820; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
               </div>
               
@@ -2236,8 +2122,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
               </p>
 
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
-                <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
-                Todos los derechos reservados.</p>
+                <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
                 <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
                   Si ya has cargado tus servicios, por favor ignora este mensaje.
                 </p>
@@ -2293,8 +2178,7 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
             ` : ''}
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px;">
-              <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
-                Todos los derechos reservados.</p>
+              <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
             </div>
           </div>
         `
@@ -2320,49 +2204,6 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
       message: 'Error al procesar la solicitud',
       error: error.message
     });
-  }
-});
-
-// Send CAE Reply Email
-app.post('/api/send-cae-email', async (req, res) => {
-  try {
-    const { email, subject, message } = req.body || {};
-
-    if (!email || !subject || !message) {
-      return res.status(400).json({ error: 'Missing required fields: email, subject, message' });
-    }
-
-    if (!resend) {
-      return res.status(500).json({ error: 'Resend API key is not configured' });
-    }
-
-    await resend.emails.send({
-      from: 'LegalUp <hola@mg.legalup.cl>',
-      reply_to: 'juan.fercommerce@gmail.com',
-      to: email,
-      subject: subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="https://legalup.cl/assets/logo.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
-          </div>
-          
-          <div style="color: #101820; line-height: 1.6; margin-bottom: 20px; white-space: pre-line; font-size: 16px;">
-            ${message}
-          </div>
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px; text-align: center;">
-            <p>© ${new Date().getFullYear()} LegalUp — Asesoría legal online en Chile.<br />
-                Todos los derechos reservados.</p>
-          </div>
-        </div>
-      `
-    });
-
-    return res.json({ success: true, message: 'Correo enviado correctamente' });
-  } catch (error) {
-    console.error('Error al enviar correo CAE:', error);
-    return res.status(500).json({ error: 'Error al enviar correo', details: error.message });
   }
 });
 

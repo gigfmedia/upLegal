@@ -232,6 +232,19 @@ function ClientDashboardContent() {
                      user?.email?.split('@')[0] || 
                      'Usuario';
 
+  // Compatibilidad entre esquemas de appointments:
+  // - legacy: appointment_date + appointment_time
+  // - alternativo: scheduled_time
+  // - otros: date
+  const getAppointmentDateTime = (appointment: any): string | null => {
+    if (appointment?.scheduled_time) return appointment.scheduled_time;
+    if (appointment?.date) return appointment.date;
+    if (appointment?.appointment_date && appointment?.appointment_time) {
+      return `${appointment.appointment_date}T${appointment.appointment_time}`;
+    }
+    return null;
+  };
+
   // Fetch consultations and appointments data
   useEffect(() => {
     const fetchData = async () => {
@@ -260,26 +273,23 @@ function ClientDashboardContent() {
         if (consultationsError) throw consultationsError;
         setConsultations(consultationsData || []);
 
-        // Fetch upcoming appointments
+        // Fetch appointments (compat multi-esquema)
         const { data: appointmentsData, error: appointmentsError } = await supabase
           .from('appointments')
-          .select(`
-            id,
-            title,
-            scheduled_time,
-            status,
-            lawyer:lawyer_id (
-              id,
-              full_name,
-              email
-            )
-          `)
-          .eq('user_id', user.id)
-          .gte('scheduled_time', new Date().toISOString())
-          .order('scheduled_time', { ascending: true });
+          .select('*')
+          .eq('user_id', user.id);
 
         if (appointmentsError) throw appointmentsError;
-        setAppointments(appointmentsData || []);
+        const nowIso = new Date().toISOString();
+        const normalizedUpcoming = (appointmentsData || [])
+          .map((appointment: any) => ({
+            ...appointment,
+            appointment_time: getAppointmentDateTime(appointment)
+          }))
+          .filter((appointment: any) => appointment.appointment_time && appointment.appointment_time >= nowIso)
+          .sort((a: any, b: any) => a.appointment_time.localeCompare(b.appointment_time));
+
+        setAppointments(normalizedUpcoming);
 
         // Update stats
         const activeCases = consultationsData?.filter(c => c.status === 'active').length || 0;
@@ -314,9 +324,9 @@ function ClientDashboardContent() {
           },
           { 
             title: "Próxima Cita", 
-            value: appointmentsData?.[0]?.title || "Sin citas", 
-            change: appointmentsData?.[0] 
-              ? formatDate(appointmentsData[0].scheduled_time) + ' a las ' + formatTime(appointmentsData[0].scheduled_time)
+            value: normalizedUpcoming?.[0]?.title || normalizedUpcoming?.[0]?.service_type || normalizedUpcoming?.[0]?.name || "Sin citas", 
+            change: normalizedUpcoming?.[0] 
+              ? formatDate(normalizedUpcoming[0].appointment_time) + ' a las ' + formatTime(normalizedUpcoming[0].appointment_time)
               : "No programadas", 
             icon: Clock, 
             iconColor: "text-yellow-500" 
@@ -368,15 +378,18 @@ function ClientDashboardContent() {
 
         const totalSpent = payments?.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0) || 0;
 
-        // 4. Fetch next appointment
-        const { data: nextAppointment } = await supabase
+        // 4. Fetch next appointment (compat multi-esquema)
+        const { data: nextAppointmentsRaw } = await supabase
           .from('appointments')
-          .select('scheduled_time')
+          .select('*')
           .eq('user_id', user?.id)
-          .gte('scheduled_time', new Date().toISOString())
-          .order('scheduled_time', { ascending: true })
-          .limit(1)
-          .single();
+          .limit(200);
+
+        const nowIso = new Date().toISOString();
+        const nextAppointment = (nextAppointmentsRaw || [])
+          .map((appointment: any) => getAppointmentDateTime(appointment))
+          .filter((appointmentTime: string | null) => appointmentTime && appointmentTime >= nowIso)
+          .sort((a: string, b: string) => a.localeCompare(b))[0];
 
         // Update stats with real data
         setStats([
@@ -406,10 +419,10 @@ function ClientDashboardContent() {
           {
             title: "Próxima Cita",
             value: nextAppointment 
-              ? new Date(nextAppointment.scheduled_time).toLocaleDateString() 
+              ? new Date(nextAppointment).toLocaleDateString() 
               : "Sin citas",
             change: nextAppointment 
-              ? new Date(nextAppointment.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              ? new Date(nextAppointment).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               : "No programadas",
             icon: Clock,
             iconColor: "text-yellow-500"
@@ -444,12 +457,12 @@ function ClientDashboardContent() {
   // Format upcoming appointments
   const upcomingAppointments = appointments.map(appointment => ({
     id: appointment.id,
-    title: appointment.title,
-    date: formatDate(appointment.scheduled_time),
-    time: formatTime(appointment.scheduled_time),
-    lawyer: appointment.lawyer?.full_name || 
-             appointment.lawyer?.email?.split('@')[0] || 
-             'Abogado',
+    title: appointment.title || appointment.service_type || appointment.name || 'Cita legal',
+    date: formatDate(appointment.appointment_time || getAppointmentDateTime(appointment) || new Date().toISOString()),
+    time: formatTime(appointment.appointment_time || getAppointmentDateTime(appointment) || new Date().toISOString()),
+    lawyer: appointment.lawyer?.full_name ||
+            appointment.lawyer?.email?.split('@')[0] ||
+            'Abogado',
   }));
 
   const handleFindLawyer = () => {

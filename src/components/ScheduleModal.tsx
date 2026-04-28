@@ -906,9 +906,9 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           appointmentId: appointment.id,
           description: `Consulta legal con ${selectedLawyerData?.name || lawyerName}`,
           // Use fallback base URL if window.location.origin is empty
-          successUrl: `${window.location.origin}/payment/success?appointmentId=${appointment.id}`,
-          failureUrl: `${window.location.origin}/payment/failure?appointmentId=${appointment.id}`,
-          pendingUrl: `${window.location.origin}/payment/pending?appointmentId=${appointment.id}`,
+          successUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/success?appointmentId=${appointment.id}`,
+          failureUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/failure?appointmentId=${appointment.id}`,
+          pendingUrl: `${window.location.origin || 'https://uplegal.netlify.app'}/payment/pending?appointmentId=${appointment.id}`,
           userEmail: user?.email || formData.email,
           userName: user?.user_metadata?.full_name || formData.name
         };
@@ -919,7 +919,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         }
         
         // USAR NETLIFY FUNCTIONS - ENDPOINT CORRECTO
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+        const API_BASE_URL = 'https://uplegal.netlify.app';
         const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
         
         // Test the function with OPTIONS request
@@ -1492,6 +1492,16 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 <span className="font-medium">{formatCurrency(estimatedCost)}</span>
               </div>
 
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center">
+                  <span className="text-gray-600">Tarifa por servicio</span>
+                  <span className="ml-1 text-xs text-gray-500">*</span>
+                </div>
+                <span className="text-gray-600">
+                  +{formatCurrency(clientSurcharge)}
+                </span>
+              </div>
+
               <div className="border-t border-gray-200 my-2"></div>
               
               <div className="flex justify-between items-center font-semibold text-lg">
@@ -1499,6 +1509,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                 <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
               </div>
             </div>
+
+              <p className="text-xs text-gray-500 mt-2">
+                * Incluye 10% de recargo por servicio app.
+              </p>
             
             </div>
             

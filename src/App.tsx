@@ -29,26 +29,6 @@ import RequireLawyer from '@/components/auth/RequireLawyer';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import Footer from '@/components/Footer';
 
-function RedirectToSearch() {
-  const location = useLocation();
-  const params = new URLSearchParams(location.search || '');
-  const category = params.get('category');
-  if (category) {
-    const lower = category.toLowerCase();
-    if (
-      lower.includes('desalojo') ||
-      lower.includes('arriendo') ||
-      lower.includes('arrendamiento') ||
-      lower.includes('inmobiliario')
-    ) {
-      params.set('category', 'Derecho Civil');
-    }
-  }
-
-  const search = params.toString();
-  return <Navigate to={`/search${search ? `?${search}` : ''}`} replace />;
-}
-
 // Lazy load all pages for code splitting
 const Index = lazy(() => import('./pages/Index'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
@@ -103,8 +83,6 @@ const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 const BlogIndex = lazy(() => import('./pages/blog/index'));
 const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago-2026'));
 const FiniquitoArticle = lazy(() => import('./pages/blog/como-calcular-tu-finiquito-chile-2026'));
-const QuePasaSiNoTengoContratoDeArriendoChile2026 = lazy(() => import("@/pages/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"));
-const ReajusteArriendoArticle = lazy(() => import('@/pages/blog/reajuste-arriendo-ipc-chile-2026'));
 const DerechoFamiliaArticle = lazy(() => import('./pages/blog/derecho-de-familia-chile-2026'));
 const DerechoPenalArticle = lazy(() => import('./pages/blog/derecho-penal-chile-2026'));
 const DesalojoArticle = lazy(() => import('./pages/blog/me-quieren-desalojar-que-hago-chile-2026'));
@@ -112,17 +90,7 @@ const JuicioDesalojoArticle = lazy(() => import('./pages/blog/cuanto-demora-juic
 const CerraduraArticle = lazy(() => import('./pages/blog/arrendador-puede-cambiar-cerradura-chile-2026'));
 const OrdenDesalojoArticle = lazy(() => import('./pages/blog/orden-desalojo-chile-2026'));
 const DespidoSinMotivoArticle = lazy(() => import('./pages/blog/me-pueden-despedir-sin-motivo-chile-2026'));
-const AniosDeServicioArticle = lazy(() => import('./pages/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026'));
 const LeyDevuelvemeMiCasaArticle = lazy(() => import('./pages/blog/ley-devuelveme-mi-casa-chile-2026'));
-const DespidoInjustificadoArticle = lazy(() => import('./pages/blog/despido-injustificado-chile-2026'));
-const GarantiaArriendoArticle = lazy(() => import('./pages/blog/no-devuelven-garantia-arriendo-chile-2026'));
-const DicomDeudaArriendoArticle = lazy(() => import('./pages/blog/dicom-deuda-arriendo-chile-2026'));
-const TacitaReconduccionArticle = lazy(() => import('./pages/blog/tacita-reconduccion-chile-2026'));
-const DerechoArrendamientoArticle = lazy(() => import('./pages/blog/derecho-arrendamiento-chile-guia-completa-2026'));
-const ContratoArriendoArticle = lazy(() => import('./pages/blog/contrato-de-arriendo-chile-2026'));
-const MesesDesalojoArticle = lazy(() => import('./pages/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026'));
-const DemandaArriendoArticle = lazy(() => import('./pages/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026'));
-const CAELanding = lazy(() => import('./pages/CAELanding'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 
 // Create a single QueryClient instance
@@ -197,43 +165,6 @@ const LoadingIndicator = () => {
 
 // Global error handlers
 const setupGlobalErrorHandlers = () => {
-  const isWhiteScreen = () => {
-    const root = document.getElementById('root');
-    if (!root) return false;
-    return root.innerHTML.trim() === '';
-  };
-
-  const reloadIfWhiteScreen = (reason: string) => {
-    // Don't reload if modal is open - look for multiple indicators
-    const hasOpenModal =
-      document.querySelector('[data-modal="open"]') ||
-      document.querySelector('[role="dialog"]') ||
-      document.querySelector('[aria-modal="true"]') ||
-      document.querySelector('.fixed.inset-0') ||
-      document.querySelector('.fixed.inset-0.bg-black');
-
-    if (hasOpenModal) {
-      return;
-    }
-
-    // Avoid reload loops
-    const key = '_legalup_whitescreen_reload_ts';
-    const last = Number(sessionStorage.getItem(key) || 0);
-    const now = Date.now();
-    if (now - last < 30_000) {
-      return;
-    }
-
-    // Give React a brief chance to paint
-    setTimeout(() => {
-      if (isWhiteScreen()) {
-        sessionStorage.setItem(key, String(Date.now()));
-        console.warn(`[recovery] White screen detected (${reason}), reloading...`);
-        window.location.reload();
-      }
-    }, 300);
-  };
-
   // Handle uncaught errors
   const handleError = (error: ErrorEvent | string) => {
     const message = typeof error === 'string' ? error : error.message;
@@ -241,12 +172,6 @@ const setupGlobalErrorHandlers = () => {
     // Check for "Failed to load module script" which often happens on stale chunks
     if (message?.includes('Failed to load module script') || 
         message?.includes('Expected a JavaScript-or-Wasm module script')) {
-      // Don't reload if modal is open
-      const hasOpenModal = document.querySelector('[data-modal="open"]');
-      if (hasOpenModal) {
-        console.warn('[error] Stale chunk detected but modal is open, skipping reload');
-        return;
-      }
       console.warn('Stale chunk detected via error event, reloading...');
       window.location.reload();
       return;
@@ -276,12 +201,6 @@ const setupGlobalErrorHandlers = () => {
       msg.includes('Expected a JavaScript-or-Wasm module script');
 
     if (isChunkError) {
-      // Don't reload if modal is open
-      const hasOpenModal = document.querySelector('[data-modal="open"]');
-      if (hasOpenModal) {
-        console.warn('[rejection] Chunk error detected but modal is open, skipping reload');
-        return;
-      }
       console.warn('Stale chunk detected via rejection, reloading...');
       window.location.reload();
       return;
@@ -298,47 +217,28 @@ const setupGlobalErrorHandlers = () => {
 
   // When the user comes back to the tab after a new deploy, stale chunks
   // will fail silently showing a white screen. This forces a reload.
-  // Mobile Safari aggressively kills processes in background, so we need
-  // shorter thresholds and additional checks for mobile.
   const handleVisibilityChange = () => {
     if (document.visibilityState === 'visible') {
-      sessionStorage.setItem('_legalup_last_active', String(Date.now()));
-      reloadIfWhiteScreen('visibilitychange');
+      // Check if any script requests fail; vite sets a well-known pattern
+      // A lightweight check: if the page has been idle for > 30 min, reload.
+      const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
+      const idleMs = Date.now() - lastActivity;
+      if (idleMs > 30 * 60 * 1000) {
+        window.location.reload();
+      }
     } else {
       sessionStorage.setItem('_legalup_last_active', String(Date.now()));
-    }
-  };
-  
-  // Page Lifecycle API: handle frozen state (Safari specific)
-  const handlePageTransition = (event: Event) => {
-    const type = (event as TransitionEvent).type;
-    if (type === 'freeze') {
-      //console.log('[lifecycle] Page frozen');
-    } else if (type === 'resume') {
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        reloadIfWhiteScreen('resume');
-      }
     }
   };
 
   window.addEventListener('error', handleError);
   window.addEventListener('unhandledrejection', handleRejection);
   document.addEventListener('visibilitychange', handleVisibilityChange);
-  
-  // Page Lifecycle API for mobile Safari
-  if ('onfreeze' in document) {
-    document.addEventListener('freeze', handlePageTransition);
-    document.addEventListener('resume', handlePageTransition);
-  }
 
   return () => {
     window.removeEventListener('error', handleError);
     window.removeEventListener('unhandledrejection', handleRejection);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
-    if ('onfreeze' in document) {
-      document.removeEventListener('freeze', handlePageTransition);
-      document.removeEventListener('resume', handlePageTransition);
-    }
   };
 };
 
@@ -442,7 +342,6 @@ const AppContent = () => {
           }>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/consultar" element={<RedirectToSearch />} />
               <Route path="/search" element={<SearchResults />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contacto" element={<ContactPage />} />
@@ -452,14 +351,12 @@ const AppContent = () => {
               <Route path="/privacidad" element={<PrivacyPolicy />} />
               
               {/* Booking Routes */}
-              <Route path="/booking/failure" element={<PaymentFailure />} />
-              <Route path="/booking/pending" element={<PaymentSuccess />} />
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 
               {/* Consultation Routes - Temporarily disabled */}
-              <Route path="/consulta" element={<RedirectToSearch />} />
-              <Route path="/consulta/detalle" element={<RedirectToSearch />} />
+              <Route path="/consulta" element={<Consulta />} />
+              <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
               <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
               
               {/* Blog Routes */}
@@ -468,24 +365,12 @@ const AppContent = () => {
               <Route path="/blog/como-calcular-tu-finiquito-chile-2026" element={<FiniquitoArticle />} />
               <Route path="/blog/derecho-de-familia-chile-2026" element={<DerechoFamiliaArticle />} />
               <Route path="/blog/derecho-penal-chile-2026" element={<DerechoPenalArticle />} />
-              <Route path="/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" element={<QuePasaSiNoTengoContratoDeArriendoChile2026 />} />
-              <Route path="/blog/reajuste-arriendo-ipc-chile-2026" element={<ReajusteArriendoArticle />} />
               <Route path="/blog/me-quieren-desalojar-que-hago-chile-2026" element={<DesalojoArticle />} />
               <Route path="/blog/cuanto-demora-juicio-desalojo-chile-2026" element={<JuicioDesalojoArticle />} />
               <Route path="/blog/arrendador-puede-cambiar-cerradura-chile-2026" element={<CerraduraArticle />} />
               <Route path="/blog/orden-desalojo-chile-2026" element={<OrdenDesalojoArticle />} />
               <Route path="/blog/me-pueden-despedir-sin-motivo-chile-2026" element={<DespidoSinMotivoArticle />} />
-              <Route path="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" element={<AniosDeServicioArticle />} />
-              <Route path="/blog/ley-devuelveme-mi-casa-chile-2026" element={<LeyDevuelvemeMiCasaArticle />} />
-              <Route path="/blog/despido-injustificado-chile-2026" element={<DespidoInjustificadoArticle />} />
-              <Route path="/blog/no-devuelven-garantia-arriendo-chile-2026" element={<GarantiaArriendoArticle />} />
-              <Route path="/blog/dicom-deuda-arriendo-chile-2026" element={<DicomDeudaArriendoArticle />} />
-              <Route path="/blog/tacita-reconduccion-chile-2026" element={<TacitaReconduccionArticle />} />
-              <Route path="/blog/derecho-arrendamiento-chile-guia-completa-2026" element={<DerechoArrendamientoArticle />} />
-              <Route path="/blog/contrato-de-arriendo-chile-2026" element={<ContratoArriendoArticle />} />
-              <Route path="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" element={<MesesDesalojoArticle />} />
-              <Route path="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" element={<DemandaArriendoArticle />} />
-              <Route path="/cae" element={<CAELanding />} />
+              <Route path="/blog/ley-devuelveme-mi-casa-chile-21461-2026" element={<LeyDevuelvemeMiCasaArticle />} />
               <Route path="/review" element={<ReviewPage />} />
              
 

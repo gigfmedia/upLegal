@@ -46,6 +46,19 @@ export default function LawyerDashboardPage() {
   const [activitiesLoading, setActivitiesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Compatibilidad entre esquemas de appointments:
+  // - legacy: appointment_date + appointment_time
+  // - alternativo: scheduled_time
+  // - otros: date
+  const getAppointmentDateTime = (appointment: any): string | null => {
+    if (appointment?.scheduled_time) return appointment.scheduled_time;
+    if (appointment?.date) return appointment.date;
+    if (appointment?.appointment_date && appointment?.appointment_time) {
+      return `${appointment.appointment_date}T${appointment.appointment_time}`;
+    }
+    return appointment?.created_at || null;
+  };
+
   useEffect(() => {
     if (searchParams.get('google_auth') === 'success') {
       toast({
@@ -75,9 +88,9 @@ export default function LawyerDashboardPage() {
         // Recent appointments
         supabase
           .from('appointments')
-          .select('id, scheduled_time, status, client:profiles!appointments_client_id_fkey(first_name, last_name)')
+          .select('*')
           .eq('lawyer_id', user.id)
-          .order('scheduled_time', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(5),
           
         // Recent messages
@@ -118,12 +131,14 @@ export default function LawyerDashboardPage() {
       
       // Add appointments to activities
       appointments?.forEach(appointment => {
+        const appointmentDateTime = getAppointmentDateTime(appointment);
+        if (!appointmentDateTime) return;
         activities.push({
           id: `appt_${appointment.id}`,
           type: 'appointment',
           title: `Cita ${appointment.status === 'confirmed' ? 'confirmada' : 'pendiente'}`,
-          description: `Con ${appointment.client?.first_name || 'el cliente'} para el ${format(parseISO(appointment.scheduled_time), "d 'de' MMMM 'a las' HH:mm", { locale: es })}`,
-          createdAt: appointment.scheduled_time,
+          description: `Con ${appointment.client?.first_name || appointment.name || 'el cliente'} para el ${format(parseISO(appointmentDateTime), "d 'de' MMMM 'a las' HH:mm", { locale: es })}`,
+          createdAt: appointmentDateTime,
           read: true,
           meta: { id: appointment.id, type: 'appointment' }
         });
@@ -208,14 +223,19 @@ export default function LawyerDashboardPage() {
         const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
         
-        // Fetch today's appointments
-        const { count: appointmentsCount } = await supabase
+        // Fetch today's appointments (compat: old `scheduled_time` + new `date`)
+        const { data: appointmentsRows } = await supabase
           .from('appointments')
-          .select('*', { count: 'exact', head: true })
+          .select('date, scheduled_time, status')
           .eq('lawyer_id', user.id)
-          .gte('scheduled_time', startOfDay.toISOString())
-          .lt('scheduled_time', endOfDay.toISOString())
           .eq('status', 'confirmed');
+
+        const appointmentsCount = (appointmentsRows || []).filter((appointment) => {
+          const appointmentDateTime = getAppointmentDateTime(appointment);
+          if (!appointmentDateTime) return false;
+          const appointmentDate = new Date(appointmentDateTime);
+          return appointmentDate >= startOfDay && appointmentDate < endOfDay;
+        }).length;
         
         // Fetch active services
         const { count: servicesCount } = await supabase
