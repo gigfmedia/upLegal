@@ -313,22 +313,12 @@ const BlogArticle = () => {
           <div className="mb-8 space-y-3">
             <h2 className="text-2xl font-bold mb-4">Artículos relacionados</h2>
             <div className="text-center py-4 border-t border-b border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Si aún no tienes pensión fijada</p>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Conoce más sobre tu caso</p>
               <Link
-                to="/blog/como-demandar-pension-alimentos-chile-2026"
+                to="/blog/derecho-de-familia-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 Cómo demandar pensión de alimentos en Chile
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="text-center py-4 border-b border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Sobre el cálculo de la pensión</p>
-              <Link
-                to="/blog/pension-de-alimentos-chile-cuanto-corresponde-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Cuánto corresponde de pensión de alimentos?
+                👉 Guía completa: Derecho de Familia en Chile
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
