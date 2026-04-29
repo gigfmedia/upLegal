@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft } from "lucide-react";
+import { Calendar, User, Clock, ChevronRight, Home, ArrowLeft, Search } from "lucide-react";
 import Header from "@/components/Header";
 
 const BlogPage = () => {
@@ -240,28 +240,43 @@ const BlogPage = () => {
 
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const categories = ["Derecho Inmobiliario", "Derecho Laboral", "Derecho de Familia", "Derecho Penal", "Derecho Civil"];
 
   const filteredArticles = useMemo(() => {
-    if (!selectedCategory) return articles;
-    return articles.filter(article => article.category === selectedCategory);
-  }, [selectedCategory, articles]);
+    let result = articles;
+    
+    if (selectedCategory) {
+      result = result.filter(article => article.category === selectedCategory);
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(article => 
+        article.title.toLowerCase().includes(query) || 
+        article.excerpt.toLowerCase().includes(query) ||
+        article.category.toLowerCase().includes(query)
+      );
+    }
+    
+    return result;
+  }, [selectedCategory, searchQuery, articles]);
 
   // `articles` debe mantenerse ordenado del más reciente al más antiguo: el destacado es siempre el primero.
   const featuredArticle = useMemo(() => {
-    if (selectedCategory) {
+    if (searchQuery || selectedCategory) {
       return filteredArticles[0];
     }
     return articles[0];
-  }, [selectedCategory, filteredArticles, articles]);
+  }, [selectedCategory, searchQuery, filteredArticles, articles]);
 
   const recentArticles = useMemo(() => {
-    if (selectedCategory) {
+    if (searchQuery || selectedCategory) {
       return filteredArticles.slice(1);
     }
     return articles.slice(1);
-  }, [selectedCategory, filteredArticles, articles]);
+  }, [selectedCategory, searchQuery, filteredArticles, articles]);
 
   const getArticleCount = (category: string) => {
     return articles.filter(a => a.category === category).length;
@@ -296,8 +311,25 @@ const BlogPage = () => {
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
-        {/* Featured Article */}
-        {/* Featured Article */}
+        {/* Results count */}
+        {(searchQuery || selectedCategory) && (
+          <div className="mb-6 text-sm text-gray-600">
+            {filteredArticles.length === 0 ? (
+              <span>No se encontraron artículos</span>
+            ) : (
+              <span>{filteredArticles.length} artículo{filteredArticles.length !== 1 ? 's' : ''} encontrado{filteredArticles.length !== 1 ? 's' : ''}</span>
+            )}
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory(null);
+              }}
+              className="ml-2 text-green-700 hover:underline font-medium"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
         {featuredArticle && (
           <div key={featuredArticle.id} className="mb-12">
             <div 
@@ -381,6 +413,20 @@ const BlogPage = () => {
             </div>
           </div>
         )}
+
+        {/* Search Bar */}
+        <div className="mb-8 w-full">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar artículos..."
+              className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent"
+            />
+          </div>
+        </div>
 
         {/* Categories Pills */}
         <div className="mb-8 flex flex-wrap gap-2">

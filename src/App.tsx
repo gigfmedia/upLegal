@@ -382,7 +382,7 @@ const AppContent = () => {
               <Route path="/blog/arrendador-puede-cambiar-cerradura-chile-2026" element={<CerraduraArticle />} />
               <Route path="/blog/orden-desalojo-chile-2026" element={<OrdenDesalojoArticle />} />
               <Route path="/blog/me-pueden-despedir-sin-motivo-chile-2026" element={<DespidoSinMotivoArticle />} />
-              <Route path="/blog/ley-devuelveme-mi-casa-chile-21461-2026" element={<LeyDevuelvemeMiCasaArticle />} />
+              <Route path="/blog/ley-devuelveme-mi-casa-chile-2026" element={<LeyDevuelvemeMiCasaArticle />} />
               <Route path="/blog/deuda-pension-alimentos-chile-2026" element={<DeudaPensionArticle />} />
               <Route path="/blog/derecho-arrendamiento-chile-guia-completa-2026" element={<DerechoArrendamientoArticle />} />
               <Route path="/blog/contrato-de-arriendo-chile-2026" element={<ContratoArriendoArticle />} />
