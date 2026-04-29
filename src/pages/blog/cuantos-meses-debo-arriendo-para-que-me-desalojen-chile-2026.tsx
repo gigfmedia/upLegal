@@ -690,7 +690,7 @@ const BlogArticle = () => {
             No esperes a que el problema escale. Un error en este momento puede significar aumentar la deuda o enfrentar un juicio. Habla con un abogado y evalúa tu caso antes de que sea tarde.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Civil">
               <Button
                 size="lg"
                 onClick={() => {

@@ -552,52 +552,58 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/consultar">
-                <Button 
-                  size="lg" 
-                  onClick={() => {
-                    window.gtag?.('event', 'cta_click', {
-                      location: 'blog_cta',
-                      text: 'Habla con un abogado ahora',
-                    });
-                    window.gtag?.("event", "click_consultar_abogado", {
-                      article: window.location.pathname,
-                      location: "blog_cta_demanda_arriendo_primary",
-                    });
-                  }}
-                  className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-                >
-                  Habla con un abogado ahora
-                </Button>
-              </Link>
-
-              <Link to="/search?category=Derecho+Civil">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => {
-                    window.gtag?.('event', 'cta_click', {
-                      location: 'blog_cta',
-                      text: 'Encontrar abogado',
-                    });
-                    window.gtag?.("event", "click_ver_abogados", {
-                      article: window.location.pathname,
-                      location: "blog_cta_demanda_arriendo_secondary",
-                    });
-                  }}
-                  className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-                >
-                  Ver Abogados Civiles
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-gray-500 mt-4">
-              Evalúa tu caso y toma una decisión antes de que el problema escale.
-            </p>
           </div>
         </div>
       </div>
+
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
+          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Estás en riesgo de demanda por no pago de arriendo?</h2>
+          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
+            No esperes a que el problema escale. Un error en este momento puede significar aumentar la deuda o enfrentar un juicio. Habla con un abogado y evalúa tu caso antes de que sea tarde.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/search?category=Derecho+Civil">
+              <Button 
+                size="lg" 
+                onClick={() => {
+                  window.gtag?.('event', 'cta_click', {
+                    location: 'blog_cta',
+                    text: 'Habla con un abogado ahora',
+                  });
+                  window.gtag?.("event", "click_consultar_abogado", {
+                    article: window.location.pathname,
+                    location: "blog_cta_demanda_arriendo_primary",
+                  });
+                }}
+                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
+              >
+                Consultar con Abogado Ahora
+              </Button>
+            </Link>
+
+            <Link to="/search?category=Derecho+Civil">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  window.gtag?.('event', 'cta_click', {
+                    location: 'blog_cta',
+                    text: 'Encontrar abogado',
+                  });
+                  window.gtag?.("event", "click_ver_abogados", {
+                    article: window.location.pathname,
+                    location: "blog_cta_demanda_arriendo_secondary",
+                  });
+                }}
+                className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
+              >
+                Ver Abogados Civiles
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <RelatedLawyers category="Derecho Civil" />
 

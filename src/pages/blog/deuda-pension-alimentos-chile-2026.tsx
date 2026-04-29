@@ -74,9 +74,9 @@ const BlogArticle = () => {
                 "La deuda no desaparece y puede acumularse con intereses",
                 "Existen mecanismos legales efectivos para obligar el pago"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span>{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -311,7 +311,6 @@ const BlogArticle = () => {
 
           {/* Links relacionados */}
           <div className="mb-8 space-y-3">
-            <h2 className="text-2xl font-bold mb-4">Artículos relacionados</h2>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Conoce más sobre tu caso</p>
               <Link
@@ -334,13 +333,13 @@ const BlogArticle = () => {
               El error más común es esperar demasiado tiempo antes de actuar. Cada mes que pasa sin iniciar acciones legales no solo aumenta la deuda, sino que también puede hacer más complejo el proceso de recuperación.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Solicitar la liquidación de la deuda y activar medidas de apremio como retención de sueldo, embargo o arresto puede cambiar completamente el escenario, obligando al deudor a cumplir.
+              Solicitar la liquidación de la deuda y activar medidas de apremio como retención de sueldo, embargo o arresto puede cambiar completamente el escenario, obligando al deudor a cumplir. Estas herramientas existen precisamente porque el legislador reconoció que la pensión de alimentos no es una obligación opcional — es un derecho del hijo que debe garantizarse.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Además, es importante entender que el hecho de que el deudor no tenga ingresos formales no lo libera de su obligación. Existen mecanismos para investigar su situación económica y aplicar medidas igualmente efectivas.
+              Además, el hecho de que el deudor no tenga ingresos formales no lo libera de su obligación. Existen mecanismos para investigar su situación económica real y aplicar medidas igualmente efectivas sobre sus bienes o ingresos informales.
             </p>
             <p className="text-gray-600 font-semibold leading-relaxed">
-              Actuar a tiempo puede marcar la diferencia entre recuperar la deuda o enfrentar un problema prolongado.
+              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora.
             </p>
           </div>
 
@@ -380,7 +379,7 @@ const BlogArticle = () => {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/search?category=Derecho+de+Familia">
               <Button
                 size="lg"
                 onClick={() => {

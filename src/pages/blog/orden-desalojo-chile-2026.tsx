@@ -497,7 +497,7 @@ const BlogArticle = () => {
             Si estás enfrentando un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consulta">
+            <Link to="/search?category=Derecho+Civil">
               <Button
                 size="lg"
                 onClick={() => {
