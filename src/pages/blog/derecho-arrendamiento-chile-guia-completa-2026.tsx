@@ -838,7 +838,7 @@ const BlogArticle = () => {
                   });
                 }}
               >
-                Consultar con Abogado Ahora
+                Hablar con abogado ahora
               </Button>
             </Link>
             

@@ -525,7 +525,7 @@ const BlogPage = () => {
               className="bg-gray-900 text-white hover:bg-green-900 hover:text-white px-8 py-3"
               onClick={() => window.location.href = '/search'}
             >
-              Consultar con Abogado Ahora
+              Hablar con abogado ahora
             </Button>
           </div>
         </div>

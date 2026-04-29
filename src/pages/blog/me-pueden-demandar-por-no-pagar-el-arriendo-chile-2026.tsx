@@ -578,7 +578,7 @@ const BlogArticle = () => {
                 }}
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
               >
-                Consultar con Abogado Ahora
+                Hablar con abogado ahora
               </Button>
             </Link>
           </div>
