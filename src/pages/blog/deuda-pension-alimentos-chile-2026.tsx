@@ -12,25 +12,30 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Cómo cobrar deuda de pensión de alimentos?",
-      answer: "Solicitando liquidación de la deuda y medidas de apremio en el tribunal de familia competente."
+      question: "¿Cómo cobrar una deuda de pensión de alimentos en Chile?",
+      answer:
+        "Debes solicitar al tribunal de familia que dictó la pensión una liquidación de la deuda acumulada. Una vez liquidada, puedes pedir medidas de apremio contra el deudor: retención del sueldo, retención de devolución de impuestos, suspensión de licencia de conducir o arresto. El proceso se inicia presentando un escrito ante el mismo tribunal que fijó la pensión.",
     },
     {
-      question: "¿Pueden arrestar por deuda de pensión?",
-      answer: "Sí. En caso de incumplimiento reiterado, el tribunal puede decretar arresto nocturno o completo como medida de presión."
+      question: "¿Pueden arrestar a alguien por no pagar la pensión de alimentos?",
+      answer:
+        "Sí. El arresto es una de las medidas de apremio más efectivas en Chile para forzar el pago. El tribunal puede decretar arresto nocturno como primera medida y, si el incumplimiento persiste, arresto completo. Esta medida busca presionar el pago, no castigar — se levanta una vez que se paga la deuda.",
     },
     {
-      question: "¿Se puede embargar por pensión de alimentos?",
-      answer: "Sí. Los bienes del deudor pueden ser embargados y rematados para pagar la deuda de alimentos."
+      question: "¿Se pueden embargar los bienes del deudor por pensión de alimentos?",
+      answer:
+        "Sí. Si el deudor no paga y no tiene ingresos retenibles, el tribunal puede ordenar el embargo de sus bienes — vehículos, cuentas bancarias, bienes muebles — y su posterior remate para pagar la deuda acumulada. Es una medida que requiere seguir el proceso judicial correspondiente.",
     },
     {
-      question: "¿Qué pasa si el deudor no tiene contrato?",
-      answer: "Igualmente debe pagar. No tener ingresos formales no elimina la obligación. Existen mecanismos para embargar y presionar el cumplimiento."
+      question: "¿Qué pasa si el deudor no tiene trabajo formal o contrato?",
+      answer:
+        "La obligación de pagar pensión de alimentos existe independientemente de si la persona tiene trabajo formal o no. Si no hay sueldo que retener, el tribunal puede recurrir a otras medidas: embargo de bienes, retención de devoluciones de impuestos, suspensión de licencia de conducir o arresto. No tener contrato no elimina la deuda.",
     },
     {
-      question: "¿Cuánto tiempo tengo para cobrar la deuda?",
-      answer: "Las deudas de pensión de alimentos tienen un tratamiento especial y pueden mantenerse exigibles por largos periodos. Actuar a tiempo es clave."
-    }
+      question: "¿Prescriben las deudas de pensión de alimentos en Chile?",
+      answer:
+        "Las deudas de pensión de alimentos tienen un tratamiento especial y no prescriben de la misma forma que otras deudas civiles. Sin embargo, actuar a tiempo siempre es recomendable para evitar que la deuda crezca y para mantener las medidas de apremio activas. Consulta con un abogado de familia para evaluar tu caso específico.",
+    },
   ];
 
   return (
@@ -61,7 +66,7 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-            <p className="text-lg leading-relaxed font-capitalize font-semibold mb-3 text-green-600">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
             <ul className="space-y-2">
               {[
                 "Puedes cobrar la deuda solicitando una liquidación judicial",
@@ -111,7 +116,7 @@ const BlogArticle = () => {
           {/* Intro */}
           <div className="prose prose-lg max-w-none mb-8">
             <p className="text-lg text-gray-600 leading-relaxed">
-              👉 <strong>La clave es actuar.</strong> En esta guía 2026 te explicamos cómo cobrar una deuda de pensión de alimentos paso a paso, qué medidas puedes exigir y cómo funciona realmente el proceso.
+              <strong>La clave es actuar.</strong> En esta guía 2026 te explicamos cómo cobrar una deuda de pensión de alimentos paso a paso, qué medidas puedes exigir y cómo funciona realmente el proceso.
             </p>
           </div>
 
@@ -128,7 +133,7 @@ const BlogArticle = () => {
               ))}
             </ul>
             <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl">
-              <p className="font-bold text-amber-900">👉 Importante</p>
+              <p className="font-bold text-amber-900">Importante</p>
               <p className="text-amber-800">La deuda se acumula mes a mes y puede aumentar con el tiempo.</p>
             </div>
           </div>
@@ -136,7 +141,7 @@ const BlogArticle = () => {
           {/* ¿Se puede cobrar? */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4">¿La deuda de pensión se puede cobrar?</h2>
-            <p className="text-gray-600 mb-4">👉 <strong>Sí, y con fuerza.</strong> A diferencia de otras deudas, la pensión de alimentos tiene mecanismos especiales.</p>
+            <p className="text-gray-600 mb-4"><strong>Sí, y con fuerza.</strong> A diferencia de otras deudas, la pensión de alimentos tiene mecanismos especiales.</p>
             <p className="text-gray-600 mb-4">Puedes solicitar:</p>
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {[
@@ -166,31 +171,31 @@ const BlogArticle = () => {
             <div className="space-y-4">
               {[
                 {
-                  title: "1. Solicitar liquidación de deuda",
+                  title: "Solicitar liquidación de deuda",
                   desc: "Debes pedir al tribunal que calcule cuánto se debe. Esto incluye meses impagos, reajustes e intereses si corresponde.",
                   note: "👉 Este documento es clave: determina el monto oficial.",
                   color: "blue"
                 },
                 {
-                  title: "2. Notificación al deudor",
+                  title: "Notificación al deudor",
                   desc: "El tribunal informa al deudor el monto adeudado y el plazo para pagar.",
                   note: "👉 Aquí aún puede pagar voluntariamente.",
                   color: "green"
                 },
                 {
-                  title: "3. Solicitar medidas de apremio",
+                  title: "Solicitar medidas de apremio",
                   desc: "Si no paga, puedes pedir retención de sueldo, retención de devolución de impuestos, suspensión de licencia de conducir, prohibición de salir del país o arresto.",
                   note: "👉 Estas medidas buscan forzar el cumplimiento.",
                   color: "amber"
                 },
                 {
-                  title: "4. Embargo de bienes",
+                  title: "Embargo de bienes",
                   desc: "Si persiste el incumplimiento, se pueden embargar bienes y rematar para pagar la deuda.",
                   note: null,
                   color: "orange"
                 },
                 {
-                  title: "5. Cumplimiento o ejecución",
+                  title: "Cumplimiento o ejecución",
                   desc: "El proceso continúa hasta que se paga la deuda o se cumple la obligación.",
                   note: null,
                   color: "gray"
@@ -272,7 +277,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Casos reales */}
-          <div className="mb-8 bg-gray-50 p-8 rounded-2xl border border-gray-100">
+          <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">Casos reales</h2>
             <div className="space-y-4">
               {[
@@ -280,7 +285,7 @@ const BlogArticle = () => {
                 { title: "Caso 2 — Incumplimiento total", desc: "No paga → embargo + arresto → pago forzado.", color: "red" },
                 { title: "Caso 3 — Acuerdo", desc: "Se negocia plan de pago → se regulariza la situación.", color: "blue" },
               ].map((c, i) => (
-                <div key={i} className={`bg-white p-5 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-${c.color}-500`}>
+                <div key={i} className={`bg-white p-5 rounded-2xl border border-gray-100 shadow-sm`}>
                   <h4 className="font-bold text-gray-900 mb-1">{c.title}</h4>
                   <p className="text-gray-600">{c.desc}</p>
                 </div>
@@ -384,7 +389,6 @@ const BlogArticle = () => {
               </div>
             ))}
           </div>
-          <p className="text-gray-600 mb-6 font-medium">👉 Actúa antes de que la deuda siga creciendo.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/consultar">
               <Button
@@ -431,16 +435,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           prevArticle={{
-            id: "derecho-de-familia-chile-2026",
-            title: "Derecho de Familia en Chile 2026: guía completa",
-            excerpt: "Pensiones, divorcio, cuidado personal y más. Todo lo que necesitas saber sobre el derecho de familia en Chile.",
-            image: "/assets/derecho-de-familia-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "derecho-penal-chile-2026",
-            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
-            excerpt: "Enfrentar una acusación penal puede ser difícil. Conoce tus derechos y cómo funciona el proceso penal en Chile.",
-            image: "/assets/derecho-penal-chile-2026.png"
+            id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
+            title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)",
+            excerpt: "Si dejas de pagar el arriendo en Chile, el arrendador puede demandarte. Conoce qué puede pasar, cuáles son tus derechos y cómo enfrentar esta situación.",
+            image: "/assets/demanda-arriendo-chile-2026.png"
           }}
         />
 
