@@ -323,23 +323,6 @@ const AppContent = () => {
     handleSupabaseHash();
   }, [navigate]);
   
-  // Only show loading state for the initial auth check
-  const [initialAuthCheck, setInitialAuthCheck] = useState(true);
-  
-  useEffect(() => {
-    if (!isLoading) {
-      setInitialAuthCheck(false);
-    }
-  }, [isLoading]);
-  
-  if (initialAuthCheck) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-  
   return (
     <div className="min-h-screen flex flex-col">
       <TooltipProvider>
