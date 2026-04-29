@@ -137,7 +137,7 @@ const BlogPage = () => {
       image: "/assets/anos-de-servicio-chile-2026.png"
     },
     {
-      id: "ley-devuelveme-mi-casa-chile-21461-2026",
+      id: "ley-devuelveme-mi-casa-chile-2026",
       title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
       excerpt: "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
       category: "Derecho Civil",

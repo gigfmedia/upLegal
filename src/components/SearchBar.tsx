@@ -44,8 +44,7 @@ export function SearchBar({
     <div className="relative group w-full bg-white shadow-2xl rounded-2xl overflow-hidden shadow-sm border border-gray-300 group-focus-within:border-transparent transition-colors duration-300" onSubmit={(e) => e.preventDefault()}>
       {/* Centered Rotating Square using custom CSS keyframes to ensure duration is respected */}
       <div 
-        className="pointer-events-none absolute top-1/2 left-1/2 w-[120vw] h-[120vw] md:w-[1200px] md:h-[1200px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 bg-[conic-gradient(from_0deg,transparent_0deg,theme(colors.blue.500)_90deg,theme(colors.purple.500)_180deg,theme(colors.pink.500)_270deg,transparent_360deg)] z-0"
-        style={{ animation: 'search-bar-spin 3s linear infinite' }}
+        className="pointer-events-none absolute top-1/2 left-1/2 w-[120vw] h-[120vw] md:w-[1200px] md:h-[1200px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 bg-[conic-gradient(from_0deg,transparent_0deg,theme(colors.blue.500)_90deg,theme(colors.purple.500)_180deg,theme(colors.pink.500)_270deg,transparent_360deg)] z-0 group-focus-within:animate-[search-bar-spin_3s_linear_infinite]"
       />
 
       {/* Internal "Mask" to create the 2px border effect */}

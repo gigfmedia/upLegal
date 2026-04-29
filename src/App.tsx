@@ -12,7 +12,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
-import LegalAgent from '@/components/LegalAgent';
 import RouteHandler from '@/components/RouteHandler';
 
 // Context Providers
@@ -79,6 +78,8 @@ const NotFound = lazy(() => import('@/pages/NotFound'));
 const Consulta = lazy(() => import('./pages/Consulta'));
 const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
 const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
+const LegalAgent = lazy(() => import('@/components/LegalAgent'));
+const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 // Blog pages
 const BlogIndex = lazy(() => import('./pages/blog/index'));
 const BlogArticle = lazy(() => import('./pages/blog/me-subieron-el-arriendo-que-hago-2026'));
@@ -91,7 +92,6 @@ const CerraduraArticle = lazy(() => import('./pages/blog/arrendador-puede-cambia
 const OrdenDesalojoArticle = lazy(() => import('./pages/blog/orden-desalojo-chile-2026'));
 const DespidoSinMotivoArticle = lazy(() => import('./pages/blog/me-pueden-despedir-sin-motivo-chile-2026'));
 const LeyDevuelvemeMiCasaArticle = lazy(() => import('./pages/blog/ley-devuelveme-mi-casa-chile-2026'));
-const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const DeudaPensionArticle = lazy(() => import('./pages/blog/deuda-pension-alimentos-chile-2026'));
 const DerechoArrendamientoArticle = lazy(() => import('./pages/blog/derecho-arrendamiento-chile-guia-completa-2026'));
 const ContratoArriendoArticle = lazy(() => import('./pages/blog/contrato-de-arriendo-chile-2026'));

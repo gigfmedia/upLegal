@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
@@ -22,17 +22,17 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { Lawyer } from "@/components/LawyerCard";
-import { AuthModal } from "@/components/AuthModal";
-import { ContactModal } from "@/components/ContactModal";
-import { ScheduleModal } from "@/components/ScheduleModal";
-import { LawyerCard } from "@/components/LawyerCard";
+import { Lawyer, LawyerCard } from "@/components/LawyerCard";
 import Header from "@/components/Header";
-import { getVerifiedLawyersCount, subscribeToVerifiedLawyers } from "@/lib/verifiedLawyers";
-import { getCompletedCasesCount, subscribeToCompletedCases } from "@/lib/caseServiceCounter";
+import { getVerifiedLawyersCount } from "@/lib/verifiedLawyers";
+import { getCompletedCasesCount } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
-import { TestimonialsSection } from "@/components/TestimonialsSection";
+
+const AuthModal = lazy(() => import("@/components/AuthModal").then(m => ({ default: m.AuthModal })));
+const ContactModal = lazy(() => import("@/components/ContactModal").then(m => ({ default: m.ContactModal })));
+const ScheduleModal = lazy(() => import("@/components/ScheduleModal").then(m => ({ default: m.ScheduleModal })));
+const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 
 const Index = () => {
   const { user, isLoading } = useAuth();
@@ -786,7 +786,9 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50" />}>
+        <TestimonialsSection />
+      </Suspense>
 
       {/* FAQ Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
@@ -963,30 +965,34 @@ const Index = () => {
         </div>
       </section>
 
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
+      <Suspense fallback={null}>
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          mode={authMode}
+          onModeChange={setAuthMode}
+        />
+      </Suspense>
 
-      {selectedLawyer && (
-        <>
-          <ContactModal
-            isOpen={showContactModal}
-            onClose={() => setShowContactModal(false)}
-            lawyerName={selectedLawyer.name}
-            lawyerId={selectedLawyer.id}
-          />
-          <ScheduleModal
-            isOpen={showScheduleModal}
-            onClose={() => setShowScheduleModal(false)}
-            lawyerName={selectedLawyer.name}
-            hourlyRate={selectedLawyer.hourlyRate}
-            lawyerId={selectedLawyer.id || ""}
-          />
-        </>
-      )}
+      <Suspense fallback={null}>
+        {selectedLawyer && (
+          <>
+            <ContactModal
+              isOpen={showContactModal}
+              onClose={() => setShowContactModal(false)}
+              lawyerName={selectedLawyer.name}
+              lawyerId={selectedLawyer.id}
+            />
+            <ScheduleModal
+              isOpen={showScheduleModal}
+              onClose={() => setShowScheduleModal(false)}
+              lawyerName={selectedLawyer.name}
+              hourlyRate={selectedLawyer.hourlyRate}
+              lawyerId={selectedLawyer.id || ""}
+            />
+          </>
+        )}
+      </Suspense>
     </div>
   );
 };

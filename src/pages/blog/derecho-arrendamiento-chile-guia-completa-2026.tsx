@@ -261,13 +261,13 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            {/* <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link to="/blog/que-pasa-si-no-pago-arriendo-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
                 👉 ¿Qué pasa si no pago el arriendo en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
-            </div> */}
+            </div>
 
             <h3 className="text-xl font-bold mb-4 text-gray-800">Derecho a recuperar la propiedad en buen estado</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">

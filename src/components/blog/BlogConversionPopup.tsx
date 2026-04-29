@@ -17,7 +17,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
   const [isExitingTension, setIsExitingTension] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const targetUrl = `/consultar?category=${encodeURIComponent(category)}`;
+  const targetUrl = `/search?category=${encodeURIComponent(category)}`;
 
   // Content Mapping
   const getTopicContent = () => {

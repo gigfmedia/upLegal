@@ -113,7 +113,7 @@ const BlogArticle = () => {
                 IMPORTANTE: Ser imputado simplemente significa que existen antecedentes que justifican investigar si la persona tuvo participación en el delito. Durante esta etapa, gozas de la presunción de inocencia.
               </p>
             </div>
-            <h3 className="text-xl font-bold mb-4 text-gray-900 font-primary">Sus derechos fundamentales como imputado:</h3>
+            <h3 className="text-xl font-bold mb-4 text-gray-900 font-primary">Tus derechos fundamentales como imputado:</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 "Derecho a guardar silencio",

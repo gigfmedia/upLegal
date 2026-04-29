@@ -262,6 +262,15 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <p className="text-gray-600 mb-6 leading-relaxed italic">Puedes leer más sobre la Ley en este artículo.</p>
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link to="blog/ley-devuelveme-mi-casa-chile-2026" className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base">
+              👉 Ley "Devuélveme mi casa"
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Consejos para arrendatarios</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">Para evitar conflictos legales o procesos de desalojo, es recomendable seguir algunas buenas prácticas:</p>

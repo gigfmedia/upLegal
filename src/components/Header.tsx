@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, lazy, Suspense } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { cn } from "@/lib/utils";
-import { NotificationDropdown } from "./NotificationDropdown";
 import { supabase } from "@/lib/supabaseClient";
-import { AuthModal } from "./AuthModal";
+
+const AuthModal = lazy(() => import("./AuthModal").then(m => ({ default: m.AuthModal })));
 
 interface HeaderProps {
   onAuthClick?: (mode: 'login' | 'signup') => void;
@@ -210,7 +210,9 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
         </div>
       )}
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} onModeChange={setAuthMode} />
+      <Suspense fallback={null}>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} onModeChange={setAuthMode} />
+      </Suspense>
     </div>
   );
 }

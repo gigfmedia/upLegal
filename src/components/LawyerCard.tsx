@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AuthModal } from "./AuthModal";
 
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { LawyerRatings } from "./ratings/LawyerRatings";
@@ -623,16 +622,6 @@ export function LawyerCard({
           />
         </DialogContent>
       </Dialog>
-
-
-
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        mode={authMode}
-        onModeChange={setAuthMode}
-      />
     </>
     );
   }

@@ -166,12 +166,12 @@ const BlogArticle = () => {
                 "Despido por incumplimiento grave"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-gray-700 font-normal text-sm">{item}</span>
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-gray-700 font-normal">{item}</span>
                 </div>
               ))}
             </div>
-            <p className="text-gray-600 leading-relaxed font-medium">
+            <p className="text-gray-600 leading-relaxed font-medium mb-4">
               Dependiendo de la causal de término, el trabajador puede tener derecho a indemnizaciones adicionales. Por ejemplo, el despido por necesidades de la empresa (artículo 161 del Código del Trabajo) suele generar el pago de indemnización por años de servicio.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si tienes dudas sobre la legalidad de tu término de contrato, lee esto:</p>
@@ -271,16 +271,16 @@ const BlogArticle = () => {
                 <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
                   <h4 className="font-bold text-gray-900 mb-3">Reglas importantes del cálculo:</h4>
                   <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-gray-700 text-sm">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-blue-500" />
+                    <li className="flex items-start gap-2 text-gray-700">
+                      <CheckCircle className="h-4 w-4 mt-1 text-blue-500" />
                       <span>Se paga máximo por 11 años de servicio</span>
                     </li>
-                    <li className="flex items-start gap-2 text-gray-700 text-sm">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-blue-500" />
+                    <li className="flex items-start gap-2 text-gray-700">
+                      <CheckCircle className="h-4 w-4 mt-1 text-blue-500" />
                       <span>El sueldo base se calcula con el promedio de los últimos 3 meses</span>
                     </li>
-                    <li className="flex items-start gap-2 text-gray-700 text-sm">
-                      <CheckCircle className="h-4 w-4 mt-0.5 text-blue-500" />
+                    <li className="flex items-start gap-2 text-gray-700">
+                      <CheckCircle className="h-4 w-4 mt-1 text-blue-500" />
                       <span>Fracciones superiores a 6 meses pueden considerarse como año completo</span>
                     </li>
                   </ul>
@@ -419,8 +419,8 @@ const BlogArticle = () => {
                 "Cotizaciones pagadas"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  <span className="text-gray-700 text-sm">{item}</span>
+                  <CheckCircle className="h-5 w-5 mt-0.5 text-green-500 flex-shrink-0" />
+                  <span className="text-gray-700">{item}</span>
                 </div>
               ))}
             </div>
