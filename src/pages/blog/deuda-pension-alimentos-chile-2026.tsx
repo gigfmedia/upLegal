@@ -146,7 +146,7 @@ const BlogArticle = () => {
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {[
                 { item: "Cobro judicial", icon: "⚖️" },
-                { item: "Retención de ingresos", icon: "💼" },
+                { item: "Retención de ingresos", icon: "💵" },
                 { item: "Embargo de bienes", icon: "🏠" },
                 { item: "Medidas de apremio", icon: "⚠️" },
               ].map((m, i) => (
@@ -390,7 +390,7 @@ const BlogArticle = () => {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/consulta">
               <Button
                 size="lg"
                 onClick={() => {
