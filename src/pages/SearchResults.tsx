@@ -41,7 +41,7 @@ const normalizeSpecialty = (s: string | null): string => {
   if (lower.includes('familia')) return 'Derecho de Familia';
   if (lower.includes('laboral')) return 'Derecho Laboral';
   if (lower.includes('penal')) return 'Derecho Penal';
-  if (lower.includes('inmobiliario') || lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Inmobiliario';
+  if (lower.includes('inmobiliario') || lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Civil';
   if (lower.includes('comercial')) return 'Derecho Comercial';
   if (lower.includes('tributario')) return 'Derecho Tributario';
   if (lower.includes('civil')) return 'Derecho Civil';

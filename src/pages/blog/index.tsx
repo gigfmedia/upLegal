@@ -157,16 +157,6 @@ const BlogPage = () => {
       image: "/assets/despido-sin-motivo-chile-2026.png"
     },
     {
-      id: "me-pueden-despedir-sin-motivo-chile-2026",
-      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
-      excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
-      category: "Derecho Laboral",
-      author: "LegalUp",
-      date: "22 de Marzo, 2026",
-      readTime: "10 min",
-      image: "/assets/despido-sin-motivo-chile-2026.png"
-    },
-    {
       id: "orden-desalojo-chile-2026",
       title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
       excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué es el lanzamiento, qué ocurre después y qué hacer si recibes una. Guía legal completa 2026.",
@@ -283,7 +273,7 @@ const BlogPage = () => {
       <Header onAuthClick={() => {}} />
       
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-green-900 text-white py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
           <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/" className="hover:text-white transition-colors">
@@ -533,17 +523,9 @@ const BlogPage = () => {
             <Button 
               size="lg" 
               className="bg-gray-900 text-white hover:bg-green-900 hover:text-white px-8 py-3"
-              onClick={() => window.location.href = '/consulta'}
-            >
-              Consultar con Abogado Ahora
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="bg-white border-gray-900 text-gray-900 hover:text-white hover:bg-green-900 px-8 py-3"
               onClick={() => window.location.href = '/search'}
             >
-              Explorar Abogados
+              Consultar con Abogado Ahora
             </Button>
           </div>
         </div>

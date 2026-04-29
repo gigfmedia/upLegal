@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { logError } from '@/utils/errorLogger';
+import { Loader2 } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -71,11 +72,8 @@ class ErrorBoundary extends Component<Props, State> {
       // Chunk errors trigger an auto-reload so just show a brief loading state
       if (this.state.isChunkError) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="text-center p-8">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900 mx-auto mb-4" />
-              <p className="text-gray-600">Actualizando la página…</p>
-            </div>
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         );
       }

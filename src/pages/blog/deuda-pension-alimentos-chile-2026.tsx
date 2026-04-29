@@ -75,7 +75,7 @@ const BlogArticle = () => {
                 "Existen mecanismos legales efectivos para obligar el pago"
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 mt-0.5 flex-shrink-0 text-green-400" />
+                  <span className="text-green-600 font-bold">✓</span>
                   <span>{item}</span>
                 </li>
               ))}
