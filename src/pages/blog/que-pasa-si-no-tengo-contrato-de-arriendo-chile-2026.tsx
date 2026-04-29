@@ -39,7 +39,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)"
         description="Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026."
-        image="/assets/desalojo-chile-2026.png"
+        image="/assets/sin-contrato-arriendo-2026.png"
         url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"
         datePublished="2026-03-26"
         dateModified="2026-03-26"

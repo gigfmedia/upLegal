@@ -42,7 +42,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks 
         title="¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley"
         description="Un desalojo en Chile puede tardar entre 3 meses y más de un año, dependiendo del tribunal y si hay oposición. Conoce las etapas, los plazos reales y cuándo conviene actuar con un abogado."
-        image="/assets/desalojo-chile-2026.png"
+        image="/assets/desalojo-2-chile-2026.png"
         url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026"
         datePublished="2026-03-16"
         dateModified="2026-03-16"

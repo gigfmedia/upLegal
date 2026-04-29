@@ -39,7 +39,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)"
         description="Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica."
-        image="/assets/sin-contrato-arriendo-2026.png"
+        image="/assets/tacita-reconduccion-chile-2026.png"
         url="https://legalup.cl/blog/tacita-reconduccion-chile-2026"
         datePublished="2026-04-13"
         dateModified="2026-04-13"

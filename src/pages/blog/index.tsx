@@ -64,7 +64,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "13 de Abril, 2026",
       readTime: "9 min",
-      image: "/assets/sin-contrato-arriendo-2026.png"
+      image: "/assets/tacita-reconduccion-chile-2026.png"
     },
     {
       id: "reajuste-arriendo-ipc-chile-2026",
@@ -114,7 +114,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "5 de Abril, 2026",
       readTime: "8 min",
-      image: "/assets/desalojo-chile-2026.png"
+      image: "/assets/sin-contrato-arriendo-2026.png"
     },
     {
       id: "despido-injustificado-chile-2026",
@@ -144,7 +144,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "24 de Marzo, 2026",
       readTime: "14 min",
-      image: "/assets/desalojo-chile-2026.png"
+      image: "/assets/ley-devuelveme-mi-casa-2026.png"
     },
     {
       id: "me-pueden-despedir-sin-motivo-chile-2026",
@@ -194,7 +194,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "16 de Marzo, 2026",
       readTime: "15 min",
-      image: "/assets/desalojo-chile-2026.png"
+      image: "/assets/desalojo-2-chile-2026.png"
     },
     {
       id: "me-quieren-desalojar-que-hago-chile-2026",

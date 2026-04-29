@@ -43,7 +43,7 @@ const BlogArticle = () => {
       <BlogGrowthHacks
         title='Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026'
         description="Ley Devuélveme Mi Casa (21.461): procedimiento monitorio de arriendo, desalojo, plazos, pasos y derechos en Chile 2026. Guía para propietarios ante arrendatario que no paga o no desocupa."
-        image="/assets/orden-desalojo-chile-2026.png"
+        image="/assets/ley-devuelveme-mi-casa-2026.png"
         url="https://legalup.cl/blog/ley-devuelveme-mi-casa-chile-2026"
         datePublished="2026-03-25"
         dateModified="2026-03-25"
