@@ -3,11 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, MapPin, CheckCircle, MessageCircle, Calendar, User, ShieldCheck } from "lucide-react";
+import Star from "lucide-react/dist/esm/icons/star";
+import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
+import MessageCircle from "lucide-react/dist/esm/icons/message-circle";
+import Calendar from "lucide-react/dist/esm/icons/calendar";
+import UserIcon from "lucide-react/dist/esm/icons/user";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
-import { LawyerRatings } from "./ratings/LawyerRatings";
+const LawyerRatings = React.lazy(() => import("./ratings/LawyerRatings").then(m => ({ default: m.LawyerRatings })));
 import {
   Dialog,
   DialogContent,
@@ -611,15 +617,17 @@ export function LawyerCard({
             </DialogDescription>
           </DialogHeader>
           
-          <LawyerRatings 
-            lawyerId={lawyer.id}
-            averageRating={currentRating}
-            ratingCount={currentReviewCount}
-            onRatingUpdate={(newAverage, newCount) => {
-              setCurrentRating(newAverage);
-              setCurrentReviewCount(newCount);
-            }}
-          />
+          <React.Suspense fallback={<div className="h-40 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+            <LawyerRatings 
+              lawyerId={lawyer.id}
+              averageRating={currentRating}
+              ratingCount={currentReviewCount}
+              onRatingUpdate={(newAverage, newCount) => {
+                setCurrentRating(newAverage);
+                setCurrentReviewCount(newCount);
+              }}
+            />
+          </React.Suspense>
         </DialogContent>
       </Dialog>
     </>

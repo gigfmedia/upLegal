@@ -6,20 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchBar } from "@/components/SearchBar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Search, 
-  Users,
-  Shield, 
-  ShieldCheck, 
-  FileText, 
-  Briefcase, 
-  Building2, 
-  Scale,
-  DollarSign,
-  Lightbulb,
-  ChevronDown,
-  ChevronRight
-} from "lucide-react";
+import Search from "lucide-react/dist/esm/icons/search";
+import Users from "lucide-react/dist/esm/icons/users";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import FileText from "lucide-react/dist/esm/icons/file-text";
+import Briefcase from "lucide-react/dist/esm/icons/briefcase";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Scale from "lucide-react/dist/esm/icons/scale";
+import DollarSign from "lucide-react/dist/esm/icons/dollar-sign";
+import Lightbulb from "lucide-react/dist/esm/icons/lightbulb";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { Lawyer, LawyerCard } from "@/components/LawyerCard";
