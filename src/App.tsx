@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate, usePa
 import ScrollToTop from '@/components/ScrollToTop';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
-import { EmailTestComponent } from '@/components/EmailTestComponent';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { logError } from '@/utils/errorLogger';
 
@@ -17,19 +16,17 @@ import RouteHandler from '@/components/RouteHandler';
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { MessageProvider } from '@/contexts/MessageProvider';
-import { NotificationProvider } from '@/contexts/NotificationContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { supabase } from '@/lib/supabaseClient';
 
-// Layouts (keep these eager as they're used frequently)
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import RequireLawyer from '@/components/auth/RequireLawyer';
-import RequireAdmin from '@/components/auth/RequireAdmin';
+// Layouts (lazy load these as they're not needed for home page)
+const DashboardLayout = lazy(() => import('@/components/dashboard/DashboardLayout'));
+const RequireLawyer = lazy(() => import('@/components/auth/RequireLawyer'));
+const RequireAdmin = lazy(() => import('@/components/auth/RequireAdmin'));
 import Footer from '@/components/Footer';
 
-// Lazy load all pages for code splitting
-const Index = lazy(() => import('./pages/Index'));
+// Pages
+import Index from './pages/Index';
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const LawyerDashboard = lazy(() => import('./pages/LawyerDashboard'));
 const LawyerDashboardPage = lazy(() => import('./pages/lawyer/DashboardPage'));
@@ -262,6 +259,9 @@ const LawyerRedirect = () => {
   return <Navigate to={`/abogado/abogado-${lawyerId}`} replace />;
 };
 
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { MessageProvider } from '@/contexts/MessageProvider';
+
 const AppContent = () => {
   const { isLoading } = useAuth();
   const navigate = useNavigate();
@@ -329,6 +329,9 @@ const AppContent = () => {
         <ScrollToTop />
         <LoadingIndicator />
         <main className="flex-1">
+          <Suspense fallback={null}>
+            <GoogleAnalytics />
+          </Suspense>
           <LegalAgent />
           <Suspense fallback={
             <div className="flex items-center justify-center min-h-screen">
@@ -488,23 +491,77 @@ const AppContent = () => {
                   <PublicProfile />
                 </RequireLawyer>
               } />
-              
-              <Route path="/dashboard" element={<DashboardLayout />}>
+                    {/* Dashboard and Protected Routes wrapped in Suspense and Providers */}
+              <Route path="/dashboard" element={
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                }>
+                  <NotificationProvider>
+                    <MessageProvider>
+                      <DashboardLayout />
+                    </MessageProvider>
+                  </NotificationProvider>
+                </Suspense>
+              }>
                 <Route index element={<UserDashboard />} />
                 <Route path="profile" element={<DashboardProfile />} />
-                <Route path="profile/setup" element={
-                  <RequireLawyer>
-                    <ProfileSetupPage />
-                  </RequireLawyer>
-                } />
+                <Route path="profile/setup" element={<ProfileSetupPage />} />
                 <Route path="settings" element={<DashboardSettings />} />
-                {/* <Route path="consultations" element={<DashboardConsultations />} /> */}
+                <Route path="consultations" element={<DashboardConsultations />} />
                 <Route path="appointments" element={<DashboardAppointments />} />
                 <Route path="payments" element={<DashboardPayments />} />
-                <Route path="payment-settings" element={<PaymentSettings />} />
                 <Route path="messages" element={<DashboardMessages />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="notifications" element={<NotificationSettingsPage />} />
+                <Route path="payment-settings" element={<PaymentSettings />} />
+              </Route>
+
+              <Route path="/lawyer" element={
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                }>
+                  <NotificationProvider>
+                    <MessageProvider>
+                      <RequireLawyer>
+                        <DashboardLayout />
+                      </RequireLawyer>
+                    </MessageProvider>
+                  </NotificationProvider>
+                </Suspense>
+              }>
+                <Route path="dashboard" element={<LawyerDashboardPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="services" element={<ServicesPage />} />
+                <Route path="consultas" element={<ConsultasPage />} />
+                <Route path="citas" element={<CitasPage />} />
+                <Route path="earnings" element={<EarningsPage />} />
+                <Route path="favorites" element={<DashboardFavorites />} />
+              </Route>
+
+              <Route path="/admin" element={
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                }>
+                  <NotificationProvider>
+                    <MessageProvider>
+                      <RequireAdmin>
+                        <DashboardLayout />
+                      </RequireAdmin>
+                    </MessageProvider>
+                  </NotificationProvider>
+                </Suspense>
+             }>
+                <Route path="analytics" element={<AdminAnalyticsPage />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="notifications" element={<AdminNotifications />} />
+                <Route path="reviews" element={<AdminReviewsPage />} />
+                <Route path="lawyer-profiles" element={<LawyerProfilesPage />} />
               </Route>
               
               <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -516,12 +573,7 @@ const AppContent = () => {
               <Route path="/auth/accept-invite" element={<AcceptInvite />} />
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="test-email" element={
-            <div className="container mx-auto p-4">
-              <h1 className="text-2xl font-bold mb-4">Prueba de Envío de Correo</h1>
-              <EmailTestComponent />
-            </div>
-          } />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
           </Suspense>
@@ -532,25 +584,18 @@ const AppContent = () => {
   );
 };
 
-import GoogleAnalytics from '@/components/GoogleAnalytics';
+const GoogleAnalytics = lazy(() => import('@/components/GoogleAnalytics'));
 
 const App = () => (
-  <>
-    <GoogleAnalytics />
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationProvider>
-          <MessageProvider>
-            <Toaster />
-            <Sonner />
-            <ErrorBoundary>
-              <AppContent />
-            </ErrorBoundary>
-          </MessageProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </>
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <Toaster />
+      <Sonner />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
+    </AuthProvider>
+  </QueryClientProvider>
 );
 
 export default App;
