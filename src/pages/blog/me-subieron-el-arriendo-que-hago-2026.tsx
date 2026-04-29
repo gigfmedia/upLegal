@@ -340,7 +340,7 @@ const BlogArticle = () => {
             No permitas cobros abusivos. Conectamos a arrendatarios con abogados expertos en derecho inmobiliario para revisar contratos y defender tus derechos.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Arrendamiento">
               <Button
                 size="lg"
                 onClick={() => {
@@ -354,21 +354,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_arriendo_aumento_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Civiles
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

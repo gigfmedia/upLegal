@@ -557,7 +557,7 @@ const BlogArticle = () => {
             Si estás enfrentando un problema de arriendo, puedes hablar con un abogado especialista en Derecho Civil y arrendamientos. ¿Problemas con tu arrendatario? Encuentra abogados expertos en arriendos y desalojos en Chile.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Civil">
               <Button
                 size="lg"
                 onClick={() => {
@@ -571,21 +571,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.("event", "click_ver_abogados", {
-                    article: window.location.pathname,
-                    location: "blog_cta_ley_devuelveme_mi_casa_secondary"
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver abogados civiles
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

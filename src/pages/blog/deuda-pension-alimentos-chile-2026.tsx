@@ -173,19 +173,19 @@ const BlogArticle = () => {
                 {
                   title: "Solicitar liquidación de deuda",
                   desc: "Debes pedir al tribunal que calcule cuánto se debe. Esto incluye meses impagos, reajustes e intereses si corresponde.",
-                  note: "👉 Este documento es clave: determina el monto oficial.",
+                  note: "Este documento es clave: determina el monto oficial.",
                   color: "blue"
                 },
                 {
                   title: "Notificación al deudor",
                   desc: "El tribunal informa al deudor el monto adeudado y el plazo para pagar.",
-                  note: "👉 Aquí aún puede pagar voluntariamente.",
+                  note: "Aquí aún puede pagar voluntariamente.",
                   color: "green"
                 },
                 {
                   title: "Solicitar medidas de apremio",
                   desc: "Si no paga, puedes pedir retención de sueldo, retención de devolución de impuestos, suspensión de licencia de conducir, prohibición de salir del país o arresto.",
-                  note: "👉 Estas medidas buscan forzar el cumplimiento.",
+                  note: "Estas medidas buscan forzar el cumplimiento.",
                   color: "amber"
                 },
                 {
@@ -208,7 +208,7 @@ const BlogArticle = () => {
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">{step.title}</h4>
                     <p className="text-gray-600 mb-2">{step.desc}</p>
-                    {step.note && <p className="text-blue-700 text-sm font-medium">{step.note}</p>}
+                    {step.note && <p className="text-blue-700 font-medium">{step.note}</p>}
                   </div>
                 </div>
               ))}
@@ -231,7 +231,7 @@ const BlogArticle = () => {
                     <span className="text-xl">{m.icon}</span>
                     <span className="font-bold text-gray-900">{m.item}</span>
                   </div>
-                  <p className="text-gray-600 text-sm">{m.desc}</p>
+                  <p className="text-gray-600">{m.desc}</p>
                 </div>
               ))}
             </div>
@@ -391,21 +391,6 @@ const BlogArticle = () => {
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Habla con un abogado ahora
-              </Button>
-            </Link>
-            <Link to="/search?category=Derecho+de+Familia">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_pension_deuda_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados de Familia
               </Button>
             </Link>
           </div>

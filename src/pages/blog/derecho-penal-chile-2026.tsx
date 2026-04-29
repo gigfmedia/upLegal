@@ -230,7 +230,7 @@ const BlogArticle = () => {
             Protege tu libertad y tus derechos. Conectamos a personas con abogados penalistas expertos para preparar tu defensa o querella de forma inmediata y profesional.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Penal">
               <Button
                 size="lg"
                 onClick={() => {
@@ -244,21 +244,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Penalista
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Penal">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_derecho_penal_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Listado de Abogados
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

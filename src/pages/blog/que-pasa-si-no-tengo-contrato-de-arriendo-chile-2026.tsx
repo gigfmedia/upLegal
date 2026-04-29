@@ -484,7 +484,7 @@ const BlogArticle = () => {
               Habla con un abogado y entiende cuáles son tus opciones legales. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/consultar">
+              <Link to="/search?category=Derecho+Inmobiliario">
                 <Button
                   size="lg"
                   onClick={() => {
@@ -498,21 +498,7 @@ const BlogArticle = () => {
                   Consultar con Abogado de Arriendo
                 </Button>
               </Link>
-              <Link to="/search?category=Arrendamiento">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => {
-                    window.gtag?.('event', 'click_ver_abogados', {
-                      article: window.location.pathname,
-                      location: 'blog_cta_sin_contrato_arriendo_secondary',
-                    });
-                  }}
-                  className="bg-white hover:bg-green-900 text-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-                >
-                  Ver Listado de Abogados
-                </Button>
-              </Link>
+              
             </div>
           </section>
       </div>

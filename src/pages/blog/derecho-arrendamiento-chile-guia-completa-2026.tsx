@@ -827,7 +827,7 @@ const BlogArticle = () => {
             Habla con un abogado experto y recibe orientación clara sobre tu caso hoy mismo. En LegalUp conectamos a personas con abogados especialistas para resolver conflictos de forma inmediata.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Inmobiliario">
               <Button
                 size="lg"
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
@@ -841,15 +841,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Arrendamiento">
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados de Arriendo
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

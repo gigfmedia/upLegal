@@ -515,7 +515,7 @@ const BlogArticle = () => {
             Habla con un abogado laboral, evalúa tu caso y entiende cuánto puedes reclamar. En LegalUp encuentras especialistas que trabajan en esto todos los días.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Laboral">
               <Button
                 size="lg"
                 onClick={() => {
@@ -529,21 +529,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Laboral">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_despido_injustificado_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Laborales
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

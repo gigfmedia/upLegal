@@ -496,7 +496,7 @@ const BlogArticle = () => {
             Protege tus derechos laborales. Habla con un abogado laboral y revisa tu finiquito antes de firmar para asegurarte de que recibes lo que te corresponde.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Laboral">
               <Button 
                 size="lg" 
                 onClick={() => {
@@ -510,21 +510,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Laboral">
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_anios_servicio_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Laborales
-              </Button>
-            </Link>
+            
           </div>
         </section>
 

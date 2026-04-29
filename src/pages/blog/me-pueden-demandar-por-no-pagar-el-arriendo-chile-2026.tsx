@@ -581,26 +581,6 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'cta_click', {
-                    location: 'blog_cta',
-                    text: 'Encontrar abogado',
-                  });
-                  window.gtag?.("event", "click_ver_abogados", {
-                    article: window.location.pathname,
-                    location: "blog_cta_demanda_arriendo_secondary",
-                  });
-                }}
-                className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Civiles
-              </Button>
-            </Link>
           </div>
         </div>
       </section>

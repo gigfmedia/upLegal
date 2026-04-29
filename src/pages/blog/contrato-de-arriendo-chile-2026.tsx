@@ -653,7 +653,7 @@ const BlogArticle = () => {
             Recibe orientación clara de un abogado especialista y protege tu situación antes de que el problema escale. Consulta hoy mismo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Arrendamiento">
               <Button
                 size="lg"
                 onClick={() => {
@@ -667,21 +667,7 @@ const BlogArticle = () => {
                 Hablar con un Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_contrato_arriendo_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados de Arriendo
-              </Button>
-            </Link>
+            
           </div>
         </section>
       </div>

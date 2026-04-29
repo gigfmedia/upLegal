@@ -550,7 +550,7 @@ const BlogArticle = () => {
             Habla con un abogado y aclara tu situación antes de que surjan problemas. En LegalUp conectamos a personas con abogados especialistas para guiarte en tu caso.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Inmobiliario">
               <Button
                 size="lg"
                 onClick={() => {
@@ -564,21 +564,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Arrendamiento">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_tacita_secondary',
-                  });
-                }}
-                className="border-gray-600 text-gray-600 hover:bg-green-900 hover:text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados Disponibles
-              </Button>
-            </Link>
+            
           </div>
         </div>
       </section>

@@ -536,7 +536,7 @@ const BlogArticle = () => {
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+de+Familia">
               <Button 
                 size="lg" 
                 onClick={() => {
@@ -550,21 +550,7 @@ const BlogArticle = () => {
                 Consultar con Abogado Ahora
               </Button>
             </Link>
-            <Link to="/search?category=Derecho+de+Familia">
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_derecho_familia_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Abogados de Familia
-              </Button>
-            </Link>
+            
           </div>
         </section>
 

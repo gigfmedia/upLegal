@@ -500,7 +500,7 @@ const BlogArticle = () => {
             Protege tus derechos laborales. Si tienes dudas sobre tu finiquito, necesitas que un abogado revise los cálculos o quieres iniciar un reclamo, contacta a un especialista ahora.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/consultar">
+            <Link to="/search?category=Derecho+Laboral">
               <Button 
                 size="lg" 
                 onClick={() => {
@@ -512,21 +512,6 @@ const BlogArticle = () => {
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
               >
                 Consultar con Abogado Laboral
-              </Button>
-            </Link>
-            <Link to="/search?category=Derecho+Laboral">
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_ver_abogados', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_finiquito_secondary',
-                  });
-                }}
-                className="border-green-900 text-green-900 hover:text-white hover:bg-green-900 px-8 py-3 w-full sm:w-auto"
-              >
-                Ver Listado de Abogados
               </Button>
             </Link>
           </div>
