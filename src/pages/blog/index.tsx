@@ -54,7 +54,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "15 de Abril, 2026",
       readTime: "15 min",
-      image: "/assets/derecho-arriendo-chile-2026.png"
+      image: "/assets/derecho-arrendamiento-chile-2026.png"
     },
     {
       id: "tacita-reconduccion-chile-2026",
@@ -64,7 +64,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "13 de Abril, 2026",
       readTime: "9 min",
-      image: "/assets/arriendo-chile-2026.png"
+      image: "/assets/sin-contrato-arriendo-2026.png"
     },
     {
       id: "reajuste-arriendo-ipc-chile-2026",
@@ -74,7 +74,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "12 de Abril, 2026",
       readTime: "9 min",
-      image: "/assets/arriendo-chile-2026.png"
+      image: "/assets/reajuste-arriendo-ipc-2026.png"
     },
     {
       id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
@@ -84,7 +84,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "10 de Abril, 2026",
       readTime: "10 min",
-      image: "/assets/desalojo-chile-2026.png"
+      image: "/assets/desalojo-3-chile-2026.png"
     },
     {
       id: "dicom-deuda-arriendo-chile-2026",
@@ -104,7 +104,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "8 de Abril, 2026",
       readTime: "9 min",
-      image: "/assets/garantia-arriendo-chile-2026.png"
+      image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
     },
     {
       id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
@@ -114,7 +114,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "5 de Abril, 2026",
       readTime: "8 min",
-      image: "/assets/arriendo-chile-2026.png"
+      image: "/assets/desalojo-chile-2026.png"
     },
     {
       id: "despido-injustificado-chile-2026",
@@ -134,7 +134,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "30 de Marzo, 2026",
       readTime: "10 min",
-      image: "/assets/finiquito-chile-2026.png"
+      image: "/assets/anos-de-servicio-chile-2026.png"
     },
     {
       id: "ley-devuelveme-mi-casa-chile-21461-2026",
@@ -194,7 +194,7 @@ const BlogPage = () => {
       author: "LegalUp",
       date: "16 de Marzo, 2026",
       readTime: "15 min",
-      image: "/assets/desalojo-2-chile-2026.png"
+      image: "/assets/desalojo-chile-2026.png"
     },
     {
       id: "me-quieren-desalojar-que-hago-chile-2026",
