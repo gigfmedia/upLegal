@@ -195,7 +195,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
       {!mobileMenuButton && isMobileMenuOpen && (
         <div className="md:hidden fixed top-[104px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
           <nav className="flex flex-col p-4 space-y-3">
-            <button onClick={() => handleNavigation('/search')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/search') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Explorar Servicios</button>
+            <button onClick={() => handleNavigation('/search')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/search') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Match con abogado</button>
             <button onClick={() => handleNavigation('/como-funciona')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/como-funciona') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Cómo Funciona</button>
             <button onClick={() => handleNavigation('/about')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/about') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Acerca de</button>
             <button onClick={() => handleNavigation('/blog')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/blog') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Blog</button>

@@ -23,8 +23,8 @@ const BlogPage = () => {
       category: "Derecho de Familia",
       author: "LegalUp",
       date: "28 de Abril, 2026",
-      readTime: "10 min",
-      image: "/assets/derecho-de-familia-chile-2026.png"
+      readTime: "12 min",
+      image: "/assets/pension-alimentos-chile-2026.png"
     },
     {
       id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",

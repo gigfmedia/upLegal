@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
@@ -8,6 +9,69 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+
+const PensionCalculator = () => {
+  const [income, setIncome] = useState(500000);
+  const [children, setChildren] = useState(1);
+
+  const calculate = () => {
+    let percentage = 0;
+    if (children === 1) percentage = 0.2;
+    if (children === 2) percentage = 0.3;
+    if (children >= 3) percentage = 0.4;
+    return Math.round(income * percentage);
+  };
+
+  return (
+    <div className="p-6 sm:p-8 rounded-md my-8 border">
+      <div className="max-w-xl mx-auto">
+        <h3 className="text-xl font-bold mb-6 text-gray-900">
+          Calcula tu pensión de alimentos estimada
+        </h3>
+
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Ingreso mensual líquido ($)
+          </label>
+          <input
+            type="number"
+            value={income}
+            onChange={(e) => setIncome(Number(e.target.value))}
+            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 text-sm font-medium text-gray-700">
+            Número de hijos
+          </label>
+          <select
+            value={children}
+            onChange={(e) => setChildren(Number(e.target.value))}
+            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+          >
+            <option value={1}>1 hijo</option>
+            <option value={2}>2 hijos</option>
+            <option value={3}>3 hijos o más</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="bg-green-100 p-6 rounded-xl text-center border border-green-100">
+        <p className="text-green-900 font-medium mb-1">Estimación mensual</p>
+        <p className="text-3xl font-bold text-green-600">
+          ${calculate().toLocaleString("es-CL")}
+        </p>
+      </div>
+
+      <p className="text-xs text-gray-400 mt-4 leading-relaxed">
+        *Estimación referencial basada en rangos comunes en Chile (20% a 40% del ingreso según número de hijos). El monto real lo define el tribunal según ingresos reales, necesidades de los niños y capacidad económica de ambos padres.
+      </p>
+      </div>
+    </div>
+  );
+};
 
 const BlogArticle = () => {
   const faqs = [
@@ -97,7 +161,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <span>Tiempo de lectura: 12 min</span>
             </div>
           </div>
         </div>
@@ -138,6 +202,15 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <PensionCalculator />
+          <div className="mb-12">
+            <InArticleCTA
+              message="¿Quieres saber el monto exacto según tu caso? La calculadora es una estimación referencial."
+              buttonText="Habla con un abogado ahora"
+              category="Derecho de Familia"
+            />
+          </div>
+
           {/* ¿Se puede cobrar? */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4">¿La deuda de pensión se puede cobrar?</h2>
@@ -157,12 +230,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-          <InArticleCTA
-            message="¿Tienes deuda de pensión de alimentos y no sabes cómo cobrarla? Un abogado especialista puede guiarte para activar liquidación, embargo y medidas de apremio de forma efectiva."
-            buttonText="Habla con un abogado ahora"
-            category="Derecho de Familia"
-          />
 
           {/* Paso a paso */}
           <div className="mb-8 mt-8">
@@ -242,6 +309,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <InArticleCTA
+            message="¿Tienes deuda de pensión de alimentos y no sabes cómo cobrarla? Un abogado especialista puede guiarte para activar liquidación, embargo y medidas de apremio de forma efectiva."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho de Familia"
+          />
+
           {/* Preguntas frecuentes de situaciones */}
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">Preguntas frecuentes sobre el proceso</h2>
@@ -293,19 +366,31 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* Errores comunes */}
+          {/* Errores al demandar */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Errores comunes</h2>
-            <div className="bg-red-50 border border-red-100 rounded-xl p-6">
-              <ul className="space-y-2">
-                {["No pedir liquidación", "Esperar demasiado", "No solicitar medidas de apremio", "No hacer seguimiento"].map((e, i) => (
-                  <li key={i} className="flex items-center gap-2 text-red-800">
-                    <span className="text-red-500">✕</span>
-                    <span>{e}</span>
-                  </li>
+            <h2 className="text-2xl font-bold mb-4">Errores al demandar pensión de alimentos en Chile</h2>
+            <p className="text-gray-600 mb-6">Muchos casos se retrasan o se complican por errores evitables. Estos son los más comunes:</p>
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
+              <div className="space-y-6">
+                {[
+                  { title: "No presentar documentos suficientes", desc: "(No acreditar ingresos o gastos correctamente)" },
+                  { title: "Indicar un domicilio incorrecto del demandado", desc: "(Esto puede retrasar la notificación por meses)" },
+                  { title: "No asistir a audiencias", desc: "(Puede perjudicar gravemente tu caso)" },
+                  { title: "Pedir montos sin justificación", desc: "(El tribunal necesita fundamentos claros)" },
+                  { title: "No actualizar información económica", desc: "(Si cambian ingresos, debes informarlo)" },
+                ].map((error, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="text-red-500 font-bold text-lg mt-0.5 flex-shrink-0">✕</div>
+                    <div>
+                      <h4 className="font-bold text-red-900">{error.title}</h4>
+                      <p className="text-red-800 opacity-90">{error.desc}</p>
+                    </div>
+                  </div>
                 ))}
-              </ul>
-              <p className="text-red-700 font-medium mt-4">👉 Estos errores retrasan el cobro.</p>
+              </div>
+            </div>
+            <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl">
+              <p className="text-blue-900 font-medium"><strong>Clave:</strong> Un error en esta etapa puede significar perder tiempo o recibir una pensión menor a la que corresponde.</p>
             </div>
           </div>
 
@@ -321,6 +406,42 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          </div>
+
+          {/* ¿Cuánto cuesta? */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">¿Cuánto cuesta demandar pensión de alimentos en Chile?</h2>
+            <p className="text-gray-600 mb-6">Una de las principales dudas es el costo del proceso. La buena noticia es que demandar pensión de alimentos en Chile puede ser gratuito.</p>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white border border-gray-100 shadow-sm p-6 rounded-2xl">
+                <span className="p-1 bg-green-100 text-green-700 rounded text-[10px] uppercase mb-3 inline-block font-bold">Opción 1</span>
+                <h3 className="font-bold text-lg mb-4 text-gray-900 flex items-center gap-2">
+                  Corporación de Asistencia Judicial
+                </h3>
+                <ul className="space-y-2 text-gray-600 mb-4">
+                  <li className="flex items-center gap-2 font-bold text-green-700"><CheckCircle className="h-4 w-4" /> Sin costo</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Abogados asignados por el Estado</li>
+                  <li className="flex items-center gap-2 text-amber-700"><Clock className="h-4 w-4" /> Puede tener tiempos más largos</li>
+                </ul>
+              </div>
+
+              <div className="bg-white border border-gray-100 shadow-sm p-6 rounded-2xl">
+                <span className="p-1 bg-blue-100 text-blue-700 rounded text-[10px] uppercase mb-3 inline-block font-bold">Opción 2</span>
+                <h3 className="font-bold text-lg mb-4 text-gray-900 flex items-center gap-2">
+                  Abogado particular
+                </h3>
+                <ul className="space-y-2 text-gray-600 mb-4">
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Honorarios variables</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4" /> Mayor rapidez y estrategia personalizada</li>
+                </ul>
+                <div className="text-xs text-gray-400 mt-4 pt-4 border-t border-gray-50">
+                  Costos adicionales posibles: Notificaciones judiciales, tramitaciones específicas.
+                </div>
+              </div>
+            </div>
+            
+            <p className="mt-8 text-gray-500 italic">En muchos casos, el costo es bajo o incluso cero comparado con el beneficio de asegurar una pensión estable.</p>
           </div>
 
           {/* Conclusión */}
