@@ -76,10 +76,6 @@ const Index = () => {
       window.history.replaceState({}, '', '/');
     }
   }, []);
-  
-  // Typing animation effect for placeholders - optimized to not cause re-renders
-  useEffect(() => {
-  }, []);
 
   useEffect(() => {
     if (shouldLoadFeatured) return;
