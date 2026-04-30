@@ -210,9 +210,11 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
         </div>
       )}
 
-      <Suspense fallback={null}>
-        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} onModeChange={setAuthMode} />
-      </Suspense>
+      {isAuthModalOpen && (
+        <Suspense fallback={null}>
+          <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} mode={authMode} onModeChange={setAuthMode} />
+        </Suspense>
+      )}
     </div>
   );
 }

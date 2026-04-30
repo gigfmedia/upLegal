@@ -964,34 +964,40 @@ const Index = () => {
         </div>
       </section>
 
-      <Suspense fallback={null}>
-        <AuthModal
-          isOpen={showAuthModal}
-          onClose={() => setShowAuthModal(false)}
-          mode={authMode}
-          onModeChange={setAuthMode}
-        />
-      </Suspense>
+      {showAuthModal && (
+        <Suspense fallback={null}>
+          <AuthModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            mode={authMode}
+            onModeChange={setAuthMode}
+          />
+        </Suspense>
+      )}
 
-      <Suspense fallback={null}>
-        {selectedLawyer && (
+      {selectedLawyer && (showContactModal || showScheduleModal) && (
+        <Suspense fallback={null}>
           <>
-            <ContactModal
-              isOpen={showContactModal}
-              onClose={() => setShowContactModal(false)}
-              lawyerName={selectedLawyer.name}
-              lawyerId={selectedLawyer.id}
-            />
-            <ScheduleModal
-              isOpen={showScheduleModal}
-              onClose={() => setShowScheduleModal(false)}
-              lawyerName={selectedLawyer.name}
-              hourlyRate={selectedLawyer.hourlyRate}
-              lawyerId={selectedLawyer.id || ""}
-            />
+            {showContactModal && (
+              <ContactModal
+                isOpen={showContactModal}
+                onClose={() => setShowContactModal(false)}
+                lawyerName={selectedLawyer.name}
+                lawyerId={selectedLawyer.id}
+              />
+            )}
+            {showScheduleModal && (
+              <ScheduleModal
+                isOpen={showScheduleModal}
+                onClose={() => setShowScheduleModal(false)}
+                lawyerName={selectedLawyer.name}
+                hourlyRate={selectedLawyer.hourlyRate}
+                lawyerId={selectedLawyer.id || ""}
+              />
+            )}
           </>
-        )}
-      </Suspense>
+        </Suspense>
+      )}
     </div>
   );
 };

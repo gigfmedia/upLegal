@@ -202,6 +202,34 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* Cómo calcula el juez */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">¿Cómo calcula el juez la pensión de alimentos en Chile?</h2>
+            <p className="text-gray-600 mb-6">El monto de la pensión no es arbitrario. El tribunal evalúa múltiples factores para fijarlo de forma proporcional.</p>
+            
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              {[
+                { title: "Necesidades del alimentario", desc: "Alimentación, educación, salud, vivienda, vestuario.", icon: "🍎" },
+                { title: "Capacidad económica", desc: "Sueldo, ingresos informales, bienes del demandado.", icon: "💰" },
+                { title: "Cargas familiares", desc: "Si el demandado tiene otros hijos o dependientes.", icon: "👨‍👩‍👧‍👦" },
+                { title: "Nivel de vida previo", desc: "El estándar que tenía el menor antes del conflicto.", icon: "📈" },
+              ].map((c, i) => (
+                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{c.icon}</span>
+                    <span className="font-bold text-gray-900">{c.title}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">{c.desc}</p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl mb-4">
+              <p className="font-bold text-blue-900">Importante</p>
+              <p className="text-blue-800">No existe un monto fijo universal. Cada caso se analiza individualmente. En la práctica, muchas pensiones se fijan entre un 20% y 40% de los ingresos, pero puede variar.</p>
+            </div>
+          </div>
+
           <PensionCalculator />
           <div className="mb-12">
             <InArticleCTA
@@ -282,32 +310,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* Medidas del tribunal */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">¿Qué medidas puede ordenar el tribunal?</h2>
-            <p className="text-gray-600 mb-4">Las más comunes en Chile:</p>
-            <div className="grid sm:grid-cols-2 gap-3 mb-6">
-              {[
-                { item: "Retención de sueldo", desc: "El empleador descuenta directamente el monto.", icon: "💼" },
-                { item: "Retención de impuestos", desc: "Se retiene la devolución de impuestos.", icon: "📄" },
-                { item: "Embargo de bienes", desc: "Se afectan bienes del deudor.", icon: "🏠" },
-                { item: "Arresto", desc: "En incumplimiento reiterado, el tribunal puede decretarlo.", icon: "⚠️" },
-              ].map((m, i) => (
-                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">{m.icon}</span>
-                    <span className="font-bold text-gray-900">{m.item}</span>
-                  </div>
-                  <p className="text-gray-600">{m.desc}</p>
-                </div>
-              ))}
-            </div>
-            <div className="bg-red-950 p-6 rounded-2xl text-white relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/20 blur-2xl rounded-full -mr-16 -mt-16"></div>
-              <p className="font-bold text-red-200 uppercase tracking-widest text-xs mb-2">Importante 2026</p>
-              <p className="text-lg font-serif">👉 Sí, puede ocurrir arresto. En caso de incumplimiento reiterado, el tribunal puede decretar arresto.</p>
-            </div>
-          </div>
 
           <InArticleCTA
             message="¿Tienes deuda de pensión de alimentos y no sabes cómo cobrarla? Un abogado especialista puede guiarte para activar liquidación, embargo y medidas de apremio de forma efectiva."
@@ -322,23 +324,23 @@ const BlogArticle = () => {
               {[
                 {
                   q: "¿Cuándo puedes solicitar estas medidas?",
-                  a: "Cuando existe pensión fijada, existe deuda y hay incumplimiento. No necesitas esperar años."
+                  a: "Cuando existe pensión fijada, hay deuda acumulada e incumplimiento. No necesitas esperar meses ni acumular una deuda grande — basta con el primer incumplimiento para iniciar acciones legales."
                 },
                 {
                   q: "¿Cuánto demora cobrar la deuda?",
-                  a: "La liquidación toma semanas. Las medidas de apremio entre 1 y 2 meses. El cobro completo es variable, pero en muchos casos las medidas generan pago rápido."
+                  a: "La liquidación toma generalmente algunas semanas. Las medidas de apremio entre 1 y 2 meses. En muchos casos, una vez decretadas las medidas el deudor paga rápido para evitar consecuencias mayores."
                 },
                 {
                   q: "¿La deuda prescribe?",
-                  a: "No fácilmente. Las deudas de pensión tienen tratamiento especial y pueden mantenerse exigibles por largos periodos."
+                  a: "No fácilmente. Las deudas de pensión tienen tratamiento especial y pueden mantenerse exigibles por períodos prolongados. Actuar a tiempo igual es recomendable para evitar que la deuda siga creciendo."
                 },
                 {
                   q: "¿Qué pasa si el deudor no tiene ingresos formales?",
-                  a: "Aún puedes solicitar embargo, investigar bienes y pedir medidas de presión. No tener contrato no elimina la obligación."
+                  a: "La obligación existe igualmente. Puedes solicitar embargo de bienes, investigar su situación económica real ante el tribunal y pedir otras medidas de presión. No tener contrato no elimina la deuda."
                 },
                 {
                   q: "¿Qué pasa si paga parcialmente?",
-                  a: "Se considera incumplimiento. Puedes cobrar la diferencia y solicitar medidas."
+                  a: "Se considera incumplimiento. Puedes cobrar la diferencia y solicitar medidas de apremio por el monto pendiente. No estás obligado a aceptar pagos parciales como cumplimiento total."
                 },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 p-5 rounded-xl border border-gray-100">
@@ -442,6 +444,148 @@ const BlogArticle = () => {
             </div>
             
             <p className="mt-8 text-gray-500 italic">En muchos casos, el costo es bajo o incluso cero comparado con el beneficio de asegurar una pensión estable.</p>
+          </div>
+
+          {/* Documentos necesarios */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              Documentos necesarios para demandar pensión de alimentos
+            </h2>
+            <p className="text-gray-600 mb-6">Para iniciar correctamente el proceso, debes reunir ciertos documentos clave:</p>
+            
+            <ul className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-gray-700 mb-6">
+              {[
+                "Certificado de nacimiento del hijo/a",
+                "Cédula de identidad",
+                "Comprobantes de gastos (colegio, salud, alimentación)",
+                "Antecedentes de ingresos del demandado (si los tienes)",
+                "Domicilio del demandado"
+              ].map((doc, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>{doc}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <p className="text-gray-900 font-medium">Mientras más información presentes, más sólido será tu caso.</p>
+          </div>
+
+          {/* Consecuencias del no pago */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              ¿Qué pasa si el demandado no paga la pensión?
+            </h2>
+            <p className="text-gray-600 mb-6">Cuando el demandado deja de pagar la pensión de alimentos, no solo se genera una deuda: se activa un proceso legal para exigir el cumplimiento.</p>
+            
+            <p className="text-gray-900 font-bold mb-4 text-sm uppercase tracking-wider">Desde ese momento:</p>
+            <ul className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-gray-700 mb-6">
+              {[
+                "La deuda comienza a acumularse mes a mes",
+                "Puedes solicitar su liquidación ante el tribunal",
+                "Se habilita el uso de medidas de presión legales"
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+              <p className="font-bold text-amber-900">Clave</p>
+              <p className="text-amber-800">No pagar la pensión no es una falta menor. Es un incumplimiento grave que permite activar mecanismos judiciales para forzar el pago.</p>
+            </div>
+            
+            <p className="text-gray-500 italic">A continuación te explicamos exactamente qué medidas puede ordenar el tribunal.</p>
+          </div>
+
+          {/* Medidas del tribunal */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Qué medidas puede ordenar el tribunal?</h2>
+            <p className="text-gray-600 mb-4">Las más comunes en Chile:</p>
+            <div className="grid sm:grid-cols-2 gap-3 mb-6">
+              {[
+                { item: "Retención de sueldo", desc: "El empleador descuenta directamente el monto.", icon: "💼" },
+                { item: "Retención de impuestos", desc: "Se retiene la devolución de impuestos.", icon: "📄" },
+                { item: "Suspensión de licencia", desc: "Se suspende la licencia de conducir del deudor.", icon: "🚗" },
+                { item: "Arraigo nacional", desc: "Prohibición de salir del país mientras exista deuda.", icon: "✈️" },
+                { item: "Embargo de bienes", desc: "Se afectan bienes del deudor.", icon: "🏠" },
+                { item: "Arresto", desc: "En incumplimiento reiterado, el tribunal puede decretarlo.", icon: "⚠️" },
+              ].map((m, i) => (
+                <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{m.icon}</span>
+                    <span className="font-bold text-gray-900">{m.item}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">{m.desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-red-950 p-6 rounded-2xl text-white relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/20 blur-2xl rounded-full -mr-16 -mt-16"></div>
+              <p className="font-bold text-red-200 uppercase tracking-widest text-xs mb-2">Importante 2026</p>
+              <p className="text-lg font-serif">👉 Sí, puede ocurrir arresto. En caso de incumplimiento reiterado, el tribunal puede decretar arresto.</p>
+            </div>
+          </div>
+
+          {/* Ejemplo de cálculo */}
+          <div className="mb-12 bg-green-900 text-white p-8 rounded-3xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 blur-3xl rounded-full -mr-32 -mt-32"></div>
+            
+            <h2 className="text-2xl font-bold mb-2">
+              Ejemplo real: cálculo de deuda de pensión de alimentos
+            </h2>
+            
+            <p className="mb-8">
+              Para entender mejor cómo se calcula una deuda, veamos un ejemplo simple:
+            </p>
+            
+            <div className="grid sm:grid-cols-2 gap-8 mb-8">
+              <div className="space-y-4">
+                <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+                  <p className="text-sm mb-1">Caso:</p>
+                  <ul className="space-y-1">
+                    <li className="font-bold">Pensión fijada: $200.000</li>
+                    <li className="font-bold">Meses sin pagar: 6</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl">
+                  <p className="text-sm text-green-400 mb-1">Resultado base:</p>
+                  <p className="text-2xl font-bold text-green-500">$1.200.000</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-sm">El tribunal puede incluir:</p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                    Reajustes según IPC
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                    Intereses en algunos casos
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                    Costas del proceso
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 border-l-4 border-green-500 p-6 rounded-r-xl mb-6">
+              <p className="text-sm mb-1">Deuda total estimada:</p>
+              <p className="text-xl font-bold text-white">Puede superar los $1.200.000 fácilmente</p>
+              <p className="text-sm mt-1">Dependiendo del tiempo y condiciones.</p>
+            </div>
+            
+            <div className="pt-4 border-t border-white/10">
+              <p className="font-bold text-green-400">Importante:</p>
+              <p>Mientras más tiempo pase sin pagar, mayor será la deuda acumulada. Por eso, iniciar la liquidación lo antes posible es clave para evitar que el monto siga creciendo.</p>
+            </div>
           </div>
 
           {/* Conclusión */}
