@@ -884,12 +884,12 @@ const Index = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <p className="bg-green-600 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">START</p>
+            <p className="bg-green-600 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">COMENZAR</p>
             <h2 className="text-3xl font-bold font-serif text-center text-green-600 mb-2">
               Comienza hoy mismo
             </h2>
             <p className="text-white">
-              Resuelve tus dudas sobre cómo funciona nuestra plataforma
+              Encuentra a tu abogado hoy, sin vueltas y sin perder tiempo
             </p>
           </div>
           
