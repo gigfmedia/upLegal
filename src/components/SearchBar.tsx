@@ -38,12 +38,12 @@ export function SearchBar({
   };
 
   return (
-    <div className="relative group w-full bg-white shadow-2xl rounded-2xl overflow-hidden shadow-sm border border-gray-300 group-focus-within:border-transparent transition-colors duration-300" onSubmit={(e) => e.preventDefault()}>
+    <div className="relative group w-full bg-white shadow-2xl rounded-2xl overflow-hidden shadow-sm border border-gray-300 transition-colors duration-200 focus-within:border-green-900 focus-within:ring-1 focus-within:ring-green-900" onSubmit={(e) => e.preventDefault()}>
       {/* Contenedor relativo del textarea y boton */}
       <div className="relative w-full h-full flex flex-col z-20">
         <textarea
           placeholder={placeholder}
-          className="relative w-full min-h-[120px] p-5 rounded-2xl bg-transparent border-none outline-none resize-none"
+          className="relative w-full min-h-[120px] p-5 rounded-2xl bg-transparent border-none outline-none resize-none focus-visible:outline-none"
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
           onKeyDown={handleKeyDown}
