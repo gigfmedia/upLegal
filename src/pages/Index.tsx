@@ -63,8 +63,8 @@ const Index = () => {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   
   // Estado para placeholders rotativos con animación de escritura
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
-  const placeholderRef = useRef<HTMLInputElement | null>(null);
+  const featuredSectionRef = useRef<HTMLElement | null>(null);
+  const [shouldLoadFeatured, setShouldLoadFeatured] = useState(false);
 
   // Check for login parameter in URL and open auth modal
   useEffect(() => {
@@ -79,44 +79,37 @@ const Index = () => {
   
   // Typing animation effect for placeholders - optimized to not cause re-renders
   useEffect(() => {
-    const placeholders = [
-      "Despido injustificado…",
-      "Pensión de alimentos…",
-      "Divorcio…",
-      "Deudas…",
-      "Herencias…"
-    ];
-    
-    const currentPlaceholder = placeholders[placeholderIndex];
-    let currentIndex = 0;
+  }, []);
 
-    // Find the search input and update its placeholder directly
-    const updatePlaceholder = (text: string) => {
-      const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-      if (searchInput) {
-        searchInput.placeholder = text;
-      }
+  useEffect(() => {
+    if (shouldLoadFeatured) return;
+
+    const node = featuredSectionRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setShouldLoadFeatured(true);
+          observer.disconnect();
+        }
+      },
+      { root: null, rootMargin: '600px 0px', threshold: 0 }
+    );
+
+    observer.observe(node);
+
+    const idleId = window.setTimeout(() => {
+      setShouldLoadFeatured(true);
+      observer.disconnect();
+    }, 4000);
+
+    return () => {
+      window.clearTimeout(idleId);
+      observer.disconnect();
     };
-
-    updatePlaceholder("");
-
-    // Typing animation
-    const typingInterval = setInterval(() => {
-      if (currentIndex < currentPlaceholder.length) {
-        updatePlaceholder(currentPlaceholder.slice(0, currentIndex + 1));
-        currentIndex++;
-      } else {
-        clearInterval(typingInterval);
-        
-        // Wait before moving to next placeholder
-        setTimeout(() => {
-          setPlaceholderIndex((prevIndex) => (prevIndex + 1) % placeholders.length);
-        }, 3000);
-      }
-    }, 60);
-
-    return () => clearInterval(typingInterval);
-  }, [placeholderIndex]);
+  }, [shouldLoadFeatured]);
 
   // Handle contact click - memoized to prevent re-renders
   const handleContactClick = useCallback((lawyer: Lawyer) => {
@@ -165,6 +158,7 @@ const Index = () => {
 
   // Fetch featured lawyers
   useEffect(() => {
+    if (!shouldLoadFeatured) return;
     const fetchFeaturedLawyers = async () => {
       try {
         setIsLoadingFeatured(true);
@@ -236,7 +230,7 @@ const Index = () => {
     };
 
     fetchFeaturedLawyers();
-  }, []);
+  }, [shouldLoadFeatured]);
 
   // Categories for the slider
   const categories = [
@@ -709,7 +703,7 @@ const Index = () => {
       </section>
 
       {/* Lista de Abogados */}
-      <section id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-bold font-serif text-gray-900">

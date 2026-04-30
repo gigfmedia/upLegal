@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 const BlogIndex = lazy(() => import('../pages/blog/index'));
 const BlogArticle = lazy(() => import('../pages/blog/me-subieron-el-arriendo-que-hago-2026'));
@@ -26,7 +27,11 @@ const DespidoInjustificadoArticle = lazy(() => import('../pages/blog/despido-inj
 const AnosServicioArticle = lazy(() => import('../pages/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026'));
 
 export const BlogRoutes = () => (
-  <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Cargando blog...</div>}>
+  <Suspense fallback={
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  }>
     <Routes>
       <Route index element={<BlogIndex />} />
       <Route path="me-subieron-el-arriendo-que-hago-2026" element={<BlogArticle />} />
