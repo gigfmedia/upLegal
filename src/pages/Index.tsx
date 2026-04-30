@@ -34,10 +34,7 @@ const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection"
 
 const Index = () => {
   const { user, isLoading } = useAuth();
-  
-  // Debug: Log user object to verify structure
-  useEffect(() => {
-  }, [user]);
+
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -149,7 +146,21 @@ const Index = () => {
       }
     };
 
-    loadInitialCounts();
+    const w = window as any;
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(() => {
+        loadInitialCounts();
+      }, { timeout: 2500 });
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      loadInitialCounts();
+    }, 1200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   // Fetch featured lawyers
