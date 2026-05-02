@@ -94,8 +94,12 @@ const BlogArticle = () => {
           />
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
-            <p className="text-lg text-gray-600 leading-relaxed font-medium">
-              Cuando termina una relación laboral, el trabajador tiene derecho a recibir todos los montos pendientes que se hayan generado durante su contrato. Sin embargo, muchas personas no saben cómo calcular su finiquito correctamente ni qué conceptos deben incluirse.
+            <p className="text-lg text-gray-600 leading-relaxed font-medium mb-4">
+              Cuando termina una relación laboral, el trabajador tiene derecho a recibir 
+              todos los montos pendientes generados durante su contrato. Para hacer el 
+              cálculo de tu finiquito en Chile 2026 correctamente, necesitas entender 
+              qué conceptos incluye y cómo verificar que el monto sea el correcto — 
+              muchas personas firman sin saber si les están pagando lo que corresponde.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
               En esta <strong>Guía 2026 sobre finiquitos en Chile</strong>, te explicamos paso a paso:
