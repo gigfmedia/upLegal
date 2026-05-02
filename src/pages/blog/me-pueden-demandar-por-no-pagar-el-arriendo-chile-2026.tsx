@@ -602,6 +602,12 @@ const BlogArticle = () => {
             excerpt: "Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitar errores.",
             image: "/assets/desalojo-3-chile-2026.png",
           }}
+          nextArticle={{
+            id: "deuda-pension-alimentos-chile-2026",
+            title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)",
+            excerpt: "Conoce cómo solicitar la liquidación de la deuda, activar medidas de apremio y asegurar el pago.",
+            image: "/assets/derecho-de-familia-chile-2026.png",
+          }}
         />
 
         <div className="mt-8 text-center">

@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "como-desalojar-a-una-persona-de-mi-propiedad-chile-2026",
+      title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
+      excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer según tu situación.",
+      category: "Derecho Civil",
+      author: "LegalUp",
+      date: "2 de Mayo, 2026",
+      readTime: "14 min",
+      image: "/assets/como-desalojar-chile-2026.png"
+    },
+    {
       id: "deuda-pension-alimentos-chile-2026",
       title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)",
       excerpt: "Si no recibes la pensión de alimentos o existe deuda acumulada, existen herramientas legales efectivas: liquidación judicial, retención de sueldo, embargo y arresto. Aprende cómo cobrarla paso a paso.",

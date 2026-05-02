@@ -25,6 +25,7 @@ const TacitaReconduccionArticle = lazy(() => import('../pages/blog/tacita-recond
 const DicomArriendoArticle = lazy(() => import('../pages/blog/dicom-deuda-arriendo-chile-2026'));
 const DespidoInjustificadoArticle = lazy(() => import('../pages/blog/despido-injustificado-chile-2026'));
 const AnosServicioArticle = lazy(() => import('../pages/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026'));
+const ComoDesalojarPropiedadArticle = lazy(() => import('../pages/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026'));
 
 export const BlogRoutes = () => (
   <Suspense fallback={
@@ -56,6 +57,8 @@ export const BlogRoutes = () => (
       <Route path="dicom-deuda-arriendo-chile-2026" element={<DicomArriendoArticle />} />
       <Route path="despido-injustificado-chile-2026" element={<DespidoInjustificadoArticle />} />
       <Route path="cuanto-me-corresponde-anos-de-servicio-chile-2026" element={<AnosServicioArticle />} />
+
+      <Route path="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" element={<ComoDesalojarPropiedadArticle />} />
     </Routes>
   </Suspense>
 );

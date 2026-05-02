@@ -679,6 +679,12 @@ const BlogArticle = () => {
             excerpt: "Si dejas de pagar el arriendo en Chile, el arrendador puede demandarte. Conoce qué puede pasar, cuáles son tus derechos y cómo enfrentar esta situación.",
             image: "/assets/demanda-arriendo-chile-2026.png"
           }}
+          nextArticle={{
+            id: "como-desalojar-a-una-persona-de-mi-propiedad-chile-2026",
+            title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
+            excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer según tu situación.",
+            image: "/assets/desalojo-chile-2026.png"
+          }}
         />
 
         <div className="mt-4 text-center">
