@@ -327,80 +327,61 @@ const SearchResults = () => {
         
         if (response) {
           // First, format all lawyers
-          const formattedLawyers = response.lawyers.map(lawyer => ({
-            id: lawyer.id,
-            user_id: lawyer.user_id,
-            name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
-            specialties: lawyer.specialties || [],
-            rating: lawyer.rating || 0,
-            reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Sin ubicación',
-            cases: 0,
-            hourlyRate: lawyer.hourly_rate_clp || 0,
-            consultationPrice: lawyer.contact_fee_clp || lawyer.hourly_rate_clp || 0,
-            image: lawyer.avatar_url || '',
-            bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
-            verified: Boolean(lawyer.verified),
-            blocked: lawyer.blocked || false,
-            availability: {
+          const formattedLawyers = response.lawyers.map(lawyer => {
+            const clientSurchargePercent = 0.1;
+            const roundToThousands = (amount: number): number => {
+              return Math.round(amount / 1000) * 1000;
+            };
+            
+            const rawHourlyRate = lawyer.hourly_rate_clp || 0;
+            const displayHourlyRate = roundToThousands(rawHourlyRate * (1 + clientSurchargePercent));
+
+            return {
+              id: lawyer.id,
+              user_id: lawyer.user_id,
+              name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
+              specialties: lawyer.specialties || [],
+              rating: lawyer.rating || 0,
+              reviews: lawyer.review_count || 0,
+              location: lawyer.location || 'Sin ubicación',
+              cases: 0,
+              hourlyRate: rawHourlyRate,
+              displayPrice: displayHourlyRate, // Added for consistent sorting/display
+              consultationPrice: displayHourlyRate, // Use the display price for sorting
+              image: lawyer.avatar_url || '',
+              bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
+              verified: Boolean(lawyer.verified),
+              blocked: lawyer.blocked || false,
+              availability: {
+                availableToday: Boolean(lawyer.available_today),
+                availableThisWeek: Boolean(lawyer.available_this_week),
+                quickResponse: true,
+                emergencyConsultations: true
+              },
               availableToday: Boolean(lawyer.available_today),
               availableThisWeek: Boolean(lawyer.available_this_week),
               quickResponse: true,
-              emergencyConsultations: true
-            },
-            availableToday: Boolean(lawyer.available_today),
-            availableThisWeek: Boolean(lawyer.available_this_week),
-            quickResponse: true,
-            emergencyConsultations: true,
-            experience_years: lawyer.experience_years || 0,
-            experienceYears: lawyer.experience_years || 0,
-            availability_config: (() => {
-              if (!lawyer.availability) return undefined;
-              if (typeof lawyer.availability === 'object') return lawyer.availability;
-              if (typeof lawyer.availability === 'string' && lawyer.availability.trim() !== '') {
-                try {
-                  return JSON.parse(lawyer.availability);
-                } catch (e) {
-                  console.error('Error parsing availability for lawyer:', lawyer.id, e);
-                  return undefined;
+              emergencyConsultations: true,
+              experience_years: lawyer.experience_years || 0,
+              experienceYears: lawyer.experience_years || 0,
+              availability_config: (() => {
+                if (!lawyer.availability) return undefined;
+                if (typeof lawyer.availability === 'object') return lawyer.availability;
+                if (typeof lawyer.availability === 'string' && lawyer.availability.trim() !== '') {
+                  try {
+                    return JSON.parse(lawyer.availability);
+                  } catch (e) {
+                    console.error('Error parsing availability for lawyer:', lawyer.id, e);
+                    return undefined;
+                  }
                 }
-              }
-              return undefined;
-            })()
-          }));
-
-          // Then sort them by profile completeness and rating
-          const sortedLawyers = [...formattedLawyers].sort((a, b) => {
-            // First priority: Verified status (verified MUST come first)
-            const aVerified = Boolean(a.verified);
-            const bVerified = Boolean(b.verified);
-            
-            if (aVerified && !bVerified) return -1;
-            if (!aVerified && bVerified) return 1;
-
-            // Second priority: Profile completeness (complete profiles first)
-            const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && 
-                              a.location?.trim() && a.hourlyRate > 0);
-            const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && 
-                              b.location?.trim() && b.hourlyRate > 0);
-            
-            if (isAComplete && !isBComplete) return -1;
-            if (!isAComplete && isBComplete) return 1;
-            
-            // Third priority: Rating (higher rating first)
-            const aRating = Number(a.rating) || 0;
-            const bRating = Number(b.rating) || 0;
-            
-            if (isAComplete && isBComplete) {
-              return bRating - aRating;
-            }
-            
-            // For incomplete profiles, also sort by rating
-            return bRating - aRating;
+                return undefined;
+              })()
+            };
           });
 
           setSearchResult(prev => ({
-            lawyers: page === 1 ? sortedLawyers : [...prev.lawyers, ...sortedLawyers],
+            lawyers: page === 1 ? formattedLawyers : [...prev.lawyers, ...formattedLawyers],
             total: response.total || 0,
             page,
             pageSize: response.pageSize || 10,
@@ -534,36 +515,46 @@ const SearchResults = () => {
     
     // Apply client-side sorting
     return [...searchResult.lawyers].sort((a, b) => {
-      // First priority: Verified status (verified MUST come first)
+      // 0-Price Handling: Always push lawyers with price 0 to the end
+      const aPrice = a.consultationPrice || 0;
+      const bPrice = b.consultationPrice || 0;
+      
+      if (aPrice === 0 && bPrice !== 0) return 1;
+      if (aPrice !== 0 && bPrice === 0) return -1;
+
+      // If a specific sort is selected, respect it primarily
+      if (sortBy === 'price_asc' || sortBy === 'price') {
+        if (aPrice !== bPrice) return aPrice - bPrice;
+      } else if (sortBy === 'price_desc') {
+        if (aPrice !== bPrice) return bPrice - aPrice;
+      } else if (sortBy === 'rating') {
+        const diff = (b.rating || 0) - (a.rating || 0);
+        if (diff !== 0) return diff;
+      } else if (sortBy === 'reviews') {
+        const diff = (b.reviews || 0) - (a.reviews || 0);
+        if (diff !== 0) return diff;
+      } else if (sortBy === 'experience') {
+        const diff = (b.experience_years || 0) - (a.experience_years || 0);
+        if (diff !== 0) return diff;
+      }
+
+      // Default / Relevance Fallback logic:
+      // First priority: Verified status
       const aVerified = Boolean(a.verified);
       const bVerified = Boolean(b.verified);
-      
-      if (aVerified && !bVerified) return -1;
-      if (!aVerified && bVerified) return 1;
+      if (aVerified !== bVerified) return aVerified ? -1 : 1;
 
-      // Second priority: Profile completeness (complete profiles first)
-      const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && 
-                                a.location?.trim() && a.hourlyRate > 0);
-      const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && 
-                                b.location?.trim() && b.hourlyRate > 0);
-      
-      if (isAComplete && !isBComplete) return -1;
-      if (!isAComplete && isBComplete) return 1;
+      // Second priority: Profile completeness
+      const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && a.location?.trim() && a.hourlyRate > 0);
+      const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && b.location?.trim() && b.hourlyRate > 0);
+      if (isAComplete !== isBComplete) return isAComplete ? -1 : 1;
 
-      // Then apply selected sort criteria
-      switch (sortBy) {
-        case 'price':
-          return a.consultationPrice - b.consultationPrice; // Precio: de menor a mayor
-        case 'rating':
-          return b.rating - a.rating; // Mejor calificados
-        case 'experience':
-          return (b.experience_years || 0) - (a.experience_years || 0); // Más experiencia
-        case 'relevance':
-        default:
-          // Relevance: Already handled by verified and completeness logic above
-          // Just sort by rating within complete/incomplete groups
-          return b.rating - a.rating;
-      }
+      // Third priority: Rating
+      const ratingDiff = (b.rating || 0) - (a.rating || 0);
+      if (ratingDiff !== 0) return ratingDiff;
+
+      // Fourth priority: Review count
+      return (b.reviews || 0) - (a.reviews || 0);
     });
   }, [searchResult.lawyers, loading, searchTerm, sortBy]);
 

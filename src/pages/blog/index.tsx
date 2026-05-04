@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "como-demandar-por-despido-injustificado-chile-2026",
+      title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
+      excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos críticos, requisitos, indemnizaciones y cómo ganar el caso.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "4 de Mayo, 2026",
+      readTime: "12 min",
+      image: "/assets/demandar-despido-injustificado-chile-2026.png"
+    },
+    {
       id: "como-desalojar-a-una-persona-de-mi-propiedad-chile-2026",
       title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
       excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer según tu situación.",
@@ -158,12 +168,12 @@ const BlogPage = () => {
     },
     {
       id: "me-pueden-despedir-sin-motivo-chile-2026",
-      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
+      title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)",
       excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
       category: "Derecho Laboral",
       author: "LegalUp",
       date: "22 de Marzo, 2026",
-      readTime: "10 min",
+      readTime: "11 min",
       image: "/assets/despido-sin-motivo-chile-2026.png"
     },
     {

@@ -180,7 +180,7 @@ const BlogArticle = () => {
             </p>
             
             <div className="grid gap-4 mb-8">
-              <div className="bg-green-50 border rounded-xl p-5 border-green-500 transition-colors shadow-sm">
+              <div className="bg-green-50 border rounded-xl p-5 border-green-100 transition-colors shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-base sm:text-lg">
                   <span className="text-green-600 font-bold">✓</span>
                   Mora en el pago de la renta
@@ -189,7 +189,7 @@ const BlogArticle = () => {
                   Desde el primer mes de atraso, ya estás facultado para demandar. No necesitas esperar tres meses ni enviar cartas notariales si el contrato no lo exige explícitamente para constituir la mora.
                 </p>
               </div>
-              <div className="bg-green-50 border rounded-xl p-5 border-green-500 transition-colors shadow-sm">
+              <div className="bg-green-50 border rounded-xl p-5 border-green-100 transition-colors shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-base sm:text-lg">
                   <span className="text-green-600 font-bold">✓</span>
                   Término por plazo vencido
@@ -545,6 +545,12 @@ const BlogArticle = () => {
               title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)",
               excerpt: "Si no recibes la pensión de alimentos o existe deuda acumulada, existen herramientas legales efectivas. Aprende cómo cobrarla paso a paso.",
               image: "/assets/pension-alimentos-chile-2026.png"
+            }}
+            nextArticle={{
+              id: "como-demandar-por-despido-injustificado-chile-2026",
+              title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
+              excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos críticos, requisitos e indemnizaciones.",
+              image: "/assets/despido-injustificado-chile-2026.png"
             }}
           />
 

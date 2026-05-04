@@ -125,6 +125,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, el empleador debe basarse en causales establecidas en el Código del Trabajo. Si no lo hace, o no puede demostrarlo, el despido puede ser declarado injustificado por un tribunal.
             </p>
+
+            <div className="text-center py-6 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
+              <Link 
+                to="/blog/como-demandar-por-despido-injustificado-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+              >
+                👉 Cómo demandar por despido injustificado (Paso a Paso 2026)
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           {/* Section 2: Cuándo */}

@@ -11,32 +11,41 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿El empleador puede despedir sin aviso?",
-      answer: "Sí, pero debe pagar una indemnización sustitutiva."
+      question: "¿Pueden despedirme sin dar motivos en Chile?",
+      answer:
+        "Sí. En Chile el empleador puede despedir a un trabajador invocando la causal de necesidades de la empresa o desahucio, sin necesidad de justificar una falta específica. Sin embargo, en ese caso está obligado a pagar indemnización por años de servicio y, si no avisó con 30 días de anticipación, también la indemnización sustitutiva del aviso previo.",
+    },
+    {
+      question: "¿Puedo despedirme sin aviso previo en Chile?",
+      answer:
+        "Sí. El trabajador puede renunciar en cualquier momento sin necesidad de dar aviso previo, aunque es recomendable hacerlo con al menos 30 días de anticipación como cortesía profesional. Si renuncias, no tienes derecho a indemnización por años de servicio — solo a las vacaciones proporcionales acumuladas.",
+    },
+    {
+      question: "¿Qué pasa si no me pagan el finiquito después del despido?",
+      answer:
+        "El empleador tiene un plazo para pagar el finiquito desde el término de la relación laboral. Si no cumple, la deuda se reajusta con IPC y se agregan intereses. Puedes reclamar en la Inspección del Trabajo o demandar directamente en el Juzgado del Trabajo para exigir el pago. {VALIDAR plazo exacto}",
     },
     {
       question: "¿Puedo negarme a firmar el finiquito?",
-      answer: "Sí. Puedes firmar con reserva de derechos si no estás de acuerdo."
+      answer:
+        "Sí. No estás obligado a firmar el finiquito si no estás de acuerdo con los montos. También puedes firmarlo con reserva de derechos — escribiendo esa frase antes de tu firma — lo que te permite aceptar el pago sin renunciar a reclamar la diferencia ante el tribunal laboral.",
     },
     {
-      question: "¿Qué pasa si no me pagan el finiquito?",
-      answer: "Puedes reclamar y exigir el pago."
+      question: "¿Puedo demandar si ya firmé el finiquito?",
+      answer:
+        "Depende de cómo firmaste. Si firmaste con reserva de derechos, puedes demandar la diferencia o impugnar el despido dentro del plazo legal. Si firmaste sin reserva, las posibilidades se reducen pero no desaparecen en todos los casos. Consulta con un abogado laboral antes de asumir que perdiste el derecho.",
     },
-    {
-      question: "¿Puedo demandar después de firmar?",
-      answer: "Depende de cómo firmaste el finiquito."
-    }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
-        description="Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado."
+        title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
+        description="Aprende si te pueden despedir sin motivo en Chile en 2026. Conoce las causales legales, el significado de 'necesidades de la empresa' y qué hacer para recibir tu indemnización."
         image="/assets/despido-sin-motivo-chile-2026.png"
         url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
         datePublished="2026-03-23"
-        dateModified="2026-03-23"
+        dateModified="2026-05-04"
         faqs={faqs}
       />
       <Header onAuthClick={() => {}} />
@@ -44,7 +53,7 @@ const BlogArticle = () => {
 
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
@@ -52,25 +61,45 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)
+            ¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)
           </h1>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+            <ul className="space-y-2">
+              {[
+                "No pueden despedirte “sin motivo” en Chile",
+                "Siempre deben invocar una causal legal",
+                "Puedes recibir indemnización incluso sin culpa",
+                "Si no prueban la causal → despido injustificado",
+                "Tienes 60 días hábiles para demandar"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <p className="text-xl leading-relaxed">
             Ser despedido genera muchas dudas, especialmente cuando no hay una explicación clara. Una de las preguntas más frecuentes es: ¿Me pueden despedir sin motivo en Chile?
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-gray-300">
               <Calendar className="h-4 w-4" />
-              <span>23 de Marzo, 2026</span>
+              <span>22 de Marzo, 2026</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-gray-300">
               <User className="h-4 w-4" />
               <span>Equipo LegalUp</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <span>Tiempo de lectura: 11 min</span>
             </div>
           </div>
         </div>
@@ -86,22 +115,27 @@ const BlogArticle = () => {
           />
 
           {/* Introduction */}
-          <div className="prose prose-lg max-w-none mb-12">
-            <p className="text-lg text-gray-600 leading-relaxed mb-4">
-              La respuesta no es tan simple. En Chile, el empleador puede poner término al contrato, pero debe cumplir ciertas condiciones legales.
+          <div className="prose max-w-none mb-12">
+            <p className="text-base text-gray-600 leading-relaxed mb-6">
+              Ser despedido genera incertidumbre, especialmente cuando no hay una explicación clara. Y la pregunta más común es: <strong>¿Me pueden despedir sin motivo en Chile?</strong>
             </p>
-            <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-8">
-              <p className="font-semibold text-blue-900 mb-3">En esta guía explicamos:</p>
-              <ul className="space-y-2">
+            <p className="text-gray-600 font-bold text-lg mb-4">La respuesta correcta es: NO.</p>
+            <p className="text-gray-600 leading-relaxed mb-6">
+                El empleador no puede despedirte sin invocar una causal legal. Pero —y esto es clave— <strong>sí puede despedirte sin que hayas hecho algo malo</strong>. Ahí es donde muchas personas se confunden.
+              </p>
+            <div className="bg-blue-50 p-8 rounded-2xl border border-blue-100 mb-8">
+              <h3 className="text-blue-900 font-bold mb-4">En esta guía 2026 te explico:</h3>
+              <ul className="grid sm:grid-cols-2 gap-3 list-none p-0">
                 {[
                   "Cuándo un despido es legal",
-                  "Qué causales existen en Chile",
-                  "Qué pasa si te despiden sin justificación",
-                  "Qué hacer si crees que tu despido fue injustificado"
+                  "Qué causales existen realmente",
+                  "Qué pasa si no te dan una razón válida",
+                  "Cuánto dinero puedes recibir",
+                  "Qué hacer paso a paso"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-blue-800">
-                    <CheckCircle className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                    <span className="text-base">{item}</span>
+                  <li key={i} className="flex items-start gap-2 text-blue-800 text-base">
+                    <CheckCircle className="h-4 w-4 mt-1 flex-shrink-0" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -109,219 +143,294 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Me pueden despedir sin motivo en Chile?</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, el empleador no puede despedir sin invocar una causal legal. Esto significa que todo despido debe basarse en una razón contemplada en el Código del Trabajo.
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede despedir a alguien “sin motivo”?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Legalmente, no. En Chile, todo despido debe:
             </p>
-            <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded-r-lg mb-6">
-              <p className="text-indigo-900 leading-relaxed">
-                <strong>El empleador puede despedir invocando “necesidades de la empresa”</strong>. Esta causal permite terminar el contrato sin que el trabajador haya cometido una falta.
+            <div className="grid sm:grid-cols-3 gap-4 mb-8">
+              {[
+                { title: "Legalidad", desc: "Basarse en una causal del Código del Trabajo" },
+                { title: "Formalidad", desc: "Estar por escrito" },
+                { title: "Transparencia", desc: "Explicar los hechos detalladamente" }
+              ].map((item, i) => (
+                <div key={i} className="p-5 bg-gray-50 rounded-xl border border-gray-100 text-center">
+                  <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
+                  <p className="text-gray-600">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed font-bold italic">
+              Si no cumple esto → el despido puede ser ilegal.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Entonces, ¿por qué dicen que sí se puede despedir “sin motivo”? Porque existe una causal clave: <strong>Necesidades de la empresa</strong>. Esta causal permite despedir aunque no hiciste nada malo, no cometiste faltas y tu desempeño era correcto.
+            </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa “necesidades de la empresa”?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Es una causal amplia que incluye:</p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              {[
+                "Reestructuración o modernización",
+                "Baja en las ventas o ingresos",
+                "Cambios internos en la organización",
+                "Eliminación definitiva de cargos"
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <Shield className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span className="text-gray-700 font-medium text-sm sm:text-base">{item}</span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-2xl mb-8">
+              <p className="font-bold text-amber-900 mb-2 flex items-center gap-2">
+                Pero OJO:
+              </p>
+              <p className="text-amber-800 leading-relaxed">
+                No basta con decirlo. El empleador debe poder probarlo. Muchas empresas usan esta causal sin justificación real, para despedir selectivamente o para evitar conflictos. Y ahí aparece el <strong>despido injustificado</strong>.
               </p>
             </div>
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Causales de despido en Chile</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">Las principales causales se dividen en tres grupos:</p>
-            <div className="space-y-6">
-              <section>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Causales de despido en Chile (explicadas fácil)</h2>
+            <div className="space-y-8">
+              <section className="p-6 border rounded-2xl bg-white shadow-sm">
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">1</span>
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm font-normal">1</span>
                   Necesidades de la empresa
                 </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">Es la más utilizada. Puede aplicarse cuando:</p>
                 <ul className="space-y-2 mb-4">
-                  {["Hay cambios en la empresa", "Disminuyen las ventas", "Existe reorganización", "Se eliminan cargos"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
+                  <li className="flex items-center gap-2 text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span>No requiere culpa del trabajador</span>
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-700">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span>Da derecho a indemnización obligatoria</span>
+                  </li>
                 </ul>
-                <p className="text-gray-600 font-bold">En estos casos, el trabajador tiene derecho a indemnización.</p>
+                <p className="text-gray-600">Es la más usada en el sistema laboral chileno.</p>
               </section>
 
-              <section>
+              <section className="p-6 border rounded-2xl bg-white shadow-sm">
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">2</span>
-                  Despido por conducta del trabajador
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm font-normal">2</span>
+                  Conducta del trabajador
                 </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">Incluye situaciones como:</p>
-                <ul className="space-y-2 mb-4">
-                  {["Incumplimiento grave del contrato", "Faltas reiteradas", "Conductas indebidas"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-gray-600 font-bold">En estos casos, generalmente no hay indemnización.</p>
+                <p className="text-gray-600 mb-4 leading-relaxed">Incluye faltas como incumplimiento grave, faltas reiteradas o conductas indebidas.</p>
+                <div className="bg-red-50 p-4 rounded-xl text-red-800 text-sm font-bold flex items-center gap-2 mb-4 border border-red-100">
+                  Generalmente sin derecho a indemnización
+                </div>
+                <p className="text-gray-600">El empleador DEBE probar la falta para que sea válido.</p>
               </section>
 
-              <section>
+              <section className="p-6 border rounded-2xl bg-white shadow-sm">
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
-                  <span className="bg-gray-900 text-white w-7 h-7 rounded-full flex items-center justify-center text-sm">3</span>
-                  Otras causales legales
+                  <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center text-sm font-normal">3</span>
+                  Otras causales
                 </h3>
-                <p className="text-gray-600 mb-4 leading-relaxed">También existen otras causales como:</p>
-                <ul className="space-y-2">
-                  {["Vencimiento del contrato", "Renuncia del trabajador", "Mutuo acuerdo"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
+                <div className="flex flex-wrap gap-2">
+                  {["Renuncia", "Mutuo acuerdo", "Vencimiento de contrato"].map((item, i) => (
+                    <span key={i} className="bg-gray-100 px-4 py-2 rounded-full text-gray-700 text-sm font-medium">{item}</span>
                   ))}
-                </ul>
+                </div>
               </section>
             </div>
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si me despiden sin justificación?</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">Si el empleador no puede probar la causal invocada, el despido puede considerarse injustificado. Esto significa que el trabajador puede:</p>
-            <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                "Reclamar judicialmente",
-                "Exigir indemnización adicional",
-                "Solicitar el pago de prestaciones pendientes"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                  <Info className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-base text-gray-700">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué es un despido injustificado?</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">Un despido es injustificado cuando:</p>
-            <div className="space-y-3 mb-6">
-              {[
-                "No existe una causa real",
-                "La causal invocada no se puede probar",
-                "El empleador no cumple el procedimiento legal"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                  <span className="text-base text-gray-700">{item}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-gray-600 leading-relaxed font-bold">En estos casos, el trabajador puede demandar.</p>
-          </div>
-
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué indemnización corresponde?</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">Si el despido es por necesidades de la empresa, el trabajador tiene derecho a:</p>
-            <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-              {[
-                "Indemnización por años de servicio",
-                "Indemnización sustitutiva de aviso previo",
-                "Pago de vacaciones pendientes"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-gray-700 text-sm">{item}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-gray-600 leading-relaxed">Si el despido es injustificado, se puede obtener un recargo adicional sobre la indemnización.</p>
-          </div>
-
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué hacer si te despiden?</h2>
-            <p className="text-gray-600 mb-8 leading-relaxed">Si te despiden, es importante actuar rápidamente.</p>
-            <div className="space-y-6">
-              <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">1</div>
-                  <span className="font-bold text-gray-900 text-lg">Revisar la carta de despido</span>
-                </div>
-                <p className="text-base text-gray-600 mb-3">El empleador debe entregar una carta que indique:</p>
-                <ul className="space-y-2">
-                  {["La causal de despido", "Los hechos que la justifican", "La fecha de término del contrato"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">2</div>
-                  <span className="font-bold text-gray-900 text-lg">Evaluar si el despido es legal</span>
-                </div>
-                <p className="text-base text-gray-600 mb-3">Es importante analizar:</p>
-                <ul className="space-y-2">
-                  {["Si la causal es correcta", "Si existen pruebas", "Si se respetó el procedimiento"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">3</div>
-                  <span className="font-bold text-gray-900 text-lg">Guardar documentos</span>
-                </div>
-                <p className="text-base text-gray-600 mb-3">Reúne:</p>
-                <ul className="space-y-2">
-                  {["Contrato de trabajo", "Liquidaciones de sueldo", "Carta de despido"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-gray-900 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">4</div>
-                  <span className="font-bold text-gray-900 text-lg">Buscar asesoría legal</span>
-                </div>
-                <p className="text-base text-gray-600 mb-3">Un abogado puede ayudarte a:</p>
-                <ul className="space-y-2">
-                  {["Evaluar el caso", "Calcular indemnizaciones", "Iniciar acciones legales"].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-base">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Plazo para demandar despido injustificado</h2>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-              <p className="text-amber-900 leading-relaxed">
-                El trabajador tiene un plazo de: <strong>60 días hábiles</strong> para presentar una demanda desde la fecha del despido.
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Relación con el finiquito</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si te despiden sin justificar?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Después del despido, el empleador debe pagar el finiquito. Si quieres saber cómo calcularlo, revisa nuestra guía completa.
+              Si el empleador no explica bien, no tiene pruebas o usa mal la causal, puedes reclamar. Y eso puede transformarse en un <strong>despido injustificado</strong>.
             </p>
-            <div className="text-center py-4 border-t border-b border-gray-100">
-              <Link
-                to="/blog/como-calcular-tu-finiquito-chile-2026"
+            <div className="text-center py-6 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
+              <Link 
+                to="/blog/como-demandar-por-despido-injustificado-chile-2026"
                 className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
-                👉 ¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso
+                👉 ¿Cómo demandar por despido injustificado? Guía 2026
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto te deben pagar si te despiden?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Depende directamente de la causal invocada:</p>
+            <div className="grid sm:grid-cols-2 gap-6 mb-10">
+              <div className="p-6 bg-white border rounded-2xl shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-4 text-base">Si es "Necesidades de la empresa"</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-2 font-bold">
+                    Años de servicio
+                  </li>
+                  <li className="flex items-center gap-2 font-bold">
+                    Aviso previo
+                  </li>
+                  <li className="flex items-center gap-2 font-bold">
+                    Vacaciones
+                  </li>
+                </ul>
+              </div>
+              <div className="p-6 bg-green-50 border border-green-200 rounded-2xl shadow-sm">
+                <h4 className="font-bold text-green-900 mb-4 text-base">Si es Injustificado</h4>
+                <p className="text-green-800 font-bold text-base mb-4">Todo lo anterior + recargo de hasta 80%</p>
+                <p className="text-green-700 text-sm">Aquí está la diferencia económica real que puedes obtener.</p>
+              </div>
+            </div>
+
+            <div className="border rounded-3xl p-8 mb-8">
+              <h4 className="text-xl text-center font-bold text-gray-900 mb-6 gap-2">
+                Ejemplo real de cálculo
+              </h4>
+              <div className="space-y-4 max-w-md mx-auto">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Sueldo mensual:</span>
+                  <span className="font-bold">$800.000</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Antigüedad (3 años):</span>
+                  <span className="font-bold">$2.400.000</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-gray-600">Aviso previo:</span>
+                  <span className="font-bold">$800.000</span>
+                </div>
+                <div className="flex justify-between border-b pb-2 text-green-600 font-bold">
+                  <span>Recargo 50% (por demanda):</span>
+                  <span>$1.200.000</span>
+                </div>
+                <div className="flex justify-between pt-4 text-xl font-black text-gray-900">
+                  <span>Total Final:</span>
+                  <span>$4.400.000</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center py-6 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu pago exacto</p>
+              <Link 
+                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+              >
+                👉 ¿Cuánto me corresponde por años de servicio? Guía 2026
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-8 text-gray-900">¿Qué hacer si te despiden?</h2>
+            <p className="text-gray-600 mb-8 leading-relaxed">Aquí es donde la mayoría se equivoca. Sigue estos 5 pasos críticos:</p>
+            <div className="space-y-6">
+              {[
+                { t: "Revisa la carta de despido", d: "La carta de despido no es un simple trámite. Debe incluir la causal exacta, los hechos detallados que la justifican y la fecha exacta del término de la relación laboral. Si alguno de estos elementos falta o está mal redactado, tienes una ventaja legal inmediata que un abogado puede aprovechar a tu favor." },
+                { t: "No firmes nada sin entender", d: "El finiquito es el documento más importante del proceso y también el más peligroso si no lo lees bien. Si firmas sin reserva de derechos, estás renunciando a tu derecho a demandar — aunque el despido haya sido injustificado. Antes de estampar tu firma, muéstraselo a un abogado." },
+                { t: "Guarda todas tus pruebas", d: "Todo cuenta: tu contrato de trabajo, las últimas liquidaciones de sueldo, mensajes de WhatsApp con tu jefe o compañeros, correos electrónicos y el nombre de posibles testigos. En un juicio laboral, las pruebas lo son todo. Guárdalas ahora antes de que desaparezcan." },
+                { t: "Evalúa tu caso seriamente", d: "No todos los despidos son iguales. La pregunta clave es: ¿la causal que usaron es real, pueden probarla y está bien aplicada según la ley? Muchos empleadores cometen errores en este proceso que los dejan en una posición muy débil frente a un tribunal." },
+                { t: "Actúa rápido", d: "El reloj ya está corriendo. En Chile tienes exactamente 60 días hábiles desde la fecha del despido para presentar una demanda laboral. No son días corridos — son hábiles. Pero no esperes al último momento. Mientras más rápido actúes, más opciones tienes." }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
+                  <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-1">{item.t}</h4>
+                    <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{item.d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center py-6 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Evita errores en tu finiquito</p>
+              <Link 
+                to="/blog/como-calcular-tu-finiquito-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+              >
+                👉 ¿Cómo calcular tu finiquito paso a paso? Guía 2026
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo saber si tu despido fue injustificado?</h2>
+            <p className="text-gray-600 mb-6">Busca estas señales claras:</p>
+            <ul className="space-y-4">
+              {[
+                "No entiendes realmente la razón del despido",
+                "La empresa sigue contratando gente para el mismo cargo",
+                "No existen pruebas objetivas de lo que dice la carta",
+                "Te despidieron de forma repentina sin avisos previos",
+                "La carta de despido es genérica y sin detalles"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-600">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-8 text-gray-600 font-bold">Si ves esto, hay una probabilidad muy alta de éxito en una demanda.</p>
+
+            <div className="text-center py-6 border-t border-b border-blue-100 mt-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Inicia tu reclamo</p>
+              <Link 
+                to="/blog/como-demandar-por-despido-injustificado-chile-2026"
+                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+              >
+                👉 Guía Completa: Cómo demandar por despido injustificado
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede demandar?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Sí. Puedes iniciar una demanda por despido injustificado. El primer paso suele ser la <strong>Inspección del Trabajo</strong>.</p>
+            <div className="grid sm:grid-cols-2 gap-4 mb-8">
+              <div className="p-5 border rounded-xl">
+                <h4 className="font-bold text-gray-900 mb-2">Plazos del proceso</h4>
+                <p className="text-gray-600">1–2 meses para el inicio</p>
+                <p className="text-gray-600">3–6 meses de juicio</p>
+                <p className="text-gray-600">6–8 meses para el resultado final</p>
+              </div>
+              <div className="p-5 border rounded-xl bg-gray-50">
+                <h4 className="font-bold text-gray-900 mb-2">Error común</h4>
+                <p className="text-gray-600">Pensar que “no hay nada que hacer”. Muchos despidos son mal aplicados y no tienen respaldo real.</p>
+              </div>
+            </div>
+            <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200 mb-8">
+              <p className="text-amber-900 leading-relaxed font-bold">¿Qué pasa si no tienes contrato? Igual puedes reclamar. Puedes probar la relación con pagos, testigos y mensajes de instrucciones.</p>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Estrategia real (lo que no te dicen)</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">No todos los casos llegan a juicio. Muchos terminan en <strong>acuerdo o conciliación</strong>.</p>
+            <div className="p-6 border-2 border-dashed border-gray-200 rounded-2xl text-center">
+              <p className="text-gray-900 font-bold text-base mb-2">Escenario típico de éxito:</p>
+              <p className="text-gray-600">Te despiden → Reclamas → Demandas → La empresa negocia para evitar costos → <strong>Recibes tu pago más rápido y con menos riesgo.</strong></p>
+            </div>
+          </div>
+
+          
+          {/* Conclusion */}
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              En Chile, todo despido debe estar respaldado por una causal legal. Sin embargo, causales como "necesidades de la empresa" le dan al empleador cierta flexibilidad para terminar contratos sin acreditar una falta específica del trabajador — siempre que pague las indemnizaciones que corresponden.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El problema más frecuente no es el despido en sí, sino que muchos trabajadores no saben exactamente qué les corresponde recibir, firman el finiquito sin revisarlo y pierden el derecho a reclamar diferencias que pueden ser significativas.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si te despidieron y tienes dudas sobre si la causal es válida, si el monto del finiquito es correcto o si puedes demandar, el momento de actuar es antes de que venzan los plazos. Tienes 60 días hábiles desde el despido — ese tiempo se acaba rápido.
+            </p>
+            <p className="text-gray-600 font-bold leading-relaxed">
+              No firmes nada que no entiendas. Si no estás de acuerdo con algún monto, firma con reserva de derechos. Y si crees que el despido fue injustificado, consulta con un abogado laboral antes de decidir qué hacer.
+            </p>
           </div>
 
           {/* FAQ */}
@@ -329,30 +438,19 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                <div key={i} className="bg-gray-50 rounded-lg p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Conclusion */}
-          <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, un trabajador no puede ser despedido sin una causal legal. Sin embargo, existen mecanismos como las necesidades de la empresa que permiten al empleador poner término al contrato.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si el despido no está justificado, el trabajador puede ejercer acciones legales y exigir compensaciones.
-            </p>
-          </div>
         </div>
 
         {/* CTA Section */}
         <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
           <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">Consulta con un abogado</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
             Si crees que tu despido fue injustificado, puedes recibir orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -377,25 +475,25 @@ const BlogArticle = () => {
       <RelatedLawyers category="Derecho Laboral" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="mt-8">
+          <div className="mt-8">
           <BlogShare
-            title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
+            title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
             url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
           />
         </div>
 
         <BlogNavigation
+          nextArticle={{
+            id: "ley-devuelveme-mi-casa-chile-2026",
+            title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
+            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada",
+            image: "/assets/ley-devuelveme-mi-casa-2026.png"
+          }}
           prevArticle={{
             id: "orden-desalojo-chile-2026",
             title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
             excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
             image: "/assets/orden-desalojo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "ley-devuelveme-mi-casa-chile-21461-2026",
-            title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026',
-            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
-            image: "/assets/desalojo-chile-2026.png"
           }}
         />
 
