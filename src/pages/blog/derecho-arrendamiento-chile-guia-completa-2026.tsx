@@ -96,8 +96,8 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Derecho de arrendamiento en Chile: guía completa 2026"
             url="https://legalup.cl/blog/derecho-arrendamiento-chile-guia-completa-2026"
@@ -819,7 +819,7 @@ const BlogArticle = () => {
           </div>
         </div>
 
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center border max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 mt-12">
+        <section className="bg-white rounded-xl shadow-sm p-8 text-center border max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8 mt-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-4 font-serif">
             ¿Tienes un problema de arriendo en Chile?
           </h2>
@@ -848,7 +848,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Civil" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="Derecho de arrendamiento en Chile: guía completa 2026"

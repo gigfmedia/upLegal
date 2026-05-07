@@ -118,8 +118,8 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)"
             url="https://legalup.cl/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026"
@@ -556,7 +556,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
         <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
           <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Estás en riesgo de demanda por no pago de arriendo?</h2>
           <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
@@ -587,7 +587,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Civil" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)"
@@ -603,10 +603,10 @@ const BlogArticle = () => {
             image: "/assets/desalojo-3-chile-2026.png",
           }}
           nextArticle={{
-            id: "deuda-pension-alimentos-chile-2026",
-            title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)",
-            excerpt: "Conoce cómo solicitar la liquidación de la deuda, activar medidas de apremio y asegurar el pago.",
-            image: "/assets/derecho-de-familia-chile-2026.png",
+            id: "dicom-deuda-arriendo-chile-2026",
+            title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)",
+            excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, qué hacer y cómo defenderte.",
+            image: "/assets/dicom-arriendo-chile-2026.png",
           }}
         />
 

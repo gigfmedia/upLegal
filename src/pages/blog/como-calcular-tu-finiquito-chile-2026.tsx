@@ -37,12 +37,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cuánto te deben pagar en el finiquito? Calculadora 2026 + fórmula paso a paso"
+        title="Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar"
         description="Calcula tu finiquito en Chile 2026 gratis: indemnización, vacaciones proporcionales y mes de aviso. Si tienes dudas, un abogado laboral de LegalUp responde en 24 horas."
         image="/assets/finiquito-chile-2026.png"
         url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
         datePublished="2026-02-18"
-        dateModified="2026-03-16"
+        dateModified="2026-05-05"
         faqs={faqs}
       />
       <Header onAuthClick={() => {}} />
@@ -60,7 +60,7 @@ const BlogArticle = () => {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
-            ¿Cuánto te deben pagar en el finiquito? Calculadora 2026 + fórmula paso a paso
+            Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar
           </h1>
           
           <p className="text-xl max-w-3xl">
@@ -85,8 +85,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare 
             title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso" 
             url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026" 
@@ -525,7 +525,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Laboral" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
           <BlogShare 
@@ -534,18 +534,18 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
+        <BlogNavigation
           prevArticle={{
-            id: "me-subieron-el-arriendo-que-hago-2026",
-            title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
-            excerpt: "Conoce tus derechos y qué hacer si el dueño de la propiedad decide aumentar el valor del arriendo.",
-            image: "/assets/arriendo-chile-2026.png"
-          }} 
+            id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
+            title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
+            excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso y cómo acelerarlo.",
+            image: "/assets/duracion-juicio-laboral-chile-2026.png"
+          }}
           nextArticle={{
-            id: "derecho-de-familia-chile-2026",
-            title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
-            excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Revisa qué abarca y cómo funcionan los juicios.",
-            image: "/assets/derecho-de-familia-chile-2026.png"
+            id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
+            title: "¿Cuánto me corresponde por años de servicio en Chile? (Guía 2026)",
+            excerpt: "Descubre cómo se calcula exactamente la indemnización por años de servicio en Chile, topes legales y qué pasa si trabajaste menos de un año.",
+            image: "/assets/anos-servicio-chile-2026.png"
           }}
         />
 

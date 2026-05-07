@@ -168,8 +168,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
             title="Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)"
@@ -664,7 +664,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho de Familia" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)"
@@ -673,17 +673,11 @@ const BlogArticle = () => {
         </div>
 
         <BlogNavigation
-          prevArticle={{
-            id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
-            title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Guía 2026)",
-            excerpt: "Si dejas de pagar el arriendo en Chile, el arrendador puede demandarte. Conoce qué puede pasar, cuáles son tus derechos y cómo enfrentar esta situación.",
-            image: "/assets/demanda-arriendo-chile-2026.png"
-          }}
           nextArticle={{
-            id: "como-desalojar-a-una-persona-de-mi-propiedad-chile-2026",
-            title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
-            excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer.",
-            image: "/assets/como-desalojar-chile-2026.png"
+            id: "derecho-de-familia-chile-2026",
+            title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
+            excerpt: "Entiende el marco general del Derecho de Familia y cómo se conectan alimentos, cuidado personal y medidas de apremio. Guía 2026.",
+            image: "/assets/derecho-de-familia-chile-2026.png"
           }}
         />
 

@@ -91,7 +91,7 @@ const BlogArticle = () => {
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2 text-gray-300">
               <Calendar className="h-4 w-4" />
-              <span>22 de Marzo, 2026</span>
+              <span>4 de Mayo, 2026</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <User className="h-4 w-4" />
@@ -106,8 +106,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
             url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
@@ -474,7 +474,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Laboral" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
           <div className="mt-8">
           <BlogShare
             title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
@@ -484,16 +484,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           nextArticle={{
-            id: "ley-devuelveme-mi-casa-chile-2026",
-            title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
-            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada",
-            image: "/assets/ley-devuelveme-mi-casa-2026.png"
-          }}
-          prevArticle={{
-            id: "orden-desalojo-chile-2026",
-            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
-            excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
-            image: "/assets/orden-desalojo-chile-2026.png"
+            id: "como-demandar-por-despido-injustificado-chile-2026",
+            title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
+            excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos, requisitos e indemnizaciones.",
+            image: "/assets/demandar-despido-injustificado-chile-2026.png"
           }}
         />
 

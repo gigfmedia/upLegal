@@ -90,8 +90,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title='Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026'
             url="https://legalup.cl/blog/ley-devuelveme-mi-casa-chile-2026"
@@ -578,7 +578,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Civil" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title='Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026'
@@ -588,10 +588,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           prevArticle={{
-            id: "me-pueden-despedir-sin-motivo-chile-2026",
-            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
-            excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
-            image: "/assets/despido-sin-motivo-chile-2026.png"
+            id: "orden-desalojo-chile-2026",
+            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
+            excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
+            image: "/assets/orden-desalojo-chile-2026.png"
           }}
           nextArticle={{
             id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",

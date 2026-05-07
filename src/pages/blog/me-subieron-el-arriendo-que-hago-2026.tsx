@@ -88,8 +88,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare 
             title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)" 
             url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026" 
@@ -361,7 +361,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Civil" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare 
             title="Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026" 
@@ -371,10 +371,10 @@ const BlogArticle = () => {
 
         <BlogNavigation 
           nextArticle={{
-            id: "como-calcular-tu-finiquito-chile-2026",
-            title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
-            excerpt: "Calcular el finiquito puede generar dudas. Te explicamos cómo calcularlo correctamente incluyendo indemnizaciones y vacaciones.",
-            image: "/assets/finiquito-chile-2026.png"
+            id: "reajuste-arriendo-ipc-chile-2026",
+            title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
+            excerpt: "Guía 2026 para saber si te pueden subir el arriendo, cómo se calcula el reajuste por IPC y qué hacer si el cálculo no corresponde.",
+            image: "/assets/reajuste-arriendo-ipc-2026.png"
           }}
         />
 

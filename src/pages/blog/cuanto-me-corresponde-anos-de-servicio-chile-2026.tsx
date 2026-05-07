@@ -94,8 +94,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare 
             title="¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)" 
             url="https://legalup.cl/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" 
@@ -518,7 +518,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Laboral" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
           <BlogShare 
@@ -529,10 +529,10 @@ const BlogArticle = () => {
 
         <BlogNavigation 
           prevArticle={{
-            id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
-            title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
-            excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos y qué hacer en esta Guía 2026.",
-            image: "/assets/sin-contrato-arriendo-2026.png"
+            id: "me-pueden-despedir-sin-motivo-chile-2026",
+            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)",
+            excerpt: "¿Te despidieron sin justificación? Descubre si es legal, qué derechos tienes y cómo reclamar. Guía 2026 del Código del Trabajo chileno.",
+            image: "/assets/despido-sin-motivo-chile-2026.png"
           }}
           nextArticle={{
             id: "despido-injustificado-chile-2026",

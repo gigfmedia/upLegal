@@ -104,8 +104,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare 
             title="Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo" 
             url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026" 
@@ -599,7 +599,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Civil" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">
           <BlogShare 
             title="Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo" 
@@ -609,10 +609,10 @@ const BlogArticle = () => {
         
         <BlogNavigation 
           prevArticle={{
-            id: "despido-injustificado-chile-2026",
-            title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
-            excerpt: "Guía 2026 sobre el despido injustificado en Chile: qué es, cuándo se puede demandar, cuánto puedes ganar.",
-            image: "/assets/despido-injustificado-chile-2026.png"
+            id: "me-subieron-el-arriendo-que-hago-2026",
+            title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
+            excerpt: "Qué hacer si te suben el arriendo: cuándo es legal, cómo reclamar y cómo evitar abusos. Guía 2026.",
+            image: "/assets/arriendo-chile-2026.png"
           }}
           nextArticle={{
             id: "no-devuelven-garantia-arriendo-chile-2026",

@@ -83,8 +83,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
             url="https://legalup.cl/blog/despido-injustificado-chile-2026"
@@ -547,7 +547,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho Laboral" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
@@ -557,10 +557,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           nextArticle={{
-            id: "reajuste-arriendo-ipc-chile-2026",
-            title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
-            excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
-            image: "/assets/reajuste-arriendo-ipc-2026.png"
+            id: "como-calcular-tu-finiquito-chile-2026",
+            title: "¿Cómo calcular tu finiquito en Chile? (Guía 2026 paso a paso + ejemplos)",
+            excerpt: "Aprende a calcular tu finiquito en Chile: vacaciones, indemnización, años de servicio y más. Guía 2026 con ejemplos prácticos.",
+            image: "/assets/finiquito-chile-2026.png"
           }}
           prevArticle={{
             id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",

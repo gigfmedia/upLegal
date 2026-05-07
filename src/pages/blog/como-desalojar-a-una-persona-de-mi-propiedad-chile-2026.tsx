@@ -113,8 +113,8 @@ const BlogArticle = () => {
       </div>
 
       <div className="mx-auto py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8">
+          <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare title={title} url={url} showBorder={false} />
 
           <div className="prose prose-lg max-w-none mb-12">
@@ -534,23 +534,23 @@ const BlogArticle = () => {
           <RelatedLawyers category="Derecho Civil" />
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
           <div className="mt-8">
             <BlogShare title={title} url={url} />
           </div>
 
           <BlogNavigation
             prevArticle={{
-              id: "deuda-pension-alimentos-chile-2026",
-              title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)",
-              excerpt: "Si no recibes la pensión de alimentos o existe deuda acumulada, existen herramientas legales efectivas. Aprende cómo cobrarla paso a paso.",
-              image: "/assets/pension-alimentos-chile-2026.png"
+              id: "ley-devuelveme-mi-casa-chile-2026",
+              title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
+              excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
+              image: "/assets/ley-devuelveme-mi-casa-2026.png"
             }}
             nextArticle={{
-              id: "como-demandar-por-despido-injustificado-chile-2026",
-              title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
-              excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos críticos, requisitos e indemnizaciones.",
-              image: "/assets/despido-injustificado-chile-2026.png"
+              id: "me-subieron-el-arriendo-que-hago-2026",
+              title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
+              excerpt: "Qué hacer si te suben el arriendo: cuándo es legal, cómo reclamar y cómo evitar abusos. Guía 2026.",
+              image: "/assets/arriendo-chile-2026.png"
             }}
           />
 

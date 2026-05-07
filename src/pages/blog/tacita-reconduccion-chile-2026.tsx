@@ -85,8 +85,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare 
             title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)" 
             url="https://legalup.cl/blog/tacita-reconduccion-chile-2026" 
@@ -541,7 +541,7 @@ const BlogArticle = () => {
       </div>
 
       {/* CTA Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
         <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
           <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">
             ¿Estás arrendando sin contrato y no sabes cuáles son tus derechos?
@@ -571,7 +571,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Arrendamiento" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare 
             title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)" 

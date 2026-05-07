@@ -99,8 +99,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           
           <BlogShare 
             title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa" 
@@ -558,7 +558,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Derecho de Familia" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
           <BlogShare 
@@ -568,17 +568,11 @@ const BlogArticle = () => {
         </div>
 
         <BlogNavigation 
-          prevArticle={{
-            id: "como-calcular-tu-finiquito-chile-2026",
-            title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
-            excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
-            image: "/assets/finiquito-chile-2026.png"
-          }} 
           nextArticle={{
-            id: "derecho-penal-chile-2026",
-            title: "¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026",
-            excerpt: "Enfrentar una acusación penal puede ser difícil. Conoce tus derechos, cómo funciona el proceso penal en Chile y qué pasos seguir para tu defensa.",
-            image: "/assets/derecho-penal-chile-2026.png"
+            id: "deuda-pension-alimentos-chile-2026",
+            title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)",
+            excerpt: "Conoce cómo solicitar la liquidación de la deuda, activar medidas de apremio y asegurar el pago.",
+            image: "/assets/pension-alimentos-chile-2026.png"
           }}
         />
 

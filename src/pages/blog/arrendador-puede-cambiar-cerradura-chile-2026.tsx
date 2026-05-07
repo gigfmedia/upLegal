@@ -89,8 +89,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-10">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)"
             url="https://legalup.cl/blog/arrendador-puede-cambiar-cerradura-chile-2026"
@@ -433,7 +433,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Arrendamiento" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)"

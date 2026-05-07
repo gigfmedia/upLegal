@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
+      title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
+      excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso, cómo acelerarlo y cuándo conviene llegar a acuerdo.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "6 de Mayo, 2026",
+      readTime: "9 min",
+      image: "/assets/duracion-juicio-laboral-chile-2026.png"
+    },
+    {
       id: "como-demandar-por-despido-injustificado-chile-2026",
       title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
       excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos críticos, requisitos, indemnizaciones y cómo ganar el caso.",
@@ -238,13 +248,13 @@ const BlogPage = () => {
     },
     {
       id: "como-calcular-tu-finiquito-chile-2026",
-      title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
+      title: "Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar",
       excerpt: "Calcular el finiquito en Chile puede generar dudas, especialmente porque intervienen distintos tipos de indemnizaciones, vacaciones pendientes y pagos proporcionales. Te explicamos cómo calcularlo correctamente.",
       category: "Derecho Laboral",
       author: "LegalUp",
       date: "18 de Febrero, 2026",
       readTime: "12 min",
-      image: "/assets/finiquito-chile-2026.png"
+      image: "/assets/calcular-finiquito-chile-2026.png"
     },
     {
       id: "me-subieron-el-arriendo-que-hago-2026",
@@ -358,9 +368,9 @@ const BlogPage = () => {
             >
               <div className="md:flex">
                 <div className="md:w-1/3">
-                  <div className="h-48 md:h-full flex py-8 items-center justify-center pl-8">
+                  <div className="h-48 md:h-full flex items-center justify-center">
                     <img 
-                      className="h-full w-full object-cover rounded-xl" 
+                      className="h-full w-full object-cover" 
                       src={featuredArticle.image || "../assets/arriendo.png"} 
                       alt={featuredArticle.category} 
                       onError={(e) => {
@@ -454,9 +464,16 @@ const BlogPage = () => {
             variant={selectedCategory === null ? "default" : "outline"}
             size="sm"
             onClick={() => setSelectedCategory(null)}
-            className={selectedCategory === null ? "bg-gray-900" : ""}
+            className={selectedCategory === null ? "bg-gray-900 group" : "group"}
           >
-            Todos
+            Todos 
+            <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+              selectedCategory === null 
+                ? 'bg-white text-gray-900' 
+                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+            }`}>
+              {articles.length}
+            </span>
           </Button>
           {categories.map(category => (
             <Button
@@ -464,9 +481,16 @@ const BlogPage = () => {
               variant={selectedCategory === category ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category ? "bg-gray-900" : ""}
+              className={selectedCategory === category ? "bg-gray-900 group" : "group"}
             >
               {category}
+              <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+                selectedCategory === category 
+                  ? 'bg-white text-gray-900' 
+                  : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+              }`}>
+                {getArticleCount(category)}
+              </span>
             </Button>
           ))}
         </div>

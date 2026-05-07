@@ -110,8 +110,8 @@ const BlogArticle = () => {
       </div>
 
       <div className="mx-auto py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8">
+          <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
             <BlogShare title={title} url={url} showBorder={false} />
 
             <div className="prose prose-lg max-w-none mb-12">
@@ -193,6 +193,17 @@ const BlogArticle = () => {
                   </ul>
                   <p className="mt-4 font-bold text-green-400">Este recargo puede duplicar lo que recibes.</p>
                 </div>
+
+                <div className="bg-white border border-gray-100 p-6 rounded-2xl">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">Otros pagos posibles</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {["Vacaciones pendientes", "Horas extra", "Bonos adeudados"].map((item, i) => (
+                      <span key={i} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">{item}</span>
+                    ))}
+                  </div>
+                </div>
+              
+
                 <div className="text-center py-6 border-t border-b border-gray-100 my-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu indemnización</p>
                   <Link 
@@ -205,17 +216,9 @@ const BlogArticle = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-100 p-6 rounded-2xl">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">Otros pagos posibles</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["Vacaciones pendientes", "Horas extra", "Bonos adeudados"].map((item, i) => (
-                    <span key={i} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">{item}</span>
-                  ))}
-                </div>
               </div>
-            </div>
 
-            <div className="mb-12 bg-gray-50 border border-gray-100 rounded-2xl p-8">
+            <div className="mb-12 bg-gray-50 border border-gray-100 rounded-2xl p-4 sm:p-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Ejemplo real de éxito</h2>
               <div className="space-y-4">
                 <div className="p-4 bg-white rounded-xl border border-gray-200">
@@ -238,7 +241,7 @@ const BlogArticle = () => {
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Plazo para demandar (ERROR CRÍTICO)</h2>
               <div className="bg-red-50 border border-red-100 rounded-2xl p-6 mb-6 shadow-sm text-red-900">
-                <p className="font-bold text-xl mb-4 italic">Tienes 60 días hábiles desde el despido.</p>
+                <p className="font-bold text-lg mb-4 italic">Tienes 60 días hábiles desde el despido.</p>
                 <div className="space-y-3">
                   <div className="flex gap-3">
                     <AlertCircle className="h-5 w-5 flex-shrink-0" />
@@ -327,6 +330,12 @@ const BlogArticle = () => {
               </div>
               <p className="text-gray-600">Total estimado: <strong>3 a 8 meses</strong></p>
             </div>
+
+             <InArticleCTA
+                message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
+                buttonText="Hablar con un abogado laboral"
+                category="Derecho Laboral"
+              />
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede ganar sin juicio?</h2>
@@ -557,17 +566,23 @@ const BlogArticle = () => {
           <RelatedLawyers category="Derecho Laboral" />
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
           <div className="mt-8">
             <BlogShare title={title} url={url} />
           </div>
 
           <BlogNavigation
             prevArticle={{
-              id: "como-desalojar-a-una-persona-de-mi-propiedad-chile-2026",
-              title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
-              excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer.",
-              image: "/assets/como-desalojar-chile-2026.png"
+              id: "me-pueden-despedir-sin-motivo-chile-2026",
+              title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026)",
+              excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
+              image: "/assets/despido-sin-motivo-chile-2026.png"
+            }}
+            nextArticle={{
+              id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
+              title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
+              excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso y cómo acelerarlo.",
+              image: "/assets/duracion-juicio-laboral-chile-2026.png"
             }}
           />
 

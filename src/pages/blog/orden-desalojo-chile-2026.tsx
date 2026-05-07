@@ -85,8 +85,8 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)"
             url="https://legalup.cl/blog/orden-desalojo-chile-2026"
@@ -517,7 +517,7 @@ const BlogArticle = () => {
 
       <RelatedLawyers category="Arrendamiento" />
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
             title="Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)"
@@ -533,10 +533,10 @@ const BlogArticle = () => {
             image: "/assets/cerradura-arriendo-chile-2026.png"
           }}
           nextArticle={{
-            id: "me-pueden-despedir-sin-motivo-chile-2026",
-            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)",
-            excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
-            image: "/assets/despido-sin-motivo-chile-2026.png"
+            id: "ley-devuelveme-mi-casa-chile-2026",
+            title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
+            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
+            image: "/assets/ley-devuelveme-mi-casa-2026.png"
           }}
         />
 
