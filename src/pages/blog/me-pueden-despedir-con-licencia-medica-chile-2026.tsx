@@ -87,7 +87,7 @@ const BlogArticle = () => {
           <div className="flex flex-wrap items-center gap-4 mt-6 text-base">
             <div className="flex items-center gap-2 text-gray-300">
               <Calendar className="h-4 w-4" />
-              <span>7 de Mayo, 2026</span>
+              <span>8 de Mayo, 2026</span>
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <User className="h-4 w-4" />
@@ -112,7 +112,7 @@ const BlogArticle = () => {
 
           <div className="prose max-w-none mb-12">
             <p className="text-base text-gray-600 leading-relaxed mb-6">
-              Esta guía te explica qué dice la ley, en qué casos el despido es ilegal, qué puedes hacer si ya te despidieron y cuánto tiempo tienes para actuar.
+              Muchos trabajadores buscan si <strong>pueden despedirme con licencia médica en Chile</strong> — y la respuesta depende de cómo y cuándo se ejecutó ese despido. Esta guía te explica qué dice la ley, en qué casos el despido es ilegal, qué puedes hacer si ya te despidieron y cuánto tiempo tienes para actuar.
             </p>
           </div>
 
@@ -193,9 +193,11 @@ const BlogArticle = () => {
               </div>
             </div>
             
-            <p className="mt-4 font-bold leading-relaxed">
-              En términos prácticos: si recibes una carta de despido mientras estás con licencia, el contrato debería seguir vigente hasta que termines la licencia, y solo entonces comenzarían a correr los plazos del finiquito.
-            </p>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg">
+              <p className="text-amber-900 leading-relaxed font-medium">
+                En términos prácticos: si recibes una carta de despido mientras estás con licencia, el contrato debería seguir vigente hasta que termines la licencia, y solo entonces comenzarían a correr los plazos del finiquito.
+              </p>
+            </div>
           </div>
 
           <InArticleCTA
@@ -232,19 +234,19 @@ const BlogArticle = () => {
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
               <div className="p-5 bg-gray-50 border border-gray-100 rounded-xl">
                 <h4 className="font-bold text-gray-900 mb-2">Despido por represalia</h4>
-                <p className="text-gray-600 text-sm">Si el empleador te despide poco después de presentar una licencia, puede interpretarse como represalia (despido discriminatorio).</p>
+                <p className="text-gray-600">Si el empleador te despide poco después de presentar una licencia, puede interpretarse como represalia (despido discriminatorio).</p>
               </div>
               <div className="p-5 bg-gray-50 border border-gray-100 rounded-xl">
                 <h4 className="font-bold text-gray-900 mb-2">Fuero maternal</h4>
-                <p className="text-gray-600 text-sm">Trabajadoras embarazadas o en período de maternidad tienen protección especial. Despedirlas sin autorización judicial es ilegal.</p>
+                <p className="text-gray-600">Trabajadoras embarazadas o en período de maternidad tienen protección especial. Despedirlas sin autorización judicial es ilegal.</p>
               </div>
               <div className="p-5 bg-gray-50 border border-gray-100 rounded-xl">
                 <h4 className="font-bold text-gray-900 mb-2">Enfermedad grave del hijo</h4>
-                <p className="text-gray-600 text-sm">Existen protecciones especiales legales para este tipo de licencias.</p>
+                <p className="text-gray-600">Existen protecciones especiales legales para este tipo de licencias.</p>
               </div>
               <div className="p-5 bg-gray-50 border border-gray-100 rounded-xl">
                 <h4 className="font-bold text-gray-900 mb-2">No respetar la fecha</h4>
-                <p className="text-gray-600 text-sm">Si el empleador hace efectivo el término del contrato durante la licencia (sin esperar a que termine), puede ser impugnado.</p>
+                <p className="text-gray-600">Si el empleador hace efectivo el término del contrato durante la licencia (sin esperar a que termine), puede ser impugnado.</p>
               </div>
             </div>
           </div>
@@ -300,15 +302,31 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <div className="text-center py-6 border-t border-b border-gray-100 my-8">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Relacionado</p>
-            <Link 
-              to="/blog/como-demandar-por-despido-injustificado-chile-2026"
-              className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
-            >
-              👉 Cómo demandar por despido injustificado en Chile
-              <ChevronRight className="h-4 w-4" />
-            </Link>
+          <div className="py-6 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículos relacionados</p>
+            <div className="flex flex-col gap-3">
+              <Link
+                to="/blog/me-pueden-despedir-sin-motivo-chile-2026"
+                className="flex items-center gap-3 text-gray-800 font-semibold hover:text-green-700 bg-gray-50 hover:bg-green-50 border border-gray-100 px-5 py-4 rounded-xl transition-all"
+              >
+                <span>¿Me pueden despedir sin motivo en Chile? Guía 2026</span>
+                <ChevronRight className="h-4 w-4 ml-auto flex-shrink-0" />
+              </Link>
+              <Link
+                to="/blog/como-demandar-por-despido-injustificado-chile-2026"
+                className="flex items-center gap-3 text-gray-800 font-semibold hover:text-green-700 bg-gray-50 hover:bg-green-50 border border-gray-100 px-5 py-4 rounded-xl transition-all"
+              >
+                <span>Cómo demandar por despido injustificado en Chile (paso a paso)</span>
+                <ChevronRight className="h-4 w-4 ml-auto flex-shrink-0" />
+              </Link>
+              <Link
+                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
+                className="flex items-center gap-3 text-gray-800 font-semibold hover:text-green-700 bg-gray-50 hover:bg-green-50 border border-gray-100 px-5 py-4 rounded-xl transition-all"
+              >
+                <span>¿Cuánto me corresponde por años de servicio en Chile?</span>
+                <ChevronRight className="h-4 w-4 ml-auto flex-shrink-0" />
+              </Link>
+            </div>
           </div>
 
           {/* Conclusion */}

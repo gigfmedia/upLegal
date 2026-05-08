@@ -70,58 +70,58 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
 
   const content = getTopicContent();
 
+  // Resize detection isolated so it doesn't re-trigger the popup logic
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
+  // Popup trigger logic — runs once on mount, reads state via refs
+  useEffect(() => {
     const status = sessionStorage.getItem('blog_popup_dismissed');
     if (status === 'true') {
       setHasDismissed(true);
       return;
     }
 
+    let triggered = false;
+
     const triggerPhase = () => {
-      if (!hasDismissed) {
-        setPhase('tension');
-        // Give users 5 seconds to read the tension message
+      if (triggered) return;
+      triggered = true;
+      setPhase('tension');
+      setTimeout(() => {
+        setIsExitingTension(true);
         setTimeout(() => {
-          setIsExitingTension(true);
-          setTimeout(() => {
-            setPhase('popup');
-            setIsExitingTension(false);
-          }, 400); 
-        }, 5000);
-      }
+          setPhase('popup');
+          setIsExitingTension(false);
+        }, 400);
+      }, 5000);
     };
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const height = document.documentElement.scrollHeight - window.innerHeight;
-      const scrollPercentage = (scrollY / height) * 100;
+      const scrollPercentage = height > 0 ? (scrollY / height) * 100 : 0;
 
-      if (scrollPercentage > 50 && !hasDismissed && phase === 'hidden') {
+      if (scrollPercentage > 50) {
         triggerPhase();
         window.removeEventListener('scroll', handleScroll);
       }
     };
 
-    // Differentiated timing: 25s for desktop, 40s for mobile
-    const delay = isMobile ? 40000 : 25000;
-    const timer = setTimeout(() => {
-      if (!hasDismissed && phase === 'hidden') {
-        triggerPhase();
-      }
-    }, delay);
+    const delay = window.innerWidth < 768 ? 40000 : 25000;
+    const timer = setTimeout(triggerPhase, delay);
 
     window.addEventListener('scroll', handleScroll);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(timer);
     };
-  }, [hasDismissed, phase, isMobile]);
+  }, []);
 
   const handleDismiss = () => {
     setPhase('hidden');
