@@ -484,10 +484,10 @@ const BlogArticle = () => {
 
         <BlogNavigation
           nextArticle={{
-            id: "como-demandar-por-despido-injustificado-chile-2026",
-            title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
-            excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos, requisitos e indemnizaciones.",
-            image: "/assets/demandar-despido-injustificado-chile-2026.png"
+            id: "me-pueden-despedir-con-licencia-medica-chile-2026",
+            title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
+            excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
+            image: "/assets/despido-licencia-medica-chile-2026.png"
           }}
         />
 

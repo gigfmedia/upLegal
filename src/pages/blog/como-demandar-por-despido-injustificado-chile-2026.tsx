@@ -485,14 +485,14 @@ const BlogArticle = () => {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div className="p-6 border rounded-2xl bg-gray-50">
                   <h4 className="font-bold text-gray-900 mb-4 border-b pb-2">Opción 1: Corporación Judicial</h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul className="space-y-2 text-gray-600">
                     <li>• Gratis para personas de bajos recursos.</li>
                     <li>• Suele ser mucho más lento por la carga.</li>
                   </ul>
                 </div>
                 <div className="p-6 border rounded-2xl bg-green-50 border-green-200">
                   <h4 className="font-bold text-green-900 mb-4 border-b border-green-200 pb-2">Opción 2: Abogado Particular</h4>
-                  <ul className="space-y-2 text-sm text-green-800">
+                  <ul className="space-y-2 text-green-800">
                     <li>• Proceso más rápido y personalizado.</li>
                     <li>• Mejor estrategia y mayor presión negociadora.</li>
                     <li>• En muchos casos, se paga solo con el resultado final.</li>
@@ -573,10 +573,10 @@ const BlogArticle = () => {
 
           <BlogNavigation
             prevArticle={{
-              id: "me-pueden-despedir-sin-motivo-chile-2026",
-              title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026)",
-              excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
-              image: "/assets/despido-sin-motivo-chile-2026.png"
+              id: "me-pueden-despedir-con-licencia-medica-chile-2026",
+              title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
+              excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
+              image: "/assets/despido-licencia-medica-chile-2026.png"
             }}
             nextArticle={{
               id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",

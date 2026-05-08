@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "me-pueden-despedir-con-licencia-medica-chile-2026",
+      title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
+      excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "8 de Mayo, 2026",
+      readTime: "8 min",
+      image: "/assets/despido-licencia-medica-chile-2026.png"
+    },
+    {
       id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
       title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
       excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso, cómo acelerarlo y cuándo conviene llegar a acuerdo.",

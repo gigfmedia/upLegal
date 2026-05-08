@@ -28,6 +28,7 @@ const AnosServicioArticle = lazy(() => import('../pages/blog/cuanto-me-correspon
 const ComoDesalojarPropiedadArticle = lazy(() => import('../pages/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026'));
 const ComoDemandarDespidoArticle = lazy(() => import('../pages/blog/como-demandar-por-despido-injustificado-chile-2026'));
 const CuantoDuraJuicioLaboralArticle = lazy(() => import('../pages/blog/cuanto-dura-juicio-laboral-despido-injustificado-chile-2026'));
+const MePuedenDespedirLicenciaMedicaArticle = lazy(() => import('../pages/blog/me-pueden-despedir-con-licencia-medica-chile-2026'));
 
 export const BlogRoutes = () => (
   <Suspense fallback={
@@ -63,6 +64,7 @@ export const BlogRoutes = () => (
       <Route path="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" element={<ComoDesalojarPropiedadArticle />} />
       <Route path="como-demandar-por-despido-injustificado-chile-2026" element={<ComoDemandarDespidoArticle />} />
       <Route path="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" element={<CuantoDuraJuicioLaboralArticle />} />
+      <Route path="me-pueden-despedir-con-licencia-medica-chile-2026" element={<MePuedenDespedirLicenciaMedicaArticle />} />
     </Routes>
   </Suspense>
 );

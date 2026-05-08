@@ -55,7 +55,7 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)"
+        title="¿Me pueden demandar por no pagar el arriendo en Chile? Guía 2026"
         description="Sí: te pueden demandar con 1 mes de deuda. Conoce qué incluye una demanda de arriendo, cuánto demora y cómo defenderte (Guía 2026)."
         image="/assets/demanda-arriendo-chile-2026.png"
         url="https://legalup.cl/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026"
