@@ -77,6 +77,7 @@ const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
 const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
+const CAELanding = lazy(() => import('./pages/CAELanding'));
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
 
@@ -339,6 +340,8 @@ const AppContent = () => {
               
               {/* Blog Routes */}
               <Route path="/blog/*" element={<BlogRoutes />} />
+
+              <Route path="/cae" element={<CAELanding />} />
               
               <Route path="/review" element={<ReviewPage />} />
              

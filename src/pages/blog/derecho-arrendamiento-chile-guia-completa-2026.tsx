@@ -71,11 +71,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-600 font-serif text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-600 font-serif">
             Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)
           </h1>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <ul className="space-y-3">
+              {[
+                "El contrato de arriendo regula derechos y obligaciones entre arrendador y arrendatario",
+                "El desalojo en Chile siempre requiere orden judicial",
+                "El arriendo puede reajustarse por IPC si el contrato lo establece",
+                "La garantía debe devolverse salvo daños o deudas justificadas",
+                "Existen derechos y obligaciones para ambas partes",
+                "Los conflictos más comunes son deuda, garantía y término del contrato",
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-xl leading-relaxed">
             ¿Te pueden desalojar? ¿Pueden subirte el arriendo? Conoce tus derechos, cómo funciona el contrato y qué hacer si tienes un problema de arriendo en Chile.
           </p>
 
@@ -770,7 +789,7 @@ const BlogArticle = () => {
                 { title: "Buscar asesoría legal", desc: "Consultar con expertos antes de tomar decisiones críticas.", icon: <Shield className="h-5 w-5" /> }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
+                  <div className="bg-gray-900 p-2 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">
                     {i + 1}
                   </div>
                   <div>
