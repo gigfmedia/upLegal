@@ -172,8 +172,10 @@ const Index = () => {
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
         const { lawyers } = await searchLawyers({ 
           page: 1, 
-          pageSize: 9,
-          minExperience: 5 // Show lawyers with >= 5 years of experience
+          pageSize: 20, // Fetch more to filter complete profiles but show 3
+          minExperience: 1,
+          orderBy: 'review_count',
+          orderDirection: 'desc'
         }); // Only fetch what we display
         
         if (lawyers && lawyers.length > 0) {
@@ -220,14 +222,7 @@ const Index = () => {
             }
           }));
           
-          // Sort lawyers by creation date (newest first)
-          const sortedLawyers = [...formattedLawyers].sort((a: any, b: any) => {
-            const dateA = new Date(a.created_at || 0).getTime();
-            const dateB = new Date(b.created_at || 0).getTime();
-            return dateB - dateA;
-          });
-          
-          setFeaturedLawyers(sortedLawyers);
+          setFeaturedLawyers(formattedLawyers);
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
@@ -422,20 +417,21 @@ const Index = () => {
               showMobileFilters={false}
               buttonWidth="1/3"
               className="h-10"
-              placeholder="Describe tu problema, ej: Me quieren subir el arriendo sin aviso, ¿es legal?"
+              placeholder="Ej: me quieren desalojar por no pagar arriendo..."
               isLoading={isSearchingState}
             />
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto mt-24">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="flex flex-col items-center">
                 <div className="text-3xl font-bold text-green-900 mb-2">
                   +10
                 </div>
               </div>
-              <div className="text-gray-900">Áreas legales disponibles</div>
+              <div className="text-gray-900 mb-1">Áreas legales disponibles</div>
+              <p className="text-sm text-gray-800">Despidos injustificados, Problemas de arriendo, Deudas y embargos, Familia y pensión alimenticia</p>
             </div>
             
             {/*<div className="text-center">
@@ -454,20 +450,21 @@ const Index = () => {
             </div> */}
             <div className="text-center">
               <div className="text-3xl font-bold text-green-900 mb-2">24/7</div>
-              <div className="text-gray-900">Soporte disponible</div>
+              <div className="text-gray-900 mb-1">No enfrentes tu problema legal solo</div>
+              <p className="text-sm text-gray-800">Recibe orientación legal clara y encuentra al abogado indicado para tu caso.</p>
             </div>
           </div>
           <div className="mt-12">
             <p className="text-gray-900 font-bold mb-4">Búsqueda rápida por especialidad:</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {[
+                "Arriendo",
+                "Deudas",
+                "Desalojo",
                 "Despido",
                 "Divorcio", 
                 "Pensión alimentos",
-                "Deudas",
                 "Herencias",
-                "Arriendo",
-                "Desalojo",
                 "Accidente laboral"
               ].map((tag) => (
                 <button
@@ -490,23 +487,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CAE High Conversion Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold font-serif text-green-600 mb-4">
-            ¿Tienes deuda CAE y no sabes qué hacer?
-          </h2>
-          <p className="text-xl mb-8 text-white">
-            Revisa tu caso antes de pagar o que el proceso avance.
-          </p>
-          <button 
-              onClick={() => navigate('/cae')}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100"
-            >
-              Revisar mi caso →
-            </button>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
@@ -535,7 +515,7 @@ const Index = () => {
                 Busca según tu problema →
               </h3>
 
-              <ul className="text-gray-600 text-sm space-y-1">
+              <ul className="text-gray-600 space-y-1">
                 <li>• Filtra por tipo de caso</li>
                 <li>• Encuentra abogados especializados</li>
                 <li>• Resultados en segundos</li>
@@ -552,7 +532,7 @@ const Index = () => {
                 Compara antes de decidir →
               </h3>
 
-              <ul className="text-gray-600 text-sm space-y-1">
+              <ul className="text-gray-600 space-y-1">
                 <li>• Revisa experiencia</li>
                 <li>• Evalúa enfoque y especialidad</li>
                 <li>• Elige con mejor información</li>
@@ -569,7 +549,7 @@ const Index = () => {
                 Precios claros desde el inicio →
               </h3>
 
-              <ul className="text-gray-600 text-sm space-y-1">
+              <ul className="text-gray-600 space-y-1">
                 <li>• Valores visibles o rangos</li>
                 <li>• Sin “depende del caso”</li>
                 <li>• Sin sorpresas después</li>
@@ -580,8 +560,43 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Emotional Block */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-green-900 overflow-hidden">
+        <div className="max-w-4xl mx-auto text-center relative">
+          {/* <div className="absolute -top-10 -left-10 w-32 h-32 bg-green-600 rounded-full blur-3xl opacity-60" />
+          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-green-600 rounded-full blur-3xl opacity-60" /> */}
+          
+          <h2 className="text-3xl font-bold font-serif text-green-600 mb-6 leading-tight relative">
+            Resolver un problema legal no debería ser complicado.
+          </h2>
+          <p className="text-lg sm:text-xl text-white mb-10 max-w-2xl mx-auto leading-relaxed relative">
+            Explica tu caso y encuentra orientación legal clara y rápida. Conecta con abogados expertos listos para brindarte la seguridad que necesitas.
+          </p>
+          <div className="relative">
+            <Button  
+              onClick={() => {
+                window.gtag?.('event', 'click_cuentanos_caso', {
+                  location: 'hero_emotional_block',
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Small delay to allow scroll to start before focusing
+                setTimeout(() => {
+                  const searchInput = document.querySelector('input[placeholder*="Ej: me quieren desalojar"]');
+                  if (searchInput instanceof HTMLInputElement) {
+                    searchInput.focus();
+                  }
+                }, 500);
+              }}
+              className="bg-white hover:bg-white-50 text-gray-900 hover:text-gray-900 px-12 py-8 text-lg font-bold rounded-2xl shadow-2xl transition-all hover:-translate-y-1 w-full sm:w-auto"
+            >
+              Cuéntanos tu caso →
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Categorías de Práctica */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <p className="text-left text-green-900 mb-2">
             Explora por especialidad
@@ -709,6 +724,11 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50" />}>
+        <TestimonialsSection />
+      </Suspense>
+
       {/* Lista de Abogados */}
       <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
@@ -717,7 +737,7 @@ const Index = () => {
               Abogados destacados
             </h2>
             <Button variant="outline" onClick={() => navigate('/search')}>
-              Ver todos
+              Ver abogados disponibles
             </Button>
           </div>
           
@@ -756,7 +776,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredLawyers.map((lawyer) => (
+              {featuredLawyers.slice(0, 3).map((lawyer) => (
                 <LawyerCard
                   key={lawyer.id}
                   lawyer={lawyer}
@@ -783,11 +803,6 @@ const Index = () => {
           )}
         </div>
       </section>
-
-      {/* Testimonials Section */}
-      <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50" />}>
-        <TestimonialsSection />
-      </Suspense>
 
       {/* FAQ Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
@@ -881,8 +896,26 @@ const Index = () => {
         </div>
       </section>
 
+      {/* CAE High Conversion Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900 border-y border-gray-800 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl font-bold font-serif text-green-600 mb-4">
+            ¿Tienes deuda CAE y no sabes qué hacer?
+          </h2>
+          <p className="text-xl mb-8 text-white">
+            Revisa tu caso antes de pagar o que el proceso avance.
+          </p>
+          <button 
+              onClick={() => navigate('/cae')}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100"
+            >
+              Revisar mi caso →
+            </button>
+        </div>
+      </section>
+
       {/* Dual CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900">
+      {/* <section className="py-16 px-4 sm:px-6 lg:px-8 bg-green-900">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <p className="bg-green-600 rounded-full p-1 text-sm text-white mb-4 max-w-3xl mx-auto w-fit px-2 mt-4">AHORA</p>
@@ -895,7 +928,7 @@ const Index = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* CTA para Clientes - Principal */}
+            
             <Card className="border border-solid shadow-2xl z-10 relative">
               <CardContent className="p-10">
                 <div className="text-center">
@@ -929,7 +962,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* CTA para Abogados - Secundario */}
+            
             <Card className="border border-solid shadow-lg bg-white/90 backdrop-blur">
               <CardContent className="p-10">
                 <div className="text-center">
@@ -962,7 +995,7 @@ const Index = () => {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {showAuthModal && (
         <Suspense fallback={null}>

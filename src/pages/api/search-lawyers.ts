@@ -12,6 +12,8 @@ interface SearchParams {
   pageSize?: number;
   select?: string;
   requirePrice?: boolean;
+  orderBy?: string;
+  orderDirection?: 'asc' | 'desc';
 }
 
 // Mapeo de términos de búsqueda a especialidades
@@ -151,6 +153,8 @@ export async function searchLawyers(params: SearchParams = {}) {
       page = 1,
       pageSize = 12,
       requirePrice = false,
+      orderBy = 'review_count',
+      orderDirection = 'desc',
       // Optimized selection: removed unused fields and truncated bio to save bandwidth
       select = 'id, user_id, first_name, last_name, specialties, rating, review_count, location, bio, avatar_url, hourly_rate_clp, contact_fee_clp, experience_years, verified, pjud_verified, blocked, availability'
     } = params;
@@ -167,6 +171,7 @@ export async function searchLawyers(params: SearchParams = {}) {
       .select(select, { count: 'exact' })
       .eq('role', 'lawyer')
       .order('verified', { ascending: false, nullsFirst: false })
+      .order(orderBy, { ascending: orderDirection === 'asc', nullsFirst: false })
       .range(from, to);
 
     // Combinamos todas las condiciones en una sola consulta
