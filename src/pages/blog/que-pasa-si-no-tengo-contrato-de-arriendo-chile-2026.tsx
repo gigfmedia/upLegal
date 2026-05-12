@@ -59,10 +59,31 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)
           </h1>
           
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "Sí puedes arrendar sin contrato escrito en Chile",
+                "Igualmente existen derechos y obligaciones legales",
+                "Sin contrato, probar acuerdos puede ser más difícil",
+                "El arrendador no puede desalojarte por la fuerza",
+                "Los conflictos suelen terminar resolviéndose en tribunales"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <p className="text-xl max-w-3xl leading-relaxed">
             Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Muchas personas viven en una propiedad con acuerdos verbales, sin firmar ningún documento formal. Pero cuando surgen problemas, ¿qué pasa legalmente?
           </p>
@@ -512,20 +533,7 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" 
           />
         </div>
-        <BlogNavigation 
-          nextArticle={{
-            id: "derecho-arrendamiento-chile-guia-completa-2026",
-            title: "Derecho de arrendamiento en Chile: guía completa 2026",
-            excerpt: "Guía completa 2026 de arriendos en Chile: contrato, desalojo, garantía, IPC, DICOM y derechos clave.",
-            image: "/assets/derecho-arrendamiento-chile-2026.png"
-          }}
-          prevArticle={{
-            id: "ley-devuelveme-mi-casa-chile-2026",
-            title: 'Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Recupera tu propiedad',
-            excerpt: "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble. Guía 2026 para propietarios en Chile.",
-            image: "/assets/ley-devuelveme-mi-casa-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

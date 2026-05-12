@@ -78,9 +78,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El reajuste de arriendo en Chile normalmente se calcula según IPC",
+                "El aumento debe respetar lo pactado en el contrato",
+                "El arrendador no puede subir el arriendo arbitrariamente",
+                "La variación del IPC cambia mes a mes",
+                "Calcular correctamente el reajuste evita cobros indebidos"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           
           <p className="text-xl max-w-3xl leading-relaxed">
             El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Muchas personas ven subir el precio mensual sin entender cómo se calcula realmente ni si el aumento es correcto.
@@ -607,20 +628,7 @@ const BlogArticle = () => {
           />
         </div>
         
-        <BlogNavigation 
-          prevArticle={{
-            id: "me-subieron-el-arriendo-que-hago-2026",
-            title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
-            excerpt: "Qué hacer si te suben el arriendo: cuándo es legal, cómo reclamar y cómo evitar abusos. Guía 2026.",
-            image: "/assets/arriendo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "no-devuelven-garantia-arriendo-chile-2026",
-            title: "No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)",
-            excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
-            image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="reajuste-arriendo-ipc-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

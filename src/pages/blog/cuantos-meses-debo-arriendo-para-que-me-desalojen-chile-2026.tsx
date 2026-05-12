@@ -84,7 +84,7 @@ const BlogArticle = () => {
             ¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-8 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
@@ -679,7 +679,7 @@ const BlogArticle = () => {
               </div>
             ))}
           </div>
-          <p className="text-gray-700 font-medium">👉 En estas situaciones, el riesgo de demanda o desalojo es alto.</p>
+          <p className="text-gray-700 font-medium">En estas situaciones, el riesgo de demanda o desalojo es alto.</p>
         </div>
       </section>
 
@@ -718,20 +718,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "contrato-de-arriendo-chile-2026",
-            title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
-            excerpt: "Descubre qué debe incluir tu contrato, qué cláusulas son ilegales y descarga un modelo base gratuito.",
-            image: "/assets/contrato-arriendo-chile-2026.png",
-          }}
-          nextArticle={{
-            id: "me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026",
-            title: "¿Me pueden demandar por no pagar el arriendo en Chile? (Guía 2026 real)",
-            excerpt: "Descubre qué pasa si dejas de pagar, cómo es el proceso legal y cómo defenderte de una demanda.",
-            image: "/assets/demanda-arriendo-chile-2026.png",
-          }}
-        />
+        <BlogNavigation currentArticleId="cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link to="/blog" className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors">

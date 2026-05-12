@@ -13,25 +13,30 @@ import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Cuántos años se pagan máximo?",
-      answer: "Hasta 11 años."
+      question: "¿Cuántos años se pagan máximo en la indemnización por años de servicio?",
+      answer:
+        "El tope legal en Chile es 11 años de servicio. Si trabajaste más de 11 años, la indemnización igual se calcula solo sobre 11 meses de remuneración. Sin embargo, el empleador puede ofrecer voluntariamente un monto mayor si así lo acuerdan las partes.",
     },
     {
-      question: "¿Se paga si renuncio?",
-      answer: "No."
+      question: "¿Se paga indemnización por años de servicio si renuncio?",
+      answer:
+        "No. La indemnización por años de servicio solo corresponde cuando el empleador pone término al contrato por necesidades de la empresa o desahucio. Si renuncias voluntariamente, solo tienes derecho a las vacaciones proporcionales acumuladas.",
     },
     {
-      question: "¿Se puede negociar la indemnización?",
-      answer: "Sí, en algunos casos."
+      question: "¿Cómo se calcula la indemnización por años de servicio en Chile?",
+      answer:
+        "Se multiplica la última remuneración mensual por el número de años trabajados, con un tope de 11 años. Por ejemplo, si ganabas $800.000 y trabajaste 5 años, la indemnización es $4.000.000. Las fracciones superiores a 6 meses se cuentan como año completo.",
     },
     {
-      question: "¿El finiquito incluye esto?",
-      answer: "Sí, es uno de sus componentes principales."
+      question: "¿Se puede negociar la indemnización por años de servicio?",
+      answer:
+        "Sí. El empleador puede ofrecer un monto mayor al legal como parte de un acuerdo de término. Sin embargo, el monto legal mínimo es irrenunciable — si el empleador ofrece menos de lo que corresponde por ley, puedes rechazarlo y reclamar la diferencia.",
     },
     {
-      question: "¿Puedo demandar si me pagan mal?",
-      answer: "Sí, dentro de los plazos legales."
-    }
+      question: "¿Puedo demandar si me pagaron mal la indemnización por años de servicio?",
+      answer:
+        "Sí. Tienes 60 días hábiles desde el término del contrato para presentar un reclamo en la Inspección del Trabajo o demandar en el Juzgado del Trabajo. Si firmaste el finiquito con reserva de derechos, puedes reclamar la diferencia dentro de ese plazo. Si firmaste sin reserva, las opciones se reducen.",
+    },
   ];
 
   const keywords = [
@@ -461,18 +466,16 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* Reserva de Derechos Link */}
-          <div className="bg-green-50 p-6 rounded-xl border border-green-100 mb-12 text-center">
-            <h3 className="text-xl font-bold text-green-900 mb-2">¿No estás de acuerdo con el cálculo de tus años de servicio?</h3>
-            <p className="text-green-800 mb-4">Aprende cómo proteger tu derecho a reclamar al firmar el finiquito.</p>
-            <Link
-              to="/blog/reserva-de-derechos-finiquito-chile-2026"
-              className="inline-flex items-center gap-2 text-white font-bold bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition-colors"
-            >
-              Guía: Cómo firmar con reserva de derechos
-              <ChevronRight className="h-5 w-5" />
-            </Link>
-          </div>
+          <div className="text-center py-4 border-t border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el cálculo de tus años de servicio?</p>
+              <Link
+                to="/blog/reserva-de-derechos-finiquito-chile-2026"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 Guía: Cómo firmar con reserva de derechos
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -540,20 +543,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          prevArticle={{
-            id: "me-pueden-despedir-sin-motivo-chile-2026",
-            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)",
-            excerpt: "¿Te despidieron sin justificación? Descubre si es legal, qué derechos tienes y cómo reclamar. Guía 2026 del Código del Trabajo chileno.",
-            image: "/assets/despido-sin-motivo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "despido-injustificado-chile-2026",
-            title: "Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)",
-            excerpt: "Si te despidieron sin causa válida, tienes derecho a indemnización y hasta un 100% de recargo adicional. Guía 2026 con plazos, pasos y ejemplo de cálculo real.",
-            image: "/assets/despido-injustificado-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="cuanto-me-corresponde-anos-de-servicio-chile-2026" />
 
         <div className="mt-4 text-center">
           <Link 

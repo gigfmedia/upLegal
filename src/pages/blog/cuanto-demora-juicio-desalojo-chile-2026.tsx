@@ -63,10 +63,31 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley
           </h1>
           
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "Un desalojo en Chile puede tardar entre 3 meses y más de 1 año",
+                "El proceso depende del tribunal y de la respuesta del arrendatario",
+                "El desalojo nunca es inmediato ni automático",
+                "Ignorar la demanda puede acelerar el lanzamiento",
+                "Negociar o actuar temprano puede reducir tiempos y costos"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <p className="text-xl max-w-3xl">
             Los conflictos de arriendo son uno de los problemas legales más comunes en Chile. Descubre los plazos reales y el funcionamiento del proceso judicial este 2026.
           </p>
@@ -376,20 +397,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          prevArticle={{
-            id: "me-quieren-desalojar-que-hago-chile-2026",
-            title: "¿Me pueden desalojar sin orden judicial en Chile? Guía 2026",
-            excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales.",
-            image: "/assets/desalojo-chile-2026.png"
-          }} 
-          nextArticle={{
-            id: "arrendador-puede-cambiar-cerradura-chile-2026",
-            title: "¿El arrendador puede cambiar la cerradura en Chile? Guía legal 2026",
-            excerpt: "En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Descubre qué dice la ley y cómo proteger tus derechos.",
-            image: "/assets/cerradura-arriendo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="cuanto-demora-juicio-desalojo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

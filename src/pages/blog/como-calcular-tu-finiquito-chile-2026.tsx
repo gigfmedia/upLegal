@@ -756,18 +756,16 @@ const BlogArticle = () => {
               </ul>
             </div>
           </div>
-          {/* Reserva de Derechos Link */}
-          <div className="bg-green-50 p-6 rounded-xl border border-green-100 mb-12 text-center">
-            <h3 className="text-xl font-bold text-green-900 mb-2">¿No estás de acuerdo con el monto de tu finiquito?</h3>
-            <p className="text-green-800 mb-4">Aprende cómo proteger tu derecho a reclamar sin perder tu pago actual.</p>
-            <Link
-              to="/blog/reserva-de-derechos-finiquito-chile-2026"
-              className="inline-flex items-center gap-2 text-white font-bold bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition-colors"
-            >
-              Guía: Cómo firmar con reserva de derechos
-              <ChevronRight className="h-5 w-5" />
-            </Link>
-          </div>
+          <div className="text-center py-4 border-t border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el monto de tu finiquito?</p>
+              <Link
+                to="/blog/reserva-de-derechos-finiquito-chile-2026"
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 Guía: Cómo firmar con reserva de derechos
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -835,20 +833,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
-            title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
-            excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso y cómo acelerarlo.",
-            image: "/assets/duracion-juicio-laboral-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
-            title: "¿Cuánto me corresponde por años de servicio en Chile? (Guía 2026)",
-            excerpt: "Descubre cómo se calcula exactamente la indemnización por años de servicio en Chile, topes legales y qué pasa si trabajaste menos de un año.",
-            image: "/assets/anos-servicio-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="como-calcular-tu-finiquito-chile-2026" />
 
         <div className="mt-4 text-center">
           <Link 

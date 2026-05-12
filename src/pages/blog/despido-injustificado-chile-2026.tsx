@@ -76,7 +76,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <span>Tiempo de lectura: 15 min</span>
             </div>
           </div>
         </div>
@@ -515,13 +515,22 @@ const BlogArticle = () => {
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              El despido injustificado es una de las situaciones más comunes en Chile, pero también una de las más defendibles legalmente.
+              El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Si actúas a tiempo, reúnes pruebas y entiendes tus derechos, puedes obtener una compensación significativa.
+              Muchos empleadores invocan causales sin respaldo suficiente, utilizan “necesidades de la empresa” de forma incorrecta o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales ante los tribunales laborales.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Por eso, actuar rápido es fundamental. Revisar la carta de despido, guardar documentos, no firmar el finiquito sin analizarlo y buscar asesoría legal puede marcar una diferencia importante en el resultado del caso.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Además, muchas personas no saben que el despido injustificado puede aumentar significativamente las indemnizaciones mediante recargos legales, especialmente cuando la causal no logra probarse correctamente.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El error más común es pensar que “ya no hay nada que hacer” después del despido o firmar documentos sin entender sus consecuencias. En la práctica, muchos trabajadores logran acuerdos o compensaciones mayores cuando reclaman dentro de plazo y presentan un caso sólido.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              La clave es no actuar impulsivamente y asesorarte antes de firmar cualquier documento.
+              Si crees que tu despido fue injusto, arbitrario o sin pruebas reales, lo más importante es actuar antes de que expire el plazo legal. Un análisis temprano del caso puede ayudarte a proteger tus derechos y evitar perder indemnizaciones que podrían corresponderte.
             </p>
           </div>
 
@@ -575,20 +584,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          nextArticle={{
-            id: "como-calcular-tu-finiquito-chile-2026",
-            title: "¿Cómo calcular tu finiquito en Chile? (Guía 2026 paso a paso + ejemplos)",
-            excerpt: "Aprende a calcular tu finiquito en Chile: vacaciones, indemnización, años de servicio y más. Guía 2026 con ejemplos prácticos.",
-            image: "/assets/finiquito-chile-2026.png"
-          }}
-          prevArticle={{
-            id: "cuanto-me-corresponde-anos-de-servicio-chile-2026",
-            title: "¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)",
-            excerpt: "Descubre cuánto te corresponde recibir por años de servicio en Chile. Guía 2026 sobre cálculo de indemnización, topes legales y qué hacer si no te pagan.",
-            image: "/assets/anos-de-servicio-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="despido-injustificado-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

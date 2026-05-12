@@ -539,20 +539,7 @@ const BlogArticle = () => {
             <BlogShare title={title} url={url} />
           </div>
 
-          <BlogNavigation
-            prevArticle={{
-              id: "ley-devuelveme-mi-casa-chile-2026",
-              title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
-              excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
-              image: "/assets/ley-devuelveme-mi-casa-2026.png"
-            }}
-            nextArticle={{
-              id: "me-subieron-el-arriendo-que-hago-2026",
-              title: "Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026",
-              excerpt: "Qué hacer si te suben el arriendo: cuándo es legal, cómo reclamar y cómo evitar abusos. Guía 2026.",
-              image: "/assets/arriendo-chile-2026.png"
-            }}
-          />
+          <BlogNavigation currentArticleId="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" />
 
           <div className="mt-8 text-center">
             <Link

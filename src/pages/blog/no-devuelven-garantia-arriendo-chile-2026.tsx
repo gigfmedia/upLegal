@@ -59,9 +59,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "La garantía no puede ser retenida arbitrariamente por el arrendador",
+                "Los descuentos deben estar justificados con daños o deudas reales",
+                "El desgaste normal del inmueble no puede cobrarse al arrendatario",
+                "Sin respaldo o inventario, retener la garantía puede ser ilegal",
+                "Si no te devuelven el dinero, puedes exigirlo judicialmente"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <p className="text-xl text-white max-w-3xl leading-relaxed">
             Uno de los problemas más comunes al terminar un contrato de arriendo en Chile es que el arrendador no devuelve la garantía. Esta guía te explica cómo recuperar tu dinero paso a paso.
@@ -520,20 +541,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "reajuste-arriendo-ipc-chile-2026",
-            title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
-            excerpt: "El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Guía legal 2026.",
-            image: "/assets/reajuste-arriendo-ipc-2026.png"
-          }}
-          nextArticle={{
-            id: "dicom-deuda-arriendo-chile-2026",
-            title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)",
-            excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp.",
-            image: "/assets/dicom-arriendo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="no-devuelven-garantia-arriendo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

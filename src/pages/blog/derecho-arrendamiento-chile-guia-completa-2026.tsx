@@ -875,20 +875,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "tacita-reconduccion-chile-2026",
-            title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
-            excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos.",
-            image: "/assets/tacita-reconduccion-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "contrato-de-arriendo-chile-2026",
-            title: "Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)",
-            excerpt: "Firmar un contrato de arriendo es uno de los pasos más importantes al arrendar en Chile. Descubre qué debe incluir y qué errores evitar.",
-            image: "/assets/contrato-arriendo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="derecho-arrendamiento-chile-guia-completa-2026" />
 
         <div className="mt-8 text-center">
           <Link

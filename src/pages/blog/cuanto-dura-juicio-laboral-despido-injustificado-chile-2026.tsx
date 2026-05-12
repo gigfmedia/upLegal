@@ -463,20 +463,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "como-demandar-por-despido-injustificado-chile-2026",
-            title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
-            excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos críticos, requisitos, indemnizaciones y cómo ganar el caso.",
-            image: "/assets/demandar-despido-injustificado-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "como-calcular-tu-finiquito-chile-2026",
-            title: '¿Cómo calcular tu finiquito en Chile? (Guía paso a paso 2026)',
-            excerpt: "Aprende a calcular tu finiquito paso a paso con la ley chilena en 2026. Conoce qué te deben pagar, cómo revisar los montos y qué hacer si no estás de acuerdo.",
-            image: "/assets/calcular-finiquito-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

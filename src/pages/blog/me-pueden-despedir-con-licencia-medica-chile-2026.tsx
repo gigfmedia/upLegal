@@ -418,20 +418,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "me-pueden-despedir-sin-motivo-chile-2026",
-            title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026)",
-            excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos e indemnizaciones.",
-            image: "/assets/despido-sin-motivo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "como-demandar-por-despido-injustificado-chile-2026",
-            title: "Cómo demandar por despido injustificado en Chile (paso a paso 2026)",
-            excerpt: "Si te despidieron y crees que fue injusto, conoce cómo demandar paso a paso en 2026. Plazos, requisitos e indemnizaciones.",
-            image: "/assets/demandar-despido-injustificado-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="me-pueden-despedir-con-licencia-medica-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

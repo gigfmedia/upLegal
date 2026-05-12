@@ -63,9 +63,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El arrendador no puede cambiar la cerradura por su cuenta",
+                "Sacarte del inmueble sin orden judicial puede ser ilegal",
+                "El desalojo requiere demanda y resolución del tribunal",
+                "Cambiar cerraduras puede generar responsabilidades legales",
+                "Si ocurrió, debes reunir pruebas y actuar rápidamente"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
             En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Conoce tus derechos y qué hacer si esto ocurre.
@@ -441,20 +462,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "cuanto-demora-juicio-desalojo-chile-2026",
-            title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
-            excerpt: "Descubre los plazos reales de un juicio de desalojo en Chile: desde la demanda hasta el lanzamiento.",
-            image: "/assets/desalojo-2-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "orden-desalojo-chile-2026",
-            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
-            excerpt: "Descubre qué es una orden de desalojo, cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
-            image: "/assets/orden-desalojo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="arrendador-puede-cambiar-cerradura-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

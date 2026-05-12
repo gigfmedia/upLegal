@@ -62,9 +62,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron
           </h1>
+
+           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El arriendo no puede subir arbitrariamente si existe contrato vigente",
+                "La mayoría de los reajustes se calculan según IPC",
+                "El aumento debe respetar lo pactado en el contrato",
+                "Un cobro excesivo puede ser discutido legalmente",
+                "Revisar el reajuste a tiempo puede evitar pagos indebidos"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div> 
           
           <p className="text-xl text-white max-w-3xl leading-relaxed">
             Entender qué dice tu contrato y cuáles son tus derechos es fundamental para proteger tu presupuesto y evitar cobros abusivos.
@@ -369,14 +390,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          nextArticle={{
-            id: "reajuste-arriendo-ipc-chile-2026",
-            title: "Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo",
-            excerpt: "Guía 2026 para saber si te pueden subir el arriendo, cómo se calcula el reajuste por IPC y qué hacer si el cálculo no corresponde.",
-            image: "/assets/reajuste-arriendo-ipc-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="me-subieron-el-arriendo-que-hago-2026" />
 
         <div className="mt-8 text-center">
           <Link 

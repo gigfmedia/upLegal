@@ -571,20 +571,7 @@ const BlogArticle = () => {
             <BlogShare title={title} url={url} />
           </div>
 
-          <BlogNavigation
-            prevArticle={{
-              id: "me-pueden-despedir-con-licencia-medica-chile-2026",
-              title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
-              excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
-              image: "/assets/despido-licencia-medica-chile-2026.png"
-            }}
-            nextArticle={{
-              id: "cuanto-dura-juicio-laboral-despido-injustificado-chile-2026",
-              title: "¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?",
-              excerpt: "Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso y cómo acelerarlo.",
-              image: "/assets/duracion-juicio-laboral-chile-2026.png"
-            }}
-          />
+          <BlogNavigation currentArticleId="como-demandar-por-despido-injustificado-chile-2026" />
 
           <div className="mt-8 text-center">
             <Link

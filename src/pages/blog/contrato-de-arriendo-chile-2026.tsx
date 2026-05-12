@@ -67,11 +67,32 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)
           </h1>
 
-          <p className="text-xl text-white max-w-3xl leading-relaxed">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El contrato de arriendo regula derechos y obligaciones entre arrendador y arrendatario",
+                "Debe incluir monto, plazo, garantía y reglas de uso del inmueble",
+                "Un contrato mal redactado puede generar conflictos legales",
+                "Sí puedes arrendar sin notaría, pero formalizar ayuda a evitar problemas",
+                "Revisar las cláusulas antes de firmar puede ahorrarte demandas futuras"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-xl text-white leading-relaxed">
             Firmar un contrato de arriendo es uno de los pasos más importantes al arrendar en Chile — y uno de los más subestimados. Un contrato mal hecho puede generar meses de conflictos legales.
           </p>
 
@@ -682,20 +703,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "derecho-arrendamiento-chile-guia-completa-2026",
-            title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
-            excerpt: "Todo lo que necesitas saber sobre contratos, desalojos, garantías e IPC en esta guía completa 2026.",
-            image: "/assets/derecho-arrendamiento-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
-            title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026)",
-            excerpt: "¿Con cuántos meses de deuda te pueden desalojar? Descubre cuándo pueden demandarte y cómo evitarlo.",
-            image: "/assets/desalojo-3-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="contrato-de-arriendo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

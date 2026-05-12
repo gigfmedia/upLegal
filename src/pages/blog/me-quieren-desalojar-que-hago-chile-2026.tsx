@@ -62,9 +62,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "En Chile no pueden desalojarte sin orden judicial",
+                "El arrendador no puede usar fuerza ni cambiar cerraduras",
+                "Antes del desalojo debe existir un juicio",
+                "La notificación judicial es obligatoria para avanzar",
+                "Ignorar la demanda puede acelerar el lanzamiento"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           
           <p className="text-xl max-w-3xl leading-relaxed">
             Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
@@ -361,20 +382,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          prevArticle={{
-            id: "derecho-arrendamiento-chile-guia-completa-2026",
-            title: "Derecho de arrendamiento en Chile: guía completa 2026",
-            excerpt: "Guía completa 2026 de arriendos en Chile: contrato, desalojo, garantía, IPC, DICOM y derechos clave.",
-            image: "/assets/derecho-arrendamiento-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "cuanto-demora-juicio-desalojo-chile-2026",
-            title: "¿Cuánto demora un juicio de desalojo? Guía 2026",
-            excerpt: "Descubre cuánto tarda realmente un proceso de desalojo y cuáles son los plazos legales en Chile.",
-            image: "/assets/desalojo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="me-quieren-desalojar-que-hago-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

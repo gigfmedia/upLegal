@@ -11,28 +11,34 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Cuánto tiempo tengo para salir después de la orden?",
-      answer: "Depende de lo que establezca el tribunal en la resolución."
+      question: "¿Cuánto tiempo tengo para salir después de la orden de desalojo?",
+      answer:
+        "Depende de lo que establezca el tribunal en la resolución. En algunos casos se otorgan días para entregar voluntariamente el inmueble antes del lanzamiento. Si no abandonas la propiedad dentro del plazo fijado, el tribunal puede coordinar el desalojo forzado con auxilio de la fuerza pública."
     },
     {
-      question: "¿Puedo evitar el desalojo?",
-      answer: "En algunos casos sí, especialmente si actúas antes de la ejecución del lanzamiento."
+      question: "¿Puedo evitar el desalojo en Chile?",
+      answer:
+        "En algunos casos sí. Actuar temprano puede marcar una diferencia importante. Dependiendo de la etapa del juicio, es posible negociar con el arrendador, pagar la deuda, solicitar más plazo o presentar defensas legales. Mientras antes reacciones, mayores son las opciones de evitar el lanzamiento."
     },
     {
-      question: "¿Carabineros puede desalojar?",
-      answer: "Solo puede intervenir cuando existe una orden judicial."
+      question: "¿Carabineros puede desalojar a un arrendatario?",
+      answer:
+        "Carabineros solo puede intervenir cuando existe una orden judicial válida emitida por el tribunal. El arrendador no puede sacar al arrendatario por su cuenta, cambiar cerraduras ni usar fuerza sin autorización judicial. Hacerlo puede ser ilegal."
     },
     {
-      question: "¿Qué pasa con mis pertenencias?",
-      answer: "Deben ser retiradas conforme al procedimiento legal."
+      question: "¿Qué pasa con mis pertenencias durante el desalojo?",
+      answer:
+        "Las pertenencias deben ser retiradas conforme al procedimiento legal. Dependiendo del caso, pueden entregarse al arrendatario, quedar bajo custodia o levantarse un acta del procedimiento. El desalojo no autoriza destruir, apropiarse o botar los bienes del ocupante."
     },
     {
-      question: "¿Qué pasa si no cumplo la orden?",
-      answer: "Si no se cumple voluntariamente, el tribunal puede ordenar el lanzamiento."
+      question: "¿Qué pasa si no cumplo la orden de desalojo?",
+      answer:
+        "Si no entregas voluntariamente el inmueble dentro del plazo fijado, el tribunal puede ordenar el lanzamiento. En esa etapa puede intervenir receptor judicial y fuerza pública para ejecutar el desalojo. Además, la deuda de arriendo y los costos judiciales pueden seguir aumentando."
     },
     {
       question: "¿Se puede suspender una orden de desalojo?",
-      answer: "En algunos casos excepcionales, es posible: presentar recursos, solicitar plazos, intentar acuerdos. Esto dependerá de la situación específica."
+      answer:
+        "En ciertos casos excepcionales sí. Dependiendo de la situación, se pueden presentar recursos, solicitar prórrogas, acreditar pagos, intentar acuerdos o discutir irregularidades del proceso. La posibilidad real de suspensión depende de la etapa del juicio y de los antecedentes del caso."
     }
   ];
 
@@ -52,7 +58,7 @@ const BlogArticle = () => {
 
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
@@ -63,6 +69,26 @@ const BlogArticle = () => {
             Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
           </h1>
 
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "La orden de desalojo solo puede dictarla un tribunal",
+                "No pueden sacarte sin proceso judicial",
+                "El lanzamiento puede realizarse con Carabineros",
+                "Ignorar la demanda aumenta el riesgo de desalojo",
+                "Actuar rápido puede ayudarte a negociar o ganar tiempo"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           <p className="text-xl max-w-3xl leading-relaxed">
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
@@ -455,13 +481,16 @@ const BlogArticle = () => {
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La orden de desalojo en Chile es una resolución judicial que se dicta después de un proceso legal.
+              La orden de desalojo en Chile es una de las etapas más serias dentro de un conflicto de arriendo. Una vez que el tribunal la dicta, el proceso puede avanzar hasta el lanzamiento forzado del ocupante con auxilio de la fuerza pública. Por eso, ignorar una demanda o esperar “a ver qué pasa” suele empeorar rápidamente la situación.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              No es inmediata ni automática, y requiere la intervención de un tribunal.
+              Muchas personas creen que el desalojo ocurre automáticamente después de algunos meses sin pagar, pero la realidad es distinta. Siempre debe existir un proceso judicial, una resolución del tribunal y una ejecución formal. Sin embargo, eso no significa que el riesgo sea bajo: cuando la deuda aumenta y no existe respuesta del arrendatario, las probabilidades de perder el inmueble crecen considerablemente.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Para el arrendador, actuar a tiempo permite recuperar la propiedad más rápido y evitar que la deuda siga aumentando. Para el arrendatario, responder la demanda, negociar o buscar asesoría legal puede marcar una diferencia importante en los plazos y en las consecuencias económicas del caso.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              Comprender cómo funciona este proceso es fundamental para proteger tus derechos como arrendador o arrendatario.
+              Lo más importante es entender que una orden de desalojo no aparece de un día para otro. Antes existen notificaciones, audiencias y oportunidades para actuar. Mientras antes enfrentes el problema, mayores serán las opciones de encontrar una solución y evitar consecuencias más graves.
             </p>
           </div>
 
@@ -478,10 +507,10 @@ const BlogArticle = () => {
 
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Otras preguntas frecuentes sobre orden de desalojo</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="bg-blue-50 rounded-lg p-6">
+                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
@@ -525,20 +554,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "arrendador-puede-cambiar-cerradura-chile-2026",
-            title: "¿El arrendador puede cambiar la cerradura en Chile? Guía legal 2026",
-            excerpt: "En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Descubre qué dice la ley y cómo proteger tus derechos.",
-            image: "/assets/cerradura-arriendo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "ley-devuelveme-mi-casa-chile-2026",
-            title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
-            excerpt: "Guía 2026 sobre la Ley 21.461: procedimiento monitorio, desalojo, plazos y pasos para recuperar tu propiedad arrendada.",
-            image: "/assets/ley-devuelveme-mi-casa-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="orden-desalojo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

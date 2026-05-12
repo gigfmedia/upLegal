@@ -63,6 +63,27 @@ const BlogArticle = () => {
             Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)
           </h1>
           
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "La tácita reconducción ocurre cuando sigues arrendando después del término del contrato",
+                "No necesitas firmar un nuevo contrato para que exista",
+                "El arriendo puede continuar bajo condiciones similares",
+                "El arrendador igualmente puede pedir el inmueble siguiendo la ley",
+                "Ignorar la situación puede generar conflictos o demandas"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <p className="text-xl max-w-3xl leading-relaxed">
             Muchas personas siguen viviendo en una propiedad después de que el contrato de arriendo termina. Pagan el arriendo normalmente y todo parece seguir igual. ¿Sigo con contrato? ¿Me pueden echar? ¿Se renovó automáticamente? Aquí es donde aparece un concepto clave: la tácita reconducción.
           </p>
@@ -578,20 +599,7 @@ const BlogArticle = () => {
             url="https://legalup.cl/blog/tacita-reconduccion-chile-2026" 
           />
         </div>
-        <BlogNavigation 
-          prevArticle={{
-            id: "dicom-deuda-arriendo-chile-2026",
-            title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)",
-            excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile.",
-            image: "/assets/dicom-arriendo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "derecho-arrendamiento-chile-guia-completa-2026",
-            title: "Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)",
-            excerpt: "Todo lo que necesitas saber sobre el arrendamiento en Chile en esta guía completa 2026.",
-            image: "/assets/derecho-arrendamiento-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="tacita-reconduccion-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

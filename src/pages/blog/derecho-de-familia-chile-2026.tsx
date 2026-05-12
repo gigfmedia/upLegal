@@ -70,11 +70,25 @@ const BlogArticle = () => {
             Derecho de Familia en Chile 2026: guía completa de pensiones, divorcio y cuidado de hijos
           </h1>
 
-          {/* Featured Snippet - Pensión de alimentos */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-            <p className="text-lg leading-relaxed">
-              En Chile, la pensión de alimentos se fija según los ingresos del sostenedor y las necesidades del niño, niña o adolecente. No existe un monto único: el juez determina el valor caso a caso, pero puede variar entre un 30% y 50% de los ingresos, dependiendo de la situación. Si no se paga, pueden aplicarse medidas como retención de sueldo, embargo e incluso arresto.
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
             </p>
+
+            <ul className="space-y-2">
+              {[
+                "El Derecho de Familia regula pensiones, divorcios y cuidado personal de hijos",
+                "Muchos trámites familiares requieren intervención del tribunal",
+                "La pensión de alimentos puede cobrarse judicialmente si no se paga",
+                "Los acuerdos familiares pueden formalizarse legalmente",
+                "Actuar a tiempo ayuda a proteger derechos y evitar conflictos mayores"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <p className="text-xl max-w-3xl">
@@ -567,14 +581,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          nextArticle={{
-            id: "deuda-pension-alimentos-chile-2026",
-            title: "Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)",
-            excerpt: "Conoce cómo solicitar la liquidación de la deuda, activar medidas de apremio y asegurar el pago.",
-            image: "/assets/pension-alimentos-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="derecho-de-familia-chile-2026" />
 
         {/* Back to Blog */}
         <div className="mt-4 text-center">

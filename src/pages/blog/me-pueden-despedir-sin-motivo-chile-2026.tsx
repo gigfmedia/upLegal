@@ -497,14 +497,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          nextArticle={{
-            id: "me-pueden-despedir-con-licencia-medica-chile-2026",
-            title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
-            excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
-            image: "/assets/despido-licencia-medica-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="me-pueden-despedir-sin-motivo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link

@@ -76,11 +76,11 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
             <div className="space-y-3 text-white/90">
               {[
@@ -550,8 +550,99 @@ const BlogArticle = () => {
                   ))}
                 </div>
               </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="font-bold text-gray-900 mb-2">Paso 3 — Reúne evidencia</p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {["Pagos", "Conversaciones", "Situación económica"].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-gray-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="font-bold text-gray-900 mb-2">Paso 4 — Intenta acuerdo</p>
+                <p className="text-gray-600">Muchos conflictos se resuelven sin juicio.</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="font-bold text-gray-900 mb-2">Paso 5 — Asesoría legal</p>
+                <p className="text-gray-600 mb-3">Esto puede:</p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {["Evitar errores", "Reducir deuda", "Evitar desalojo"].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-gray-700">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo debes actuar urgente?</h2>
+
+            <div className="border-b border-gray-100 my-8">
+              <div className="bg-red-50 p-6 rounded-xl border border-red-100 mb-6">
+                <p className="text-red-900 font-bold mb-4">Si ocurre esto:</p>
+                <div className="grid sm:grid-cols-2 gap-3 mb-6">
+                  {[
+                    "Debes 2 meses o más",
+                    "Recibiste notificación", 
+                    "Te amenazan con desalojo",
+                    "El arrendador dejó de negociar"
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-red-800">
+                      <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      <span className="font-medium">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-red-100 p-4 rounded-lg">
+                  <p className="text-red-900 font-bold text-lg">Estás en zona de alto riesgo.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Conclusion */}
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              No pagar el arriendo en Chile no es un problema que “explota” de un día para otro, pero tampoco es algo que puedas dejar pasar sin consecuencias.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              La ley es clara: con un solo mes de deuda el arrendador ya puede iniciar acciones legales. Sin embargo, lo que realmente determina el resultado no es solo la deuda, sino cómo evoluciona la situación desde ese primer incumplimiento.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              En la práctica, el desalojo es un proceso que toma tiempo —generalmente entre 3 y 12 meses—, pero ese plazo no es una oportunidad para ignorar el problema, sino una ventana para actuar estratégicamente. Durante ese período puedes negociar, pagar, defenderte o buscar alternativas que reduzcan el impacto.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El error más común no es dejar de pagar: es no hacer nada después. Ignorar la deuda, evitar la comunicación o no responder una demanda suele acelerar el conflicto y aumentar significativamente las consecuencias legales y económicas.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Por el contrario, quienes actúan temprano —ya sea regularizando la deuda, llegando a acuerdos o asesorándose legalmente— tienen muchas más probabilidades de evitar el desalojo o, al menos, minimizar el daño.
+            </p>
+            <p className="text-gray-600 font-bold leading-relaxed">
+              Si estás en esta situación, el enfoque correcto no es preguntarte solo “qué va a pasar”, sino qué puedes hacer hoy para cambiar el resultado.
+            </p>
+          </div>
+
+          {/* FAQ (SEO structured) */}
+          <div className="mb-6" data-faq-section>
+            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, i) => (
+                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
+                  <p className="text-gray-700">{faq.answer}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -595,20 +686,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026",
-            title: "¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)",
-            excerpt: "Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitar errores.",
-            image: "/assets/desalojo-3-chile-2026.png",
-          }}
-          nextArticle={{
-            id: "dicom-deuda-arriendo-chile-2026",
-            title: "¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)",
-            excerpt: "Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, qué hacer y cómo defenderte.",
-            image: "/assets/dicom-arriendo-chile-2026.png",
-          }}
-        />
+        <BlogNavigation currentArticleId="me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link to="/blog" className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors">

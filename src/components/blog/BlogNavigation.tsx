@@ -1,19 +1,43 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 
-interface ArticleInfo {
-  id: string;
-  title: string;
-  excerpt: string;
-  image: string;
-}
+import { articles } from "@/data/blogArticles";
 
 interface BlogNavigationProps {
-  prevArticle?: ArticleInfo;
-  nextArticle?: ArticleInfo;
+  currentArticleId: string;
 }
 
-export const BlogNavigation = ({ prevArticle, nextArticle }: BlogNavigationProps) => {
+export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
+  const currentArticle = articles.find(a => a.id === currentArticleId);
+  const category = currentArticle?.category;
+  
+  // Filter articles to stay within the same category for navigation
+  const categoryArticles = category 
+    ? articles.filter(a => a.category === category)
+    : articles;
+
+  const currentIndex = categoryArticles.findIndex(a => a.id === currentArticleId);
+  
+  // Articles are ordered from newest to oldest in the array
+  // If at the beginning (newest), "Next" (newer) loops to the end (oldest)
+  let nextArticle = categoryArticles.length > 1
+    ? (currentIndex > 0 ? categoryArticles[currentIndex - 1] : categoryArticles[categoryArticles.length - 1])
+    : undefined;
+
+    
+  // If at the end (oldest), "Prev" (older) loops to the beginning (newest)
+  let prevArticle = categoryArticles.length > 1
+    ? (currentIndex < categoryArticles.length - 1 ? categoryArticles[currentIndex + 1] : categoryArticles[0])
+    : undefined;
+
+  // If next and prev are the same (happens with only 2 articles), hide prev to avoid redundancy
+  // We keep "Next" to encourage forward navigation
+  if (nextArticle && prevArticle && nextArticle.id === prevArticle.id) {
+    prevArticle = undefined;
+  }
+
+
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">

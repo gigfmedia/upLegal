@@ -672,14 +672,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          nextArticle={{
-            id: "derecho-de-familia-chile-2026",
-            title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
-            excerpt: "Entiende el marco general del Derecho de Familia y cómo se conectan alimentos, cuidado personal y medidas de apremio. Guía 2026.",
-            image: "/assets/derecho-de-familia-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="deuda-pension-alimentos-chile-2026" />
 
         <div className="mt-4 text-center">
           <Link

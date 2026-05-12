@@ -66,6 +66,27 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             ¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "Una deuda de arriendo NO va automáticamente a DICOM",
+                "Normalmente debe existir respaldo legal o judicial",
+                "El arriendo impago puede terminar en demanda y cobranza",
+                "Sí puedes aparecer en DICOM en ciertos casos",
+                "Actuar temprano puede evitar problemas financieros mayores"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           
           <p className="text-xl max-w-3xl leading-relaxed">
             Tener problemas con el pago del arriendo genera muchas dudas, pero hay una que aparece siempre: ¿Me pueden meter a DICOM por deuda de arriendo? Muchos arrendadores usan esta amenaza como presión, pero no siempre es legal ni posible.
@@ -492,6 +513,26 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+          
+          {/* Conclusion */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Tener una deuda de arriendo en Chile no significa automáticamente aparecer en DICOM. Para que eso ocurra, normalmente debe existir una deuda exigible, respaldada legalmente y, en muchos casos, un proceso judicial o documento que permita su cobranza formal.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El problema es que muchas personas descubren demasiado tarde que la situación escaló: primero aparece el atraso, luego la cobranza, después la demanda y finalmente las consecuencias financieras y legales. Por eso, esperar “a ver qué pasa” suele ser uno de los peores errores.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              También es importante entender que no todas las amenazas de “te voy a meter a DICOM” son válidas. Existen límites legales sobre qué deudas pueden informarse y cómo debe hacerse ese tratamiento de datos. En algunos casos, incluso puede existir información indebida que puede reclamarse.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Si tienes deuda de arriendo, lo más importante es actuar antes de que el problema crezca. Negociar, revisar si existe una demanda, entender el estado real de la deuda y buscar asesoría legal puede ayudarte a evitar consecuencias más graves como juicios, embargos o problemas financieros prolongados.
+            </p>
+            <p className="text-gray-600 font-bold leading-relaxed">
+              En muchos casos, actuar temprano marca la diferencia entre resolver una deuda manejable o enfrentar un conflicto legal mucho más complejo.
+            </p>
+          </div>
 
           {/* FAQs */}
           <div className="mb-12">
@@ -505,17 +546,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-          {/* Conclusion */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-lg text-gray-600 leading-relaxed mb-4">
-              Una deuda de arriendo no va automáticamente a DICOM, pero en ciertos casos sí puede ser informada si cumple requisitos legales. Lo importante es entender tu situación real y no actuar solo por miedo. Con la información correcta, puedes evitar problemas mayores o resolverlos a tiempo.
-            </p>
-          </div>
-
-
-
         </div>
       </div>
 
@@ -558,20 +588,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          prevArticle={{
-            id: "no-devuelven-garantia-arriendo-chile-2026",
-            title: "No me devuelven la garantía de arriendo en Chile",
-            excerpt: "Uno de los problemas más comunes al terminar un contrato de arriendo es que el arrendador no devuelve la garantía. Descubre cómo recuperar tu dinero paso a paso.",
-            image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "tacita-reconduccion-chile-2026",
-            title: "Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)",
-            excerpt: "Si tu contrato de arriendo terminó pero sigues pagando y viviendo ahí, entraste en tácita reconducción. Descubre tus derechos y qué implica.",
-            image: "/assets/tacita-reconduccion-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="dicom-deuda-arriendo-chile-2026" />
         
         <div className="mt-8 text-center">
           <Link

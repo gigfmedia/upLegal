@@ -289,20 +289,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "como-calcular-tu-finiquito-chile-2026",
-            title: "¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso",
-            excerpt: "Aprende paso a paso cómo calcular el finiquito, indemnizaciones por años de servicio, vacaciones proporcionales y descuentos legales en Chile.",
-            image: "/assets/calcular-finiquito-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "despido-injustificado-chile-2026",
-            title: "Despido injustificado en Chile: qué es, indemnización y qué hacer (Guía 2026)",
-            excerpt: "Si te despidieron sin una causa válida en Chile, tienes derecho a indemnización. Conoce qué es el despido injustificado y cómo reclamarlo.",
-            image: "/assets/despido-injustificado-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="reserva-de-derechos-finiquito-chile-2026" />
 
         <div className="mt-4 text-center">
           <Link 

@@ -259,20 +259,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation 
-          prevArticle={{
-            id: "derecho-de-familia-chile-2026",
-            title: "¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa",
-            excerpt: "El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. Revisa qué abarca y cómo funcionan los juicios.",
-            image: "/assets/derecho-de-familia-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "me-quieren-desalojar-que-hago-chile-2026",
-            title: "¿Me pueden desalojar sin orden judicial en Chile? Guía 2026",
-            excerpt: "Conoce tus derechos legales y el proceso correcto para enfrentar un intento de desalojo bajo la normativa vigente.",
-            image: "/assets/desalojo-chile-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="derecho-penal-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link 

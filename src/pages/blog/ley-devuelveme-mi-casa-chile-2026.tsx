@@ -64,9 +64,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             Ley &quot;Devuélveme Mi Casa&quot; en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "La Ley Devuélveme Mi Casa busca acelerar desalojos en Chile",
+                "Permite procedimientos más rápidos en ciertos casos de arriendo",
+                "El arrendador igualmente necesita intervención judicial",
+                "No autoriza desalojos por la fuerza ni cambios de cerradura",
+                "Actuar rápido puede evitar que la deuda y el conflicto aumenten"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
             La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) se ha convertido en una de las normas más relevantes en Chile para propietarios que enfrentan problemas con arrendatarios que no pagan o se niegan a abandonar una propiedad.
@@ -586,20 +607,7 @@ const BlogArticle = () => {
           />
         </div>
 
-        <BlogNavigation
-          prevArticle={{
-            id: "orden-desalojo-chile-2026",
-            title: "Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)",
-            excerpt: "¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después y qué hacer si recibes una.",
-            image: "/assets/orden-desalojo-chile-2026.png"
-          }}
-          nextArticle={{
-            id: "que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026",
-            title: "¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)",
-            excerpt: "Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Descubre tus derechos.",
-            image: "/assets/sin-contrato-arriendo-2026.png"
-          }}
-        />
+        <BlogNavigation currentArticleId="ley-devuelveme-mi-casa-chile-2026" />
 
         <div className="mt-8 text-center">
           <Link
