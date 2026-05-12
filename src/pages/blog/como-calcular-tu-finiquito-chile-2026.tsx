@@ -104,13 +104,12 @@ export function CalculadoraFiniquito() {
 
   return (
     <div className="mb-12">
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">
+      <h3 className="text-2xl font-bold mb-6 text-gray-900">
         Calculadora de finiquito Chile 2026
-      </h2>
+      </h3>
       <p className="text-gray-600 mb-6 leading-relaxed">
         Ingresa tu sueldo, tiempo trabajado y la causal de término para
-        estimar los montos de tu finiquito. El resultado es referencial —
-        consulta con un abogado laboral para verificar tu caso específico.
+        estimar los montos de tu finiquito. El resultado es referencial y no reemplaza asesoría legal.
       </p>
 
       <div className="border border-gray-200 bg-gray-50 rounded-xl p-6 space-y-6">
@@ -637,7 +636,10 @@ const BlogArticle = () => {
             />
             
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile 2026</h2>
-
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Ahora que ya conoces qué pagos puede incluir un finiquito laboral, puedes estimar cuánto te corresponde según tu sueldo, años trabajados y causal de término del contrato.<br />
+              Usa esta calculadora de finiquito Chile 2026 para obtener una estimación referencial de indemnización por años de servicio, aviso previo, vacaciones pendientes y otros montos laborales.
+            </p>
             <CalculadoraFiniquito />
             <p className="text-gray-600 mb-8 leading-relaxed">
               A continuación revisamos una forma simple de estimar tu finiquito paso a paso.
