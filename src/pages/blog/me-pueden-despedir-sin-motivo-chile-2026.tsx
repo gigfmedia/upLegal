@@ -310,13 +310,13 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="text-center py-6 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu pago exacto</p>
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
               <Link 
-                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
-                className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
+                to="/blog/como-calcular-tu-finiquito-chile-2026" 
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
-                👉 ¿Cuánto me corresponde por años de servicio? Guía 2026
+                👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
@@ -328,16 +328,31 @@ const BlogArticle = () => {
             <div className="space-y-6">
               {[
                 { t: "Revisa la carta de despido", d: "La carta de despido no es un simple trámite. Debe incluir la causal exacta, los hechos detallados que la justifican y la fecha exacta del término de la relación laboral. Si alguno de estos elementos falta o está mal redactado, tienes una ventaja legal inmediata que un abogado puede aprovechar a tu favor." },
-                { t: "No firmes nada sin entender", d: "El finiquito es el documento más importante del proceso y también el más peligroso si no lo lees bien. Si firmas sin reserva de derechos, estás renunciando a tu derecho a demandar — aunque el despido haya sido injustificado. Antes de estampar tu firma, muéstraselo a un abogado." },
+                { 
+                  t: "No firmes nada sin entender", 
+                  d: "El finiquito es el documento más importante del proceso y también el más peligroso si no lo lees bien. Si firmas sin reserva de derechos, estás renunciando a tu derecho a demandar — aunque el despido haya sido injustificado. Antes de estampar tu firma, muéstraselo a un abogado.",
+                  link: { to: "/blog/reserva-de-derechos-finiquito-chile-2026", text: "👉 Guía: Cómo firmar con reserva de derechos" }
+                },
                 { t: "Guarda todas tus pruebas", d: "Todo cuenta: tu contrato de trabajo, las últimas liquidaciones de sueldo, mensajes de WhatsApp con tu jefe o compañeros, correos electrónicos y el nombre de posibles testigos. En un juicio laboral, las pruebas lo son todo. Guárdalas ahora antes de que desaparezcan." },
                 { t: "Evalúa tu caso seriamente", d: "No todos los despidos son iguales. La pregunta clave es: ¿la causal que usaron es real, pueden probarla y está bien aplicada según la ley? Muchos empleadores cometen errores en este proceso que los dejan en una posición muy débil frente a un tribunal." },
                 { t: "Actúa rápido", d: "El reloj ya está corriendo. En Chile tienes exactamente 60 días hábiles desde la fecha del despido para presentar una demanda laboral. No son días corridos — son hábiles. Pero no esperes al último momento. Mientras más rápido actúes, más opciones tienes." }
               ].map((item, i) => (
                 <div key={i} className="flex gap-4 p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all">
                   <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold flex-shrink-0">{i + 1}</div>
-                  <div>
+                  <div className="w-full">
                     <h4 className="font-bold text-gray-900 mb-1">{item.t}</h4>
                     <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{item.d}</p>
+                    {item.link && (
+                      <div className="mt-3">
+                        <Link
+                          to={item.link.to}
+                          className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline text-sm"
+                        >
+                          {item.link.text}
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

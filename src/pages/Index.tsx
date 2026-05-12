@@ -170,59 +170,108 @@ const Index = () => {
       try {
         setIsLoadingFeatured(true);
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        const { lawyers } = await searchLawyers({ 
+        
+        // Helper function for slug creation
+        const createSlug = (str: string): string => {
+          if (!str) return '';
+          return str
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/-+/g, '-');
+        };
+
+        // 1. Fetch a pool of lawyers first to know their names and IDs
+        const { lawyers: profileLawyers } = await searchLawyers({ 
           page: 1, 
-          pageSize: 20, // Fetch more to filter complete profiles but show 3
+          pageSize: 200, // Fetch many more to ensure we catch all popular ones
           minExperience: 1,
           orderBy: 'review_count',
           orderDirection: 'desc'
-        }); // Only fetch what we display
+        });
         
-        if (lawyers && lawyers.length > 0) {
-          const formattedLawyers = lawyers
+        // 2. Fetch RECENT page views (last 60 days) to determine popularity
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        
+        const { data: viewsData } = await supabase
+          .from('page_views')
+          .select('page_path')
+          .ilike('page_path', '%/abogado/%')
+          .gte('created_at', sixtyDaysAgo.toISOString());
+
+        // Pre-calculate counts by UUID to avoid O(N*M)
+        const countsByUuid: Record<string, number> = {};
+        const otherPaths: string[] = [];
+        
+        (viewsData || []).forEach(v => {
+          const path = v.page_path.toLowerCase();
+          const uuidMatch = path.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+          if (uuidMatch) {
+            const id = uuidMatch[0];
+            countsByUuid[id] = (countsByUuid[id] || 0) + 1;
+          } else {
+            otherPaths.push(path);
+          }
+        });
+
+        if (profileLawyers && profileLawyers.length > 0) {
+          const formattedLawyers = profileLawyers
             .filter((lawyer: any) => {
-              const firstName = lawyer.first_name?.toLowerCase() || '';
-              const lastName = lawyer.last_name?.toLowerCase() || '';
+              const firstName = (lawyer.first_name || '').toLowerCase();
+              const lastName = (lawyer.last_name || '').toLowerCase();
               
-              // Skip admin accounts
-              if (firstName.includes('admin') || lastName.includes('admin')) {
-                return false;
-              }
+              if (firstName.includes('admin') || lastName.includes('admin')) return false;
               
-              // Check if profile is complete and verified
-              const isProfileComplete = 
-                lawyer.verified && 
-                lawyer.bio?.trim() && 
-                lawyer.specialties?.length > 0 && 
-                lawyer.location?.trim() && 
-                lawyer.hourly_rate_clp > 0;
-              
-              return isProfileComplete;
+              // Basic quality filter
+              return lawyer.verified && lawyer.bio && lawyer.hourly_rate_clp > 0;
             })
-            .map(lawyer => ({
-            id: lawyer.id || '',
-            user_id: lawyer.user_id || '',
-            name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim(),
-            specialties: lawyer.specialties || [],
-            rating: lawyer.rating || 0,
-            reviews: lawyer.review_count || 0,
-            location: lawyer.location || 'Sin ubicación',
-            cases: 0, // Simplified - not fetching appointment counts for performance
-            hourlyRate: lawyer.hourly_rate_clp || 0,
-            consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
-            image: lawyer.avatar_url || '',
-            bio: lawyer.bio || '',
-            verified: lawyer.verified || false,
-            created_at: lawyer.created_at,
-            availability: {
-              availableToday: true,
-              availableThisWeek: true,
-              quickResponse: true,
-              emergencyConsultations: true
-            }
-          }));
+            .map(lawyer => {
+              const lawyerId = lawyer.id || '';
+              const lawyerSlug = createSlug(`${lawyer.first_name || ''} ${lawyer.last_name || ''}`);
+              
+              // Sum UUID views + slug views from non-uuid paths
+              let visits = countsByUuid[lawyerId] || 0;
+              if (lawyerSlug) {
+                otherPaths.forEach(path => {
+                  if (path.includes(lawyerSlug)) visits++;
+                });
+              }
+
+              return {
+                id: lawyerId,
+                user_id: lawyer.user_id || '',
+                name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim(),
+                specialties: lawyer.specialties || [],
+                rating: lawyer.rating || 0,
+                reviews: lawyer.review_count || 0,
+                location: lawyer.location || 'Sin ubicación',
+                cases: 0,
+                hourlyRate: lawyer.hourly_rate_clp || 0,
+                consultationPrice: lawyer.hourly_rate_clp ? Math.round(lawyer.hourly_rate_clp * 0.5) : 0,
+                image: lawyer.avatar_url || '',
+                bio: lawyer.bio || '',
+                verified: lawyer.verified || false,
+                created_at: lawyer.created_at,
+                visits: visits,
+                availability: {
+                  availableToday: true,
+                  availableThisWeek: true,
+                  quickResponse: true,
+                  emergencyConsultations: true
+                }
+              };
+            });
           
-          setFeaturedLawyers(formattedLawyers);
+          // Sort by visits descending, then by reviews
+          const sortedByVisits = [...formattedLawyers].sort((a, b) => {
+            if (b.visits !== a.visits) return (b.visits || 0) - (a.visits || 0);
+            return (b.reviews || 0) - (a.reviews || 0);
+          });
+          
+          setFeaturedLawyers(sortedByVisits);
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);
@@ -423,7 +472,7 @@ const Index = () => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="flex flex-col items-center">
                 <div className="text-3xl font-bold text-green-900 mb-2">
@@ -512,7 +561,7 @@ const Index = () => {
               </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Busca según tu problema →
+                Busca según tu problema
               </h3>
 
               <ul className="text-gray-600 space-y-1">
@@ -529,7 +578,7 @@ const Index = () => {
               </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Compara antes de decidir →
+                Compara antes de decidir
               </h3>
 
               <ul className="text-gray-600 space-y-1">
@@ -546,7 +595,7 @@ const Index = () => {
               </div> */}
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Precios claros desde el inicio →
+                Precios claros desde el inicio
               </h3>
 
               <ul className="text-gray-600 space-y-1">
@@ -587,7 +636,7 @@ const Index = () => {
                   }
                 }, 500);
               }}
-              className="bg-white hover:bg-white-50 text-gray-900 hover:text-gray-900 px-12 py-8 text-lg font-bold rounded-2xl shadow-2xl transition-all hover:-translate-y-1 w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100 w-full sm:w-auto"
             >
               Cuéntanos tu caso →
             </Button>
@@ -732,11 +781,11 @@ const Index = () => {
       {/* Lista de Abogados */}
       <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold font-serif text-gray-900">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 whitespace-nowrap">
               Abogados destacados
             </h2>
-            <Button variant="outline" onClick={() => navigate('/search')}>
+            <Button variant="outline" onClick={() => navigate('/search')} className="w-full sm:w-auto">
               Ver abogados disponibles
             </Button>
           </div>

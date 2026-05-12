@@ -78,8 +78,19 @@ const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
+const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
+
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
+
+const CategoryRoutes = () => (
+  <Routes>
+    <Route path="/abogados-laborales" element={<CategoryLanding />} />
+    <Route path="/abogados-divorcio" element={<CategoryLanding />} />
+    <Route path="/abogados-arriendo" element={<CategoryLanding />} />
+    <Route path="/abogados-penales" element={<CategoryLanding />} />
+  </Routes>
+);
 
 // Create a single QueryClient instance
 const queryClient = new QueryClient({
@@ -340,6 +351,12 @@ const AppContent = () => {
               
               {/* Blog Routes */}
               <Route path="/blog/*" element={<BlogRoutes />} />
+
+              {/* SEO Category Routes */}
+              <Route path="/abogados-laborales" element={<CategoryLanding category="laboral" />} />
+              <Route path="/abogados-divorcio" element={<CategoryLanding category="divorcio" />} />
+              <Route path="/abogados-arriendo" element={<CategoryLanding category="arriendo" />} />
+              <Route path="/abogados-penales" element={<CategoryLanding category="penal" />} />
 
               <Route path="/cae" element={<CAELanding />} />
               

@@ -257,14 +257,29 @@ const BlogArticle = () => {
               {[
                 { title: "Paso 1 — Revisa la carta de despido", desc: "Verifica la causal invocada, la fecha de notificación y la fecha de término del contrato. Si la fecha de término cae dentro del período de licencia, eso es una señal de alerta." },
                 { title: "Paso 2 — Guarda toda la documentación", desc: "Carta de despido, licencias médicas, comprobantes de pago, comunicaciones con el empleador. Todo sirve como prueba." },
-                { title: "Paso 3 — No firmes el finiquito sin revisarlo", desc: "Si no estás de acuerdo con los montos o crees que el despido fue injustificado, firma con reserva de derechos o no firmes hasta consultar con un abogado." },
+                { 
+                  title: "Paso 3 — No firmes el finiquito sin revisarlo", 
+                  desc: "Si no estás de acuerdo con los montos o crees que el despido fue injustificado, firma con reserva de derechos o no firmes hasta consultar con un abogado.",
+                  link: { to: "/blog/reserva-de-derechos-finiquito-chile-2026", text: "👉 Cómo firmar con reserva de derechos" }
+                },
                 { title: "Paso 4 — Actúa dentro del plazo", desc: "Tienes 60 días hábiles desde la fecha de término del contrato para presentar un reclamo en la Inspección del Trabajo o demandar directamente." },
                 { title: "Paso 5 — Consulta con un abogado laboral", desc: "La licencia médica agrega una capa de complejidad al caso. Un abogado puede evaluar si el proceso fue correcto y si tienes base para demandar." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-gray-50 transition-colors">
-                  <div>
+                  <div className="w-full">
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
+                    {step.link && (
+                      <div className="mt-3">
+                        <Link
+                          to={step.link.to}
+                          className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline text-sm"
+                        >
+                          {step.link.text}
+                          <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -300,6 +315,17 @@ const BlogArticle = () => {
                 Si el despido se declara además discriminatorio o de represalia, pueden existir indemnizaciones adicionales importantes.
               </p>
             </div>
+          </div>
+
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link 
+              to="/blog/como-calcular-tu-finiquito-chile-2026" 
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
           <div className="py-6 border-t border-b border-gray-100 my-8">

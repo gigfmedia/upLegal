@@ -22,6 +22,7 @@ interface LawyerProfile {
   profile_completion?: number;
   last_profile_update?: string;
   hourly_rate_clp?: number;
+  visits?: number;
   profile_fields?: {
     bio: boolean;
     experience: boolean;
@@ -71,12 +72,27 @@ export default function LawyerProfilesPage() {
         return acc;
       }, {});
 
+      // Fetch page views for lawyer profiles
+      const { data: viewsData, error: viewsError } = await supabase
+        .from('page_views')
+        .select('page_path')
+        .ilike('page_path', '%/abogado/%');
+
+      const viewCounts = (viewsData || []).reduce((acc: Record<string, number>, v) => {
+        const uuidMatch = v.page_path.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+        if (uuidMatch) {
+          const id = uuidMatch[0];
+          acc[id] = (acc[id] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
       const lawyersWithCompletion = (profilesData || []).map(lawyer => {
         const servicesCount = serviceCounts[lawyer.id] || 0;
-        const lawyerWithServices = { ...lawyer, services_count: servicesCount };
         return {
           ...lawyer,
           services_count: servicesCount,
+          visits: viewCounts[lawyer.id] || 0,
           profile_completion: calculateProfileCompletion({
             ...lawyer,
             servicesCount: servicesCount
@@ -367,7 +383,13 @@ export default function LawyerProfilesPage() {
                       <h3 className="font-medium truncate">
                         {lawyer.first_name} {lawyer.last_name}
                       </h3>
-                      <p className="text-sm text-gray-500 truncate">{lawyer.email}</p>
+                      <div className="flex items-center gap-3 text-sm text-gray-500">
+                        <span className="truncate">{lawyer.email}</span>
+                        <span className="flex items-center gap-1 text-gray-400 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
+                          <Eye className="w-3 h-3" />
+                          {lawyer.visits || 0}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   

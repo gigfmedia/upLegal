@@ -17,6 +17,16 @@ const BlogPage = () => {
 
   const articles = [
     {
+      id: "reserva-de-derechos-finiquito-chile-2026",
+      title: "Reserva de derechos en el finiquito en Chile: qué es, cómo escribirla y cuándo usarla (Guía 2026)",
+      excerpt: "Aprende qué es la reserva de derechos en el finiquito, cómo escribirla correctamente y cuándo usarla para proteger tu derecho a demandar en Chile 2026.",
+      category: "Derecho Laboral",
+      author: "LegalUp",
+      date: "11 de Mayo, 2026",
+      readTime: "6 min",
+      image: "/assets/reserva-derechos-finiquito-chile-2026.png"
+    },
+    {
       id: "me-pueden-despedir-con-licencia-medica-chile-2026",
       title: "¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026",
       excerpt: "Descubre si es legal que te despidan durante una licencia médica en Chile. Conoce las causales permitidas, excepciones y qué hacer si el despido es injustificado.",
@@ -330,8 +340,8 @@ const BlogPage = () => {
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
-          <div className="flex items-center gap-2 text-white mb-4">
-            <Link to="/" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 text-white text-sm mb-4">
+            <Link to="/" className="text-green-600 hover:text-white transition-colors">
               Inicio
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -351,6 +361,20 @@ const BlogPage = () => {
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
+        {/* Search Bar */}
+        <div className="mb-8 w-full">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar artículos..."
+              className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent"
+            />
+          </div>
+        </div>
+
         {/* Results count */}
         {(searchQuery || selectedCategory) && (
           <div className="mb-6 text-sm text-gray-600">
@@ -370,6 +394,43 @@ const BlogPage = () => {
             </button>
           </div>
         )}
+        
+        {/* Categories Pills */}
+        <div className="mb-8 flex flex-wrap gap-2">
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedCategory(null)}
+            className={selectedCategory === null ? "bg-gray-900 group" : "group"}
+          >
+            Todos 
+            <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+              selectedCategory === null 
+                ? 'bg-white text-gray-900' 
+                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+            }`}>
+              {articles.length}
+            </span>
+          </Button>
+          {categories.map(category => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(category)}
+              className={selectedCategory === category ? "bg-gray-900 group" : "group"}
+            >
+              {category}
+              <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
+                selectedCategory === category 
+                  ? 'bg-white text-gray-900' 
+                  : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+              }`}>
+                {getArticleCount(category)}
+              </span>
+            </Button>
+          ))}
+        </div>
         {featuredArticle && (
           <div key={featuredArticle.id} className="mb-12">
             <div 
@@ -454,56 +515,7 @@ const BlogPage = () => {
           </div>
         )}
 
-        {/* Search Bar */}
-        <div className="mb-8 w-full">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar artículos..."
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-gray-200 bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-900 focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Categories Pills */}
-        <div className="mb-8 flex flex-wrap gap-2">
-          <Button
-            variant={selectedCategory === null ? "default" : "outline"}
-            size="sm"
-            onClick={() => setSelectedCategory(null)}
-            className={selectedCategory === null ? "bg-gray-900 group" : "group"}
-          >
-            Todos 
-            <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
-              selectedCategory === null 
-                ? 'bg-white text-gray-900' 
-                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-            }`}>
-              {articles.length}
-            </span>
-          </Button>
-          {categories.map(category => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category ? "bg-gray-900 group" : "group"}
-            >
-              {category}
-              <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
-                selectedCategory === category 
-                  ? 'bg-white text-gray-900' 
-                  : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-              }`}>
-                {getArticleCount(category)}
-              </span>
-            </Button>
-          ))}
-        </div>
+        
 
         {/* Recent Articles */}
         <div className="mb-12">

@@ -461,6 +461,19 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* Reserva de Derechos Link */}
+          <div className="bg-green-50 p-6 rounded-xl border border-green-100 mb-12 text-center">
+            <h3 className="text-xl font-bold text-green-900 mb-2">¿No estás de acuerdo con el cálculo de tus años de servicio?</h3>
+            <p className="text-green-800 mb-4">Aprende cómo proteger tu derecho a reclamar al firmar el finiquito.</p>
+            <Link
+              to="/blog/reserva-de-derechos-finiquito-chile-2026"
+              className="inline-flex items-center gap-2 text-white font-bold bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition-colors"
+            >
+              Guía: Cómo firmar con reserva de derechos
+              <ChevronRight className="h-5 w-5" />
+            </Link>
+          </div>
+
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>

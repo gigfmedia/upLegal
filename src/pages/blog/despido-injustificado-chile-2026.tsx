@@ -301,6 +301,17 @@ const BlogArticle = () => {
               message="¿Quieres saber cuánto te corresponde exactamente? Un abogado puede calcularlo contigo."
               category="Derecho Laboral"
             />
+
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <Link 
+                to="/blog/como-calcular-tu-finiquito-chile-2026" 
+                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+              >
+                👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
 
           {/* Section 5: Qué hacer */}
@@ -319,6 +330,15 @@ const BlogArticle = () => {
                 <p className="text-base text-gray-600 mb-3">Puedes firmar con:</p>
                 <p className="text-gray-700 font-semibold mb-2">Reserva de derechos</p>
                 <p className="text-gray-600">Esto te permite reclamar después.</p>
+                <div className="mt-4">
+                  <Link
+                    to="/blog/reserva-de-derechos-finiquito-chile-2026"
+                    className="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline text-sm"
+                  >
+                    👉 Cómo escribir la reserva de derechos paso a paso
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
 
               <div className="p-5 border rounded-xl hover:bg-blue-50/30 transition-colors">

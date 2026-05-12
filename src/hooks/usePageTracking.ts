@@ -6,8 +6,9 @@ export function usePageTracking() {
   const location = useLocation();
 
   useEffect(() => {
-    // Only track in browser environment
+    // Only track in browser environment and NOT on localhost
     if (typeof window === 'undefined') return;
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return;
 
     const trackPageView = async () => {
       try {

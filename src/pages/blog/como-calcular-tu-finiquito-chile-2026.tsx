@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
@@ -9,6 +10,289 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+
+// ─── helpers ───────────────────────────────────────────────────────────────
+const formatClp = (n: number) =>
+  Number.isFinite(n) && n >= 0
+    ? Math.round(n).toLocaleString("es-CL")
+    : "—";
+
+type Causal = "necesidades" | "renuncia" | "mutuo" | "otra";
+
+interface FiniquitoResult {
+  indemnizacion: number;
+  mesAviso: number;
+  vacaciones: number;
+  total: number;
+  tieneIndemnizacion: boolean;
+  tieneMesAviso: boolean;
+}
+
+function calcularFiniquito(
+  sueldo: number,
+  anos: number,
+  mesesExtra: number,
+  causal: Causal,
+  sinAviso: boolean
+): FiniquitoResult {
+  const anosTotal = anos + mesesExtra / 12;
+  const anosRedondeados = Math.min(Math.floor(anosTotal), 11); // tope legal 11 años
+
+  const tieneIndemnizacion =
+    causal === "necesidades" || causal === "otra";
+  const tieneMesAviso = sinAviso && tieneIndemnizacion;
+
+  const indemnizacion = tieneIndemnizacion
+    ? sueldo * anosRedondeados
+    : 0;
+  const mesAviso = tieneMesAviso ? sueldo : 0;
+
+  // vacaciones proporcionales: 15 días hábiles / 12 meses × meses trabajados en el año
+  const mesesEnAnio = mesesExtra === 0 ? 12 : mesesExtra;
+  const diasVacaciones = (15 / 12) * mesesEnAnio;
+  const vacaciones = (sueldo / 30) * diasVacaciones;
+
+  const total = indemnizacion + mesAviso + vacaciones;
+
+  return {
+    indemnizacion,
+    mesAviso,
+    vacaciones,
+    total,
+    tieneIndemnizacion,
+    tieneMesAviso,
+  };
+}
+
+// ─── component ─────────────────────────────────────────────────────────────
+export function CalculadoraFiniquito() {
+  const [sueldoValue, setSueldoValue] = useState("800000");
+  const [anosValue, setAnosValue] = useState("3");
+  const [mesesValue, setMesesValue] = useState("0");
+  const [causal, setCausal] = useState<Causal>("necesidades");
+  const [sinAviso, setSinAviso] = useState(true);
+
+  const parsed = useMemo(() => {
+    const sueldo = parseFloat(sueldoValue.replace(/\./g, "").replace(",", ".")) || 0;
+    const anos = parseInt(anosValue) || 0;
+    const meses = parseInt(mesesValue) || 0;
+    return calcularFiniquito(sueldo, anos, meses, causal, sinAviso);
+  }, [sueldoValue, anosValue, mesesValue, causal, sinAviso]);
+
+  const causales: { value: Causal; label: string; desc: string }[] = [
+    {
+      value: "necesidades",
+      label: "Necesidades de la empresa",
+      desc: "Art. 161 — Tienes derecho a indemnización",
+    },
+    {
+      value: "renuncia",
+      label: "Renuncia voluntaria",
+      desc: "Solo vacaciones proporcionales",
+    },
+    {
+      value: "mutuo",
+      label: "Mutuo acuerdo",
+      desc: "Según lo pactado entre las partes",
+    },
+    {
+      value: "otra",
+      label: "Despido injustificado / otra causal",
+      desc: "Puedes tener derecho a recargos adicionales",
+    },
+  ];
+
+  return (
+    <div className="mb-12">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900">
+        Calculadora de finiquito Chile 2026
+      </h2>
+      <p className="text-gray-600 mb-6 leading-relaxed">
+        Ingresa tu sueldo, tiempo trabajado y la causal de término para
+        estimar los montos de tu finiquito. El resultado es referencial —
+        consulta con un abogado laboral para verificar tu caso específico.
+      </p>
+
+      <div className="border border-gray-200 bg-gray-50 rounded-xl p-6 space-y-6">
+
+        {/* ── causal ── */}
+        <div className="space-y-2">
+          <label className="text-sm font-semibold text-gray-900">
+            Causal de término del contrato
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {causales.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => setCausal(c.value)}
+                className={`text-left rounded-lg border px-4 py-3 transition-all ${
+                  causal === c.value
+                    ? "border-gray-900 bg-white ring-1 ring-gray-900"
+                    : "border-gray-200 bg-white hover:border-gray-400"
+                }`}
+              >
+                <p className="text-sm font-semibold text-gray-900">
+                  {c.label}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">{c.desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── inputs ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-900">
+              Sueldo base (CLP)
+            </label>
+            <input
+              inputMode="numeric"
+              value={sueldoValue}
+              onChange={(e) => setSueldoValue(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
+              placeholder="Ej: 800000"
+              aria-label="Sueldo base"
+            />
+            <p className="text-xs text-gray-500">
+              Ejemplo: ${formatClp(800000)}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-900">
+              Años trabajados
+            </label>
+            <input
+              inputMode="numeric"
+              value={anosValue}
+              onChange={(e) => setAnosValue(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
+              placeholder="Ej: 3"
+              aria-label="Años trabajados"
+            />
+            <p className="text-xs text-gray-500">Tope legal: 11 años</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-900">
+              Meses adicionales
+            </label>
+            <input
+              inputMode="numeric"
+              value={mesesValue}
+              onChange={(e) => setMesesValue(e.target.value)}
+              className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
+              placeholder="Ej: 6"
+              aria-label="Meses adicionales"
+            />
+            <p className="text-xs text-gray-500">
+              Meses del año en curso (0–11)
+            </p>
+          </div>
+        </div>
+
+        {/* ── mes aviso toggle ── */}
+        {(causal === "necesidades" || causal === "otra") && (
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="sinAviso"
+              checked={sinAviso}
+              onChange={(e) => setSinAviso(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-gray-900"
+            />
+            <label
+              htmlFor="sinAviso"
+              className="text-sm text-gray-700 cursor-pointer"
+            >
+              No me avisaron con 30 días de anticipación{" "}
+              <span className="text-gray-400">
+                (agrega indemnización sustitutiva del aviso previo)
+              </span>
+            </label>
+          </div>
+        )}
+
+        {/* ── resultados ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Indemnización años
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-2">
+              ${formatClp(parsed.indemnizacion)}
+            </p>
+            {!parsed.tieneIndemnizacion && (
+              <p className="text-xs text-gray-400 mt-1">
+                No aplica para esta causal
+              </p>
+            )}
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Mes de aviso
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-2">
+              ${formatClp(parsed.mesAviso)}
+            </p>
+            {!parsed.tieneMesAviso && (
+              <p className="text-xs text-gray-400 mt-1">
+                {parsed.tieneIndemnizacion
+                  ? "Avisaron con 30 días"
+                  : "No aplica"}
+              </p>
+            )}
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-4">
+            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Vacaciones proporcionales
+            </p>
+            <p className="text-2xl font-bold text-gray-900 mt-2">
+              ${formatClp(parsed.vacaciones)}
+            </p>
+          </div>
+
+          <div className="bg-green-900 border border-gray-900 rounded-xl p-4">
+            <p className="text-[10px] font-semibold text-white uppercase tracking-widest">
+              Total estimado
+            </p>
+            <p className="text-2xl font-bold text-green-600 mt-2">
+              ${formatClp(parsed.total)}
+            </p>
+          </div>
+        </div>
+
+        {/* ── restaurar ── */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-end">
+          <Button
+            variant="outline"
+            className="h-11 border-gray-900 text-gray-900 hover:bg-green-900 hover:text-white"
+            onClick={() => {
+              setSueldoValue("800000");
+              setAnosValue("3");
+              setMesesValue("0");
+              setCausal("necesidades");
+              setSinAviso(true);
+            }}
+          >
+            Restaurar ejemplo
+          </Button>
+        </div>
+
+        {/* ── disclaimer ── */}
+        <div className="text-xs text-gray-500 leading-relaxed">
+          El cálculo es una aproximación para fines informativos basada en
+          el Código del Trabajo. No considera gratificaciones, bonos,
+          horas extra ni otros beneficios pactados. Para verificar el monto
+          exacto de tu finiquito, consulta con un abogado laboral.
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const BlogArticle = () => {
   const faqs = [
@@ -352,7 +636,9 @@ const BlogArticle = () => {
               category="Derecho Laboral"
             />
             
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile (2026)</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile 2026</h2>
+
+            <CalculadoraFiniquito />
             <p className="text-gray-600 mb-8 leading-relaxed">
               A continuación revisamos una forma simple de estimar tu finiquito paso a paso.
             </p>
@@ -466,6 +752,18 @@ const BlogArticle = () => {
                 ))}
               </ul>
             </div>
+          </div>
+          {/* Reserva de Derechos Link */}
+          <div className="bg-green-50 p-6 rounded-xl border border-green-100 mb-12 text-center">
+            <h3 className="text-xl font-bold text-green-900 mb-2">¿No estás de acuerdo con el monto de tu finiquito?</h3>
+            <p className="text-green-800 mb-4">Aprende cómo proteger tu derecho a reclamar sin perder tu pago actual.</p>
+            <Link
+              to="/blog/reserva-de-derechos-finiquito-chile-2026"
+              className="inline-flex items-center gap-2 text-white font-bold bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition-colors"
+            >
+              Guía: Cómo firmar con reserva de derechos
+              <ChevronRight className="h-5 w-5" />
+            </Link>
           </div>
 
           {/* Conclusion */}
