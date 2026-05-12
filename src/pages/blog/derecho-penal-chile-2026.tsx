@@ -53,9 +53,30 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             ¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El sistema penal chileno se basa en la presunción de inocencia hasta que se pruebe lo contrario",
+                "Todo imputado tiene derecho a una defensa técnica proporcionada por un abogado",
+                "El proceso incluye etapas de investigación, audiencia preparatoria y juicio oral",
+                "Existen salidas alternativas como la suspensión condicional o acuerdos reparatorios",
+                "Contar con asesoría legal experta desde el inicio es crucial para el resultado del caso"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
           
           <p className="text-xl max-w-3xl leading-relaxed">
             Enfrentar una acusación penal es una de las situaciones más difíciles. Conocer tus derechos y el sistema es vital para proteger tu situación legal.

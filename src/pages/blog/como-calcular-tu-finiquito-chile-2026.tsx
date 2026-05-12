@@ -345,6 +345,28 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "El finiquito debe incluir remuneraciones pendientes, vacaciones y avisos legales",
+                "Se calcula sobre la base de la última remuneración mensual del trabajador",
+                "El empleador tiene un plazo de 10 días hábiles para pagar el finiquito",
+                "Firmar con reserva de derechos permite reclamar diferencias posteriormente",
+                "La Inspección del Trabajo puede intervenir si no hay acuerdo en los montos"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           
           <p className="text-xl max-w-3xl">
             Calcular el finiquito en Chile puede generar muchas dudas, especialmente porque intervienen distintos factores como indemnizaciones, vacaciones pendientes, pagos proporcionales y otros beneficios laborales.

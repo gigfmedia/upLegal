@@ -76,6 +76,28 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             ¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "Corresponde a un mes de sueldo por cada año de servicio o fracción superior a 6 meses",
+                "El tope legal máximo para el cálculo es de 11 años de servicio",
+                "Solo aplica en despidos por necesidades de la empresa o desahucio",
+                "Se calcula sobre la última remuneración mensual con ciertos topes legales",
+                "No corresponde en caso de renuncia voluntaria o despido por causas graves"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           
           <p className="text-xl max-w-3xl">
             Cuando una persona es despedida en Chile, una de las primeras dudas que surgen es cuánto dinero le corresponde recibir. Dentro del finiquito, uno de los conceptos más importantes es la indemnización por años de servicio.

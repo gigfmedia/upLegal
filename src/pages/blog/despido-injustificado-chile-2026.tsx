@@ -57,9 +57,31 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            Despido injustificado en Chile 2026: qué te corresponde y cómo reclamar
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
+            Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)
           </h1>
+
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+              Resumen rápido
+            </p>
+
+            <ul className="space-y-2">
+              {[
+                "Ocurre cuando el empleador pone término al contrato sin una causa legal válida",
+                "El trabajador puede demandar para obtener un recargo legal sobre su indemnización",
+                "El plazo para demandar es de 60 días hábiles desde la fecha del despido",
+                "Es fundamental no firmar el finiquito sin incluir una reserva de derechos",
+                "La carga de probar la causal del despido recae siempre sobre el empleador"
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
 
           <p className="text-xl max-w-3xl leading-relaxed">
             Ser despedido del trabajo es una situación difícil. Pero cuando el despido ocurre sin una causa válida o sin respetar la ley, se trata de un despido injustificado, y tienes derecho a reclamar.

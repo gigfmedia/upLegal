@@ -23,7 +23,7 @@ const BlogArticle = () => {
     {
       question: "¿Qué pasa si no me pagan el finiquito después del despido?",
       answer:
-        "El empleador tiene un plazo para pagar el finiquito desde el término de la relación laboral. Si no cumple, la deuda se reajusta con IPC y se agregan intereses. Puedes reclamar en la Inspección del Trabajo o demandar directamente en el Juzgado del Trabajo para exigir el pago. {VALIDAR plazo exacto}",
+        "El empleador tiene un plazo para pagar el finiquito desde el término de la relación laboral. Si no cumple, la deuda se reajusta con IPC y se agregan intereses. Puedes reclamar en la Inspección del Trabajo o demandar directamente en el Juzgado del Trabajo para exigir el pago.",
     },
     {
       question: "¿Puedo negarme a firmar el finiquito?",
