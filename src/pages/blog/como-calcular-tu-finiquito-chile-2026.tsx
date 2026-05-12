@@ -641,6 +641,7 @@ const BlogArticle = () => {
               Usa esta calculadora de finiquito Chile 2026 para obtener una estimación referencial de indemnización por años de servicio, aviso previo, vacaciones pendientes y otros montos laborales.
             </p>
             <CalculadoraFiniquito />
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito paso a paso</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
               A continuación revisamos una forma simple de estimar tu finiquito paso a paso.
             </p>
