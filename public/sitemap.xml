@@ -25,6 +25,36 @@
     <changefreq>weekly</changefreq>
   </url>
 
+  <!-- Categorías -->
+  <url>
+    <loc>https://legalup.cl/abogados-laborales</loc>
+    <lastmod>2026-05-13</lastmod>
+    <priority>0.9</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/abogados-divorcio</loc>
+    <lastmod>2026-05-13</lastmod>
+    <priority>0.9</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/abogados-arriendo</loc>
+    <lastmod>2026-05-13</lastmod>
+    <priority>0.9</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/abogados-penales</loc>
+    <lastmod>2026-05-13</lastmod>
+    <priority>0.9</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+
   <url>
     <loc>https://legalup.cl/blog/reserva-de-derechos-finiquito-chile-2026</loc>
     <lastmod>2026-05-12</lastmod>
