@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+
 
 const BlogArticle = () => {
   const faqs = [
@@ -90,8 +92,9 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
-            La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) se ha convertido en una de las normas más relevantes en Chile para propietarios que enfrentan problemas con arrendatarios que no pagan o se niegan a abandonar una propiedad.
+            La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) se ha convertido en una de las normas más relevantes en Chile para propietarios que enfrentan problemas con arrendatarios que no pagan o se niegan a abandonar una propiedad, quienes a menudo necesitan <Link to="/abogados-arriendo" className="text-green-600 underline hover:text-green-400">abogados de arriendo en Chile</Link> para recuperar su inmueble.
           </p>
+
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
@@ -554,9 +557,13 @@ const BlogArticle = () => {
               Lo que sí cambia es que actuar bien desde el inicio — con la documentación correcta y asesoría legal adecuada — puede hacer la diferencia entre un proceso de 3 meses y uno de 12. Los errores en la demanda, las notificaciones mal hechas o los plazos vencidos son las razones más comunes por las que estos juicios se alargan innecesariamente.
             </p>
             <p className="text-gray-600 mb-4 font-bold leading-relaxed">
-              Si eres propietario y necesitas recuperar tu inmueble, o si eres arrendatario y te acaban de notificar una demanda bajo esta ley, el momento de actuar es ahora.
+              Si eres propietario y necesitas recuperar tu inmueble, o si eres arrendatario y te acaban de notificar una demanda bajo esta ley, lo más recomendable es <Link to="/abogados-arriendo" className="text-green-900 underline hover:text-green-600">hablar con un abogado experto en arriendo y desalojo</Link> ahora.
             </p>
           </div>
+
+          {/* CTA Section - Specific Category */}
+          <CategoryCTA category="arriendo" />
+
 
           <div className="mb-12" data-faq-section>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes sobre la Ley 21.461</h2>
@@ -571,30 +578,7 @@ const BlogArticle = () => {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas recuperar tu propiedad?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Si estás enfrentando un problema de arriendo, puedes hablar con un abogado especialista en Derecho Civil y arrendamientos. ¿Problemas con tu arrendatario? Encuentra abogados expertos en arriendos y desalojos en Chile.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.("event", "click_consultar_abogado", {
-                    article: window.location.pathname,
-                    location: "blog_cta_ley_devuelveme_mi_casa_primary"
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
+
       </div>
 
       <RelatedLawyers category="Derecho Civil" />

@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+
 
 const BlogArticle = () => {
   const faqs = [
@@ -117,8 +119,9 @@ const BlogArticle = () => {
               Cuando alguien es acusado de un delito, surgen muchas dudas y temores. ¿Puedo ir a la cárcel? ¿Debo declarar? ¿Qué derechos tengo? ¿Cómo funciona el proceso penal en Chile?
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
-              En esta <strong>Guía 2026 de Derecho Penal en Chile</strong> explicamos de forma simple qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal chileno y qué pasos debes seguir para proteger tu situación legal.
+              En esta <strong>Guía 2026 de Derecho Penal en Chile</strong> explicamos de forma simple qué significa ser acusado de un delito, cuáles son tus derechos, cómo funciona el proceso penal chileno y cómo obtener ayuda de <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-600">abogados penales en Chile</Link> para proteger tu situación legal.
             </p>
+
             <p className="text-lg text-gray-600 leading-relaxed font-semibold">
               Conocer cómo funciona el sistema penal puede ayudarte a tomar decisiones informadas y evitar errores que podrían perjudicar tu defensa.
             </p>
@@ -226,9 +229,13 @@ const BlogArticle = () => {
               En el sistema penal chileno, enfrentar una acusación requiere conocimiento de tus derechos y rapidez en la defensa. No declarar sin asesoría y contar con un abogado especialista son las claves para proteger tu libertad y futuro.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              Si tienes dudas sobre tu situación legal o necesitas ayuda inmediata por una detención o denuncia, buscar asesoría jurídica de confianza es el primer paso hacia una solución justa.
+              Si tienes dudas sobre tu situación legal o necesitas ayuda inmediata por una detención o denuncia, lo más importante es <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-700">hablar con un abogado penalista</Link> ahora para buscar una solución justa.
             </p>
           </div>
+
+          {/* CTA Section - Specific Category */}
+          <CategoryCTA category="penal" />
+
 
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
@@ -244,30 +251,7 @@ const BlogArticle = () => {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te acusan de un delito o fuiste víctima?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Protege tu libertad y tus derechos. Conectamos a personas con abogados penalistas expertos para preparar tu defensa o querella de forma inmediata y profesional.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Penal">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_derecho_penal_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
+
       </div>
 
       <RelatedLawyers category="Derecho Penal" />

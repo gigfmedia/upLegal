@@ -8,6 +8,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const PensionCalculator = () => {
@@ -147,8 +149,9 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl">
-            Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse.
+            Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse con el apoyo de un <Link to="/abogados-divorcio" className="text-green-600 underline hover:text-green-400">abogado de familia en Chile</Link>.
           </p>
+
 
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
@@ -604,9 +607,13 @@ const BlogArticle = () => {
               Además, el hecho de que el deudor no tenga ingresos formales no lo libera de su obligación. Existen mecanismos para investigar su situación económica real y aplicar medidas igualmente efectivas sobre sus bienes o ingresos informales.
             </p>
             <p className="text-gray-600 font-semibold leading-relaxed">
-              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora.
+              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora y <Link to="/abogados-divorcio" className="text-green-900 underline hover:text-green-600">buscar asesoría con un abogado de familia</Link>.
             </p>
           </div>
+
+          {/* CTA Section - Specific Category */}
+          <CategoryCTA category="familia" />
+
 
           {/* FAQs */}
           <div className="mb-12" data-faq-section>
@@ -623,43 +630,7 @@ const BlogArticle = () => {
 
         </div>
 
-        {/* CTA Final */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Tienes deuda de pensión de alimentos y no sabes cómo cobrarla?</h2>
-          <p className="text-lg text-gray-700 mb-6">
-            Un abogado especialista en derecho de familia puede ayudarte a:
-          </p>
-          <div className="grid gap-3 md:grid-cols-2 mb-8 max-w-2xl mx-auto text-left">
-            {[
-              "Solicitar la liquidación de la deuda",
-              "Activar medidas de apremio",
-              "Gestionar embargo de bienes",
-              "Representarte ante el tribunal",
-              "Exigir arresto en caso necesario",
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+de+Familia">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_pension_deuda_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Habla con un abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </section>
+
       </div>
 
       <RelatedLawyers category="Derecho de Familia" />

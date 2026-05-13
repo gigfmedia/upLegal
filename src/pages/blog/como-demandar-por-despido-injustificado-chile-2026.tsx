@@ -9,6 +9,8 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+
 
 const BlogArticle = () => {
   const faqs = [
@@ -89,8 +91,9 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl mb-8 leading-relaxed">
-            Si te despidieron y sientes que no fue justo, es normal preguntarse: <strong>¿Cómo demandar por despido injustificado en Chile?</strong> La respuesta simple es que puedes demandar dentro de 60 días hábiles y exigir indemnización.
+            Si te despidieron y sientes que no fue justo, es normal preguntarse: <strong>¿Cómo demandar por despido injustificado en Chile?</strong> La respuesta simple es que puedes demandar dentro de 60 días hábiles y exigir indemnización con la ayuda de un <Link to="/abogados-laborales" className="text-green-600 underline hover:text-green-400">abogado laboral en Chile</Link>.
           </p>
+
 
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
@@ -523,13 +526,17 @@ const BlogArticle = () => {
                   La mayoría de las personas comete el mismo error: espera demasiado, firma sin entender o simplemente no actúa por miedo o desconocimiento. Y eso tiene un costo directo, porque un despido mal aplicado puede significar millones en indemnización… pero solo si reclamas correctamente.
                 </p>
                 <p>
-                  Además, el sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto.
+                  Además, el sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto y no <Link to="/abogados-laborales" className="text-green-900 underline hover:text-green-600">revisar tu despido con un abogado laboral</Link>.
                 </p>
                 <p className="font-bold text-gray-900 bg-gray-100 p-8 rounded-2xl border">
                   Porque cada día que pasa, reduces tus opciones. Actuar a tiempo no solo te permite defenderte: te permite recuperar lo que legítimamente te corresponde.
                 </p>
               </div>
             </div>
+
+            {/* CTA Section - Specific Category */}
+            <CategoryCTA category="laboral" />
+
 
             <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
               <h2 className="text-2xl font-bold mb-8 text-gray-900">Preguntas frecuentes</h2>
@@ -544,22 +551,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <section className="bg-white rounded-2xl shadow-sm p-8 text-center mt-8 border border-gray-100 mb-12">
-            <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te despidieron y no sabes si fue legal?</h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Habla con un abogado ahora. Evalúa tu caso, calcula cuánto podrías recibir y decide antes de que venza el plazo legal.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/search?category=Derecho+Laboral">
-                <Button
-                  size="lg"
-                  className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto transition-colors shadow-lg"
-                >
-                  Hablar con un abogado ahora
-                </Button>
-              </Link>
-            </div>
-          </section>
+
         </div>
 
         <div className="w-full bg-gray-100/50">

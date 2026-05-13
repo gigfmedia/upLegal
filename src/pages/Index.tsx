@@ -651,8 +651,9 @@ const Index = () => {
             Explora por especialidad
           </p>
           <h2 className="text-3xl font-bold font-serif text-left text-gray-900 mb-4">
-            Elige el área legal que necesitas
+            Áreas legales más consultadas
           </h2>
+
           <p className="text-left text-gray-600 mb-12">
           Al buscar asesoría y representación, las personas a menudo buscan abogados que se especialicen en el área del derecho más adecuada para sus necesidades.
           </p>
@@ -661,8 +662,9 @@ const Index = () => {
             {/* Derecho Laboral */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=Derecho+Laboral')}
+              onClick={() => navigate('/abogados-laborales')}
             >
+
               <CardContent className="p-6">
                 <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
                   <Briefcase className="h-6 w-6 text-green-600" />
@@ -675,8 +677,9 @@ const Index = () => {
             {/* Derecho de Familia */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=Derecho+de+Familia')}
+              onClick={() => navigate('/abogados-divorcio')}
             >
+
               <CardContent className="p-6">
                 <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
                   <Users className="h-6 w-6 text-green-600" />
@@ -689,8 +692,23 @@ const Index = () => {
             {/* Derecho Civil */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
+              onClick={() => navigate('/abogados-arriendo')}
+            >
+              <CardContent className="p-6">
+                <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
+                  <Building2 className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Arriendos y Desalojos</h3>
+                <p className="text-sm text-gray-600 line-clamp-3">Juicio de Arrendamiento, Ley Devuélveme mi Casa, Desalojos, Cobro de Rentas, Restitución de Garantía, entre otros.</p>
+              </CardContent>
+            </Card>
+
+            {/* Derecho Civil */}
+            <Card 
+              className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
               onClick={() => navigate('/search?category=Derecho+Civil')}
             >
+
               <CardContent className="p-6">
                 <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
                   <Scale className="h-6 w-6 text-green-600" />
@@ -703,8 +721,9 @@ const Index = () => {
             {/* Derecho Penal */}
             <Card 
               className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-gray-900 border-2 hover:-translate-y-1 h-full"
-              onClick={() => navigate('/search?category=Derecho+Penal')}
+              onClick={() => navigate('/abogados-penales')}
             >
+
               <CardContent className="p-6">
                 <div className="bg-green-900 w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors">
                   <Shield className="h-6 w-6 text-green-600" />

@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSqu
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
+import CategoryCTA from "@/components/blog/CategoryCTA";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
@@ -789,6 +790,7 @@ const BlogArticle = () => {
               </Link>
             </div>
 
+
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -799,9 +801,12 @@ const BlogArticle = () => {
               Antes de firmar el documento, es fundamental revisar aspectos como las indemnizaciones, vacaciones pendientes y cotizaciones previsionales.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              Si existen dudas o diferencias en los montos, es recomendable buscar asesoría legal o consultar con la Dirección del Trabajo para evitar perder beneficios que corresponden por ley.
+              Si existen dudas o diferencias en los montos, es recomendable <Link to="/abogados-laborales" className="text-green-900 underline hover:text-green-700">hablar con un abogado laboral en Chile</Link> para evitar perder beneficios que corresponden por ley.
             </p>
           </div>
+
+          {/* CTA Section - Specific Category */}
+          <CategoryCTA category="laboral" />
 
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>
@@ -818,29 +823,7 @@ const BlogArticle = () => {
           </div>
         </div>
 
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te deben tu finiquito o es incorrecto?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Protege tus derechos laborales. Si tienes dudas sobre tu finiquito, necesitas que un abogado revise los cálculos o quieres iniciar un reclamo, contacta a un especialista ahora.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button 
-                size="lg" 
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_finiquito_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Consultar con Abogado Laboral
-              </Button>
-            </Link>
-          </div>
-        </section>
+
 
       </div>
 
