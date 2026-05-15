@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "autodespido-chile-2026",
+    title: "Autodespido en Chile: qué es, cuándo aplica y cuánto puedes recibir (Guía 2026)",
+    excerpt: "Guía completa sobre el autodespido en Chile. Aprende qué es, cuándo aplica, qué debes probar y cuánto dinero puedes recibir por incumplimientos del empleador.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "15 de Mayo, 2026",
+    readTime: "8 min",
+    image: "/assets/autodespido-chile-2026.png"
+  },
+  {
     id: "reserva-de-derechos-finiquito-chile-2026",
     title: "Reserva de derechos en el finiquito en Chile: qué es, cómo escribirla y cuándo usarla (Guía 2026)",
     excerpt: "Aprende qué es la reserva de derechos en el finiquito, cómo escribirla correctamente y cuándo usarla para proteger tu derecho a demandar en Chile 2026.",

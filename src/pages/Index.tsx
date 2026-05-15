@@ -265,13 +265,20 @@ const Index = () => {
               };
             });
           
-          // Sort by visits descending, then by reviews
-          const sortedByVisits = [...formattedLawyers].sort((a, b) => {
+          // 1. Sort all lawyers by visits descending, then by reviews
+          const sortedAll = [...formattedLawyers].sort((a, b) => {
             if (b.visits !== a.visits) return (b.visits || 0) - (a.visits || 0);
             return (b.reviews || 0) - (a.reviews || 0);
           });
+
+          // 2. Prioritize lawyers with reviews
+          const withReviews = sortedAll.filter(lawyer => (lawyer.reviews || 0) > 0);
+          const withoutReviews = sortedAll.filter(lawyer => (lawyer.reviews || 0) === 0);
+
+          // 3. Take top 3 total (fill with non-reviewed if we don't have enough reviewed ones)
+          const topFeatured = [...withReviews, ...withoutReviews].slice(0, 3);
           
-          setFeaturedLawyers(sortedByVisits);
+          setFeaturedLawyers(topFeatured);
         }
       } catch (error) {
         console.error('Error fetching featured lawyers:', error);

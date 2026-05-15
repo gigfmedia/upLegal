@@ -18,11 +18,17 @@
         if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
           var src = target.getAttribute('src') || target.getAttribute('href');
           if (src && src.match(/\/assets\/.*\.(js|css)$/)) {
-            console.warn("Failed to load asset: " + src + ". Possible stale cache. Reloading...");
-            var reloadCount = parseInt(sessionStorage.getItem('asset_reload_count') || '0', 10);
-            if (reloadCount < 2) {
-              sessionStorage.setItem('asset_reload_count', String(reloadCount + 1));
-              window.location.reload(true);
+            var rootEl = document.getElementById('root');
+            // Only reload if the screen is actually blank (main bundle failed)
+            if (rootEl && rootEl.children.length === 0) {
+              console.warn("Failed to load asset: " + src + ". Page is blank. Possible stale cache. Reloading...");
+              var reloadCount = parseInt(sessionStorage.getItem('asset_reload_count') || '0', 10);
+              if (reloadCount < 2) {
+                sessionStorage.setItem('asset_reload_count', String(reloadCount + 1));
+                window.location.reload(true);
+              }
+            } else {
+              console.warn("Failed to load lazy asset: " + src + ". Page is active, avoiding forced reload.");
             }
           }
         }

@@ -30,6 +30,7 @@ const ComoDemandarDespidoArticle = lazy(() => import('../pages/blog/como-demanda
 const CuantoDuraJuicioLaboralArticle = lazy(() => import('../pages/blog/cuanto-dura-juicio-laboral-despido-injustificado-chile-2026'));
 const MePuedenDespedirLicenciaMedicaArticle = lazy(() => import('../pages/blog/me-pueden-despedir-con-licencia-medica-chile-2026'));
 const ReservaDeDerechosArticle = lazy(() => import('../pages/blog/reserva-de-derechos-finiquito-chile-2026'));
+const AutodespidoArticle = lazy(() => import('../pages/blog/autodespido-chile-2026'));
 
 export const BlogRoutes = () => (
   <Suspense fallback={
@@ -67,6 +68,7 @@ export const BlogRoutes = () => (
       <Route path="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" element={<CuantoDuraJuicioLaboralArticle />} />
       <Route path="me-pueden-despedir-con-licencia-medica-chile-2026" element={<MePuedenDespedirLicenciaMedicaArticle />} />
       <Route path="reserva-de-derechos-finiquito-chile-2026" element={<ReservaDeDerechosArticle />} />
+      <Route path="autodespido-chile-2026" element={<AutodespidoArticle />} />
     </Routes>
   </Suspense>
 );

@@ -26,7 +26,7 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
           <Button 
             className="bg-gray-900 hover:bg-green-900 text-white px-8 h-11 rounded-md transition-all shadow-sm active:scale-95 w-full sm:w-auto font-bold text-sm"
           >
-            <MessageSquare className="mr-2 h-4 w-4" />
+            {/* <MessageSquare className="mr-2 h-4 w-4" /> */}
             {buttonText}
             <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
           </Button>
