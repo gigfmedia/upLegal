@@ -20,7 +20,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['system-ui', 'sans-serif'],
-				serif: ['"Palatino Linotype"', 'Palatino', '"Palatino LT STD"', '"Book Antiqua"', 'Georgia', 'serif'],
+				serif: ['var(--font-serif)'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -99,13 +99,88 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'pulse-slow': {
+					'0%, 100%': {
+					transform: 'scale(1)',
+					opacity: '0.7',
+					},
+					'50%': {
+					transform: 'scale(1.15)',
+					opacity: '1',
+					},
+				},
+
+				orb: {
+					'0%, 100%': {
+					transform: 'translate(0px, 0px)',
+					},
+					'25%': {
+					transform: 'translate(-60px, -40px)',
+					},
+					'50%': {
+					transform: 'translate(30px, -80px)',
+					},
+					'75%': {
+					transform: 'translate(-40px, 20px)',
+					},
+				},
+
+				aurora: {
+					'0%': {
+					transform: 'translateX(-10%) rotate(-12deg)',
+					},
+					'50%': {
+					transform: 'translateX(10%) rotate(-12deg)',
+					},
+					'100%': {
+					transform: 'translateX(-10%) rotate(-12deg)',
+					},
+				},
+
+				'spin-ultra-slow': {
+					from: {
+					transform: 'rotate(0deg)',
+					},
+					to: {
+					transform: 'rotate(360deg)',
+					},
+				},
+
+				'spin-reverse': {
+					from: {
+					transform: 'rotate(360deg)',
+					},
+					to: {
+					transform: 'rotate(0deg)',
+					},
+				},
+
+				particles: {
+					'0%': {
+					transform: 'translateY(0px)',
+					opacity: '0',
+					},
+					'10%': {
+					opacity: '1',
+					},
+					'100%': {
+					transform: 'translateY(-200px)',
+					opacity: '0',
+					},
+				},
 			},
 			animation: {
 				slide: 'slide 6s ease-in-out infinite',
 				'spin-slow': 'border-spin 30s linear infinite',
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-slow': 'pulse-slow 8s ease-in-out infinite',
+				orb: 'orb 18s ease-in-out infinite',
+				aurora: 'aurora 15s ease-in-out infinite',
+				'spin-ultra-slow': 'spin-ultra-slow 40s linear infinite',
+				'spin-reverse': 'spin-reverse 30s linear infinite',
+				particles: 'particles linear infinite',
 			}
 		}
 	},

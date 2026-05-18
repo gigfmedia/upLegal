@@ -455,7 +455,7 @@ const Index = () => {
           </p>
           <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold text-gray-900 font-serif mb-8 mt-8">
             Asesoría legal online con&nbsp;
-            <span className="text-green-900 underline underline-offset-8 font-serif">Abogados verificados.</span> 
+            <span className="text-green-900 underline underline-offset-8 font-serif italic">Abogados verificados.</span> 
             <br />Rápido, seguro y sin complicaciones.
           </h1>
           <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">

@@ -63,7 +63,6 @@ const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
 const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
-const AsesoriaLegalOnlinePage = lazy(() => import('./pages/AsesoriaLegalOnline'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -72,13 +71,11 @@ const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
-const Consulta = lazy(() => import('./pages/Consulta'));
-const ConsultaDetalle = lazy(() => import('./pages/ConsultaDetalle'));
-const ConsultaConfirmacion = lazy(() => import('./pages/ConsultaConfirmacion'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
+const LegalUpAI = lazy(() => import('./pages/LegalUpAI'));
 
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
@@ -214,6 +211,12 @@ const setupGlobalErrorHandlers = () => {
     });
   };
 
+  const isPageBlank = () => {
+    const root = document.getElementById('root');
+    if (!root) return true;
+    return root.innerHTML.trim() === '' || root.innerText.trim() === '';
+  };
+
   // When the user comes back to the tab after a new deploy, stale chunks
   // will fail silently showing a white screen. This forces a reload.
   const handleVisibilityChange = () => {
@@ -223,7 +226,10 @@ const setupGlobalErrorHandlers = () => {
       const lastActivity = Number(sessionStorage.getItem('_legalup_last_active') || Date.now());
       const idleMs = Date.now() - lastActivity;
       if (idleMs > 30 * 60 * 1000) {
-        window.location.reload();
+        if (isPageBlank()) {
+          console.warn('Stale idle session and blank page detected, reloading...');
+          window.location.reload();
+        }
       }
     } else {
       sessionStorage.setItem('_legalup_last_active', String(Date.now()));
@@ -336,7 +342,6 @@ const AppContent = () => {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contacto" element={<ContactPage />} />
               <Route path="/como-funciona" element={<HowItWorksPage />} />
-              <Route path="/asesoria-legal-online" element={<AsesoriaLegalOnlinePage />} />
               <Route path="/terminos" element={<TermsOfService />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />
               
@@ -344,10 +349,6 @@ const AppContent = () => {
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 
-              {/* Consultation Routes - Temporarily disabled */}
-              <Route path="/consulta" element={<Consulta />} />
-              <Route path="/consulta/detalle" element={<ConsultaDetalle />} />
-              <Route path="/consulta/confirmacion" element={<ConsultaConfirmacion />} />
               
               {/* Blog Routes */}
               <Route path="/blog/*" element={<BlogRoutes />} />
@@ -359,6 +360,7 @@ const AppContent = () => {
               <Route path="/abogados-penales" element={<CategoryLanding category="penal" />} />
 
               <Route path="/cae" element={<CAELanding />} />
+              <Route path="/legalup-ai" element={<LegalUpAI />} />
               
               <Route path="/review" element={<ReviewPage />} />
              

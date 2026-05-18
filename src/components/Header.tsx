@@ -15,9 +15,24 @@ interface HeaderProps {
   onAuthClick?: (mode: 'login' | 'signup') => void;
   centerLogoOnMobile?: boolean;
   mobileMenuButton?: ReactNode;
+  variant?: 'light' | 'dark';
+  hideTopBar?: boolean;
+  hasBackground?: boolean;
+  visible?: boolean;
+  fixed?: boolean;
 }
 
-export default function Header({ onAuthClick, centerLogoOnMobile = false, mobileMenuButton }: HeaderProps) {
+export default function Header({
+  onAuthClick,
+  centerLogoOnMobile = false,
+  mobileMenuButton,
+  variant = 'light',
+  hideTopBar = false,
+  hasBackground = true,
+  visible = true,
+  fixed = true
+}: HeaderProps) {
+  console.log('Header visible:', visible);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -97,19 +112,27 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <div className={`${fixed ? 'fixed' : 'absolute'} top-0 left-0 right-0 z-50 h-16 transition-transform duration-300 ${visible ? 'translate-y-0' : '-translate-y-[80px]'}`}>
       {/* Top Bar */}
-      <div 
-        className="h-10 bg-[#111827] flex items-center justify-center px-4 cursor-pointer hover:bg-black transition-colors border-b border-gray-800"
-        onClick={() => handleNavigation('/cae')}
-      >
-        <p className="text-white text-[13px] sm:text-sm font-medium text-center">
-          ¿Tienes deuda CAE? Revísalo antes de pagar <span className="ml-1">→</span>
-        </p>
-      </div>
+      {!hideTopBar && (
+        <div 
+          className="h-10 bg-[#111827] flex items-center justify-center px-4 cursor-pointer hover:bg-black transition-colors border-b border-gray-800"
+          onClick={() => handleNavigation('/cae')}
+        >
+          <p className="text-white text-[13px] sm:text-sm font-medium text-center">
+            ¿Tienes deuda CAE? Revísalo antes de pagar <span className="ml-1">→</span>
+          </p>
+        </div>
+      )}
 
       {/* Main Header */}
-      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200 h-16 flex items-center px-4 sm:px-6 lg:px-8">
+      <div className={cn(
+        "h-16 flex items-center px-4 sm:px-6 lg:px-8 transition-all duration-300",
+        hasBackground && "backdrop-blur-sm",
+        hasBackground && variant === 'dark'
+          ? "bg-gray-950 border-b border-white/10"
+          : hasBackground && "bg-white/95 border-b border-gray-200"
+      )}>
         <div className="w-full max-w-7xl mx-auto">
           <div className="relative flex items-center justify-between h-full w-full">
             {/* Mobile Menu Button */}
@@ -118,13 +141,16 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
             ) : (
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+                className={cn(
+                  "md:hidden p-2 rounded-md transition-colors",
+                  variant === 'dark' ? "hover:bg-white/10" : "hover:bg-gray-100"
+                )}
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6 text-gray-700" />
+                  <X className={cn("h-6 w-6", variant === 'dark' ? "text-gray-300" : "text-gray-700")} />
                 ) : (
-                  <Menu className="h-6 w-6 text-gray-700" />
+                  <Menu className={cn("h-6 w-6", variant === 'dark' ? "text-gray-300" : "text-gray-700")} />
                 )}
               </button>
             )}
@@ -139,17 +165,41 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
               )}
               onClick={() => handleNavigation('/')}
             >
-              <Scale className="h-8 w-8 text-green-900" />
-              <span className="text-xl font-bold text-green-900">LegalUp</span>
+              <Scale className={cn("h-8 w-8", variant === 'dark' ? "text-white" : "text-green-900")} />
+              <span className={cn("text-xl font-bold", variant === 'dark' ? "text-white" : "text-green-900")}>LegalUp</span>
             </div>
 
-            {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
-              <a href="/search" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Match con abogado</a>
-              <a href="/como-funciona" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>¿Cómo funciona?</a>
-              <a href="/about" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Acerca de</a>
-              <a href="/blog" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/blog') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Blog</a>
-              <a href="/contacto" className={cn("transition-colors hover:text-green-900 text-sm", isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground')}>Contáctanos</a>
+              <a href="/search" className={cn(
+                "transition-colors text-sm", 
+                variant === 'dark' 
+                  ? (isActive('/search') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
+                  : (isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
+              )}>Match con abogado</a>
+              <a href="/como-funciona" className={cn(
+                "transition-colors text-sm", 
+                variant === 'dark' 
+                  ? (isActive('/como-funciona') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
+                  : (isActive('/como-funciona') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
+              )}>¿Cómo funciona?</a>
+              <a href="/about" className={cn(
+                "transition-colors text-sm", 
+                variant === 'dark' 
+                  ? (isActive('/about') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
+                  : (isActive('/about') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
+              )}>Acerca de</a>
+              <a href="/blog" className={cn(
+                "transition-colors text-sm", 
+                variant === 'dark' 
+                  ? (isActive('/blog') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
+                  : (isActive('/blog') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
+              )}>Blog</a>
+              <a href="/contacto" className={cn(
+                "transition-colors text-sm", 
+                variant === 'dark' 
+                  ? (isActive('/contacto') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
+                  : (isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
+              )}>Contáctanos</a>
             </nav>
 
             {/* Auth Section */}
@@ -160,7 +210,7 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                     <Button variant="ghost" className="h-10 w-10 p-0 rounded-full relative hover:bg-gray-100 transition-colors">
                       <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
                         <AvatarImage src={user.user_metadata?.avatar_url ?? undefined} alt={userName || user?.email || 'Usuario'} className="object-cover" />
-                        <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">{avatarInitials}</AvatarFallback>
+                        <AvatarFallback className="bg-green-900 text-green-600 font-medium">{avatarInitials}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -182,8 +232,28 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
                 </DropdownMenu>
               ) : (
                 <div className="hidden md:flex items-center space-x-3 h-16">
-                  <Button variant="ghost" onClick={() => handleAuthNavigation('login')} className="text-gray-600 border border-solid">Iniciar Sesión</Button>
-                  <Button onClick={() => handleAuthNavigation('signup')} className="bg-gray-900 hover:bg-green-900">Registrarse</Button>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleAuthNavigation('login')} 
+                    className={cn(
+                      "transition-colors",
+                      variant === 'dark' 
+                        ? "text-gray-300 border-white/20 hover:bg-white/10 hover:text-white" 
+                        : "text-gray-600 border-gray-200"
+                    )}
+                  >
+                    Iniciar Sesión
+                  </Button>
+                  <Button 
+                    onClick={() => handleAuthNavigation('signup')} 
+                    className={cn(
+                      variant === 'dark' 
+                        ? "bg-white hover:bg-green-400 text-gray-900" 
+                        : "bg-gray-900 hover:bg-green-900"
+                    )}
+                  >
+                    Registrarse
+                  </Button>
                 </div>
               )}
             </div>
@@ -193,17 +263,68 @@ export default function Header({ onAuthClick, centerLogoOnMobile = false, mobile
 
       {/* Mobile Menu Dropdown */}
       {!mobileMenuButton && isMobileMenuOpen && (
-        <div className="md:hidden fixed top-[104px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg z-40">
+        <div className={cn(
+          "md:hidden fixed left-0 right-0 border-b shadow-lg z-40 transition-all",
+          hideTopBar ? "top-16" : "top-[104px]",
+          variant === 'dark' ? "bg-gray-900 border-white/10" : "bg-white border-gray-200"
+        )}>
           <nav className="flex flex-col p-4 space-y-3">
-            <button onClick={() => handleNavigation('/search')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/search') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Match con abogado</button>
-            <button onClick={() => handleNavigation('/como-funciona')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/como-funciona') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Cómo Funciona</button>
-            <button onClick={() => handleNavigation('/about')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/about') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Acerca de</button>
-            <button onClick={() => handleNavigation('/blog')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/blog') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Blog</button>
-            <button onClick={() => handleNavigation('/contacto')} className={cn("text-left px-4 py-3 rounded-lg transition-colors", isActive('/contacto') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50')}>Contáctanos</button>
+            <button 
+              onClick={() => handleNavigation('/search')} 
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors", 
+                isActive('/search') 
+                  ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
+                  : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
+              )}
+            >Match con abogado</button>
+            <button 
+              onClick={() => handleNavigation('/como-funciona')} 
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors", 
+                isActive('/como-funciona') 
+                  ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
+                  : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
+              )}
+            >Cómo Funciona</button>
+            <button 
+              onClick={() => handleNavigation('/about')} 
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors", 
+                isActive('/about') 
+                  ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
+                  : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
+              )}
+            >Acerca de</button>
+            <button 
+              onClick={() => handleNavigation('/blog')} 
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors", 
+                isActive('/blog') 
+                  ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
+                  : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
+              )}
+            >Blog</button>
+            <button 
+              onClick={() => handleNavigation('/contacto')} 
+              className={cn(
+                "text-left px-4 py-3 rounded-lg transition-colors", 
+                isActive('/contacto') 
+                  ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
+                  : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
+              )}
+            >Contáctanos</button>
             {!user && (
-              <div className="pt-3 border-t border-gray-200 space-y-2">
-                <Button onClick={() => handleAuthNavigation('login')} variant="outline" className="w-full">Iniciar Sesión</Button>
-                <Button onClick={() => handleAuthNavigation('signup')} className="w-full bg-gray-900 hover:bg-green-900">Registrarse</Button>
+              <div className={cn("pt-3 border-t space-y-2", variant === 'dark' ? "border-white/10" : "border-gray-200")}>
+                <Button 
+                  onClick={() => handleAuthNavigation('login')} 
+                  variant="outline" 
+                  className={cn("w-full", variant === 'dark' ? "border-white/20 text-white hover:bg-white/10" : "")}
+                >Iniciar Sesión</Button>
+                <Button 
+                  onClick={() => handleAuthNavigation('signup')} 
+                  className={cn("w-full", variant === 'dark' ? "bg-green-500 hover:bg-green-400 text-gray-950" : "bg-gray-900 hover:bg-green-900")}
+                >Registrarse</Button>
               </div>
             )}
           </nav>

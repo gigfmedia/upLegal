@@ -58,6 +58,18 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
           message: "Un abogado puede calcular el monto exacto según el IPC oficial.",
           priceLabel: "Desde $30.000"
         };
+      case 'divorcio':
+        return {
+          title: "¿Quieres iniciar un divorcio de mutuo acuerdo?",
+          message: "Un abogado de familia puede guiarte, redactar el acuerdo y asegurar que todo se resuelva sin inconvenientes.",
+          priceLabel: "Abogados disponibles"
+        };
+      case 'autodespido':
+        return {
+          title: "¿Estás pensando en autodespedirte?",
+          message: "Un experto laboral puede evaluar tu caso para asegurar todas tus indemnizaciones por ley.",
+          priceLabel: "Abogados disponibles"
+        };
       default:
         return {
           title: "¿Te está pasando esto ahora?",

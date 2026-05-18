@@ -8,18 +8,6 @@
   </url>
 
   <url>
-    <loc>https://legalup.cl/asesoria-legal-online</loc>
-    <priority>0.9</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
-    <loc>https://legalup.cl/consulta</loc>
-    <priority>0.9</priority>
-    <changefreq>monthly</changefreq>
-  </url>
-
-  <url>
     <loc>https://legalup.cl/blog</loc>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>

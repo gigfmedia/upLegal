@@ -8,6 +8,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { Button } from "@/components/ui/button";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -100,7 +101,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <span>Tiempo de lectura: 12 min</span>
             </div>
           </div>
         </div>
@@ -439,6 +440,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Derecho Laboral" topic="autodespido" />
     </div>
   );
 };

@@ -11,8 +11,8 @@ export function AppLoading({ fullScreen = true, className = '' }: AppLoadingProp
       <div className="flex flex-col items-center space-y-8">
         <div className="flex flex-col items-center">
           <div className="mt-4 flex items-center space-x-2">
-            <Scale className="h-8 w-8 text-blue-600" />
-            <span className="text-3xl font-bold text-gray-900">LegalUp</span>
+            <Scale className="h-8 w-8 text-green-900" />
+            <span className="text-3xl font-bold text-green-900">LegalUp</span>
           </div>
         </div>
         

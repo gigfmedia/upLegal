@@ -1,11 +1,11 @@
 import { GoogleCalendarConnect } from '@/components/dashboard/GoogleCalendarConnect';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -296,6 +296,14 @@ export default function LawyerDashboardPage() {
     }
   };
 
+  const handleLegalUpAIClick = () => {
+    // Track CTR for LegalUp AI badge
+    console.log('LegalUp AI badge clicked - tracking CTR');
+    // Here you could add analytics tracking like:
+    // analytics.track('legalup_ai_badge_clicked', { user_id: user?.id });
+    navigate('/legalup-ai');
+  };
+
   return (
     <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       {/* ... existing header and counters ... */}
@@ -305,6 +313,31 @@ export default function LawyerDashboardPage() {
           <p className="text-muted-foreground">
             Gestiona tu perfil, servicios y consultas legales en un solo lugar.
           </p>
+        </div>
+      </div>
+
+      {/* LegalUp AI Badge */}
+      <div 
+        onClick={handleLegalUpAIClick}
+        className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/10 rounded-lg p-3">
+              <Sparkles className="h-6 w-6 text-green-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Nuevo</span>
+              </div>
+              <h3 className="text-xl font-bold text-white">LegalUp AI</h3>
+              <p className="text-green-100 text-sm">IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2 group-hover:bg-white/20 transition-colors">
+            <span className="text-white font-medium text-sm">Conocer más</span>
+            <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
       </div>
 
