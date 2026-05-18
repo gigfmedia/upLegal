@@ -319,7 +319,7 @@ export default function Header({
                 <Button 
                   onClick={() => handleAuthNavigation('login')} 
                   variant="outline" 
-                  className={cn("w-full", variant === 'dark' ? "border-white/20 text-white hover:bg-white/10" : "")}
+                  className={cn("w-full", variant === 'dark' ? "border-white/20 text-gray-900 hover:bg-white" : "")}
                 >Iniciar Sesión</Button>
                 <Button 
                   onClick={() => handleAuthNavigation('signup')} 

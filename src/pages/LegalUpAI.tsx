@@ -332,7 +332,7 @@ const LegalUpAI = () => {
 
           {/* Subtitle */}
           <p className="text-lg sm:text-xl text-white max-w-2xl mx-auto mb-8 leading-relaxed animate-fade-up delay-300">
-            Plataforma de IA legal diseñada para ayudarte a entender jurisprudencia, analizar casos privados y automatizar tareas legales. Precisión, velocidad y confianza en cada respuesta.
+            Plataforma de IA legal diseñada para ayudarte a entender jurisprudencia, analizar casos privados y automatizar tareas legales. <br />Precisión, velocidad y confianza en cada respuesta.
           </p>
 
           {/* Social proof */}
