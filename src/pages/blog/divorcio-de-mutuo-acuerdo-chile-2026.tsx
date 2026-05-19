@@ -476,9 +476,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
               Un abogado de familia puede explicarte los pasos y los plazos según tu situación, y redactar el acuerdo con los más altos estándares de suficiencia.
             </p>
-            <Link to="/abogados-de-familia">
+            <Link to="/abogados-divorcio">
               <Button className="bg-gray-900 hover:bg-green-900 text-white font-bold w-full sm:w-auto rounded-md shadow-lg transition-all active:scale-95 h-[44px]">
-                Contactar a un abogado de familia ahora
+                Contactar a un abogado de familia
                 <ChevronRight className="ml-1 h-4 w-4 transition-transform" />
               </Button>
             </Link>

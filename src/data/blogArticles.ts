@@ -11,16 +11,6 @@ export interface Article {
 
 export const articles: Article[] = [
   {
-    id: "autodespido-chile-2026",
-    title: "Autodespido en Chile: qué es, cuándo aplica y cuánto puedes recibir (Guía 2026)",
-    excerpt: "Guía completa sobre el autodespido en Chile. Aprende qué es, cuándo aplica, qué debes probar y cuánto dinero puedes recibir por incumplimientos del empleador.",
-    category: "Derecho Laboral",
-    author: "LegalUp",
-    date: "15 de Mayo, 2026",
-    readTime: "12 min",
-    image: "/assets/autodespido-chile-2026.png"
-  },
-  {
     id: "divorcio-de-mutuo-acuerdo-chile-2026",
     title: "Divorcio de mutuo acuerdo en Chile 2026: requisitos, pasos y cuánto demora",
     excerpt: "Guía completa sobre el divorcio de mutuo acuerdo en Chile 2026. Requisitos, etapas del proceso, plazos reales y qué debes tener resuelto antes de presentar la demanda.",
@@ -29,6 +19,16 @@ export const articles: Article[] = [
     date: "18 de Mayo, 2026",
     readTime: "10 min",
     image: "/assets/divorcio-mutuo-acuerdo-chile-2026.png"
+  },
+  {
+    id: "autodespido-chile-2026",
+    title: "Autodespido en Chile: qué es, cuándo aplica y cuánto puedes recibir (Guía 2026)",
+    excerpt: "Guía completa sobre el autodespido en Chile. Aprende qué es, cuándo aplica, qué debes probar y cuánto dinero puedes recibir por incumplimientos del empleador.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "15 de Mayo, 2026",
+    readTime: "12 min",
+    image: "/assets/autodespido-chile-2026.png"
   },
   {
     id: "reserva-de-derechos-finiquito-chile-2026",
