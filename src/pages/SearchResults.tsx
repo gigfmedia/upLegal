@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { X, SlidersHorizontal, Search } from "lucide-react";
 import { Helmet } from 'react-helmet-async';
@@ -17,8 +17,7 @@ import { useInView } from 'react-intersection-observer';
 import debounce from 'lodash/debounce';
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectEspecialidad } from "@/utils/askLLM";
-
-const SpecialtiesSlider = lazy(() => import('@/components/search/SpecialtiesSlider'));
+import SpecialtiesSlider from '@/components/search/SpecialtiesSlider';
 
 const specialties = [
   "Derecho Civil",
@@ -169,15 +168,9 @@ const SearchResults = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [showSpecialtiesSlider, setShowSpecialtiesSlider] = useState(false);
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setShowSpecialtiesSlider(true), 0);
-    return () => window.clearTimeout(id);
-  }, []);
-  
   // Modal states
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
+
   
   
   // Infinite scroll ref
@@ -724,20 +717,10 @@ const SearchResults = () => {
           {/* Specialties Slider */}
           <div className="mt-4 relative">
             <h4 className="text-lg font-semibold mb-4">¿Buscas alguna subespecialidad?</h4>
-            <div className="relative">
-              <div className="min-h-[56px]">
-                {showSpecialtiesSlider ? (
-                  <Suspense fallback={<div className="h-14 w-full rounded-lg bg-gray-50 border border-gray-200" />}>
-                    <SpecialtiesSlider
-                      selectedSpecialty={selectedSpecialty}
-                      onSpecialtyChange={handleSpecialtyChange}
-                    />
-                  </Suspense>
-                ) : (
-                  <div className="h-14 w-full rounded-lg bg-gray-50 border border-gray-200" />
-                )}
-              </div>
-            </div>
+            <SpecialtiesSlider
+              selectedSpecialty={selectedSpecialty}
+              onSpecialtyChange={handleSpecialtyChange}
+            />
             <div id="after-specialties" />
           </div>
         </div>

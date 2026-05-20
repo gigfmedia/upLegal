@@ -66,7 +66,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">{title}</h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
@@ -85,7 +85,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl mb-8 leading-relaxed">
+          <p className="text-xl mb-8 leading-relaxed">
             Cuando una pareja decide separarse de común acuerdo, el divorcio de mutuo acuerdo es el camino más directo, menos costoso y menos desgastante que existe en Chile. A diferencia del divorcio unilateral — donde uno quiere divorciarse y el otro no — el mutuo acuerdo permite que ambas partes controlen el proceso y lleguen a términos que les convengan.
           </p>
 

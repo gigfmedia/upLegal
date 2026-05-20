@@ -172,8 +172,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                       'penal': 'Derecho Penal'
                     };
                     const specialty = category ? specialtyMap[category] : '';
-                    if (!user) setShowAuthModal(true);
-                    else window.location.href = `/search?specialty=${encodeURIComponent(specialty || '')}`;
+                    window.location.href = `/search?specialty=${encodeURIComponent(specialty || '')}`;
                   }}
                 >
                   Hablar con un Abogado
@@ -492,8 +491,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                 'penal': 'Derecho Penal'
               };
               const specialty = category ? specialtyMap[category] : '';
-              if (!user) setShowAuthModal(true);
-              else window.location.href = `/search?specialty=${encodeURIComponent(specialty || '')}`;
+              window.location.href = `/search?specialty=${encodeURIComponent(specialty || '')}`;
             }}
           >
             Comenzar mi consulta ahora →

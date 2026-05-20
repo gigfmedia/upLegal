@@ -132,7 +132,6 @@ const LegalUpAI = () => {
 
       // Header visibility: hide when scrolling down, show when scrolling up
       const shouldHide = scrollY > currentScrollY && scrollY > 50;
-      console.log('Scroll:', scrollY, 'Current:', currentScrollY, 'Should hide:', shouldHide, 'Fixed:', isScrollingUp && scrollY > 50);
       setHeaderVisible(!shouldHide);
 
       currentScrollY = scrollY;
@@ -270,6 +269,16 @@ const LegalUpAI = () => {
           {/* Rotating rings */}
           <div className="absolute inset-0 flex items-center justify-center">
             
+            <div className="absolute w-[1300px] h-[1300px]
+              border border-white/5 rounded-full
+              animate-spin-ultra-slow"
+            />
+
+            <div className="absolute w-[1100px] h-[1100px]
+              border border-emerald-500/5 rounded-full
+              animate-spin-reverse"
+            />
+
             <div className="absolute w-[900px] h-[900px]
               border border-white/10 rounded-full
               animate-spin-ultra-slow"
@@ -305,7 +314,7 @@ const LegalUpAI = () => {
           </div>
 
           {/* Noise */}
-          <div className="absolute inset-0 opacity-[0.03] mix-blend-soft-light bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
+          <div className="absolute inset-0 mix-blend-soft-light bg-[url('https://resend.com/static/product-pages/noise.png')]" />
 
           {/* Vignette */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,#020617_95%)]" />
@@ -325,7 +334,7 @@ const LegalUpAI = () => {
             <span className="inline-block animate-fade-up">
               Inteligencia Artificial para 
             </span>
-            <span className="font-bold font-serif italic bg-gradient-to-b from-white/100 to-gray/80 bg-clip-text text-transparent inline-block animate-fade-up delay-150">
+            <span className="font-bold font-serif italic bg-gradient-to-b from-white/100 to-green/80 bg-clip-text text-transparent inline-block animate-fade-up delay-150">
               Abogados en Chile
             </span>
           </h1>
@@ -353,7 +362,7 @@ const LegalUpAI = () => {
           <a href="#waitlist" onClick={scrollToWaitlist}>
             <Button
               size="lg"
-              className="group relative overflow-hidden bg-white hover:bg-green-400 text-gray-950 font-bold h-14 px-10 text-lg rounded-xl shadow-2xl hover:scale-[1.02] transition-all duration-300"
+              className="group relative overflow-hidden bg-transparent text-white border border-white hover:bg-white hover:text-gray-900 font-bold h-14 px-10 text-lg rounded-xl shadow-2xl hover:scale-[1.02] transition-all duration-300"
             >
               {/* Button shine */}
               <span className="absolute inset-0 overflow-hidden rounded-xl">
@@ -362,7 +371,7 @@ const LegalUpAI = () => {
 
               <span className="relative z-10 flex items-center">
                 Solicitar acceso anticipado
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform hover:text-gray-900" />
               </span>
             </Button>
           </a>

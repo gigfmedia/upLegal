@@ -32,7 +32,6 @@ export default function Header({
   visible = true,
   fixed = true
 }: HeaderProps) {
-  console.log('Header visible:', visible);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
