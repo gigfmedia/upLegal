@@ -362,7 +362,7 @@ const LegalUpAI = () => {
           <a href="#waitlist" onClick={scrollToWaitlist}>
             <Button
               size="lg"
-              className="group relative overflow-hidden bg-transparent text-white border border-white hover:bg-white hover:text-gray-900 font-bold h-14 px-10 text-lg rounded-xl shadow-2xl hover:scale-[1.02] transition-all duration-300"
+              className="group relative overflow-hidden bg-transparent text-white border border-white hover:bg-white hover:text-gray-900 font-bold h-14 px-10 text-lg rounded-xl shadow-2xl transition-all duration-300"
             >
               {/* Button shine */}
               <span className="absolute inset-0 overflow-hidden rounded-xl">
@@ -560,7 +560,7 @@ const LegalUpAI = () => {
           </div>
 
           {/* Time saved callout */}
-          <div className="mt-16 border border-gray-800 text-white rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
+          <div className="mt-6 border border-gray-800 text-white rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center gap-8">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="h-6 w-6 text-green-400" />

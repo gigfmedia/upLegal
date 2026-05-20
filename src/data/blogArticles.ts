@@ -212,7 +212,7 @@ export const articles: Article[] = [
   },
   {
     id: "me-pueden-despedir-sin-motivo-chile-2026",
-    title: "¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)",
+    title: "¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026",
     excerpt: "Descubre si es legal que te despidan sin motivo en Chile 2026. Conoce las causales de despido, tus derechos, indemnizaciones y qué hacer si crees que fue injustificado.",
     category: "Derecho Laboral",
     author: "LegalUp",

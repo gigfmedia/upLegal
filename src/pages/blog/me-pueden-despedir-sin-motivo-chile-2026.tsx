@@ -40,8 +40,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
-        description="Aprende si te pueden despedir sin motivo en Chile en 2026. Conoce las causales legales, el significado de 'necesidades de la empresa' y qué hacer para recibir tu indemnización."
+        title="¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026"
+        description="En Chile el empleador puede despedirte sin justificar una falta, pero debe pagarte indemnización. Conoce cuándo es legal, qué te corresponde cobrar y cómo actuar si crees que fue injustificado."
         image="/assets/despido-sin-motivo-chile-2026.png"
         url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
         datePublished="2026-03-23"
@@ -61,7 +61,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)
+            ¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026
           </h1>
 
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">

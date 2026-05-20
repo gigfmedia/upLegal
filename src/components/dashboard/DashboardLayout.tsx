@@ -25,6 +25,7 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   exact?: boolean;
+  badge?: boolean;
 };
 
 type UserRole = 'lawyer' | 'client' | undefined;
@@ -35,6 +36,7 @@ function DashboardLayout() {
   const { user, logout, isLoading } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('client');
+  const [showServicesBadge, setShowServicesBadge] = useState(false);
   
   // Get user role safely
   const getUserRole = (): UserRole => {
@@ -54,6 +56,25 @@ function DashboardLayout() {
   useEffect(() => {
     setUserRole(getUserRole());
   }, [location.pathname, user]);
+
+  // Check if lawyer has services configured
+  useEffect(() => {
+    const checkServices = async () => {
+      if (!user?.id || !location.pathname.startsWith('/lawyer')) return;
+      try {
+        const { count } = await supabase
+          .from('lawyer_services')
+          .select('*', { count: 'exact', head: true })
+          .eq('lawyer_user_id', user.id);
+        
+        // Show badge if there are 0 services
+        setShowServicesBadge(count === 0);
+      } catch {
+        // Silently ignore
+      }
+    };
+    checkServices();
+  }, [user?.id, location.pathname]);
 
   // Check authentication and profile setup
   useEffect(() => {
@@ -133,7 +154,7 @@ function DashboardLayout() {
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
-        { href: '/lawyer/services', icon: FileText, label: 'Servicios' },
+        { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
@@ -216,7 +237,7 @@ function DashboardLayout() {
               <div className="flex-1 overflow-y-auto py-4">
                 <nav>
                   <ul className="space-y-1 px-3">
-                    {navItems.map(({ href, icon: Icon, label, exact }) => (
+                    {navItems.map(({ href, icon: Icon, label, exact, badge }) => (
                       <li key={href}>
                         <Link
                           to={href}
@@ -235,7 +256,10 @@ function DashboardLayout() {
                             }`}
                             aria-hidden="true"
                           />
-                          {label}
+                          <span className="flex-1">{label}</span>
+                          {badge && (
+                            <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                          )}
                         </Link>
                       </li>
                     ))}
