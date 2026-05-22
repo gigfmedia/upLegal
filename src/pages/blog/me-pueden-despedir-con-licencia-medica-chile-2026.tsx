@@ -45,7 +45,7 @@ const BlogArticle = () => {
         dateModified="2026-05-08"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -61,7 +61,7 @@ const BlogArticle = () => {
             ¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
             </p>
@@ -138,7 +138,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué causales puede usar el empleador para despedirte con licencia?</h2>
-            
+
             <h3 className="text-xl font-bold mb-4">Causales que generalmente sí puede usar</h3>
             <div className="space-y-6 mb-8">
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
@@ -173,7 +173,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">El punto clave: notificación vs. ejecución del despido</h2>
             <p className="mb-6 font-medium">Esta distinción es fundamental y muchos trabajadores no la conocen:</p>
-            
+
             <div className="grid sm:grid-cols-2 gap-6 mb-6">
               <div className="bg-white p-5 rounded-2xl border">
                 <h4 className="font-bold mb-2 flex items-center gap-2">
@@ -192,7 +192,7 @@ const BlogArticle = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-lg">
               <p className="text-amber-900 leading-relaxed font-medium">
                 En términos prácticos: si recibes una carta de despido mientras estás con licencia, el contrato debería seguir vigente hasta que termines la licencia, y solo entonces comenzarían a correr los plazos del finiquito.
@@ -257,8 +257,8 @@ const BlogArticle = () => {
               {[
                 { title: "Paso 1 — Revisa la carta de despido", desc: "Verifica la causal invocada, la fecha de notificación y la fecha de término del contrato. Si la fecha de término cae dentro del período de licencia, eso es una señal de alerta." },
                 { title: "Paso 2 — Guarda toda la documentación", desc: "Carta de despido, licencias médicas, comprobantes de pago, comunicaciones con el empleador. Todo sirve como prueba." },
-                { 
-                  title: "Paso 3 — No firmes el finiquito sin revisarlo", 
+                {
+                  title: "Paso 3 — No firmes el finiquito sin revisarlo",
                   desc: "Si no estás de acuerdo con los montos o crees que el despido fue injustificado, firma con reserva de derechos o no firmes hasta consultar con un abogado.",
                   link: { to: "/blog/reserva-de-derechos-finiquito-chile-2026", text: "👉 Cómo firmar con reserva de derechos" }
                 },
@@ -319,8 +319,8 @@ const BlogArticle = () => {
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-            <Link 
-              to="/blog/como-calcular-tu-finiquito-chile-2026" 
+            <Link
+              to="/blog/como-calcular-tu-finiquito-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
               👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026

@@ -14,24 +14,29 @@ const BlogArticle = () => {
   const faqs = [
     {
       question: "¿El arrendador puede quedarse con toda la garantía?",
-      answer: "Solo si justifica completamente los daños o deudas con respaldo documental como boletas, facturas o presupuestos. No puede retenerla de forma arbitraria."
+      answer:
+        "Solo si justifica completamente los daños o deudas con respaldo documental — boletas, facturas o presupuestos de reparación. No puede retenerla de forma arbitraria ni por desgaste normal del inmueble. Si retiene la garantía sin respaldo, puedes demandar su devolución ante el tribunal civil competente.",
     },
     {
-      question: "¿Puede descontar por 'uso normal' de la propiedad?",
-      answer: "No. El desgaste natural del inmueble producto del uso habitual no debería cobrarse al arrendatario. Solo son descontables los daños que excedan el desgaste normal."
+      question: "¿Puede el arrendador descontar por desgaste normal de la propiedad?",
+      answer:
+        "No. El desgaste natural del inmueble producto del uso habitual — pintura levemente desgastada, pequeñas marcas en paredes, deterioro normal de pisos — no puede cobrarse al arrendatario. Solo son descontables los daños que excedan el desgaste normal, como roturas, agujeros en paredes o daños por mal uso. Por eso es importante documentar el estado del inmueble con fotos al entrar y al salir.",
     },
     {
-      question: "¿Qué pasa si el arrendador no responde mi solicitud?",
-      answer: "Puedes iniciar acciones legales. Lo recomendable es documentar todos los intentos de comunicación (correos, WhatsApp, cartas) antes de demandar."
+      question: "¿Qué pasa si el arrendador no responde mi solicitud de devolución?",
+      answer:
+        "Si el arrendador no responde ni devuelve la garantía dentro de un plazo razonable después de que entregaste el inmueble, puedes iniciar acciones legales ante el tribunal civil. Antes de demandar, documenta todos los intentos de comunicación — correos, WhatsApp, cartas — con fecha y hora. Ese registro es clave como prueba en el juicio.",
     },
     {
-      question: "¿Hay plazo para reclamar la garantía?",
-      answer: "Sí. No conviene dejar pasar mucho tiempo. Las acciones civiles tienen plazos de prescripción, y actuar a tiempo fortalece tu posición legal."
+      question: "¿Hay plazo para reclamar la devolución de la garantía?",
+      answer:
+        "Sí. Las acciones civiles para cobrar deudas en Chile tienen plazos de prescripción — una vez vencidos, pierdes el derecho a demandar. No conviene dejar pasar más de un año desde que terminó el contrato sin actuar. Mientras antes reclames, más sólida es tu posición y más fácil es probar el estado del inmueble al momento de la entrega.",
     },
     {
-      question: "¿Puedo negociar sin ir a juicio?",
-      answer: "Sí, muchas veces la negociación directa o a través de un abogado es la solución más rápida y económica para recuperar la garantía."
-    }
+      question: "¿Puedo recuperar la garantía sin ir a juicio?",
+      answer:
+        "Sí, y es lo más recomendable en primera instancia. Muchas veces una carta formal o la intervención de un abogado que contacte al arrendador resuelve el problema sin necesidad de juicio. El juicio es más lento, más costoso y más desgastante para ambas partes. Si la negociación directa falla, el tribunal civil es el siguiente paso.",
+    },
   ];
 
   return (
@@ -45,7 +50,7 @@ const BlogArticle = () => {
         dateModified="2026-04-08"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -120,9 +125,9 @@ const BlogArticle = () => {
               Muchas personas entregan la propiedad al finalizar su contrato de arriendo, esperan el pago de la garantía… y nunca reciben el dinero. Es uno de los conflictos más frecuentes entre arrendadores y arrendatarios en Chile.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed font-medium mt-2">
-              Las dudas que surgen de inmediato son siempre las mismas:<br/>
-              ¿Es legal que no devuelvan la garantía?<br/>
-              ¿En qué casos pueden retenerla?<br/>
+              Las dudas que surgen de inmediato son siempre las mismas:<br />
+              ¿Es legal que no devuelvan la garantía?<br />
+              ¿En qué casos pueden retenerla?<br />
               ¿Qué puedo hacer si no me la devuelven?
             </p>
             <p className="text-lg text-gray-600 leading-relaxed text-balance mt-2">
@@ -470,13 +475,19 @@ const BlogArticle = () => {
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La garantía de arriendo no es un pago perdido. Es un dinero que debe devolverse salvo que existan razones justificadas y debidamente respaldadas.
+              La garantía de arriendo no es un pago perdido — es tu dinero, y la ley chilena te da herramientas concretas para recuperarlo.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Si el arrendador no cumple, tienes herramientas legales para exigirla: desde una solicitud formal hasta una demanda civil. Lo importante es actuar a tiempo, tener respaldo documental y entender tus derechos como arrendatario.
+              El arrendador puede retener la garantía solo si tiene razones justificadas y respaldo documental: boletas, facturas, presupuestos que acrediten daños reales que excedan el desgaste normal. Sin ese respaldo, la retención es arbitraria y puedes demandar su devolución.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El error más frecuente es esperar demasiado. Muchos arrendatarios dejan pasar meses después de entregar el inmueble sin actuar, pierden los registros fotográficos del estado de la propiedad y dejan que el tiempo trabaje en contra. La prescripción existe y los plazos corren desde que terminó el contrato.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si el arrendador no responde o se niega a devolver sin justificación, el camino es claro: carta formal documentando el reclamo, y si no hay respuesta, demanda civil. En muchos casos la sola intervención de un abogado resuelve el problema sin llegar a juicio — el arrendador prefiere devolver antes de enfrentar un proceso legal.
             </p>
             <p className="text-gray-600 font-bold leading-relaxed">
-              Conocer el proceso y contar con asesoría jurídica adecuada puede marcar la diferencia entre perder ese dinero y recuperarlo en su totalidad.
+              Documenta todo desde el primer día: fotos al entrar, fotos al salir, comunicaciones por escrito. Ese registro es la diferencia entre ganar o perder el caso.
             </p>
           </div>
 
@@ -526,7 +537,7 @@ const BlogArticle = () => {
                 Hablar con abogado ahora
               </Button>
             </Link>
-            
+
           </div>
         </section>
       </div>

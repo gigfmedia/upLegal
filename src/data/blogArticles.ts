@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "que-pasa-si-no-firmo-el-finiquito-chile-2026",
+    title: "¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)",
+    excerpt: "Descubre qué ocurre si no firmas tu finiquito, los riesgos legales, cuándo hacer una reserva de derechos y cómo proteger tus indemnizaciones.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "20 de Mayo, 2026",
+    readTime: "8 min",
+    image: "/assets/que-pasa-si-no-firmo-finiquito-chile-2026.png"
+  },
+  {
     id: "divorcio-de-mutuo-acuerdo-chile-2026",
     title: "Divorcio de mutuo acuerdo en Chile 2026: requisitos, pasos y cuánto demora",
     excerpt: "Guía completa sobre el divorcio de mutuo acuerdo en Chile 2026. Requisitos, etapas del proceso, plazos reales y qué debes tener resuelto antes de presentar la demanda.",

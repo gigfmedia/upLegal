@@ -45,7 +45,7 @@ const BlogArticle = () => {
         dateModified="2026-05-05"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -61,7 +61,7 @@ const BlogArticle = () => {
             ¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
             </p>
@@ -142,7 +142,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Antes de presentar la demanda, puedes concurrir a la Inspección del Trabajo para intentar una conciliación con el empleador. Esta etapa es voluntaria pero puede ahorrarte meses de juicio.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto demora?</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
               La citación al empleador generalmente ocurre dentro de <strong>2 a 4 semanas</strong> desde que presentas el reclamo.
@@ -173,7 +173,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si no hay acuerdo en la Inspección o decides ir directamente a tribunales, el siguiente paso es presentar la demanda ante el Juzgado Laboral competente según el domicilio del empleador o el lugar donde se prestaron los servicios.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué incluye la demanda?</h3>
             <ul className="space-y-2 mb-6">
               {[
@@ -202,13 +202,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               En la audiencia preparatoria el juez intenta nuevamente una conciliación entre las partes. Si no hay acuerdo, se organiza el juicio: se fijan los hechos en disputa, se determina qué pruebas se van a presentar y se fija la fecha de la audiencia de juicio.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto demora?</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
               La audiencia preparatoria generalmente dura entre 30 minutos y 2 horas dependiendo de la complejidad del caso. La fecha de la audiencia de juicio se fija en ese mismo momento, normalmente para <strong>4 a 8 semanas después</strong>.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Si las partes llegan a acuerdo en esta etapa, el caso termina aquí.</p>
-            
+
             <InArticleCTA
               message="¿Estás evaluando demandar por despido injustificado y no sabes si conviene? Un abogado laboral puede revisar tu caso y decirte qué esperar."
               buttonText="Evaluar mi caso con un abogado"
@@ -221,7 +221,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Esta es la etapa central del proceso. En la audiencia de juicio se presentan todas las pruebas: testigos, documentos, liquidaciones de sueldo, correos, contratos. El juez escucha a ambas partes y puede dictar sentencia en la misma audiencia o dentro de un plazo posterior.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué factores alargan esta etapa?</h3>
             <div className="grid sm:grid-cols-2 gap-4 mb-8">
               {[
@@ -248,7 +248,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si el juez falla a tu favor, la sentencia declara el despido injustificado y ordena al empleador pagar las indemnizaciones correspondientes más los recargos legales.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Qué pasa si el empleador no paga?</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si el empleador no paga voluntariamente dentro del plazo fijado en la sentencia, puedes solicitar el cumplimiento incidental ante el mismo tribunal. En esta etapa el tribunal puede ordenar medidas de apremio como embargo de cuentas bancarias o bienes del empleador.
@@ -263,7 +263,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto dura el juicio en total?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">Sumando todas las etapas, este es el rango realista:</p>
-            
+
             <div className="overflow-x-auto mb-8">
               <table className="w-full border-collapse border border-gray-200 rounded-lg overflow-hidden">
                 <thead className="bg-gray-100">
@@ -315,7 +315,7 @@ const BlogArticle = () => {
                   </li>
                 </ul>
               </div>
-              
+
               <div className="p-6 bg-red-50 border border-red-200 rounded-2xl shadow-sm">
                 <h4 className="font-bold text-red-900 mb-4">Factores que alargan el juicio</h4>
                 <ul className="space-y-3">
@@ -343,7 +343,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Conviene demandar o llegar a un acuerdo?</h2>
             <p className="text-gray-600 mb-6">No hay una respuesta única — depende de tu caso. Algunos factores para evaluar:</p>
-            
+
             <div className="gap-6 mb-6">
               <div>
                 <h4 className="font-bold text-gray-900 mb-4">Conviene intentar acuerdo cuando:</h4>
@@ -360,7 +360,7 @@ const BlogArticle = () => {
                   ))}
                 </ul>
               </div>
-              
+
               <div>
                 <h4 className="font-bold text-gray-900 mb-4 mt-4">Conviene ir a juicio cuando:</h4>
                 <ul className="space-y-3">
@@ -377,7 +377,7 @@ const BlogArticle = () => {
                 </ul>
               </div>
             </div>
-            
+
             <p className="mt-4 text-gray-900 font-bold">
               Un abogado laboral puede hacer esta evaluación en una primera consulta y darte una estimación realista del resultado según tu situación específica.
             </p>
@@ -388,10 +388,10 @@ const BlogArticle = () => {
             buttonText="Consultar con abogado laboral"
             category="Derecho Laboral"
           />
-          
+
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Relacionado</p>
-            <Link 
+            <Link
               to="/blog/como-demandar-por-despido-injustificado-chile-2026"
               className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
             >

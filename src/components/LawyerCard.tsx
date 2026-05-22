@@ -462,7 +462,7 @@ export function LawyerCard({
                     </div>
                   )}
                   {displayName.toLowerCase().includes('jorge') && displayName.toLowerCase().includes('pacheco') && (
-                    <div className="text-xs text-gray-500 italic text-[11px]">
+                    <div className="text-xs text-gray-500 text-[11px]">
                       Casos complejos · Alta experiencia
                     </div>
                   )}

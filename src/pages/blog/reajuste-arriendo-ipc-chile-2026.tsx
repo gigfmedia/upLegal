@@ -64,9 +64,9 @@ const BlogArticle = () => {
         dateModified="2026-04-06"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -77,7 +77,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo
           </h1>
@@ -102,11 +102,11 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
-          
+
           <p className="text-xl max-w-3xl leading-relaxed">
             El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Muchas personas ven subir el precio mensual sin entender cómo se calcula realmente ni si el aumento es correcto.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -127,12 +127,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo" 
-            url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026" 
+          <BlogShare
+            title="Reajuste arriendo IPC Chile 2026 — Calcula cuánto sube tu arriendo"
+            url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed mb-6 font-medium">
@@ -183,8 +183,8 @@ const BlogArticle = () => {
           {/* Cluster link equivalent */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-            <Link 
-              to="/blog/me-subieron-el-arriendo-que-hago-2026" 
+            <Link
+              to="/blog/me-subieron-el-arriendo-que-hago-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
               👉 ¿Te subieron el arriendo? Qué hacer hoy
@@ -222,7 +222,7 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula el reajuste por IPC paso a paso?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed font-medium">La fórmula es simple:</p>
             <p className="text-gray-900 font-bold text-xl mb-8 text-center bg-gray-50 p-6 rounded-lg border border-gray-100">Nuevo arriendo = arriendo actual × (1 + variación IPC)</p>
-            
+
             <div className="space-y-4 mb-8 text-gray-700">
               <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4">
                 <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
@@ -231,13 +231,13 @@ const BlogArticle = () => {
                   <p className="text-gray-600">Ejemplo: $500.000</p>
                 </div>
               </div>
-              
+
               <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4">
                 <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
                 <div>
                   <p className="text-xl font-bold mb-3 text-gray-900 mb-1">Obtén el IPC acumulado del período</p>
                   <p className="text-gray-600">
-                    El IPC oficial lo encuentras en el sitio del INE (ine.gob.cl). Debes usar el IPC acumulado del período exacto que indica tu contrato, no el IPC del último mes.<br/>
+                    El IPC oficial lo encuentras en el sitio del INE (ine.gob.cl). Debes usar el IPC acumulado del período exacto que indica tu contrato, no el IPC del último mes.<br />
                     Supongamos: 5%
                   </p>
                 </div>
@@ -248,7 +248,7 @@ const BlogArticle = () => {
                 <div>
                   <p className="text-xl font-bold mb-3 text-gray-900 mb-1">Aplica la fórmula</p>
                   <p className="text-gray-600">
-                    $500.000 × 1,05 = $525.000<br/>
+                    $500.000 × 1,05 = $525.000<br />
                     <span className="font-bold text-gray-900 line-clamp-2 mt-2">Ese es el nuevo arriendo correcto.</span>
                   </p>
                 </div>
@@ -327,12 +327,12 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h3 className="text-xl font-bold mb-6 text-gray-900 border-t pt-8">Ejemplos reales de reajuste</h3>
-            
+
             <div className="grid md:grid-cols-1 gap-6 mt-6">
               <div className="border border-gray-200 bg-gray-50 rounded-xl p-8 flex flex-col items-start h-full">
                 <h4 className="font-bold text-gray-900 mb-4 text-lg">Ejemplo 1 — Familia en Santiago, arriendo anual</h4>
                 <p className="text-gray-600 mb-6 leading-relaxed text-base flex-grow">
-                  María lleva dos años arrendando un departamento en Ñuñoa por $600.000 mensuales. Su contrato establece reajuste anual según IPC. Al cumplirse el año, el IPC acumulado fue de 6%.<br/><br/>
+                  María lleva dos años arrendando un departamento en Ñuñoa por $600.000 mensuales. Su contrato establece reajuste anual según IPC. Al cumplirse el año, el IPC acumulado fue de 6%.<br /><br />
                   El arrendador le envió un aviso cobrando $650.000. María revisó el INE, hizo el cálculo y solicitó explicación. El error era administrativo — el arrendador había usado un IPC incorrecto.
                 </p>
                 <div className="w-full border-t border-gray-200 pt-4">
@@ -549,17 +549,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El reajuste de arriendo según IPC es un mecanismo legítimo y común en Chile, pero para que sea válido debe estar en el contrato, calcularse con el IPC oficial del período correcto y aplicarse en la fecha que corresponde.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si te llegó un aviso de aumento, lo primero es revisar el contrato. Si el cálculo no cuadra, tienes herramientas para cuestionarlo. Y si el conflicto no se resuelve entre las partes, un abogado especialista puede orientarte.
-            </p>
-          </div>
-
-          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+          <div className="text-center py-4 border-t border-gray-100 my-4">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
@@ -568,6 +558,22 @@ const BlogArticle = () => {
               👉 Guía legal: Todo sobre arriendos en Chile
               <ChevronRight className="h-4 w-4" />
             </Link>
+          </div>
+
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El reajuste de arriendo según IPC es un mecanismo legítimo y común en Chile, pero para que sea válido debe cumplir tres condiciones: estar establecido en el contrato, calcularse con el IPC oficial del período correcto según el INE, y aplicarse en la fecha que corresponde. Si falla cualquiera de esas tres condiciones, el aumento puede ser cuestionado.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si te llegó un aviso de aumento, lo primero es revisar el contrato — no el mensaje del arrendador, el contrato. Busca la cláusula de reajuste y verifica qué período de IPC debe usarse. Luego entra al sitio del INE y calcula tú mismo el monto correcto con la fórmula que explicamos arriba. En la mayoría de los casos, los errores son administrativos y se resuelven con un correo bien fundamentado.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si el cálculo no cuadra y el arrendador insiste, tienes herramientas concretas: puedes pagar el monto que corresponde según el IPC correcto, dejar constancia escrita de la diferencia y solicitar explicación formal. No estás obligado a pagar un reajuste incorrecto solo porque te lo exigen.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed font-bold">
+              Y si el conflicto escala — el arrendador amenaza con desalojo o cobra montos que no corresponden de forma reiterada — ese es el momento de buscar asesoría legal. Un abogado de arriendo puede evaluar si existe cobro indebido y qué acciones corresponden según tu contrato específico.
+            </p>
           </div>
 
           <InArticleCTA
@@ -613,7 +619,7 @@ const BlogArticle = () => {
                 Hablar con abogado ahora
               </Button>
             </Link>
-            
+
           </div>
         </section>
       </div>
@@ -622,17 +628,17 @@ const BlogArticle = () => {
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">
-          <BlogShare 
-            title="Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo" 
-            url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026" 
+          <BlogShare
+            title="Reajuste de arriendo en Chile según IPC (2026): cuánto pueden subir y cómo calcularlo"
+            url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
           />
         </div>
-        
+
         <BlogNavigation currentArticleId="reajuste-arriendo-ipc-chile-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

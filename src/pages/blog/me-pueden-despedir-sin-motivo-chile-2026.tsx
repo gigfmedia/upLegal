@@ -48,7 +48,7 @@ const BlogArticle = () => {
         dateModified="2026-05-04"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -64,7 +64,7 @@ const BlogArticle = () => {
             ¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026
           </h1>
 
-          <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
             </p>
@@ -83,7 +83,7 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
-          
+
           <p className="text-xl leading-relaxed">
             Ser despedido genera muchas dudas, especialmente cuando no hay una explicación clara. Una de las preguntas más frecuentes es: ¿Me pueden despedir sin motivo en Chile?
           </p>
@@ -121,8 +121,8 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 font-bold text-lg mb-4">La respuesta correcta es: NO.</p>
             <p className="text-gray-600 leading-relaxed mb-6">
-                El empleador no puede despedirte sin invocar una causal legal. Pero —y esto es clave— <strong>sí puede despedirte sin que hayas hecho algo malo</strong>. Ahí es donde muchas personas se confunden.
-              </p>
+              El empleador no puede despedirte sin invocar una causal legal. Pero —y esto es clave— <strong>sí puede despedirte sin que hayas hecho algo malo</strong>. Ahí es donde muchas personas se confunden.
+            </p>
             <div className="bg-blue-50 p-8 rounded-2xl border border-blue-100 mb-8">
               <h3 className="text-blue-900 font-bold mb-4">En esta guía 2026 te explico:</h3>
               <ul className="grid sm:grid-cols-2 gap-3 list-none p-0">
@@ -247,7 +247,7 @@ const BlogArticle = () => {
             </p>
             <div className="text-center py-6 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
-              <Link 
+              <Link
                 to="/blog/como-demandar-por-despido-injustificado-chile-2026"
                 className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
@@ -312,8 +312,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/como-calcular-tu-finiquito-chile-2026" 
+              <Link
+                to="/blog/como-calcular-tu-finiquito-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
@@ -328,8 +328,8 @@ const BlogArticle = () => {
             <div className="space-y-6">
               {[
                 { t: "Revisa la carta de despido", d: "La carta de despido no es un simple trámite. Debe incluir la causal exacta, los hechos detallados que la justifican y la fecha exacta del término de la relación laboral. Si alguno de estos elementos falta o está mal redactado, tienes una ventaja legal inmediata que un abogado puede aprovechar a tu favor." },
-                { 
-                  t: "No firmes nada sin entender", 
+                {
+                  t: "No firmes nada sin entender",
                   d: "El finiquito es el documento más importante del proceso y también el más peligroso si no lo lees bien. Si firmas sin reserva de derechos, estás renunciando a tu derecho a demandar — aunque el despido haya sido injustificado. Antes de estampar tu firma, muéstraselo a un abogado.",
                   link: { to: "/blog/reserva-de-derechos-finiquito-chile-2026", text: "👉 Guía: Cómo firmar con reserva de derechos" }
                 },
@@ -360,7 +360,7 @@ const BlogArticle = () => {
 
             <div className="text-center py-6 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Evita errores en tu finiquito</p>
-              <Link 
+              <Link
                 to="/blog/como-calcular-tu-finiquito-chile-2026"
                 className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
@@ -391,7 +391,7 @@ const BlogArticle = () => {
 
             <div className="text-center py-6 border-t border-b border-blue-100 mt-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Inicia tu reclamo</p>
-              <Link 
+              <Link
                 to="/blog/como-demandar-por-despido-injustificado-chile-2026"
                 className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
@@ -430,7 +430,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          
+
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -490,7 +490,7 @@ const BlogArticle = () => {
       <RelatedLawyers category="Derecho Laboral" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
-          <div className="mt-8">
+        <div className="mt-8">
           <BlogShare
             title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
             url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"

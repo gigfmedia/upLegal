@@ -5,7 +5,7 @@ import { X, MessageSquare, ShieldCheck, Zap } from 'lucide-react';
 
 interface BlogConversionPopupProps {
   category?: string;
-  topic?: 'finiquito' | 'despido' | 'arriendo' | string;
+  topic?: 'finiquito' | 'despido' | 'arriendo' | 'no-firmo-finiquito' | string;
 }
 
 const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({ 
@@ -69,6 +69,12 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
           title: "¿Estás pensando en autodespedirte?",
           message: "Un experto laboral puede evaluar tu caso para asegurar todas tus indemnizaciones por ley.",
           priceLabel: "Abogados disponibles"
+        };
+      case 'no-firmo-finiquito':
+        return {
+          title: "¿No firmaste el finiquito o tienes dudas?",
+          message: "Los plazos laborales son cortos. Un abogado puede orientarte y proteger tus derechos antes de que venzan.",
+          priceLabel: "Abogados desde $30.000"
         };
       default:
         return {
