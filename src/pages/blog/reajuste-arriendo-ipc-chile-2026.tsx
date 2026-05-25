@@ -270,6 +270,7 @@ const BlogArticle = () => {
                     inputMode="numeric"
                     value={rentValue}
                     onChange={(e) => setRentValue(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
                     placeholder="Ej: 500000"
                     aria-label="Arriendo actual"
@@ -283,6 +284,7 @@ const BlogArticle = () => {
                     inputMode="decimal"
                     value={ipcPercent}
                     onChange={(e) => setIpcPercent(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     className="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-900"
                     placeholder="Ej: 5"
                     aria-label="IPC acumulado"

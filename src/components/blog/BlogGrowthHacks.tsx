@@ -88,10 +88,12 @@ export const BlogGrowthHacks = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={`${window.location.origin}${image}`} />
 
-      {/* Structured Data */}
-      <script type="application/ld+json">
-        {JSON.stringify(structuredDataArray)}
-      </script>
+      {/* Structured Data - Rendered as individual schemas to prevent third-party pixels from crashing on arrays */}
+      {structuredDataArray.map((data, index) => (
+        <script key={index} type="application/ld+json">
+          {JSON.stringify(data)}
+        </script>
+      ))}
     </Helmet>
   );
 };

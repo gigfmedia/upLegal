@@ -58,9 +58,12 @@ export const HomeGrowthHacks = ({ faqs }: HomeGrowthHacksProps) => {
 
   return (
     <Helmet>
-      <script type="application/ld+json">
-        {JSON.stringify(structuredDataArray)}
-      </script>
+      {/* Render schemas individually to avoid crashing crawler pixels expecting objects */}
+      {structuredDataArray.map((data, index) => (
+        <script key={index} type="application/ld+json">
+          {JSON.stringify(data)}
+        </script>
+      ))}
     </Helmet>
   );
 };

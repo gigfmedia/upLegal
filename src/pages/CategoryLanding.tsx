@@ -22,7 +22,7 @@ interface CategoryLandingProps {
 const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
   const { category: urlCategory } = useParams<{ category: string }>();
   const category = propCategory || urlCategory;
-  
+
   const [lawyers, setLawyers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -34,11 +34,11 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
   useEffect(() => {
     const fetchLawyers = async () => {
       if (!category) return;
-      
+
       setIsLoading(true);
       try {
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        
+
         let specialty = "";
         if (category === "laboral") specialty = "Derecho Laboral";
         if (category === "divorcio") specialty = "Derecho de Familia";
@@ -151,7 +151,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
             <ChevronRight className="h-4 w-4" />
             <span className="text-white capitalize">{category}</span>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6 leading-tight">
@@ -161,8 +161,8 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                 {content.introText}
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button 
-                  size="md" 
+                <Button
+                  size="md"
                   className="bg-white hover:bg-green-400 text-gray-900 border-none h-14 px-8 text-lg"
                   onClick={() => {
                     const specialtyMap: Record<string, string> = {
@@ -222,9 +222,9 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
             <h2 className="text-3xl font-bold text-gray-900 mb-8">
               {content.longSeoTitle || `¿Por qué elegir un abogado de LegalUp para tu caso ${category}?`}
             </h2>
-            
+
             {content.longSeoText ? (
-              <div 
+              <div
                 className="space-y-6"
                 dangerouslySetInnerHTML={{ __html: content.longSeoText }}
               />
@@ -274,7 +274,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
 
           <div className="space-y-4">
             {content.faqs.map((faq, index) => (
-              <Card 
+              <Card
                 key={index}
                 className="border border-gray-200 hover:border-black transition-colors cursor-pointer bg-white"
                 onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
@@ -287,10 +287,9 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                         {faq.question}
                       </CardTitle>
                     </div>
-                    <ChevronDown 
-                      className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${
-                        openFaqIndex === index ? 'transform rotate-180' : ''
-                      }`}
+                    <ChevronDown
+                      className={`h-5 w-5 text-gray-600 transition-transform duration-200 ${openFaqIndex === index ? 'transform rotate-180' : ''
+                        }`}
                     />
                   </div>
                 </CardHeader>
@@ -334,94 +333,94 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
         if (category === "penal") return a.category === "Derecho Penal";
         return false;
       }).length > 0 && (
-        <section className="py-20 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6">
+          <section className="py-20 bg-white border-t border-gray-100">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6">
 
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  Guías y artículos relacionados
-                </h2>
-                <p className="text-gray-600 max-w-2xl">
-                  Aprende más sobre tus derechos y cómo funciona el sistema legal en Chile con nuestras guías especializadas.
-                </p>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                    Guías y artículos relacionados
+                  </h2>
+                  <p className="text-gray-600 max-w-2xl">
+                    Aprende más sobre tus derechos y cómo funciona el sistema legal en Chile con nuestras guías especializadas.
+                  </p>
+                </div>
+                <Link to="/blog">
+                  <Button variant="outline" className="border-gray-800 text-gray-900 hover:bg-green-900 hover:text-white">
+                    Ver todo el blog
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-              <Link to="/blog">
-                <Button variant="outline" className="border-gray-800 text-gray-900 hover:bg-green-900 hover:text-white">
-                  Ver todo el blog
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {articles
-                .filter(a => {
-                  if (category === "laboral") return a.category === "Derecho Laboral";
-                  if (category === "divorcio") return a.category === "Derecho de Familia";
-                  if (category === "arriendo") return a.category === "Derecho Inmobiliario" || a.category === "Derecho Civil";
-                  if (category === "penal") return a.category === "Derecho Penal";
-                  return false;
-                })
-                .slice(0, 6)
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {articles
+                  .filter(a => {
+                    if (category === "laboral") return a.category === "Derecho Laboral";
+                    if (category === "divorcio") return a.category === "Derecho de Familia";
+                    if (category === "arriendo") return a.category === "Derecho Inmobiliario" || a.category === "Derecho Civil";
+                    if (category === "penal") return a.category === "Derecho Penal";
+                    return false;
+                  })
+                  .slice(0, 6)
 
-                .map((article) => (
-                  <Card 
-                    key={article.id} 
-                    className="hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group overflow-hidden bg-white"
-                    onClick={() => window.location.href = `/blog/${article.id}`}
-                  >
-                    <div className="h-48 w-full overflow-hidden">
-                      <img 
-                        src={article.image || "/assets/arriendo.png"} 
-                        alt={article.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/assets/arriendo.png";
-                        }}
-                      />
-                    </div>
-                    <UICardContent className="p-6 flex flex-col flex-1">
-                      <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-                          {article.category}
-                        </span>
+                  .map((article) => (
+                    <Card
+                      key={article.id}
+                      className="hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group overflow-hidden bg-white"
+                      onClick={() => window.location.href = `/blog/${article.id}`}
+                    >
+                      <div className="h-48 w-full overflow-hidden">
+                        <img
+                          src={article.image || "/assets/arriendo.png"}
+                          alt={article.title}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "/assets/arriendo.png";
+                          }}
+                        />
                       </div>
-                      
-                      <h3 className="text-lg font-semibold text-green-900 mb-3">
-                        <Link 
-                          to={`/blog/${article.id}`}
-                          className="group-hover:text-green-600 transition-colors"
-                        >
-                          {article.title}
-                        </Link>
-                      </h3>
-                      
-                      <p className="text-gray-600 mb-4 line-clamp-3">
-                        {article.excerpt}
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4 border-t border-gray-50">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{article.date}</span>
+                      <UICardContent className="p-6 flex flex-col flex-1">
+                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
+                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
+                            {article.category}
+                          </span>
                         </div>
-                        
-                        <Link 
-                          to={`/blog/${article.id}`}
-                          className="text-green-900 hover:text-green-600 font-medium"
-                        >
-                          Leer →
-                        </Link>
-                      </div>
-                    </UICardContent>
-                  </Card>
-                ))}
-            </div>
 
-          </div>
-        </section>
-      )}
+                        <h3 className="text-lg font-semibold text-green-900 mb-3">
+                          <Link
+                            to={`/blog/${article.id}`}
+                            className="group-hover:text-green-600 transition-colors"
+                          >
+                            {article.title}
+                          </Link>
+                        </h3>
+
+                        <p className="text-gray-600 mb-4 line-clamp-3">
+                          {article.excerpt}
+                        </p>
+
+                        <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4 border-t border-gray-50">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            <span>{article.date}</span>
+                          </div>
+
+                          <Link
+                            to={`/blog/${article.id}`}
+                            className="text-green-900 hover:text-green-600 font-medium"
+                          >
+                            Leer →
+                          </Link>
+                        </div>
+                      </UICardContent>
+                    </Card>
+                  ))}
+              </div>
+
+            </div>
+          </section>
+        )}
 
       {/* Lawyers List */}
       <section className="py-20 bg-gray-50">
@@ -453,8 +452,8 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {lawyers.map((lawyer) => (
-                <LawyerCard 
-                  key={lawyer.id} 
+                <LawyerCard
+                  key={lawyer.id}
                   lawyer={{
                     ...lawyer,
                     name: `${lawyer.first_name} ${lawyer.last_name}`,
@@ -462,7 +461,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                     reviews: lawyer.review_count,
                     hourlyRate: lawyer.hourly_rate_clp,
                     consultationPrice: Math.round(lawyer.hourly_rate_clp * 0.5)
-                  }} 
+                  }}
                   user={user}
                 />
               ))}
@@ -480,8 +479,8 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
           <p className="text-xl text-white mb-10">
             Explica tu caso hoy mismo y deja que un especialista te guíe.
           </p>
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="bg-white text-green-900 hover:bg-green-400 h-14 px-10 text-md"
             onClick={() => {
               const specialtyMap: Record<string, string> = {
@@ -499,9 +498,9 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
         </div>
       </section>
 
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
         initialMode="login"
       />
     </div>
