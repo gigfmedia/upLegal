@@ -33,6 +33,7 @@ const ReservaDeDerechosArticle = lazy(() => import('../pages/blog/reserva-de-der
 const AutodespidoArticle = lazy(() => import('../pages/blog/autodespido-chile-2026'));
 const DivorcioMutuoAcuerdoArticle = lazy(() => import('../pages/blog/divorcio-de-mutuo-acuerdo-chile-2026'));
 const QuePasaSiNoFirmoFiniquitoArticle = lazy(() => import('../pages/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026'));
+const DesalojoFamiliarArticle = lazy(() => import('../pages/blog/como-desalojar-a-un-familiar-de-mi-casa-chile-2026'));
 
 export const BlogRoutes = () => (
   <Suspense fallback={
@@ -73,6 +74,7 @@ export const BlogRoutes = () => (
       <Route path="autodespido-chile-2026" element={<AutodespidoArticle />} />
       <Route path="divorcio-de-mutuo-acuerdo-chile-2026" element={<DivorcioMutuoAcuerdoArticle />} />
       <Route path="que-pasa-si-no-firmo-el-finiquito-chile-2026" element={<QuePasaSiNoFirmoFiniquitoArticle />} />
+      <Route path="como-desalojar-a-un-familiar-de-mi-casa-chile-2026" element={<DesalojoFamiliarArticle />} />
     </Routes>
   </Suspense>
 );

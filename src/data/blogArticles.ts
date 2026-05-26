@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "como-desalojar-a-un-familiar-de-mi-casa-chile-2026",
+    title: "¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso",
+    excerpt: "Aprende cómo recuperar legalmente tu propiedad de un familiar en Chile 2026. Qué acción legal corresponde, cuánto demora y qué hacer si el familiar no quiere irse.",
+    category: "Derecho Inmobiliario",
+    author: "LegalUp",
+    date: "25 de Mayo, 2026",
+    readTime: "8 min",
+    image: "/assets/como-desalojar-a-un-familiar-de-mi-casa-chile-2026.png"
+  },
+  {
     id: "que-pasa-si-no-firmo-el-finiquito-chile-2026",
     title: "¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)",
     excerpt: "Descubre qué ocurre si no firmas tu finiquito, los riesgos legales, cuándo hacer una reserva de derechos y cómo proteger tus indemnizaciones.",
