@@ -241,45 +241,45 @@ const LegalUpAI = () => {
           <div className="absolute inset-0 bg-[#020617]" />
 
           {/* Massive animated orb */}
-          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2">
+          {/* <div className="absolute top-[-20%] left-1/2 -translate-x-1/2">
             <div className="w-[1200px] h-[1200px] rounded-full 
               bg-emerald-400/10 
               blur-[140px] 
               animate-pulse-slow"
             />
-          </div>
+          </div> */}
 
           {/* Secondary moving orb */}
-          <div className="absolute bottom-[-30%] right-[-10%]">
+          {/* <div className="absolute bottom-[-30%] right-[-10%]">
             <div className="w-[900px] h-[900px] rounded-full 
               bg-cyan-500/20 
               blur-[120px] 
               animate-orb"
             />
-          </div>
+          </div> */}
 
           {/* Aurora beam */}
-          <div className="absolute top-[-10%] left-[-10%] w-[140%] h-[500px]
+          {/* <div className="absolute top-[-10%] left-[-10%] w-[140%] h-[500px]
             bg-gradient-to-r from-transparent via-emerald-400/20 to-transparent
             rotate-[-12deg]
             blur-3xl
             animate-aurora"
-          />
+          /> */}
 
           {/* Rotating rings */}
           <div className="absolute inset-0 flex items-center justify-center">
             
-            <div className="absolute w-[1300px] h-[1300px]
-              border border-white/5 rounded-full
+            <div className="absolute w-[1700px] h-[1700px]
+              border border-white/40 rounded-full
               animate-spin-ultra-slow"
             />
 
-            <div className="absolute w-[1100px] h-[1100px]
-              border border-emerald-500/5 rounded-full
+            <div className="absolute w-[1300px] h-[1300px]
+              border border-emerald-500/20 rounded-full
               animate-spin-reverse"
             />
 
-            <div className="absolute w-[900px] h-[900px]
+            <div className="absolute w-[1000px] h-[1000px]
               border border-white/10 rounded-full
               animate-spin-ultra-slow"
             />

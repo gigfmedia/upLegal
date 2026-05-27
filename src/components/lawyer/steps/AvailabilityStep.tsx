@@ -46,6 +46,11 @@ export default function AvailabilityStep({ lawyerId, onSaved }: AvailabilityStep
           saved = typeof data.availability === 'string'
             ? JSON.parse(data.availability)
             : data.availability;
+          
+          // Robust fallback: if it's still a string after JSON.parse, parse it again!
+          if (typeof saved === 'string') {
+            saved = JSON.parse(saved);
+          }
         } catch {
           saved = {};
         }
@@ -97,7 +102,8 @@ export default function AvailabilityStep({ lawyerId, onSaved }: AvailabilityStep
     setSaving(true);
     try {
       const updatePayload: Record<string, unknown> = {
-        availability: JSON.stringify(availability),
+        availability: availability, // Save directly as an object to match profiles JSONB field
+        meet_link: meetLink.trim() || null, // Include Google Meet link so it is saved!
         updated_at: new Date().toISOString(),
       };
 

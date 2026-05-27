@@ -953,7 +953,6 @@ app.post('/api/bookings/create', async (req, res) => {
         },
         user_id: user_id || null,
       });
-      console.log('[analytics] payment started tracked', { bookingId: booking.id });
     } catch (trackingError) {
       console.error('Failed to track payment start:', trackingError);
     }
@@ -1624,7 +1623,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 .update({ user_id: userId })
                 .eq('metadata->>booking_id', bookingId)
                 .is('user_id', null);
-              console.log('[analytics] Updated payment event with user_id', { bookingId, userId });
             } catch (updateError) {
               console.error('Failed to update payment event with user_id:', updateError);
             }

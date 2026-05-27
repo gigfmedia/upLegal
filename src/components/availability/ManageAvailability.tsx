@@ -47,6 +47,11 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
           savedAvailability = typeof data.availability === 'string' 
             ? JSON.parse(data.availability)
             : data.availability;
+            
+          // Robust fallback: if it's still a string after JSON.parse, parse it again!
+          if (typeof savedAvailability === 'string') {
+            savedAvailability = JSON.parse(savedAvailability);
+          }
         } catch (e) {
           console.error('Error parsing availability JSON:', e, data.availability);
           // Fallback to empty if parse fails

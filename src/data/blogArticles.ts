@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "rebaja-pension-alimentos-chile-2026",
+    title: "Rebaja de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)",
+    excerpt: "Aprende cuándo y cómo solicitar una rebaja de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso para evitar deudas.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "28 de Mayo, 2026",
+    readTime: "10 min",
+    image: "/assets/rebaja-pension-chile-2026.png"
+  },
+  {
     id: "como-desalojar-a-un-familiar-de-mi-casa-chile-2026",
     title: "¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso",
     excerpt: "Aprende cómo recuperar legalmente tu propiedad de un familiar en Chile 2026. Qué acción legal corresponde, cuánto demora y qué hacer si el familiar no quiere irse.",

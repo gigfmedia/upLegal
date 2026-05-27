@@ -303,6 +303,7 @@ Reglas:
 - color gris suave
 - lectura relajada
 - máximo 3 líneas visuales por párrafo
+- no hay que ocupar text-sm
 
 ---
 

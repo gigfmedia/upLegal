@@ -133,6 +133,7 @@ export default function AcceptInvite() {
 
       await supabase.from('profiles').upsert({
         id: user.id,
+        user_id: user.id,
         email: user.email,
         role,
         updated_at: new Date().toISOString(),

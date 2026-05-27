@@ -14,6 +14,7 @@ const OrdenDesalojoArticle = lazy(() => import('../pages/blog/orden-desalojo-chi
 const DespidoSinMotivoArticle = lazy(() => import('../pages/blog/me-pueden-despedir-sin-motivo-chile-2026'));
 const LeyDevuelvemeMiCasaArticle = lazy(() => import('../pages/blog/ley-devuelveme-mi-casa-chile-2026'));
 const DeudaPensionArticle = lazy(() => import('../pages/blog/deuda-pension-alimentos-chile-2026'));
+const RebajaPensionArticle = lazy(() => import('../pages/blog/rebaja-pension-alimentos-chile-2026'));
 const DerechoArrendamientoArticle = lazy(() => import('../pages/blog/derecho-arrendamiento-chile-guia-completa-2026'));
 const ContratoArriendoArticle = lazy(() => import('../pages/blog/contrato-de-arriendo-chile-2026'));
 const CuantosMesesArriendoArticle = lazy(() => import('../pages/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026'));
@@ -54,6 +55,7 @@ export const BlogRoutes = () => (
       <Route path="me-pueden-despedir-sin-motivo-chile-2026" element={<DespidoSinMotivoArticle />} />
       <Route path="ley-devuelveme-mi-casa-chile-2026" element={<LeyDevuelvemeMiCasaArticle />} />
       <Route path="deuda-pension-alimentos-chile-2026" element={<DeudaPensionArticle />} />
+      <Route path="rebaja-pension-alimentos-chile-2026" element={<RebajaPensionArticle />} />
       <Route path="derecho-arrendamiento-chile-guia-completa-2026" element={<DerechoArrendamientoArticle />} />
       <Route path="contrato-de-arriendo-chile-2026" element={<ContratoArriendoArticle />} />
       <Route path="cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" element={<CuantosMesesArriendoArticle />} />

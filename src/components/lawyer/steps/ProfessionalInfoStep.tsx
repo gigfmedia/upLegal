@@ -22,7 +22,6 @@ export interface ProfessionalInfoFormData {
   specialties: string[];
   experience_years: string;
   hourly_rate_clp: string;
-  contact_fee_clp: string;
   languages: string[];
   education: string;
   university: string;
@@ -90,11 +89,10 @@ export default function ProfessionalInfoStep({
                 key={spec}
                 type="button"
                 onClick={() => toggleSpecialty(spec)}
-                className={`px-3 py-1.5 rounded-md text-sm border transition-colors flex items-center gap-1.5 ${
-                  selected
-                    ? 'bg-primary text-white border-black'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-accent'
-                }`}
+                className={`px-3 py-1.5 rounded-md text-sm border transition-colors flex items-center gap-1.5 ${selected
+                  ? 'bg-primary text-white border-black'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-accent'
+                  }`}
               >
                 {spec}
                 {selected && <Check className="h-3.5 w-3.5" />}
@@ -105,7 +103,7 @@ export default function ProfessionalInfoStep({
       </div>
 
       {/* Experience & Rates */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="experience_years">Años de experiencia</Label>
           <Input
@@ -128,17 +126,6 @@ export default function ProfessionalInfoStep({
             placeholder="Ej: 25000"
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="contact_fee_clp">Tarifa consulta (CLP)</Label>
-          <Input
-            id="contact_fee_clp"
-            type="number"
-            min="0"
-            value={formData.contact_fee_clp}
-            onChange={(e) => onFormDataChange({ contact_fee_clp: e.target.value })}
-            placeholder="Ej: 15000"
-          />
-        </div>
       </div>
 
       {/* Languages */}
@@ -152,11 +139,10 @@ export default function ProfessionalInfoStep({
                 key={lang}
                 type="button"
                 onClick={() => toggleLanguage(lang)}
-                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  selected
-                    ? 'bg-black text-white'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-accent'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${selected
+                  ? 'bg-black text-white'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-accent'
+                  }`}
               >
                 {lang}
               </button>
