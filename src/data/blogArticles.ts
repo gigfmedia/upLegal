@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "aumento-pension-alimentos-chile-2026",
+    title: "Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)",
+    excerpt: "Aprende cuándo y cómo solicitar un aumento de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "28 de Mayo, 2026",
+    readTime: "10 min",
+    image: "/assets/aumento-pension-alimentos-chile-2026.png"
+  },
+  {
     id: "rebaja-pension-alimentos-chile-2026",
     title: "Rebaja de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)",
     excerpt: "Aprende cuándo y cómo solicitar una rebaja de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso para evitar deudas.",

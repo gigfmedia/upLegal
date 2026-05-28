@@ -102,8 +102,8 @@ export default function AvailabilityStep({ lawyerId, onSaved }: AvailabilityStep
     setSaving(true);
     try {
       const updatePayload: Record<string, unknown> = {
-        availability: availability, // Save directly as an object to match profiles JSONB field
-        meet_link: meetLink.trim() || null, // Include Google Meet link so it is saved!
+        availability: availability,
+        meet_link: meetLink.trim() || null,
         updated_at: new Date().toISOString(),
       };
 
