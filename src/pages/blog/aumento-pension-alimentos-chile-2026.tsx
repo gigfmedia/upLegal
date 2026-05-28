@@ -137,7 +137,7 @@ const BlogArticle = () => {
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
         title="Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)"
-        description="Aprende cuándo y cómo solicitar un aumento de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso."
+        description="Cuándo y cómo solicitar aumento de pensión de alimentos en Chile: motivos válidos, documentación necesaria, proceso judicial y qué hace el tribunal para determinarlo."
         image="/assets/aumento-pension-alimentos-chile-2026.png"
         url="https://legalup.cl/blog/aumento-pension-alimentos-chile-2026"
         datePublished="2026-05-28"
