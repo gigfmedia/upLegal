@@ -17,7 +17,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "28 de Mayo, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/aumento-pension-alimentos-chile-2026.png"
   },
   {

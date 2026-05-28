@@ -107,29 +107,29 @@ const AumentoSimulator = () => {
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Se puede aumentar la pensión de alimentos en Chile?",
+      question: "¿Cuándo se puede pedir aumento de pensión de alimentos en Chile?",
       answer:
-        "Sí. Cuando aumentan las necesidades del hijo o mejora la capacidad económica de quien paga, puede solicitarse judicialmente un aumento. El tribunal analizará ambas partes antes de resolver.",
+        "Puedes pedir aumento cuando cambian las circunstancias que justificaron el monto original. Las causales más frecuentes son: aumento demostrable de los ingresos del que paga, incremento real de las necesidades del hijo por edad, educación o salud, o cuando el monto actual ya no cubre los gastos básicos del menor. El tribunal evaluará si el cambio es significativo y permanente.",
     },
     {
-      question: "¿Necesito abogado para pedir aumento?",
+      question: "¿Necesito abogado para pedir aumento de pensión?",
       answer:
-        "En muchos casos sí es recomendable, especialmente cuando existe oposición o discusión sobre ingresos y gastos. Un abogado de familia puede reunir la documentación correcta y presentar el caso de manera sólida ante el tribunal.",
+        "No es obligatorio en todos los casos, pero es altamente recomendable cuando el otro padre se opone, cuando hay discusión sobre ingresos reales o cuando el caso involucra montos importantes. Un abogado de familia puede ayudarte a reunir la documentación correcta, representarte en las audiencias y aumentar las posibilidades de éxito.",
     },
     {
-      question: "¿La pensión sube automáticamente con el IPC?",
+      question: "¿La pensión sube automáticamente con el IPC en Chile?",
       answer:
-        "Muchas pensiones tienen reajuste IPC, pero eso no impide pedir un aumento adicional si el monto sigue siendo insuficiente para cubrir las necesidades reales del hijo.",
+        "Muchas pensiones tienen cláusula de reajuste automático según IPC, lo que significa que el monto se actualiza periódicamente según la inflación. Pero ese reajuste no es lo mismo que un aumento real — si las necesidades del hijo crecieron más que la inflación o si el padre que paga gana significativamente más, puedes pedir un aumento adicional ante el tribunal.",
     },
     {
-      question: "¿Qué pasa si el otro padre gana más dinero ahora?",
+      question: "¿Qué pasa si el padre que paga gana más dinero ahora?",
       answer:
-        "Eso puede ser considerado por el tribunal al evaluar un posible aumento de pensión. Sin embargo, debes acreditarlo con pruebas: liquidaciones, información comercial, bienes o nivel de vida observable.",
+        "El aumento de ingresos del obligado es una de las causales más sólidas para pedir aumento de pensión. Debes acreditar ese aumento ante el tribunal con documentación concreta: liquidaciones de sueldo, declaraciones de renta, contratos nuevos o cualquier evidencia de mejora económica. El tribunal considerará ese cambio al evaluar si el monto actual sigue siendo proporcional.",
     },
     {
-      question: "¿Cuánto demora el proceso?",
+      question: "¿Cuánto demora el proceso de aumento de pensión de alimentos?",
       answer:
-        "Depende del tribunal y la complejidad del caso. Puede tardar desde semanas hasta varios meses. Si hay mediación exitosa, el proceso puede cerrarse rápidamente. Si hay juicio, los plazos se extienden.",
+        "Si hay acuerdo entre las partes en mediación, puede resolverse en pocas semanas. Si el caso va a juicio porque el otro padre se opone, el proceso puede tardar entre 3 y 6 meses dependiendo de la carga del tribunal y la complejidad del caso. Actuar con documentación completa desde el inicio acelera significativamente los plazos.",
     },
   ];
 
@@ -193,7 +193,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <span>Tiempo de lectura: 11 min</span>
             </div>
           </div>
         </div>
@@ -552,27 +552,27 @@ const BlogArticle = () => {
               {[
                 {
                   q: "¿Qué pasa si el otro padre oculta ingresos?",
-                  a: "El tribunal puede analizar patrimonio, nivel de vida, bienes y movimientos económicos. No todo depende exclusivamente del sueldo formal declarado.",
+                  a: "El tribunal puede analizar patrimonio, nivel de vida, bienes y movimientos económicos para determinar la capacidad económica real. No todo depende del sueldo formal declarado — el juez puede considerar vehículos, propiedades, gastos habituales y otros indicadores de ingresos reales.",
                 },
                 {
                   q: "¿Se puede pedir aumento aunque exista acuerdo previo?",
-                  a: "Sí. Aunque exista mediación, acuerdo firmado o sentencia previa, la pensión puede modificarse si cambian las circunstancias de manera relevante.",
+                  a: "Sí. Aunque exista mediación, acuerdo firmado o sentencia previa, la pensión puede modificarse si cambian las circunstancias de manera relevante. La ley permite revisar el monto cada vez que se acredite un cambio significativo en las necesidades del hijo o en la capacidad económica del que paga.",
                 },
                 {
-                  q: "¿La otra parte puede oponerse?",
-                  a: "Sí, puede argumentar que ya paga suficiente, que no aumentaron los gastos o que no tiene capacidad económica. Por eso las pruebas son fundamentales.",
+                  q: "¿La otra parte puede oponerse al aumento?",
+                  a: "Sí. Puede argumentar que ya paga suficiente, que no aumentaron los gastos reales del hijo o que no tiene capacidad económica para pagar más. Por eso la documentación es fundamental — liquidaciones de sueldo, boletas de gastos del hijo, certificados médicos o educacionales que acrediten el aumento real de necesidades.",
                 },
                 {
-                  q: "¿Puede aumentarse aunque el padre tenga otros hijos?",
-                  a: "Sí. El tribunal considera las nuevas cargas familiares, pero eso no elimina la obligación alimenticia. Todo se analiza proporcionalmente.",
+                  q: "¿Puede aumentarse la pensión aunque el padre tenga otros hijos?",
+                  a: "Sí. El tribunal considera las nuevas cargas familiares del obligado, pero eso no elimina la obligación alimenticia hacia el hijo que pide el aumento. Todo se analiza proporcionalmente — el juez buscará un equilibrio que proteja a todos los hijos sin dejar a ninguno desatendido.",
                 },
                 {
                   q: "¿Qué pasa si no paga el aumento aprobado?",
-                  a: "Una vez aprobada la nueva pensión, el incumplimiento genera deuda. Pueden solicitarse retenciones, embargo, medidas de apremio y liquidación de la deuda acumulada.",
+                  a: "Una vez aprobada la nueva pensión por el tribunal, el incumplimiento genera deuda acumulada desde la fecha de la resolución. Pueden solicitarse retención del sueldo, embargo de bienes, suspensión de licencia de conducir, prohibición de salida del país y arresto nocturno como medidas de apremio.",
                 },
               ].map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">{faq.q}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">{faq.q}</h3>
                   <p className="text-gray-700 leading-relaxed">{faq.answer || faq.a}</p>
                 </div>
               ))}
@@ -613,7 +613,7 @@ const BlogArticle = () => {
               Los tribunales sí pueden modificar la pensión cuando existen fundamentos reales: mayores gastos educacionales, salud, crecimiento del hijo, inflación o aumento en los ingresos del alimentante. Pero todo debe acreditarse correctamente.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
-              Mientras más clara sea la documentación y antes se inicie el proceso, mayores posibilidades existen de obtener un ajuste razonable que refleje la situación actual del hijo y de ambas partes.
+              No esperes a que el desequilibrio sea insostenible para actuar. El tribunal puede considerar el aumento desde la fecha de la solicitud — no desde el momento en que los gastos empezaron a subir. Cada mes que pasa sin presentar la solicitud es un mes más que absorbes tú solo los costos que deberían distribuirse entre ambos padres.
             </p>
           </div>
 
