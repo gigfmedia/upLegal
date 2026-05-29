@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "regimen-de-visitas-chile-2026",
+    title: "¿Qué es el régimen de visitas en Chile 2026? Guía completa paso a paso",
+    excerpt: "Aprende qué es el régimen de visitas en Chile 2026. Conoce los tipos de visitas, cómo se establecen, modificaciones y qué hacer si no se respeta.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "29 de Mayo, 2026",
+    readTime: "8 min",
+    image: "/assets/regimen-de-visitas-chile-2026.png"
+  },
+  {
     id: "aumento-pension-alimentos-chile-2026",
     title: "Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)",
     excerpt: "Aprende cuándo y cómo solicitar un aumento de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso.",

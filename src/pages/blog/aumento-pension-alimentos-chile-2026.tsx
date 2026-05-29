@@ -109,7 +109,7 @@ const BlogArticle = () => {
     {
       question: "¿Cuándo se puede pedir aumento de pensión de alimentos en Chile?",
       answer:
-        "Puedes pedir aumento cuando cambian las circunstancias que justificaron el monto original. Las causales más frecuentes son: aumento demostrable de los ingresos del que paga, incremento real de las necesidades del hijo por edad, educación o salud, o cuando el monto actual ya no cubre los gastos básicos del menor. El tribunal evaluará si el cambio es significativo y permanente.",
+        "Puedes pedir aumento cuando cambian las circunstancias que justificaron el monto original. Las causales más frecuentes son: aumento demostrable de los ingresos del que paga, incremento real de las necesidades del hijo por edad, educación o salud, o cuando el monto actual ya no cubre los gastos básicos del niño, niña o adolecente. El tribunal evaluará si el cambio es significativo y permanente.",
     },
     {
       question: "¿Necesito abogado para pedir aumento de pensión?",
@@ -234,7 +234,7 @@ const BlogArticle = () => {
               {[
                 "Cambió sustancialmente la situación económica del alimentante (a mejor).",
                 "El monto original no cubre los gastos actuales reales del hijo.",
-                "Han aumentado los gastos de educación, salud o necesidades del menor.",
+                "Han aumentado los gastos de educación, salud o necesidades del niño, niña o adolecente.",
                 "Pasaron varios años sin reajuste real y el costo de vida subió considerablemente.",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-3 text-sm sm:text-base">
@@ -313,7 +313,7 @@ const BlogArticle = () => {
               {[
                 {
                   title: "Necesidades del hijo",
-                  desc: "El tribunal analiza gastos reales, nivel de vida, educación, salud y bienestar general. El interés superior del menor siempre es la prioridad.",
+                  desc: "El tribunal analiza gastos reales, nivel de vida, educación, salud y bienestar general. El interés superior del niño, niña o adolescente siempre es la prioridad.",
                 },
                 {
                   title: "Capacidad económica de quien paga",

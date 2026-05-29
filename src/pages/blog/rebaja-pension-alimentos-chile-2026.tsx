@@ -289,7 +289,7 @@ const BlogArticle = () => {
             <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl mb-4">
               <p className="font-bold text-blue-900">Cambios en necesidades del hijo</p>
               <p className="text-blue-800 leading-relaxed">
-                En algunos casos específicos, la rebaja también puede justificarse si disminuyen drásticamente ciertos gastos esenciales del menor (ej. egresar de la universidad, cambio de colegio a uno significativamente más económico por mutuo acuerdo, etc.).
+                En algunos casos específicos, la rebaja también puede justificarse si disminuyen drásticamente ciertos gastos esenciales del niño, niña o adolecente (ej. egresar de la universidad, cambio de colegio a uno significativamente más económico por mutuo acuerdo, etc.).
               </p>
             </div>
           </div>
@@ -313,7 +313,7 @@ const BlogArticle = () => {
               {[
                 {
                   title: "“Tengo muchas deudas”",
-                  desc: "El simple hecho de contraer créditos de consumo, deudas comerciales o de tarjetas de crédito voluntarias NO basta por sí solo, ya que el tribunal prioriza la subsistencia del menor por sobre tus acreedores comerciales."
+                  desc: "El simple hecho de contraer créditos de consumo, deudas comerciales o de tarjetas de crédito voluntarias NO basta por sí solo, ya que el tribunal prioriza la subsistencia del niño, niña o adolescente por sobre tus acreedores comerciales."
                 },
                 {
                   title: "“Solo quiero pagar menos”",
