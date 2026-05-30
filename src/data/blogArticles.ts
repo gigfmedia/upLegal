@@ -36,7 +36,7 @@ export const articles: Article[] = [
     excerpt: "Aprende cuándo y cómo solicitar una rebaja de pensión de alimentos en Chile en 2026. Requisitos, motivos válidos y el proceso legal paso a paso para evitar deudas.",
     category: "Derecho de Familia",
     author: "LegalUp",
-    date: "28 de Mayo, 2026",
+    date: "27 de Mayo, 2026",
     readTime: "10 min",
     image: "/assets/rebaja-pension-chile-2026.png"
   },
