@@ -11,8 +11,19 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "cuidado-personal-hijos-chile-2026",
+    title: "Cuidado personal de hijos en Chile: qué es, quién puede obtenerlo y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es el cuidado personal de hijos en Chile, quién puede solicitarlo, qué evalúa el juez y cómo funciona el proceso judicial. Guía actualizada 2026.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "1 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/cuidado-personal-hijos-chile-2026.png"
+  },
+  {
     id: "regimen-de-visitas-chile-2026",
     title: "¿Qué es el régimen de visitas en Chile 2026? Guía completa paso a paso",
+
     excerpt: "Aprende qué es el régimen de visitas en Chile 2026. Conoce los tipos de visitas, cómo se establecen, modificaciones y qué hacer si no se respeta.",
     category: "Derecho de Familia",
     author: "LegalUp",

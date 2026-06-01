@@ -31,45 +31,45 @@ const PensionCalculator = () => {
           Calcula tu pensión de alimentos estimada
         </h3>
 
-      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Ingreso mensual líquido ($)
-          </label>
-          <input
-            type="number"
-            value={income}
-            onChange={(e) => setIncome(Number(e.target.value))}
-            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
-          />
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Ingreso mensual líquido ($)
+            </label>
+            <input
+              type="number"
+              value={income}
+              onChange={(e) => setIncome(Number(e.target.value))}
+              className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Número de hijos
+            </label>
+            <select
+              value={children}
+              onChange={(e) => setChildren(Number(e.target.value))}
+              className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+            >
+              <option value={1}>1 hijo</option>
+              <option value={2}>2 hijos</option>
+              <option value={3}>3 hijos o más</option>
+            </select>
+          </div>
         </div>
 
-        <div>
-          <label className="block mb-2 text-sm font-medium text-gray-700">
-            Número de hijos
-          </label>
-          <select
-            value={children}
-            onChange={(e) => setChildren(Number(e.target.value))}
-            className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
-          >
-            <option value={1}>1 hijo</option>
-            <option value={2}>2 hijos</option>
-            <option value={3}>3 hijos o más</option>
-          </select>
+        <div className="bg-green-100 p-6 rounded-xl text-center border border-green-100">
+          <p className="text-green-900 font-medium mb-1">Estimación mensual</p>
+          <p className="text-3xl font-bold text-green-600">
+            ${calculate().toLocaleString("es-CL")}
+          </p>
         </div>
-      </div>
 
-      <div className="bg-green-100 p-6 rounded-xl text-center border border-green-100">
-        <p className="text-green-900 font-medium mb-1">Estimación mensual</p>
-        <p className="text-3xl font-bold text-green-600">
-          ${calculate().toLocaleString("es-CL")}
+        <p className="text-xs text-gray-400 mt-4 leading-relaxed">
+          *Estimación referencial basada en rangos comunes en Chile (20% a 40% del ingreso según número de hijos). El monto real lo define el tribunal según ingresos reales, necesidades de los niños y capacidad económica de ambos padres.
         </p>
-      </div>
-
-      <p className="text-xs text-gray-400 mt-4 leading-relaxed">
-        *Estimación referencial basada en rangos comunes en Chile (20% a 40% del ingreso según número de hijos). El monto real lo define el tribunal según ingresos reales, necesidades de los niños y capacidad económica de ambos padres.
-      </p>
       </div>
     </div>
   );
@@ -115,7 +115,7 @@ const BlogArticle = () => {
         dateModified="2026-04-28"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero */}
@@ -188,7 +188,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué se considera deuda */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Qué se considera deuda de pensión de alimentos?</h2>
             <p className="text-gray-600 mb-4">Existe deuda cuando:</p>
             <ul className="space-y-2 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
@@ -206,10 +206,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Cómo calcula el juez */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Cómo calcula el juez la pensión de alimentos en Chile?</h2>
             <p className="text-gray-600 mb-6">El monto de la pensión no es arbitrario. El tribunal evalúa múltiples factores para fijarlo de forma proporcional.</p>
-            
+
             <div className="grid sm:grid-cols-2 gap-4 mb-6">
               {[
                 { title: "Necesidades del alimentario", desc: "Alimentación, educación, salud, vivienda, vestuario.", icon: "🍎" },
@@ -226,7 +226,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl mb-4">
               <p className="font-bold text-blue-900">Importante</p>
               <p className="text-blue-800">No existe un monto fijo universal. Cada caso se analiza individualmente. En la práctica, muchas pensiones se fijan entre un 20% y 40% de los ingresos, pero puede variar.</p>
@@ -243,7 +243,7 @@ const BlogArticle = () => {
           </div>
 
           {/* ¿Se puede cobrar? */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿La deuda de pensión se puede cobrar?</h2>
             <p className="text-gray-600 mb-4"><strong>Sí, y con fuerza.</strong> A diferencia de otras deudas, la pensión de alimentos tiene mecanismos especiales.</p>
             <p className="text-gray-600 mb-4">Puedes solicitar:</p>
@@ -321,7 +321,7 @@ const BlogArticle = () => {
           />
 
           {/* Preguntas frecuentes de situaciones */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Preguntas frecuentes sobre el proceso</h2>
             <div className="space-y-4">
               {[
@@ -355,7 +355,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Casos reales */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Casos reales</h2>
             <div className="space-y-4">
               {[
@@ -372,7 +372,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Errores al demandar */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">Errores al demandar pensión de alimentos en Chile</h2>
             <p className="text-gray-600 mb-6">Muchos casos se retrasan o se complican por errores evitables. Estos son los más comunes:</p>
             <div className="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
@@ -414,10 +414,10 @@ const BlogArticle = () => {
           </div>
 
           {/* ¿Cuánto cuesta? */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Cuánto cuesta demandar pensión de alimentos en Chile?</h2>
             <p className="text-gray-600 mb-6">Una de las principales dudas es el costo del proceso. La buena noticia es que demandar pensión de alimentos en Chile puede ser gratuito.</p>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-white border border-gray-100 shadow-sm p-6 rounded-2xl">
                 <span className="p-1 bg-green-100 text-green-700 rounded text-[10px] uppercase mb-3 inline-block font-bold">Opción 1</span>
@@ -445,17 +445,17 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
-            
+
             <p className="mt-8 text-gray-500 italic">En muchos casos, el costo es bajo o incluso cero comparado con el beneficio de asegurar una pensión estable.</p>
           </div>
 
           {/* Documentos necesarios */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               Documentos necesarios para demandar pensión de alimentos
             </h2>
             <p className="text-gray-600 mb-6">Para iniciar correctamente el proceso, debes reunir ciertos documentos clave:</p>
-            
+
             <ul className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-gray-700 mb-6">
               {[
                 "Certificado de nacimiento del hijo/a",
@@ -470,17 +470,17 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-            
+
             <p className="text-gray-900 font-medium">Mientras más información presentes, más sólido será tu caso.</p>
           </div>
 
           {/* Consecuencias del no pago */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
               ¿Qué pasa si el demandado no paga la pensión?
             </h2>
             <p className="text-gray-600 mb-6">Cuando el demandado deja de pagar la pensión de alimentos, no solo se genera una deuda: se activa un proceso legal para exigir el cumplimiento.</p>
-            
+
             <p className="text-gray-900 font-bold mb-4 text-sm uppercase tracking-wider">Desde ese momento:</p>
             <ul className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-gray-700 mb-6">
               {[
@@ -494,12 +494,12 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-            
+
             <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
               <p className="font-bold text-amber-900">Clave</p>
               <p className="text-amber-800">No pagar la pensión no es una falta menor. Es un incumplimiento grave que permite activar mecanismos judiciales para forzar el pago.</p>
             </div>
-            
+
             <p className="text-gray-500 italic">A continuación te explicamos exactamente qué medidas puede ordenar el tribunal.</p>
           </div>
 
@@ -535,15 +535,15 @@ const BlogArticle = () => {
           {/* Ejemplo de cálculo */}
           <div className="mb-12 bg-green-900 text-white p-8 rounded-3xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 blur-3xl rounded-full -mr-32 -mt-32"></div>
-            
+
             <h2 className="text-2xl font-bold mb-2">
               Ejemplo real: cálculo de deuda de pensión de alimentos
             </h2>
-            
-            <p className="mb-8">
+
+            <p className="mb-12">
               Para entender mejor cómo se calcula una deuda, veamos un ejemplo simple:
             </p>
-            
+
             <div className="grid sm:grid-cols-2 gap-8 mb-8">
               <div className="space-y-4">
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
@@ -553,13 +553,13 @@ const BlogArticle = () => {
                     <li className="font-bold">Meses sin pagar: 6</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl">
                   <p className="text-sm text-green-400 mb-1">Resultado base:</p>
                   <p className="text-2xl font-bold text-green-500">$1.200.000</p>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <p className="text-sm">El tribunal puede incluir:</p>
                 <ul className="space-y-2">
@@ -578,13 +578,13 @@ const BlogArticle = () => {
                 </ul>
               </div>
             </div>
-            
+
             <div className="bg-white/5 border-l-4 border-green-500 p-6 rounded-r-xl mb-6">
               <p className="text-sm mb-1">Deuda total estimada:</p>
               <p className="text-xl font-bold text-white">Puede superar los $1.200.000 fácilmente</p>
               <p className="text-sm mt-1">Dependiendo del tiempo y condiciones.</p>
             </div>
-            
+
             <div className="pt-4 border-t border-white/10">
               <p className="font-bold text-green-400">Importante:</p>
               <p>Mientras más tiempo pase sin pagar, mayor será la deuda acumulada. Por eso, iniciar la liquidación lo antes posible es clave para evitar que el monto siga creciendo.</p>
@@ -616,7 +616,7 @@ const BlogArticle = () => {
 
 
           {/* FAQs */}
-          <div className="mb-12" data-faq-section>
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

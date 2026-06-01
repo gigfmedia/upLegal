@@ -51,7 +51,7 @@ const BlogArticle = () => {
         dateModified="2026-03-25"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -565,7 +565,7 @@ const BlogArticle = () => {
           <CategoryCTA category="arriendo" />
 
 
-          <div className="mb-12" data-faq-section>
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes sobre la Ley 21.461</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

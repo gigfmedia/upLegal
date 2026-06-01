@@ -218,7 +218,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué es una rebaja */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Qué es una rebaja de pensión de alimentos?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Es una solicitud judicial para disminuir el monto de una pensión de alimentos que ya fue fijada previamente de manera formal, ya sea por una sentencia del tribunal, un acuerdo en mediación aprobada, o una transacción judicial.
@@ -239,7 +239,7 @@ const BlogArticle = () => {
           </div>
 
           {/* ¿Se puede bajar porque quiero? */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h3 className="text-xl font-bold mb-3 text-gray-800">¿Se puede bajar la pensión porque quiero?</h3>
             <p className="text-gray-600 mb-4 leading-relaxed">
               <strong>No.</strong> El tribunal exige fundamentos reales, objetivos y acreditables. Debes demostrar de manera fehaciente un cambio importante, permanente o relevante que afecte severamente tu capacidad de pago real.
@@ -247,7 +247,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Motivos comunes */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Motivos más comunes para pedir rebaja</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               La ley chilena no rebaja pensiones por capricho. El juez buscará constatar que las circunstancias del alimentante realmente variaron. Las causas más recurrentes son:
@@ -305,7 +305,7 @@ const BlogArticle = () => {
           </div>
 
           {/* ¿Qué no suele servir? */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Qué NO suele servir para pedir rebaja?</h2>
             <p className="text-gray-600 mb-6">Existen varios errores comunes que llevan al rechazo inmediato de la demanda por parte del juez:</p>
 
@@ -336,7 +336,7 @@ const BlogArticle = () => {
           </div>
 
           {/* No bajar por su cuenta */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Importante: NO puedes bajar la pensión por tu cuenta</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Este es probablemente el error más grave y extendido. Muchas personas dejan de pagar completo, reducen el depósito unilateralmente o “ajustan” el monto bajo la promesa informal de regularizarlo después.
@@ -411,7 +411,7 @@ const BlogArticle = () => {
           />
 
           {/* Cuánto puede rebajarse */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuánto puede rebajarse la pensión?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No existe un porcentaje fijo ni una regla matemática en la ley. El tribunal analiza con pinzas los ingresos reales, las necesidades vigentes del alimentario, la capacidad económica del otro progenitor y el principio de proporcionalidad para no desamparar al menor.
@@ -457,7 +457,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué revisa el juez */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué revisa el juez para decidir?</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               {[
@@ -510,7 +510,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" />
 
           {/* FAQs */}
-          <div className="mb-12" data-faq-section>
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

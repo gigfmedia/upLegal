@@ -225,7 +225,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué es un aumento */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Qué es un aumento de pensión de alimentos?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Es una solicitud judicial para aumentar el monto de una pensión ya existente. Puede pedirse cuando cambian las necesidades del hijo, aumentan los gastos, mejora la situación económica de quien paga, o la pensión quedó insuficiente.
@@ -246,7 +246,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Cuándo se puede pedir */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuándo se puede pedir aumento de pensión?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               No existe un plazo mínimo obligatorio. Pero normalmente se solicita cuando existe un cambio relevante en las circunstancias. Los casos más comunes son:
@@ -304,7 +304,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué revisa el juez */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué revisa el juez para decidir?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               El tribunal analiza principalmente dos cosas:
@@ -337,7 +337,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Qué pruebas sirven */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Qué pruebas sirven para pedir aumento?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Mientras más documentación exista, más sólido será el caso. Las pruebas se dividen principalmente en dos grupos:
@@ -439,7 +439,7 @@ const BlogArticle = () => {
           </div>
 
           {/* ¿Cuánto puede subir? */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuánto puede subir la pensión?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No existe monto fijo. El juez analiza proporcionalidad, ingresos, necesidades reales y equilibrio económico entre ambas partes.
@@ -494,7 +494,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Casos donde se aprueba / rechaza */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo suele aprobarse y cuándo rechazarse?</h2>
             <div className="grid sm:grid-cols-1 gap-4">
               <div className="bg-green-50 border border-green-100 rounded-2xl p-6">
@@ -621,7 +621,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" />
 
           {/* FAQs Schema */}
-          <div className="mb-12" data-faq-section>
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

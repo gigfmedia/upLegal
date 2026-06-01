@@ -655,11 +655,10 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
-                    <div className="mb-12" data-faq-section>
+                    <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">
                             Preguntas frecuentes
                         </h2>
-
                         <div className="space-y-4">
                             {faqs.map((faq, i) => (
                                 <div

@@ -52,9 +52,9 @@ const BlogArticle = () => {
         dateModified="2026-03-16"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -65,7 +65,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
             Derecho de Familia en Chile 2026: guía completa de pensiones, divorcio y cuidado de hijos
           </h1>
@@ -94,7 +94,7 @@ const BlogArticle = () => {
           <p className="text-xl max-w-3xl">
             El Derecho de Familia en Chile regula las relaciones jurídicas entre padres, hijos, parejas y otros vínculos familiares. En esta Guía completa 2026 de Derecho de Familia, revisamos qué abarca esta área del derecho, cuáles son los trámites más comunes en los tribunales de familia y qué puedes hacer si enfrentas un conflicto familiar.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -115,10 +115,10 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          
-          <BlogShare 
-            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa" 
-            url="https://legalup.cl/blog/derecho-de-familia-chile-2026" 
+
+          <BlogShare
+            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa"
+            url="https://legalup.cl/blog/derecho-de-familia-chile-2026"
             showBorder={false}
           />
 
@@ -151,7 +151,7 @@ const BlogArticle = () => {
           </div>
 
           {/* What is Family Law */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Qué es el Derecho de Familia?</h2>
             <p className="text-gray-600 mb-4">
               El Derecho de Familia es la rama del derecho que regula las relaciones legales entre los miembros de una familia.
@@ -200,12 +200,12 @@ const BlogArticle = () => {
           </div>
 
           {/* Important Topics */}
-          <div className="mb-8">
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">¿Cuáles son los temas más importantes del Derecho de Familia en Chile?</h2>
             <p className="text-gray-600 mb-6">
               En los tribunales de familia existen ciertos conflictos que aparecen con mayor frecuencia. A continuación revisamos los más comunes.
             </p>
-            
+
             <div className="space-y-10">
               {/* 1. Pensión de alimentos */}
               <div>
@@ -227,7 +227,7 @@ const BlogArticle = () => {
                 <p className="text-gray-600 mb-4">
                   La obligación de pagar alimentos existe independientemente de si los padres están casados, separados o nunca convivieron.
                 </p>
-                
+
                 {/* ¿Cuánto se paga? */}
                 <div className="bg-gray-50 border-l-4 border-gray-500 p-6 rounded-r-xl mb-6">
                   <h4 className="font-bold text-gray-900 mb-2">¿Cuánto se paga de pensión de alimentos?</h4>
@@ -296,10 +296,10 @@ const BlogArticle = () => {
                   <p className="text-lg font-serif">"La ley ha incorporado herramientas adicionales para mejorar el cumplimiento de las pensiones alimenticias."</p>
                 </div>
                 <InArticleCTA
-                    message="¿No te están pagando la pensión? Si existe deuda de pensión de alimentos, puedes iniciar acciones legales para exigir el pago y aplicar medidas como retención de sueldo, embargo de bienes o incluso arresto."
-                    buttonText="Habla con un abogado ahora"
-                    category="Derecho de Familia"
-                  />
+                  message="¿No te están pagando la pensión? Si existe deuda de pensión de alimentos, puedes iniciar acciones legales para exigir el pago y aplicar medidas como retención de sueldo, embargo de bienes o incluso arresto."
+                  buttonText="Habla con un abogado ahora"
+                  category="Derecho de Familia"
+                />
               </div>
 
               {/* 2. Cuidado personal */}
@@ -505,9 +505,9 @@ const BlogArticle = () => {
           </div>
 
           {/* Preguntas frecuentes */}
-          <div className="mb-12" data-faq-section>
+          <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre Derecho de Familia en Chile</h2>
-            
+
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -551,8 +551,8 @@ const BlogArticle = () => {
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/search?category=Derecho+de+Familia">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={() => {
                   window.gtag?.('event', 'click_consultar_abogado', {
                     article: window.location.pathname,
@@ -564,7 +564,7 @@ const BlogArticle = () => {
                 Hablar con abogado ahora
               </Button>
             </Link>
-            
+
           </div>
         </section>
 
@@ -575,9 +575,9 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
-          <BlogShare 
-            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa" 
-            url="https://legalup.cl/blog/derecho-de-familia-chile-2026" 
+          <BlogShare
+            title="¿Qué es el Derecho de Familia y cómo funciona en Chile? Guía 2026 completa"
+            url="https://legalup.cl/blog/derecho-de-familia-chile-2026"
           />
         </div>
 
@@ -585,8 +585,8 @@ const BlogArticle = () => {
 
         {/* Back to Blog */}
         <div className="mt-4 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors font-medium"
           >
             <ArrowLeft className="h-4 w-4" />
