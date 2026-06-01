@@ -251,7 +251,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <span>Tiempo de lectura: 11 min</span>
             </div>
           </div>
         </div>
@@ -671,6 +671,21 @@ const BlogArticle = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Interlink 3 */}
+          <div className="mb-6 space-y-3">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/blog/derecho-de-familia-chile-2026"
+                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
+                >
+                  👉 Guía completa de Derecho de Familia
+                </Link>
               </div>
             </div>
           </div>

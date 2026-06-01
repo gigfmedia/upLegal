@@ -17,7 +17,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "1 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/cuidado-personal-hijos-chile-2026.png"
   },
   {
