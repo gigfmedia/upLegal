@@ -289,6 +289,21 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* Interlink: Pensión de Alimentos */}
+          <div className="mb-6 space-y-3">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/blog/deuda-pension-alimentos-chile-2026"
+                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
+                >
+                  👉 Pensión de alimentos en Chile
+                </Link>
+              </div>
+            </div>
+          </div>
+
           {/* Validador Interactivo */}
           <MediationChecker />
 
@@ -333,13 +348,13 @@ const BlogArticle = () => {
 
             <ul className="space-y-3 bg-gray-50 p-6 rounded-2xl border border-gray-100 shadow-sm text-gray-700 mb-6">
               {[
-                "Reducir el conflicto entre las partes.",
-                "Promover acuerdos voluntarios.",
-                "Favorecer la comunicación.",
-                "Proteger el bienestar de los hijos.",
-                "Disminuir los costos emocionales de un juicio.",
-                "Obtener soluciones más rápidas.",
-                "Fomentar el cumplimiento voluntario de los acuerdos."
+                "Reducir el conflicto entre las partes",
+                "Promover acuerdos voluntarios",
+                "Favorecer la comunicación",
+                "Proteger el bienestar de los hijos",
+                "Disminuir los costos emocionales de un juicio",
+                "Obtener soluciones más rápidas",
+                "Fomentar el cumplimiento voluntario de los acuerdos"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm sm:text-base">
                   <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -410,7 +425,7 @@ const BlogArticle = () => {
                         El mediador mantiene una postura neutral e imparcial. No representa a ninguna de las partes ni emite juicios respecto de quién tiene la razón.
                       </p>
                       <p className="mb-2">
-                        En asuntos relacionados con alimentos, por ejemplo, pueden analizarse ingresos, gastos and necesidades de los hijos. En conflictos sobre cuidado personal pueden discutirse aspectos relacionados con la estabilidad del niño, niña o adolescente, sus rutinas, necesidades educativas y bienestar emocional. Cuando el problema se relaciona con visitas o relación directa y regular, las conversaciones suelen centrarse en horarios, vacaciones, comunicación y formas de mantener un vínculo saludable con ambos padres.
+                        En asuntos relacionados con alimentos, por ejemplo, pueden analizarse ingresos, gastos y necesidades de los hijos. En conflictos sobre cuidado personal pueden discutirse aspectos relacionados con la estabilidad del niño, niña o adolescente, sus rutinas, necesidades educativas y bienestar emocional. Cuando el problema se relaciona con visitas o relación directa y regular, las conversaciones suelen centrarse en horarios, vacaciones, comunicación y formas de mantener un vínculo saludable con ambos padres.
                       </p>
                       <p>
                         Dependiendo de la complejidad del caso, pueden realizarse una o varias sesiones.
@@ -539,6 +554,21 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          {/* Interlink: Rebaja de Pensión */}
+          <div className="mb-6 space-y-3">
+            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/blog/rebaja-pension-alimentos-chile-2026"
+                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
+                >
+                  👉 Rebaja de pensión de alimentos
+                </Link>
+              </div>
+            </div>
+          </div>
+
           {/* ¿La mediación familiar es gratuita? */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿La mediación familiar es gratuita?</h2>
@@ -633,6 +663,21 @@ const BlogArticle = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Interlink: Derecho de Familia */}
+          <div className="mb-6 space-y-3">
+            <div className="text-center py-4 border-t border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/blog/derecho-de-familia-chile-2026"
+                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
+                >
+                  👉 Derecho de Familia en Chile
+                </Link>
               </div>
             </div>
           </div>
