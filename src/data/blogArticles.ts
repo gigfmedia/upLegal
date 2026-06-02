@@ -11,8 +11,19 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "mediacion-familiar-chile-2026",
+    title: "Mediación familiar obligatoria en Chile: cuándo es necesaria y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es la mediación familiar en Chile, cuándo es obligatoria (alimentos, visitas, cuidado personal), cómo funciona el proceso y qué hacer si no hay acuerdo.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "2 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/mediacion-familiar-chile-2026.png"
+  },
+  {
     id: "cuidado-personal-hijos-chile-2026",
     title: "Cuidado personal de hijos en Chile: qué es, quién puede obtenerlo y cómo funciona (Guía 2026)",
+
     excerpt: "Aprende qué es el cuidado personal de hijos en Chile, quién puede solicitarlo, qué evalúa el juez y cómo funciona el proceso judicial. Guía actualizada 2026.",
     category: "Derecho de Familia",
     author: "LegalUp",
