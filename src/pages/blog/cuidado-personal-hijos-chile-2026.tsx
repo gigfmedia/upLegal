@@ -220,13 +220,13 @@ const BlogArticle = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
             <ul className="space-y-2">
               {[
-                "La antigua \"tuición\" actualmente se denomina cuidado personal.",
-                "Puede corresponder a la madre, al padre o, excepcionalmente, a un tercero.",
-                "No existe preferencia automática por la madre o el padre.",
-                "El juez decide según el interés superior del niño, niña o adolescente.",
-                "La situación económica no es el único factor relevante.",
-                "El cuidado personal es distinto de la pensión de alimentos y las visitas.",
-                "Puede modificarse judicialmente si cambian las circunstancias.",
+                "La antigua \"tuición\" actualmente se denomina cuidado personal",
+                "Puede corresponder a la madre, al padre o, excepcionalmente, a un tercero",
+                "No existe preferencia automática por la madre o el padre",
+                "El juez decide según el interés superior del niño, niña o adolescente",
+                "La situación económica no es el único factor relevante",
+                "El cuidado personal es distinto de la pensión de alimentos y las visitas",
+                "Puede modificarse judicialmente si cambian las circunstancias",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>

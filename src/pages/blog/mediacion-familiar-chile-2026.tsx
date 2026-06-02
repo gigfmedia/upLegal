@@ -161,13 +161,13 @@ const BlogArticle = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
             <ul className="space-y-2">
               {[
-                "La mediación familiar es obligatoria en numerosas materias de familia.",
-                "Su objetivo es intentar alcanzar acuerdos antes de iniciar un juicio.",
-                "Un mediador no actúa como juez ni dicta sentencias.",
-                "La mediación puede terminar con acuerdo o sin acuerdo.",
-                "Si fracasa, se emite un certificado de mediación frustrada.",
-                "Ese certificado permite presentar una demanda ante el Tribunal de Familia.",
-                "En muchos casos el servicio puede ser gratuito.",
+                "La mediación familiar es obligatoria en numerosas materias de familia",
+                "Su objetivo es intentar alcanzar acuerdos antes de iniciar un juicio",
+                "Un mediador no actúa como juez ni dicta sentencias",
+                "La mediación puede terminar con acuerdo o sin acuerdo",
+                "Si fracasa, se emite un certificado de mediación frustrada",
+                "Ese certificado permite presentar una demanda ante el Tribunal de Familia",
+                "En muchos casos el servicio puede ser gratuito",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
