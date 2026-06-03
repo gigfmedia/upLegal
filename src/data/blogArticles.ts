@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "divorcio-unilateral-chile-2026",
+    title: "Divorcio unilateral en Chile 2026: cuándo se puede pedir y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es el divorcio unilateral en Chile, cuándo se puede pedir, cómo funciona el proceso y qué hacer si no hay acuerdo.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "2 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/divorcio-unilateral-chile-2026.png"
+  },
+  {
     id: "mediacion-familiar-chile-2026",
     title: "Mediación familiar obligatoria en Chile: cuándo es necesaria y cómo funciona (Guía 2026)",
     excerpt: "Aprende qué es la mediación familiar en Chile, cuándo es obligatoria (alimentos, visitas, cuidado personal), cómo funciona el proceso y qué hacer si no hay acuerdo.",
