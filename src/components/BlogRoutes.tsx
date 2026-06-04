@@ -40,6 +40,7 @@ const RegimenVisitaArticle = lazy(() => import('../pages/blog/regimen-de-visitas
 const CuidadoPersonalArticle = lazy(() => import('../pages/blog/cuidado-personal-hijos-chile-2026'));
 const MediacionFamiliarArticle = lazy(() => import('../pages/blog/mediacion-familiar-chile-2026'));
 const DivorcioUnilateralArticle = lazy(() => import('../pages/blog/divorcio-unilateral-chile-2026'));
+const CompensacionEconomicaArticle = lazy(() => import('../pages/blog/compensacion-economica-divorcio-chile-2026'));
 
 
 
@@ -89,6 +90,8 @@ export const BlogRoutes = () => (
       <Route path="cuidado-personal-hijos-chile-2026" element={<CuidadoPersonalArticle />} />
       <Route path="mediacion-familiar-chile-2026" element={<MediacionFamiliarArticle />} />
       <Route path="divorcio-unilateral-chile-2026" element={<DivorcioUnilateralArticle />} />
+      <Route path="compensacion-economica-chile-2026" element={<CompensacionEconomicaArticle />} />
+
 
 
     </Routes>

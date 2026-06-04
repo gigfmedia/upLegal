@@ -10,6 +10,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const MediationChecker = () => {
   const [selectedTopic, setSelectedTopic] = useState("");
@@ -767,6 +768,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Derecho de Familia" topic="mediacion" />
     </div>
   );
 };

@@ -64,6 +64,12 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
           message: "Un abogado de familia puede guiarte, redactar el acuerdo y asegurar que todo se resuelva sin inconvenientes.",
           priceLabel: "Abogados disponibles"
         };
+      case 'divorcio-unilateral':
+        return {
+          title: "¿Quieres iniciar un divorcio unilateral?",
+          message: "Un abogado de familia te ayudará a interponer la demanda, notificar a tu cónyuge y defender tus derechos en juicio.",
+          priceLabel: "Abogados disponibles"
+        };
       case 'autodespido':
         return {
           title: "¿Estás pensando en autodespedirte?",
