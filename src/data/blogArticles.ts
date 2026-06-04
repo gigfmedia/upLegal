@@ -11,7 +11,7 @@ export interface Article {
 
 export const articles: Article[] = [
   {
-    id: "compensacion-economica-chile-2026",
+    id: "compensacion-economica-divorcio-chile-2026",
     title: "Compensación económica en el divorcio en Chile 2026: qué es, quién puede pedirla y cómo se calcula (Guía 2026)",
     excerpt: "Aprende qué es la compensación económica en el divorcio en Chile 2026, quién puede solicitarla, cómo se calcula, qué pruebas necesitas y errores comunes.",
     category: "Derecho de Familia",
