@@ -72,7 +72,7 @@ const BlogArticle = () => {
         <div className="min-h-screen bg-gray-50">
             <BlogGrowthHacks
                 title="Compensación económica en el divorcio en Chile: qué es, quién puede pedirla y cómo se calcula (Guía 2026)"
-                description="Conoce qué es la compensación económica en el divorcio en Chile 2026, quién puede solicitarla, cómo se calcula, qué pruebas necesitas y errores comunes."
+                description="Qué es la compensación económica en el divorcio en Chile, quién puede solicitarla, cómo la calcula el tribunal, qué pruebas necesitas y cuándo se pierde el derecho."
                 image="/assets/compensacion-economica-divorcio-chile-2026.png"
                 url="https://legalup.cl/blog/compensacion-economica-divorcio-chile-2026"
                 datePublished="2026-06-04"
