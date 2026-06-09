@@ -16,6 +16,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const VisitScheduleCalculator = () => {
@@ -626,6 +627,13 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="El régimen de visitas protege el vínculo con tus hijos. Compara abogados de familia y agenda una consulta para evaluar tu situación."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Comparar abogados especializados"
+          />
+
 
                     {/* CONCLUSION */}
                     <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
@@ -652,7 +660,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="familia" />
+                    <CategoryCTA category="familia" topic="familia" />
 
                     {/* FAQS */}
                     <div className="mb-6" data-faq-section>

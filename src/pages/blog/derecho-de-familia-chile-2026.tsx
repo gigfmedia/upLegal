@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -486,6 +488,13 @@ const BlogArticle = () => {
             </div>
             <p className="mt-6 text-base text-gray-500 italic">Contar con estos documentos facilita el desarrollo del proceso judicial.</p>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Los conflictos familiares requieren estrategia y plazos estrictos. Encuentra abogados verificados y agenda tu consulta online."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
@@ -504,6 +513,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <CategoryCTA category="familia" topic="familia" />
+
           {/* Preguntas frecuentes */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre Derecho de Familia en Chile</h2>
@@ -519,54 +530,6 @@ const BlogArticle = () => {
           </div>
 
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas ayuda en un caso de familia?</h2>
-          <p className="text-lg text-gray-700 mb-6">
-            Un abogado especialista puede ayudarte a:
-          </p>
-
-          <div className="grid gap-3 md:grid-cols-2 mb-8 max-w-2xl mx-auto text-left">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span>Presentar demandas</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span>Revisar acuerdos</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span>Representarte ante el tribunal</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span>Asegurar el interés superior del niño</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span>Proteger tus derechos y los de tus hijos</span>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+de+Familia">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_derecho_familia_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-
-          </div>
-        </section>
 
       </div>
 

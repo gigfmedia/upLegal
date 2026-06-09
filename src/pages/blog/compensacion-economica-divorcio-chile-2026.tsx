@@ -16,6 +16,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -434,6 +435,13 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4 text-center italic">La decisión siempre será caso a caso.</p>
                     </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
+            link="/abogado-divorcio-unilateral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
                     {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
@@ -452,7 +460,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="familia" />
+                    <CategoryCTA category="familia" topic="divorcio" />
 
                     {/* FAQS */}
                     <div className="mb-6" data-faq-section>

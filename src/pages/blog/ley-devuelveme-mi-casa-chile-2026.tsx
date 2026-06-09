@@ -7,7 +7,9 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 
 const BlogArticle = () => {
@@ -161,6 +163,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <InArticleCTA
+              message="¿Quieres recuperar tu propiedad bajo la ley Devuélveme mi Casa? Un abogado puede evaluar si tu caso califica."
+              buttonText="Ver abogados de arriendo"
+              category="Derecho Civil"
+            />
             <p className="text-gray-600 leading-relaxed">
               En simple: le da más herramientas al propietario para recuperar su inmueble en menos tiempo.
             </p>
@@ -544,6 +551,13 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La ley Devuélveme mi Casa tiene requisitos específicos. Compara abogados especializados y verifica si puedes usar este procedimiento."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -562,7 +576,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="arriendo" />
+          <CategoryCTA category="arriendo" topic="arriendo" />
 
 
           <div className="mb-6" data-faq-section>

@@ -9,6 +9,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -561,6 +563,13 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="No todo reajuste de arriendo es válido. Compara abogados especializados y verifica si el aumento cumple la ley."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -583,6 +592,8 @@ const BlogArticle = () => {
             buttonText="Consultar sobre mi arriendo"
             category="Derecho Civil"
           />
+          <CategoryCTA category="arriendo" topic="arriendo" />
+
 
           {/* FAQ */}
           <div className="mb-6 pt-6" data-faq-section>
@@ -597,33 +608,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">
-            ¿Te subieron el arriendo y no sabes si el cálculo es correcto?
-          </h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Habla con un abogado y entiende cuáles son tus opciones legales. Conectamos a personas con abogados especialistas en arrendamiento para revisar tu contrato de forma inmediata y profesional.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_reajuste_arriendo_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />

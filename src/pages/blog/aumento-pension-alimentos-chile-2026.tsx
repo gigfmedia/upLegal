@@ -9,6 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const AumentoSimulator = () => {
@@ -600,6 +601,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="El aumento de alimentos requiere acreditar un cambio sustancial en las necesidades o ingresos. Compara abogados y revisa tu caso antes de demandar."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Ver abogados de pensión de alimentos"
+          />
+
           {/* Conclusión */}
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
@@ -618,7 +626,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA final */}
-          <CategoryCTA category="familia" />
+          <CategoryCTA category="familia" topic="pension" />
 
           {/* FAQs Schema */}
           <div className="mb-6" data-faq-section>

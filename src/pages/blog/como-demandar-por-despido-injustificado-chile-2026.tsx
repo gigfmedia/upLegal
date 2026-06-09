@@ -10,6 +10,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 
 const BlogArticle = () => {
@@ -516,6 +517,13 @@ const BlogArticle = () => {
               <p className="mt-6 text-gray-700 font-bold text-lg">Estos factores pueden duplicar el resultado económico.</p>
             </div>
 
+            {/* CTA before Conclusion */}
+            <PreConclusionCTA
+              description="El plazo para demandar por despido injustificado es corto. Compara abogados laborales verificados y actúa antes de que venza tu derecho."
+              link="/search?specialty=Derecho%20Laboral"
+              buttonText="Ver abogados laborales disponibles"
+            />
+
             <div className="mb-12 border-t border-gray-100 pt-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
               <div className="prose prose-lg text-gray-600 leading-relaxed space-y-6">
@@ -535,7 +543,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CTA Section - Specific Category */}
-            <CategoryCTA category="laboral" />
+            <CategoryCTA category="laboral" topic="despido" />
 
 
             <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>

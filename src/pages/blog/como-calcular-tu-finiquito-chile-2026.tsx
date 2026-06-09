@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
@@ -789,6 +790,13 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Antes de firmar, verifica que tu finiquito incluya todas las indemnizaciones y vacaciones que te corresponden. Compara abogados laborales y revisa tu caso."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Revisar mi finiquito con un abogado"
+          />
+
 
 
           {/* Conclusion */}
@@ -806,7 +814,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="laboral" />
+          <CategoryCTA category="laboral" topic="finiquito" />
 
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>

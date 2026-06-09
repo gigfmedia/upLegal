@@ -7,7 +7,9 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 
 const BlogArticle = () => {
@@ -174,6 +176,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <InArticleCTA
+              message="¿Necesitas defensa penal o quieres interponer una querella? Compara abogados penalistas disponibles para ayudarte."
+              buttonText="Ver abogados penales"
+              category="Derecho Penal"
+            />
           </div>
 
           <div className="mb-12">
@@ -222,6 +229,13 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="En materia penal cada plazo cuenta. Encuentra abogados penalistas verificados y agenda una consulta urgente."
+            link="/search?specialty=Derecho%20Penal"
+            buttonText="Ver abogados penales disponibles"
+          />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -234,7 +248,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="penal" />
+          <CategoryCTA category="penal" topic="penal" />
 
 
           {/* FAQ */}

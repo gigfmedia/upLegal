@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -532,6 +534,13 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Muchos despidos no cumplen los requisitos legales. Compara abogados laborales y evalúa si conviene demandar o negociar."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -556,6 +565,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -569,31 +580,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te despidieron y crees que fue injusto?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Habla con un abogado laboral, evalúa tu caso y entiende cuánto puedes reclamar. En LegalUp encuentras especialistas que trabajan en esto todos los días.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_despido_injustificado_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Laboral" />

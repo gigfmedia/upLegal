@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -39,7 +41,7 @@ const BlogArticle = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <BlogGrowthHacks 
+      <BlogGrowthHacks
         title="¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley"
         description="Un desalojo en Chile puede tardar entre 3 meses y más de un año, dependiendo del tribunal y si hay oposición. Conoce las etapas, los plazos reales y cuándo conviene actuar con un abogado."
         image="/assets/desalojo-2-chile-2026.png"
@@ -49,7 +51,7 @@ const BlogArticle = () => {
         faqs={faqs}
       />
 
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -62,11 +64,11 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley
           </h1>
-          
+
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
@@ -91,7 +93,7 @@ const BlogArticle = () => {
           <p className="text-xl max-w-3xl">
             Los conflictos de arriendo son uno de los problemas legales más comunes en Chile. Descubre los plazos reales y el funcionamiento del proceso judicial este 2026.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -112,12 +114,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Cuánto demora un juicio de desalojo en Chile? Guía 2026" 
-            url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026" 
+          <BlogShare
+            title="¿Cuánto demora un juicio de desalojo en Chile? Guía 2026"
+            url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -164,7 +166,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6">
               En términos generales, un juicio de desalojo en Chile puede demorar entre <strong>3 y 8 meses</strong>. Sin embargo, el tiempo exacto depende de varios factores como el tribunal, la rapidez de las notificaciones y la respuesta del arrendatario.
             </p>
-            
+
             {/* New Table Section */}
             <div className="overflow-x-auto mb-12 border rounded-xl overflow-hidden shadow-sm">
               <table className="min-w-full divide-y divide-gray-200">
@@ -239,7 +241,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Etapas detalladas de un juicio de desalojo</h2>
-            
+
             <div className="space-y-8 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-blue-100 lg:before:left-4">
               <div className="relative pl-12">
                 <div className="absolute left-1.5 top-1 h-5 w-5 rounded-full bg-yellow-500 border-4 border-yellow-900 shadow-[0_0_10px_rgba(59,130,246,0.3)]"></div>
@@ -301,23 +303,23 @@ const BlogArticle = () => {
                   <li>• Evalúa la posibilidad de pagar o negociar un plazo.</li>
                   <li>• Busca orientación legal para defender tus derechos.</li>
                 </ul>
-                  <div className="text-center py-4 border-t border-b border-gray-100 mt-8">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-                    <Link 
-                      to="/blog/me-subieron-el-arriendo-que-hago-2026"
-                      className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-                    >
-                      👉 Me subieron el arriendo: ¿Cómo defenderme?
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </div>
+                <div className="text-center py-4 border-t border-b border-gray-100 mt-8">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+                  <Link
+                    to="/blog/me-subieron-el-arriendo-que-hago-2026"
+                    className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                  >
+                    👉 Me subieron el arriendo: ¿Cómo defenderme?
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-            <Link 
+            <Link
               to="/blog/me-quieren-desalojar-que-hago-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
@@ -326,11 +328,18 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="Cada caso de desalojo es distinto. Si quieres saber exactamente cuánto puede demorar el tuyo, consulta hoy con un abogado especialista."
             buttonText="Evaluar mi caso de desalojo"
             category="Derecho Arrendamiento"
+          /> */}
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Conocer los plazos del desalojo te permite actuar con anticipación. Compara abogados especializados en arriendos y protege tu propiedad o tus derechos."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
           />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -348,6 +357,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre desalojos en Chile</h2>
             <div className="space-y-4">
@@ -360,48 +371,23 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te enfrentas a un desalojo o necesitas recuperar tu propiedad?</h2>
-          <p className="text-lg text-gray-700 mb-6">
-            Recupera tu tranquilidad de forma legal. En LegalUp te conectamos con abogados especialistas que analizan tu caso y te guían paso a paso.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Arrendamiento">
-              <Button 
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_desalojo_duracion_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="¿Cuánto demora un juicio de desalojo en Chile? Guía 2026" 
-            url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026" 
+          <BlogShare
+            title="¿Cuánto demora un juicio de desalojo en Chile? Guía 2026"
+            url="https://legalup.cl/blog/cuanto-demora-juicio-desalojo-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="cuanto-demora-juicio-desalojo-chile-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

@@ -9,6 +9,8 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -801,6 +803,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="El arrendamiento tiene reglas específicas en Chile. Encuentra abogados verificados y resuelve tu conflicto con asesoría profesional."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Ver abogados de arriendo disponibles"
+          />
+
           <div className="mb-6 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <div className="prose prose-lg max-w-none text-gray-600 text-base font-medium space-y-4 leading-relaxed italic">
@@ -825,6 +834,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <CategoryCTA category="arriendo" topic="arriendo" />
+
           <div className="mb-6 pt-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pt-2">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -837,32 +848,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center border max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8 mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 font-serif">
-            ¿Tienes un problema de arriendo en Chile?
-          </h2>
-          <p className="text-lg text-gray-700 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Habla con un abogado experto y recibe orientación clara sobre tu caso hoy mismo. En LegalUp conectamos a personas con abogados especialistas para resolver conflictos de forma inmediata.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Inmobiliario">
-              <Button
-                size="lg"
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    'category': 'Derecho Inmobiliario',
-                    'label': 'Derecho de arrendamiento en Chile: guía completa 2026'
-                  });
-                }}
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />

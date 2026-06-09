@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -49,9 +51,9 @@ const BlogArticle = () => {
         dateModified="2026-04-10"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -62,7 +64,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             ¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)
           </h1>
@@ -87,11 +89,11 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
-          
+
           <p className="text-xl max-w-3xl leading-relaxed">
             Tener problemas con el pago del arriendo genera muchas dudas, pero hay una que aparece siempre: ¿Me pueden meter a DICOM por deuda de arriendo? Muchos arrendadores usan esta amenaza como presión, pero no siempre es legal ni posible.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -112,12 +114,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)" 
-            url="https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026" 
+          <BlogShare
+            title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)"
+            url="https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -159,6 +161,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <InArticleCTA
+              message="¿Te reportaron en DICOM por deuda de arriendo? Un abogado puede orientarte sobre cobro, negociación y defensa."
+              buttonText="Ver abogados de arriendo"
+              category="Derecho Civil"
+            />
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <p className="text-gray-700 leading-relaxed font-bold">
                 Pero no cualquier deuda puede ser publicada. Es fundamental entender los requisitos legales antes de alarmarse por una amenaza de este tipo.
@@ -181,26 +188,26 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Para que una deuda sea informada, debe cumplir ciertos requisitos legales. En LegalUp recomendamos revisar estos 4 puntos clave antes de preocuparse:
             </p>
-            
+
             <div className="space-y-4">
               {[
-                { 
-                  title: "Debe existir una deuda clara y exigible", 
+                {
+                  title: "Debe existir una deuda clara y exigible",
                   desc: "No basta con que el arrendador diga que le debes. El monto debe estar definido, no estar siendo discutido judicialmente y estar fuera de plazo (vencido).",
-                  sublabel: "Requisito: Monto definido · Sin discusión judicial · Plazo vencido" 
+                  sublabel: "Requisito: Monto definido · Sin discusión judicial · Plazo vencido"
                 },
-                { 
-                  title: "Debe estar respaldada por un documento válido", 
+                {
+                  title: "Debe estar respaldada por un documento válido",
                   desc: "Para informar a DICOM, el arrendador necesita un respaldo legal sólido como un contrato firmado ante notario, un pagaré o un documento de cobro válido.",
                   sublabel: "Documentos: Contrato ante notario · Pagaré · Sentencia judicial"
                 },
-                { 
-                  title: "Suele requerir validación judicial", 
+                {
+                  title: "Suele requerir validación judicial",
                   desc: "En la mayoría de los casos de arriendo de vivienda, se necesita una demanda o una sentencia de un tribunal para que la deuda pueda ser informada legalmente.",
                   sublabel: "Proceso: Demanda civil · Sentencia ejecutoriada"
                 },
-                { 
-                  title: "Cumplimiento de la Ley de Protección de Datos", 
+                {
+                  title: "Cumplimiento de la Ley de Protección de Datos",
                   desc: "No se puede publicar información de deudas si no se cumple estrictamente con la normativa de protección de datos personales en Chile.",
                   sublabel: "Marco legal: Ley 19.628 sobre protección de la vida privada"
                 }
@@ -224,7 +231,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-8 leading-relaxed">
               La diferencia entre estar o no en DICOM suele depender de cómo se formalizó el arriendo. Aquí tienes tres escenarios comunes analizados bajo el estándar de LegalUp:
             </p>
-            
+
             <div className="space-y-6">
               {/* Escenario 1 */}
               <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
@@ -312,8 +319,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">Entiende los plazos y protecciones legales ante un desalojo:</p>
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/me-quieren-desalojar-que-hago-chile-2026" 
+              <Link
+                to="/blog/me-quieren-desalojar-que-hago-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Te quieren desalojar? Qué hacer paso a paso
@@ -402,7 +409,7 @@ const BlogArticle = () => {
                 { title: "Confirmar origen de la deuda", desc: "Esto es clave antes de tomar decisiones" }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -423,7 +430,7 @@ const BlogArticle = () => {
                 { title: "Acciones legales", desc: "Si el registro es indebido, puedes tomar acciones legales" }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -513,7 +520,15 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          
+
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Un reporte en DICOM por arriendo impago puede afectar tu historial crediticio. Compara abogados y define la mejor estrategia."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
+
           {/* Conclusion */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -534,6 +549,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQs */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes</h2>
@@ -549,47 +566,18 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">
-            ¿Tienes una deuda de arriendo y no sabes si puede afectarte en DICOM?
-          </h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Habla con un abogado especializado y revisa tu situación antes de que escale. En LegalUp conectamos a personas con abogados que analizan tu caso de forma inmediata.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_dicom_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </div>
-      </section>
-
       <RelatedLawyers category="Derecho Civil" />
-      
+
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)" 
-            url="https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026" 
+          <BlogShare
+            title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)"
+            url="https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="dicom-deuda-arriendo-chile-2026" />
-        
+
         <div className="mt-8 text-center">
           <Link
             to="/blog"

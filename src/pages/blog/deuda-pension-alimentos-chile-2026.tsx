@@ -9,6 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
@@ -591,6 +592,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La deuda de alimentos puede generar consecuencias graves. Compara abogados especializados en pensiones alimenticias y actúa a tiempo."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Ver abogados de pensión de alimentos"
+          />
+
           {/* Conclusión */}
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
@@ -612,7 +620,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="familia" />
+          <CategoryCTA category="familia" topic="pension" />
 
 
           {/* FAQs */}

@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -614,6 +616,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La deuda acumulada puede derivar en demanda y desalojo. Compara abogados de arriendo y evalúa si conviene negociar o defender tu caso."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Ver abogados de arriendo disponibles"
+          />
+
           <div className="mb-8 pt-4">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -648,6 +657,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">

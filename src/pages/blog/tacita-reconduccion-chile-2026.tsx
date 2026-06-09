@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -45,9 +47,9 @@ const BlogArticle = () => {
         dateModified="2026-04-13"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -58,11 +60,11 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
             Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)
           </h1>
-          
+
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
@@ -87,7 +89,7 @@ const BlogArticle = () => {
           <p className="text-xl max-w-3xl leading-relaxed">
             Muchas personas siguen viviendo en una propiedad después de que el contrato de arriendo termina. Pagan el arriendo normalmente y todo parece seguir igual. ¿Sigo con contrato? ¿Me pueden echar? ¿Se renovó automáticamente? Aquí es donde aparece un concepto clave: la tácita reconducción.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -108,12 +110,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)" 
-            url="https://legalup.cl/blog/tacita-reconduccion-chile-2026" 
+          <BlogShare
+            title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)"
+            url="https://legalup.cl/blog/tacita-reconduccion-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -160,7 +162,7 @@ const BlogArticle = () => {
                 Sin firmar un nuevo contrato
               </p>
             </div>
-            
+
             <h2 className="text-2xl font-bold mb-4 mt-8 text-gray-900">¿Está regulada en Chile?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed font-bold">
               Sí, es un concepto reconocido en el derecho civil chileno.
@@ -175,7 +177,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Se genera una nueva relación de arriendo, pero con características distintas.
             </p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">Cambios importantes</h3>
             <div className="grid sm:grid-cols-1 gap-4 mb-8">
               {[
@@ -196,7 +198,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">
               En parte sí, pero no completamente.
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-green-50 p-6 rounded-xl border border-green-100">
                 <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
@@ -249,9 +251,9 @@ const BlogArticle = () => {
                 </p>
               </div>
             </div>
-            
-            <InArticleCTA 
-              message="¿Estás en esta situación y necesitas ayuda con tu arriendo?" 
+
+            <InArticleCTA
+              message="¿Estás en esta situación y necesitas ayuda con tu arriendo?"
               category="Derecho Inmobiliario"
             />
           </div>
@@ -275,7 +277,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="mb-6">
               <p className="flex items-center gap-2">
                 No puede simplemente sacarte sin proceso.
@@ -284,8 +286,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/orden-desalojo-chile-2026" 
+              <Link
+                to="/blog/orden-desalojo-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 Guía: ¿Cómo funciona el desalojo en Chile?
@@ -301,7 +303,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Se puede subir el arriendo en tácita reconducción?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed font-bold">Sí, pero no arbitrariamente.</p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900 mt-6">Reglas</h3>
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
@@ -316,11 +318,11 @@ const BlogArticle = () => {
             </div>
 
             <p className="text-gray-600 mb-4 leading-relaxed font-medium">Esto conecta con:</p>
-            
+
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/reajuste-arriendo-ipc-chile-2026" 
+              <Link
+                to="/blog/reajuste-arriendo-ipc-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 Reajuste por IPC: Todo lo que debes saber
@@ -333,7 +335,7 @@ const BlogArticle = () => {
               Sí, porque ya no hay plazo fijo.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Pero: Debe hacerse correctamente</p>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">Requiere</h3>
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
@@ -349,8 +351,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/me-quieren-desalojar-que-hago-chile-2026" 
+              <Link
+                to="/blog/me-quieren-desalojar-que-hago-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Desalojo sin orden judicial? Entiende tus derechos
@@ -361,7 +363,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia clave: contrato vigente vs tácita reconducción</h2>
-            
+
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                 <h3 className="text-lg font-bold mb-3 text-gray-900">Contrato vigente</h3>
@@ -403,13 +405,13 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Conviene firmar un nuevo contrato?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">En la mayoría de los casos:</p>
-            
+
             <div className="mb-6">
               <p className="font-bold flex items-center gap-2">
                 Sí
               </p>
             </div>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">Ventajas</h3>
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
@@ -446,8 +448,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/no-devuelven-garantia-arriendo-chile-2026" 
+              <Link
+                to="/blog/no-devuelven-garantia-arriendo-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿No te devuelven la garantía? Cómo recuperarla
@@ -459,7 +461,7 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Relación con otros problemas de arriendo</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">La tácita reconducción suele aparecer junto con:</p>
-            
+
             <div className="grid sm:grid-cols-3 gap-3 mb-8">
               {[
                 "No pago de arriendo",
@@ -474,8 +476,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/cuanto-demora-juicio-desalojo-chile-2026" 
+              <Link
+                to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 Juicio de desalojo: Tiempos y plazos reales
@@ -486,7 +488,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué hacer si estás en tácita reconducción?</h2>
-            
+
             <div className="space-y-4 mb-8">
               {[
                 { title: "Confirmar la situación", desc: "¿terminó el contrato? ¿sigues pagando?" },
@@ -496,7 +498,7 @@ const BlogArticle = () => {
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
                   <div className="bg-gray-900 p-2 rounded-lg text-white w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal text-sm">
-                    {i+1}
+                    {i + 1}
                   </div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
@@ -520,12 +522,19 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            
-            <InArticleCTA 
+
+            {/* <InArticleCTA 
               message="¿Necesitas regularizar tu situación de arriendo con asesoría legal?" 
               category="Derecho Inmobiliario"
-            />
+            /> */}
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La tacita reconducción cambia tus derechos como arrendador. Compara abogados especializados antes de actuar por tu cuenta."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -546,6 +555,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -561,49 +572,20 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">
-            ¿Estás arrendando sin contrato y no sabes cuáles son tus derechos?
-          </h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Habla con un abogado y aclara tu situación antes de que surjan problemas. En LegalUp conectamos a personas con abogados especialistas para guiarte en tu caso.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Inmobiliario">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_tacita_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </div>
-      </section>
-
       <RelatedLawyers category="Arrendamiento" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)" 
-            url="https://legalup.cl/blog/tacita-reconduccion-chile-2026" 
+          <BlogShare
+            title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)"
+            url="https://legalup.cl/blog/tacita-reconduccion-chile-2026"
           />
         </div>
         <BlogNavigation currentArticleId="tacita-reconduccion-chile-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -611,7 +593,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      
+
       <BlogConversionPopup category="Derecho Inmobiliario" topic="tacita-reconduccion" />
     </div>
   );

@@ -9,6 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const RebajaSimulator = () => {
@@ -489,6 +490,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La rebaja de alimentos no es automática: debes acreditar un cambio en tu capacidad económica. Compara abogados especializados y evalúa tu caso."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Ver abogados de pensión de alimentos"
+          />
+
           {/* Conclusión */}
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
@@ -507,7 +515,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="familia" />
+          <CategoryCTA category="familia" topic="pension" />
 
           {/* FAQs */}
           <div className="mb-6" data-faq-section>

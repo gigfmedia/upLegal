@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -498,6 +500,13 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La indemnización por años de servicio depende de tu sueldo y tiempo trabajado. Compara abogados laborales y confirma que el cálculo sea correcto."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -512,6 +521,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+
+          <CategoryCTA category="laboral" topic="finiquito" />
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes</h2>
@@ -526,31 +537,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te despidieron y no sabes cuánto te corresponde?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Protege tus derechos laborales. Habla con un abogado laboral y revisa tu finiquito antes de firmar para asegurarte de que recibes lo que te corresponde.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button 
-                size="lg" 
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_anios_servicio_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
 
       </div>
 

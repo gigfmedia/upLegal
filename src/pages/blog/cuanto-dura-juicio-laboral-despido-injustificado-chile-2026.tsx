@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -383,11 +385,11 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="¿No sabes si conviene demandar o llegar a un acuerdo? Un abogado laboral puede decirte qué esperar según tu caso específico."
             buttonText="Consultar con abogado laboral"
             category="Derecho Laboral"
-          />
+          /> */}
 
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Relacionado</p>
@@ -399,6 +401,13 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Conocer la duración del juicio te ayuda a planificar. Compara abogados laborales especializados en despidos y agenda una consulta."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -414,6 +423,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -427,30 +438,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te despidieron y no sabes si vale la pena demandar?</h2>
-          <p className="text-base text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Un abogado laboral puede revisar tu caso y darte una estimación real. En LegalUp puedes encontrar abogados que analicen tu situación y te orienten sobre los próximos pasos.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_duracion_juicio_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Consultar sobre mi despido
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Laboral" />

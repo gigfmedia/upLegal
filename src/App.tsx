@@ -76,6 +76,7 @@ const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
 const LegalUpAI = lazy(() => import('./pages/LegalUpAI'));
+const DivorcioUnilateralLanding = lazy(() => import('./pages/DivorcioUnilateralLanding'));
 
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
@@ -361,6 +362,7 @@ const AppContent = () => {
 
               <Route path="/cae" element={<CAELanding />} />
               <Route path="/legalup-ai" element={<LegalUpAI />} />
+              <Route path="/abogado-divorcio-unilateral" element={<DivorcioUnilateralLanding />} />
               
               <Route path="/review" element={<ReviewPage />} />
              

@@ -20,6 +20,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -607,6 +609,13 @@ const BlogArticle = () => {
             </div>
 
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Ignorar una demanda por arriendo impago aumenta el riesgo de desalojo. Compara abogados de arriendo y responde a tiempo."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -631,6 +640,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>

@@ -9,6 +9,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -590,6 +591,13 @@ const BlogArticle = () => {
               <li>Vacaciones omitidas</li>
             </ul>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="No firmar el finiquito no significa perder tus derechos. Compara abogados laborales y define la mejor estrategia para tu caso."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12">
@@ -608,30 +616,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          {/* CTA Section */}
-          <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-            <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">Consulta con un abogado laboral</h2>
-            <p className="text-base text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Si te presionan para firmar el finiquito o tienes dudas sobre los montos, es fundamental asesorarte antes de estampar tu firma.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/abogados-laborales">
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    window.gtag?.('event', 'click_consultar_abogado', {
-                      article: window.location.pathname,
-                      location: 'blog_cta_finiquito_primary',
-                    });
-                  }}
-                  className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-                >
-                  Hablar con abogado ahora
-                </Button>
-              </Link>
-            </div>
-          </section>
 
+          <CategoryCTA category="laboral" topic="finiquito" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

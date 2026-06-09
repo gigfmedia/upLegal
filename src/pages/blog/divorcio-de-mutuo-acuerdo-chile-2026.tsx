@@ -7,6 +7,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { Button } from "@/components/ui/button";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -54,7 +56,7 @@ const BlogArticle = () => {
         faqs={faqs}
       />
 
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -130,7 +132,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Requisitos para el divorcio de mutuo acuerdo en Chile 2026</h2>
-            
+
             <div className="space-y-6">
               <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6">
                 <h3 className="text-xl font-bold mb-3 text-gray-900 flex items-center gap-2">
@@ -174,7 +176,7 @@ const BlogArticle = () => {
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   Antes de presentar la demanda, ambos cónyuges deben tener resueltas todas las materias que afectan a la familia. El acuerdo debe ser completo — que cubra todos los temas — y suficiente — que proteja adecuadamente a los hijos y al cónyuge más vulnerable.
                 </p>
-                
+
                 <div className="gap-4 mt-4">
                   <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
                     <p className="font-semibold text-gray-900 mb-2">Si hay hijos menores de edad:</p>
@@ -208,7 +210,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Pasos del proceso de divorcio de mutuo acuerdo</h2>
-            
+
             <div className="space-y-6">
               {[
                 {
@@ -409,7 +411,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Diferencias entre divorcio de mutuo acuerdo y divorcio unilateral</h2>
-            
+
             <div className="overflow-x-auto border border-gray-200 rounded-xl my-6">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -454,6 +456,14 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Si ambos están de acuerdo en divorciarse, un abogado especializado puede preparar el acuerdo sobre hijos y bienes y acelerar el trámite."
+            link="/abogado-divorcio-unilateral"
+            buttonText="Comparar abogados especializados"
+          />
+
+
           {/* Conclusion */}
           <div className="mb-12 border-t border-gray-100 pt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
@@ -471,7 +481,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Call to Action Card */}
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-12">
+          {/* <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 font-serif">¿Decididos a iniciar el proceso?</h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
               Un abogado de familia puede explicarte los pasos y los plazos según tu situación, y redactar el acuerdo con los más altos estándares de suficiencia.
@@ -482,8 +492,10 @@ const BlogArticle = () => {
                 <ChevronRight className="ml-1 h-4 w-4 transition-transform" />
               </Button>
             </Link>
-          </div>
+          </div> */}
 
+
+          <CategoryCTA category="familia" topic="divorcio" />
           {/* FAQs */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

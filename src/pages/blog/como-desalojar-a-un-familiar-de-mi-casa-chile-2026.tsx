@@ -19,6 +19,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const faqs = [
@@ -430,6 +432,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Desalojar a un familiar requiere el procedimiento correcto. Compara abogados y evita errores que retrasen el proceso."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
           {/* Conclusión */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -444,11 +453,13 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="¿Necesitas recuperar tu propiedad de un familiar y no sabes cómo hacerlo legalmente? Un abogado puede evaluar tu caso y explicarte el proceso exacto."
             buttonText="Consultar sobre mi caso"
             category="Derecho Arrendamiento"
-          />
+          /> */}
+          <CategoryCTA category="arriendo" topic="arriendo" />
+
 
           {/* FAQ */}
           <div className="mb-6 pt-6" data-faq-section>

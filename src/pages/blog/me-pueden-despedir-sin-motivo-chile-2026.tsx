@@ -7,6 +7,9 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -159,6 +162,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <InArticleCTA
+              message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
+              buttonText="Ver abogados laborales"
+              category="Derecho Laboral"
+            />
             <p className="text-gray-600 mb-6 leading-relaxed font-bold italic">
               Si no cumple esto → el despido puede ser ilegal.
             </p>
@@ -429,6 +437,13 @@ const BlogArticle = () => {
               <p className="text-gray-600">Te despiden → Reclamas → Demandas → La empresa negocia para evitar costos → <strong>Recibes tu pago más rápido y con menos riesgo.</strong></p>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Aunque pueden despedirte sin acreditar una falta, deben pagarte indemnización. Compara abogados laborales y revisa si el monto es correcto."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
 
           {/* Conclusion */}
@@ -448,6 +463,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -461,30 +478,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">Consulta con un abogado</h2>
-          <p className="text-base text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Si crees que tu despido fue injustificado, puedes recibir orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_despido_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Laboral" />

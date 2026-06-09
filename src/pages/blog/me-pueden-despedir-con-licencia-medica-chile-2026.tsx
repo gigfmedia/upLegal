@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -354,6 +356,13 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Despedir durante licencia médica puede ser ilegal. Compara abogados laborales y actúa rápido para proteger tus derechos."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -369,6 +378,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

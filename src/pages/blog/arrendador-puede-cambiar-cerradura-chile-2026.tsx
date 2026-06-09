@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -49,7 +51,7 @@ const BlogArticle = () => {
         dateModified="2026-03-18"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -189,7 +191,7 @@ const BlogArticle = () => {
                 { title: "Obtener una orden de desalojo", desc: "Solo después de la sentencia y con una orden expresa del juez se puede proceder al desalojo." }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{item.title}</span>
                     <p className="text-base text-gray-600 mt-1">{item.desc}</p>
@@ -386,11 +388,18 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="No enfrentes esta situación sin asesoría. Un abogado especialista puede revisar tu caso y defender tus derechos de arrendatario inmediatamente."
             buttonText="Hablar con un abogado ahora"
             category="Derecho Arrendamiento"
+          /> */}
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Cambiar cerraduras sin autorización judicial puede ser delito. Compara abogados de arriendo y resuelve el conflicto legalmente."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
           />
+
 
           {/* Conclusion */}
           <div className="mb-12 pt-4">
@@ -412,6 +421,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -425,31 +436,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Tienes un problema con tu arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Ya seas arrendatario o arrendador, en LegalUp conectamos a personas con abogados especializados en derecho inmobiliario que analizan tu caso de forma inmediata y profesional.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Arrendamiento">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_cerradura_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Arrendamiento" />

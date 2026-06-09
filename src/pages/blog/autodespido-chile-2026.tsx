@@ -7,6 +7,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { Button } from "@/components/ui/button";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -54,7 +56,7 @@ const BlogArticle = () => {
         faqs={faqs}
       />
 
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -111,7 +113,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare title={title} url={url} showBorder={false} />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -193,7 +195,7 @@ const BlogArticle = () => {
                   <li className="flex gap-2"><span className="text-gray-400">-</span> NO hay recargos legales</li>
                 </ul>
               </div>
-              
+
               <div className="bg-green-50 border border-green-200 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 text-green-600">
                   <CheckCircle className="h-6 w-6" />
@@ -207,7 +209,7 @@ const BlogArticle = () => {
                 </ul>
               </div>
             </div>
-            
+
             <p className="text-gray-600 mt-6 leading-relaxed font-medium">
               Por eso el autodespido tiene mucho más impacto económico que una renuncia normal.
             </p>
@@ -215,8 +217,8 @@ const BlogArticle = () => {
 
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
-            <Link 
-              to="/blog/como-demandar-por-despido-injustificado-chile-2026" 
+            <Link
+              to="/blog/como-demandar-por-despido-injustificado-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 sm:px-8 py-4 rounded-xl transition-all hover:bg-blue-100 w-full sm:w-auto text-left sm:text-center text-sm sm:text-base"
             >
               👉 Despido injustificado en Chile: qué es y cuánto puedes recibir
@@ -283,7 +285,7 @@ const BlogArticle = () => {
             <div className="bg-green-900 text-white p-8 rounded-2xl mt-8">
               <h3 className="font-bold text-xl mb-4 text-white">Ejemplo real simple</h3>
               <p className="mb-4 text-white">Supongamos que el sueldo es de $1.000.000, la antigüedad es de 5 años y hay cotizaciones impagas. El tribunal acepta el autodespido.</p>
-              
+
               <div className="space-y-3 p-6 rounded-xl border border-gray-700 font-mono text-sm">
                 <div className="flex justify-between items-center border-b border-gray-700 pb-2">
                   <span className="text-white">Años de servicio (5)</span>
@@ -308,8 +310,8 @@ const BlogArticle = () => {
 
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
-            <Link 
-              to="/blog/que-revisar-finiquito-chile" 
+            <Link
+              to="/blog/que-revisar-finiquito-chile"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 sm:px-8 py-4 rounded-xl transition-all hover:bg-blue-100 w-full sm:w-auto text-left sm:text-center text-sm sm:text-base"
             >
               👉 Finiquito en Chile 2026: qué revisar antes de firmar
@@ -319,7 +321,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Paso a paso: cómo hacer un autodespido en Chile</h2>
-            
+
             <div className="space-y-4">
               {[
                 { title: "Paso 1 — Reunir pruebas", desc: "Antes de renunciar o comunicar cualquier decisión: descarga documentos, guarda liquidaciones, revisa cotizaciones y recopila mensajes. Este paso es crítico." },
@@ -346,8 +348,8 @@ const BlogArticle = () => {
 
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
-            <Link 
-              to="/blog/reserva-derechos-finiquito-chile" 
+            <Link
+              to="/blog/reserva-derechos-finiquito-chile"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 sm:px-8 py-4 rounded-xl transition-all hover:bg-blue-100 w-full sm:w-auto text-left sm:text-center text-sm sm:text-base"
             >
               👉 Reserva de derechos en el finiquito: cómo funciona
@@ -357,7 +359,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Errores comunes en un autodespido</h2>
-            
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="bg-white p-4 rounded-xl border border-red-100 shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-1">Renunciar antes de asesorarse</h4>
@@ -377,6 +379,13 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="El autodespido exige pruebas sólidas de incumplimiento. Compara abogados laborales antes de renunciar con derecho a indemnización."
+            link="/search?specialty=Derecho%20Laboral"
+            buttonText="Comparar abogados especializados"
+          />
+
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <div className="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
@@ -393,7 +402,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-12">
+          {/* <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 font-serif">¿Decidido a realizar tu autodespido?</h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
               No arriesgues tus indemnizaciones. Si el empleador lleva meses incumpliendo obligaciones, actúa seguro. Evaluemos tus pruebas y preparemos tu carta.
@@ -404,8 +413,10 @@ const BlogArticle = () => {
                 <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-          </div>
+          </div> */}
 
+
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQs */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -420,19 +431,19 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-        
+
       <RelatedLawyers category="Derecho Laboral" />
-      
+
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare title={title} url={url} showBorder={true} />
-        </div>     
-        
+        </div>
+
         <BlogNavigation currentArticleId="autodespido-chile-2026" />
-      
+
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

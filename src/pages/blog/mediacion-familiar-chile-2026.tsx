@@ -9,6 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -683,6 +684,14 @@ const BlogArticle = () => {
             </div>
           </div>
 
+
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="La mediación familiar es obligatoria en muchos conflictos. Un abogado especializado puede orientarte antes, durante y después del proceso."
+            link="/search?specialty=Derecho%20de%20Familia"
+            buttonText="Comparar abogados especializados"
+          />
+
           {/* Conclusión */}
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
@@ -705,7 +714,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA final */}
-          <CategoryCTA category="familia" />
+          <CategoryCTA category="familia" topic="familia" />
 
           {/* FAQs Schema */}
           <div className="mb-6" data-faq-section>
@@ -720,30 +729,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas asesoría en mediación familiar?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            En LegalUp te guiamos paso a paso para resolver tu conflicto de familia en forma rápida y profesional a través de nuestros abogados especialistas.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Familia">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_mediacion_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho de Familia" />

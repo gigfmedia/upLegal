@@ -8,6 +8,8 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -473,6 +475,13 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Aun sin contrato escrito existen derechos y obligaciones. Compara abogados de arriendo y regulariza tu situación."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -484,6 +493,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
@@ -497,31 +508,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Problemas con un arriendo sin contrato?</h2>
-            <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-              Habla con un abogado y entiende cuáles son tus opciones legales. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/search?category=Derecho+Inmobiliario">
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    window.gtag?.('event', 'click_consultar_abogado', {
-                      article: window.location.pathname,
-                      location: 'blog_cta_sin_contrato_arriendo_primary',
-                    });
-                  }}
-                  className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-                >
-                  Hablar con abogado ahora
-                </Button>
-              </Link>
-              
-            </div>
-          </section>
       </div>
 
       <RelatedLawyers category="Arrendamiento" />

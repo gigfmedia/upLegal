@@ -7,6 +7,9 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -162,6 +165,11 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <InArticleCTA
+              message="¿Recibiste una orden de desalojo o estás por obtenerla? Un abogado especializado puede evaluar tus opciones legales."
+              buttonText="Ver abogados de arriendo"
+              category="Derecho Civil"
+            />
             <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded-r-lg">
               <p className="text-indigo-900 leading-relaxed">
                 Es importante entender que la orden de desalojo es el <strong>resultado de un proceso judicial previo</strong>, no una decisión unilateral.
@@ -476,6 +484,13 @@ const BlogArticle = () => {
               <p className="text-indigo-900 leading-relaxed font-bold">Este es uno de los escenarios más comunes en Chile.</p>
             </div>
           </div>
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Una orden de desalojo puede llevar al lanzamiento forzado. Compara abogados especializados en arriendos y desalojos y actúa a tiempo."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -504,6 +519,8 @@ const BlogArticle = () => {
               En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
             </p>
           </div> */}
+          <CategoryCTA category="arriendo" topic="arriendo" />
+
 
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
@@ -518,30 +535,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Tienes un problema de arriendo o desalojo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Si estás enfrentando un problema de arriendo o desalojo, es recomendable buscar orientación legal. En LegalUp puedes encontrar abogados que analicen tu caso y te orienten.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_orden_desalojo_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Arrendamiento" />

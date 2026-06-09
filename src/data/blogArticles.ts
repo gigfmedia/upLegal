@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "cese-de-convivencia-chile-2026",
+    title: "Cese de convivencia en Chile 2026: qué es, cuándo se puede pedir y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es el cese de convivencia en Chile, cuándo se puede pedir, cómo funciona el proceso y qué hacer si no hay acuerdo.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "8 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/cese-de-convivencia-chile-2026.png"
+  },
+  {
     id: "compensacion-economica-divorcio-chile-2026",
     title: "Compensación económica en el divorcio en Chile 2026: qué es, quién puede pedirla y cómo se calcula (Guía 2026)",
     excerpt: "Aprende qué es la compensación económica en el divorcio en Chile 2026, quién puede solicitarla, cómo se calcula, qué pruebas necesitas y errores comunes.",

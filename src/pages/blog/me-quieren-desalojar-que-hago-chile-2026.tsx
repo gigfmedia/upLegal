@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -48,9 +50,9 @@ const BlogArticle = () => {
         dateModified="2026-03-16"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -61,7 +63,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero
           </h1>
@@ -86,11 +88,11 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
-          
+
           <p className="text-xl max-w-3xl leading-relaxed">
             Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -111,12 +113,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)" 
-            url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026" 
+          <BlogShare
+            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
+            url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -135,7 +137,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.
             </p>
-            
+
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-bold mb-3 text-gray-900">Demanda ante tribunal civil</h3>
@@ -261,7 +263,7 @@ const BlogArticle = () => {
                 { title: "Lanzamiento con fuerza pública", desc: "Si el arrendatario no abandona voluntariamente, el tribunal puede ordenar el lanzamiento con apoyo de Carabineros. Este es el único momento en que una persona puede ser desalojada físicamente." }
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
-                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i+1}</div>
+                  <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -313,11 +315,18 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="Enfrentar un desalojo sin asesoría legal es arriesgado. Un abogado puede revisar tu situación y decirte qué opciones tienes."
             buttonText="Hablar con abogado ahora"
             category="Derecho Arrendamiento"
+          /> */}
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Actuar temprano en un desalojo puede marcar la diferencia. Compara abogados de arriendo y protege tus derechos."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
           />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -332,6 +341,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre desalojos</h2>
@@ -345,48 +356,23 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te quieren desalojar o tienes problemas de arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Protege tu hogar y tus derechos. Conectamos a personas con abogados especialistas en arrendamiento para defender tu situación de forma inmediata y profesional.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Arrendamiento">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_me_quieren_desalojar_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Arrendamiento" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)" 
-            url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026" 
+          <BlogShare
+            title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
+            url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="me-quieren-desalojar-que-hago-chile-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

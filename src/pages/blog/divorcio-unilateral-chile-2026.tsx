@@ -16,6 +16,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -70,6 +71,11 @@ const BlogArticle = () => {
             question: "¿Qué ocurre si mi cónyuge no asiste al juicio?",
             answer:
                 "La ausencia del cónyuge demandado no impide que el tribunal continúe el procedimiento. Si fue notificado correctamente y no comparece, el juicio puede avanzar y dictarse sentencia si se cumplen los requisitos legales.",
+        },
+        {
+            question: "¿Necesito un abogado para un divorcio unilateral?",
+            answer:
+                "Sí. El divorcio unilateral debe tramitarse ante el Tribunal de Familia y requiere una demanda formal. Un abogado especializado en derecho de familia puede ayudarte a reunir las pruebas, redactar la demanda y representarte en el juicio. Puedes comparar abogados especializados en divorcio unilateral y revisar sus honorarios antes de agendar una consulta en legalup.cl/abogado-divorcio-unilateral.",
         },
     ];
 
@@ -256,6 +262,21 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CTA after Requisitos */}
+                    <div className="my-10 border rounded-md px-6 rounded-2xl p-6 sm:p-8 text-center">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">¿Necesitas iniciar un divorcio unilateral?</h3>
+                        <p className="text-gray-600 mb-6">
+                            Compara abogados especializados en derecho de familia, revisa sus perfiles y agenda una consulta online.
+                        </p>
+                        <Link
+                            to="/abogado-divorcio-unilateral"
+                            className="inline-flex items-center gap-2 bg-gray-900 hover:bg-green-900 text-white font-semibold px-8 py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+                        >
+                            Ver abogados para divorcio unilateral
+                            <ChevronRight className="h-5 w-5" />
+                        </Link>
+                    </div>
+
                     {/* QUE PASA SI NO SE DOMICILIO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué ocurre si no sé dónde vive mi cónyuge?</h2>
@@ -268,12 +289,6 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
-
-                    <InArticleCTA
-                        message="¿Quieres iniciar un divorcio unilateral? Un abogado de familia puede ayudarte a reunir las pruebas y tramitar el proceso."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho de Familia"
-                    />
 
                     {/* PROCESO PASO A PASO */}
                     <div className="mb-12">
@@ -431,6 +446,12 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
+                    {/* CTA before Conclusion */}
+                    <PreConclusionCTA
+                        description="Si cumples los requisitos para divorciarte pero no sabes cómo iniciar la demanda, puedes comparar abogados especializados en divorcio unilateral y agendar una consulta online."
+                        link="/abogado-divorcio-unilateral"
+                        buttonText="Comparar abogados especializados"
+                    />
 
                     {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
@@ -446,7 +467,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="familia" />
+                    <CategoryCTA category="familia" topic="divorcio" />
 
                     {/* FAQS */}
                     <div className="mb-6" data-faq-section>

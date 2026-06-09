@@ -7,35 +7,37 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
- const faqs = [
-  {
-    question: "¿Cuánto pueden subir el arriendo legalmente en Chile?",
-    answer: "En Chile no existe un tope legal fijo para el reajuste del arriendo. El monto del aumento depende de lo que establezca el contrato. Lo más común es que los contratos vinculen el reajuste al IPC (Índice de Precios al Consumidor). Si el contrato no tiene cláusula de reajuste, el valor no puede modificarse durante su vigencia sin acuerdo de ambas partes."
-  },
-  {
-    question: "¿Me pueden subir el arriendo si no está en el contrato?",
-    answer: "No. Si el contrato no establece una cláusula de reajuste, el valor del arriendo debe mantenerse igual durante la vigencia del contrato."
-  },
-  {
-    question: "¿Qué pasa si el dueño quiere subir el arriendo de forma repentina?",
-    answer: "Puedes solicitar la base contractual del aumento. Si no existe cláusula de reajuste, el aumento no corresponde."
-  },
-  {
-    question: "¿El arriendo puede subir todos los meses?",
-    answer: "Solo si el contrato establece un reajuste mensual, lo cual no es muy común. La mayoría de los contratos utiliza reajustes anuales."
-  },
-  {
-    question: "¿Qué pasa si no acepto el aumento al renovar contrato?",
-    answer: "El arrendador puede decidir no renovar el contrato y buscar otro arrendatario. En ese caso deberás entregar la propiedad cuando corresponda."
-  },
-  {
-    question: "¿Qué puedo hacer si me subieron el arriendo más del IPC?",
-    answer: "Si tu contrato establece reajuste según IPC y el arrendador cobró más, tienes derecho a reclamar la diferencia. Puedes hacerlo directamente con el arrendador mostrando el contrato, o acudir a un abogado para evaluar una demanda por cobro indebido."
-  }
-];
+  const faqs = [
+    {
+      question: "¿Cuánto pueden subir el arriendo legalmente en Chile?",
+      answer: "En Chile no existe un tope legal fijo para el reajuste del arriendo. El monto del aumento depende de lo que establezca el contrato. Lo más común es que los contratos vinculen el reajuste al IPC (Índice de Precios al Consumidor). Si el contrato no tiene cláusula de reajuste, el valor no puede modificarse durante su vigencia sin acuerdo de ambas partes."
+    },
+    {
+      question: "¿Me pueden subir el arriendo si no está en el contrato?",
+      answer: "No. Si el contrato no establece una cláusula de reajuste, el valor del arriendo debe mantenerse igual durante la vigencia del contrato."
+    },
+    {
+      question: "¿Qué pasa si el dueño quiere subir el arriendo de forma repentina?",
+      answer: "Puedes solicitar la base contractual del aumento. Si no existe cláusula de reajuste, el aumento no corresponde."
+    },
+    {
+      question: "¿El arriendo puede subir todos los meses?",
+      answer: "Solo si el contrato establece un reajuste mensual, lo cual no es muy común. La mayoría de los contratos utiliza reajustes anuales."
+    },
+    {
+      question: "¿Qué pasa si no acepto el aumento al renovar contrato?",
+      answer: "El arrendador puede decidir no renovar el contrato y buscar otro arrendatario. En ese caso deberás entregar la propiedad cuando corresponda."
+    },
+    {
+      question: "¿Qué puedo hacer si me subieron el arriendo más del IPC?",
+      answer: "Si tu contrato establece reajuste según IPC y el arrendador cobró más, tienes derecho a reclamar la diferencia. Puedes hacerlo directamente con el arrendador mostrando el contrato, o acudir a un abogado para evaluar una demanda por cobro indebido."
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -48,9 +50,9 @@ const BlogArticle = () => {
         dateModified="2026-03-16"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -61,12 +63,12 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron
           </h1>
 
-           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
             </p>
@@ -85,12 +87,12 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-          </div> 
-          
+          </div>
+
           <p className="text-xl text-white max-w-3xl leading-relaxed">
             Entender qué dice tu contrato y cuáles son tus derechos es fundamental para proteger tu presupuesto y evitar cobros abusivos.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 text-white mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -111,12 +113,12 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)" 
-            url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026" 
+          <BlogShare
+            title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)"
+            url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -152,8 +154,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/reajuste-arriendo-ipc-chile-2026" 
+              <Link
+                to="/blog/reajuste-arriendo-ipc-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cómo calcular el reajuste según IPC? (Guía 2026)
@@ -174,7 +176,7 @@ const BlogArticle = () => {
                 { title: "Método de cálculo", desc: "Es importante verificar cómo se calcula exactamente el aumento para asegurar que sea el monto correcto." }
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-100">
-                  <div className="bg-gray-900 w-7 h-7 rounded-full flex items-center justify-center text-white mb-4">{i+1}</div>
+                  <div className="bg-gray-900 w-7 h-7 rounded-full flex items-center justify-center text-white mb-4">{i + 1}</div>
                   <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-base text-gray-600">{item.desc}</p>
                 </div>
@@ -321,11 +323,18 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
+          {/* <InArticleCTA
             message="Si el aumento no está respaldado por tu contrato, tienes derechos. Habla con un abogado de arriendo y aclara tu situación hoy."
             buttonText="Consultar sobre mi arriendo"
             category="Derecho Arrendamiento"
+          /> */}
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Aceptar un aumento ilegal puede perjudicarte a largo plazo. Compara abogados de arriendo y evalúa tus opciones."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
           />
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -340,6 +349,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre el aumento del arriendo</h2>
@@ -353,48 +364,23 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Necesitas asesoría legal por tu arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            No permitas cobros abusivos. Conectamos a arrendatarios con abogados expertos en derecho inmobiliario para revisar contratos y defender tus derechos.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Arrendamiento">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_arriendo_aumento_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026" 
-            url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026" 
+          <BlogShare
+            title="Me subieron el arriendo, ¿qué hago? Guía completa Chile 2026"
+            url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="me-subieron-el-arriendo-que-hago-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

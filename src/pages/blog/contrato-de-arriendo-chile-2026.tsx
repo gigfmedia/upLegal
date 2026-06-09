@@ -7,6 +7,8 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import CategoryCTA from "@/components/blog/CategoryCTA";
+import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -37,9 +39,9 @@ const BlogArticle = () => {
       answer: "No es obligatorio, pero sí muy recomendable. Si el contrato no incluye una cláusula de reajuste, el arrendador no puede subir el precio de forma unilateral durante la vigencia del contrato."
     },
     {
-    question: "¿Cuánto tiempo mínimo debe durar un contrato de arriendo en Chile?",
-    answer: "La ley chilena no establece un plazo mínimo obligatorio para los contratos de arriendo. Las partes pueden acordar libremente la duración. Lo más común son contratos de 12 meses renovables, aunque también existen contratos de 6 meses o por tiempo indefinido."
-  }
+      question: "¿Cuánto tiempo mínimo debe durar un contrato de arriendo en Chile?",
+      answer: "La ley chilena no establece un plazo mínimo obligatorio para los contratos de arriendo. Las partes pueden acordar libremente la duración. Lo más común son contratos de 12 meses renovables, aunque también existen contratos de 6 meses o por tiempo indefinido."
+    }
   ];
 
   return (
@@ -53,7 +55,7 @@ const BlogArticle = () => {
         dateModified="2026-04-18"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -639,6 +641,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CTA before Conclusion */}
+          <PreConclusionCTA
+            description="Un contrato mal redactado puede generar conflictos costosos. Compara abogados de arriendo antes de firmar."
+            link="/search?specialty=Derecho%20Civil"
+            buttonText="Comparar abogados especializados"
+          />
+
           {/* Conclusión */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -653,6 +662,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
+
+          <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre el contrato de arriendo en Chile</h2>
@@ -666,31 +677,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Tienes dudas sobre tu contrato de arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Recibe orientación clara de un abogado especialista y protege tu situación antes de que el problema escale. Consulta hoy mismo.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Arrendamiento">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_contrato_arriendo_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con un Abogado Ahora
-              </Button>
-            </Link>
-            
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />
