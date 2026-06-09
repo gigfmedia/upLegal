@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "liquidacion-sociedad-conyugal-chile-2026",
+    title: "Liquidación de sociedad conyugal en Chile 2026: qué es, cuándo se puede pedir y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es la liquidación de sociedad conyugal en Chile 2026, cuándo se puede pedir, cómo funciona el proceso y qué hacer si no hay acuerdo.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "9 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/liquidacion-sociedad-conyugal-chile-2026.png"
+  },
+  {
     id: "cese-de-convivencia-chile-2026",
     title: "Cese de convivencia en Chile 2026: qué es, cuándo se puede pedir y cómo funciona (Guía 2026)",
     excerpt: "Aprende qué es el cese de convivencia en Chile, cuándo se puede pedir, cómo funciona el proceso y qué hacer si no hay acuerdo.",
