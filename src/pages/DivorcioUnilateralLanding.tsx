@@ -111,17 +111,17 @@ const DivorcioUnilateralLanding = () => {
       <Header onAuthClick={() => setShowAuthModal(true)} />
 
       {/* Hero Section */}
-      <div className="bg-gray-50 pt-20 pb-16 lg:pt-32 lg:pb-24 border-b border-gray-100">
+      <div className="bg-gray-100 pt-20 pb-16 lg:pt-32 lg:pb-24 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
-            <span className="bg-gray-900 text-white text-xs border border-gray-900 font-semibold px-3 py-1 rounded-full uppercase tracking-wide inline-flex mb-6">
+          <div className="flex flex-col items-center text-center mx-auto">
+            <span className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
               Derecho de Familia
             </span>
             <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6 leading-tight">
               ¿Necesitas iniciar un divorcio unilateral?
             </h1>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
+            <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
               Compara abogados especializados, revisa precios y agenda tu consulta online.
             </p>
 

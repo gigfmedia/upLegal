@@ -47,7 +47,7 @@ const BlogArticle = () => {
         dateModified="2026-04-01"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -152,7 +152,7 @@ const BlogArticle = () => {
 
             <div className="text-center py-6 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
-              <Link 
+              <Link
                 to="/blog/como-demandar-por-despido-injustificado-chile-2026"
                 className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
               >
@@ -312,8 +312,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Para calcular el monto exacto, revisa nuestra guía completa:</p>
-              <Link 
-                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" 
+              <Link
+                to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cuánto me corresponde por años de servicio en Chile?
@@ -328,8 +328,8 @@ const BlogArticle = () => {
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link 
-                to="/blog/como-calcular-tu-finiquito-chile-2026" 
+              <Link
+                to="/blog/como-calcular-tu-finiquito-chile-2026"
                 className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
               >
                 👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
@@ -534,13 +534,13 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Muchos despidos no cumplen los requisitos legales. Compara abogados laborales y evalúa si conviene demandar o negociar."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-despido-injustificado"
             buttonText="Comparar abogados especializados"
           />
-
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -567,6 +567,7 @@ const BlogArticle = () => {
 
 
           <CategoryCTA category="laboral" topic="despido" />
+
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

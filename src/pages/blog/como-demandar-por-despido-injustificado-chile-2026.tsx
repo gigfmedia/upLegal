@@ -57,7 +57,7 @@ const BlogArticle = () => {
         faqs={faqs}
       />
 
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -206,11 +206,11 @@ const BlogArticle = () => {
                     ))}
                   </div>
                 </div>
-              
+
 
                 <div className="text-center py-6 border-t border-b border-gray-100 my-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu indemnización</p>
-                  <Link 
+                  <Link
                     to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
                     className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
                   >
@@ -220,7 +220,7 @@ const BlogArticle = () => {
                 </div>
               </div>
 
-              </div>
+            </div>
 
             <div className="mb-12 bg-gray-50 border border-gray-100 rounded-2xl p-4 sm:p-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Ejemplo real de éxito</h2>
@@ -335,11 +335,11 @@ const BlogArticle = () => {
               <p className="text-gray-600">Total estimado: <strong>3 a 8 meses</strong></p>
             </div>
 
-             <InArticleCTA
-                message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
-                buttonText="Hablar con un abogado laboral"
-                category="Derecho Laboral"
-              />
+            <InArticleCTA
+              message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
+              buttonText="Hablar con un abogado laboral"
+              category="Derecho Laboral"
+            />
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede ganar sin juicio?</h2>
@@ -379,7 +379,7 @@ const BlogArticle = () => {
 
                 <div className="text-center py-6 border-t border-b border-gray-100 my-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Profundiza en el tema</p>
-                  <Link 
+                  <Link
                     to="/blog/despido-injustificado-chile-2026"
                     className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
                   >
@@ -414,7 +414,7 @@ const BlogArticle = () => {
 
               <div className="text-center py-6 border-t border-b border-gray-100 my-8">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Evita errores en tu pago</p>
-                <Link 
+                <Link
                   to="/blog/como-calcular-tu-finiquito-chile-2026"
                   className="inline-flex items-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100"
                 >
@@ -520,7 +520,7 @@ const BlogArticle = () => {
             {/* CTA before Conclusion */}
             <PreConclusionCTA
               description="El plazo para demandar por despido injustificado es corto. Compara abogados laborales verificados y actúa antes de que venza tu derecho."
-              link="/search?specialty=Derecho%20Laboral"
+              link="/abogado-despido-injustificado"
               buttonText="Ver abogados laborales disponibles"
             />
 

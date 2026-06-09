@@ -594,9 +594,9 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="La deuda de alimentos puede generar consecuencias graves. Compara abogados especializados en pensiones alimenticias y actúa a tiempo."
-            link="/search?specialty=Derecho%20de%20Familia"
-            buttonText="Ver abogados de pensión de alimentos"
+            description="¿Necesitas iniciar una demanda de alimentos, solicitar un aumento o cobrar una deuda?"
+            link="/abogado-pension-alimentos"
+            buttonText="Compara abogados especializados"
           />
 
           {/* Conclusión */}

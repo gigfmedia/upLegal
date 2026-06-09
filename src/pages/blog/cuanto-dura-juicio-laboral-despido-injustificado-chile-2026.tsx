@@ -401,10 +401,11 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Conocer la duración del juicio te ayuda a planificar. Compara abogados laborales especializados en despidos y agenda una consulta."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-despido-injustificado"
             buttonText="Comparar abogados especializados"
           />
 

@@ -435,13 +435,13 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4 text-center italic">La decisión siempre será caso a caso.</p>
                     </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
-            link="/abogado-divorcio-unilateral"
-            buttonText="Comparar abogados especializados"
-          />
 
+                    {/* CTA before Conclusion */}
+                    <PreConclusionCTA
+                        description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
+                        link="/abogado-divorcio-unilateral"
+                        buttonText="Comparar abogados especializados"
+                    />
 
                     {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">

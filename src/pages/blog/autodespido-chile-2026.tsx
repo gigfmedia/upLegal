@@ -379,10 +379,11 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El autodespido exige pruebas sólidas de incumplimiento. Compara abogados laborales antes de renunciar con derecho a indemnización."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-despido-injustificado"
             buttonText="Comparar abogados especializados"
           />
 
@@ -417,6 +418,7 @@ const BlogArticle = () => {
 
 
           <CategoryCTA category="laboral" topic="despido" />
+
           {/* FAQs */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

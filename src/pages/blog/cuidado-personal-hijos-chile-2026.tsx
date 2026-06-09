@@ -695,7 +695,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El cuidado personal define con quién viven los hijos. Compara abogados especializados y recibe orientación antes de presentar tu demanda."
-            link="/search?specialty=Derecho%20de%20Familia"
+            link="/abogado-pension-alimentos"
             buttonText="Comparar abogados especializados"
           />
 

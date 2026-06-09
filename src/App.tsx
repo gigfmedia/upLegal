@@ -77,6 +77,11 @@ const CAELanding = lazy(() => import('./pages/CAELanding'));
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
 const LegalUpAI = lazy(() => import('./pages/LegalUpAI'));
 const DivorcioUnilateralLanding = lazy(() => import('./pages/DivorcioUnilateralLanding'));
+const PensionAlimentosLanding = lazy(() => import('./pages/PensionAlimentosLanding'));
+const FiniquitoLanding = lazy(() => import('./pages/FiniquitoLanding'));
+const DespidoInjustificadoLanding = lazy(() => import('./pages/DespidoInjustificadoLanding'));
+const ArriendoLanding = lazy(() => import('./pages/ArriendoLanding'));
+const PenalLanding = lazy(() => import('./pages/PenalLanding'));
 
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
@@ -136,10 +141,10 @@ const LoadingIndicator = () => {
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 300);
-    
+
     // Setup global error handlers
     const cleanup = setupGlobalErrorHandlers();
-    
+
     return () => {
       clearTimeout(timer);
       cleanup?.();
@@ -165,10 +170,10 @@ const setupGlobalErrorHandlers = () => {
   // Handle uncaught errors
   const handleError = (error: ErrorEvent | string) => {
     const message = typeof error === 'string' ? error : error.message;
-    
+
     // Check for "Failed to load module script" which often happens on stale chunks
-    if (message?.includes('Failed to load module script') || 
-        message?.includes('Expected a JavaScript-or-Wasm module script')) {
+    if (message?.includes('Failed to load module script') ||
+      message?.includes('Expected a JavaScript-or-Wasm module script')) {
       console.warn('Stale chunk detected via error event, reloading...');
       window.location.reload();
       return;
@@ -262,7 +267,7 @@ import { MessageProvider } from '@/contexts/MessageProvider';
 const AppContent = () => {
   const { isLoading } = useAuth();
   const navigate = useNavigate();
-  
+
   // Track page views
   usePageTracking();
 
@@ -319,7 +324,7 @@ const AppContent = () => {
 
     handleSupabaseHash();
   }, [navigate]);
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <TooltipProvider>
@@ -345,12 +350,12 @@ const AppContent = () => {
               <Route path="/como-funciona" element={<HowItWorksPage />} />
               <Route path="/terminos" element={<TermsOfService />} />
               <Route path="/privacidad" element={<PrivacyPolicy />} />
-              
+
               {/* Booking Routes */}
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
 
-              
+
               {/* Blog Routes */}
               <Route path="/blog/*" element={<BlogRoutes />} />
 
@@ -363,9 +368,13 @@ const AppContent = () => {
               <Route path="/cae" element={<CAELanding />} />
               <Route path="/legalup-ai" element={<LegalUpAI />} />
               <Route path="/abogado-divorcio-unilateral" element={<DivorcioUnilateralLanding />} />
-              
+              <Route path="/abogado-pension-alimentos" element={<PensionAlimentosLanding />} />
+              <Route path="/abogado-finiquito" element={<FiniquitoLanding />} />
+              <Route path="/abogado-despido-injustificado" element={<DespidoInjustificadoLanding />} />
+              <Route path="/abogado-arriendo" element={<ArriendoLanding />} />
+              <Route path="/abogado-penal" element={<PenalLanding />} />
               <Route path="/review" element={<ReviewPage />} />
-             
+
 
               {/* New lawyer dashboard routes */}
               <Route path="/lawyer" element={
@@ -441,32 +450,32 @@ const AppContent = () => {
               <Route path="/test-analytics" element={
                 <TestAnalytics />
               } />
-              
+
               {/* Legacy route for backward compatibility */}
               <Route path="/lawyer-dashboard" element={<Navigate to="/lawyer/dashboard" replace />} />
               <Route path="/attorney-dashboard" element={<AttorneyDashboard />} />
               {/* Main route for lawyer profiles */}
               <Route path="/abogado">
                 {/* Route for SEO-friendly URLs: /abogado/name-lastname-uuid */}
-                <Route 
-                  path=":slug" 
-                  element={<PublicProfile />} 
+                <Route
+                  path=":slug"
+                  element={<PublicProfile />}
                 />
-                
+
                 {/* Catch-all route for /abogado/* that isn't a valid profile URL */}
-                <Route 
-                  path="*" 
+                <Route
+                  path="*"
                   element={
                     <RouteHandler>
                       <PublicProfile />
                     </RouteHandler>
-                  } 
+                  }
                 />
               </Route>
-              
+
               {/* Legacy route for backward compatibility */}
               <Route path="/lawyer/:id" element={<LawyerRedirect />} />
-              
+
               {/* 404 Not Found Page - must be last */}
               <Route path="*" element={<NotFound />} />
               <Route path="/profile" element={
@@ -474,7 +483,7 @@ const AppContent = () => {
                   <PublicProfile />
                 </RequireLawyer>
               } />
-                    {/* Dashboard and Protected Routes wrapped in Suspense and Providers */}
+              {/* Dashboard and Protected Routes wrapped in Suspense and Providers */}
               <Route path="/dashboard" element={
                 <Suspense fallback={
                   <div className="flex items-center justify-center min-h-screen">
@@ -539,14 +548,14 @@ const AppContent = () => {
                     </MessageProvider>
                   </NotificationProvider>
                 </Suspense>
-             }>
+              }>
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="notifications" element={<AdminNotifications />} />
                 <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="lawyer-profiles" element={<LawyerProfilesPage />} />
               </Route>
-              
+
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/payment/failure" element={<PaymentFailure />} />
               <Route path="/payment-canceled" element={<PaymentCanceled />} />
@@ -557,8 +566,8 @@ const AppContent = () => {
               <Route path="/auth/confirm-email" element={<EmailVerification />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </Suspense>
         </main>
         <Footer />

@@ -126,11 +126,10 @@ export function CalculadoraFiniquito() {
               <button
                 key={c.value}
                 onClick={() => setCausal(c.value)}
-                className={`text-left rounded-lg border px-4 py-3 transition-all ${
-                  causal === c.value
+                className={`text-left rounded-lg border px-4 py-3 transition-all ${causal === c.value
                     ? "border-gray-900 bg-white ring-1 ring-gray-900"
                     : "border-gray-200 bg-white hover:border-gray-400"
-                }`}
+                  }`}
               >
                 <p className="text-sm font-semibold text-gray-900">
                   {c.label}
@@ -330,9 +329,9 @@ const BlogArticle = () => {
         dateModified="2026-05-05"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -343,7 +342,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar
           </h1>
@@ -369,11 +368,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          
+
           <p className="text-xl max-w-3xl">
             Calcular el finiquito en Chile puede generar muchas dudas, especialmente porque intervienen distintos factores como indemnizaciones, vacaciones pendientes, pagos proporcionales y otros beneficios laborales.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -394,18 +393,18 @@ const BlogArticle = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso" 
-            url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026" 
+          <BlogShare
+            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
+            url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
             showBorder={false}
           />
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium mb-4">
-              Cuando termina una relación laboral, el trabajador tiene derecho a recibir 
-              todos los montos pendientes generados durante su contrato. Para hacer el 
-              cálculo de tu finiquito en Chile 2026 correctamente, necesitas entender 
-              qué conceptos incluye y cómo verificar que el monto sea el correcto — 
+              Cuando termina una relación laboral, el trabajador tiene derecho a recibir
+              todos los montos pendientes generados durante su contrato. Para hacer el
+              cálculo de tu finiquito en Chile 2026 correctamente, necesitas entender
+              qué conceptos incluye y cómo verificar que el monto sea el correcto —
               muchas personas firman sin saber si les están pagando lo que corresponde.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
@@ -496,7 +495,7 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            
+
             <InArticleCTA
               message="¿No estás seguro si el monto que te ofrecen es correcto? Un abogado laboral puede revisar tu finiquito antes de que lo firmes."
               buttonText="Revisar mi finiquito con un abogado"
@@ -567,7 +566,7 @@ const BlogArticle = () => {
                   <p className="text-indigo-900 font-bold text-lg mb-2">El cálculo corresponde a:</p>
                   <p className="text-indigo-800">1 mes de sueldo por cada año trabajado.</p>
                 </div>
-                
+
                 <p className="text-gray-600 mb-4 leading-relaxed">Revisa el detalle de cómo cobrar tus años de servicio:</p>
                 <div className="text-center py-4 border-t border-b border-gray-100 my-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -658,7 +657,7 @@ const BlogArticle = () => {
               buttonText="Consultar sobre mi finiquito"
               category="Derecho Laboral"
             />
-            
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile 2026</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
               Ahora que ya conoces qué pagos puede incluir un finiquito laboral, puedes estimar cuánto te corresponde según tu sueldo, años trabajados y causal de término del contrato.<br />
@@ -781,23 +780,22 @@ const BlogArticle = () => {
             </div>
           </div>
           <div className="text-center py-4 border-t border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el monto de tu finiquito?</p>
-              <Link
-                to="/blog/reserva-de-derechos-finiquito-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 Guía: Cómo firmar con reserva de derechos
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el monto de tu finiquito?</p>
+            <Link
+              to="/blog/reserva-de-derechos-finiquito-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía: Cómo firmar con reserva de derechos
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Antes de firmar, verifica que tu finiquito incluya todas las indemnizaciones y vacaciones que te corresponden. Compara abogados laborales y revisa tu caso."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-finiquito"
             buttonText="Revisar mi finiquito con un abogado"
           />
-
-
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -819,7 +817,7 @@ const BlogArticle = () => {
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
-            
+
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -840,17 +838,17 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
-          <BlogShare 
-            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso" 
-            url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026" 
+          <BlogShare
+            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
+            url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="como-calcular-tu-finiquito-chile-2026" />
 
         <div className="mt-4 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -858,7 +856,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      
+
       <BlogConversionPopup category="Derecho Laboral" topic="finiquito" />
     </div>
   );

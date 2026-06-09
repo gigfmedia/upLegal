@@ -688,7 +688,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La mediación familiar es obligatoria en muchos conflictos. Un abogado especializado puede orientarte antes, durante y después del proceso."
-            link="/search?specialty=Derecho%20de%20Familia"
+            link="/abogado-pension-alimentos"
             buttonText="Comparar abogados especializados"
           />
 

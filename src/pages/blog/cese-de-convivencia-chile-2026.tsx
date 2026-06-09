@@ -557,7 +557,7 @@ const BlogArticle = () => {
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
                         description="Para iniciar un divorcio unilateral en Chile debes acreditar un cese de convivencia de al menos 3 años, si no hay acuerdo, será necesario iniciar un proceso judicial. Consulta con un abogado especialista."
-                        link="/search?specialty=Derecho%20de%20Familia"
+                        link="/abogado-divorcio-unilatera"
                         buttonText="Comparar abogados especializados"
                     />
 

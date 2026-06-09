@@ -627,13 +627,13 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="El régimen de visitas protege el vínculo con tus hijos. Compara abogados de familia y agenda una consulta para evaluar tu situación."
-            link="/search?specialty=Derecho%20de%20Familia"
-            buttonText="Comparar abogados especializados"
-          />
 
+                    {/* CTA before Conclusion */}
+                    <PreConclusionCTA
+                        description="El régimen de visitas protege el vínculo con tus hijos. Compara abogados de familia y agenda una consulta para evaluar tu situación."
+                        link="/abogado-pension-alimentos"
+                        buttonText="Comparar abogados especializados"
+                    />
 
                     {/* CONCLUSION */}
                     <div className="prose prose-lg max-w-none mb-12 border-t pt-8">

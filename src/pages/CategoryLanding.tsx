@@ -48,34 +48,28 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
         const { lawyers: results } = await searchLawyers({
           specialty: specialty || "all",
           page: 1,
-          pageSize: 12, // Fetch more to have a better sorting pool
+          pageSize: 12,
           orderBy: 'review_count',
           orderDirection: 'desc'
         });
 
-        // Sort: Complete profiles first
-        const sortedResults = [...(results || [])].sort((a, b) => {
-          const isCompleteA = Boolean(
-            (a.verified || a.pjud_verified) &&
-            a.hourly_rate_clp > 0 &&
-            a.bio && a.bio.trim() !== '' &&
-            a.specialties && a.specialties.length > 0 &&
-            a.location && a.location.trim() !== ''
+        // FILTRAR: Solo abogados con perfil completo
+        const completeResults = (results || []).filter((lawyer) => {
+          return Boolean(
+            (lawyer.verified || lawyer.pjud_verified) &&
+            lawyer.hourly_rate_clp > 0 &&
+            lawyer.bio && lawyer.bio.trim() !== '' &&
+            lawyer.specialties && lawyer.specialties.length > 0 &&
+            lawyer.location && lawyer.location.trim() !== ''
           );
-          const isCompleteB = Boolean(
-            (b.verified || b.pjud_verified) &&
-            b.hourly_rate_clp > 0 &&
-            b.bio && b.bio.trim() !== '' &&
-            b.specialties && b.specialties.length > 0 &&
-            b.location && b.location.trim() !== ''
-          );
-
-          if (isCompleteA && !isCompleteB) return -1;
-          if (!isCompleteA && isCompleteB) return 1;
-          return 0;
         });
 
-        setLawyers(sortedResults.slice(0, 6)); // Only show top 6 after sorting
+        // Ordenar por cantidad de reseñas (mejores primero)
+        const sortedResults = [...completeResults].sort((a, b) => {
+          return (b.review_count || 0) - (a.review_count || 0);
+        });
+
+        setLawyers(sortedResults.slice(0, 6));
       } catch (error) {
         console.error("Error fetching category lawyers:", error);
       } finally {
@@ -143,7 +137,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
 
       {/* Hero Section */}
       <div className="bg-green-900 text-white pt-32 pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-2 mb-6 text-green-400 text-sm">
             <Link to="/" className="hover:text-white transition-colors">Inicio</Link>
             <ChevronRight className="h-4 w-4" />
@@ -191,7 +185,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
               </div>
             </div>
             <div className="hidden lg:block relative">
-              <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 mb-8">
+              <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
                 <div className="flex items-center gap-4 mb-6">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-green-400/80">Asesoría Inmediata</h3>
                 </div>
@@ -214,6 +208,53 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
         </div>
       </div>
 
+      {/* Lawyers List */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Abogados destacados en esta área
+              </h2>
+
+              <p className="text-gray-600 max-w-2xl">
+                Hemos seleccionado a los profesionales con mejores valoraciones y mayor experiencia para ayudarte con tu caso.
+              </p>
+            </div>
+            <Link to="/search">
+              <Button variant="outline" className="border-gray-800 text-gray-900 hover:bg-green-900 hover:text-white">
+                Ver todos los abogados
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white rounded-2xl h-96 animate-pulse border border-gray-100" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {lawyers.map((lawyer) => (
+                <LawyerCard
+                  key={lawyer.id}
+                  lawyer={{
+                    ...lawyer,
+                    name: `${lawyer.first_name} ${lawyer.last_name}`,
+                    image: lawyer.avatar_url,
+                    reviews: lawyer.review_count,
+                    hourlyRate: lawyer.hourly_rate_clp,
+                    consultationPrice: Math.round(lawyer.hourly_rate_clp * 0.5)
+                  }}
+                  user={user}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* SEO Text Block */}
       <section className="py-20">
@@ -334,7 +375,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
         return false;
       }).length > 0 && (
           <section className="py-20 bg-white border-t border-gray-100">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6">
 
                 <div>
@@ -421,56 +462,6 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
             </div>
           </section>
         )}
-
-      {/* Lawyers List */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-start justify-between mb-12 gap-6">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Abogados destacados en esta área
-              </h2>
-
-              <p className="text-gray-600 max-w-2xl">
-                Hemos seleccionado a los profesionales con mejores valoraciones y mayor experiencia para ayudarte con tu caso.
-              </p>
-            </div>
-            <Link to="/search">
-              <Button variant="outline" className="border-gray-800 text-gray-900 hover:bg-green-900 hover:text-white">
-                Ver todos los abogados
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl h-96 animate-pulse border border-gray-100" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {lawyers.map((lawyer) => (
-                <LawyerCard
-                  key={lawyer.id}
-                  lawyer={{
-                    ...lawyer,
-                    name: `${lawyer.first_name} ${lawyer.last_name}`,
-                    image: lawyer.avatar_url,
-                    reviews: lawyer.review_count,
-                    hourlyRate: lawyer.hourly_rate_clp,
-                    consultationPrice: Math.round(lawyer.hourly_rate_clp * 0.5)
-                  }}
-                  user={user}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-
-
 
       {/* CTA Section */}
       <section className="py-20 bg-green-900 text-white">
