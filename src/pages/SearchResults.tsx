@@ -54,54 +54,52 @@ const normalizeSpecialty = (s: string | null): string => {
 const chileanLocations = [
   // Región de Arica y Parinacota
   'Arica', 'Putre', 'General Lagos', 'Camarones',
-  
+
   // Región de Tarapacá
   'Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Colchane',
-  
+
   // Región de Antofagasta
   'Antofagasta', 'Calama', 'Tocopilla', 'Mejillones', 'Taltal', 'San Pedro de Atacama', 'María Elena',
-  
+
   // Región de Atacama
   'Copiapó', 'Caldera', 'Tierra Amarilla', 'Chañaral', 'Diego de Almagro', 'Vallenar', 'Alto del Carmen', 'Freirina', 'Huasco',
-  
+
   // Región de Coquimbo
   'La Serena', 'Coquimbo', 'Ovalle', 'Illapel', 'Los Vilos', 'Salamanca', 'Vicuña', 'Paihuano', 'Andacollo', 'La Higuera',
-  
+
   // Región de Valparaíso
   'Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'San Antonio', 'Quillota', 'San Felipe', 'Los Andes', 'La Ligua', 'Zapallar',
-  
+
   // Región Metropolitana
   'Santiago', 'Maipú', 'Puente Alto', 'La Florida', 'Las Condes', 'Providencia', 'Ñuñoa', 'La Reina', 'Peñalolén', 'La Pintana',
-  
+
   // Región del Libertador Bernardo O'Higgins
   'Rancagua', 'San Fernando', 'Santa Cruz', 'Pichilemu', 'San Vicente de Tagua Tagua', 'Rengo', 'Machalí',
-  
+
   // Región del Maule
   'Talca', 'Curicó', 'Linares', 'Constitución', 'Cauquenes', 'Parral', 'San Javier',
-  
+
   // Región de Ñuble
   'Chillán', 'Chillán Viejo', 'Bulnes', 'Quirihue', 'San Carlos', 'Coihueco',
-  
+
   // Región del Biobío
   'Concepción', 'Talcahuano', 'Los Ángeles', 'Coronel', 'Chiguayante', 'San Pedro de la Paz', 'Lota', 'Lebu', 'Los Ángeles',
-  
+
   // Región de La Araucanía
   'Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Lautaro',
-  
+
   // Región de Los Ríos
   'Valdivia', 'La Unión', 'Panguipulli', 'Paillaco', 'Río Bueno', 'Los Lagos',
-  
+
   // Región de Los Lagos
   'Puerto Montt', 'Osorno', 'Castro', 'Ancud', 'Puerto Varas', 'Frutillar', 'Calbuco', 'Puerto Octay',
-  
+
   // Región de Aysén
   'Coyhaique', 'Puerto Aysén', 'Chile Chico', 'Cochrane', 'Villa O\'Higgins',
-  
+
   // Región de Magallanes
   'Punta Arenas', 'Puerto Natales', 'Porvenir', 'Puerto Williams'
 ];
-
-
 
 const SearchResults = () => {
   const { user } = useAuth() as AuthContextType;
@@ -109,16 +107,18 @@ const SearchResults = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
-  const viewLawyersTrackedRef = useRef<string | null>(null);
-  
+  const viewLawyersTrackedRef = useRef<{ key: string; timestamp: number } | null>(null);
+  const isInitialMount = useRef(true);
+  const isUpdatingFromUrl = useRef(false);
+
   // Get search parameters from URL
   const initialQuery = searchParams.get('query') || '';
   const categoryFromUrl = searchParams.get('category');
-  
+
   // Handle multiple specialty params
   const specialtyParams = searchParams.getAll('specialty');
   let initialSpecialties: string[] = [];
-  
+
   if (categoryFromUrl) {
     initialSpecialties = [normalizeSpecialty(categoryFromUrl)];
   } else if (specialtyParams.length > 0) {
@@ -135,7 +135,7 @@ const SearchResults = () => {
   }
 
   const initialLocation = searchParams.get('location') || '';
-  
+
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string[]>(initialSpecialties);
   const [location, setLocation] = useState(initialLocation);
@@ -143,27 +143,27 @@ const SearchResults = () => {
     return searchParams.get('sort') || 'relevance';
   });
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // New filter states
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [minRating, setMinRating] = useState<number>(0);
   const [minExperience, setMinExperience] = useState<number>(0);
   const [availableNow, setAvailableNow] = useState<boolean>(false);
-  
+
   const [searchResult, setSearchResult] = useState<{
     lawyers: Lawyer[];
     total: number;
     page: number;
     pageSize: number;
     hasMore: boolean;
-  }>({ 
-    lawyers: [], 
-    total: 0, 
-    page: 1, 
-    pageSize: 12, // Increased page size for better initial load
-    hasMore: true 
+  }>({
+    lawyers: [],
+    total: 0,
+    page: 1,
+    pageSize: 12,
+    hasMore: true
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -171,99 +171,14 @@ const SearchResults = () => {
   // Modal states
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
 
-  
-  
   // Infinite scroll ref
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false,
   });
 
-  // Sync local state with URL parameters when they change
-  useEffect(() => {
-    const urlQuery = searchParams.get('query') || '';
-    const urlCategory = searchParams.get('category');
-    const urlSpecialties = searchParams.getAll('specialty');
-    const urlLocation = searchParams.get('location') || '';
-    const urlMinRating = Number(searchParams.get('minRating')) || 0;
-    const urlMinExperience = Number(searchParams.get('minExperience')) || 0;
-    // const urlAvailableNow = searchParams.get('availableNow') === 'true'; // Not used in backend query yet
-    
-    // Determine specialties from URL
-    let newSpecialties: string[] = [];
-    if (urlCategory) {
-      newSpecialties = [normalizeSpecialty(urlCategory)];
-    } else if (urlSpecialties.length > 0) {
-      newSpecialties = urlSpecialties.map(s => normalizeSpecialty(s));
-    } else if (urlQuery) {
-      const detected = detectEspecialidad(urlQuery);
-      if (detected) {
-        newSpecialties = [normalizeSpecialty(detected)];
-      } else {
-        newSpecialties = ['all'];
-      }
-    } else {
-      newSpecialties = ['all'];
-    }
-
-    // Sync state from URL without depending on state variables (avoids exhaustive-deps loop)
-    setSearchTerm((prev) => (prev === urlQuery ? prev : urlQuery));
-    setSelectedSpecialty((prev) => {
-      const isSame =
-        prev.length === newSpecialties.length &&
-        prev.every((val, index) => val === newSpecialties[index]);
-      return isSame ? prev : newSpecialties;
-    });
-    setLocation((prev) => (prev === urlLocation ? prev : urlLocation));
-    setMinRating((prev) => (prev === urlMinRating ? prev : urlMinRating));
-    setMinExperience((prev) => (prev === urlMinExperience ? prev : urlMinExperience));
-
-    
-    // Trigger search using URL-derived values (avoid stale state + fixes hook deps)
-    const hasSearchFilters = Boolean(
-      urlQuery ||
-        (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') ||
-        urlCategory ||
-        urlLocation ||
-        urlMinRating > 0 ||
-        urlMinExperience > 0
-    );
-
-    if (hasSearchFilters) {
-      setLoading(true);
-      debouncedSearchRef.current({
-        page: 1,
-        isInitialLoad: true,
-        searchParams: {
-          query: urlQuery,
-          specialty: newSpecialties,
-          location: urlLocation,
-          minRating: urlMinRating,
-          minExperience: urlMinExperience,
-          availableNow: false
-        },
-        currentPageSize: 12
-      });
-    } else {
-      // Si no hay filtros específicos (o solo hay UTMs/parámetros irrelevantes), buscar todos los abogados
-      setLoading(true);
-      debouncedSearchRef.current({
-        page: 1,
-        isInitialLoad: true,
-        searchParams: {
-          query: '',
-          specialty: ['all'],
-          location: '',
-          minRating: 0,
-          minExperience: 0,
-          availableNow: false
-        },
-        currentPageSize: 12
-      });
-    }
-  }, [searchParams]); // Only depend on searchParams, not state variables
-
-
+  // Ref to store last request key for deduplication
+  const lastRequestKeyRef = useRef<string>('');
 
   // Create a ref to store the debounced search function
   const debouncedSearchRef = useRef(
@@ -281,31 +196,38 @@ const SearchResults = () => {
       currentPageSize: number;
     }) => {
       const { page, isInitialLoad, searchParams, currentPageSize } = params;
-      
+
+      // Deduplicate identical requests
+      const requestKey = JSON.stringify({ page, ...searchParams });
+      if (lastRequestKeyRef.current === requestKey && !isInitialLoad) {
+        return;
+      }
+      lastRequestKeyRef.current = requestKey;
+
       // Add safety check for searchParams
       const safeSearchParams = searchParams || {
         query: '',
-        specialty: '',
+        specialty: ['all'],
         location: '',
         minRating: 0,
         minExperience: 0,
         availableNow: false
       };
-      
+
       const { query, specialty, location, minRating, minExperience, availableNow } = safeSearchParams;
-      
+
       try {
         if (isInitialLoad) {
           setLoading(true);
         } else {
           setLoadingMore(true);
         }
-        
+
         setError(null);
-        
+
         // Use dynamic import for code splitting
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        
+
         const response = await searchLawyers({
           query: query || '',
           specialty: specialty && specialty[0] !== 'all' ? specialty : undefined,
@@ -316,8 +238,7 @@ const SearchResults = () => {
           page,
           pageSize: currentPageSize
         });
-        
-        
+
         if (response) {
           // First, format all lawyers
           const formattedLawyers = response.lawyers.map(lawyer => {
@@ -325,7 +246,7 @@ const SearchResults = () => {
             const roundToThousands = (amount: number): number => {
               return Math.round(amount / 1000) * 1000;
             };
-            
+
             const rawHourlyRate = lawyer.hourly_rate_clp || 0;
             const displayHourlyRate = roundToThousands(rawHourlyRate * (1 + clientSurchargePercent));
 
@@ -339,8 +260,8 @@ const SearchResults = () => {
               location: lawyer.location || 'Sin ubicación',
               cases: 0,
               hourlyRate: rawHourlyRate,
-              displayPrice: displayHourlyRate, // Added for consistent sorting/display
-              consultationPrice: displayHourlyRate, // Use the display price for sorting
+              displayPrice: displayHourlyRate,
+              consultationPrice: displayHourlyRate,
               image: lawyer.avatar_url || '',
               bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
               verified: Boolean(lawyer.verified),
@@ -387,7 +308,7 @@ const SearchResults = () => {
         setLoading(false);
         setLoadingMore(false);
       }
-    }, 300) // 300ms debounce delay
+    }, 500) // Increased to 500ms for better performance
   );
 
   // Cleanup debounce on unmount
@@ -396,6 +317,144 @@ const SearchResults = () => {
       debouncedSearchRef.current.cancel();
     };
   }, []);
+
+  // Sync URL changes to local state and trigger search - FIXED VERSION (no infinite loop)
+  useEffect(() => {
+    // Prevent recursive updates
+    if (isUpdatingFromUrl.current) {
+      return;
+    }
+
+    // Get current URL parameters
+    const urlQuery = searchParams.get('query') || '';
+    const urlCategory = searchParams.get('category');
+    const urlSpecialties = searchParams.getAll('specialty');
+    const urlLocation = searchParams.get('location') || '';
+    const urlMinRating = Number(searchParams.get('minRating')) || 0;
+    const urlMinExperience = Number(searchParams.get('minExperience')) || 0;
+    const urlSort = searchParams.get('sort') || 'relevance';
+
+    // Determine specialties from URL
+    let newSpecialties: string[] = [];
+    if (urlCategory) {
+      newSpecialties = [normalizeSpecialty(urlCategory)];
+    } else if (urlSpecialties.length > 0) {
+      newSpecialties = urlSpecialties.map(s => normalizeSpecialty(s));
+    } else if (urlQuery) {
+      const detected = detectEspecialidad(urlQuery);
+      if (detected) {
+        newSpecialties = [normalizeSpecialty(detected)];
+      } else {
+        newSpecialties = ['all'];
+      }
+    } else {
+      newSpecialties = ['all'];
+    }
+
+    // Check for actual changes
+    const hasQueryChanged = searchTerm !== urlQuery;
+    const hasSpecialtiesChanged = JSON.stringify(selectedSpecialty) !== JSON.stringify(newSpecialties);
+    const hasLocationChanged = location !== urlLocation;
+    const hasRatingChanged = minRating !== urlMinRating;
+    const hasExperienceChanged = minExperience !== urlMinExperience;
+    const hasSortChanged = sortBy !== urlSort;
+
+    // Update local state if needed
+    if (hasQueryChanged) setSearchTerm(urlQuery);
+    if (hasSpecialtiesChanged) setSelectedSpecialty(newSpecialties);
+    if (hasLocationChanged) setLocation(urlLocation);
+    if (hasRatingChanged) setMinRating(urlMinRating);
+    if (hasExperienceChanged) setMinExperience(urlMinExperience);
+    if (hasSortChanged) setSortBy(urlSort);
+
+    // Determine if we need to trigger a search
+    const shouldSearch = hasQueryChanged || hasSpecialtiesChanged || hasLocationChanged ||
+      hasRatingChanged || hasExperienceChanged;
+
+    // Handle initial mount separately
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+
+      // Only search if there are meaningful filters or no lawyers loaded
+      const hasSearchFilters = Boolean(
+        urlQuery ||
+        (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') ||
+        urlCategory ||
+        urlLocation ||
+        urlMinRating > 0 ||
+        urlMinExperience > 0
+      );
+
+      if (hasSearchFilters || searchResult.lawyers.length === 0) {
+        isUpdatingFromUrl.current = true;
+        debouncedSearchRef.current({
+          page: 1,
+          isInitialLoad: true,
+          searchParams: {
+            query: urlQuery,
+            specialty: newSpecialties,
+            location: urlLocation,
+            minRating: urlMinRating,
+            minExperience: urlMinExperience,
+            availableNow: false
+          },
+          currentPageSize: 12
+        });
+        setTimeout(() => {
+          isUpdatingFromUrl.current = false;
+        }, 100);
+      } else if (searchResult.lawyers.length === 0) {
+        // Load all lawyers if no filters
+        isUpdatingFromUrl.current = true;
+        debouncedSearchRef.current({
+          page: 1,
+          isInitialLoad: true,
+          searchParams: {
+            query: '',
+            specialty: ['all'],
+            location: '',
+            minRating: 0,
+            minExperience: 0,
+            availableNow: false
+          },
+          currentPageSize: 12
+        });
+        setTimeout(() => {
+          isUpdatingFromUrl.current = false;
+        }, 100);
+      }
+      return;
+    }
+
+    // For subsequent changes, only search if relevant params changed
+    if (shouldSearch) {
+      isUpdatingFromUrl.current = true;
+      setSearchResult(prev => ({
+        ...prev,
+        page: 1,
+        lawyers: prev.page === 1 ? prev.lawyers : [],
+        hasMore: true
+      }));
+
+      debouncedSearchRef.current({
+        page: 1,
+        isInitialLoad: true,
+        searchParams: {
+          query: urlQuery,
+          specialty: newSpecialties,
+          location: urlLocation,
+          minRating: urlMinRating,
+          minExperience: urlMinExperience,
+          availableNow: false
+        },
+        currentPageSize: 12
+      });
+
+      setTimeout(() => {
+        isUpdatingFromUrl.current = false;
+      }, 100);
+    }
+  }, [searchParams]); // Only depend on searchParams
 
   // Load more when scroll reaches the bottom
   useEffect(() => {
@@ -421,37 +480,14 @@ const SearchResults = () => {
   // Handle search
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
-    
+
     // If search term is empty, clear the search and show all lawyers
     if (!searchTerm.trim()) {
-      setSearchTerm('');
-      setSelectedSpecialty(['all']);
-      setLocation('');
+      // Update URL to clear filters
       setSearchParams(new URLSearchParams());
-      
-      setSearchResult(prev => ({
-        ...prev,
-        page: 1,
-        lawyers: [],
-        hasMore: true
-      }));
-      
-      debouncedSearchRef.current({
-        page: 1,
-        isInitialLoad: true,
-        searchParams: {
-          query: '',
-          specialty: ['all'],
-          location: '',
-          minRating: 0,
-          minExperience: 0,
-          availableNow: false
-        },
-        currentPageSize: searchResult.pageSize
-      });
       return;
     }
-    
+
     // Handle specialty logic intelligently with natural language mapping
     const detected = detectEspecialidad(searchTerm);
     if (detected) {
@@ -468,50 +504,30 @@ const SearchResults = () => {
     } else if (selectedSpecialty.length > 0 && selectedSpecialty[0] !== 'all') {
       selectedSpecialty.forEach(s => params.append('specialty', s));
     }
-    
+
     // Only add search term if it's not empty
     if (searchTerm.trim()) {
       params.set('query', searchTerm.trim());
     }
-    
+
     if (location) params.set('location', location);
+    if (sortBy !== 'relevance') params.set('sort', sortBy);
+
     setSearchParams(params);
-    
-    // Reset pagination and load first page
-    setSearchResult(prev => ({
-      ...prev,
-      page: 1,
-      lawyers: [],
-      hasMore: true
-    }));
-    
-    debouncedSearchRef.current({
-      page: 1,
-      isInitialLoad: true,
-      searchParams: {
-        query: searchTerm,
-        specialty: selectedSpecialty,
-        location,
-        minRating,
-        minExperience,
-        availableNow: false
-      },
-      currentPageSize: searchResult.pageSize
-    });
-  }, [searchTerm, selectedSpecialty, location, minRating, minExperience, searchResult.pageSize, setSearchParams]);
+  }, [searchTerm, selectedSpecialty, location, sortBy, setSearchParams]);
 
   // Get the lawyers from the search result
   const filteredLawyers = useMemo(() => {
     if (loading && !searchResult.lawyers.length) {
       return [];
     }
-    
+
     // Apply client-side sorting
     return [...searchResult.lawyers].sort((a, b) => {
       // 0-Price Handling: Always push lawyers with price 0 to the end
       const aPrice = a.consultationPrice || 0;
       const bPrice = b.consultationPrice || 0;
-      
+
       if (aPrice === 0 && bPrice !== 0) return 1;
       if (aPrice !== 0 && bPrice === 0) return -1;
 
@@ -549,7 +565,7 @@ const SearchResults = () => {
       // Fourth priority: Review count
       return (b.reviews || 0) - (a.reviews || 0);
     });
-  }, [searchResult.lawyers, loading, searchTerm, sortBy]);
+  }, [searchResult.lawyers, loading, sortBy]);
 
   // Handle applying filters
   const handleApplyFilters = useCallback((filters: {
@@ -560,13 +576,16 @@ const SearchResults = () => {
     modality?: string;
     region?: string;
   }) => {
-    // Update local state is handled by URL sync now, but we can update optimistically/redundantly
+    // Update local state
     setPriceRange(filters.priceRange);
-    
+    setMinRating(filters.minRating);
+    setMinExperience(filters.minExperience);
+    setAvailableNow(filters.availableNow);
+
     // Update URL params to trigger search and persistence
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
-      
+
       // Update Min Experience
       if (filters.minExperience > 0) {
         params.set('minExperience', filters.minExperience.toString());
@@ -588,35 +607,29 @@ const SearchResults = () => {
         params.delete('location');
       }
 
-      // Note: availableNow and priceRange might not be fully supported in URL/Backend yet based on previous analysis
-      
       return params;
     });
-
   }, [setSearchParams]);
 
   // Handle specialty change from filters
   const handleSpecialtyChange = useCallback((specialties: string[]) => {
     setSelectedSpecialty(specialties);
-    
+
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
       params.delete('specialty');
-      params.delete('category'); // Clear category if specialty changes
-      
+      params.delete('category');
+
       specialties.forEach(s => {
         if (s !== 'all') params.append('specialty', s);
       });
-      
+
       return params;
     });
   }, [setSearchParams]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    // Show loading state
-    setLoading(true);
-    
     // Reset all search-related states
     setSearchTerm('');
     setSelectedSpecialty(['all']);
@@ -625,85 +638,88 @@ const SearchResults = () => {
     setMinExperience(0);
     setAvailableNow(false);
     setPriceRange([0, 1000000]);
-    
+    setSortBy('relevance');
+
     // Clear URL parameters
     setSearchParams(new URLSearchParams());
-    
-    // Force a search with empty parameters to show all lawyers
-    debouncedSearchRef.current({
-      page: 1,
-      isInitialLoad: true,
-      searchParams: {
-        query: '',
-        specialty: ['all'],
-        location: '',
-        minRating: 0,
-        minExperience: 0,
-        availableNow: false
-      },
-      currentPageSize: 12
-    });
   }, [setSearchParams]);
-
-
 
   // Scroll to lawyer cards when coming from category click
   useEffect(() => {
     // Check if we have a category parameter (coming from category click on homepage)
     const hasCategoryParam = searchParams.get('category');
-    
+
     if (hasCategoryParam && !loading && filteredLawyers.length > 0) {
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         const afterSpecialties = document.getElementById('after-specialties');
         if (afterSpecialties) {
           const isMobile = window.innerWidth < 768;
-          const offset = isMobile ? 80 : 0; // Offset para mobile para dejar espacio visual
+          const offset = isMobile ? 80 : 0;
           const elementPosition = afterSpecialties.getBoundingClientRect().top + window.scrollY;
           window.scrollTo({
             top: elementPosition - offset,
             behavior: 'smooth'
           });
         }
-      }, 150); // Delay ligeramente mayor para asegurar render completo en mobile
+      }, 150);
     }
   }, [loading, filteredLawyers.length, searchParams]);
 
+  // Fixed GA4 tracking with throttling to prevent contamination
   useEffect(() => {
     if (loading) return;
     if (filteredLawyers.length === 0) return;
 
-    const dedupeKey = `${searchParams.toString()}|${filteredLawyers.length}`;
-    if (viewLawyersTrackedRef.current === dedupeKey) return;
-    viewLawyersTrackedRef.current = dedupeKey;
+    const now = Date.now();
+    const trackingKey = `${searchParams.toString()}|${filteredLawyers.length}`;
+
+    // Throttle: Don't send more than once every 2 seconds for the same search
+    if (viewLawyersTrackedRef.current?.key === trackingKey) {
+      if (now - viewLawyersTrackedRef.current.timestamp < 2000) {
+        return;
+      }
+    }
+
+    viewLawyersTrackedRef.current = {
+      key: trackingKey,
+      timestamp: now
+    };
 
     const specialty = selectedSpecialty?.length
       ? selectedSpecialty.filter((s) => s !== 'all').join(',') || 'all'
       : 'all';
 
-    window.gtag?.('event', 'view_lawyers', {
-      results_count: filteredLawyers.length,
-      specialty,
-    });
+    // Debounce GA4 events
+    const timeoutId = setTimeout(() => {
+      if (window.gtag) {
+        window.gtag('event', 'view_lawyers', {
+          results_count: filteredLawyers.length,
+          specialty,
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
   }, [loading, filteredLawyers.length, searchParams, selectedSpecialty]);
-  
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       <Helmet>
         <link rel="canonical" href="https://legalup.cl/search" />
       </Helmet>
       <Header />
-      
+
       {/* Header and Search */}
       <div className="bg-white py-8 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold font-serif text-gray-900">Haz Match con el abogado ideal para tu caso</h1>
           <p className="text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
           <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small>
-          
+
           {/* Search Bar */}
           <div className="mt-6">
-            <SearchBar 
+            <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
               location={location}
@@ -745,34 +761,30 @@ const SearchResults = () => {
           <div id="filters-section" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             {/* Active Filters (Left Side) */}
             <div className="w-full md:flex-1">
-              {(selectedSpecialty.some(s => s !== 'all') || location) ? (
+              {(selectedSpecialty.some(s => s !== 'all') || location || minRating > 0 || minExperience > 0) ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm text-gray-500">Filtros activos:</span>
                   {selectedSpecialty.filter(s => s !== 'all').map((specialty) => (
                     <div key={specialty} className="inline-flex items-center gap-1 bg-gray-50 text-green-900 border border-green-600 hover:bg-green-100 px-3 py-1 rounded-full text-sm font-medium">
                       {specialty}
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          
+
                           // Create new specialties array without the removed one
                           const newSpecialties = selectedSpecialty.filter(s => s !== specialty);
                           const updatedSpecialties = newSpecialties.length > 0 ? newSpecialties : ['all'];
-                          
-                          // Show loading state
-                          setLoading(true);
-                          
-                          // Update URL first
+
+                          // Update local state immediately
+                          setSelectedSpecialty(updatedSpecialties);
+
+                          // Update URL
                           setSearchParams(prevParams => {
-                            const params = new URLSearchParams();
-                            
-                            // Only keep location and other non-search parameters
-                            if (location) params.set('location', location);
-                            if (minRating > 0) params.set('minRating', minRating.toString());
-                            if (minExperience > 0) params.set('minExperience', minExperience.toString());
-                            
-                            // Only add specialty if it's not 'all' and there are specialties left
+                            const params = new URLSearchParams(prevParams);
+                            params.delete('specialty');
+                            params.delete('category');
+
                             if (updatedSpecialties[0] !== 'all') {
                               updatedSpecialties.forEach(s => {
                                 if (s && s !== 'all') {
@@ -782,9 +794,6 @@ const SearchResults = () => {
                             }
                             return params;
                           });
-                          
-                          // Then update the state
-                          setSelectedSpecialty(updatedSpecialties);
                         }}
                         className="ml-1 text-green-500 hover:text-green-700 rounded-full focus:outline-none hover:bg-green-200 p-0.5 transition-colors"
                         type="button"
@@ -797,17 +806,16 @@ const SearchResults = () => {
                   {location && (
                     <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 px-3 py-1 rounded-full text-sm font-medium">
                       {location}
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          // Use functional form to get latest params
+                          setLocation('');
                           setSearchParams((prevParams) => {
-                            const params = new URLSearchParams(prevParams.toString());
+                            const params = new URLSearchParams(prevParams);
                             params.delete('location');
                             return params;
                           });
-                          // Don't manually update state - let the useEffect handle it
                         }}
                         className="ml-1 text-blue-500 hover:text-blue-700 rounded-full focus:outline-none hover:bg-blue-200 p-0.5 transition-colors"
                         type="button"
@@ -817,8 +825,52 @@ const SearchResults = () => {
                       </button>
                     </div>
                   )}
-                  {(selectedSpecialty[0] !== 'all' || location) && (
-                    <button 
+                  {minRating > 0 && (
+                    <div className="inline-flex items-center gap-1 bg-yellow-50 text-yellow-700 border border-yellow-100 hover:bg-yellow-100 px-3 py-1 rounded-full text-sm font-medium">
+                      {minRating}+ estrellas
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMinRating(0);
+                          setSearchParams((prevParams) => {
+                            const params = new URLSearchParams(prevParams);
+                            params.delete('minRating');
+                            return params;
+                          });
+                        }}
+                        className="ml-1 text-yellow-500 hover:text-yellow-700 rounded-full focus:outline-none hover:bg-yellow-200 p-0.5 transition-colors"
+                        type="button"
+                        aria-label="Remover filtro de calificación"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {minExperience > 0 && (
+                    <div className="inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-100 hover:bg-purple-100 px-3 py-1 rounded-full text-sm font-medium">
+                      {minExperience}+ años exp.
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMinExperience(0);
+                          setSearchParams((prevParams) => {
+                            const params = new URLSearchParams(prevParams);
+                            params.delete('minExperience');
+                            return params;
+                          });
+                        }}
+                        className="ml-1 text-purple-500 hover:text-purple-700 rounded-full focus:outline-none hover:bg-purple-200 p-0.5 transition-colors"
+                        type="button"
+                        aria-label="Remover filtro de experiencia"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  {(selectedSpecialty[0] !== 'all' || location || minRating > 0 || minExperience > 0) && (
+                    <button
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -832,7 +884,6 @@ const SearchResults = () => {
                   )}
                 </div>
               ) : (
-                /* Empty div to maintain spacing if needed, or just empty */
                 <div />
               )}
             </div>
@@ -845,10 +896,15 @@ const SearchResults = () => {
                   id="sort"
                   value={sortBy}
                   onChange={(e) => {
-                    setSortBy(e.target.value);
+                    const newSort = e.target.value;
+                    setSortBy(newSort);
                     // Update the URL with the new sort parameter
                     const params = new URLSearchParams(searchParams);
-                    params.set('sort', e.target.value);
+                    if (newSort !== 'relevance') {
+                      params.set('sort', newSort);
+                    } else {
+                      params.delete('sort');
+                    }
                     setSearchParams(params);
                   }}
                   className="h-10 w-full sm:w-48 pl-3 pr-10 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white"
@@ -859,9 +915,9 @@ const SearchResults = () => {
                   <option value="price">Precio</option>
                 </select>
               </div>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 className="w-full sm:w-auto border-gray-300 bg-white hover:bg-gray-50 flex items-center justify-center gap-2"
                 onClick={() => setShowFilters(true)}
               >
@@ -871,7 +927,6 @@ const SearchResults = () => {
             </div>
           </div>
 
-          
           {/* Results Grid */}
           {loading && searchResult.lawyers.length === 0 ? (
             <div className="w-full">
@@ -930,14 +985,14 @@ const SearchResults = () => {
                   );
                 })}
               </div>
-              
+
               {/* Loading indicator at the bottom */}
               {(loading || loadingMore) && (
                 <div className="flex justify-center py-8">
                   <div className="h-8 w-8 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
-              
+
               {/* Infinite scroll trigger */}
               <div ref={loadMoreRef} className="h-1 w-full" />
             </div>
@@ -948,7 +1003,7 @@ const SearchResults = () => {
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron abogados</h3>
               <p className="text-gray-500 mb-6 max-w-md mx-auto">No hay resultados que coincidan con tu búsqueda. Intenta con otros términos o ajusta los filtros.</p>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={clearFilters}
                 className="border-green-900 text-gray-900 hover:bg-green-900 hover:text-white"
@@ -959,16 +1014,14 @@ const SearchResults = () => {
           )}
         </div>
       </div>
-      
+
       {/* Modals */}
-      <AuthModal 
+      <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         mode={authMode}
         onModeChange={(mode) => setAuthMode(mode)}
       />
-      
-      {/* Modals moved or removed as per requirement */}
     </div>
   );
 };
