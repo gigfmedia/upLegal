@@ -14,7 +14,6 @@ import type { AuthContextType } from "@/contexts/AuthContext";
 import { AuthModal } from "@/components/AuthModal";
 import * as React from 'react';
 import { useInView } from 'react-intersection-observer';
-import debounce from 'lodash/debounce';
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectEspecialidad } from "@/utils/askLLM";
 import SpecialtiesSlider from '@/components/search/SpecialtiesSlider';
@@ -51,56 +50,6 @@ const normalizeSpecialty = (s: string | null): string => {
   return s;
 };
 
-const chileanLocations = [
-  // Región de Arica y Parinacota
-  'Arica', 'Putre', 'General Lagos', 'Camarones',
-
-  // Región de Tarapacá
-  'Iquique', 'Alto Hospicio', 'Pozo Almonte', 'Pica', 'Huara', 'Colchane',
-
-  // Región de Antofagasta
-  'Antofagasta', 'Calama', 'Tocopilla', 'Mejillones', 'Taltal', 'San Pedro de Atacama', 'María Elena',
-
-  // Región de Atacama
-  'Copiapó', 'Caldera', 'Tierra Amarilla', 'Chañaral', 'Diego de Almagro', 'Vallenar', 'Alto del Carmen', 'Freirina', 'Huasco',
-
-  // Región de Coquimbo
-  'La Serena', 'Coquimbo', 'Ovalle', 'Illapel', 'Los Vilos', 'Salamanca', 'Vicuña', 'Paihuano', 'Andacollo', 'La Higuera',
-
-  // Región de Valparaíso
-  'Valparaíso', 'Viña del Mar', 'Quilpué', 'Villa Alemana', 'San Antonio', 'Quillota', 'San Felipe', 'Los Andes', 'La Ligua', 'Zapallar',
-
-  // Región Metropolitana
-  'Santiago', 'Maipú', 'Puente Alto', 'La Florida', 'Las Condes', 'Providencia', 'Ñuñoa', 'La Reina', 'Peñalolén', 'La Pintana',
-
-  // Región del Libertador Bernardo O'Higgins
-  'Rancagua', 'San Fernando', 'Santa Cruz', 'Pichilemu', 'San Vicente de Tagua Tagua', 'Rengo', 'Machalí',
-
-  // Región del Maule
-  'Talca', 'Curicó', 'Linares', 'Constitución', 'Cauquenes', 'Parral', 'San Javier',
-
-  // Región de Ñuble
-  'Chillán', 'Chillán Viejo', 'Bulnes', 'Quirihue', 'San Carlos', 'Coihueco',
-
-  // Región del Biobío
-  'Concepción', 'Talcahuano', 'Los Ángeles', 'Coronel', 'Chiguayante', 'San Pedro de la Paz', 'Lota', 'Lebu', 'Los Ángeles',
-
-  // Región de La Araucanía
-  'Temuco', 'Padre Las Casas', 'Villarrica', 'Pucón', 'Angol', 'Victoria', 'Lautaro',
-
-  // Región de Los Ríos
-  'Valdivia', 'La Unión', 'Panguipulli', 'Paillaco', 'Río Bueno', 'Los Lagos',
-
-  // Región de Los Lagos
-  'Puerto Montt', 'Osorno', 'Castro', 'Ancud', 'Puerto Varas', 'Frutillar', 'Calbuco', 'Puerto Octay',
-
-  // Región de Aysén
-  'Coyhaique', 'Puerto Aysén', 'Chile Chico', 'Cochrane', 'Villa O\'Higgins',
-
-  // Región de Magallanes
-  'Punta Arenas', 'Puerto Natales', 'Porvenir', 'Puerto Williams'
-];
-
 const SearchResults = () => {
   const { user } = useAuth() as AuthContextType;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,8 +57,8 @@ const SearchResults = () => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   const viewLawyersTrackedRef = useRef<{ key: string; timestamp: number } | null>(null);
-  const isInitialMount = useRef(true);
-  const isUpdatingFromUrl = useRef(false);
+  const initialLoadDone = useRef(false);
+  const isSearching = useRef(false);
 
   // Get search parameters from URL
   const initialQuery = searchParams.get('query') || '';
@@ -177,164 +126,153 @@ const SearchResults = () => {
     triggerOnce: false,
   });
 
-  // Ref to store last request key for deduplication
-  const lastRequestKeyRef = useRef<string>('');
-
-  // Create a ref to store the debounced search function
-  const debouncedSearchRef = useRef(
-    debounce(async (params: {
-      page: number;
-      isInitialLoad: boolean;
-      searchParams: {
-        query: string;
-        specialty: string[];
-        location: string;
-        minRating: number;
-        minExperience: number;
-        availableNow: boolean;
-      };
-      currentPageSize: number;
-    }) => {
-      const { page, isInitialLoad, searchParams, currentPageSize } = params;
-
-      // Deduplicate identical requests
-      const requestKey = JSON.stringify({ page, ...searchParams });
-      if (lastRequestKeyRef.current === requestKey && !isInitialLoad) {
-        return;
-      }
-      lastRequestKeyRef.current = requestKey;
-
-      // Add safety check for searchParams
-      const safeSearchParams = searchParams || {
-        query: '',
-        specialty: ['all'],
-        location: '',
-        minRating: 0,
-        minExperience: 0,
-        availableNow: false
-      };
-
-      const { query, specialty, location, minRating, minExperience, availableNow } = safeSearchParams;
-
-      try {
-        if (isInitialLoad) {
-          setLoading(true);
-        } else {
-          setLoadingMore(true);
-        }
-
-        setError(null);
-
-        // Use dynamic import for code splitting
-        const { searchLawyers } = await import('@/pages/api/search-lawyers');
-
-        const response = await searchLawyers({
-          query: query || '',
-          specialty: specialty && specialty[0] !== 'all' ? specialty : undefined,
-          location: location || undefined,
-          minRating: minRating || undefined,
-          minExperience: minExperience || undefined,
-          availableNow: availableNow || false,
-          page,
-          pageSize: currentPageSize
-        });
-
-        if (response) {
-          // First, format all lawyers
-          const formattedLawyers = response.lawyers.map(lawyer => {
-            const clientSurchargePercent = 0.1;
-            const roundToThousands = (amount: number): number => {
-              return Math.round(amount / 1000) * 1000;
-            };
-
-            const rawHourlyRate = lawyer.hourly_rate_clp || 0;
-            const displayHourlyRate = roundToThousands(rawHourlyRate * (1 + clientSurchargePercent));
-
-            return {
-              id: lawyer.id,
-              user_id: lawyer.user_id,
-              name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
-              specialties: lawyer.specialties || [],
-              rating: lawyer.rating || 0,
-              reviews: lawyer.review_count || 0,
-              location: lawyer.location || 'Sin ubicación',
-              cases: 0,
-              hourlyRate: rawHourlyRate,
-              displayPrice: displayHourlyRate,
-              consultationPrice: displayHourlyRate,
-              image: lawyer.avatar_url || '',
-              bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
-              verified: Boolean(lawyer.verified),
-              blocked: lawyer.blocked || false,
-              availability: {
-                availableToday: Boolean(lawyer.available_today),
-                availableThisWeek: Boolean(lawyer.available_this_week),
-                quickResponse: true,
-                emergencyConsultations: true
-              },
-              availableToday: Boolean(lawyer.available_today),
-              availableThisWeek: Boolean(lawyer.available_this_week),
-              quickResponse: true,
-              emergencyConsultations: true,
-              experience_years: lawyer.experience_years || 0,
-              experienceYears: lawyer.experience_years || 0,
-              availability_config: (() => {
-                if (!lawyer.availability) return undefined;
-                if (typeof lawyer.availability === 'object') return lawyer.availability;
-                if (typeof lawyer.availability === 'string' && lawyer.availability.trim() !== '') {
-                  try {
-                    return JSON.parse(lawyer.availability);
-                  } catch (e) {
-                    console.error('Error parsing availability for lawyer:', lawyer.id, e);
-                    return undefined;
-                  }
-                }
-                return undefined;
-              })()
-            };
-          });
-
-          setSearchResult(prev => ({
-            lawyers: page === 1 ? formattedLawyers : [...prev.lawyers, ...formattedLawyers],
-            total: response.total || 0,
-            page,
-            pageSize: response.pageSize || 10,
-            hasMore: (page * (response.pageSize || 10)) < (response.total || 0)
-          }));
-        }
-      } catch (err) {
-        setError('Error al cargar los abogados. Por favor, intente nuevamente.');
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-      }
-    }, 500) // Increased to 500ms for better performance
-  );
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSearchRef.current.cancel();
+  // Function to perform search
+  const performSearch = async (params: {
+    page: number;
+    isInitialLoad: boolean;
+    searchParams: {
+      query: string;
+      specialty: string[];
+      location: string;
+      minRating: number;
+      minExperience: number;
+      availableNow: boolean;
     };
-  }, []);
-
-  // Sync URL changes to local state and trigger search - FIXED VERSION (no infinite loop)
-  useEffect(() => {
-    // Prevent recursive updates
-    if (isUpdatingFromUrl.current) {
+    currentPageSize: number;
+  }) => {
+    if (isSearching.current) {
       return;
     }
 
-    // Get current URL parameters
+    const { page, isInitialLoad, searchParams, currentPageSize } = params;
+
+    const safeSearchParams = searchParams || {
+      query: '',
+      specialty: ['all'],
+      location: '',
+      minRating: 0,
+      minExperience: 0,
+      availableNow: false
+    };
+
+    const { query, specialty, location, minRating, minExperience, availableNow } = safeSearchParams;
+
+    try {
+      isSearching.current = true;
+
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      setError(null);
+
+      const { searchLawyers } = await import('@/pages/api/search-lawyers');
+
+      const response = await searchLawyers({
+        query: query || '',
+        specialty: specialty && specialty[0] !== 'all' ? specialty : undefined,
+        location: location || undefined,
+        minRating: minRating || undefined,
+        minExperience: minExperience || undefined,
+        availableNow: availableNow || false,
+        page,
+        pageSize: currentPageSize
+      });
+
+      if (response && response.lawyers) {
+        const formattedLawyers = response.lawyers.map(lawyer => {
+          const clientSurchargePercent = 0.1;
+          const roundToThousands = (amount: number): number => {
+            return Math.round(amount / 1000) * 1000;
+          };
+
+          const rawHourlyRate = lawyer.hourly_rate_clp || 0;
+          const displayHourlyRate = roundToThousands(rawHourlyRate * (1 + clientSurchargePercent));
+
+          // Safe availability parsing
+          let availabilityConfig = undefined;
+          if (lawyer.availability) {
+            if (typeof lawyer.availability === 'object') {
+              availabilityConfig = lawyer.availability;
+            } else if (typeof lawyer.availability === 'string' && lawyer.availability.trim() !== '') {
+              try {
+                if (lawyer.availability.trim().startsWith('{') || lawyer.availability.trim().startsWith('[')) {
+                  availabilityConfig = JSON.parse(lawyer.availability);
+                }
+              } catch (e) {
+                // Silently fail
+              }
+            }
+          }
+
+          return {
+            id: lawyer.id,
+            user_id: lawyer.user_id,
+            first_name: lawyer.first_name,
+            last_name: lawyer.last_name,
+            name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
+            display_name: `${lawyer.first_name} ${lawyer.last_name}`.trim(),
+            specialties: lawyer.specialties || [],
+            rating: lawyer.rating || 0,
+            reviews: lawyer.review_count || 0,
+            review_count: lawyer.review_count || 0,
+            location: lawyer.location && lawyer.location.trim() !== '' ? lawyer.location : '',
+            cases: 0,
+            hourlyRate: rawHourlyRate,
+            hourly_rate_clp: rawHourlyRate,
+            consultationPrice: displayHourlyRate,
+            contact_fee_clp: displayHourlyRate,
+            image: lawyer.avatar_url || '',
+            avatar_url: lawyer.avatar_url || '',
+            bio: lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? lawyer.bio : 'Este abogado no ha proporcionado una biografía.',
+            verified: Boolean(lawyer.verified),
+            pjud_verified: Boolean(lawyer.verified),
+            blocked: lawyer.blocked || false,
+            availability: {
+              availableToday: Boolean(lawyer.available_today),
+              availableThisWeek: Boolean(lawyer.available_this_week),
+              quickResponse: true,
+              emergencyConsultations: true
+            },
+            availableToday: Boolean(lawyer.available_today),
+            availableThisWeek: Boolean(lawyer.available_this_week),
+            quickResponse: true,
+            emergencyConsultations: true,
+            experience_years: lawyer.experience_years || 0,
+            experienceYears: lawyer.experience_years || 0,
+            availability_config: availabilityConfig
+          };
+        });
+
+        setSearchResult(prev => ({
+          lawyers: page === 1 ? formattedLawyers : [...prev.lawyers, ...formattedLawyers],
+          total: response.total || 0,
+          page,
+          pageSize: response.pageSize || 10,
+          hasMore: (page * (response.pageSize || 10)) < (response.total || 0)
+        }));
+      }
+    } catch (err) {
+      console.error('Error loading lawyers:', err);
+      setError('Error al cargar los abogados. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+      isSearching.current = false;
+    }
+  };
+
+  // Function to perform initial search
+  const performInitialSearch = useCallback(() => {
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
     const urlMinRating = Number(searchParams.get('minRating')) || 0;
     const urlMinExperience = Number(searchParams.get('minExperience')) || 0;
-    const urlSort = searchParams.get('sort') || 'relevance';
 
-    // Determine specialties from URL
     let newSpecialties: string[] = [];
     if (urlCategory) {
       newSpecialties = [normalizeSpecialty(urlCategory)];
@@ -351,92 +289,78 @@ const SearchResults = () => {
       newSpecialties = ['all'];
     }
 
-    // Check for actual changes
-    const hasQueryChanged = searchTerm !== urlQuery;
-    const hasSpecialtiesChanged = JSON.stringify(selectedSpecialty) !== JSON.stringify(newSpecialties);
-    const hasLocationChanged = location !== urlLocation;
-    const hasRatingChanged = minRating !== urlMinRating;
-    const hasExperienceChanged = minExperience !== urlMinExperience;
-    const hasSortChanged = sortBy !== urlSort;
+    setSearchResult(prev => ({
+      ...prev,
+      page: 1,
+      lawyers: [],
+      hasMore: true
+    }));
 
-    // Update local state if needed
-    if (hasQueryChanged) setSearchTerm(urlQuery);
-    if (hasSpecialtiesChanged) setSelectedSpecialty(newSpecialties);
-    if (hasLocationChanged) setLocation(urlLocation);
-    if (hasRatingChanged) setMinRating(urlMinRating);
-    if (hasExperienceChanged) setMinExperience(urlMinExperience);
-    if (hasSortChanged) setSortBy(urlSort);
+    performSearch({
+      page: 1,
+      isInitialLoad: true,
+      searchParams: {
+        query: urlQuery,
+        specialty: newSpecialties,
+        location: urlLocation,
+        minRating: urlMinRating,
+        minExperience: urlMinExperience,
+        availableNow: false
+      },
+      currentPageSize: 12
+    });
+  }, [searchParams]);
 
-    // Determine if we need to trigger a search
-    const shouldSearch = hasQueryChanged || hasSpecialtiesChanged || hasLocationChanged ||
-      hasRatingChanged || hasExperienceChanged;
+  // Initial load - only once
+  useEffect(() => {
+    if (!initialLoadDone.current) {
+      initialLoadDone.current = true;
+      performInitialSearch();
+    }
+  }, [performInitialSearch]);
 
-    // Handle initial mount separately
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+  // Sync URL changes to local state
+  useEffect(() => {
+    const urlQuery = searchParams.get('query') || '';
+    const urlCategory = searchParams.get('category');
+    const urlSpecialties = searchParams.getAll('specialty');
+    const urlLocation = searchParams.get('location') || '';
+    const urlMinRating = Number(searchParams.get('minRating')) || 0;
+    const urlMinExperience = Number(searchParams.get('minExperience')) || 0;
+    const urlSort = searchParams.get('sort') || 'relevance';
 
-      // Only search if there are meaningful filters or no lawyers loaded
-      const hasSearchFilters = Boolean(
-        urlQuery ||
-        (urlSpecialties.length > 0 && urlSpecialties[0] !== 'all') ||
-        urlCategory ||
-        urlLocation ||
-        urlMinRating > 0 ||
-        urlMinExperience > 0
-      );
-
-      if (hasSearchFilters || searchResult.lawyers.length === 0) {
-        isUpdatingFromUrl.current = true;
-        debouncedSearchRef.current({
-          page: 1,
-          isInitialLoad: true,
-          searchParams: {
-            query: urlQuery,
-            specialty: newSpecialties,
-            location: urlLocation,
-            minRating: urlMinRating,
-            minExperience: urlMinExperience,
-            availableNow: false
-          },
-          currentPageSize: 12
-        });
-        setTimeout(() => {
-          isUpdatingFromUrl.current = false;
-        }, 100);
-      } else if (searchResult.lawyers.length === 0) {
-        // Load all lawyers if no filters
-        isUpdatingFromUrl.current = true;
-        debouncedSearchRef.current({
-          page: 1,
-          isInitialLoad: true,
-          searchParams: {
-            query: '',
-            specialty: ['all'],
-            location: '',
-            minRating: 0,
-            minExperience: 0,
-            availableNow: false
-          },
-          currentPageSize: 12
-        });
-        setTimeout(() => {
-          isUpdatingFromUrl.current = false;
-        }, 100);
+    let newSpecialties: string[] = [];
+    if (urlCategory) {
+      newSpecialties = [normalizeSpecialty(urlCategory)];
+    } else if (urlSpecialties.length > 0) {
+      newSpecialties = urlSpecialties.map(s => normalizeSpecialty(s));
+    } else if (urlQuery) {
+      const detected = detectEspecialidad(urlQuery);
+      if (detected) {
+        newSpecialties = [normalizeSpecialty(detected)];
+      } else {
+        newSpecialties = ['all'];
       }
-      return;
+    } else {
+      newSpecialties = ['all'];
     }
 
-    // For subsequent changes, only search if relevant params changed
-    if (shouldSearch) {
-      isUpdatingFromUrl.current = true;
+    setSearchTerm(urlQuery);
+    setSelectedSpecialty(newSpecialties);
+    setLocation(urlLocation);
+    setMinRating(urlMinRating);
+    setMinExperience(urlMinExperience);
+    setSortBy(urlSort);
+
+    if (initialLoadDone.current && (urlQuery !== searchTerm || urlLocation !== location)) {
       setSearchResult(prev => ({
         ...prev,
         page: 1,
-        lawyers: prev.page === 1 ? prev.lawyers : [],
+        lawyers: [],
         hasMore: true
       }));
 
-      debouncedSearchRef.current({
+      performSearch({
         page: 1,
         isInitialLoad: true,
         searchParams: {
@@ -449,19 +373,14 @@ const SearchResults = () => {
         },
         currentPageSize: 12
       });
-
-      setTimeout(() => {
-        isUpdatingFromUrl.current = false;
-      }, 100);
     }
-  }, [searchParams]); // Only depend on searchParams
+  }, [searchParams]);
 
   // Load more when scroll reaches the bottom
   useEffect(() => {
-    if (inView && !loading && !loadingMore && searchResult.hasMore) {
+    if (inView && !loading && !loadingMore && searchResult.hasMore && searchResult.lawyers.length > 0) {
       const nextPage = searchResult.page + 1;
-      setLoadingMore(true);
-      debouncedSearchRef.current({
+      performSearch({
         page: nextPage,
         isInitialLoad: false,
         searchParams: {
@@ -475,25 +394,21 @@ const SearchResults = () => {
         currentPageSize: searchResult.pageSize
       });
     }
-  }, [inView, loading, loadingMore, searchResult.hasMore, searchResult.page, searchResult.pageSize, searchTerm, selectedSpecialty, location, minRating, minExperience]);
+  }, [inView, loading, loadingMore, searchResult.hasMore, searchResult.page, searchResult.pageSize, searchTerm, selectedSpecialty, location, minRating, minExperience, searchResult.lawyers.length]);
 
   // Handle search
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
 
-    // If search term is empty, clear the search and show all lawyers
     if (!searchTerm.trim()) {
-      // Update URL to clear filters
       setSearchParams(new URLSearchParams());
       return;
     }
 
-    // Handle specialty logic intelligently with natural language mapping
     const detected = detectEspecialidad(searchTerm);
     if (detected) {
       const normalizedDetected = normalizeSpecialty(detected);
       if (!selectedSpecialty.includes(normalizedDetected)) {
-        // If detected specialty is not selected, add it (replacing 'all' if present)
         const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
         newSpecialties.push(normalizedDetected);
         setSelectedSpecialty(newSpecialties);
@@ -505,7 +420,6 @@ const SearchResults = () => {
       selectedSpecialty.forEach(s => params.append('specialty', s));
     }
 
-    // Only add search term if it's not empty
     if (searchTerm.trim()) {
       params.set('query', searchTerm.trim());
     }
@@ -522,16 +436,17 @@ const SearchResults = () => {
       return [];
     }
 
-    // Apply client-side sorting
+    if (searchResult.lawyers.length === 0) {
+      return [];
+    }
+
     return [...searchResult.lawyers].sort((a, b) => {
-      // 0-Price Handling: Always push lawyers with price 0 to the end
       const aPrice = a.consultationPrice || 0;
       const bPrice = b.consultationPrice || 0;
 
       if (aPrice === 0 && bPrice !== 0) return 1;
       if (aPrice !== 0 && bPrice === 0) return -1;
 
-      // If a specific sort is selected, respect it primarily
       if (sortBy === 'price_asc' || sortBy === 'price') {
         if (aPrice !== bPrice) return aPrice - bPrice;
       } else if (sortBy === 'price_desc') {
@@ -547,22 +462,17 @@ const SearchResults = () => {
         if (diff !== 0) return diff;
       }
 
-      // Default / Relevance Fallback logic:
-      // First priority: Verified status
       const aVerified = Boolean(a.verified);
       const bVerified = Boolean(b.verified);
       if (aVerified !== bVerified) return aVerified ? -1 : 1;
 
-      // Second priority: Profile completeness
       const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && a.location?.trim() && a.hourlyRate > 0);
       const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && b.location?.trim() && b.hourlyRate > 0);
       if (isAComplete !== isBComplete) return isAComplete ? -1 : 1;
 
-      // Third priority: Rating
       const ratingDiff = (b.rating || 0) - (a.rating || 0);
       if (ratingDiff !== 0) return ratingDiff;
 
-      // Fourth priority: Review count
       return (b.reviews || 0) - (a.reviews || 0);
     });
   }, [searchResult.lawyers, loading, sortBy]);
@@ -576,31 +486,26 @@ const SearchResults = () => {
     modality?: string;
     region?: string;
   }) => {
-    // Update local state
     setPriceRange(filters.priceRange);
     setMinRating(filters.minRating);
     setMinExperience(filters.minExperience);
     setAvailableNow(filters.availableNow);
 
-    // Update URL params to trigger search and persistence
     setSearchParams(prev => {
       const params = new URLSearchParams(prev);
 
-      // Update Min Experience
       if (filters.minExperience > 0) {
         params.set('minExperience', filters.minExperience.toString());
       } else {
         params.delete('minExperience');
       }
 
-      // Update Min Rating
       if (filters.minRating > 0) {
         params.set('minRating', filters.minRating.toString());
       } else {
         params.delete('minRating');
       }
 
-      // Handle Modality & Region (Location)
       if (filters.modality === 'presencial' && filters.region) {
         params.set('location', filters.region);
       } else if (filters.modality !== 'presencial') {
@@ -630,7 +535,6 @@ const SearchResults = () => {
 
   // Clear all filters
   const clearFilters = useCallback(() => {
-    // Reset all search-related states
     setSearchTerm('');
     setSelectedSpecialty(['all']);
     setLocation('');
@@ -639,18 +543,14 @@ const SearchResults = () => {
     setAvailableNow(false);
     setPriceRange([0, 1000000]);
     setSortBy('relevance');
-
-    // Clear URL parameters
     setSearchParams(new URLSearchParams());
   }, [setSearchParams]);
 
   // Scroll to lawyer cards when coming from category click
   useEffect(() => {
-    // Check if we have a category parameter (coming from category click on homepage)
     const hasCategoryParam = searchParams.get('category');
 
     if (hasCategoryParam && !loading && filteredLawyers.length > 0) {
-      // Small delay to ensure DOM is ready
       setTimeout(() => {
         const afterSpecialties = document.getElementById('after-specialties');
         if (afterSpecialties) {
@@ -666,7 +566,7 @@ const SearchResults = () => {
     }
   }, [loading, filteredLawyers.length, searchParams]);
 
-  // Fixed GA4 tracking with throttling to prevent contamination
+  // GA4 tracking
   useEffect(() => {
     if (loading) return;
     if (filteredLawyers.length === 0) return;
@@ -674,7 +574,6 @@ const SearchResults = () => {
     const now = Date.now();
     const trackingKey = `${searchParams.toString()}|${filteredLawyers.length}`;
 
-    // Throttle: Don't send more than once every 2 seconds for the same search
     if (viewLawyersTrackedRef.current?.key === trackingKey) {
       if (now - viewLawyersTrackedRef.current.timestamp < 2000) {
         return;
@@ -690,8 +589,7 @@ const SearchResults = () => {
       ? selectedSpecialty.filter((s) => s !== 'all').join(',') || 'all'
       : 'all';
 
-    // Debounce GA4 events
-    const timeoutId = setTimeout(() => {
+    setTimeout(() => {
       if (window.gtag) {
         window.gtag('event', 'view_lawyers', {
           results_count: filteredLawyers.length,
@@ -699,8 +597,6 @@ const SearchResults = () => {
         });
       }
     }, 100);
-
-    return () => clearTimeout(timeoutId);
   }, [loading, filteredLawyers.length, searchParams, selectedSpecialty]);
 
   return (
@@ -771,20 +667,13 @@ const SearchResults = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-
-                          // Create new specialties array without the removed one
                           const newSpecialties = selectedSpecialty.filter(s => s !== specialty);
                           const updatedSpecialties = newSpecialties.length > 0 ? newSpecialties : ['all'];
-
-                          // Update local state immediately
                           setSelectedSpecialty(updatedSpecialties);
-
-                          // Update URL
                           setSearchParams(prevParams => {
                             const params = new URLSearchParams(prevParams);
                             params.delete('specialty');
                             params.delete('category');
-
                             if (updatedSpecialties[0] !== 'all') {
                               updatedSpecialties.forEach(s => {
                                 if (s && s !== 'all') {
@@ -898,7 +787,6 @@ const SearchResults = () => {
                   onChange={(e) => {
                     const newSort = e.target.value;
                     setSortBy(newSort);
-                    // Update the URL with the new sort parameter
                     const params = new URLSearchParams(searchParams);
                     if (newSort !== 'relevance') {
                       params.set('sort', newSort);
@@ -926,6 +814,14 @@ const SearchResults = () => {
               </Button>
             </div>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              <p className="font-medium">Error:</p>
+              <p>{error}</p>
+            </div>
+          )}
 
           {/* Results Grid */}
           {loading && searchResult.lawyers.length === 0 ? (
@@ -963,27 +859,16 @@ const SearchResults = () => {
                 ))}
               </div>
             </div>
-          ) : searchResult.lawyers.length === 0 && !searchParams.toString() ? (
-            <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-              <div className="mx-auto h-16 w-16 bg-green-900 rounded-full flex items-center justify-center mb-4">
-                <Search className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Realiza una búsqueda para encontrar abogados</h3>
-              <p className="text-gray-500">Ingresa un término de búsqueda o selecciona una especialidad para comenzar</p>
-            </div>
           ) : filteredLawyers.length > 0 ? (
             <div className="w-full" id="lawyer-cards-section">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
-                {filteredLawyers.map((lawyer) => {
-                  return (
-                    <div key={lawyer.id} className="w-full h-full">
-                      <LawyerCard
-                        lawyer={lawyer}
-                        user={user}
-                      />
-                    </div>
-                  );
-                })}
+                {filteredLawyers.map((lawyer) => (
+                  <LawyerCard
+                    key={lawyer.id}
+                    lawyer={lawyer}
+                    user={user}
+                  />
+                ))}
               </div>
 
               {/* Loading indicator at the bottom */}
@@ -996,7 +881,7 @@ const SearchResults = () => {
               {/* Infinite scroll trigger */}
               <div ref={loadMoreRef} className="h-1 w-full" />
             </div>
-          ) : (
+          ) : !loading && searchResult.lawyers.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-xl shadow-sm">
               <div className="mx-auto h-16 w-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-green-600" />
@@ -1011,7 +896,7 @@ const SearchResults = () => {
                 Limpiar filtros
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

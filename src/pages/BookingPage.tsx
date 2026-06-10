@@ -71,9 +71,9 @@ const TESTIMONIALS: Record<string, { quote: string; author: string; extra: strin
     extra: "Contador"
   },
   'Derecho Penal': {
-    quote: "Entendí exactamente mi situación legal y los pasos a seguir.",
-    author: "Juan Pablo M.",
-    extra: "Contador"
+    quote: "Salí de la consulta tranquila, con un plan de acción y la sensación de haber hablado con alguien que realmente sabe lo que hace.",
+    author: "Marcela Oyarzún",
+    extra: "Médico Psiquiatra"
   },
   'Default': {
     quote: "Entendió mi caso rápidamente y me dio una orientación clara y concreta.",
@@ -96,18 +96,17 @@ function BookingTestimonial({ specialties }: { specialties: string[] }) {
   }, [specialties]);
 
   return (
-    <div className="bg-green-50/50 border border-green-100 rounded-lg p-4 mb-4">
+    <div className="bg-white border border-gray-100 rounded-lg p-4 mb-4">
       <div className="flex items-start gap-3">
-        <Quote className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+        <Quote className="h-4 w-4 text-green-900 flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-gray-700 leading-relaxed">
-            "{testimonial.quote}"
+            {testimonial.quote}
           </p>
           <div className="flex items-center gap-2 mt-2">
             <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-              ))}
+              <span className="text-sm text-gray-500 mr-1">5</span>
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
             </div>
             <span className="text-xs text-gray-500">
               — {testimonial.author}, {testimonial.extra}
@@ -139,7 +138,7 @@ export default function BookingPage() {
     if (!lawyerId) return '';
     return lawyerId.length > 36 ? lawyerId.slice(-36) : lawyerId;
   }, [lawyerId]);
-  
+
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
   const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -168,7 +167,7 @@ export default function BookingPage() {
         console.error('Error fetching lawyer:', error);
         // Only redirect if it's a real error, not just loading
         if (error.code !== 'PGRST116') { // PGRST116 is "The result contains 0 rows"
-             navigate('/search');
+          navigate('/search');
         }
         return;
       }
@@ -283,7 +282,7 @@ export default function BookingPage() {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase(),
-  []);
+    []);
 
   const getAvailabilityForDay = useCallback((
     availability: Record<string, unknown> | null,
@@ -351,7 +350,7 @@ export default function BookingPage() {
 
       try {
         setIsLoadingSlots(true); // Only show loading in slots area
-        
+
         // Call RPC
         const { data: busySlots, error } = await supabase
           .rpc('get_lawyer_busy_slots', {
@@ -407,19 +406,19 @@ export default function BookingPage() {
 
         // 3. Filter base slots based on Lawyer Config
         const configFilteredSlots = baseSlots.filter(slot => {
-            const hour = parseInt(slot.time.split(':')[0]);
-            const hourIndex = hour - AVAILABILITY_START_HOUR;
+          const hour = parseInt(slot.time.split(':')[0]);
+          const hourIndex = hour - AVAILABILITY_START_HOUR;
 
-            if (dayAvailability && Array.isArray(dayAvailability)) {
-              return dayAvailability[hourIndex] === true;
-            }
+          if (dayAvailability && Array.isArray(dayAvailability)) {
+            return dayAvailability[hourIndex] === true;
+          }
 
-            if (hasCustomAvailability) {
-              return false;
-            }
+          if (hasCustomAvailability) {
+            return false;
+          }
 
-            // Default to OPEN only if NO configuration exists at all (legacy support)
-            return true;
+          // Default to OPEN only if NO configuration exists at all (legacy support)
+          return true;
         });
 
         // 4. Fetch busy slots from DB (Bookings) - defined above, now map them
@@ -576,25 +575,25 @@ export default function BookingPage() {
     const now = new Date();
     const todayStr = format(now, 'yyyy-MM-dd');
     const currentHour = now.getHours();
-    
+
     const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(now), i));
 
     return dates
       .filter(date => date.getDay() !== 0) // Hide Sundays
       .filter(date => {
         const isToday = format(date, 'yyyy-MM-dd') === todayStr;
-        
+
         // If it's today, check if there's any time left
         if (isToday) {
           // If no config, default to 18:00 cutoff
           if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
             return currentHour < 18;
           }
-          
+
           // If has config, check if there are any slots left today
           const dayName = getDayName(date);
           const dayAvailability = getAvailabilityForDay(lawyerAvailability, dayName);
-          
+
           if (Array.isArray(dayAvailability)) {
             return dayAvailability.some((slot, index) => {
               const slotHour = 9 + index;
@@ -618,7 +617,7 @@ export default function BookingPage() {
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null); // Reset time when date changes
-    
+
     // Scroll to time selection on mobile
     if (window.innerWidth < 768) {
       setTimeout(() => {
@@ -629,12 +628,12 @@ export default function BookingPage() {
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time);
-    
+
     // Scroll to summary section after state updates and renders
     setTimeout(() => {
       summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
-    
+
     // Track time_selected event
     if (window.gtag && lawyer?.user_id && selectedDate) {
       window.gtag('event', 'time_selected', {
@@ -713,8 +712,8 @@ export default function BookingPage() {
       {/* Lawyer Info Skeleton */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <Skeleton className="w-20 h-20 rounded-full" />
+          <div className="flex items-start gap-6">
+            <Skeleton className="w-20 h-20 rounded-md" />
             <div className="space-y-2 flex-1">
               <Skeleton className="h-6 w-48" />
               <div className="flex gap-2">
@@ -755,7 +754,7 @@ export default function BookingPage() {
                 ))}
               </div>
             </div>
-            
+
             {/* Time Picker Skeleton */}
             <div>
               <Skeleton className="h-5 w-32 mb-4" />
@@ -792,277 +791,275 @@ export default function BookingPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="py-8 px-4 pt-32">
-      <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
 
-        {/* Lawyer Info Card */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <Avatar className="w-20 h-20">
-                <AvatarImage
-                  src={lawyer.avatar_url || ''}
-                  alt={`${lawyer.first_name} ${lawyer.last_name}`}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
-                  {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {lawyer.first_name} {lawyer.last_name}
-                  </h1>
-                  {lawyer.pjud_verified && (
-                    <Badge variant="secondary" className="bg-blue-50 text-blue-700 flex items-center gap-1 w-fit mt-1 md:mt-0">
-                      <div className="p-[2px]">
-                        <ShieldCheck className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="text-xs font-medium">
-                        Verificado PJUD
-                      </span>
-                    </Badge>
+          {/* Lawyer Info Card */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <Avatar className="w-40 h-40 rounded-md">
+                  <AvatarImage
+                    src={lawyer.avatar_url || ''}
+                    alt={`${lawyer.first_name} ${lawyer.last_name}`}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
+                    {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900">
+                      {lawyer.first_name} {lawyer.last_name}
+                    </h1>
+                    {lawyer.pjud_verified && (
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 flex items-center gap-1 w-fit mt-1 md:mt-0">
+                        <div className="p-[2px]">
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-xs font-medium">
+                          Verificado PJUD
+                        </span>
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {lawyer.specialties?.map((specialty, index) => (
+                      <Badge key={index} variant="secondary">
+                        {specialty}
+                      </Badge>
+                    ))}
+                  </div>
+                  {lawyer.bio && (
+                    <p className="text-gray-600 mt-3 line-clamp-2">{lawyer.bio}</p>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {lawyer.specialties?.map((specialty, index) => (
-                    <Badge key={index} variant="secondary">
-                      {specialty}
-                    </Badge>
-                  ))}
+                <div className="flex-1">
+                  {/* Testimonial social proof */}
+                  <BookingTestimonial specialties={lawyer.specialties} />
                 </div>
-                {lawyer.bio && (
-                  <p className="text-gray-600 mt-3 line-clamp-2">{lawyer.bio}</p>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Booking Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Agenda tu asesoría</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Duration Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duración:
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button
-                  onClick={() => setDuration(30)}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    duration === 30
-                      ? 'border-green-900 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <span className="font-medium">30 minutos</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    ${getClientPriceForDuration(30).toLocaleString('es-CL')}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setDuration(60)}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    duration === 60
-                      ? 'border-green-900 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <span className="font-medium">60 minutos</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    ${getClientPriceForDuration(60).toLocaleString('es-CL')}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setDuration(90)}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    duration === 90
-                      ? 'border-green-900 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <span className="font-medium">90 minutos</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    ${getClientPriceForDuration(90).toLocaleString('es-CL')}
-                  </div>
-                </button>
-                <button
-                  onClick={() => setDuration(120)}
-                  className={`p-4 border-2 rounded-lg transition-all ${
-                    duration === 120
-                      ? 'border-green-900 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    <span className="font-medium">120 minutos</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">
-                    ${getClientPriceForDuration(120).toLocaleString('es-CL')}
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Date Selection */}
+          {/* Booking Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Agenda tu asesoría</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Duration Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecciona una fecha:
+                  Duración:
                 </label>
-                <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
-                  {availableDates.map((date) => (
-                    <button
-                      key={date.toISOString()}
-                      onClick={() => handleDateSelect(date)}
-                      className={`p-3 border-2 rounded-lg transition-all text-center ${
-                        selectedDate?.toDateString() === date.toDateString()
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <button
+                    onClick={() => setDuration(30)}
+                    className={`p-4 border-2 rounded-lg transition-all ${duration === 30
+                      ? 'border-green-900 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-medium">30 minutos</span>
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      ${getClientPriceForDuration(30).toLocaleString('es-CL')}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDuration(60)}
+                    className={`p-4 border-2 rounded-lg transition-all ${duration === 60
+                      ? 'border-green-900 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-medium">60 minutos</span>
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      ${getClientPriceForDuration(60).toLocaleString('es-CL')}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDuration(90)}
+                    className={`p-4 border-2 rounded-lg transition-all ${duration === 90
+                      ? 'border-green-900 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-medium">90 minutos</span>
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      ${getClientPriceForDuration(90).toLocaleString('es-CL')}
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDuration(120)}
+                    className={`p-4 border-2 rounded-lg transition-all ${duration === 120
+                      ? 'border-green-900 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-medium">120 minutos</span>
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      ${getClientPriceForDuration(120).toLocaleString('es-CL')}
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Date Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona una fecha:
+                  </label>
+                  <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-2">
+                    {availableDates.map((date) => (
+                      <button
+                        key={date.toISOString()}
+                        onClick={() => handleDateSelect(date)}
+                        className={`p-3 border-2 rounded-lg transition-all text-center ${selectedDate?.toDateString() === date.toDateString()
                           ? 'border-green-900 bg-green-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="text-xs text-gray-500">
-                        {format(date, 'EEE', { locale: es })}
-                      </div>
-                      <div className="text-lg font-semibold">
-                        {format(date, 'd', { locale: es })}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {format(date, 'MMM', { locale: es })}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Time Selection */}
-              <div ref={timeSelectionRef}>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selecciona un horario:
-                </label>
-                {selectedDate ? (
-                  <>
-                  {isLoadingSlots && availableSlots.length === 0 ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="animate-spin h-6 w-6 text-gray-400" />
-                    </div>
-                  ) : availableSlots.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">
-                      <Clock className="h-8 w-8 mb-2 opacity-50" />
-                      <p className="font-medium text-center">No hay horas disponibles</p>
-                      <p className="text-xs text-center mt-1">Intenta seleccionando otra fecha</p>
-                    </div>
-                  ) : (
-                    <div className={`grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2 ${isLoadingSlots ? 'opacity-50 pointer-events-none' : ''}`}>
-                      {availableSlots.map((slot) => (
-                        <button
-                          key={slot.time}
-                          onClick={() => handleTimeSelect(slot.time)}
-                          disabled={!slot.available || isLoadingSlots}
-                          className={`p-3 border-2 rounded-lg transition-all ${
-                            selectedTime === slot.time
-                              ? 'border-green-900 bg-green-50'
-                              : slot.available
-                              ? 'border-gray-200 hover:border-gray-300'
-                              : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
                           }`}
-                        >
-                          {slot.time}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-sm font-medium text-gray-700 mt-4">Este horario se libera automáticamente si no se confirma el pago</p>
-                  </>
-                ) : (
-                  <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm bg-gray-50">
-                    <Calendar className="h-8 w-8 mb-2 opacity-50" />
-                    <span>Selecciona una fecha primero</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Summary and Continue */}
-            {selectedDate && selectedTime && (
-              <div ref={summaryRef} className="border-t pt-6">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Fecha:</span>
-                    <span className="font-medium">
-                      {format(selectedDate, "d 'de' MMMM yyyy", { locale: es })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Hora:</span>
-                    <span className="font-medium">{selectedTime}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Duración:</span>
-                    <span className="font-medium">{duration} minutos</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Precio abogado:</span>
-                    <span className="font-medium">${totalPrice.toLocaleString('es-CL')}</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                    <span>Total a pagar:</span>
-                    <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
+                      >
+                        <div className="text-xs text-gray-500">
+                          {format(date, 'EEE', { locale: es })}
+                        </div>
+                        <div className="text-lg font-semibold">
+                          {format(date, 'd', { locale: es })}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {format(date, 'MMM', { locale: es })}
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Testimonial social proof */}
-                <BookingTestimonial specialties={lawyer.specialties} />
-
-                <Button
-                  onClick={handleContinue}
-                  className="w-full bg-gray-900 hover:bg-green-900 text-sm py-6"
-                  disabled={isProcessingPayment}
-                >
-                  {isProcessingPayment ? (
+                {/* Time Selection */}
+                <div ref={timeSelectionRef}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecciona un horario:
+                  </label>
+                  {selectedDate ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Redirigiendo...
+                      {isLoadingSlots && availableSlots.length === 0 ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="animate-spin h-6 w-6 text-gray-400" />
+                        </div>
+                      ) : availableSlots.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">
+                          <Clock className="h-8 w-8 mb-2 opacity-50" />
+                          <p className="font-medium text-center">No hay horas disponibles</p>
+                          <p className="text-xs text-center mt-1">Intenta seleccionando otra fecha</p>
+                        </div>
+                      ) : (
+                        <div className={`grid grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-2 ${isLoadingSlots ? 'opacity-50 pointer-events-none' : ''}`}>
+                          {availableSlots.map((slot) => (
+                            <button
+                              key={slot.time}
+                              onClick={() => handleTimeSelect(slot.time)}
+                              disabled={!slot.available || isLoadingSlots}
+                              className={`p-3 border-2 rounded-lg transition-all ${selectedTime === slot.time
+                                ? 'border-green-900 bg-green-50'
+                                : slot.available
+                                  ? 'border-gray-200 hover:border-gray-300'
+                                  : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                                }`}
+                            >
+                              {slot.time}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-sm font-medium text-gray-700 mt-4">Este horario se libera automáticamente si no se confirma el pago</p>
                     </>
                   ) : (
-                    'Continuar al pago'
+                    <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm bg-gray-50">
+                      <Calendar className="h-8 w-8 mb-2 opacity-50" />
+                      <span>Selecciona una fecha primero</span>
+                    </div>
                   )}
-                </Button>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Pre-checkout Modal */}
-      {showPreCheckout && selectedDate && selectedTime && (
-        <PreCheckoutModal
-          isOpen={showPreCheckout}
-          onClose={() => setShowPreCheckout(false)}
-          bookingData={{
-            lawyer_id: lawyer.user_id,
-            lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
-            scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-            scheduled_time: selectedTime,
-            duration,
-            price: totalPrice
-          }}
-        />
-      )}
+              {/* Summary and Continue */}
+              {selectedDate && selectedTime && (
+                <div ref={summaryRef} className="border-t pt-6">
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Fecha:</span>
+                      <span className="font-medium">
+                        {format(selectedDate, "d 'de' MMMM yyyy", { locale: es })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Hora:</span>
+                      <span className="font-medium">{selectedTime}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Duración:</span>
+                      <span className="font-medium">{duration} minutos</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Precio abogado:</span>
+                      <span className="font-medium">${totalPrice.toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
+                      <span>Total a pagar:</span>
+                      <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
+                    </div>
+                  </div>
+
+                  {/* Testimonial social proof */}
+                  {/* <BookingTestimonial specialties={lawyer.specialties} /> */}
+
+                  <Button
+                    onClick={handleContinue}
+                    className="w-full bg-gray-900 hover:bg-green-900 text-sm py-6"
+                    disabled={isProcessingPayment}
+                  >
+                    {isProcessingPayment ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Redirigiendo...
+                      </>
+                    ) : (
+                      'Continuar al pago'
+                    )}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pre-checkout Modal */}
+        {showPreCheckout && selectedDate && selectedTime && (
+          <PreCheckoutModal
+            isOpen={showPreCheckout}
+            onClose={() => setShowPreCheckout(false)}
+            bookingData={{
+              lawyer_id: lawyer.user_id,
+              lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
+              scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+              scheduled_time: selectedTime,
+              duration,
+              price: totalPrice
+            }}
+          />
+        )}
       </div>
     </div>
   );

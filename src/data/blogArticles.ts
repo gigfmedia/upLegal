@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "acuerdo-completo-y-suficiente-chile-2026",
+    title: "Acuerdo completo y suficiente en Chile 2026: qué es, requisitos y cómo funciona (Guía 2026)",
+    excerpt: "Aprende qué es el Acuerdo completo y suficiente en Chile 2026, cuándo es obligatorio, qué debe incluir, cómo se aprueba y qué errores pueden provocar el rechazo del tribunal.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "10 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/acuerdo-completo-suficiente-chile-2026.png"
+  },
+  {
     id: "liquidacion-sociedad-conyugal-chile-2026",
     title: "Liquidación de sociedad conyugal en Chile 2026: qué es, cuándo se puede pedir y cómo funciona (Guía 2026)",
     excerpt: "Aprende qué es la liquidación de sociedad conyugal en Chile 2026, cuándo se puede pedir, cómo funciona el proceso y qué hacer si no hay acuerdo.",

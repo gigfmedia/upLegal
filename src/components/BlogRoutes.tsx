@@ -43,6 +43,7 @@ const DivorcioUnilateralArticle = lazy(() => import('../pages/blog/divorcio-unil
 const CompensacionEconomicaArticle = lazy(() => import('../pages/blog/compensacion-economica-divorcio-chile-2026'));
 import CeseConvivenciaArticle from '../pages/blog/cese-de-convivencia-chile-2026';
 const LiquidacionSociedadConyugalArticle = lazy(() => import('../pages/blog/liquidacion-sociedad-conyugal-chile-2026'));
+const AcuerdoCompletoYSuficienteArticle = lazy(() => import('../pages/blog/acuerdo-completo-y-suficiente-chile-2026'));
 
 
 
@@ -95,6 +96,7 @@ export const BlogRoutes = () => (
       <Route path="compensacion-economica-divorcio-chile-2026" element={<CompensacionEconomicaArticle />} />
       <Route path="cese-de-convivencia-chile-2026" element={<CeseConvivenciaArticle />} />
       <Route path="liquidacion-sociedad-conyugal-chile-2026" element={<LiquidacionSociedadConyugalArticle />} />
+      <Route path="acuerdo-completo-y-suficiente-chile-2026" element={<AcuerdoCompletoYSuficienteArticle />} />
 
     </Routes>
   </Suspense>

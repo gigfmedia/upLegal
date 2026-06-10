@@ -73,42 +73,42 @@ const formatCLP = (amount: number): string => {
 // Utility to optimize image URL for Supabase storage
 const getOptimizedImageUrl = (url: string, width = 256, quality = 80) => {
   if (!url) return '';
-  
+
   // Temporarily disable Supabase transformations to test
   // This might be causing the zoom/distortion issues
   return url;
 };
 
-export function LawyerCard({ 
-  lawyer, 
-  onContactClick, 
-  onScheduleClick, 
-  onContact, 
+export function LawyerCard({
+  lawyer,
+  onContactClick,
+  onScheduleClick,
+  onContact,
   onSchedule,
   user
 }: LawyerCardProps & { user?: any }) {
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [imageLoaded, setImageLoaded] = useState(false);
-  
+
   // Handle image load to detect actual dimensions
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     const size = { width: img.naturalWidth, height: img.naturalHeight };
     setImageSize(size);
     setImageLoaded(true);
-    const needsZoomCondition = size.width < 100 || size.height < 100 || 
+    const needsZoomCondition = size.width < 100 || size.height < 100 ||
       Math.abs(size.width - size.height) > 20 || Math.min(size.width, size.height) < 80;
   };
-  
+
   // Calculate if image needs zoom (smaller than container or not square enough)
   const needsZoom = imageLoaded && (
-    imageSize.width < 100 || 
-    imageSize.height < 100 || 
+    imageSize.width < 100 ||
+    imageSize.height < 100 ||
     Math.abs(imageSize.width - imageSize.height) > 20 || // Not square (difference > 20px)
     Math.min(imageSize.width, imageSize.height) < 80
   );
   const zoomScale = needsZoom ? 1.5 : 1;
-  
+
   const displayName = React.useMemo(() => {
     // If we have both first and last name, use them
     if (lawyer.first_name && lawyer.last_name) {
@@ -123,26 +123,26 @@ export function LawyerCard({
   }, [lawyer.first_name, lawyer.last_name, lawyer.display_name, lawyer.name]);
   // Check if the current user is the owner of this lawyer profile
   const isOwnProfile = Boolean(
-    user?.id && 
+    user?.id &&
     (user.id === lawyer.user_id || user.id === lawyer.id)
   );
-  
+
   // Check if the lawyer is verified and has the required fields
   const hasVerificationFlag = Boolean(lawyer.verified || lawyer.pjud_verified);
   const isVerifiedLawyer = Boolean(
     hasVerificationFlag &&
     lawyer.hourlyRate > 0 &&
-    lawyer.bio && 
-    lawyer.bio.trim() !== '' && 
-    lawyer.specialties && 
+    lawyer.bio &&
+    lawyer.bio.trim() !== '' &&
+    lawyer.specialties &&
     lawyer.specialties.length > 0 &&
-    lawyer.location && 
+    lawyer.location &&
     lawyer.location.trim() !== ''
   );
-  
+
   // Determine if buttons should be disabled
   const buttonsDisabled = isOwnProfile || !isVerifiedLawyer;
-  
+
   // Debug logs - only log if we have a user to reduce noise
   if (user?.id) {
     console.debug('LawyerCard - User ID:', user.id);
@@ -157,11 +157,11 @@ export function LawyerCard({
   const { user: authUser } = useAuth();
   const [currentRating, setCurrentRating] = useState(lawyer.rating);
   const [currentReviewCount, setCurrentReviewCount] = useState(lawyer.reviews);
-  
+
   // Check if user has already used their free consultation
   const hasUsedFreeConsultation = user?.user_metadata?.hasUsedFreeConsultation || false;
   const hasFreeConsultation = !!user && !hasUsedFreeConsultation;
-  
+
   const navigate = useNavigate();
 
   const clientSurchargePercent = 0.1;
@@ -187,7 +187,7 @@ export function LawyerCard({
       const schedule = lawyer.availability_config;
       const normalizedDay = normalizeDayKey(dayName);
       const dayKey = Object.keys(schedule).find(k => normalizeDayKey(k) === normalizedDay);
-      
+
       if (dayKey && Array.isArray(schedule[dayKey])) {
         return schedule[dayKey].some((slot: boolean) => slot === true);
       }
@@ -205,10 +205,10 @@ export function LawyerCard({
       const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
       const todayName = dayNames[today.getDay()];
       const normalizedDay = normalizeDayKey(todayName);
-      
+
       const schedule = lawyer.availability_config;
       const dayKey = Object.keys(schedule).find(k => normalizeDayKey(k) === normalizedDay);
-      
+
       if (dayKey && Array.isArray(schedule[dayKey])) {
         const currentHour = today.getHours();
         // Slots are 9:00 (index 0) to 18:00 (index 9)
@@ -235,7 +235,7 @@ export function LawyerCard({
     const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
     const currentHour = today.getHours();
     const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    
+
     // Check various days
     const tomorrowIndex = (dayOfWeek + 1) % 7;
     const tomorrowName = dayNames[tomorrowIndex];
@@ -251,9 +251,9 @@ export function LawyerCard({
           if (currentHour < 18) {
             return { text: 'Disponible hoy', showPulse: true, shouldShow: true };
           } else {
-             // After 6 PM on weekday -> Available tomorrow (or monday if friday)
-             if (dayOfWeek === 5) return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
-             return { text: `Disponible ${dayNames[(dayOfWeek + 1) % 7].toLowerCase()}`, showPulse: false, shouldShow: true };
+            // After 6 PM on weekday -> Available tomorrow (or monday if friday)
+            if (dayOfWeek === 5) return { text: 'Disponible lunes', showPulse: false, shouldShow: true };
+            return { text: `Disponible ${dayNames[(dayOfWeek + 1) % 7].toLowerCase()}`, showPulse: false, shouldShow: true };
           }
         } else {
           // Weekend
@@ -318,7 +318,7 @@ export function LawyerCard({
     if (onContactClick) onContactClick();
     else if (onContact) onContact();
   };
-  
+
   // Create URL-friendly slug from lawyer's name
   const createSlug = (name: string) => {
     return name
@@ -342,10 +342,10 @@ export function LawyerCard({
     const nameSlug = lawyerName ? createSlug(lawyerName) : 'abogado';
     navigate(`/booking/${nameSlug}-${lawyer.user_id || lawyer.id}`);
   };
-  
+
   return (
     <>
-      <Card 
+      <Card
         className={`hover:shadow-lg transition-shadow duration-300 border border-solid flex flex-col h-full cursor-pointer ${lawyer.blocked ? 'opacity-50 bg-gray-50 cursor-not-allowed' : ''}`}
         onClick={(e) => {
           // Don't navigate if lawyer is blocked
@@ -373,8 +373,8 @@ export function LawyerCard({
               <div className="relative">
                 <div className="relative">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage 
-                      src={getOptimizedImageUrl(lawyer.image, 256)} 
+                    <AvatarImage
+                      src={getOptimizedImageUrl(lawyer.image, 256)}
                       alt={lawyer.name}
                       className="object-contain"
                       style={{
@@ -397,11 +397,11 @@ export function LawyerCard({
                   </Avatar>
                 </div>
               </div>
-              
+
               <div className="flex-1 min-w-0 w-full">
                 <div className="flex items-center justify-between w-full mb-1 gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate" 
-                      title={displayName}>
+                  <h3 className="text-lg font-semibold text-gray-900 truncate"
+                    title={displayName}>
                     {displayName}
                   </h3>
                   {/*{lawyer.hourlyRate > 60000 && (
@@ -412,7 +412,7 @@ export function LawyerCard({
                     </div>
                   )}*/}
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2 mb-2">
                   {shouldShowAvailabilityBadge && (
                     <Badge variant="secondary" className={`w-fit flex items-center gap-1.5 ${availabilityDisplay.showPulse ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-green-100 text-green-800 hover:bg-green-200'} border-none`}>
@@ -420,7 +420,7 @@ export function LawyerCard({
                       {availabilityDisplay.text}
                     </Badge>
                   )}
-                  
+
                   {hasVerificationFlag && (
                     <Badge variant="secondary" className="w-fit flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-none">
                       <ShieldCheck className="h-3 w-3" />
@@ -428,21 +428,21 @@ export function LawyerCard({
                     </Badge>
                   )}
                 </div>
-                
+
                 <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden mb-1">
                   <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span 
-                    className="truncate block w-full max-w-[180px]" 
+                  <span
+                    className="truncate block w-full max-w-[180px]"
                     title={lawyer.location || 'Ubicación no disponible'}
                   >
                     {lawyer.location || 'Ubicación no disponible'}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center space-x-4 text-sm mt-2 mb-2">
                   {currentReviewCount > 0 && (
                     <div className="flex-1">
-                      <button 
+                      <button
                         className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -473,7 +473,7 @@ export function LawyerCard({
               </div>
             </div>
           </div>
-            
+
 
           {/* Contenido con alineación fija */}
           <div className="flex flex-col h-full">
@@ -481,31 +481,31 @@ export function LawyerCard({
               {/* Especialidades */}
               <div className="min-h-[40px]">
                 <div className="flex flex-wrap gap-2 items-start">
-                  {(Array.isArray(lawyer.specialties) 
-                    ? lawyer.specialties.flatMap(s => 
-                        typeof s === 'string' ? s.split(',').map(x => x.trim()) : []
-                      )
+                  {(Array.isArray(lawyer.specialties)
+                    ? lawyer.specialties.flatMap(s =>
+                      typeof s === 'string' ? s.split(',').map(x => x.trim()) : []
+                    )
                     : typeof lawyer.specialties === 'string'
                       ? lawyer.specialties.split(',').map(s => s.trim())
                       : []
                   )
-                  .filter(s => s) // Remove empty strings
-                  .slice(0, 3) // Limit to 3 specialties
-                  .map((specialty, index) => (
-                    <Badge 
-                      key={`${specialty}-${index}`} 
-                      variant="secondary" 
-                      className="text-xs font-normal bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
-                    >
-                      {specialty}
-                    </Badge>
-                  ))}
-                  {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 || 
-                   (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
-                    <span className="text-xs text-gray-500 self-center">
-                      +{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más
-                    </span>
-                  )}
+                    .filter(s => s) // Remove empty strings
+                    .slice(0, 3) // Limit to 3 specialties
+                    .map((specialty, index) => (
+                      <Badge
+                        key={`${specialty}-${index}`}
+                        variant="secondary"
+                        className="text-xs font-normal bg-gray-100 text-gray-700 hover:bg-gray-200 whitespace-nowrap"
+                      >
+                        {specialty}
+                      </Badge>
+                    ))}
+                  {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 ||
+                    (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
+                      <span className="text-xs text-gray-500 self-center">
+                        +{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más
+                      </span>
+                    )}
                 </div>
               </div>
 
@@ -513,7 +513,7 @@ export function LawyerCard({
               <div className="max-w-full flex-1">
                 {lawyer.bio && typeof lawyer.bio === 'string' && lawyer.bio.trim() !== '' ? (
                   <div className="text-gray-700 text-sm">
-                    <p className="overflow-hidden text-ellipsis" style={{ 
+                    <p className="overflow-hidden text-ellipsis" style={{
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
@@ -579,11 +579,11 @@ export function LawyerCard({
             </Button> */}
             <Button
               variant="default"
-              className={`flex-1 bg-gray-900 text-white dark:bg-gray-900 dark:text-white [color-scheme:light] font-medium shadow-sm transition ${
-                buttonsDisabled 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:bg-green-900 active:scale-[0.98]'
-              }`}
+              size="lg"
+              className={`flex-1 bg-gray-900 text-white dark:bg-gray-900 dark:text-white [color-scheme:light] font-medium shadow-sm transition ${buttonsDisabled
+                ? 'opacity-50 cursor-not-allowed'
+                : 'hover:bg-green-900 active:scale-[0.98]'
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleScheduleClick(e);
@@ -591,16 +591,16 @@ export function LawyerCard({
               disabled={buttonsDisabled}
               title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
             >
-              <Calendar className="h-4 w-4 mr-2" />
+              <Calendar className="h-6 w-6 mr-2" />
               {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Ver disponibilidad'}
             </Button>
-            
+
           </div>
           <p className="text-gray-700 text-xs text-center pt-2">Pago seguro · Orientación directa</p>
           {buttonsDisabled && (
             <p className="text-xs text-gray-500 mt-2 text-center">
-              {isOwnProfile 
-                ? 'No puedes contactar ni agendar contigo mismo' 
+              {isOwnProfile
+                ? 'No puedes contactar ni agendar contigo mismo'
                 : 'Este abogado tiene un perfil incompleto'}
             </p>
           )}
@@ -616,9 +616,9 @@ export function LawyerCard({
               Opiniones de clientes sobre {lawyer.name}
             </DialogDescription>
           </DialogHeader>
-          
+
           <React.Suspense fallback={<div className="h-40 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-            <LawyerRatings 
+            <LawyerRatings
               lawyerId={lawyer.id}
               averageRating={currentRating}
               ratingCount={currentReviewCount}
@@ -631,5 +631,5 @@ export function LawyerCard({
         </DialogContent>
       </Dialog>
     </>
-    );
-  }
+  );
+}
