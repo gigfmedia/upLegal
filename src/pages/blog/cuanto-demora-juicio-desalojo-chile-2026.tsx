@@ -336,7 +336,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Conocer los plazos del desalojo te permite actuar con anticipación. Compara abogados especializados en arriendos y protege tu propiedad o tus derechos."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

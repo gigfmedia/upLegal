@@ -503,7 +503,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La indemnización por años de servicio depende de tu sueldo y tiempo trabajado. Compara abogados laborales y confirma que el cálculo sea correcto."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-finiquito"
             buttonText="Comparar abogados especializados"
           />
 

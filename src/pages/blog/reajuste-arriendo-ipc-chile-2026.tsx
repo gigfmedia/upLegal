@@ -566,7 +566,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="No todo reajuste de arriendo es válido. Compara abogados especializados y verifica si el aumento cumple la ley."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

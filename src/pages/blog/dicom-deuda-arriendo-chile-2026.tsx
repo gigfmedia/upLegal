@@ -524,7 +524,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Un reporte en DICOM por arriendo impago puede afectar tu historial crediticio. Compara abogados y define la mejor estrategia."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

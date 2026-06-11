@@ -476,7 +476,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Retener la garantía sin fundamento puede ser ilegal. Compara abogados especializados y recupera lo que te corresponde."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

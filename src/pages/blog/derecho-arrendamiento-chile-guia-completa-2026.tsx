@@ -806,7 +806,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El arrendamiento tiene reglas específicas en Chile. Encuentra abogados verificados y resuelve tu conflicto con asesoría profesional."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Ver abogados de arriendo disponibles"
           />
 

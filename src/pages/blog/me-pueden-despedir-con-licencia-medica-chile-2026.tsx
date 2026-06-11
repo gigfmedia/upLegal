@@ -359,7 +359,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Despedir durante licencia médica puede ser ilegal. Compara abogados laborales y actúa rápido para proteger tus derechos."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-despido-injustificado"
             buttonText="Comparar abogados especializados"
           />
 

@@ -487,7 +487,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Una orden de desalojo puede llevar al lanzamiento forzado. Compara abogados especializados en arriendos y desalojos y actúa a tiempo."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

@@ -396,7 +396,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Cambiar cerraduras sin autorización judicial puede ser delito. Compara abogados de arriendo y resuelve el conflicto legalmente."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

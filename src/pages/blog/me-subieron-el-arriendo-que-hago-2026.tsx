@@ -331,7 +331,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Aceptar un aumento ilegal puede perjudicarte a largo plazo. Compara abogados de arriendo y evalúa tus opciones."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

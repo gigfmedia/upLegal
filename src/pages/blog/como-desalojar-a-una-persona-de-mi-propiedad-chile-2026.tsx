@@ -476,7 +476,7 @@ const BlogArticle = () => {
             {/* CTA before Conclusion */}
             <PreConclusionCTA
               description="Desalojar por tu cuenta puede ser ilegal. Compara abogados especializados y recupera tu propiedad por la vía judicial."
-              link="/search?specialty=Derecho%20Civil"
+              link="/abogado-arriendo"
               buttonText="Ver abogados de arriendo disponibles"
             />
 

@@ -323,7 +323,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Actuar temprano en un desalojo puede marcar la diferencia. Compara abogados de arriendo y protege tus derechos."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

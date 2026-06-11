@@ -644,7 +644,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Un contrato mal redactado puede generar conflictos costosos. Compara abogados de arriendo antes de firmar."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

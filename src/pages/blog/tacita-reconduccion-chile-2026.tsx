@@ -531,7 +531,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La tacita reconducción cambia tus derechos como arrendador. Compara abogados especializados antes de actuar por tu cuenta."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

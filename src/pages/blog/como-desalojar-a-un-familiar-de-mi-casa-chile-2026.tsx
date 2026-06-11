@@ -435,7 +435,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Desalojar a un familiar requiere el procedimiento correcto. Compara abogados y evita errores que retrasen el proceso."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

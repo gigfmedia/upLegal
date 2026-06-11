@@ -232,7 +232,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Firmar con reserva de derechos te permite cobrar y aún reclamar diferencias. Compara abogados laborales antes de tomar una decisión."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-finiquito"
             buttonText="Comparar abogados especializados"
           />
 

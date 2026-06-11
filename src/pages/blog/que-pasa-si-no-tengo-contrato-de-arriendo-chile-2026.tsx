@@ -478,7 +478,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Aun sin contrato escrito existen derechos y obligaciones. Compara abogados de arriendo y regulariza tu situación."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

@@ -493,7 +493,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La rebaja de alimentos no es automática: debes acreditar un cambio en tu capacidad económica. Compara abogados especializados y evalúa tu caso."
-            link="/search?specialty=Derecho%20de%20Familia"
+            link="/abogado-pension-alimentos"
             buttonText="Ver abogados de pensión de alimentos"
           />
 

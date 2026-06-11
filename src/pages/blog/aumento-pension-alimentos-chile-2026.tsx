@@ -604,7 +604,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El aumento de alimentos requiere acreditar un cambio sustancial en las necesidades o ingresos. Compara abogados y revisa tu caso antes de demandar."
-            link="/search?specialty=Derecho%20de%20Familia"
+            link="/abogado-pension-alimentos"
             buttonText="Ver abogados de pensión de alimentos"
           />
 

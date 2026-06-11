@@ -440,7 +440,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Aunque pueden despedirte sin acreditar una falta, deben pagarte indemnización. Compara abogados laborales y revisa si el monto es correcto."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-despido-injustificado"
             buttonText="Comparar abogados especializados"
           />
 

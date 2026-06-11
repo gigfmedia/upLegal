@@ -594,7 +594,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="No firmar el finiquito no significa perder tus derechos. Compara abogados laborales y define la mejor estrategia para tu caso."
-            link="/search?specialty=Derecho%20Laboral"
+            link="/abogado-finiquito"
             buttonText="Comparar abogados especializados"
           />
 

@@ -44,22 +44,22 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     },
     pension: {
       description: 'Un abogado de familia puede ayudarte a demandar, aumentar, rebajar o cobrar pensiones de alimentos.',
-      link: '/search?specialty=Derecho%20de%20Familia',
+      link: '/abogado-pension-alimentos',
       linkText: 'Ver abogados de pensión de alimentos',
     },
     finiquito: {
       description: 'Revisa tu finiquito con un abogado laboral antes de firmar y asegúrate de cobrar todo lo que te corresponde.',
-      link: '/search?specialty=Derecho%20Laboral',
+      link: '/abogado-finiquito',
       linkText: 'Revisar mi finiquito con un abogado',
     },
     despido: {
       description: 'Evalúa si tu despido fue legal y qué indemnizaciones te corresponden con un abogado laboral verificado.',
-      link: '/search?specialty=Derecho%20Laboral',
+      link: '/abogado-despido-injustificado',
       linkText: 'Ver abogados laborales disponibles',
     },
     arriendo: {
       description: 'Encuentra abogados especializados en contratos, desalojos, cobro de rentas y la ley Devuélveme mi Casa.',
-      link: '/search?specialty=Derecho%20Civil',
+      link: '/abogado-arriendo',
       linkText: 'Ver abogados de arriendo disponibles',
     },
     penal: {

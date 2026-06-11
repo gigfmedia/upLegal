@@ -619,7 +619,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La deuda acumulada puede derivar en demanda y desalojo. Compara abogados de arriendo y evalúa si conviene negociar o defender tu caso."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Ver abogados de arriendo disponibles"
           />
 

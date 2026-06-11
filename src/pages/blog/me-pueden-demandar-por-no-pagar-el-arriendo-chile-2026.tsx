@@ -612,7 +612,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Ignorar una demanda por arriendo impago aumenta el riesgo de desalojo. Compara abogados de arriendo y responde a tiempo."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 

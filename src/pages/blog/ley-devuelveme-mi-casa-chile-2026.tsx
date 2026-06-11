@@ -554,7 +554,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La ley Devuélveme mi Casa tiene requisitos específicos. Compara abogados especializados y verifica si puedes usar este procedimiento."
-            link="/search?specialty=Derecho%20Civil"
+            link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
 
