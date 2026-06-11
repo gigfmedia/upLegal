@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "liquidacion-bienes-divorcio-chile-2026",
+    title: "Liquidación de bienes en el divorcio en Chile 2026: qué es, cómo funciona y requisitos",
+    excerpt: "Aprende qué es la liquidación de bienes en el divorcio en Chile 2026, cómo funciona el proceso y qué requisitos debes cumplir.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "11 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/liquidacion-bienes-divorcio-chile-2026.png"
+  },
+  {
     id: "acuerdo-completo-y-suficiente-chile-2026",
     title: "Acuerdo completo y suficiente en Chile 2026: qué es, requisitos y cómo funciona (Guía 2026)",
     excerpt: "Aprende qué es el Acuerdo completo y suficiente en Chile 2026, cuándo es obligatorio, qué debe incluir, cómo se aprueba y qué errores pueden provocar el rechazo del tribunal.",

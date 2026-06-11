@@ -44,6 +44,7 @@ const CompensacionEconomicaArticle = lazy(() => import('../pages/blog/compensaci
 import CeseConvivenciaArticle from '../pages/blog/cese-de-convivencia-chile-2026';
 const LiquidacionSociedadConyugalArticle = lazy(() => import('../pages/blog/liquidacion-sociedad-conyugal-chile-2026'));
 const AcuerdoCompletoYSuficienteArticle = lazy(() => import('../pages/blog/acuerdo-completo-y-suficiente-chile-2026'));
+const LiquidacionBienesComunesArticle = lazy(() => import('../pages/blog/liquidacion-de-bienes-divorcio-chile-2026'));
 
 
 
@@ -97,6 +98,7 @@ export const BlogRoutes = () => (
       <Route path="cese-de-convivencia-chile-2026" element={<CeseConvivenciaArticle />} />
       <Route path="liquidacion-sociedad-conyugal-chile-2026" element={<LiquidacionSociedadConyugalArticle />} />
       <Route path="acuerdo-completo-y-suficiente-chile-2026" element={<AcuerdoCompletoYSuficienteArticle />} />
+      <Route path="liquidacion-bienes-divorcio-chile-2026" element={<LiquidacionBienesComunesArticle />} />
 
     </Routes>
   </Suspense>
