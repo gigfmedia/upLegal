@@ -440,7 +440,17 @@ const SearchResults = () => {
       return [];
     }
 
-    return [...searchResult.lawyers].sort((a, b) => {
+    // Filter out incomplete lawyers (missing bio, specialties, location, or hourly rate)
+    const completeLawyers = searchResult.lawyers.filter(lawyer => 
+      Boolean(
+        lawyer.bio?.trim() && 
+        lawyer.specialties?.length > 0 && 
+        lawyer.location?.trim() && 
+        lawyer.hourlyRate > 0
+      )
+    );
+
+    return [...completeLawyers].sort((a, b) => {
       const aPrice = a.consultationPrice || 0;
       const bPrice = b.consultationPrice || 0;
 
@@ -465,10 +475,6 @@ const SearchResults = () => {
       const aVerified = Boolean(a.verified);
       const bVerified = Boolean(b.verified);
       if (aVerified !== bVerified) return aVerified ? -1 : 1;
-
-      const isAComplete = Boolean(a.bio?.trim() && a.specialties?.length > 0 && a.location?.trim() && a.hourlyRate > 0);
-      const isBComplete = Boolean(b.bio?.trim() && b.specialties?.length > 0 && b.location?.trim() && b.hourlyRate > 0);
-      if (isAComplete !== isBComplete) return isAComplete ? -1 : 1;
 
       const ratingDiff = (b.rating || 0) - (a.rating || 0);
       if (ratingDiff !== 0) return ratingDiff;
