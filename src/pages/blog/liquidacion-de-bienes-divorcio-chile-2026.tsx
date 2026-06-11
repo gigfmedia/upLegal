@@ -117,7 +117,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 12 min</span>
+                            <span>Tiempo de lectura: 11 min</span>
                         </div>
                     </div>
                 </div>

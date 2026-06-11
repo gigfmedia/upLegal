@@ -17,7 +17,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "11 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/liquidacion-bienes-divorcio-chile-2026.png"
   },
   {
