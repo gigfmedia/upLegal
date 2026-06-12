@@ -15,6 +15,10 @@ import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 const BlogArticle = () => {
   const faqs = [
     {
+      question: "¿Puedo entrar a DICOM por no pago de arriendo?",
+      answer: "El no pago de arriendo no genera automáticamente una publicación en DICOM. Sin embargo, dependiendo de cómo se documente la deuda y de las acciones posteriores del acreedor, pueden existir consecuencias financieras y judiciales."
+    },
+    {
       question: "¿Puedo ir a DICOM por deuda de arriendo?",
       answer: "Sí, pero solo en ciertos casos. No es automático y debe cumplir requisitos legales específicos como tener contrato firmado, pagaré o sentencia judicial."
     },
@@ -224,6 +228,19 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Puedo entrar a DICOM por no pago de arriendo?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Una de las consultas más frecuentes es si una persona puede aparecer en DICOM por no pago de arriendo. La respuesta depende de cómo se origine y registre la deuda.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              En términos generales, el simple incumplimiento de un contrato de arriendo no implica automáticamente ingresar a DICOM. Sin embargo, si la deuda es reconocida mediante instrumentos válidos para reporte comercial o existe una obligación exigible que termina siendo informada por una entidad autorizada, podrían existir consecuencias financieras relevantes.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si existe una demanda judicial por deuda de arriendo, el arrendador puede además perseguir el cobro de las rentas adeudadas, solicitar el término del contrato y exigir la restitución del inmueble.
+            </p>
           </div>
 
           <div className="mb-12">

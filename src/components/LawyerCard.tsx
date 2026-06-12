@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Star from "lucide-react/dist/esm/icons/star";
-import MapPin from "lucide-react/dist/esm/icons/map-pin";
+import Globe from "lucide-react/dist/esm/icons/globe";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import MessageCircle from "lucide-react/dist/esm/icons/message-circle";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
@@ -399,8 +399,8 @@ export function LawyerCard({
               </div>
 
               <div className="flex-1 min-w-0 w-full">
-                <div className="flex items-center justify-between w-full mb-1 gap-2">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate"
+                <div className="flex items-center justify-between w-full mb-2 gap-2">
+                  <h3 className="text-md font-semibold text-gray-900 truncate"
                     title={displayName}>
                     {displayName}
                   </h3>
@@ -430,17 +430,19 @@ export function LawyerCard({
                 </div>
 
                 <div className="flex items-center text-sm text-gray-600 space-x-2 w-full overflow-hidden mb-1">
-                  <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                  <span
+                  {/* <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" /> */}
+                  {/* <span
                     className="truncate block w-full max-w-[180px]"
-                    title={lawyer.location || 'Ubicación no disponible'}
+                    title={lawyer.location.split(',')[0]} || 'Ubicación no disponible'}
                   >
                     {lawyer.location || 'Ubicación no disponible'}
-                  </span>
+                  </span> */}
+                  <Globe className="h-3 w-3" />
+                  <span>Atención online en todo Chile</span>
                 </div>
 
                 <div className="flex items-center space-x-4 text-sm mt-2 mb-2">
-                  {currentReviewCount > 0 && (
+                  {currentReviewCount >= 3 && (
                     <div className="flex-1">
                       <button
                         className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
@@ -479,7 +481,7 @@ export function LawyerCard({
           <div className="flex flex-col h-full">
             <div className="space-y-4 pt-2">
               {/* Especialidades */}
-              <div className="min-h-[40px]">
+              <div className="min-h-[30px]">
                 <div className="flex flex-wrap gap-2 items-start">
                   {(Array.isArray(lawyer.specialties)
                     ? lawyer.specialties.flatMap(s =>
@@ -490,7 +492,7 @@ export function LawyerCard({
                       : []
                   )
                     .filter(s => s) // Remove empty strings
-                    .slice(0, 3) // Limit to 3 specialties
+                    .slice(0, 2) // Limit to 3 specialties
                     .map((specialty, index) => (
                       <Badge
                         key={`${specialty}-${index}`}
@@ -500,10 +502,10 @@ export function LawyerCard({
                         {specialty}
                       </Badge>
                     ))}
-                  {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 3 ||
-                    (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 3)) && (
+                  {((Array.isArray(lawyer.specialties) ? lawyer.specialties.length : 0) > 2 ||
+                    (typeof lawyer.specialties === 'string' && lawyer.specialties.split(',').length > 2)) && (
                       <span className="text-xs text-gray-500 self-center">
-                        +{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 3)} más
+                        +{Math.max(0, (Array.isArray(lawyer.specialties) ? lawyer.specialties.length : lawyer.specialties.split(',').length) - 2)} más
                       </span>
                     )}
                 </div>
@@ -549,10 +551,10 @@ export function LawyerCard({
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-2xl font-bold text-gray-900">
-                    ${formatCLP(displayHourlyRate)}
+                    ${formatCLP(displayHourlyRate)} CLP
                   </span>
                   {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
-                  <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>
+                  <small className="text-gray-500 text-xs block">Asesoría online · consulta 60 min</small>
                   <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
                 </div>
               </div>
@@ -592,7 +594,7 @@ export function LawyerCard({
               title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
             >
               <Calendar className="h-6 w-6 mr-2" />
-              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Ver disponibilidad'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar consulta'}
             </Button>
 
           </div>

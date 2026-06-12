@@ -48,8 +48,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)"
-        description="¿Qué es una orden de desalojo en Chile? Descubre cuándo se dicta, qué ocurre después, cómo funciona el lanzamiento y qué hacer si recibes una. Guía legal completa 2026."
+        title="Juicio y Orden de Desalojo en Chile: ¿Cuánto Demora y Qué Hacer? (2026)"
+        description="Guía legal 2026 sobre el juicio de desalojo en Chile. Descubre qué es una orden de desalojo, cuánto demora el lanzamiento con Carabineros y cómo actuar."
         image="/assets/orden-desalojo-chile-2026.png"
         url="https://legalup.cl/blog/orden-desalojo-chile-2026"
         datePublished="2026-03-20"
@@ -69,7 +69,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)
+            Juicio y Orden de Desalojo en Chile: Guía Completa del Proceso 2026
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">

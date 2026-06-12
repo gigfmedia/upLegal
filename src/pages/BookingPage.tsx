@@ -37,37 +37,37 @@ interface TimeSlot {
 const TESTIMONIALS: Record<string, { quote: string; author: string; extra: string }> = {
   'Laboral': {
     quote: "Me orientó sobre mi despido y qué pasos seguir.",
-    author: "Carolina H.",
+    author: "Carolina H",
     extra: "Ingeniera Civil"
   },
   'Derecho Laboral': {
     quote: "Me orientó sobre mi despido y qué pasos seguir.",
-    author: "Carolina H.",
+    author: "Carolina H",
     extra: "Ingeniera Civil"
   },
   'Familia': {
     quote: "Me explicó claramente el proceso de divorcio y mis opciones.",
-    author: "María José R.",
+    author: "María José R",
     extra: "Empresaria"
   },
   'Derecho de Familia': {
     quote: "Me explicó claramente el proceso de divorcio y mis opciones.",
-    author: "María José R.",
+    author: "María José R",
     extra: "Empresaria"
   },
   'Civil': {
     quote: "Me explicó claramente mi contrato de arriendo y qué hacer.",
-    author: "Felipe A.",
+    author: "Felipe A",
     extra: "Arquitecto"
   },
   'Derecho Civil': {
     quote: "Me explicó claramente mi contrato de arriendo y qué hacer.",
-    author: "Felipe A.",
+    author: "Felipe A",
     extra: "Arquitecto"
   },
   'Penal': {
     quote: "Entendí exactamente mi situación legal y los pasos a seguir.",
-    author: "Juan Pablo M.",
+    author: "Juan Pablo M",
     extra: "Contador"
   },
   'Derecho Penal': {
@@ -77,7 +77,7 @@ const TESTIMONIALS: Record<string, { quote: string; author: string; extra: strin
   },
   'Default': {
     quote: "Entendió mi caso rápidamente y me dio una orientación clara y concreta.",
-    author: "Marcela O.",
+    author: "Marcela O",
     extra: "Médico Psiquiatra"
   }
 };
@@ -106,7 +106,7 @@ function BookingTestimonial({ specialties }: { specialties: string[] }) {
           <div className="flex items-center gap-2 mt-2">
             <div className="flex">
               <span className="text-sm text-gray-500 mr-1">5</span>
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+              <Star className="h-4 w-4 fill-amber-400 text-amber-400 pt-1" />
             </div>
             <span className="text-xs text-gray-500">
               — {testimonial.author}, {testimonial.extra}
@@ -796,24 +796,30 @@ export default function BookingPage() {
           {/* Lawyer Info Card */}
           <Card className="mb-6">
             <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-40 h-40 rounded-md">
-                  <AvatarImage
-                    src={lawyer.avatar_url || ''}
-                    alt={`${lawyer.first_name} ${lawyer.last_name}`}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
-                    {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex flex-col items-start gap-1 md:flex-row md:items-center md:gap-2">
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="flex flex-col items-center gap-2 md:w-1/4">
+                  <Avatar className="w-40 h-40 rounded-md">
+                    <AvatarImage
+                      src={lawyer.avatar_url || ''}
+                      alt={`${lawyer.first_name} ${lawyer.last_name}`}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="bg-green-900 text-green-600 text-xl font-medium">
+                      {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-green-100 text-green-800">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
+                    <span>Disponible</span>
+                  </Badge>
+                </div>
+                <div className="flex-1 md:w-3/4">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
                     <h1 className="text-2xl font-bold text-gray-900">
                       {lawyer.first_name} {lawyer.last_name}
                     </h1>
                     {lawyer.pjud_verified && (
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 flex items-center gap-1 w-fit mt-1 md:mt-0">
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700 flex items-center gap-1">
                         <div className="p-[2px]">
                           <ShieldCheck className="h-3.5 w-3.5" />
                         </div>
@@ -823,7 +829,7 @@ export default function BookingPage() {
                       </Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     {lawyer.specialties?.map((specialty, index) => (
                       <Badge key={index} variant="secondary">
                         {specialty}
@@ -831,10 +837,8 @@ export default function BookingPage() {
                     ))}
                   </div>
                   {lawyer.bio && (
-                    <p className="text-gray-600 mt-3 line-clamp-2">{lawyer.bio}</p>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{lawyer.bio}</p>
                   )}
-                </div>
-                <div className="flex-1">
                   {/* Testimonial social proof */}
                   <BookingTestimonial specialties={lawyer.specialties} />
                 </div>

@@ -82,6 +82,7 @@ const FiniquitoLanding = lazy(() => import('./pages/FiniquitoLanding'));
 const DespidoInjustificadoLanding = lazy(() => import('./pages/DespidoInjustificadoLanding'));
 const ArriendoLanding = lazy(() => import('./pages/ArriendoLanding'));
 const PenalLanding = lazy(() => import('./pages/PenalLanding'));
+const FamiliaLanding = lazy(() => import('./pages/FamiliaLanding'));
 
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
@@ -373,6 +374,7 @@ const AppContent = () => {
               <Route path="/abogado-despido-injustificado" element={<DespidoInjustificadoLanding />} />
               <Route path="/abogado-arriendo" element={<ArriendoLanding />} />
               <Route path="/abogado-penal" element={<PenalLanding />} />
+              <Route path="/abogado-familia" element={<FamiliaLanding />} />
               <Route path="/review" element={<ReviewPage />} />
 
 

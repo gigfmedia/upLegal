@@ -15,6 +15,10 @@ import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 const BlogArticle = () => {
   const faqs = [
     {
+      question: "¿Puedo demandar por no devolución de mes de garantía?",
+      answer: "Sí. Si el arrendador retiene injustificadamente el mes de garantía, el arrendatario puede demandar judicialmente la devolución de los montos correspondientes."
+    },
+    {
       question: "¿El arrendador puede quedarse con toda la garantía?",
       answer:
         "Solo si justifica completamente los daños o deudas con respaldo documental — boletas, facturas o presupuestos de reparación. No puede retenerla de forma arbitraria ni por desgaste normal del inmueble. Si retiene la garantía sin respaldo, puedes demandar su devolución ante el tribunal civil competente.",
@@ -375,6 +379,33 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede presentar una demanda por no devolución de mes de garantía?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Sí. Cuando el arrendador se niega injustificadamente a restituir el mes de garantía, el arrendatario puede presentar una demanda por no devolución de mes de garantía para exigir judicialmente el pago de los montos retenidos.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Para ello resulta importante conservar:
+            </p>
+            <div className="space-y-3 mb-6">
+              {[
+                "Contrato de arriendo",
+                "Comprobantes de pago",
+                "Inventario de entrega",
+                "Fotografías del inmueble",
+                "Comunicaciones con el arrendador"
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span className="text-base text-gray-700">{item}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si el propietario no logra justificar descuentos o daños atribuibles al arrendatario, el tribunal puede ordenar la devolución total o parcial del dinero retenido.
+            </p>
           </div>
 
           {/* Cluster link 3 */}

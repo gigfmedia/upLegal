@@ -18,11 +18,11 @@ import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection"
 import { AuthModal } from "@/components/AuthModal";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Star, 
-  MapPin, 
+import {
+  Star,
+  MapPin,
   ShieldCheck,
-  MessageSquare, 
+  MessageSquare,
   Calendar,
   Scale,
   Clock,
@@ -127,7 +127,7 @@ interface LawyerWithViews extends Omit<LawyerProfile, 'profile_views'> {
 // Helper function to create a URL-friendly slug from a string
 const createSlug = (str: string): string => {
   if (!str) return '';
-  
+
   return str
     // Remove accents
     .normalize('NFD')
@@ -146,36 +146,36 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get the ID and slug from the URL parameters
   const { id: urlId, slug } = useParams<{ id?: string; slug?: string }>();
   const { user: currentUser } = useAuth();
-  
+
   // Extract the ID from the URL
   const id = useMemo(() => {
-    
+
     // If we have an ID from the URL params, use that
     if (urlId) {
       return urlId;
     }
-    
+
     // If we have a slug, try to extract the ID from it
     if (slug) {
       // UUID regex pattern
       const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
       const match = slug.match(uuidRegex);
-      
+
       if (match) {
         return match[0];
       }
-      
+
       console.warn('No UUID found in slug:', slug);
     }
-    
+
     console.error('No ID could be extracted from URL');
     return '';
   }, [urlId, slug]);
-  
+
   // State declarations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +199,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [services, setServices] = useState<ServiceType[]>([]);
   const { toast } = useToast();
-  
+
   // Handle booking a service
   const handleBookService = useCallback(async (service: ServiceType) => {
     if (!currentUser) {
@@ -207,14 +207,14 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       setIsAuthModalOpen(true);
       return;
     }
-    
+
     // Implement booking logic here
     toast({
       title: 'Servicio reservado',
       description: `Has reservado el servicio: ${service.title}`,
     });
   }, [currentUser, toast, setAuthMode, setIsAuthModalOpen]);
-  
+
   // Check if we need to redirect to the new URL format
   useEffect(() => {
     // If we have the lawyer data, ensure we're using the correct URL format
@@ -222,18 +222,18 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
       const nameSlug = fullName ? createSlug(fullName) : 'abogado';
       const expectedPath = `/abogado/${nameSlug}-${id}`;
-      
+
       // Only redirect if we're not already on the correct path
       if (location.pathname !== expectedPath && !location.pathname.startsWith('/abogado/abogado-')) {
         navigate(expectedPath, { replace: true });
       }
     }
   }, [id, lawyer, location.pathname, navigate]);
-  
+
   // Memoize the handleServiceAction function to prevent unnecessary re-renders
   const handleServiceAction = useCallback((actionType: 'contact' | 'schedule' | 'book', serviceItem?: ServiceType) => {
     if (!serviceItem) return;
-    
+
     if (!currentUser) {
       // Store the intended action to perform after login
       const pendingAction = {
@@ -252,13 +252,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           available: serviceItem.available !== false
         }
       };
-      
+
       sessionStorage.setItem('pendingAction', JSON.stringify(pendingAction));
       setAuthMode('login');
       setIsAuthModalOpen(true);
       return;
     }
-    
+
     if (actionType === 'contact') {
       setSelectedService(serviceItem);
       setIsContactModalOpen(true);
@@ -269,13 +269,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       handleBookService(serviceItem);
     }
   }, [
-    currentUser, 
-    id, 
-    setAuthMode, 
-    setIsAuthModalOpen, 
-    setSelectedService, 
-    setIsContactModalOpen, 
-    setIsScheduleModalOpen, 
+    currentUser,
+    id,
+    setAuthMode,
+    setIsAuthModalOpen,
+    setSelectedService,
+    setIsContactModalOpen,
+    setIsScheduleModalOpen,
     handleBookService
   ]);
 
@@ -305,8 +305,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   // Type guard to check if an object is a valid service
   const isValidService = (service: unknown): service is ServiceType => {
     return (
-      typeof service === 'object' && 
-      service !== null && 
+      typeof service === 'object' &&
+      service !== null &&
       'id' in service &&
       typeof service.id === 'string'
     );
@@ -369,7 +369,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     return [];
   }, []);
 
-    // Define a type for the raw profile data from the API
+  // Define a type for the raw profile data from the API
   interface RawProfileData {
     id: string;
     user_id: string;
@@ -417,7 +417,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       console.error('No profile data provided to updateLawyerState');
       return;
     }
-    
+
     // Parse availability with better error handling and fallbacks
     let availability: Availability = {
       available_today: false,
@@ -455,10 +455,10 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     }
 
     // Ensure specialties is properly typed
-    const specialties = Array.isArray(profile.specialties) 
-      ? profile.specialties 
-      : typeof profile.specialties === 'string' 
-        ? [profile.specialties] 
+    const specialties = Array.isArray(profile.specialties)
+      ? profile.specialties
+      : typeof profile.specialties === 'string'
+        ? [profile.specialties]
         : [];
 
     // Create a properly typed lawyer object
@@ -500,54 +500,54 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       setLoading(false);
       return null;
     }
-    
+
     // Clean the ID in case it contains any extra characters
     const cleanId = profileId.trim();
     try {
       setLoading(true);
       setError(null);
-      
+
       // First try to get the profile by ID
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .or(`id.eq.${cleanId},user_id.eq.${cleanId}`)
         .single();
-        
+
       if (profileError) throw profileError;
       if (!profile) throw new Error('No se encontró el perfil');
-      
-      
+
+
       // Get appointment count for this lawyer (excluding pending payments)
       const { data: appointmentCounts, error: countError } = await supabase
         .from('appointments')
         .select('lawyer_id, status')
         .eq('lawyer_id', profile.id)
         .neq('status', 'pending_payment');
-      
+
       // Add appointment count to profile
       const profileWithCount = {
         ...profile,
         profile_views: appointmentCounts?.length || 0
       };
-      
+
       // Update the lawyer state
       updateLawyerState(profileWithCount);
-      
+
       // If we have a slug, check if it matches the expected format
       if (slug) {
         const expectedSlug = `${createSlug(profile.first_name || '')}-${createSlug(profile.last_name || '')}`;
         const currentSlug = slug.replace(`-${cleanId}`, '');
-        
+
         if (expectedSlug !== currentSlug) {
           // Redirect to the canonical URL
           const newPath = `/abogado/${expectedSlug}-${cleanId}`;
           navigate(newPath, { replace: true });
         }
       }
-      
+
       return profile;
-      
+
     } catch (error) {
       console.error('Error in fetchProfile:', error);
       setError(`Error al cargar el perfil: ${error instanceof Error ? error.message : String(error)}`);
@@ -567,16 +567,16 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   useLayoutEffect(() => {
     if (!loading && location.hash) {
       const hash = location.hash.substring(1);
-      
+
       // Function to attempt scroll
       const scrollToElement = (attempts = 0) => {
         const element = document.getElementById(hash);
-        
+
         if (element) {
           // Element found, scroll to it
           setTimeout(() => {
-            element.scrollIntoView({ 
-              behavior: 'smooth', 
+            element.scrollIntoView({
+              behavior: 'smooth',
               block: 'start',
               inline: 'nearest'
             });
@@ -588,7 +588,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           console.error('Element not found after 10 attempts:', hash);
         }
       };
-      
+
       // Start attempting to scroll
       scrollToElement();
     }
@@ -598,14 +598,14 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   interface LawyerWithViews extends Omit<LawyerProfile, 'profile_views'> {
     profile_views?: number;
   }
-  
+
   // Type assertion for the lawyer data
   const lawyerWithViews = lawyer as LawyerWithViews | null;
 
   // Format data for display
   const profileData = useMemo(() => {
     const lawyerWithViews = lawyer as LawyerWithViews | null;
-    
+
     // Format education information if available
     const education = [];
     if (lawyerWithViews?.education) {
@@ -620,7 +620,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       }
       education.push(educationStr);
     }
-    
+
     return {
       hourlyRate: lawyerWithViews?.hourly_rate_clp || 0,
       specialties: lawyerWithViews?.specialties || [],
@@ -628,16 +628,16 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       bio: lawyerWithViews?.bio || 'Este abogado no ha proporcionado una biografía.',
       education: education,
       experience: [
-        lawyerWithViews?.experience_years 
+        lawyerWithViews?.experience_years
           ? `${lawyerWithViews.experience_years} ${lawyerWithViews.experience_years === 1 ? 'año' : 'años'} de experiencia`
           : 'Recién comenzando'
       ],
-      certifications: lawyerWithViews?.certifications 
-        ? (typeof lawyerWithViews.certifications === 'string' 
-            ? lawyerWithViews.certifications.split('\n').filter(cert => cert.trim() !== '')
-            : Array.isArray(lawyerWithViews.certifications) 
-              ? lawyerWithViews.certifications 
-              : [])
+      certifications: lawyerWithViews?.certifications
+        ? (typeof lawyerWithViews.certifications === 'string'
+          ? lawyerWithViews.certifications.split('\n').filter(cert => cert.trim() !== '')
+          : Array.isArray(lawyerWithViews.certifications)
+            ? lawyerWithViews.certifications
+            : [])
         : [],
       languages: lawyerWithViews?.languages || ["Español"],
       availability: "Disponible",
@@ -669,7 +669,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     if (price === null || price === undefined) {
       return 'Precio no disponible';
     }
-    
+
     // Convert to number if it's a string
     let priceNum: number;
     if (typeof price === 'string') {
@@ -684,7 +684,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     } else {
       return 'Precio no disponible';
     }
-    
+
     // Format the price as CLP
     try {
       return new Intl.NumberFormat('es-CL', {
@@ -710,14 +710,14 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             </div>
             <Skeleton className="h-5 w-24 rounded-full" />
           </div>
-          
+
           <div className="flex-1 space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <Skeleton className="h-9 w-64" />
               <Skeleton className="h-5 w-24 rounded-full" />
               <Skeleton className="h-5 w-5 rounded-full" />
             </div>
-            
+
             <div className="flex items-center gap-4">
               <div className="flex items-center">
                 <Skeleton className="h-5 w-5 mr-1" />
@@ -729,7 +729,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                 <Skeleton className="h-4 w-40" />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-6">
                 <div className="flex items-center">
@@ -746,12 +746,12 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center">
               <Skeleton className="h-4 w-48" />
             </div>
           </div>
-          
+
           <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-64 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
             <Skeleton className="h-10 w-40 mb-4" />
             <div className="space-y-3 w-full">
@@ -776,7 +776,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           <Skeleton className="h-4 w-5/6" />
           <Skeleton className="h-4 w-4/5" />
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6 mt-8">
           <div className="space-y-6">
             <div>
@@ -787,7 +787,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                 <Skeleton className="h-4 w-32" />
               </div>
             </div>
-            
+
             <div>
               <Skeleton className="h-5 w-24 mb-3" />
               <div className="flex flex-wrap gap-2">
@@ -796,7 +796,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               </div>
             </div>
           </div>
-          
+
           <div>
             <Skeleton className="h-5 w-32 mb-3" />
             <div className="space-y-2">
@@ -977,8 +977,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           </div>
           <h2 className="mt-3 text-lg font-medium text-gray-900">Error al cargar el perfil</h2>
           <p className="mt-2 text-sm text-gray-600">{error}</p>
-          <Button 
-            onClick={() => fetchProfile()} 
+          <Button
+            onClick={() => fetchProfile()}
             className="mt-4"
             variant="outline"
           >
@@ -992,7 +992,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="bg-muted pt-32 px-4 sm:px-6 lg:px-8 pb-8">
         <div className="max-w-7xl mx-auto">
           <div className="space-y-8">
@@ -1001,40 +1001,40 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               <CardContent className="p-6 md:p-8">
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex flex-col items-center relative">
-                      {/* Mobile-only verified badge */}
-                      {lawyer?.verified && (
-                        <div className="sm:hidden absolute -top-1 -left-1 z-10">
-                          <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
-                            <span className="text-xs font-medium">
-                              {lawyer?.pjud_verified ? 'Verificado PJUD' : 'Verificado'}
-                            </span>
-                          </div>
+                    {/* Mobile-only verified badge */}
+                    {lawyer?.verified && (
+                      <div className="sm:hidden absolute -top-1 -left-1 z-10">
+                        <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full whitespace-nowrap">
+                          <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="text-xs font-medium">
+                            {lawyer?.pjud_verified ? 'Verificado PJUD' : 'Verificado'}
+                          </span>
                         </div>
-                      )}
-                      <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-full ring-4 ring-white shadow-md overflow-hidden">
-                        <Avatar className="h-full w-full">
-                          <AvatarImage 
-                            src={lawyer?.avatar_url || ''} 
-                            alt={`${lawyer?.first_name || ''} ${lawyer?.last_name || ''}`.trim()}
-                            className="object-cover w-full h-full"
-                          />
-                          <AvatarFallback className="bg-green-900 text-green-600 text-3xl font-medium h-full w-full flex items-center justify-center">
-                            {lawyer?.first_name && lawyer.last_name 
-                              ? `${lawyer.first_name[0]}${lawyer.last_name[0]}`.toUpperCase() 
-                              : 'AB'}
-                          </AvatarFallback>
-                        </Avatar>
                       </div>
-                      {/* {lawyer?.hourly_rate_clp > 60000 && (
+                    )}
+                    <div className="relative h-28 w-28 md:h-32 md:w-32 rounded-md ring-4 ring-white shadow-md overflow-hidden">
+                      <Avatar className="h-full w-full rounded-md">
+                        <AvatarImage
+                          src={lawyer?.avatar_url || ''}
+                          alt={`${lawyer?.first_name || ''} ${lawyer?.last_name || ''}`.trim()}
+                          className="object-cover w-full h-full"
+                        />
+                        <AvatarFallback className="bg-green-900 text-green-600 text-3xl font-medium h-full w-full flex items-center justify-center">
+                          {lawyer?.first_name && lawyer.last_name
+                            ? `${lawyer.first_name[0]}${lawyer.last_name[0]}`.toUpperCase()
+                            : 'AB'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    {/* {lawyer?.hourly_rate_clp > 60000 && (
                         <Badge variant="default" className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-gray-100">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">🏅 Premium</span>
                         </Badge>
                       )} */}
-                      <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-green-100 text-green-800">
-                        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
-                        <span>Disponible</span>
-                      </Badge>
+                    <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-green-100 text-green-800">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
+                      <span>Disponible</span>
+                    </Badge>
                   </div>
 
                   <div className="flex-1 space-y-4">
@@ -1050,7 +1050,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Desktop verified badge next to name */}
                         {lawyer?.verified && (
                           <div className="hidden sm:flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full self-start mt-2">
@@ -1067,24 +1067,24 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="w-full">
-                    {/* Specialty Badges */}
+                      {/* Specialty Badges */}
                       {lawyer?.specialties && lawyer.specialties.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {Array.isArray(lawyer.specialties) ? (
                             lawyer.specialties.map((specialty, index) => (
-                              <Badge 
-                                key={index} 
-                                variant="outline" 
+                              <Badge
+                                key={index}
+                                variant="outline"
                                 className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
                               >
                                 {specialty}
                               </Badge>
                             ))
                           ) : (
-                            <Badge 
-                              variant="outline" 
+                            <Badge
+                              variant="outline"
                               className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700"
                             >
                               {lawyer.specialties}
@@ -1120,9 +1120,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           </span>
                           <div className="flex items-center ml-2">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star 
-                                key={star} 
-                                className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0" 
+                              <Star
+                                key={star}
+                                className="h-4 w-4 text-yellow-400 fill-current flex-shrink-0"
                               />
                             ))}
                           </div>
@@ -1172,11 +1172,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                               <span>{lawyer.profile_views} casos</span>
                             </div>
                           ) : null}
-                          
+
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* {lawyer?.website && (
                       <div className="flex items-center">
                         <a 
@@ -1194,17 +1194,17 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                   <div className="md:pl-6 md:ml-6 md:border-l-2 md:border-gray-200 w-full md:w-68 lg:w-72 mt-6 md:mt-0 flex-shrink-0">
                     <div className="text-3xl font-bold text-primary mb-4 text-center md:text-left">
-                      {displayHourlyRate !== undefined && displayHourlyRate !== null 
-                        ? formatPrice(displayHourlyRate)
+                      {displayHourlyRate !== undefined && displayHourlyRate !== null
+                        ? formatPrice(displayHourlyRate) + ' CLP'
                         : 'Consultar precio'}
                       {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
-                      <small className="text-gray-500 text-xs block">Asesoría online · hasta 60 min</small>
-                 
+                      <small className="text-gray-500 text-xs block">Asesoría online · consulta 60 min</small>
+
                     </div>
 
                     <div className="space-y-3 w-full">
                       <div className="flex gap-3 w-full">
-                        <Button 
+                        <Button
                           className={`flex-1 h-11 ${(currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp) ? 'opacity-50 cursor-not-allowed' : ''} bg-gray-900 hover:bg-green-900`}
                           onClick={(e) => {
                             e.preventDefault();
@@ -1218,7 +1218,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                                   .replace(/[^a-z0-9]+/g, '-')
                                   .replace(/(^-|-$)/g, '');
                               };
-                              
+
                               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
                               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
                               navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
@@ -1227,7 +1227,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
-                          Ver disponibilidad
+                          Agendar consulta
                         </Button>
 
                         {lawyer && (
@@ -1246,7 +1246,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           No puedes contactar ni agendar contigo mismo
                         </p>
                       )}
-                       <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
+                      <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
                     </div>
                   </div>
                 </div>
@@ -1270,7 +1270,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                     </p>
                   )}
                 </div>
-                
+
                 <div className="grid md:grid-cols-2 gap-6 mt-8">
                   <div>
                     {/* Educación Section */}
@@ -1298,19 +1298,19 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Languages Section */}
                     <div>
                       <h4 className="font-semibold mb-3">Idiomas</h4>
                       {lawyer?.languages && lawyer.languages.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {lawyer.languages.flatMap(lang => 
-                            typeof lang === 'string' 
+                          {lawyer.languages.flatMap(lang =>
+                            typeof lang === 'string'
                               ? lang.split(',').map(l => l.trim()).filter(Boolean)
                               : []
                           ).map((lang, index) => (
-                            <span 
-                              key={index} 
+                            <span
+                              key={index}
                               className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-green-900"
                             >
                               {lang}
@@ -1322,7 +1322,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-semibold mb-3">Certificaciones</h4>
                     <ul className="space-y-2">
@@ -1348,9 +1348,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
               </CardHeader>
               <CardContent>
-                <ServicesSection 
-                  services={services} 
-                  isLoading={loading} 
+                <ServicesSection
+                  services={services}
+                  isLoading={loading}
                   isOwner={currentUser?.id === lawyer?.user_id}
                   onAuthRequired={() => setIsAuthModalOpen(true)}
                   lawyerId={lawyer?.id}
@@ -1369,14 +1369,14 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             {/* Reviews Section */}
             {lawyer && (
               <div id="reviews-section" className="scroll-mt-28">
-                <LawyerReviewsSection 
+                <LawyerReviewsSection
                   lawyerId={lawyer.id}
                   lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
                 />
               </div>
             )}
 
-            
+
           </div>
 
         </div>
@@ -1395,7 +1395,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
             service={selectedService}
           />
-          
+
           <ScheduleModal
             isOpen={isScheduleModalOpen}
             onClose={() => setIsScheduleModalOpen(false)}
@@ -1403,7 +1403,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
             hourlyRate={lawyer.hourly_rate_clp || 0}
           />
-          
+
           <AuthModal
             isOpen={isAuthModalOpen}
             onClose={() => {
