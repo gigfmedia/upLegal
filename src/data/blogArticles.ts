@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "violencia-intrafamiliar-chile-2026",
+    title: "Violencia intrafamiliar (VIF) en Chile 2026: qué hacer, cómo denunciar y qué medidas de protección existen",
+    excerpt: "Aprende cómo denunciar violencia intrafamiliar en Chile, qué medidas de protección puede decretar un tribunal, qué ocurre cuando existen hijos involucrados y cuáles son tus derechos.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "12 de Junio, 2026",
+    readTime: "14 min",
+    image: "/assets/violencia-intrafamiliar-chile-2026.png"
+  },
+  {
     id: "liquidacion-bienes-divorcio-chile-2026",
     title: "Liquidación de bienes en el divorcio en Chile 2026: qué es, cómo funciona y requisitos",
     excerpt: "Aprende qué es la liquidación de bienes en el divorcio en Chile 2026, cómo funciona el proceso y qué requisitos debes cumplir.",

@@ -8,7 +8,7 @@ import Globe from "lucide-react/dist/esm/icons/globe";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import MessageCircle from "lucide-react/dist/esm/icons/message-circle";
 import Calendar from "lucide-react/dist/esm/icons/calendar";
-import UserIcon from "lucide-react/dist/esm/icons/user";
+import Lock from "lucide-react/dist/esm/icons/lock";
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import { useNavigate } from "react-router-dom";
 
@@ -598,7 +598,8 @@ export function LawyerCard({
             </Button>
 
           </div>
-          <p className="text-gray-700 text-xs text-center pt-2">Pago seguro · Orientación directa</p>
+
+          <p className="text-gray-700 text-xs text-center pt-2"><Lock className="h-3 w-3 text-gray-900 mb-1 inline-block mr-1" /> Pago seguro con Mercado Pago</p>
           {buttonsDisabled && (
             <p className="text-xs text-gray-500 mt-2 text-center">
               {isOwnProfile
