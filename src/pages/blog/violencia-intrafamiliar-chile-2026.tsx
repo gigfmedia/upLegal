@@ -75,7 +75,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -129,7 +129,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 14 min</span>
+                            <span>Tiempo de lectura: 10 min</span>
                         </div>
                     </div>
                 </div>

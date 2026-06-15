@@ -11,13 +11,23 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "incumplimiento-regimen-visitas-chile-2026",
+    title: "Incumplimiento del régimen de relación directa y regular en Chile 2026: qué hacer si no te dejan ver a tus hijos",
+    excerpt: "Aprende qué hacer si no te permiten cumplir el régimen de visitas en Chile. Conoce las medidas judiciales, sanciones, mediación y cómo exigir el cumplimiento de la relación directa y regular.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "15 de Junio, 2026",
+    readTime: "9 min",
+    image: "/assets/incumplimiento-regimen-visitas-chile-2026.png"
+  },
+  {
     id: "violencia-intrafamiliar-chile-2026",
     title: "Violencia intrafamiliar (VIF) en Chile 2026: qué hacer, cómo denunciar y qué medidas de protección existen",
     excerpt: "Aprende cómo denunciar violencia intrafamiliar en Chile, qué medidas de protección puede decretar un tribunal, qué ocurre cuando existen hijos involucrados y cuáles son tus derechos.",
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "12 de Junio, 2026",
-    readTime: "14 min",
+    readTime: "10 min",
     image: "/assets/violencia-intrafamiliar-chile-2026.png"
   },
   {

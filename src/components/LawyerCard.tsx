@@ -554,8 +554,8 @@ export function LawyerCard({
                     ${formatCLP(displayHourlyRate)} CLP
                   </span>
                   {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
-                  <small className="text-gray-500 text-xs block">Asesoría online · consulta 60 min</small>
-                  <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
+                  <small className="text-gray-500 text-xs block">Consulta 60 min</small>
+                  {/* <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small> */}
                 </div>
               </div>
             </div>

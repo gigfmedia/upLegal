@@ -325,9 +325,9 @@ const SearchResults = () => {
 
       <div className="bg-white py-8 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold font-serif text-gray-900">Conecta con el abogado ideal para tu caso</h1>
-          <p className="text-gray-600">Agenda una asesoría legal online con abogados verificados, precios transparentes y sin compromisos.</p>
-          <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small>
+          <h1 className="text-3xl font-bold font-serif text-gray-900">Elige tu abogado y agenda hoy</h1>
+          <p className="text-gray-600">Consulta online de 60 minutos · Abogados verificados en PJUD</p>
+          {/* <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small> */}
 
           <div className="mt-6">
             <SearchBar

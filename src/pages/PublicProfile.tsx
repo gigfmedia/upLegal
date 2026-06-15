@@ -1198,7 +1198,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                         ? formatPrice(displayHourlyRate) + ' CLP'
                         : 'Consultar precio'}
                       {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
-                      <small className="text-gray-500 text-xs block">Asesoría online · consulta 60 min</small>
+                      <small className="text-gray-500 text-xs block">Consulta 60 min</small>
 
                     </div>
 
@@ -1246,7 +1246,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           No puedes contactar ni agendar contigo mismo
                         </p>
                       )}
-                      <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small>
+                      {/* <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small> */}
                     </div>
                   </div>
                 </div>
