@@ -594,7 +594,7 @@ export function LawyerCard({
               title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
             >
               <Calendar className="h-6 w-6 mr-2" />
-              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agendar consulta'}
+              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Agenda consulta'}
             </Button>
 
           </div>

@@ -174,7 +174,7 @@ export default function Header({
                 variant === 'dark'
                   ? (isActive('/search') ? 'text-green-400 font-medium' : 'text-gray-300 hover:text-white')
                   : (isActive('/search') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
-              )}>Agendar consulta</a>
+              )}>Agendar</a>
               <a href="/como-funciona" className={cn(
                 "transition-colors text-sm",
                 variant === 'dark'
@@ -276,7 +276,7 @@ export default function Header({
                   ? (variant === 'dark' ? 'bg-green-500/20 text-green-400 font-medium' : 'bg-blue-50 text-blue-600 font-medium')
                   : (variant === 'dark' ? 'text-gray-300 hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50')
               )}
-            >Agendar consulta</button>
+            >Agendar</button>
             <button
               onClick={() => handleNavigation('/como-funciona')}
               className={cn(

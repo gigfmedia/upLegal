@@ -1227,7 +1227,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
-                          Agendar consulta
+                          Agenda consulta
                         </Button>
 
                         {lawyer && (
