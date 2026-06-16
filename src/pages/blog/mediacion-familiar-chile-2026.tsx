@@ -214,6 +214,17 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed">
               Si estás pensando en demandar por pensión de alimentos, solicitar el cuidado personal de un hijo o regular un régimen de visitas, esta guía te explicará exactamente cómo funciona la mediación familiar obligatoria en Chile, cuándo es necesaria, cuánto demora, qué ocurre si no hay acuerdo y cómo obtener el certificado que permite continuar ante el Tribunal de Familia.
             </p>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Si ya sabes que necesitas actuar, puedes comparar{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                abogados especializados en pensión de alimentos
+              </Link>{" "}
+              o{" "}
+              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                abogados de divorcio en Chile
+              </Link>{" "}
+              según tu caso.
+            </p>
           </div>
 
           {/* ¿Qué es la mediación familiar? */}
@@ -643,6 +654,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               El certificado de mediación frustrada permitirá presentar la demanda correspondiente para que un juez resuelva el conflicto mediante una sentencia. En otras palabras, la mediación no reemplaza al tribunal. Más bien constituye una etapa previa destinada a intentar una solución menos confrontacional.
             </p>
+            <p className="text-gray-600 leading-relaxed">
+              En esta etapa es clave contar con un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                abogado de familia para preparar la demanda
+              </Link>{" "}
+              con los fundamentos correctos desde el primer escrito.
+            </p>
           </div>
 
           {/* Errores comunes que debes evitar */}
@@ -708,8 +726,17 @@ const BlogArticle = () => {
               Cuando existe voluntad de colaboración, la mediación puede resolver completamente el conflicto. Cuando ello no ocurre, el proceso igualmente cumple una función esencial: generar el certificado de mediación frustrada que permitirá continuar mediante una demanda judicial.
             </p>
             <p className="text-gray-600 leading-relaxed font-semibold">
-              Por ello, conocer cómo funciona la mediación familiar obligatoria, cuáles son sus etapas y qué documentos genera puede evitar retrasos innecesarios y errores procesales. Si estás enfrentando un conflicto familiar y tienes dudas sobre cómo proceder, un abogado de familia puede orientarte antes de iniciar cualquier trámite.<br />
-              ¿Necesitas hablar con un abogado de familia? En LegalUp puedes encontrar profesionales especializados de forma rápida y sin complicaciones.
+              Por ello, conocer cómo funciona la mediación familiar obligatoria, cuáles son sus etapas
+              y qué documentos genera puede evitar retrasos innecesarios y errores procesales. Si estás
+              enfrentando un conflicto de pensión de alimentos, puedes revisar tu caso con un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                abogado especialista en alimentos en Chile
+              </Link>
+              . Si el conflicto es sobre divorcio o cuidado personal, encuentra un{" "}
+              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                abogado de familia online
+              </Link>{" "}
+              en LegalUp.
             </p>
           </div>
 

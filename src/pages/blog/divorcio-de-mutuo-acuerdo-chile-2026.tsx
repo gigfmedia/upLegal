@@ -118,6 +118,13 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
               Esta guía te explica qué se necesita, cómo funciona el proceso paso a paso, cuánto demora y qué debes tener resuelto antes de presentar la demanda.
             </p>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              Si ya tienes claro que quieres iniciar el proceso, puedes consultar con un{" "}
+              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                abogado de divorcio de mutuo acuerdo en Chile
+              </Link>{" "}
+              para evaluar tu caso y preparar el acuerdo.
+            </p>
           </div>
 
           <div className="mb-12">
@@ -223,7 +230,17 @@ const BlogArticle = () => {
                 },
                 {
                   title: "Presentar la demanda de divorcio",
-                  desc: "La demanda se presenta ante el Juzgado de Familia competente según el domicilio de cualquiera de los cónyuges. Puede presentarla un abogado que represente a ambas partes o cada cónyuge con su propio abogado. La demanda incluye la solicitud de divorcio de mutuo acuerdo, la acreditación del cese de convivencia, el acuerdo completo sobre todas las materias y la documentación de respaldo."
+                  desc: (
+                    <>
+                      La demanda incluye la solicitud de divorcio de mutuo acuerdo, la acreditación del cese de
+                      convivencia, el acuerdo completo sobre todas las materias y la documentación de respaldo.
+                      Un{" "}
+                      <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                        abogado especialista en divorcio de común acuerdo
+                      </Link>{" "}
+                      puede representar a ambas partes en este paso, reduciendo costos.
+                    </>
+                  ),
                 }
               ].map((item, index) => (
                 <div key={index} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex items-start gap-4">
@@ -459,7 +476,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="Si ambos están de acuerdo en divorciarse, un abogado especializado puede preparar el acuerdo sobre hijos y bienes y acelerar el trámite."
-            link="/abogado-divorcio-unilateral"
+            link="/abogados-divorcio"
             buttonText="Comparar abogados especializados"
           />
 
@@ -471,11 +488,14 @@ const BlogArticle = () => {
               <p>
                 El divorcio de mutuo acuerdo en Chile es el proceso más rápido, económico y controlado para disolver un matrimonio cuando ambas partes están de acuerdo. El requisito más importante es el año de cese de convivencia — y el factor que más determina la duración es qué tan rápido pueden llegar a acuerdo sobre los hijos y los bienes.
               </p>
-              <p>
-                Si tienes todo resuelto y la documentación en orden, el proceso judicial en sí no debería tomarte más de 3 a 4 meses. Si hay temas pendientes que resolver, un abogado de familia puede ayudarte a estructurar el acuerdo de forma que sea suficiente para el tribunal y equitativo para ambas partes.
-              </p>
-              <p className="font-semibold text-gray-900">
-                Lo más importante es no esperar — cada mes que pasa sin formalizar la separación es un mes menos de claridad legal para ambas partes y para los hijos.
+              <p className="font-medium">
+                Si tienes todo resuelto y la documentación en orden, el proceso judicial en sí no debería
+                tomarte más de 3 a 4 meses. Si hay temas pendientes que resolver, un{" "}
+                <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                  abogado de familia para divorcio en Chile
+                </Link>{" "}
+                puede ayudarte a estructurar el acuerdo de forma que sea suficiente para el tribunal y
+                equitativo para ambas partes.
               </p>
             </div>
           </div>

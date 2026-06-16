@@ -223,6 +223,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               En esta guía 2026 te explicamos cuándo se puede pedir aumento de pensión de alimentos, qué debe probarse, cómo funciona el proceso y qué factores considera el juez.
             </p>
+            <p className="text-gray-600 leading-relaxed">
+  Si ya tienes claro que necesitas actuar, puedes{" "}
+  <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+    consultar con un abogado especialista en pensión de alimentos
+  </Link>{" "}
+  directamente online para evaluar tu caso.
+</p>
           </div>
 
           {/* Qué es un aumento */}
@@ -360,7 +367,7 @@ const BlogArticle = () => {
                     "Arriendo o gastos habitacionales",
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                      <span className="text-green-600 font-bold">✓</span>
                       {item}
                     </li>
                   ))}
@@ -380,7 +387,7 @@ const BlogArticle = () => {
                     "Viajes, vehículos, inversiones",
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-gray-600">
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                      <span className="text-green-600 font-bold">✓</span>
                       {item}
                     </li>
                   ))}
@@ -404,7 +411,17 @@ const BlogArticle = () => {
                 },
                 {
                   title: "Mediación familiar",
-                  desc: "En muchos casos la mediación es obligatoria antes de demandar. Si existe acuerdo, puede aprobarse rápidamente. Si no hay acuerdo o una parte no asiste, se emite un acta de mediación frustrada que permite continuar judicialmente.",
+                  desc: (
+                    <>
+                      En muchos casos la mediación es obligatoria antes de demandar. Si existe acuerdo, puede
+                      aprobarse rápidamente. Si no hay acuerdo o una parte no asiste, se emite un acta de
+                      mediación frustrada que permite continuar judicialmente. Un{" "}
+                      <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                        abogado de familia para aumento de pensión
+                      </Link>{" "}
+                      puede acompañarte desde esta etapa.
+                    </>
+                  ),
                 },
                 {
                   title: "Presentar demanda",
@@ -621,7 +638,11 @@ const BlogArticle = () => {
               Los tribunales sí pueden modificar la pensión cuando existen fundamentos reales: mayores gastos educacionales, salud, crecimiento del hijo, inflación o aumento en los ingresos del alimentante. Pero todo debe acreditarse correctamente.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
-              No esperes a que el desequilibrio sea insostenible para actuar. El tribunal puede considerar el aumento desde la fecha de la solicitud — no desde el momento en que los gastos empezaron a subir. Cada mes que pasa sin presentar la solicitud es un mes más que absorbes tú solo los costos que deberían distribuirse entre ambos padres.
+              No esperes a que el desequilibrio sea insostenible para actuar. El tribunal puede considerar el aumento desde la fecha de la solicitud — no desde el momento en que los gastos empezaron a subir. Cada mes que pasa sin presentar la solicitud es un mes más que absorbes tú solo los costos que deberían distribuirse entre ambos padres. {" "}
+  <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+    Un abogado para aumento de pensión alimenticia
+  </Link>{" "}
+  puede ayudarte a preparar el caso correctamente desde el primer día.
             </p>
           </div>
 

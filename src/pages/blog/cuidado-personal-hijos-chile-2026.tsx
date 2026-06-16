@@ -276,6 +276,12 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               Si estás enfrentando una separación, un conflicto familiar o deseas modificar una situación ya establecida, esta guía te explicará todo lo que debes saber sobre el cuidado personal de hijos en Chile, incluyendo quién puede solicitarlo, qué factores considera el tribunal y cómo funciona el procedimiento judicial.
             </p>
+            <p className="text-gray-600 leading-relaxed">
+              Si ya necesitas asesoría, puedes consultar con un{" "}
+              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                abogado especialista en derecho de familia en Chile
+              </Link>.
+            </p>
           </div>
 
           {/* ¿Qué es el cuidado personal de un hijo? */}
@@ -384,7 +390,7 @@ const BlogArticle = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   La madre puede ejercer el cuidado personal cuando ello sea lo más beneficioso para el hijo. Por ejemplo:
                 </p>
-                <ul className="space-y-1 text-gray-600 text-sm">
+                <ul className="space-y-1 text-gray-600">
                   <li>• Ha sido la principal cuidadora.</li>
                   <li>• Mantiene estabilidad emocional y familiar.</li>
                   <li>• Tiene disponibilidad efectiva para la crianza.</li>
@@ -400,7 +406,7 @@ const BlogArticle = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   Cada vez existen más casos donde el cuidado personal es otorgado al padre. Esto ocurre cuando las circunstancias demuestran que dicha alternativa protege mejor el interés superior del niño, niña o adolescente. Por ejemplo:
                 </p>
-                <ul className="space-y-1 text-gray-600 text-sm">
+                <ul className="space-y-1 text-gray-600">
                   <li>• Mayor estabilidad familiar.</li>
                   <li>• Mejor capacidad de cuidado.</li>
                   <li>• Participación activa en la crianza.</li>
@@ -416,10 +422,10 @@ const BlogArticle = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   Sí, aunque se trata de situaciones excepcionales. Cuando ninguno de los padres puede ejercer adecuadamente sus responsabilidades, el tribunal puede otorgar el cuidado personal a terceros. Algunos ejemplos son:
                 </p>
-                <ul className="space-y-1 text-gray-600 text-sm">
-                  <li>• Abuelos.</li>
-                  <li>• Tíos.</li>
-                  <li>• Familiares cercanos.</li>
+                <ul className="space-y-1 text-gray-600">
+                  <li>• Abuelos</li>
+                  <li>• Tíos</li>
+                  <li>• Familiares cercanos</li>
                   <li>• Personas con vínculos afectivos relevantes.</li>
                 </ul>
                 <p className="text-gray-500 italic mt-3 text-xs">
@@ -563,7 +569,17 @@ const BlogArticle = () => {
                 },
                 {
                   title: "Paso 2: Presentar una demanda",
-                  desc: "Cuando la mediación fracasa, cualquiera de las partes puede presentar una demanda ante el Tribunal de Familia. La demanda debe incluir: Identificación de las partes, fundamentación jurídica, solicitud concreta y medios de prueba."
+                  desc: (
+                    <>
+                      Cuando la mediación fracasa, cualquiera de las partes puede presentar una demanda ante
+                      el Tribunal de Familia con el apoyo de un{" "}
+                      <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                        abogado de familia para cuidado personal
+                      </Link>
+                      . La demanda debe incluir: Identificación de las partes, fundamentación jurídica,
+                      solicitud concreta y medios de prueba.
+                    </>
+                  ),
                 },
                 {
                   title: "Paso 3: Audiencia preparatoria",
@@ -695,7 +711,7 @@ const BlogArticle = () => {
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El cuidado personal define con quién viven los hijos. Compara abogados especializados y recibe orientación antes de presentar tu demanda."
-            link="/abogado-pension-alimentos"
+            link="/abogados-divorcio"
             buttonText="Comparar abogados especializados"
           />
 
@@ -712,11 +728,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4">
               Los tribunales analizan múltiples factores, incluyendo estabilidad, vínculo afectivo, capacidad de cuidado, disponibilidad real y protección emocional.
             </p>
-            <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
+            <p className="text-gray-600 leading-relaxed mb-4">
               Si existe acuerdo entre los padres, el proceso suele resolverse de forma más rápida. Cuando no hay acuerdo, será necesario acudir a mediación y eventualmente al Tribunal de Familia para que un juez determine la solución más adecuada.
             </p>
-            <p className="text-gray-600 leading-relaxed mb-4">
-              Si enfrentas un conflicto relacionado con cuidado personal, tuición, custodia o crianza, actuar oportunamente y contar con asesoría especializada puede marcar una diferencia importante en el resultado del proceso y, sobre todo, en el bienestar de tu hijo.
+            <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
+              Si enfrentas un conflicto relacionado con cuidado personal, tuición, custodia o crianza,
+              actuar oportunamente puede marcar una diferencia importante en el resultado del proceso.
+              Un{" "}
+              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                abogado especializado en tuición y cuidado personal
+              </Link>{" "}
+              puede orientarte desde la mediación hasta la sentencia final.
             </p>
           </div>
 

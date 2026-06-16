@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "pension-alimentos-mayores-18-chile-2026",
+    title: "Pensión de alimentos para mayores de 18 años en Chile 2026: cuándo se puede pedir y cómo funciona",
+    excerpt: "Aprende cuándo se puede pedir pensión de alimentos para mayores de 18 años en Chile, qué requisitos deben cumplirse, cómo funciona el proceso y qué hacer si no hay acuerdo.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "16 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/pension-alimentos-hijos-mayores-18-chile-2026.png"
+  },
+  {
     id: "incumplimiento-regimen-visitas-chile-2026",
     title: "Incumplimiento del régimen de relación directa y regular en Chile 2026: qué hacer si no te dejan ver a tus hijos",
     excerpt: "Aprende qué hacer si no te permiten cumplir el régimen de visitas en Chile. Conoce las medidas judiciales, sanciones, mediación y cómo exigir el cumplimiento de la relación directa y regular.",

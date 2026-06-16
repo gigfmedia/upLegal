@@ -150,7 +150,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl">
-            Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse con el apoyo de un <Link to="/abogados-divorcio" className="text-green-600 underline hover:text-green-400">abogado de familia en Chile</Link>.
+            Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse con el apoyo de un <Link to="/abogado-pension-alimentos" className="text-green-600 underline hover:text-green-400">abogado especializado en cobro de pensión de alimentos</Link>.
           </p>
 
 
@@ -261,6 +261,13 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <p className="text-gray-600 mb-4">
+              Si necesitas activar estos mecanismos, un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                abogado para cobrar pensión de alimentos
+              </Link>{" "}
+              puede guiarte desde la liquidación hasta las medidas de apremio.
+            </p>
           </div>
 
           {/* Paso a paso */}
@@ -615,13 +622,12 @@ const BlogArticle = () => {
               Además, el hecho de que el deudor no tenga ingresos formales no lo libera de su obligación. Existen mecanismos para investigar su situación económica real y aplicar medidas igualmente efectivas sobre sus bienes o ingresos informales.
             </p>
             <p className="text-gray-600 font-semibold leading-relaxed">
-              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora y <Link to="/abogados-divorcio" className="text-green-900 underline hover:text-green-600">buscar asesoría con un abogado de familia</Link>.
+              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora y <Link to="/abogado-pension-alimentos" className="text-green-900 underline hover:text-green-600">buscar asesoría con un abogado de pensión de alimentos</Link>.
             </p>
           </div>
 
           {/* CTA Section - Specific Category */}
           <CategoryCTA category="familia" topic="pension" />
-
 
           {/* FAQs */}
           <div className="mb-6" data-faq-section>

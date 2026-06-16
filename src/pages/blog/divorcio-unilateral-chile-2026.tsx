@@ -173,6 +173,13 @@ const BlogArticle = () => {
                                 deuda de pensión de alimentos en Chile
                             </Link>.
                         </p>
+                        <p className="text-gray-600 mt-4">
+                            Si ya cumples los requisitos y quieres iniciar el proceso, puedes comparar{" "}
+                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                abogados especializados en divorcio unilateral en Chile
+                            </Link>{" "}
+                            directamente online.
+                        </p>
                     </div>
 
                     {/* QUE ES */}
@@ -296,7 +303,18 @@ const BlogArticle = () => {
                         <div className="space-y-4">
                             {[
                                 { step: "Paso 1: Reunir antecedentes", desc: "Certificado de matrimonio, certificados de nacimiento, documentos que acrediten separación." },
-                                { step: "Paso 2: Presentar la demanda", desc: "El abogado presenta la demanda de divorcio unilateral ante el Tribunal de Familia." },
+                                { step: "Paso 2: Presentar la demanda", 
+                                  desc: (
+                                    <>
+                                    El abogado presenta la demanda de divorcio unilateral ante el Tribunal de Familia.{" "}
+                                    En este paso es fundamental contar con un{" "}
+                                    <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                        abogado de divorcio unilateral
+                                    </Link>{" "}
+                                    que redacte la demanda con los fundamentos y pruebas correctas desde el primer escrito.
+                                    </>
+                                    )
+                                 },
                                 { step: "Paso 3: Notificación", desc: "El cónyuge demandado debe ser informado formalmente." },
                                 { step: "Paso 4: Audiencia preparatoria", desc: "El tribunal revisa las pruebas y fija los puntos a discutir." },
                                 { step: "Paso 5: Audiencia de juicio", desc: "Se presentan testigos, documentos y declaraciones." },
@@ -462,8 +480,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El requisito más importante es acreditar un cese efectivo de convivencia de al menos tres años. Para ello será necesario presentar documentos, testigos u otros medios de prueba que permitan demostrar que la vida matrimonial terminó de manera permanente.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si llevas años separado de hecho y tu cónyuge no quiere firmar el divorcio, la ley contempla mecanismos para que puedas regularizar tu situación y cerrar jurídicamente una etapa que ya terminó en la práctica.
+                        <p className="text-gray-600 leading-relaxed font-bold mb-4">
+                            Si llevas años separado de hecho y tu cónyuge no quiere firmar el divorcio, la ley
+                            contempla mecanismos para que puedas regularizar tu situación y cerrar jurídicamente
+                            una etapa que ya terminó en la práctica. Un{" "}
+                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                abogado para divorcio sin acuerdo del cónyuge
+                            </Link>{" "}
+                            puede guiarte desde la recopilación de pruebas hasta la sentencia final.
                         </p>
                     </div>
 

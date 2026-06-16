@@ -160,6 +160,13 @@ const BlogArticle = () => {
                                 compensación económica en el divorcio
                             </Link>.
                         </p>
+                        <p className="text-gray-600 mt-4">
+                            Si ya tienes el cese acreditado y quieres dar el siguiente paso, puedes{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                consultar con un abogado de divorcio en Chile
+                            </Link>{" "}
+                            online.
+                            </p>
                     </div>
 
                     {/* QUE ES */}
@@ -291,6 +298,13 @@ const BlogArticle = () => {
                                 Sin prueba suficiente del cese de convivencia, el tribunal podría rechazar la demanda de divorcio. Por eso resulta fundamental contar con antecedentes que permitan demostrar cuándo comenzó efectivamente la separación.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">
+                            Un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado especialista en divorcio
+                            </Link>{" "}
+                            puede ayudarte a reunir la prueba correcta y evitar que el tribunal rechace tu demanda por falta de acreditación del cese.
+                        </p>
                     </div>
 
                     {/* DESDE CUANDO SE CUENTA */}
@@ -557,7 +571,7 @@ const BlogArticle = () => {
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
                         description="Para iniciar un divorcio unilateral en Chile debes acreditar un cese de convivencia de al menos 3 años, si no hay acuerdo, será necesario iniciar un proceso judicial. Consulta con un abogado especialista."
-                        link="/abogado-divorcio-unilatera"
+                        link="/abogados-divorcio"
                         buttonText="Comparar abogados especializados"
                     />
 
@@ -574,7 +588,14 @@ const BlogArticle = () => {
                             Muchas personas desconocen la importancia de contar con una fecha clara de separación y enfrentan dificultades innecesarias al momento de tramitar el divorcio. Un pequeño descuido en esta materia puede significar esperar años adicionales para poder terminar legalmente el matrimonio.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Si estás separado y no has formalizado el cese de convivencia, el momento de hacerlo es ahora — no cuando ya necesites el divorcio. Una escritura ante notario o un acta ante el Registro Civil puede ahorrarte meses de trámites y discusiones probatorias más adelante.
+                            Si estás separado y no has formalizado el cese de convivencia, el momento de hacerlo es ahora
+                            — no cuando ya necesites el divorcio. Una escritura ante notario o un acta ante el Registro
+                            Civil puede ahorrarte meses de trámites y discusiones probatorias más adelante. Si tienes
+                            dudas sobre cómo proceder, un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia para divorcio en Chile
+                            </Link>{" "}
+                            puede orientarte desde el primer paso.
                         </p>
                     </div>
 

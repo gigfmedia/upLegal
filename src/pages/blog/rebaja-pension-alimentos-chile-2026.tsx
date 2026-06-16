@@ -216,6 +216,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               En esta guía 2026 te explicamos cuándo se puede pedir rebaja de pensión de alimentos, qué requisitos existen, cómo funciona el proceso y qué errores debes evitar al gestionar este cambio.
             </p>
+            <p className="text-gray-600 leading-relaxed">
+              Si tu situación ya cambió y necesitas actuar, puedes revisar tu caso con un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                abogado para rebaja de pensión de alimentos
+              </Link>{" "}
+              antes de que la deuda se acumule.
+            </p>
           </div>
 
           {/* Qué es una rebaja */}
@@ -374,7 +381,16 @@ const BlogArticle = () => {
                 },
                 {
                   title: "Presentar demanda de rebaja",
-                  desc: "Si la mediación se frustra (no hay acuerdo o una de las partes no asiste), el mediador emite un acta de mediación frustrada. Con ella, tu abogado de familia redacta y presenta la demanda de rebaja ante el Tribunal de Familia competente."
+                  desc: (
+                    <>
+                      Si la mediación se frustra (no hay acuerdo o una de las partes no asiste), el mediador emite
+                      un acta de mediación frustrada. Con ella, un{" "}
+                      <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                        abogado especialista en pensión de alimentos
+                      </Link>{" "}
+                      redacta y presenta la demanda de rebaja ante el Tribunal de Familia competente.
+                    </>
+                  ),
                 },
                 {
                   title: "Audiencia de juicio",
@@ -510,7 +526,13 @@ const BlogArticle = () => {
               La diferencia entre una rebaja exitosa y una solicitud rechazada está casi siempre en la documentación y en el momento en que actúas. Quien presenta la solicitud rápido, con liquidaciones de sueldo, finiquito, certificados médicos o cualquier evidencia que respalde el cambio real en su situación, tiene muchas más posibilidades de obtener una modificación justa.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
-              Si tu situación económica cambió y ya no puedes mantener el monto actual, no esperes a acumular deuda antes de actuar. El tribunal puede considerar la rebaja desde la fecha de la solicitud — no desde el momento en que empezaste a tener dificultades.
+              Si tu situación económica cambió y ya no puedes mantener el monto actual, no esperes a
+              acumular deuda antes de actuar. El tribunal puede considerar la rebaja desde la fecha de
+              la solicitud — no desde el momento en que empezaste a tener dificultades. Un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                abogado para reducir la pensión alimenticia
+              </Link>{" "}
+              puede ayudarte a documentar correctamente tu caso desde el primer día.
             </p>
           </div>
 

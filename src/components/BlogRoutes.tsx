@@ -47,6 +47,7 @@ const AcuerdoCompletoYSuficienteArticle = lazy(() => import('../pages/blog/acuer
 const LiquidacionBienesComunesArticle = lazy(() => import('../pages/blog/liquidacion-de-bienes-divorcio-chile-2026'));
 const ViolenciaIntrafamiliarArticle = lazy(() => import('../pages/blog/violencia-intrafamiliar-chile-2026'));
 const IncumplimientoRegimenVisitaArticle = lazy(() => import('../pages/blog/incumplimiento-regimen-visitas-chile-2026'));
+const PensionAlimentosMayoresArticle = lazy(() => import('../pages/blog/pension-alimentos-mayores-18-chile-2026'));
 
 
 
@@ -81,7 +82,6 @@ export const BlogRoutes = () => (
       <Route path="dicom-deuda-arriendo-chile-2026" element={<DicomArriendoArticle />} />
       <Route path="despido-injustificado-chile-2026" element={<DespidoInjustificadoArticle />} />
       <Route path="cuanto-me-corresponde-anos-de-servicio-chile-2026" element={<AnosServicioArticle />} />
-
       <Route path="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" element={<ComoDesalojarPropiedadArticle />} />
       <Route path="como-demandar-por-despido-injustificado-chile-2026" element={<ComoDemandarDespidoArticle />} />
       <Route path="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" element={<CuantoDuraJuicioLaboralArticle />} />
@@ -103,6 +103,7 @@ export const BlogRoutes = () => (
       <Route path="liquidacion-bienes-divorcio-chile-2026" element={<LiquidacionBienesComunesArticle />} />
       <Route path="violencia-intrafamiliar-chile-2026" element={<ViolenciaIntrafamiliarArticle />} />
       <Route path="incumplimiento-regimen-visitas-chile-2026" element={<IncumplimientoRegimenVisitaArticle />} />
+      <Route path="pension-alimentos-mayores-18-chile-2026" element={<PensionAlimentosMayoresArticle />} />
 
     </Routes>
   </Suspense>
