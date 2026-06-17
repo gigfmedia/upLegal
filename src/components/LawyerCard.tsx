@@ -357,6 +357,10 @@ export function LawyerCard({
           if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
             return;
           }
+          window.gtag?.('event', 'lawyer_profile_viewed', {
+            lawyer_id: lawyer.user_id || lawyer.id,
+            lawyer_name: displayName,
+          });
           const nameSlug = (lawyer.name || 'abogado')
             .normalize('NFD')
             .replace(/[\u0300-\u036f]/g, '')

@@ -34,7 +34,7 @@ export default function PaymentCanceled() {
                 Volver al inicio
               </Button>
             </Link>
-            <Link to="/search" className="block">
+            <Link to="/search" className="block" onClick={() => window.gtag?.('event', 'search_started')}>
               <Button className="w-full">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Buscar otro abogado

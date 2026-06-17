@@ -98,7 +98,10 @@ const BlogPage = () => {
               <Button
                 size="lg"
                 className="w-full bg-gray-900 text-white hover:bg-green-600 hover:text-white"
-                onClick={() => window.location.href = '/search'}
+                onClick={() => {
+                  window.gtag?.('event', 'search_started');
+                  window.location.href = '/search';
+                }}
               >
                 Hablar con abogado ahora
               </Button>
@@ -381,10 +384,13 @@ const BlogPage = () => {
             Conecta con abogados verificados especializados en tu área de necesidad. Consultas online, precios transparentes y disponibilidad inmediata.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-gray-900 text-white hover:bg-green-900 hover:text-white px-8 py-3"
-              onClick={() => window.location.href = '/search'}
+              onClick={() => {
+                window.gtag?.('event', 'search_started');
+                window.location.href = '/search';
+              }}
             >
               Hablar con abogado ahora
             </Button>

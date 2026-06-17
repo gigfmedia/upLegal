@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "autorizacion-salir-pais-menores-chile-2026",
+    title: "Autorización para salir del país de menores de edad en Chile: qué es, cómo funciona y qué documentos se necesitan",
+    excerpt: "Aprende qué es la autorización para salir del país de menores de edad en Chile, qué documentos se necesitan y cómo funciona el proceso.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "17 de Junio, 2026",
+    readTime: "9 min",
+    image: "/assets/autorizacion-salir-pais-menores-chile-2026.png"
+  },
+  {
     id: "pension-alimentos-mayores-18-chile-2026",
     title: "Pensión de alimentos para mayores de 18 años en Chile 2026: cuándo se puede pedir y cómo funciona",
     excerpt: "Aprende cuándo se puede pedir pensión de alimentos para mayores de 18 años en Chile, qué requisitos deben cumplirse, cómo funciona el proceso y qué hacer si no hay acuerdo.",

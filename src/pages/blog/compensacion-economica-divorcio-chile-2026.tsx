@@ -166,6 +166,13 @@ const BlogArticle = () => {
                                 divorcio unilateral en Chile
                             </Link>.
                         </p>
+                        <p className="text-gray-600 mt-4">
+                            Si ya quieres evaluar tu caso, puedes consultar con un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado especialista en compensación económica por divorcio
+                            </Link>{" "}
+                            directamente online.
+                        </p>
                     </div>
 
                     {/* QUE ES */}
@@ -273,7 +280,7 @@ const BlogArticle = () => {
                         <div className="grid sm:grid-cols-2 gap-3 mb-6">
                             {["Duración del matrimonio", "Edad del cónyuge solicitante", "Estado de salud", "Situación patrimonial", "Posibilidades laborales futuras", "Dedicación al cuidado de los hijos"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span className="text-gray-700">{item}</span>
                                 </div>
                             ))}
@@ -282,6 +289,14 @@ const BlogArticle = () => {
                             <p className="font-bold text-green-800 mb-2">Ejemplo práctico</p>
                             <p className="text-green-700">Matrimonio de 18 años, dos hijos. Una cónyuge dejó de trabajar durante 15 años mientras el otro desarrolló una carrera exitosa. Al divorcio: uno gana $4.000.000 mensuales, el otro no tiene ingresos permanentes. En este escenario existe una base sólida para solicitar compensación económica.</p>
                         </div>
+
+                        <p className="text-gray-600 mt-4">
+                            Para determinar si tu caso tiene mérito, un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia para compensación económica
+                            </Link>{" "}
+                            puede revisar los antecedentes antes de iniciar el procedimiento.
+                        </p>
 
                         {/* INTERLINK 3 */}
                         <div className="mb-6 space-y-3">
@@ -439,7 +454,7 @@ const BlogArticle = () => {
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
                         description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
-                        link="/abogado-divorcio-unilateral"
+                        link="/abogados-divorcio"
                         buttonText="Comparar abogados especializados"
                     />
 
@@ -455,8 +470,12 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             También es importante recordar que no existe una fórmula automática ni un monto garantizado. El éxito de la solicitud dependerá principalmente de la capacidad para acreditar el perjuicio económico mediante pruebas sólidas y antecedentes concretos.
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Si estás enfrentando un divorcio y crees que tu desarrollo profesional se vio afectado por las responsabilidades familiares asumidas durante el matrimonio, es recomendable buscar orientación jurídica antes de iniciar el procedimiento. Una evaluación temprana puede marcar una diferencia importante en el resultado final del proceso.
+                        <p className="text-gray-600 leading-relaxed font-bold mb-4">
+                            Si estás enfrentando un divorcio y crees que tu desarrollo profesional se vio afectado por las responsabilidades familiares asumidas durante el matrimonio, es recomendable buscar orientación jurídica antes de iniciar el procedimiento. Un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado de divorcio y patrimonio familiar en Chile
+                            </Link>{" "}
+                            puede evaluar si corresponde solicitar compensación y ayudarte a reunir las pruebas necesarias.
                         </p>
                     </div>
 

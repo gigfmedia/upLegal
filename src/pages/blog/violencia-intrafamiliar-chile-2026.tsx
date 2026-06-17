@@ -158,6 +158,13 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Según datos del Ministerio de la Mujer y la Equidad de Género, durante 2025 se registraron más de 150.000 denuncias por VIF en el país, siendo la violencia psicológica la más frecuente. Sin embargo, se estima que una gran cantidad de casos nunca son denunciados por temor o falta de información.
                         </p>
+                        <p className="text-gray-600 mt-4">
+                            Si necesitas orientación legal urgente, puedes consultar con un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado especialista en violencia intrafamiliar en Chile
+                            </Link>{" "}
+                            directamente online.
+                        </p>
                     </div>
 
                     {/* QUE ES VIF */}
@@ -289,6 +296,13 @@ const BlogArticle = () => {
                                 <li>• Posible intervención de equipos psicosociales del tribunal para evaluar el vínculo parentofilial</li>
                             </ul>
                         </div>
+                        <p className="text-gray-600 mt-4">
+                            Si hay hijos involucrados y necesitas regularizar el cuidado personal o la pensión, un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia para casos de VIF
+                            </Link>{" "}
+                            puede orientarte sobre las medidas disponibles y cómo proteger a tus hijos durante el proceso.
+                        </p>
                     </div>
 
                     {/* VIF Y DIVORCIO */}
@@ -417,8 +431,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Es importante recordar que la víctima nunca es responsable de la violencia que sufre. El agresor es el único responsable de sus actos. Buscar ayuda no es un signo de debilidad — es un paso valiente hacia la recuperación de la seguridad y la dignidad.
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Si estás en una situación de riesgo ahora mismo, no esperes. Llama al <strong>133</strong> (Carabineros) o al <strong>800 104 008</strong> (SernamEG, línea gratuita para mujeres). Si necesitas orientación legal sobre medidas de protección, cuidado de tus hijos o el proceso judicial, un abogado puede acompañarte desde el primer paso.
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Si estás en una situación de riesgo ahora mismo, no esperes. Llama al{" "}
+                            <strong>133</strong> (Carabineros) o al <strong>800 104 008</strong> (SernamEG, línea
+                            gratuita para mujeres). Si necesitas orientación legal sobre medidas de protección,
+                            cuidado de tus hijos o el proceso judicial, un{" "}
+                            <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia para protección por violencia intrafamiliar
+                            </Link>{" "}
+                            puede acompañarte desde el primer paso.
                         </p>
                     </div>
 
@@ -454,7 +475,7 @@ const BlogArticle = () => {
                 <div className="mt-4 text-center">
                     <Link
                         to="/blog"
-                        className="inline-flex items-center gap-2 text-green-600 hover:text-red-500 transition-colors font-medium"
+                        className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors font-medium"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Volver al Blog

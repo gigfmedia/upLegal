@@ -221,7 +221,7 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
                 Hemos seleccionado a los profesionales con mejores valoraciones y mayor experiencia para ayudarte con tu caso.
               </p>
             </div>
-            <Link to="/search">
+            <Link to="/search" onClick={() => window.gtag?.('event', 'search_started')}>
               <Button variant="outline" className="border-gray-800 text-gray-900 hover:bg-green-900 hover:text-white">
                 Ver todos los abogados
                 <ArrowRight className="ml-2 h-4 w-4" />

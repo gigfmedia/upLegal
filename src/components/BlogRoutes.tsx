@@ -48,6 +48,7 @@ const LiquidacionBienesComunesArticle = lazy(() => import('../pages/blog/liquida
 const ViolenciaIntrafamiliarArticle = lazy(() => import('../pages/blog/violencia-intrafamiliar-chile-2026'));
 const IncumplimientoRegimenVisitaArticle = lazy(() => import('../pages/blog/incumplimiento-regimen-visitas-chile-2026'));
 const PensionAlimentosMayoresArticle = lazy(() => import('../pages/blog/pension-alimentos-mayores-18-chile-2026'));
+const AutorizacionSalirPaisArticle = lazy(() => import('../pages/blog/autorizacion-salir-pais-menores-chile-2026'));
 
 
 
@@ -104,6 +105,7 @@ export const BlogRoutes = () => (
       <Route path="violencia-intrafamiliar-chile-2026" element={<ViolenciaIntrafamiliarArticle />} />
       <Route path="incumplimiento-regimen-visitas-chile-2026" element={<IncumplimientoRegimenVisitaArticle />} />
       <Route path="pension-alimentos-mayores-18-chile-2026" element={<PensionAlimentosMayoresArticle />} />
+      <Route path="autorizacion-salir-pais-menores-chile-2026" element={<AutorizacionSalirPaisArticle />} />
 
     </Routes>
   </Suspense>

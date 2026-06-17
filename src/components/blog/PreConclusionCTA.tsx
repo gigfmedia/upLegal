@@ -21,6 +21,7 @@ const PreConclusionCTA: React.FC<PreConclusionCTAProps> = ({
     <Link
       to={link}
       className="inline-flex items-center gap-2 bg-white hover:border-white text-gray-900 font-bold px-8 py-3 rounded-xl transition-all shadow-md hover:shadow-lg"
+      onClick={() => window.gtag?.('event', 'search_started')}
     >
       {buttonText}
       <ChevronRight className="h-5 w-5" />

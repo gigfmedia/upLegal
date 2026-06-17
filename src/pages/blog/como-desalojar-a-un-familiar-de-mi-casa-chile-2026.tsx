@@ -487,7 +487,7 @@ const BlogArticle = () => {
             Conectamos a personas con abogados especialistas en desalojo y recuperación de inmuebles. Evalúa tu caso hoy y entiende cuáles son tus opciones legales concretas.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
+            <Link to="/search?category=Derecho+Civil" onClick={() => window.gtag?.('event', 'search_started')}>
               <Button
                 size="lg"
                 className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
