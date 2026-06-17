@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ export default function BookingSuccessPage() {
   
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  // Guard para disparar purchase exactamente una vez cuando Mercado Pago confirma el pago
+  const purchaseTracked = useRef(false);
 
   useEffect(() => {
     async function fetchBooking() {
@@ -58,29 +60,46 @@ export default function BookingSuccessPage() {
     fetchBooking();
   }, [bookingId, navigate]);
 
-  // Track purchase and booking_confirmed events once booking is loaded
+  // purchase: Se dispara SOLO cuando Mercado Pago redirige al usuario a esta página de éxito
+  // y el backend confirmó que la reserva existe. Representa una conversión real y exitosa.
+  // El useRef evita duplicados en caso de re-renders (especialmente en React StrictMode).
   useEffect(() => {
-    if (booking) {
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        // Purchase event
-        (window as any).gtag('event', 'purchase', {
-          transaction_id: booking.id,
-          value: booking.price,
-          currency: 'CLP',
-          items: [{
-            item_id: booking.lawyer.first_name, // Using lawyer name/id as item
-            item_name: `Asesoría con ${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
-            price: booking.price,
-            quantity: 1
-          }]
-        });
+    if (booking && !purchaseTracked.current) {
+      purchaseTracked.current = true;
 
-        // Custom booking_confirmed event
-        (window as any).gtag('event', 'booking_confirmed', {
-          booking_id: booking.id,
-          lawyer_name: `${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
-          price: booking.price
-        });
+      // purchase: evento estándar de GA4/ecommerce. Solo cuando el pago fue confirmado.
+      window.gtag?.('event', 'purchase', {
+        transaction_id: booking.id,
+        booking_id: booking.id,
+        value: booking.price,
+        currency: 'CLP',
+        items: [{
+          item_id: booking.id,
+          item_name: `Asesoría con ${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+          price: booking.price,
+          quantity: 1
+        }]
+      });
+
+      // booking_confirmed: evento custom para tracking interno de confirmaciones
+      window.gtag?.('event', 'booking_confirmed', {
+        booking_id: booking.id,
+        lawyer_name: `${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+        price: booking.price
+      });
+
+      // Marcar el booking_lead como 'paid' para cerrar el funnel.
+      // El lead_id fue guardado en sessionStorage por PreCheckoutModal
+      // justo antes de redirigir al usuario a Mercado Pago.
+      const pendingLeadId = sessionStorage.getItem('pending_lead_id');
+      if (pendingLeadId) {
+        fetch(`${import.meta.env.VITE_API_BASE_URL}/api/leads/${pendingLeadId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'paid' })
+        })
+          .then(() => sessionStorage.removeItem('pending_lead_id'))
+          .catch((err) => console.warn('Could not update lead status to paid:', err));
       }
     }
   }, [booking]);

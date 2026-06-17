@@ -569,20 +569,6 @@ export function LawyerCard({
         {/* Botones de acción - Fijos en la parte inferior */}
         <div className="p-6 pt-4 mt-auto border-t border-gray-100">
           <div className="flex space-x-2 w-full">
-            {/* <Button 
-              variant="outline" 
-              className={`flex-1 bg-white border-gray-300 ${
-                buttonsDisabled 
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : 'hover:bg-gray-50'
-              }`}
-              onClick={handleContactClick}
-              disabled={buttonsDisabled}
-              title={!isVerifiedLawyer ? 'Este abogado tiene un perfil incompleto' : ''}
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              {buttonsDisabled && !isOwnProfile ? 'No disponible' : 'Contactar'}
-            </Button> */}
             <Button
               variant="default"
               size="lg"

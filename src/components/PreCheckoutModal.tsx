@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Mail, User } from 'lucide-react';
+import { Loader2, Phone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
@@ -26,6 +26,7 @@ interface PreCheckoutModalProps {
 export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCheckoutModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -70,6 +71,21 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
       return;
     }
 
+    // Validar teléfono si se ingresó (opcional pero debe ser válido)
+    const phoneTrimmed = phone.trim();
+    if (phoneTrimmed) {
+      // Acepta formatos chilenos: +569XXXXXXXX, 569XXXXXXXX, 9XXXXXXXX, 09XXXXXXXX
+      const phoneRegex = /^(\+?56)?0?9\d{8}$/;
+      if (!phoneRegex.test(phoneTrimmed.replace(/\s/g, ''))) {
+        toast({
+          title: 'Teléfono inválido',
+          description: 'Ingresa un número chileno válido, ej: 912345678',
+          variant: 'destructive'
+        });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -81,9 +97,10 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         },
         body: JSON.stringify({
           lawyer_id: bookingData.lawyer_id,
-          user_id: sessionUserId || undefined,  // link to authenticated user if available
+          user_id: sessionUserId || undefined,
           user_email: email,
           user_name: name,
+          user_phone: phoneTrimmed || undefined,   // WhatsApp para seguimiento de abandono
           scheduled_date: bookingData.scheduled_date,
           scheduled_time: bookingData.scheduled_time,
           duration: bookingData.duration,
@@ -97,13 +114,19 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
         throw new Error(data.error || 'Error al crear la reserva');
       }
 
-      // Track GA4 event
-      if (window.gtag) {
-        window.gtag('event', 'lead_created', {
-          lawyer_id: bookingData.lawyer_id,
-          duration: bookingData.duration,
-          price: bookingData.price
-        });
+      // lead_created: Se dispara SOLO después de que el backend confirmó exitosamente la creación
+      // de la reserva. Nunca antes de la respuesta del servidor.
+      // Representa que el usuario completó el formulario de contacto y el lead fue registrado.
+      window.gtag?.('event', 'lead_created', {
+        lawyer_id: bookingData.lawyer_id,
+        duration: bookingData.duration,
+        price: bookingData.price
+      });
+
+      // Guardar lead_id en sessionStorage para poder marcar el lead como 'paid'
+      // en BookingSuccessPage después de que Mercado Pago confirme el pago.
+      if (data.lead_id) {
+        sessionStorage.setItem('pending_lead_id', data.lead_id);
       }
 
       // Redirect to MercadoPago payment
@@ -120,20 +143,19 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           }
         });
 
-        // Track begin_checkout event
-        if (window.gtag) {
-          window.gtag('event', 'begin_checkout', {
-            booking_id: data.booking_id,
-            value: bookingData.price,
-            currency: 'CLP',
-            items: [{
-              item_id: data.booking_id,
-              item_name: `Asesoría con ${bookingData.lawyer_name}`,
-              price: bookingData.price,
-              quantity: 1
-            }]
-          });
-        }
+        // begin_checkout: Se dispara SOLO cuando el servidor retornó un payment_link válido
+        // y justo antes de redirigir al usuario a Mercado Pago. Nunca antes.
+        window.gtag?.('event', 'begin_checkout', {
+          booking_id: data.booking_id,
+          value: bookingData.price,
+          currency: 'CLP',
+          items: [{
+            item_id: data.booking_id,
+            item_name: `Asesoría con ${bookingData.lawyer_name}`,
+            price: bookingData.price,
+            quantity: 1
+          }]
+        });
 
         window.location.href = data.payment_link;
       } else {
@@ -181,7 +203,6 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
-              {/* <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
               <Input
                 id="email"
                 type="email"
@@ -192,6 +213,28 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="flex items-center gap-1.5">
+              <Phone className="h-3.5 w-3.5 text-green-700" />
+              WhatsApp
+              <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+            </Label>
+            <div className="relative">
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="912 345 678"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={isSubmitting}
+                inputMode="numeric"
+              />
+            </div>
+            <p className="text-xs text-gray-500">
+              Si no completas el pago te contactamos para ayudarte.
+            </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -834,6 +834,7 @@ app.post('/api/bookings/create', async (req, res) => {
       user_id,
       user_email,
       user_name,
+      user_phone,          // WhatsApp para seguimiento de abandono
       scheduled_date,
       scheduled_time,
       duration,
@@ -957,6 +958,39 @@ app.post('/api/bookings/create', async (req, res) => {
       console.error('Failed to track payment start:', trackingError);
     }
 
+    // -------------------------------------------------------
+    // Guardar booking_lead con status 'started'.
+    // Se guarda ANTES de Mercado Pago para capturar leads
+    // que abandonen en el checkout externo.
+    // -------------------------------------------------------
+    let leadId = null;
+    try {
+      const { data: leadData, error: leadError } = await supabase
+        .from('booking_leads')
+        .insert({
+          lawyer_id,
+          name: user_name,
+          email: user_email,
+          phone: user_phone || null,
+          selected_date: scheduled_date,
+          selected_time: scheduled_time,
+          duration,
+          price,
+          booking_id: booking.id,
+          status: 'started'
+        })
+        .select('id')
+        .single();
+
+      if (leadError) {
+        console.error('Failed to save booking_lead:', leadError);
+      } else {
+        leadId = leadData.id;
+      }
+    } catch (leadErr) {
+      console.error('Exception saving booking_lead:', leadErr);
+    }
+
     // Create MercadoPago preference
     const webhookUrl = resolveWebhookUrl(req);
     const preferenceData = {
@@ -1020,12 +1054,26 @@ app.post('/api/bookings/create', async (req, res) => {
       })
       .eq('id', booking.id);
 
+    // Actualizar lead a 'checkout': el usuario recibió el link y será
+    // redirigido a Mercado Pago. Si no vuelve, quedará como abandonado.
+    if (leadId) {
+      try {
+        await supabase
+          .from('booking_leads')
+          .update({ status: 'checkout' })
+          .eq('id', leadId);
+      } catch (leadUpdateErr) {
+        console.error('Failed to update booking_lead to checkout:', leadUpdateErr);
+      }
+    }
+
     // Return booking and payment link
     const paymentLink = mpData.init_point || mpData.sandbox_init_point;
 
     res.json({
       success: true,
       booking_id: booking.id,
+      lead_id: leadId,          // Exponer al frontend por si necesita actualizarlo
       payment_link: paymentLink,
       message: 'Booking created successfully'
     });
@@ -1037,6 +1085,42 @@ app.post('/api/bookings/create', async (req, res) => {
       details: error.message,
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
     });
+  }
+});
+
+// -------------------------------------------------------
+// PATCH /api/leads/:id/status
+// Actualizar el status de un booking_lead.
+// Usado por: BookingSuccessPage (paid), webhook (paid/abandoned)
+// -------------------------------------------------------
+app.patch('/api/leads/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['started', 'checkout', 'paid', 'abandoned'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('booking_leads')
+      .update({ status })
+      .eq('id', id)
+      .select('id, status')
+      .single();
+
+    if (error) {
+      console.error('Error updating booking_lead status:', error);
+      return res.status(404).json({ error: 'Lead not found or update failed' });
+    }
+
+    res.json({ success: true, lead: data });
+  } catch (error) {
+    console.error('Error in PATCH /api/leads/:id/status:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

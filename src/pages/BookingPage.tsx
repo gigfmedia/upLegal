@@ -133,6 +133,8 @@ export default function BookingPage() {
   const prefillRef = useRef<{ date?: string; time?: string; duration?: number; applied: boolean }>({ applied: false });
   const summaryRef = useRef<HTMLDivElement>(null);
   const timeSelectionRef = useRef<HTMLDivElement>(null);
+  // Guard para disparar booking_page_viewed exactamente una vez cuando la página carga correctamente
+  const bookingPageTracked = useRef(false);
 
   const actualLawyerId = useMemo(() => {
     if (!lawyerId) return '';
@@ -220,10 +222,13 @@ export default function BookingPage() {
     }
   }, [searchParams]);
 
-  // Track booking_start event when lawyer data is loaded
+  // booking_page_viewed: Se dispara una sola vez cuando la página de booking carga correctamente
+  // (el abogado fue encontrado y los datos están disponibles).
+  // Usamos useRef para evitar disparos duplicados por re-renders o cambios de estado.
   useEffect(() => {
-    if (lawyer?.user_id && window.gtag) {
-      window.gtag('event', 'booking_start', {
+    if (lawyer?.user_id && !bookingPageTracked.current) {
+      bookingPageTracked.current = true;
+      window.gtag?.('event', 'booking_page_viewed', {
         lawyer_id: lawyer.user_id,
         lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`
       });
@@ -519,13 +524,13 @@ export default function BookingPage() {
         throw new Error(data.error || 'Error al crear la reserva');
       }
 
-      if (window.gtag) {
-        window.gtag('event', 'lead_created', {
-          lawyer_id: lawyer.user_id,
-          duration,
-          price: totalPrice
-        });
-      }
+      // lead_created: Se dispara SOLO después de que la reserva fue creada exitosamente en el servidor.
+      // Nunca antes. Representa que el usuario completó el formulario y el backend confirmó la reserva.
+      window.gtag?.('event', 'lead_created', {
+        lawyer_id: lawyer.user_id,
+        duration,
+        price: totalPrice
+      });
 
       // Redirect to MercadoPago payment
       if (data.payment_link) {
@@ -542,19 +547,19 @@ export default function BookingPage() {
           }
         });
 
-        if (window.gtag) {
-          window.gtag('event', 'begin_checkout', {
-            booking_id: data.booking_id,
-            value: totalPrice,
-            currency: 'CLP',
-            items: [{
-              item_id: data.booking_id,
-              item_name: `Asesoría con ${lawyer.first_name} ${lawyer.last_name}`,
-              price: totalPrice,
-              quantity: 1
-            }]
-          });
-        }
+        // begin_checkout: Se dispara SOLO cuando existe un payment_link válido,
+        // justo antes de redirigir al usuario a Mercado Pago. Nunca antes.
+        window.gtag?.('event', 'begin_checkout', {
+          booking_id: data.booking_id,
+          value: totalPrice,
+          currency: 'CLP',
+          items: [{
+            item_id: data.booking_id,
+            item_name: `Asesoría con ${lawyer.first_name} ${lawyer.last_name}`,
+            price: totalPrice,
+            quantity: 1
+          }]
+        });
 
         window.location.href = data.payment_link;
       } else {
@@ -618,6 +623,13 @@ export default function BookingPage() {
     setSelectedDate(date);
     setSelectedTime(null); // Reset time when date changes
 
+    // date_selected: Se dispara cuando el usuario selecciona activamente una fecha en el calendario.
+    // Es una acción explícita del usuario, no un efecto secundario de un render.
+    window.gtag?.('event', 'date_selected', {
+      lawyer_id: lawyer?.user_id,
+      selected_date: format(date, 'yyyy-MM-dd')
+    });
+
     // Scroll to time selection on mobile
     if (window.innerWidth < 768) {
       setTimeout(() => {
@@ -634,12 +646,13 @@ export default function BookingPage() {
       summaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 100);
 
-    // Track time_selected event
-    if (window.gtag && lawyer?.user_id && selectedDate) {
-      window.gtag('event', 'time_selected', {
+    // time_selected: Se dispara cuando el usuario selecciona activamente una hora disponible.
+    // Es una acción explícita del usuario. Parámetros estandarizados con el resto del funnel.
+    if (lawyer?.user_id && selectedDate) {
+      window.gtag?.('event', 'time_selected', {
         lawyer_id: lawyer.user_id,
-        date: format(selectedDate, 'yyyy-MM-dd'),
-        time: time
+        selected_date: format(selectedDate, 'yyyy-MM-dd'),
+        selected_time: time
       });
     }
   };
@@ -647,6 +660,15 @@ export default function BookingPage() {
   const handleContinue = async () => {
     if (!selectedDate || !selectedTime) return;
     if (isProcessingPayment) return;
+
+    // continue_to_checkout: Se dispara cuando el usuario hace clic en "Continuar al pago".
+    // Se registra ANTES de cualquier validación o apertura de modal, porque representa la
+    // intención real del usuario de avanzar al checkout, independientemente del resultado.
+    window.gtag?.('event', 'continue_to_checkout', {
+      lawyer_id: lawyer?.user_id,
+      duration,
+      price: totalPrice
+    });
 
     if (isAuthenticated && user) {
       if (!user.email) {
