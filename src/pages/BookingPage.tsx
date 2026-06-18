@@ -619,6 +619,13 @@ export default function BookingPage() {
       .filter(date => !isChileanHoliday(date));
   }, [lawyerAvailability, getDayName, getAvailabilityForDay]);
 
+  // Auto-select the first available date when component loads
+  useEffect(() => {
+    if (availableDates.length > 0 && !selectedDate) {
+      setSelectedDate(availableDates[0]);
+    }
+  }, [availableDates, selectedDate]);
+
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
     setSelectedTime(null); // Reset time when date changes
@@ -819,7 +826,7 @@ export default function BookingPage() {
           <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-start gap-6">
-                <div className="flex flex-col items-center gap-2 md:w-1/4">
+                <div className="flex flex-col items-center gap-2 w-full md:w-1/4">
                   <Avatar className="w-40 h-40 rounded-md">
                     <AvatarImage
                       src={lawyer.avatar_url || ''}
@@ -830,9 +837,12 @@ export default function BookingPage() {
                       {lawyer.first_name?.[0]}{lawyer.last_name?.[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-green-100 text-green-800">
+                  <Badge className="mt-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-green-100 text-green-800">
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
                     <span>Disponible</span>
+                  </Badge>
+                  <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-blue-100 text-blue-800">
+                    Atención en todo Chile
                   </Badge>
                 </div>
                 <div className="flex-1 md:w-3/4">
@@ -863,6 +873,7 @@ export default function BookingPage() {
                   )}
                   {/* Testimonial social proof */}
                   <BookingTestimonial specialties={lawyer.specialties} />
+
                 </div>
               </div>
             </CardContent>
@@ -871,7 +882,7 @@ export default function BookingPage() {
           {/* Booking Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Agenda tu asesoría</CardTitle>
+              <CardTitle>Habla con un abogado verificado hoy</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Duration Selection */}
@@ -1050,6 +1061,37 @@ export default function BookingPage() {
 
                   {/* Testimonial social proof */}
                   {/* <BookingTestimonial specialties={lawyer.specialties} /> */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                      <h3 className="font-medium text-blue-900 mb-3">
+                        ¿Qué incluye esta consulta?
+                      </h3>
+
+                      <ul className="space-y-2 text-sm text-blue-700">
+                        <li>✓ El abogado analizará tu situación</li>
+                        <li>✓ Resolverá tus dudas legales</li>
+                        <li>✓ Te explicará las alternativas disponibles</li>
+                        <li>✓ Recibirás orientación para los próximos pasos</li>
+                      </ul>
+                    </div>
+                    <div className="border border-gray-100 rounded-lg p-4">
+                      <ul className="flex flex-col space-y-2 items-start">
+                        <li>
+                          <span className="text-green-600 mr-1">✓</span>
+                          <span className="text-sm font-bold text-gray-700">Consulta privada por Google Meet</span>
+                        </li>
+                        <li>
+                          <span className="text-green-600 mr-1">✓</span>
+                          <span className="text-sm font-bold text-gray-700">Pago seguro con Mercado Pago</span>
+                        </li>
+                        <li>
+                          <span className="text-green-600 mr-1">✓</span>
+                          <span className="text-sm font-bold text-gray-700">Confirmación inmediata</span>
+                        </li>
+                      </ul>
+                      <span className="text-sm text-gray-600 mt-2 block">Recibirás los datos de acceso a tu consulta una vez confirmado el pago.</span>
+                    </div>
+                  </div>
 
                   <Button
                     onClick={handleContinue}
@@ -1062,7 +1104,7 @@ export default function BookingPage() {
                         Redirigiendo...
                       </>
                     ) : (
-                      'Continuar al pago'
+                      'Confirmar reserva'
                     )}
                   </Button>
                 </div>

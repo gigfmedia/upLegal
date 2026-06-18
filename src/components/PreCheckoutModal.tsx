@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Phone } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
@@ -177,13 +177,13 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Confirma tu asesoría legal</DialogTitle>
+          <DialogTitle>Agenda tu asesoría legal</DialogTitle>
           <DialogDescription>
-            Estás a un paso de hablar con un abogado verificado por el <strong>Poder Judicial</strong> por videollamada.
+            Estás a un paso de hablar con un abogado verificado en el <strong>Poder Judicial</strong> mediante videollamada.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre completo</Label>
             <div className="relative">
@@ -216,10 +216,10 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-green-700" />
+            <Label htmlFor="phone">
+              {/* <Phone className="h-3.5 w-3.5 text-green-700" /> */}
               WhatsApp
-              <span className="text-xs text-gray-400 font-normal">(opcional)</span>
+              {/* <span className="text-xs text-gray-400 font-normal">(opcional)</span> */}
             </Label>
             <div className="relative">
               <Input
@@ -233,7 +233,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
               />
             </div>
             <p className="text-xs text-gray-500">
-              Si no completas el pago te contactamos para ayudarte.
+              Si surge algún problema con tu reserva, podremos contactarte por WhatsApp.
             </p>
           </div>
 
@@ -241,9 +241,11 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
             <div className="text-sm text-blue-800 space-y-1">
               <p className="font-medium">Resumen de tu asesoría:</p>
               <p>• Abogado: {bookingData.lawyer_name}</p>
+              <p>• Fecha: {bookingData.scheduled_date}</p>
+              <p>• Hora: {bookingData.scheduled_time}</p>
               <p>• Duración: {bookingData.duration} minutos</p>
               <p>• Total: ${bookingData.price.toLocaleString('es-CL')}</p>
-              <p>• Reembolso si el abogado no asiste</p>
+              {/* <p>• Reembolso si el abogado no asiste</p> */}
             </div>
           </div>
 
@@ -263,7 +265,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
           </Button>
 
           <p className="text-sm text-gray-500 text-center">
-            Al continuar, serás redirigido a MercadoPago para completar el pago de forma segura
+            Serás redirigido a Mercado Pago para completar tu pago de forma segura.
           </p>
         </form>
       </DialogContent>
