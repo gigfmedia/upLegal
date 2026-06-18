@@ -1535,6 +1535,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     console.log('id:', id);
     console.log('typeof id:', typeof id);
     console.log('access token exists:', !!process.env.VITE_MERCADOPAGO_ACCESS_TOKEN);
+    console.log('access token start:', process.env.VITE_MERCADOPAGO_ACCESS_TOKEN?.substring(0, 20));
 
     const handleApprovedPayment = async (payment) => {
         const bookingId = payment.external_reference;
@@ -1911,7 +1912,18 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
     if (topic === 'payment') {
       console.log('About to fetch payment from MercadoPago', id);
-      const payment = await new Payment(mpClient).get({ id });
+      
+      const response = await fetch(
+        `https://api.mercadopago.com/v1/payments/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
+          }
+        }
+      );
+
+      const payment = await response.json();
+      console.log('MP payment status:', payment.status);
       
       if (payment.status === 'approved') {
         await handleApprovedPayment(payment);
