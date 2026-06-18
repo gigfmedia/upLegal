@@ -1530,6 +1530,12 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     const topic = req.body.topic || type;
     const id = req.body.id || data?.id;
 
+    console.log('Webhook payload:', JSON.stringify(req.body, null, 2));
+    console.log('topic:', topic);
+    console.log('id:', id);
+    console.log('typeof id:', typeof id);
+    console.log('access token exists:', !!process.env.VITE_MERCADOPAGO_ACCESS_TOKEN);
+
     const handleApprovedPayment = async (payment) => {
         const bookingId = payment.external_reference;
         
@@ -1904,6 +1910,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     };
 
     if (topic === 'payment') {
+      console.log('About to fetch payment from MercadoPago', id);
       const payment = await new Payment(mpClient).get({ id });
       
       if (payment.status === 'approved') {
