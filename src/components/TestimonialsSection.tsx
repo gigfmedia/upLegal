@@ -34,7 +34,7 @@ const testimonials: Testimonial[] = [
     name: "Carolina Torres",
     role: "Profesional",
     location: "Santiago, Chile",
-    content: "Muy buena experiencia. Tenía una duda laboral y la pude resolver en una videollamada en menos de 30 minutos. Me gustó la claridad en los precios y la calidad del abogado. Lo recomiendo.",
+    content: "Muy buena experiencia. Tenía una duda laboral y la pude resolver durante una videollamada con un abogado especializado. Me gustó la claridad en los precios y la calidad de la asesoría recibida. Lo recomiendo.",
     avatarColor: "bg-[#C4B5FD]" // Light Purple
   }
 ];

@@ -276,6 +276,14 @@ const SearchResults = () => {
     if (loading && !searchResult.lawyers.length) return [];
     const complete = searchResult.lawyers.filter(l => l.bio?.trim() && l.specialties?.length && l.location?.trim() && l.hourlyRate > 0);
     return [...complete].sort((a, b) => {
+      // Check if either is Diego Donoso
+      const aIsDiegoDonoso = a.name.toLowerCase().includes('diego') && a.name.toLowerCase().includes('donoso');
+      const bIsDiegoDonoso = b.name.toLowerCase().includes('diego') && b.name.toLowerCase().includes('donoso');
+
+      // If one is Diego Donoso and the other isn't, put Diego Donoso last
+      if (aIsDiegoDonoso && !bIsDiegoDonoso) return 1;
+      if (!aIsDiegoDonoso && bIsDiegoDonoso) return -1;
+
       const aPrice = a.consultationPrice || 0;
       const bPrice = b.consultationPrice || 0;
       if (aPrice === 0 && bPrice !== 0) return 1;
