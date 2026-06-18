@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "reconocimiento-paternidad-chile-2026",
+    title: "Reconocimiento de paternidad en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
+    excerpt: "Aprende qué es el reconocimiento de paternidad en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "18 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/reconocimiento-paternidad-chile-2026.png"
+  },
+  {
     id: "autorizacion-salir-pais-menores-chile-2026",
     title: "Autorización para salir del país de menores de edad en Chile: qué es, cómo funciona y qué documentos se necesitan",
     excerpt: "Aprende qué es la autorización para salir del país de menores de edad en Chile, qué documentos se necesitan y cómo funciona el proceso.",

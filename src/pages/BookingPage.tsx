@@ -147,7 +147,7 @@ export default function BookingPage() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [duration, setDuration] = useState<30 | 60 | 90 | 120>(60);
+  const [duration, setDuration] = useState<60 | 90 | 120>(60);
   const [showPreCheckout, setShowPreCheckout] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
 
@@ -890,22 +890,7 @@ export default function BookingPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Duración:
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <button
-                    onClick={() => setDuration(30)}
-                    className={`p-4 border-2 rounded-lg transition-all ${duration === 30
-                      ? 'border-green-900 bg-green-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <Clock className="h-5 w-5" />
-                      <span className="font-medium">30 minutos</span>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      ${getClientPriceForDuration(30).toLocaleString('es-CL')}
-                    </div>
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
                     onClick={() => setDuration(60)}
                     className={`p-4 border-2 rounded-lg transition-all ${duration === 60
