@@ -265,18 +265,33 @@ const Index = () => {
               };
             });
           
-          // 1. Sort all lawyers by visits descending, then by reviews
-          const sortedAll = [...formattedLawyers].sort((a, b) => {
-            if (b.visits !== a.visits) return (b.visits || 0) - (a.visits || 0);
-            return (b.reviews || 0) - (a.reviews || 0);
+          // 1. Find the three specific featured lawyers by name
+          const hansChristian = formattedLawyers.find(lawyer => {
+            const fullName = lawyer.name.toLowerCase();
+            return fullName.includes('hans-christian') && fullName.includes('bevensee');
           });
 
-          // 2. Prioritize lawyers with reviews
-          const withReviews = sortedAll.filter(lawyer => (lawyer.reviews || 0) > 0);
-          const withoutReviews = sortedAll.filter(lawyer => (lawyer.reviews || 0) === 0);
+          const angelCristopher = formattedLawyers.find(lawyer => {
+            const fullName = lawyer.name.toLowerCase();
+            return fullName.includes('angel') && fullName.includes('cristopher') && fullName.includes('labra');
+          });
 
-          // 3. Take top 3 total (fill with non-reviewed if we don't have enough reviewed ones)
-          const topFeatured = [...withReviews, ...withoutReviews].slice(0, 3);
+          const mariaFernanda = formattedLawyers.find(lawyer => {
+            const fullName = lawyer.name.toLowerCase();
+            // Normalize accents to handle María with accent
+            const normalized = fullName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            return normalized.includes('maria') && normalized.includes('fernanda');
+          });
+
+          // Debug: Log the found lawyers
+          console.log('Hans-Christian:', hansChristian?.name);
+          console.log('Angel Cristopher:', angelCristopher?.name);
+          console.log('Maria Fernanda:', mariaFernanda?.name);
+          console.log('All lawyers with maria:', formattedLawyers.filter(l => l.name.toLowerCase().includes('maria')).map(l => l.name));
+          console.log('All lawyer names in pool:', formattedLawyers.map(l => l.name));
+
+          // 2. Set the featured lawyers to these three specific lawyers
+          const topFeatured = [hansChristian, angelCristopher, mariaFernanda].filter(lawyer => lawyer !== undefined);
           
           setFeaturedLawyers(topFeatured);
         }

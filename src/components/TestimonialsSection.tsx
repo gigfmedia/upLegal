@@ -8,6 +8,7 @@ interface Testimonial {
   location: string;
   content: string;
   avatarColor: string;
+  avatarImage?: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -25,7 +26,8 @@ const testimonials: Testimonial[] = [
     role: "Médico Psiquiatra",
     location: "Pichilemu, Chile",
     content: "Mi experiencia fue espectacular. Agendar fue rápido y sin complicaciones, y el abogado que me atendió fue muy profesional. Entendió perfectamente mi caso y me dio una orientación clara y experta. Totalmente recomendable.",
-    avatarColor: "bg-[#93C5FD]" // Light Blue
+    avatarColor: "bg-[#93C5FD]", // Light Blue
+    avatarImage: "/assets/testimonials/mo.png"
   },
   {
     id: 3,
@@ -53,7 +55,7 @@ export const TestimonialsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
-            <Card key={testimonial.id} className="border-none shadow-sm hover:shadow-md transition-shadow duration-300 rounded-3xl overflow-hidden bg-white h-full flex flex-col">
+            <Card key={testimonial.id} className="border-none shadow-sm transition-shadow duration-300 rounded-3xl overflow-hidden bg-white h-full flex flex-col">
               <CardContent className="p-8 relative flex-1 flex flex-col">
                 <div className="flex-1">
                   {/* 5 Stars */}
@@ -76,9 +78,17 @@ export const TestimonialsSection = () => {
 
                   {/* User Info */}
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full bg-green-900 flex items-center justify-center text-green-600 text-md`}>
-                      {testimonial.name.split(' ').map(n => n[0]).join('')}
-                    </div>
+                    {testimonial.avatarImage ? (
+                      <img
+                        src={testimonial.avatarImage}
+                        alt={testimonial.name}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className={`w-12 h-12 rounded-full bg-green-900 flex items-center justify-center text-green-600 text-md`}>
+                        {testimonial.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    )}
                     <div className="flex flex-col">
                       <span className="font-bold text-gray-900 text-lg">{testimonial.name}</span>
                       <span className="text-gray-500 text-sm">{testimonial.role}</span>
