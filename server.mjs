@@ -1621,6 +1621,93 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         console.error('Failed to track payment event:', trackingError);
       }
 
+      // Fetch lawyer info early for payment confirmation email
+      let lawyerEmail = '';
+      let lawyerName = '';
+      try {
+        const { data: lawyerProfile, error: lawyerProfileError } = await supabase
+          .from('profiles')
+          .select('display_name, first_name, last_name, user_id')
+          .eq('id', booking.lawyer_id)
+          .single();
+        
+        if (lawyerProfile) {
+          lawyerName = lawyerProfile.display_name || 
+                       `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
+                       'Abogado';
+          
+          // Get email from auth.users
+          if (lawyerProfile.user_id) {
+            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerProfile.user_id);
+            if (lawyerUser?.user) {
+              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+            } else {
+              console.error('Could not find lawyer user for email notification', lawyerError);
+            }
+          }
+        } else {
+          console.error('Could not find lawyer profile', lawyerProfileError);
+        }
+      } catch (e) {
+        console.error('Error fetching lawyer info:', e);
+      }
+
+      // CORREO 1: Confirmación de pago (inmediato)
+      if (resend) {
+        try {
+          const paymentConfirmationResponse = await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: userEmail,
+            subject: 'Tu pago ha sido confirmado',
+            html: `
+              <body style="margin:0;padding:16px;background:#f9fafb;">
+                  <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                    <div style="text-align:center;margin-bottom:28px;">
+                      <img
+                        src="https://legalup.cl/apple-touch-icon.png"
+                        alt="LegalUp"
+                        style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
+                      />
+                      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                    </div>
+                    <h1 style="color: #1a202c;">Tu pago ha sido confirmado</h1>
+                    <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
+                    <p>Hemos recibido tu pago correctamente y tu consulta ha sido reservada con éxito. En los próximos minutos recibirás correo con los detalles de acceso a tu reunión.</p>
+                    
+                    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                      <p style="margin: 5px 0;"><strong>Nombre del cliente:</strong> ${userName}</p>
+                      <p style="margin: 5px 0;"><strong>Abogado:</strong> ${lawyerName}</p>
+                      <p style="margin: 5px 0;"><strong>Fecha de la consulta:</strong> ${booking.scheduled_date || booking.date || ''}</p>
+                      <p style="margin: 5px 0;"><strong>Hora de la consulta:</strong> ${booking.scheduled_time || booking.time || ''}</p>
+                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
+                      <p style="margin: 5px 0;"><strong>Monto pagado:</strong> $${payment.transaction_amount?.toLocaleString('es-CL') || booking.price?.toLocaleString('es-CL') || 'N/A'} CLP</p>
+                      <p style="margin: 5px 0;"><strong>ID de reserva:</strong> ${bookingId}</p>
+                    </div>
+
+                    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                      Todos los derechos reservados.<br />
+                      Este es un correo automático, por favor no respondas a este mensaje.
+                    </p>
+                  </div>
+                </body>
+            `
+          });
+
+          console.log('[payment-email] payment confirmation sent', {
+            bookingId,
+            to: userEmail,
+            resendId: paymentConfirmationResponse?.data?.id,
+          });
+        } catch (emailError) {
+          console.error('[payment-email] Error sending payment confirmation email:', {
+            bookingId,
+            to: userEmail,
+            error: emailError
+          });
+        }
+      }
+
           // 3. Create user if not exists
       if (userEmail && !userId) {
             console.log('[webhook] Creating new user for email:', userEmail);
@@ -1834,37 +1921,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
       }
 
-          // Fetch lawyer email and name to send notification
-          let lawyerEmail = '';
-          let lawyerName = '';
-          try {
-            const { data: lawyerProfile, error: lawyerProfileError } = await supabase
-              .from('profiles')
-              .select('display_name, first_name, last_name, user_id')
-              .eq('id', booking.lawyer_id)
-              .single();
-            
-            if (lawyerProfile) {
-              lawyerName = lawyerProfile.display_name || 
-                           `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
-                           'Abogado';
-              
-              // Get email from auth.users
-              if (lawyerProfile.user_id) {
-                const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerProfile.user_id);
-                if (lawyerUser?.user) {
-                  lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
-                } else {
-                  console.error('Could not find lawyer user for email notification', lawyerError);
-                }
-              }
-            } else {
-              console.error('Could not find lawyer profile', lawyerProfileError);
-            }
-          } catch (e) {
-            console.error('Error fetching lawyer info:', e);
-          }
-
           // Generate Magic Link for user auto-login
           let magicLink = `${appUrl}/login`;
           if (userEmail) {
@@ -1887,10 +1943,10 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             }
           }
 
-          // Send confirmation email to Client
+          // CORREO 2: Confirmación de cita con Google Meet (después de generar Meet)
           if (resend) {
             try {
-          const userEmailResponse = await resend.emails.send({
+          const appointmentConfirmationResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
               to: userEmail,
               subject: 'Tu cita ha sido confirmada',
@@ -1907,7 +1963,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                       </div>
                       <h1 style="color: #1a202c;">Tu cita ha sido confirmada</h1>
                       <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
-                      <p>Hemos confirmado tu reserva y recibido tu pago correctamente. Revisa a continuación los detalles de tu consulta.</p>
+                      <p>Tu consulta está lista. Aquí tienes los detalles para conectarte con tu abogado.</p>
                       
                       <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 5px 0;"><strong>Abogado:</strong> ${lawyerName}</p>
@@ -1926,7 +1982,14 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                           O copia este enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
                         </p>
                       </div>
-                      ` : ''}
+                      ` : `
+                      <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffc107;">
+                        <p style="margin: 0; color: #856404; font-weight: 600;">El enlace de Google Meet estará disponible pronto</p>
+                        <p style="margin: 10px 0 0; font-size: 12px; color: #856404;">
+                          Te notificaremos cuando el enlace esté listo.
+                        </p>
+                      </div>
+                      `}
 
                     <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
                       © 2026 LegalUp — Asesoría legal online en Chile.<br />
@@ -1938,13 +2001,13 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               `
             });
 
-          console.log('[booking-email] user confirmation sent', {
+          console.log('[appointment-email] appointment confirmation sent', {
             bookingId,
             to: userEmail,
-            resendId: userEmailResponse?.data?.id,
+            resendId: appointmentConfirmationResponse?.data?.id,
           });
             } catch (emailError) {
-          console.error('[booking-email] Error sending user email:', {
+          console.error('[appointment-email] Error sending appointment confirmation email:', {
             bookingId,
             to: userEmail,
             error: emailError
