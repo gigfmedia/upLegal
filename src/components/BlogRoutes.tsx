@@ -50,6 +50,7 @@ const IncumplimientoRegimenVisitaArticle = lazy(() => import('../pages/blog/incu
 const PensionAlimentosMayoresArticle = lazy(() => import('../pages/blog/pension-alimentos-mayores-18-chile-2026'));
 const AutorizacionSalirPaisArticle = lazy(() => import('../pages/blog/autorizacion-salir-pais-menores-chile-2026'));
 const ReconocimientoPaternidadArticle = lazy(() => import('../pages/blog/reconocimiento-paternidad-chile-2026'));
+const ImpunacionPaternidadArticle = lazy(() => import('../pages/blog/impugnacion-paternidad-chile-2026'));
 
 
 
@@ -108,6 +109,7 @@ export const BlogRoutes = () => (
       <Route path="pension-alimentos-mayores-18-chile-2026" element={<PensionAlimentosMayoresArticle />} />
       <Route path="autorizacion-salir-pais-menores-chile-2026" element={<AutorizacionSalirPaisArticle />} />
       <Route path="reconocimiento-paternidad-chile-2026" element={<ReconocimientoPaternidadArticle />} />
+      <Route path="impugnacion-paternidad-chile-2026" element={<ImpunacionPaternidadArticle />} />
 
     </Routes>
   </Suspense>

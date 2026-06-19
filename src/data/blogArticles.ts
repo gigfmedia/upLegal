@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "impugnacion-paternidad-chile-2026",
+    title: "Impugnación de paternidad en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
+    excerpt: "Aprende qué es la impugnación de paternidad en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
+    category: "Derecho de Familia",
+    author: "LegalUp",
+    date: "19 de Junio, 2026",
+    readTime: "11 min",
+    image: "/assets/impugnacion-paternidad-chile-2026.png"
+  },
+  {
     id: "reconocimiento-paternidad-chile-2026",
     title: "Reconocimiento de paternidad en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
     excerpt: "Aprende qué es el reconocimiento de paternidad en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
