@@ -1722,6 +1722,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           }
 
       // 6. Ensure appointment exists for lawyer dashboard
+      let appointmentId = null;
       if (userId) {
         try {
           const { data: existingAppointment, error: existingAppointmentError } = await supabase
@@ -1738,7 +1739,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           }
 
           if (!existingAppointment) {
-            const { error: insertAppointmentError } = await supabase
+            const { data: newAppointment, error: insertAppointmentError } = await supabase
               .from('appointments')
               .insert({
                 lawyer_id: booking.lawyer_id,
@@ -1755,36 +1756,113 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 currency: 'CLP',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-              });
+              })
+              .select('id')
+              .single();
 
             if (insertAppointmentError) {
               console.error('Error inserting appointment:', insertAppointmentError);
             } else {
+              appointmentId = newAppointment?.id;
               console.log('[booking->appointment] appointment created', {
                 bookingId,
                 lawyerId: booking.lawyer_id,
                 userId,
                 appointment_date: booking.scheduled_date,
                 appointment_time: booking.scheduled_time,
+                appointmentId,
               });
             }
+          } else {
+            appointmentId = existingAppointment.id;
           }
         } catch (appointmentError) {
           console.error('Exception ensuring appointment:', appointmentError);
         }
       }
 
-          // Fetch lawyer email to send notification
+      // 7. Create Google Meet link if videollamada
+      let meetLink = '';
+      if (appointmentId && booking.contact_method === 'platform') {
+        try {
+          console.log('[webhook] Attempting to create Google Meet for appointment:', appointmentId);
+          const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
+            body: { appointmentId }
+          });
+          
+          if (meetError) {
+            console.error('[webhook] Error calling create-google-meeting:', meetError);
+          } else if (meetData?.meetLink) {
+            meetLink = meetData.meetLink;
+            console.log('[webhook] Google Meet created successfully:', meetLink);
+          } else {
+            console.warn('[webhook] No meet link returned from create-google-meeting');
+          }
+        } catch (meetError) {
+          console.error('[webhook] Exception creating Google Meet:', meetError);
+        }
+      }
+
+      // If no dynamic Meet link, try lawyer's profile
+      if (!meetLink && booking.lawyer_id) {
+        try {
+          const { data: lawyerProfile } = await supabase
+            .from('profiles')
+            .select('meet_link')
+            .eq('id', booking.lawyer_id)
+            .single();
+          
+          if (lawyerProfile?.meet_link) {
+            meetLink = lawyerProfile.meet_link;
+            console.log('[webhook] Using meet_link from lawyer profile:', meetLink);
+          }
+        } catch (profileError) {
+          console.error('[webhook] Error fetching lawyer profile for meet_link:', profileError);
+        }
+      }
+
+      // Update appointment with meet_link if we have one
+      if (meetLink && appointmentId) {
+        try {
+          await supabase
+            .from('appointments')
+            .update({ meet_link: meetLink })
+            .eq('id', appointmentId);
+          console.log('[webhook] Appointment updated with meet_link');
+        } catch (updateError) {
+          console.error('[webhook] Error updating appointment with meet_link:', updateError);
+        }
+      }
+
+          // Fetch lawyer email and name to send notification
           let lawyerEmail = '';
+          let lawyerName = '';
           try {
-            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(booking.lawyer_id);
-            if (lawyerUser?.user) {
-          lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+            const { data: lawyerProfile, error: lawyerProfileError } = await supabase
+              .from('profiles')
+              .select('display_name, first_name, last_name, user_id')
+              .eq('id', booking.lawyer_id)
+              .single();
+            
+            if (lawyerProfile) {
+              lawyerName = lawyerProfile.display_name || 
+                           `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
+                           'Abogado';
+              
+              // Get email from auth.users
+              if (lawyerProfile.user_id) {
+                const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerProfile.user_id);
+                if (lawyerUser?.user) {
+                  lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+                } else {
+                  console.error('Could not find lawyer user for email notification', lawyerError);
+                }
+              }
             } else {
-               console.error('Could not find lawyer user for email notification', lawyerError);
+              console.error('Could not find lawyer profile', lawyerProfileError);
             }
           } catch (e) {
-            console.error('Error fetching lawyer email:', e);
+            console.error('Error fetching lawyer info:', e);
           }
 
           // Generate Magic Link for user auto-login
@@ -1815,32 +1893,48 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           const userEmailResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
               to: userEmail,
-              subject: '¡Tu asesoría está confirmada!',
+              subject: 'Tu cita ha sido confirmada',
               html: `
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h1 style="color: #2563eb;">¡Reserva Confirmada!</h1>
-                  <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
-                  <p>Tu asesoría ha sido confirmada exitosamente.</p>
-                  
-                  <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 5px 0;"><strong>Abogado:</strong> Consultar en plataforma</p>
-                    <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
-                    <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
-                    <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
+                <body style="margin:0;padding:16px;background:#f9fafb;">
+                    <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                      <div style="text-align:center;margin-bottom:28px;">
+                        <img
+                          src="https://legalup.cl/apple-touch-icon.png"
+                          alt="LegalUp"
+                          style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
+                        />
+                        <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                      </div>
+                      <h1 style="color: #1a202c;">Tu cita ha sido confirmada</h1>
+                      <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
+                      <p>Hemos confirmado tu reserva y recibido tu pago correctamente. Revisa a continuación los detalles de tu consulta.</p>
+                      
+                      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Abogado:</strong> ${lawyerName}</p>
+                        <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
+                        <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
+                        <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
+                      </div>
+
+                      ${meetLink ? `
+                      <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
+                        <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet</p>
+                        <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                          Unirse a la videollamada
+                        </a>
+                        <p style="margin: 10px 0 0; font-size: 12px; color: #5f6368;">
+                          O copia este enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
+                        </p>
+                      </div>
+                      ` : ''}
+
+                    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                      Todos los derechos reservados.<br />
+                      Este es un correo automático, por favor no respondas a este mensaje.
+                    </p>
                   </div>
-
-                  <p>Hemos creado una cuenta para ti (o actualizado la existente) para que puedas gestionar tu cita.</p>
-
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${magicLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                      Ingresar a mi cuenta y ver detalles
-                    </a>
-                  </div>
-
-                  <p style="font-size: 12px; color: #6b7280; margin-top: 20px;">
-                    Si el botón no funciona, copia y pega este enlace: ${magicLink}
-                  </p>
-                </div>
+                </body>
               `
             });
 
@@ -1866,28 +1960,53 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           const lawyerEmailResponse = await resend.emails.send({
             from: 'LegalUp <hola@mg.legalup.cl>',
                 to: lawyerEmail,
-                subject: 'Nueva reserva confirmada',
+                subject: 'Tienes una nueva cita agendada',
                 html: `
-                  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h1 style="color: #2563eb;">¡Nueva Reserva!</h1>
-                    <p>Has recibido una nueva reserva confirmada.</p>
-                    
-                    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                      <p style="margin: 5px 0;"><strong>Cliente:</strong> ${userName}</p>
-                      <p style="margin: 5px 0;"><strong>Email:</strong> ${userEmail}</p>
-                      <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
-                      <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
-                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
-                    </div>
+                  <body style="margin:0;padding:16px;background:#f9fafb;">
+                    <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                      <div style="text-align:center;margin-bottom:28px;">
+                        <img
+                          src="https://legalup.cl/apple-touch-icon.png"
+                          alt="LegalUp"
+                          style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
+                        />
+                        <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                      </div>
+                      <h1 style="color: #1a202c;">Tienes una nueva cita agendada</h1>
+                      <p>Un cliente ha reservado una consulta contigo a través de LegalUp.cl</p>
+                      <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Cliente:</strong> ${userName}</p>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> ${userEmail}</p>
+                        <p style="margin: 5px 0;"><strong>Fecha:</strong> ${booking.scheduled_date || booking.date || ''}</p>
+                        <p style="margin: 5px 0;"><strong>Hora:</strong> ${booking.scheduled_time || booking.time || ''}</p>
+                        <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
+                      </div>
 
-                    <p>Ingresa a tu panel para ver más detalles.</p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                      <a href="${appUrl}/dashboard/appointments" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                        Ir a mis citas
-                      </a>
+                      ${meetLink ? `
+                      <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
+                        <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet para esta cita</p>
+                        <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                          Unirse a la videollamada
+                        </a>
+                        <p style="margin: 10px 0 0; font-size: 12px; color: #5f6368;">
+                          Enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
+                        </p>
+                      </div>
+                      ` : ''}
+
+                      <p>Ingresa a tu panel para ver más detalles.</p>
+                      <div style="text-align: center; margin: 30px 0;">
+                        <a href="${appUrl}/dashboard/appointments" style="background-color: #111; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                          Ir a mis citas
+                        </a>
+                      </div>
+                      <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                        © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                        Todos los derechos reservados.<br />
+                        Este es un correo automático, por favor no respondas a este mensaje.
+                      </p>
                     </div>
-                  </div>
+                  </body>
                 `
               });
 
