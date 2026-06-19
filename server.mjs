@@ -1623,6 +1623,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
           // 3. Create user if not exists
       if (userEmail && !userId) {
+            console.log('[webhook] Creating new user for email:', userEmail);
             const tempPassword = crypto.randomBytes(9).toString('hex');
 
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
@@ -1631,12 +1632,13 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               email_confirm: true,
               user_metadata: {
                 first_name: firstName || userName,
-                last_name,
+                last_name: lastName,
                 full_name: userName,
                 role: 'client',
                 signup_method: 'booking'
               }
             });
+            console.log('[webhook] User creation attempted, error:', createError?.message || 'none');
 
             if (createError) {
               console.error('Error creating user:', createError);
