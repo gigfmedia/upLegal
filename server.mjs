@@ -1596,16 +1596,43 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
 // MercadoPago Webhook
 app.post('/api/mercadopago/webhook', async (req, res) => {
   try {
-    const { type, data } = req.body;
-    const topic = req.body.topic || type;
-    const id = req.body.id || data?.id;
+    const topic = req.body?.topic || req.body?.type || req.query?.topic || req.query?.type;
 
-    console.log('Webhook payload:', JSON.stringify(req.body, null, 2));
+    console.log('Webhook payload received:', JSON.stringify({ body: req.body, query: req.query }, null, 2));
+
+    if (topic === 'merchant_order') {
+      console.log('Ignoring merchant_order webhook');
+      return res.status(200).send('OK');
+    }
+
+    let paymentId = null;
+    let source = '';
+
+    if (req.body?.data?.id) {
+      paymentId = req.body.data.id;
+      source = 'body.data.id';
+    } else if (req.body?.resource) {
+      const resourceStr = String(req.body.resource);
+      paymentId = resourceStr.split('/').pop();
+      source = 'body.resource';
+    } else if (req.query?.['data.id']) {
+      paymentId = req.query['data.id'];
+      source = "query['data.id']";
+    } else if (req.query?.id) {
+      paymentId = req.query.id;
+      source = 'query.id';
+    }
+
+    console.log('Extracted Payment ID:', paymentId);
+    console.log('Source used:', source);
     console.log('topic:', topic);
-    console.log('id:', id);
-    console.log('typeof id:', typeof id);
     console.log('access token exists:', !!process.env.VITE_MERCADOPAGO_ACCESS_TOKEN);
     console.log('access token start:', process.env.VITE_MERCADOPAGO_ACCESS_TOKEN?.substring(0, 20));
+
+    if (!paymentId && topic === 'payment') {
+      console.log('Could not extract payment ID from webhook');
+      return res.status(200).send('OK');
+    }
 
     const handleApprovedPayment = async (payment) => {
         const bookingId = payment.external_reference;
@@ -2179,11 +2206,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       }
     };
 
-    if (topic === 'payment') {
-      console.log('About to fetch payment from MercadoPago', id);
+    if (topic === 'payment' && paymentId) {
+      console.log('About to fetch payment from MercadoPago', paymentId);
       
       const response = await fetch(
-        `https://api.mercadopago.com/v1/payments/${id}`,
+        `https://api.mercadopago.com/v1/payments/${paymentId}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
