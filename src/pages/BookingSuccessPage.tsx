@@ -24,7 +24,7 @@ interface Booking {
 export default function BookingSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const bookingId = searchParams.get('booking_id');
+  const bookingId = searchParams.get('booking_id') || searchParams.get('external_reference');
   
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,24 +34,26 @@ export default function BookingSuccessPage() {
   useEffect(() => {
     async function fetchBooking() {
       if (!bookingId) {
+        console.warn('No bookingId found in search parameters');
         navigate('/');
         return;
       }
 
       try {
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/bookings/${bookingId}`
+          `${apiBaseUrl}/api/bookings/${bookingId}`
         );
 
         if (!response.ok) {
-          throw new Error('Booking not found');
+          throw new Error(`Booking fetch failed with status ${response.status}`);
         }
 
         const data = await response.json();
         setBooking(data.booking);
       } catch (error) {
-        console.error('Error fetching booking:', error);
-        navigate('/');
+        console.error('Error fetching booking in success page:', error);
+        // navigate('/'); // Retiramos el navigate automático para poder ver el error si falla
       } finally {
         setLoading(false);
       }
@@ -75,7 +77,7 @@ export default function BookingSuccessPage() {
         currency: 'CLP',
         items: [{
           item_id: booking.id,
-          item_name: `Asesoría con ${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+          item_name: `Asesoría con ${booking.lawyer?.first_name || 'Tu'} ${booking.lawyer?.last_name || 'Abogado'}`.trim(),
           price: booking.price,
           quantity: 1
         }]
@@ -84,7 +86,7 @@ export default function BookingSuccessPage() {
       // booking_confirmed: evento custom para tracking interno de confirmaciones
       window.gtag?.('event', 'booking_confirmed', {
         booking_id: booking.id,
-        lawyer_name: `${booking.lawyer.first_name} ${booking.lawyer.last_name}`,
+        lawyer_name: `${booking.lawyer?.first_name || 'Tu'} ${booking.lawyer?.last_name || 'Abogado'}`.trim(),
         price: booking.price
       });
 
@@ -140,14 +142,14 @@ export default function BookingSuccessPage() {
             {/* Lawyer Info */}
             <div className="flex items-center gap-4 pb-6 border-b">
               <img
-                src={booking.lawyer.avatar_url || '/default-avatar.png'}
-                alt={`${booking.lawyer.first_name} ${booking.lawyer.last_name}`}
+                src={booking.lawyer?.avatar_url || '/default-avatar.png'}
+                alt={`${booking.lawyer?.first_name || ''} ${booking.lawyer?.last_name || 'Abogado'}`.trim()}
                 className="w-16 h-16 rounded-full object-cover"
               />
               <div>
                 <p className="text-sm text-gray-600">Asesoría con</p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {booking.lawyer.first_name} {booking.lawyer.last_name}
+                  {booking.lawyer?.first_name || 'Tu'} {booking.lawyer?.last_name || 'Abogado'}
                 </p>
               </div>
             </div>
