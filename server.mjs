@@ -1665,188 +1665,117 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
     const handleApprovedPayment = async (payment) => {
         const bookingId = payment.external_reference;
+        const paymentId = payment.id.toString();
         
-        // 1. Update booking status
+        console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
+        
+        // STEP 1: Payment ingestion - Get booking
         const { data: booking, error: bookingError } = await supabase
           .from('bookings')
           .update({ 
             status: 'confirmed', 
             payment_status: 'approved',
-            payment_id: payment.id.toString(),
+            payment_id: paymentId,
             updated_at: new Date().toISOString()
           })
           .eq('id', bookingId)
           .select()
-          .single();
+          .maybeSingle();
 
-        if (bookingError) {
-          console.error('Error updating booking:', bookingError);
+        if (bookingError || !booking) {
+          console.error('[webhook] step=payment_ingestion status=failed error=' + (bookingError?.message || 'booking not found'));
+          return;
         }
-
-      if (!booking) {
-        console.warn('[mp] approved payment but booking not found', {
-          paymentId: payment.id,
-          external_reference: bookingId,
-        });
-        return;
-      }
-
-          const userEmail = (booking.user_email || '').trim().toLowerCase();
-          const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
-          const [firstName, ...restName] = userName.split(' ').filter(Boolean);
-          const lastName = restName.length > 0 ? restName.join(' ') : '';
-
-          let userId = null;
-
-          // Check if user already exists in profiles (synced with auth)
-          if (userEmail) {
-            try {
-              // Replaced deprecated auth.admin.getUserByEmail with profiles lookup
-              const { data: existingProfile, error: profileError } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('email', userEmail)
-                .maybeSingle();
-                
-              if (existingProfile) {
-                userId = existingProfile.id;
-              } else if (profileError) {
-                 console.error('Error looking up user profile:', profileError);
-              }
-            } catch (lookupError) {
-              console.error('Exception checking existing user:', lookupError);
-            }
-          }
-
-      // Track payment event for analytics (after checking for existing user)
-      try {
-        const { data: paymentEvent, error: insertError } = await supabase.from('payment_events').insert({
-          event_type: 'success',
-          amount: payment.transaction_amount,
-          status: 'completed',
-          metadata: {
-            payment_id: payment.id,
-            booking_id: bookingId,
-            source: 'webhook',
-            user_email: userEmail || null
-          },
-          user_id: userId || null,
-        }).select().single();
-
-        if (insertError) {
-          console.error('Failed to track payment event:', insertError);
-        } else {
-          console.log('[analytics] payment event tracked', { 
-            paymentId: payment.id, 
-            bookingId,
-            userId: userId || 'null',
-            eventId: paymentEvent?.id 
-          });
-        }
-      } catch (trackingError) {
-        console.error('Failed to track payment event:', trackingError);
-      }
-
-      // Fetch lawyer info early for payment confirmation email
-      let lawyerEmail = '';
-      let lawyerName = 'Abogado';
-      try {
-        const { data: lawyerProfile, error: lawyerProfileError } = await supabase
-          .from('profiles')
-          .select('display_name, first_name, last_name, user_id')
-          .eq('id', booking.lawyer_id)
-          .single();
         
-        if (lawyerProfile) {
+        console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId);
+
+        // STEP 2: Lawyer resolution (STRICT VALIDATION)
+        console.log('[webhook] step=lawyer_resolution lawyer_id=' + booking.lawyer_id);
+        
+        let lawyerEmail = '';
+        let lawyerName = 'Abogado';
+        let lawyerProfile = null;
+        
+        try {
+          const { data: lawyerData, error: lawyerError } = await supabase
+            .from('profiles')
+            .select('id, display_name, first_name, last_name, user_id, meet_link')
+            .eq('user_id', booking.lawyer_id)
+            .maybeSingle();
+          
+          if (lawyerError || !lawyerData) {
+            console.error('[webhook] step=lawyer_resolution status=failed error=lawyer_not_found lawyer_id=' + booking.lawyer_id);
+            
+            // Mark booking for manual review
+            await supabase
+              .from('bookings')
+              .update({ needs_manual_review: true })
+              .eq('id', bookingId);
+            
+            console.log('[webhook] step=lawyer_resolution action=marked_manual_review booking_id=' + bookingId);
+            return; // STOP automation flow
+          }
+          
+          lawyerProfile = lawyerData;
           lawyerName = lawyerProfile.display_name || 
                        `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
                        'Abogado';
-        } else {
-          console.error('Could not find lawyer profile', lawyerProfileError);
+          
+          // Get email from auth.users
+          const lawyerAuthId = lawyerProfile.user_id || booking.lawyer_id;
+          if (lawyerAuthId) {
+            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerAuthId);
+            if (lawyerUser?.user) {
+              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+              
+              if (lawyerName === 'Abogado' && lawyerUser.user.user_metadata) {
+                const metaName = lawyerUser.user.user_metadata.full_name || 
+                                 lawyerUser.user.user_metadata.first_name;
+                if (metaName) lawyerName = metaName;
+              }
+            }
+          }
+          
+          console.log('[webhook] step=lawyer_resolution status=ok lawyer_id=' + booking.lawyer_id + ' lawyer_email=' + lawyerEmail);
+        } catch (e) {
+          console.error('[webhook] step=lawyer_resolution status=failed error=exception', e);
+          await supabase
+            .from('bookings')
+            .update({ needs_manual_review: true })
+            .eq('id', bookingId);
+          return;
         }
 
-        // Get email from auth.users
-        const lawyerAuthId = lawyerProfile?.user_id || booking.lawyer_id;
-        if (lawyerAuthId) {
-          const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerAuthId);
-          if (lawyerUser?.user) {
-            lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+        // STEP 3: Booking normalization - Client creation/update
+        console.log('[webhook] step=booking_normalization booking_id=' + bookingId);
+        
+        const userEmail = (booking.user_email || '').trim().toLowerCase();
+        const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+        const [firstName, ...restName] = userName.split(' ').filter(Boolean);
+        const lastName = restName.length > 0 ? restName.join(' ') : '';
+        let userId = null;
+
+        // Check if user exists
+        if (userEmail) {
+          try {
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', userEmail)
+              .maybeSingle();
             
-            // Si el nombre sigue siendo el fallback, intentamos sacar algo de Auth
-            if (lawyerName === 'Abogado' && lawyerUser.user.user_metadata) {
-              const metaName = lawyerUser.user.user_metadata.full_name || 
-                               lawyerUser.user.user_metadata.first_name;
-              if (metaName) lawyerName = metaName;
+            if (existingProfile) {
+              userId = existingProfile.id;
             }
-          } else {
-            console.error('Could not find lawyer user for email notification', lawyerError);
+          } catch (lookupError) {
+            console.error('[webhook] step=booking_normalization error=user_lookup', lookupError);
           }
         }
-      } catch (e) {
-        console.error('Error fetching lawyer info:', e);
-      }
 
-      // CORREO 1: Confirmación de pago (inmediato)
-      if (resend) {
-        try {
-          const paymentConfirmationResponse = await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
-            to: userEmail,
-            subject: 'Tu pago ha sido confirmado',
-            html: `
-              <body style="margin:0;padding:16px;background:#f9fafb;">
-                  <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
-                    <div style="text-align:center;margin-bottom:28px;">
-                      <img
-                        src="https://legalup.cl/apple-touch-icon.png"
-                        alt="LegalUp"
-                        style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
-                      />
-                      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
-                    </div>
-                    <h1 style="color: #1a202c;">Tu pago ha sido confirmado</h1>
-                    <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
-                    <p>Hemos recibido tu pago correctamente y tu consulta ha sido reservada con éxito. En los próximos minutos recibirás correo con los detalles de acceso a tu reunión.</p>
-                    
-                    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                      <p style="margin: 5px 0;"><strong>Nombre del cliente:</strong> ${userName}</p>
-                      <p style="margin: 5px 0;"><strong>Abogado:</strong> ${lawyerName}</p>
-                      <p style="margin: 5px 0;"><strong>Fecha de la consulta:</strong> ${booking.scheduled_date || booking.date || ''}</p>
-                      <p style="margin: 5px 0;"><strong>Hora de la consulta:</strong> ${booking.scheduled_time || booking.time || ''}</p>
-                      <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
-                      <p style="margin: 5px 0;"><strong>Monto pagado:</strong> $${payment.transaction_amount?.toLocaleString('es-CL') || booking.price?.toLocaleString('es-CL') || 'N/A'} CLP</p>
-                      <p style="margin: 5px 0;"><strong>ID de reserva:</strong> ${bookingId}</p>
-                    </div>
-
-                    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
-                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
-                      Todos los derechos reservados.<br />
-                      Este es un correo automático, por favor no respondas a este mensaje.
-                    </p>
-                  </div>
-                </body>
-            `
-          });
-
-          console.log('[payment-email] payment confirmation sent', {
-            bookingId,
-            to: userEmail,
-            resendId: paymentConfirmationResponse?.data?.id,
-          });
-        } catch (emailError) {
-          console.error('[payment-email] Error sending payment confirmation email:', {
-            bookingId,
-            to: userEmail,
-            error: emailError
-          });
-        }
-      }
-
-          // 3. Create user if not exists
-      if (userEmail && !userId) {
-            console.log('[webhook] Creating new user for email:', userEmail);
+        // Create user if not exists
+        if (userEmail && !userId) {
+          try {
             const tempPassword = crypto.randomBytes(9).toString('hex');
-
             const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
               email: userEmail,
               password: tempPassword,
@@ -1859,222 +1788,207 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 signup_method: 'booking'
               }
             });
-            console.log('[webhook] User creation attempted, error:', createError?.message || 'none');
 
-            if (createError) {
-              console.error('Error creating user:', createError);
-            } else if (newUser?.user?.id) {
+            if (!createError && newUser?.user?.id) {
               userId = newUser.user.id;
             }
+          } catch (createError) {
+            console.error('[webhook] step=booking_normalization error=user_creation', createError);
           }
+        }
 
-          // 4. Ensure profile exists and is up to date
-          if (userId && userEmail) {
-            try {
-              const { data: existingProfile, error: profileLookupError } = await supabase
-                .from('profiles')
-                .select('user_id')
-                .eq('user_id', userId)
-                .maybeSingle();
+        // Ensure profile exists
+        if (userId && userEmail) {
+          try {
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('user_id')
+              .eq('user_id', userId)
+              .maybeSingle();
 
-              if (profileLookupError) {
-                console.error('Error querying profile:', profileLookupError);
-              }
+            const baseProfile = {
+              email: userEmail,
+              first_name: firstName || null,
+              last_name: lastName || null,
+              display_name: userName,
+              role: 'client',
+              updated_at: new Date().toISOString(),
+            };
 
-              const baseProfile = {
-                email: userEmail,
-                first_name: firstName || null,
-                last_name: lastName || null,
-                display_name: userName,
-                role: 'client',
-                updated_at: new Date().toISOString(),
-              };
-
-              if (existingProfile) {
-                const { error: updateProfileError } = await supabase
-                  .from('profiles')
-                  .update(baseProfile)
-                  .eq('user_id', userId);
-
-                if (updateProfileError) {
-                  console.error('Error updating profile:', updateProfileError);
-                }
-              } else {
-                const { error: insertProfileError } = await supabase
-                  .from('profiles')
-                  .insert({
-                    ...baseProfile,
-                    id: userId,
-                    user_id: userId,
-                    created_at: new Date().toISOString(),
-                    has_used_free_consultation: false,
-                  });
-
-                if (insertProfileError) {
-                  console.error('Error inserting profile:', insertProfileError);
-                }
-              }
-            } catch (profileError) {
-              console.error('Exception ensuring profile:', profileError);
-            }
-          }
-
-          // 5. Associate booking with user and normalize stored contact data
-          if (userId && userEmail) {
-            await supabase
-              .from('bookings')
-              .update({
-                user_id: userId,
-                user_email: userEmail,
-                user_name: userName,
-              })
-              .eq('id', bookingId);
-
-            // Update payment event with user_id if it was null
-            try {
-              await supabase
-                .from('payment_events')
-                .update({ user_id: userId })
-                .eq('metadata->>booking_id', bookingId)
-                .is('user_id', null);
-            } catch (updateError) {
-              console.error('Failed to update payment event with user_id:', updateError);
-            }
-          }
-
-      // 6. Ensure appointment exists for lawyer dashboard
-      let appointmentId = null;
-      if (userId) {
-        try {
-          const { data: existingAppointment, error: existingAppointmentError } = await supabase
-            .from('appointments')
-            .select('id')
-            .eq('lawyer_id', booking.lawyer_id)
-            .eq('user_id', userId)
-            .eq('appointment_date', booking.scheduled_date)
-            .eq('appointment_time', booking.scheduled_time)
-            .maybeSingle();
-
-          if (existingAppointmentError) {
-            console.error('Error checking existing appointment:', existingAppointmentError);
-          }
-
-          if (!existingAppointment) {
-            const { data: newAppointment, error: insertAppointmentError } = await supabase
-              .from('appointments')
-              .insert({
-                lawyer_id: booking.lawyer_id,
-                user_id: userId,
-                email: userEmail,
-                name: userName,
-                appointment_date: booking.scheduled_date,
-                appointment_time: booking.scheduled_time,
-                duration: booking.duration,
-                price: booking.price,
-                status: 'confirmed',
-                consultation_type: 'paid',
-                contact_method: 'platform',
-                currency: 'CLP',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              })
-              .select('id')
-              .single();
-
-            if (insertAppointmentError) {
-              console.error('Error inserting appointment:', insertAppointmentError);
+            if (existingProfile) {
+              await supabase.from('profiles').update(baseProfile).eq('user_id', userId);
             } else {
-              appointmentId = newAppointment?.id;
-              console.log('[booking->appointment] appointment created', {
-                bookingId,
-                lawyerId: booking.lawyer_id,
-                userId,
-                appointment_date: booking.scheduled_date,
-                appointment_time: booking.scheduled_time,
-                appointmentId,
+              await supabase.from('profiles').insert({
+                ...baseProfile,
+                id: userId,
+                user_id: userId,
+                created_at: new Date().toISOString(),
+                has_used_free_consultation: false,
               });
             }
-          } else {
-            appointmentId = existingAppointment.id;
+          } catch (profileError) {
+            console.error('[webhook] step=booking_normalization error=profile_update', profileError);
           }
-        } catch (appointmentError) {
-          console.error('Exception ensuring appointment:', appointmentError);
         }
-      }
 
-      // Send GA4 Purchase Event
-      try {
-        await sendGA4PurchaseEvent({
-          transaction_id: payment.id,
-          value: payment.transaction_amount,
-          currency: 'CLP',
-          booking_id: bookingId,
-          lawyer_id: booking.lawyer_id,
-          appointment_id: appointmentId
-        });
-      } catch (ga4Error) {
-        console.error('[GA4] Failed to send purchase event', ga4Error);
-        // Do not throw - payment flow should continue even if GA4 fails
-      }
-
-      // 7. Create Google Meet link if videollamada
-      let meetLink = '';
-      if (appointmentId && booking.contact_method === 'platform') {
-        try {
-          console.log('[webhook] Attempting to create Google Meet for appointment:', appointmentId);
-          const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
-            body: { appointmentId }
-          });
-          
-          if (meetError) {
-            console.error('[webhook] Error calling create-google-meeting:', meetError);
-          } else if (meetData?.meetLink) {
-            meetLink = meetData.meetLink;
-            console.log('[webhook] Google Meet created successfully:', meetLink);
-          } else {
-            console.warn('[webhook] No meet link returned from create-google-meeting');
-          }
-        } catch (meetError) {
-          console.error('[webhook] Exception creating Google Meet:', meetError);
-        }
-      }
-
-      // If no dynamic Meet link, try lawyer's profile
-      if (!meetLink && booking.lawyer_id) {
-        try {
-          const { data: lawyerProfile } = await supabase
-            .from('profiles')
-            .select('meet_link')
-            .eq('id', booking.lawyer_id)
-            .single();
-          
-          if (lawyerProfile?.meet_link) {
-            meetLink = lawyerProfile.meet_link;
-            console.log('[webhook] Using meet_link from lawyer profile:', meetLink);
-          }
-        } catch (profileError) {
-          console.error('[webhook] Error fetching lawyer profile for meet_link:', profileError);
-        }
-      }
-
-      // Update appointment with meet_link if we have one
-      if (meetLink && appointmentId) {
-        try {
+        // Associate booking with user
+        if (userId && userEmail) {
           await supabase
-            .from('appointments')
-            .update({ meet_link: meetLink })
-            .eq('id', appointmentId);
-          console.log('[webhook] Appointment updated with meet_link');
-        } catch (updateError) {
-          console.error('[webhook] Error updating appointment with meet_link:', updateError);
+            .from('bookings')
+            .update({
+              user_id: userId,
+              user_email: userEmail,
+              user_name: userName,
+            })
+            .eq('id', bookingId);
         }
-      }
+        
+        console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
 
-          // Generate Magic Link for user auto-login
+        // Track payment event
+        try {
+          await supabase.from('payment_events').insert({
+            event_type: 'success',
+            amount: payment.transaction_amount,
+            status: 'completed',
+            metadata: {
+              payment_id: paymentId,
+              booking_id: bookingId,
+              source: 'webhook',
+              user_email: userEmail || null
+            },
+            user_id: userId || null,
+          });
+        } catch (trackingError) {
+          console.error('[webhook] step=booking_normalization error=payment_event', trackingError);
+        }
+
+        // STEP 4: Appointment creation (with pending_meet_link status)
+        console.log('[webhook] step=appointment_creation booking_id=' + bookingId);
+        
+        let appointmentId = null;
+        if (userId) {
+          try {
+            const { data: existingAppointment } = await supabase
+              .from('appointments')
+              .select('id, meet_link, status')
+              .eq('lawyer_id', booking.lawyer_id)
+              .eq('user_id', userId)
+              .eq('appointment_date', booking.scheduled_date)
+              .eq('appointment_time', booking.scheduled_time)
+              .maybeSingle();
+
+            if (existingAppointment) {
+              appointmentId = existingAppointment.id;
+              console.log('[webhook] step=appointment_creation status=exists appointment_id=' + appointmentId);
+            } else {
+              const { data: newAppointment } = await supabase
+                .from('appointments')
+                .insert({
+                  lawyer_id: booking.lawyer_id,
+                  user_id: userId,
+                  email: userEmail,
+                  name: userName,
+                  appointment_date: booking.scheduled_date,
+                  appointment_time: booking.scheduled_time,
+                  duration: booking.duration,
+                  price: booking.price,
+                  status: 'pending_meet_link',
+                  consultation_type: 'paid',
+                  contact_method: booking.contact_method || 'platform',
+                  currency: 'CLP',
+                  meet_status: 'pending',
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .select('id')
+                .maybeSingle();
+
+              if (newAppointment) {
+                appointmentId = newAppointment.id;
+                console.log('[webhook] step=appointment_creation status=created appointment_id=' + appointmentId);
+              }
+            }
+          } catch (appointmentError) {
+            console.error('[webhook] step=appointment_creation status=failed', appointmentError);
+          }
+        }
+
+        // Send GA4 Purchase Event
+        try {
+          await sendGA4PurchaseEvent({
+            transaction_id: paymentId,
+            value: payment.transaction_amount,
+            currency: 'CLP',
+            booking_id: bookingId,
+            lawyer_id: booking.lawyer_id,
+            appointment_id: appointmentId
+          });
+        } catch (ga4Error) {
+          console.error('[webhook] step=ga4_event status=failed', ga4Error);
+        }
+
+        // STEP 5: Google Meet generation (ASYNC SAFE)
+        console.log('[webhook] step=meet_generation appointment_id=' + appointmentId);
+        
+        let meetLink = '';
+        let meetStatus = 'failed';
+        
+        if (appointmentId && booking.contact_method === 'platform') {
+          try {
+            const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
+              body: { appointmentId }
+            });
+            
+            if (!meetError && meetData?.meetLink) {
+              meetLink = meetData.meetLink;
+              meetStatus = 'success';
+              console.log('[webhook] step=meet_generation status=success meet_link=' + meetLink);
+            } else {
+              console.warn('[webhook] step=meet_generation status=failed error=' + (meetError?.message || 'no_link_returned'));
+            }
+          } catch (meetError) {
+            console.error('[webhook] step=meet_generation status=failed error=exception', meetError);
+          }
+        }
+
+        // Fallback to lawyer profile meet_link
+        if (!meetLink && lawyerProfile?.meet_link) {
+          meetLink = lawyerProfile.meet_link;
+          meetStatus = 'fallback';
+          console.log('[webhook] step=meet_generation status=fallback source=lawyer_profile');
+        }
+
+        // Update appointment with meet_link and status
+        if (appointmentId) {
+          try {
+            const updateData = {
+              meet_status: meetStatus,
+              updated_at: new Date().toISOString(),
+            };
+            
+            if (meetLink) {
+              updateData.meet_link = meetLink;
+              updateData.status = 'confirmed';
+            }
+            
+            await supabase.from('appointments').update(updateData).eq('id', appointmentId);
+            console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus);
+          } catch (updateError) {
+            console.error('[webhook] step=meet_generation status=update_failed', updateError);
+          }
+        }
+
+        // STEP 6: Email dispatch (ONLY IF CONSISTENT STATE)
+        // Only send emails if: meet_link exists AND appointment exists AND booking exists
+        console.log('[webhook] step=email_dispatch meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
+        
+        if (meetLink && appointmentId && resend) {
+          // Generate Magic Link
           let magicLink = `${appUrl}/login`;
           if (userEmail) {
             try {
-              const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+              const { data: linkData } = await supabase.auth.admin.generateLink({
                 type: 'magiclink',
                 email: userEmail,
                 options: {
@@ -2084,30 +1998,23 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               
               if (linkData?.properties?.action_link) {
                 magicLink = linkData.properties.action_link;
-              } else if (linkError) {
-                  console.error('Error generating magic link:', linkError);
               }
             } catch (e) {
-              console.error('Error generating magic link exception:', e);
+              console.error('[webhook] step=email_dispatch error=magic_link', e);
             }
           }
 
-          // CORREO 2: Confirmación de cita con Google Meet (después de generar Meet)
-          if (resend) {
-            try {
-          const appointmentConfirmationResponse = await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
+          // Send client email
+          try {
+            await resend.emails.send({
+              from: 'LegalUp <hola@mg.legalup.cl>',
               to: userEmail,
               subject: 'Tu cita ha sido confirmada',
               html: `
                 <body style="margin:0;padding:16px;background:#f9fafb;">
                     <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
                       <div style="text-align:center;margin-bottom:28px;">
-                        <img
-                          src="https://legalup.cl/apple-touch-icon.png"
-                          alt="LegalUp"
-                          style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
-                        />
+                        <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
                         <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
                       </div>
                       <h1 style="color: #1a202c;">Tu cita ha sido confirmada</h1>
@@ -2121,7 +2028,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                         <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
                       </div>
 
-                      ${meetLink ? `
                       <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
                         <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet</p>
                         <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
@@ -2131,57 +2037,33 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                           O copia este enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
                         </p>
                       </div>
-                      ` : `
-                      <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ffc107;">
-                        <p style="margin: 0; color: #856404; font-weight: 600;">El enlace de Google Meet estará disponible pronto</p>
-                        <p style="margin: 10px 0 0; font-size: 12px; color: #856404;">
-                          Te notificaremos cuando el enlace esté listo.
-                        </p>
-                      </div>
-                      `}
 
-                    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
-                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
-                      Todos los derechos reservados.<br />
-                      Este es un correo automático, por favor no respondas a este mensaje.
-                    </p>
-                  </div>
+                      <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                        © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                        Todos los derechos reservados.<br />
+                        Este es un correo automático, por favor no respondas a este mensaje.
+                      </p>
+                    </div>
                 </body>
               `
             });
-
-          console.log('[appointment-email] appointment confirmation sent', {
-            bookingId,
-            to: userEmail,
-            resendId: appointmentConfirmationResponse?.data?.id,
-          });
-            } catch (emailError) {
-          console.error('[appointment-email] Error sending appointment confirmation email:', {
-            bookingId,
-            to: userEmail,
-            error: emailError
-          });
-        }
+            console.log('[webhook] step=email_dispatch status=sent type=client');
+          } catch (emailError) {
+            console.error('[webhook] step=email_dispatch status=failed type=client', emailError);
           }
 
-          // Send notification email to Lawyer
-          if (lawyerEmail && resend) {
+          // Send lawyer email
+          if (lawyerEmail) {
             try {
-          console.log('[booking-email] sending lawyer confirmation', { bookingId, to: lawyerEmail });
-
-          const lawyerEmailResponse = await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
+              await resend.emails.send({
+                from: 'LegalUp <hola@mg.legalup.cl>',
                 to: lawyerEmail,
                 subject: 'Tienes una nueva cita agendada',
                 html: `
                   <body style="margin:0;padding:16px;background:#f9fafb;">
                     <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
                       <div style="text-align:center;margin-bottom:28px;">
-                        <img
-                          src="https://legalup.cl/apple-touch-icon.png"
-                          alt="LegalUp"
-                          style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;"
-                        />
+                        <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
                         <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
                       </div>
                       <h1 style="color: #1a202c;">Tienes una nueva cita agendada</h1>
@@ -2194,7 +2076,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                         <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || ''} min</p>
                       </div>
 
-                      ${meetLink ? `
                       <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
                         <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet para esta cita</p>
                         <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
@@ -2204,7 +2085,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                           Enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
                         </p>
                       </div>
-                      ` : ''}
 
                       <p>Ingresa a tu panel para ver más detalles.</p>
                       <div style="text-align: center; margin: 30px 0;">
@@ -2221,26 +2101,16 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   </body>
                 `
               });
-
-          console.log('[booking-email] lawyer confirmation sent', {
-            bookingId,
-            to: lawyerEmail,
-            resendId: lawyerEmailResponse?.data?.id,
-          });
+              console.log('[webhook] step=email_dispatch status=sent type=lawyer');
             } catch (emailError) {
-          console.error('[booking-email] Error sending lawyer email:', {
-            bookingId,
-            to: lawyerEmail,
-            error: emailError
-          });
+              console.error('[webhook] step=email_dispatch status=failed type=lawyer', emailError);
+            }
+          }
+        } else {
+          console.log('[webhook] step=email_dispatch status=skipped reason=inconsistent_state meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
         }
-      } else {
-        console.warn('[booking-email] lawyer email not sent (missing lawyerEmail or resend not configured)', {
-          bookingId,
-          lawyerEmail,
-          resendConfigured: Boolean(resend)
-        });
-      }
+        
+        console.log('[webhook] step=complete booking_id=' + bookingId + ' appointment_id=' + (appointmentId || 'no') + ' meet_status=' + meetStatus);
     };
 
     if ((topic === 'payment' || topic === 'payment.created') && paymentId) {
