@@ -1749,7 +1749,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       // Fetch lawyer info early for payment confirmation email
       let lawyerEmail = '';
-      let lawyerName = '';
+      let lawyerName = 'Abogado';
       try {
         const { data: lawyerProfile, error: lawyerProfileError } = await supabase
           .from('profiles')
@@ -1761,18 +1761,26 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           lawyerName = lawyerProfile.display_name || 
                        `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
                        'Abogado';
-          
-          // Get email from auth.users
-          if (lawyerProfile.user_id) {
-            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerProfile.user_id);
-            if (lawyerUser?.user) {
-              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
-            } else {
-              console.error('Could not find lawyer user for email notification', lawyerError);
-            }
-          }
         } else {
           console.error('Could not find lawyer profile', lawyerProfileError);
+        }
+
+        // Get email from auth.users
+        const lawyerAuthId = lawyerProfile?.user_id || booking.lawyer_id;
+        if (lawyerAuthId) {
+          const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerAuthId);
+          if (lawyerUser?.user) {
+            lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+            
+            // Si el nombre sigue siendo el fallback, intentamos sacar algo de Auth
+            if (lawyerName === 'Abogado' && lawyerUser.user.user_metadata) {
+              const metaName = lawyerUser.user.user_metadata.full_name || 
+                               lawyerUser.user.user_metadata.first_name;
+              if (metaName) lawyerName = metaName;
+            }
+          } else {
+            console.error('Could not find lawyer user for email notification', lawyerError);
+          }
         }
       } catch (e) {
         console.error('Error fetching lawyer info:', e);
