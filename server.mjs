@@ -49,6 +49,76 @@ if (!mercadoPagoWebhookUrl) {
   console.warn('⚠️ MERCADOPAGO_WEBHOOK_URL is not configured. MercadoPago webhooks will NOT be received, and bookings may remain pending.');
 }
 
+// GA4 Measurement Protocol Configuration
+const ga4MeasurementId = process.env.GA4_MEASUREMENT_ID;
+const ga4ApiSecret = process.env.GA4_API_SECRET;
+
+if (!ga4MeasurementId || !ga4ApiSecret) {
+  console.warn('⚠️ GA4_MEASUREMENT_ID or GA4_API_SECRET is not configured. GA4 purchase events will NOT be sent.');
+}
+
+// Send GA4 Purchase Event using Measurement Protocol
+const sendGA4PurchaseEvent = async (params) => {
+  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id } = params;
+  
+  if (!ga4MeasurementId || !ga4ApiSecret) {
+    console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
+    return;
+  }
+
+  try {
+    console.log('[GA4] Sending purchase event', { transaction_id, value, currency, booking_id, lawyer_id, appointment_id });
+    
+    const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
+    
+    const payload = {
+      client_id: transaction_id, // Use transaction_id as client_id for server-side events
+      events: [
+        {
+          name: 'purchase',
+          params: {
+            transaction_id,
+            value,
+            currency,
+            items: [
+              {
+                item_id: booking_id,
+                item_name: 'Legal Consultation',
+                price: value,
+                quantity: 1
+              }
+            ],
+            custom_parameters: {
+              booking_id,
+              lawyer_id,
+              ...(appointment_id && { appointment_id })
+            }
+          }
+        }
+      ]
+    };
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[GA4] Purchase event failed', { status: response.status, error: errorText });
+      return;
+    }
+    
+    console.log('[GA4] Purchase event sent successfully', { transaction_id, value, currency });
+  } catch (error) {
+    console.error('[GA4] Purchase event failed', error);
+    // Do not throw - payment flow should continue even if GA4 fails
+  }
+};
+
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('Missing required environment variables');
   process.exit(1);
@@ -1866,6 +1936,21 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         } catch (appointmentError) {
           console.error('Exception ensuring appointment:', appointmentError);
         }
+      }
+
+      // Send GA4 Purchase Event
+      try {
+        await sendGA4PurchaseEvent({
+          transaction_id: payment.id,
+          value: payment.transaction_amount,
+          currency: 'CLP',
+          booking_id: bookingId,
+          lawyer_id: booking.lawyer_id,
+          appointment_id: appointmentId
+        });
+      } catch (ga4Error) {
+        console.error('[GA4] Failed to send purchase event', ga4Error);
+        // Do not throw - payment flow should continue even if GA4 fails
       }
 
       // 7. Create Google Meet link if videollamada
