@@ -57,8 +57,18 @@ serve(async (req) => {
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
       
-      if (!code || !state) {
-        throw new Error('Missing code or state in query parameters');
+      console.log('🔥 CALLBACK FULL URL:', req.url);
+
+      if (!code) {
+        console.error('❌ Missing code from Google redirect');
+        return new Response(JSON.stringify({
+          error: 'Missing code',
+          url: req.url
+        }), { status: 200 });
+      }
+
+      if (!state) {
+        console.error('❌ Missing state');
       }
 
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
@@ -79,9 +89,7 @@ serve(async (req) => {
 
       const tokens = await tokenResponse.json();
 
-      if (tokens.error) {
-        throw new Error(`Google Token Error: ${tokens.error_description || tokens.error}`);
-      }
+      console.error('🔥 GOOGLE TOKEN RESPONSE:', tokens);
 
       // Save tokens to database
       const { error: upsertError } = await supabaseClient
