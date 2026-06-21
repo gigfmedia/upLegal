@@ -212,12 +212,33 @@ serve(async (req) => {
     if (!meetLink) {
       meetLink = `https://meet.jit.si/legalup-${appointmentId}`;
       meetSource = 'jitsi';
+      console.log('JITSI_LINK_GENERATED:', meetLink);
       console.log('JITSI_FALLBACK_USED', {
         appointmentId,
         meetLink,
         reason: hasGoogleIntegration ? 'google_failed' : 'no_google_integration'
       });
     }
+
+    // Save meet_link to database
+    console.log('JITSI_LINK_SAVING_TO_DB', { appointmentId, meetLink, meetSource });
+    const { error: updateError } = await supabaseClient
+      .from('appointments')
+      .update({
+        meet_link: meetLink,
+        meet_provider: meetSource,
+        meet_status: 'success',
+        status: 'confirmed',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', appointmentId);
+
+    if (updateError) {
+      console.error('JITSI_LINK_DB_UPDATE_ERROR', updateError);
+      throw new Error(`Failed to update appointment: ${updateError.message}`);
+    }
+
+    console.log('JITSI_LINK_SAVED_TO_DB');
 
     // Traceability logging
     console.log('MEETING_GENERATION', {
@@ -227,6 +248,8 @@ serve(async (req) => {
       meetLink,
       action: 'generated_new'
     });
+
+    console.log('RETURNING_JITSI_RESPONSE:', { meetLink, source: meetSource });
 
     return new Response(
       JSON.stringify({ 
