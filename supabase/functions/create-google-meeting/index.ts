@@ -33,12 +33,12 @@ serve(async (req) => {
       .eq('id', appointmentId)
       .single();
 
-    console.log('🔥 APPOINTMENT FETCHED');
-
     if (appError || !appointment) {
-      console.error('Error fetching appointment:', appError);
+      console.error('❌ Appointment error:', appError);
       throw new Error('Appointment not found');
     }
+
+    console.log('🔥 APPOINTMENT FETCHED:', appointment);
 
     // 2. Lawyer profile
     const { data: lawyerProfile, error: profileError } = await supabaseClient
@@ -47,12 +47,12 @@ serve(async (req) => {
       .eq('user_id', appointment.lawyer_id)
       .single();
 
-    console.log('🔥 LAWYER PROFILE FOUND');
-
     if (profileError || !lawyerProfile) {
-      console.error('Error fetching lawyer profile:', profileError);
+      console.error('❌ Lawyer profile error:', profileError);
       throw new Error('Lawyer profile not found');
     }
+
+    console.log('🔥 LAWYER PROFILE FOUND:', lawyerProfile);
 
     const lawyerUserId = lawyerProfile.user_id;
 
@@ -63,49 +63,58 @@ serve(async (req) => {
       .eq('user_id', lawyerUserId)
       .single();
 
-    console.log('🔥 GOOGLE INTEGRATION FOUND');
-
     if (intError || !integration) {
+      console.log('❌ No Google integration found');
       return new Response(JSON.stringify({ message: 'No Google integration found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    console.log('🔥 GOOGLE INTEGRATION FOUND');
+
     let accessToken = integration.access_token;
 
-    // refresh logic omitted (igual que tu versión)
     if (Date.now() >= integration.expires_at) {
       console.log('🔥 REFRESHING TOKEN');
-      const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
-      const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
       const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId!,
-        client_secret: clientSecret!,
-        refresh_token: integration.refresh_token,
-        grant_type: 'refresh_token',
-      }),
-    });
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,
+          client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET')!,
+          refresh_token: integration.refresh_token,
+          grant_type: 'refresh_token',
+        }),
+      });
 
       const newTokens = await refreshResponse.json();
       accessToken = newTokens.access_token;
     }
 
-    // event time
+    // 🔥 VALIDACIÓN TOTAL DE FECHA
+    console.log('🔥 RAW APPOINTMENT CHECK:', {
+      date: appointment.appointment_date,
+      time: appointment.appointment_time,
+      duration: appointment.duration,
+    });
+
     if (!appointment.appointment_time || !appointment.appointment_date) {
       throw new Error('Invalid appointment date/time');
     }
 
-    const timeStr = String(appointment.appointment_time).substring(0, 5);
+    const timeStr = String(appointment.appointment_time).slice(0, 5);
     const dateTimeStr = `${appointment.appointment_date}T${timeStr}:00`;
 
     const startDate = new Date(dateTimeStr);
-    const endDate = new Date(
-      startDate.getTime() + (appointment.duration || 60) * 60000
-    );
+
+    if (isNaN(startDate.getTime())) {
+      throw new Error(`Invalid date generated: ${dateTimeStr}`);
+    }
+
+    const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
+
+    console.log('🔥 BEFORE GOOGLE CALL');
 
     const event = {
       summary: `Cita LegalUp: ${appointment.consultation_type}`,
@@ -127,11 +136,6 @@ serve(async (req) => {
       attendees: [{ email: appointment.email }],
     };
 
-    console.log('🔥 BEFORE GOOGLE CALL');
-    console.log('dateTimeStr:', dateTimeStr);
-    console.log('startDate:', startDate);
-    console.log('endDate:', endDate);
-
     const calendarResponse = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
       {
@@ -151,13 +155,12 @@ serve(async (req) => {
     console.log('GOOGLE RAW RESPONSE:', rawText);
 
     if (!calendarResponse.ok) {
-      console.error('Google Calendar HTTP ERROR:', rawText);
-      throw new Error('Google Calendar request failed');
+      throw new Error(`Google error: ${rawText}`);
     }
 
     const calendarData = JSON.parse(rawText);
 
-    console.log('🔥 CALENDAR PARSED');
+    console.log('🔥 CALENDAR PARSED:', calendarData);
 
     const meetLink =
       calendarData.hangoutLink ||
