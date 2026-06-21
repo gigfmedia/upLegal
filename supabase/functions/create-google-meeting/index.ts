@@ -39,7 +39,7 @@ serve(async (req) => {
     const { data: lawyerProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('user_id')
-      .eq('id', appointment.lawyer_id)
+      .eq('user_id', appointment.lawyer_id)
       .single();
 
     if (profileError || !lawyerProfile) {
