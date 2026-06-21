@@ -95,7 +95,11 @@ serve(async (req) => {
     }
 
     // event time
-    const timeStr = appointment.appointment_time.substring(0, 5);
+    if (!appointment.appointment_time || !appointment.appointment_date) {
+      throw new Error('Invalid appointment date/time');
+    }
+
+    const timeStr = String(appointment.appointment_time).substring(0, 5);
     const dateTimeStr = `${appointment.appointment_date}T${timeStr}:00`;
 
     const startDate = new Date(dateTimeStr);
@@ -124,6 +128,9 @@ serve(async (req) => {
     };
 
     console.log('🔥 BEFORE GOOGLE CALL');
+    console.log('dateTimeStr:', dateTimeStr);
+    console.log('startDate:', startDate);
+    console.log('endDate:', endDate);
 
     const calendarResponse = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
