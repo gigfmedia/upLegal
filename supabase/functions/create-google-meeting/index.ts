@@ -31,7 +31,7 @@ serve(async (req) => {
       .from('appointments')
       .select('*')
       .eq('id', appointmentId)
-      .single();
+      .maybeSingle();
 
     if (appError || !appointment) {
       console.error('❌ Appointment error:', appError);
@@ -39,6 +39,27 @@ serve(async (req) => {
     }
 
     console.log('🔥 APPOINTMENT FETCHED:', appointment);
+
+    // Idempotency check: Return existing meet_link if already exists
+    if (appointment.meet_link) {
+      const originalProvider = appointment.meet_provider || 'jitsi';
+      console.log('MEETING_LINK_REUSE', {
+        appointmentId,
+        provider: originalProvider,
+        meetLink: appointment.meet_link,
+        action: 'returning_existing_link'
+      });
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          meetLink: appointment.meet_link,
+          source: originalProvider,
+          existing: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 2. Lawyer profile
     const { data: lawyerProfile, error: profileError } = await supabaseClient
@@ -56,118 +77,163 @@ serve(async (req) => {
 
     const lawyerUserId = lawyerProfile.user_id;
 
-    // 3. Google integration
+    // 3. Google integration (optional)
     const { data: integration, error: intError } = await supabaseClient
       .from('google_integrations')
       .select('*')
       .eq('user_id', lawyerUserId)
-      .single();
+      .maybeSingle();
 
-    if (intError || !integration) {
-      console.log('❌ No Google integration found');
-      return new Response(JSON.stringify({ message: 'No Google integration found' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const hasGoogleIntegration = !intError && integration;
+    console.log('🔥 GOOGLE INTEGRATION STATUS:', hasGoogleIntegration ? 'FOUND' : 'NOT FOUND');
+
+    let meetLink = '';
+    let meetSource = '';
+
+    // Try Google Calendar only if integration exists
+    if (hasGoogleIntegration) {
+      console.log('🔥 ATTEMPTING GOOGLE CALENDAR');
+      
+      let accessToken = integration.access_token;
+
+      if (Date.now() >= integration.expires_at) {
+        console.log('🔥 REFRESHING TOKEN');
+
+        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,
+            client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET')!,
+            refresh_token: integration.refresh_token,
+            grant_type: 'refresh_token',
+          }),
+        });
+
+        const newTokens = await refreshResponse.json();
+        accessToken = newTokens.access_token;
+      }
+
+      // 🔥 VALIDACIÓN TOTAL DE FECHA
+      console.log('🔥 RAW APPOINTMENT CHECK:', {
+        date: appointment.appointment_date,
+        time: appointment.appointment_time,
+        duration: appointment.duration,
+      });
+
+      if (!appointment.appointment_time || !appointment.appointment_date) {
+        console.warn('⚠️ Invalid appointment date/time, falling back to Jitsi');
+      } else {
+        const timeStr = String(appointment.appointment_time).slice(0, 5);
+        const dateTimeStr = `${appointment.appointment_date}T${timeStr}:00`;
+
+        const startDate = new Date(dateTimeStr);
+
+        if (isNaN(startDate.getTime())) {
+          console.warn('⚠️ Invalid date generated, falling back to Jitsi:', dateTimeStr);
+        } else {
+          const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
+
+          console.log('🔥 BEFORE GOOGLE CALL');
+
+          const event = {
+            summary: `Cita LegalUp: ${appointment.consultation_type}`,
+            description: `Cita con ${appointment.name}`,
+            start: {
+              dateTime: startDate.toISOString(),
+              timeZone: 'America/Santiago',
+            },
+            end: {
+              dateTime: endDate.toISOString(),
+              timeZone: 'America/Santiago',
+            },
+            conferenceData: {
+              createRequest: {
+                requestId: `meet-${appointmentId}`,
+                conferenceSolutionKey: { type: 'hangoutsMeet' },
+              },
+            },
+            attendees: [{ email: appointment.email }],
+          };
+
+          try {
+            const calendarResponse = await fetch(
+              'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event),
+              }
+            );
+
+            const rawText = await calendarResponse.text();
+
+            console.log('🔥 AFTER GOOGLE CALL');
+            console.log('GOOGLE STATUS:', calendarResponse.status);
+            console.log('GOOGLE RAW RESPONSE:', rawText);
+
+            if (calendarResponse.ok) {
+              const calendarData = JSON.parse(rawText);
+              console.log('🔥 CALENDAR PARSED:', calendarData);
+
+              meetLink =
+                calendarData.hangoutLink ||
+                calendarData.conferenceData?.entryPoints?.[0]?.uri;
+              
+              if (meetLink) {
+                meetSource = 'google';
+                console.log('GOOGLE_MEET_SUCCESS', {
+                  appointmentId,
+                  meetLink,
+                  calendarEventId: calendarData.id
+                });
+              }
+            } else {
+              console.error('GOOGLE_MEET_ERROR', {
+                appointmentId,
+                status: calendarResponse.status,
+                error: rawText
+              });
+              console.warn('⚠️ Google Calendar failed, falling back to Jitsi:', rawText);
+            }
+          } catch (googleError) {
+            console.warn('⚠️ Google Calendar exception, falling back to Jitsi:', googleError);
+          }
+        }
+      }
+    } else {
+      console.log('🔥 SKIPPING GOOGLE CALENDAR - NO INTEGRATION');
+    }
+
+    // Fallback to Jitsi Meet if Google failed or not available
+    if (!meetLink) {
+      meetLink = `https://meet.jit.si/legalup-${appointmentId}`;
+      meetSource = 'jitsi';
+      console.log('JITSI_FALLBACK_USED', {
+        appointmentId,
+        meetLink,
+        reason: hasGoogleIntegration ? 'google_failed' : 'no_google_integration'
       });
     }
 
-    console.log('🔥 GOOGLE INTEGRATION FOUND');
-
-    let accessToken = integration.access_token;
-
-    if (Date.now() >= integration.expires_at) {
-      console.log('🔥 REFRESHING TOKEN');
-
-      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,
-          client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET')!,
-          refresh_token: integration.refresh_token,
-          grant_type: 'refresh_token',
-        }),
-      });
-
-      const newTokens = await refreshResponse.json();
-      accessToken = newTokens.access_token;
-    }
-
-    // 🔥 VALIDACIÓN TOTAL DE FECHA
-    console.log('🔥 RAW APPOINTMENT CHECK:', {
-      date: appointment.appointment_date,
-      time: appointment.appointment_time,
-      duration: appointment.duration,
+    // Traceability logging
+    console.log('MEETING_GENERATION', {
+      appointmentId,
+      provider: meetSource,
+      hasGoogleIntegration,
+      meetLink,
+      action: 'generated_new'
     });
 
-    if (!appointment.appointment_time || !appointment.appointment_date) {
-      throw new Error('Invalid appointment date/time');
-    }
-
-    const timeStr = String(appointment.appointment_time).slice(0, 5);
-    const dateTimeStr = `${appointment.appointment_date}T${timeStr}:00`;
-
-    const startDate = new Date(dateTimeStr);
-
-    if (isNaN(startDate.getTime())) {
-      throw new Error(`Invalid date generated: ${dateTimeStr}`);
-    }
-
-    const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
-
-    console.log('🔥 BEFORE GOOGLE CALL');
-
-    const event = {
-      summary: `Cita LegalUp: ${appointment.consultation_type}`,
-      description: `Cita con ${appointment.name}`,
-      start: {
-        dateTime: startDate.toISOString(),
-        timeZone: 'America/Santiago',
-      },
-      end: {
-        dateTime: endDate.toISOString(),
-        timeZone: 'America/Santiago',
-      },
-      conferenceData: {
-        createRequest: {
-          requestId: `meet-${appointmentId}`,
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      },
-      attendees: [{ email: appointment.email }],
-    };
-
-    const calendarResponse = await fetch(
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
-      }
-    );
-
-    const rawText = await calendarResponse.text();
-
-    console.log('🔥 AFTER GOOGLE CALL');
-    console.log('GOOGLE STATUS:', calendarResponse.status);
-    console.log('GOOGLE RAW RESPONSE:', rawText);
-
-    if (!calendarResponse.ok) {
-      throw new Error(`Google error: ${rawText}`);
-    }
-
-    const calendarData = JSON.parse(rawText);
-
-    console.log('🔥 CALENDAR PARSED:', calendarData);
-
-    const meetLink =
-      calendarData.hangoutLink ||
-      calendarData.conferenceData?.entryPoints?.[0]?.uri;
-
     return new Response(
-      JSON.stringify({ success: true, meetLink }),
+      JSON.stringify({ 
+        success: true, 
+        meetLink,
+        source: meetSource
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

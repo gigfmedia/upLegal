@@ -1932,7 +1932,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         console.log('[webhook] step=meet_generation appointment_id=' + appointmentId);
         
         let meetLink = '';
-        let meetStatus = 'failed';
+        let meetStatus = 'fallback';
+        let meetProvider = 'jitsi';
         
         if (appointmentId && booking.contact_method === 'platform') {
           try {
@@ -1952,14 +1953,18 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             
             if (!meetError && meetData?.meetLink) {
               meetLink = meetData.meetLink;
-              meetStatus = 'success';
-              console.log('[webhook] step=meet_generation status=success meet_link=' + meetLink);
+              meetProvider = meetData.source || 'jitsi';
+              meetStatus = meetData.existing ? 'success' : (meetData.source === 'jitsi' ? 'fallback' : 'success');
+              console.log('[webhook] step=meet_generation status=' + meetStatus + ' meet_link=' + meetLink + ' provider=' + meetProvider + ' existing=' + (meetData.existing || false));
+              if (meetData.existing) {
+                console.log('[webhook] step=meet_generation action=reused_existing_link');
+              }
             } else {
-              console.warn('[webhook] step=meet_generation status=failed error=' + (meetError?.message || 'no_link_returned'));
+              console.warn('[webhook] step=meet_generation status=fallback error=' + (meetError?.message || 'no_link_returned'));
             }
           } catch (meetError) {
             console.error('[webhook] create-google-meeting exception', meetError);
-            console.warn('[webhook] step=meet_generation status=failed error=exception');
+            console.warn('[webhook] step=meet_generation status=fallback error=exception');
           }
         }
 
@@ -1967,14 +1972,21 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         if (!meetLink && lawyerProfile?.meet_link) {
           meetLink = lawyerProfile.meet_link;
           meetStatus = 'fallback';
-          console.log('[webhook] step=meet_generation status=fallback source=lawyer_profile');
+          // Detect provider from URL pattern
+          if (meetLink.includes('meet.google.com') || meetLink.includes('hangouts.google.com')) {
+            meetProvider = 'google';
+          } else {
+            meetProvider = 'jitsi';
+          }
+          console.log('[webhook] step=meet_generation status=fallback provider=' + meetProvider + ' source=lawyer_profile');
         }
 
-        // Update appointment with meet_link and status
+        // Update appointment with meet_link, status, and provider
         if (appointmentId) {
           try {
             const updateData = {
               meet_status: meetStatus,
+              meet_provider: meetProvider,
               updated_at: new Date().toISOString(),
             };
             
@@ -1984,7 +1996,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             }
             
             await supabase.from('appointments').update(updateData).eq('id', appointmentId);
-            console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus);
+            console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus + ' meet_provider=' + meetProvider);
           } catch (updateError) {
             console.error('[webhook] step=meet_generation status=update_failed', updateError);
           }
@@ -1992,7 +2004,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
         // STEP 6: Email dispatch (ONLY IF CONSISTENT STATE)
         // Only send emails if: meet_link exists AND appointment exists AND booking exists
-        console.log('[webhook] step=email_dispatch meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
+        console.log('[webhook] step=email_dispatch meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no') + ' provider=' + meetProvider);
         
         if (meetLink && appointmentId && resend) {
           // Generate Magic Link
