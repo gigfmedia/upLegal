@@ -129,7 +129,12 @@ serve(async (req) => {
 
     // Calculate end time based on duration
     const startDate = new Date(dateTimeStr);
-    const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
+
+    const endDate = new Date(
+      startDate.getTime() + (appointment.duration || 60) * 60000
+    );
+
+    event.start.dateTime = startDate.toISOString();
     event.end.dateTime = endDate.toISOString();
 
     const calendarResponse = await fetch(
@@ -144,7 +149,17 @@ serve(async (req) => {
       }
     );
 
-    const calendarData = await calendarResponse.json();
+    const rawText = await calendarResponse.text();
+
+    console.log('GOOGLE STATUS:', calendarResponse.status);
+    console.log('GOOGLE RAW RESPONSE:', rawText);
+
+    if (!calendarResponse.ok) {
+      console.error('Google Calendar HTTP ERROR:', rawText);
+      throw new Error('Google Calendar request failed');
+    }
+
+    const calendarData = JSON.parse(rawText);
 
     console.log('CALENDAR RESPONSE:', JSON.stringify(calendarData, null, 2));
 
