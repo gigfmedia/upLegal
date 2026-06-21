@@ -1936,8 +1936,18 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         
         if (appointmentId && booking.contact_method === 'platform') {
           try {
+            console.log('[webhook] invoking create-google-meeting', {
+              appointmentId,
+              lawyerId: booking.lawyer_id
+            });
+            
             const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
               body: { appointmentId }
+            });
+            
+            console.log('[webhook] create-google-meeting result', {
+              data: meetData,
+              error: meetError
             });
             
             if (!meetError && meetData?.meetLink) {
@@ -1948,7 +1958,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               console.warn('[webhook] step=meet_generation status=failed error=' + (meetError?.message || 'no_link_returned'));
             }
           } catch (meetError) {
-            console.error('[webhook] step=meet_generation status=failed error=exception', meetError);
+            console.error('[webhook] create-google-meeting exception', meetError);
+            console.warn('[webhook] step=meet_generation status=failed error=exception');
           }
         }
 

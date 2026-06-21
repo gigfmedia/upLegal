@@ -146,11 +146,15 @@ serve(async (req) => {
 
     const calendarData = await calendarResponse.json();
 
+    console.log('CALENDAR RESPONSE:', JSON.stringify(calendarData, null, 2));
+
     if (calendarData.error) {
       throw new Error(`Google Calendar API Error: ${JSON.stringify(calendarData.error)}`);
     }
 
-    const meetLink = calendarData.hangoutLink;
+    const meetLink =
+  calendarData.hangoutLink ||
+  calendarData.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri;
 
     // 5. Update appointment with meet link
     if (meetLink) {
