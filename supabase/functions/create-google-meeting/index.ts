@@ -130,7 +130,7 @@ serve(async (req) => {
     // Calculate end time based on duration
     const startDate = new Date(dateTimeStr);
     const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
-    event.end.dateTime = endDate.toISOString().replace('Z', ''); // Simple ISO format, Google handles timezone
+    event.end.dateTime = endDate.toISOString();
 
     const calendarResponse = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
@@ -153,8 +153,9 @@ serve(async (req) => {
     }
 
     const meetLink =
-  calendarData.hangoutLink ||
-  calendarData.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri;
+      calendarData.hangoutLink ||
+      calendarData.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri ||
+      calendarData.conferenceData?.entryPoints?.[0]?.uri;
 
     // 5. Update appointment with meet link
     if (meetLink) {
