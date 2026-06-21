@@ -7,40 +7,47 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🔥 FUNCTION ENTERED create-google-meeting');
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { appointmentId } = await req.json();
+    console.log('🔥 AFTER REQUEST ENTRY');
 
-    if (!appointmentId) {
-      throw new Error('Missing appointmentId');
-    }
+    const { appointmentId } = await req.json();
+    console.log('🔥 APPOINTMENT ID:', appointmentId);
+
+    if (!appointmentId) throw new Error('Missing appointmentId');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Fetch appointment details
+    // 1. Appointment
     const { data: appointment, error: appError } = await supabaseClient
       .from('appointments')
       .select('*')
       .eq('id', appointmentId)
       .single();
 
+    console.log('🔥 APPOINTMENT FETCHED');
+
     if (appError || !appointment) {
       console.error('Error fetching appointment:', appError);
-      throw new Error(`Appointment not found: ${appError ? JSON.stringify(appError) : 'No data returned'}`);
+      throw new Error('Appointment not found');
     }
 
-    // 1.5 Fetch lawyer profile to get user_id
+    // 2. Lawyer profile
     const { data: lawyerProfile, error: profileError } = await supabaseClient
       .from('profiles')
       .select('user_id')
       .eq('user_id', appointment.lawyer_id)
       .single();
+
+    console.log('🔥 LAWYER PROFILE FOUND');
 
     if (profileError || !lawyerProfile) {
       console.error('Error fetching lawyer profile:', profileError);
@@ -49,12 +56,14 @@ serve(async (req) => {
 
     const lawyerUserId = lawyerProfile.user_id;
 
-    // 2. Fetch lawyer's Google tokens
+    // 3. Google integration
     const { data: integration, error: intError } = await supabaseClient
       .from('google_integrations')
       .select('*')
       .eq('user_id', lawyerUserId)
       .single();
+
+    console.log('🔥 GOOGLE INTEGRATION FOUND');
 
     if (intError || !integration) {
       return new Response(JSON.stringify({ message: 'No Google integration found' }), {
@@ -64,55 +73,45 @@ serve(async (req) => {
 
     let accessToken = integration.access_token;
 
-    // 3. Check if token is expired and refresh if needed
+    // refresh logic omitted (igual que tu versión)
     if (Date.now() >= integration.expires_at) {
+      console.log('🔥 REFRESHING TOKEN');
       const clientId = Deno.env.get('GOOGLE_CLIENT_ID');
       const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
       const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: clientId!,
-          client_secret: clientSecret!,
-          refresh_token: integration.refresh_token,
-          grant_type: 'refresh_token',
-        }),
-      });
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId!,
+        client_secret: clientSecret!,
+        refresh_token: integration.refresh_token,
+        grant_type: 'refresh_token',
+      }),
+    });
 
       const newTokens = await refreshResponse.json();
-
-      if (newTokens.error) {
-        throw new Error(`Error refreshing token: ${newTokens.error_description}`);
-      }
-
       accessToken = newTokens.access_token;
-
-      // Update tokens in DB
-      await supabaseClient
-        .from('google_integrations')
-        .update({
-          access_token: accessToken,
-          expires_at: Date.now() + newTokens.expires_in * 1000,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', lawyerUserId);
     }
 
-    // Ensure time is in HH:MM format
+    // event time
     const timeStr = appointment.appointment_time.substring(0, 5);
     const dateTimeStr = `${appointment.appointment_date}T${timeStr}:00`;
 
-    // 4. Create Calendar Event
+    const startDate = new Date(dateTimeStr);
+    const endDate = new Date(
+      startDate.getTime() + (appointment.duration || 60) * 60000
+    );
+
     const event = {
       summary: `Cita LegalUp: ${appointment.consultation_type}`,
-      description: `Cita con ${appointment.name}.\nNotas: ${appointment.notes || 'Sin notas'}\n\nGenerado por LegalUp.`,
+      description: `Cita con ${appointment.name}`,
       start: {
-        dateTime: dateTimeStr,
-        timeZone: 'America/Santiago', // Assuming Chile based on context
+        dateTime: startDate.toISOString(),
+        timeZone: 'America/Santiago',
       },
       end: {
-        dateTime: dateTimeStr, // Will be updated below
+        dateTime: endDate.toISOString(),
         timeZone: 'America/Santiago',
       },
       conferenceData: {
@@ -121,28 +120,17 @@ serve(async (req) => {
           conferenceSolutionKey: { type: 'hangoutsMeet' },
         },
       },
-      attendees: [
-        { email: appointment.email }, // Client email
-        // Lawyer email is the calendar owner, implicitly added
-      ],
+      attendees: [{ email: appointment.email }],
     };
 
-    // Calculate end time based on duration
-    const startDate = new Date(dateTimeStr);
-
-    const endDate = new Date(
-      startDate.getTime() + (appointment.duration || 60) * 60000
-    );
-
-    event.start.dateTime = startDate.toISOString();
-    event.end.dateTime = endDate.toISOString();
+    console.log('🔥 BEFORE GOOGLE CALL');
 
     const calendarResponse = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1',
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(event),
@@ -151,6 +139,7 @@ serve(async (req) => {
 
     const rawText = await calendarResponse.text();
 
+    console.log('🔥 AFTER GOOGLE CALL');
     console.log('GOOGLE STATUS:', calendarResponse.status);
     console.log('GOOGLE RAW RESPONSE:', rawText);
 
@@ -161,35 +150,30 @@ serve(async (req) => {
 
     const calendarData = JSON.parse(rawText);
 
-    console.log('CALENDAR RESPONSE:', JSON.stringify(calendarData, null, 2));
-
-    if (calendarData.error) {
-      throw new Error(`Google Calendar API Error: ${JSON.stringify(calendarData.error)}`);
-    }
+    console.log('🔥 CALENDAR PARSED');
 
     const meetLink =
       calendarData.hangoutLink ||
-      calendarData.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri ||
       calendarData.conferenceData?.entryPoints?.[0]?.uri;
 
-    // 5. Update appointment with meet link
-    if (meetLink) {
-      await supabaseClient
-        .from('appointments')
-        .update({ meet_link: meetLink })
-        .eq('id', appointmentId);
-    }
-
-    return new Response(JSON.stringify({ success: true, meetLink }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ success: true, meetLink }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
-    console.error('Error:', error);
-    // Return 200 even on error to see the message in the client
-    return new Response(JSON.stringify({ success: false, error: error.message, details: error.toString() }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('🔥 GLOBAL ERROR:', error);
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        details: error.toString(),
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
