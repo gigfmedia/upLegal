@@ -85,6 +85,7 @@ serve(async (req) => {
       .maybeSingle();
 
     const hasGoogleIntegration = !intError && integration;
+    console.log('🚨 CHATGPT_TEST_999');
     console.log('🔥 GOOGLE INTEGRATION STATUS:', hasGoogleIntegration ? 'FOUND' : 'NOT FOUND');
 
     let meetLink = '';
