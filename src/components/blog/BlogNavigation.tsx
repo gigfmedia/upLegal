@@ -10,9 +10,9 @@ interface BlogNavigationProps {
 export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
   const currentArticle = articles.find(a => a.id === currentArticleId);
   const category = currentArticle?.category;
-  
+
   // Filter articles to stay within the same category for navigation
-  const categoryArticles = category 
+  const categoryArticles = category
     ? articles.filter(a => a.category === category)
     : articles;
 

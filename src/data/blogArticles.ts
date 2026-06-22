@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "constancia-por-amenazas-en-chile-2026",
+    title: "Constancia por amenazas en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
+    excerpt: "Aprende qué es la constancia por amenazas en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "22 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/constancia-por-amenazas-en-chile-2026.png"
+  },
+  {
     id: "impugnacion-paternidad-chile-2026",
     title: "Impugnación de paternidad en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
     excerpt: "Aprende qué es la impugnación de paternidad en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",

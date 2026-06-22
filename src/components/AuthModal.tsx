@@ -649,9 +649,9 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Scale className="h-10 w-10 text-green-900" />
-              <span className="text-2xl font-bold text-gray-900 mt-2">LegalUp</span>
+            <div className="flex justify-center mb-8">
+              <Scale className="h-8 w-8 text-green-900" />
+              <span className="text-xl font-bold text-gray-900 mt-1 ml-2">LegalUp</span>
             </div>
             <DialogTitle className="text-2xl">
               Recuperar contraseña
