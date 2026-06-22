@@ -120,43 +120,43 @@ serve(async (req) => {
           subject: '¿Cómo fue tu experiencia con el abogado?',
           html: `
           <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Califica al Abogado</title>
-      </head>
-      <body>
-        <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
-          <div style="text-align: center; padding: 30px 20px;">
-            <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
-              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
-              <span style="color: #101820; font-size: 28px; position: relative; top: -2px;">LegalUp</span>
-            </div>
-          </div>
-          
-          <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
-            <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¡Escribe una reseña!</h1>
-            <p style="color: #475569; line-height: 1.6; font-size: 16px;">Hola ${clientFirstName},</p>
-            <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
-            <p style="color: #475569; line-height: 1.6;">Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${reviewUrl}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Dejar mi reseña ahora
-              </a>
-            </div>
-            <p style="color: #666; font-size: 14px; text-align: center;">Este enlace será válido por 7 días.</p>
-            <p style="color: #475569; line-height: 1.6; margin: 0; margin-top: 20px;">¡Saludos! 👋</p>
-            <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Equipo de LegalUp</p>
-          </div>
-          
-          <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
-            <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
-            <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
-            <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
-          </div>
-        </div>
-      </body>
-      </html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Califica al Abogado</title>
+            </head>
+            <body>
+              <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
+                <div style="text-align: center; padding: 30px 20px;">
+                  <div style="text-align:center;margin-bottom:28px;">
+                    <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                    <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                  </div>
+                </div>
+                
+                <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                  <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¡Escribe una reseña!</h1>
+                  <p style="color: #475569; line-height: 1.6; font-size: 16px;">Hola ${clientFirstName},</p>
+                  <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
+                  <p style="color: #475569; line-height: 1.6;">Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${reviewUrl}" style="background-color: #101820; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                      Dejar mi reseña ahora
+                    </a>
+                  </div>
+                  <p style="color: #666; font-size: 14px; text-align: center;">Este enlace será válido por 7 días.</p>
+                  <p style="color: #475569; line-height: 1.6; margin: 0; margin-top: 20px;">¡Saludos! 👋</p>
+                  <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Equipo de LegalUp</p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
+                  <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
+                  <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
+                  <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
+                </div>
+              </div>
+            </body>
+          </html>
           `
         })
 

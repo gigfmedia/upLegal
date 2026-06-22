@@ -43,7 +43,7 @@ serve(async (req) => {
     // Idempotency check: Return existing meet_link if already exists
     if (appointment.meet_link) {
       const originalProvider = appointment.meet_provider || 'jitsi';
-      console.log('MEETING_LINK_REUSE', {
+      console.log('MEET_LINK_REUSE', {
         appointmentId,
         provider: originalProvider,
         meetLink: appointment.meet_link,

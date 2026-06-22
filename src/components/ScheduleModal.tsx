@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, Video, Check, Clock, ExternalLink, X, ChevronDown, Calendar as CalendarIcon  } from "lucide-react";
+import { Phone, Video, Check, Clock, ExternalLink, X, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ValidatedInput } from "@/components/ValidatedInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -243,7 +243,7 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
     (date: Date) => findAvailabilityForDate(normalizedAvailability, date),
     [normalizedAvailability]
   );
-  
+
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
     const initialParsed = formData.date ? parseLocalDateString(formData.date) : null;
     return normalizeCalendarDate(initialParsed ?? new Date()) ?? new Date();
@@ -294,9 +294,9 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
     if (!normalizedDate) return;
 
     setSelectedDate(normalizedDate);
-    
+
     const formattedDate = format(normalizedDate, 'yyyy-MM-dd');
-    
+
     onDateSelect(formattedDate);
     setIsCalendarOpen(false);
   };
@@ -308,15 +308,15 @@ const CalendarField = ({ formData, onDateSelect, lawyerAvailability }: CalendarF
     <div className="space-y-2">
       <Label htmlFor="date">Fecha *</Label>
       <div className="relative">
-        <DatePicker 
+        <DatePicker
           date={selectedDate}
           setDate={handleDateSelect}
           disabled={isDateDisabled}
           className={formData.date ? "border-green-500 ring-0.5 ring-green-500" : ""}
         />
         {formData.date && (
-          <Check 
-            className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500 pointer-events-none" 
+          <Check
+            className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500 pointer-events-none"
             aria-hidden="true"
             strokeWidth={3}
           />
@@ -345,7 +345,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
-  
+
   // Normalized availability for the selected lawyer
   const normalizedAvailability = useMemo(
     () => normalizeAvailabilityMap(lawyerAvailability),
@@ -362,10 +362,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     },
     [normalizedAvailability]
   );
-  
+
   // CORRECCIÓN: Mover el hook useToast antes de cualquier condicional
   const { toast } = useToast();
-  
+
   // CORRECCIÓN: Mover la detección de ruta después de los hooks
   const isAppointmentsPage = typeof window !== 'undefined' && window.location.pathname === '/dashboard/appointments';
 
@@ -394,19 +394,19 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Initialize form data with user information if available
   const [formData, setFormData] = useState(() => {
     // Get user's full name from either user_metadata or profile
-    const fullName = user?.user_metadata?.full_name || 
-                    (user?.user_metadata?.first_name && user.user_metadata.last_name 
-                      ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}` 
-                      : '');
-    
+    const fullName = user?.user_metadata?.full_name ||
+      (user?.user_metadata?.first_name && user.user_metadata.last_name
+        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+        : '');
+
     // Get phone number from profile or user_metadata
-    const phone = user?.phone || 
-                 user?.user_metadata?.phone || 
-                 '';
-    
+    const phone = user?.phone ||
+      user?.user_metadata?.phone ||
+      '';
+
     // Get email from user object
     const email = user?.email || '';
-    
+
     const initialDate = getNextBookableDate();
 
     return {
@@ -480,20 +480,20 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         setLawyers([]);
         return;
       }
-    
+
       setIsLoadingLawyers(true);
       hasLoadedLawyers.current = false;
-      
+
       try {
         // Use the same search function as the main search page
         const { searchLawyers } = await import('@/pages/api/search-lawyers');
-        
+
         const response = await searchLawyers({
           specialty: selectedSpecialty,
           minRating: 0,
           select: 'id,first_name,last_name,hourly_rate_clp,specialties,rating,review_count,avatar_url,experience_years,verified'
         });
-        
+
         if (response?.lawyers?.length > 0) {
           const mappedLawyers = response.lawyers.map(lawyer => {
             const lawyerData = {
@@ -502,20 +502,20 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               last_name: lawyer.last_name || '',
               name: `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim(),
               hourly_rate: lawyer.hourly_rate_clp || 0,
-              specialty: Array.isArray(lawyer.specialties) && lawyer.specialties.length > 0 
-                ? lawyer.specialties[0] 
+              specialty: Array.isArray(lawyer.specialties) && lawyer.specialties.length > 0
+                ? lawyer.specialties[0]
                 : selectedSpecialty,
               avatar_url: lawyer.avatar_url || '',
               rating: lawyer.rating || 0,
               review_count: lawyer.review_count || 0
             };
-            
+
             return lawyerData;
           });
-          
+
           setLawyers(mappedLawyers);
           hasLoadedLawyers.current = true;
-        
+
           // If there's only one lawyer, select it by default
           if (mappedLawyers.length === 1) {
             setSelectedLawyer(mappedLawyers[0].id);
@@ -528,20 +528,20 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           setLawyers([]);
           setSelectedLawyer('');
           setSelectedLawyerData(null);
-          
+
           toast({
             title: 'No hay abogados',
             description: `No se encontraron abogados disponibles para la especialidad: ${selectedSpecialty}`,
             variant: 'destructive',
           });
         }
-        
+
       } catch (error) {
         console.error('Error fetching lawyers:', error);
         setLawyers([]);
         setSelectedLawyer('');
         setSelectedLawyerData(null);
-        
+
         toast({
           title: 'Error',
           description: 'No se pudieron cargar los abogados. Por favor, inténtalo de nuevo.',
@@ -560,15 +560,15 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Update form data when user data changes
   useEffect(() => {
     if (user) {
-      const fullName = user.user_metadata?.full_name || 
-                      (user.user_metadata?.first_name && user.user_metadata.last_name 
-                        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}` 
-                        : '');
-      
-      const phone = user.phone || 
-                   user.user_metadata?.phone || 
-                   '';
-      
+      const fullName = user.user_metadata?.full_name ||
+        (user.user_metadata?.first_name && user.user_metadata.last_name
+          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`
+          : '');
+
+      const phone = user.phone ||
+        user.user_metadata?.phone ||
+        '';
+
       const email = user.email || '';
 
       setFormData(prev => ({
@@ -596,7 +596,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     // Availability is stored as { "Lunes": [true, false, ...], ... } mapping to hours 9:00-19:00
     // We need to cast it to any because TypeScript thinks it's a string from the DB schema
     const availabilityObj = lawyerAvailability as any;
-    
+
     // Handle case sensitivity by trying to find the key
     const key = Object.keys(availabilityObj).find(k => k.toLowerCase() === dayName.toLowerCase()) || dayName;
     const dayAvailability = availabilityObj[key];
@@ -614,7 +614,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
       const hour = HOURS_START + index;
       const timeString = `${String(hour).padStart(2, '0')}:00`;
-      
+
       // Calculate end time (assuming 1 hour duration for simplicity based on the grid)
       const endTimeString = `${String(hour + 1).padStart(2, '0')}:00`;
 
@@ -632,7 +632,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         isGoogleBusy = googleBusySlots.some(busy => {
           const busyStart = new Date(busy.start);
           const busyEnd = new Date(busy.end);
-          
+
           // Check for overlap
           return (
             (slotStartDateTime >= busyStart && slotStartDateTime < busyEnd) || // Slot starts during busy
@@ -658,7 +658,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       return;
     }
     setIsLoadingAvailability(true);
-    
+
     try {
       // Get availability from profiles table
       const { data, error } = await supabase
@@ -691,7 +691,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             // true means available. 
             // We need to match the length expected by ManageAvailability (usually 11 slots for 9-19)
             const standardDay = Array(11).fill(false).map((_, i) => i < 9); // 9 hours from 9am = until 6pm
-            
+
             setLawyerAvailability({
               lunes: [...standardDay],
               martes: [...standardDay],
@@ -705,7 +705,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           }
         }
       }
-      
+
       setLawyerAvailability(availability);
 
     } catch (error) {
@@ -728,13 +728,13 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Fetch available slots when date or lawyer changes
   const fetchAvailableSlots = useCallback(async (dateString: string, lawyerId: string) => {
     if (!dateString || !lawyerId) return;
-    
+
     setIsLoadingSlots(true);
     try {
       // Note: generateTimeSlots now uses the state (lawyerAvailability, selectedDate, etc.)
       // so we don't need to fetch anything here if the state is already set.
       // However, we do need to ensure bookedSlots are up to date.
-      
+
       const { data: bookedData, error: bookedError } = await supabase
         .from('appointments') // Changed from consultations to appointments as that's the main table now
         .select('appointment_time')
@@ -752,11 +752,11 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           return slot.appointment_time?.substring(0, 5);
         })
         .filter((time): time is string => Boolean(time)) || [];
-        
+
       setBookedSlots(new Set(bookedTimes));
-      
+
       // The actual slot generation happens in the useEffect that watches bookedSlots
-      
+
     } catch (error) {
       console.error('Error in fetchAvailableSlots:', error);
       setAvailableSlots([]);
@@ -768,7 +768,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
   // Update available slots when dependencies change
   useEffect(() => {
     const slots = generateTimeSlots();
-    setAvailableSlots(slots); 
+    setAvailableSlots(slots);
   }, [generateTimeSlots]);
 
   // Fetch available slots when date or lawyer changes
@@ -797,17 +797,17 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
       hourly_rate: hourlyRate,
       specialty: ""
     } : null);
-    
+
     if (!currentLawyer) return 0;
-    
+
     const durationInMinutes = parseInt(formData.duration || '60');
     const durationInHours = durationInMinutes / 60;
     return Math.round(durationInHours * currentLawyer.hourly_rate);
   }, [formData.duration, selectedLawyerData, lawyerId, lawyerName, hourlyRate]);
-  
+
   // Calculate final amounts
   const originalAmount = useMemo(() => estimatedCost, [estimatedCost]);
-  
+
   const clientAmount = useMemo(() =>
     Math.round(originalAmount * (1 + platformSettings.client_surcharge_percent)),
     [originalAmount, platformSettings.client_surcharge_percent]
@@ -839,7 +839,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form data
     const validation = validateForm(formData);
     if (!validation.valid) {
@@ -857,7 +857,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     try {
       // Get the final lawyer ID (either from selection or props)
       const finalLawyerId = selectedLawyer || lawyerId;
-      
+
       if (!finalLawyerId) {
         throw new Error('No se ha seleccionado un abogado');
       }
@@ -879,7 +879,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         notes: formData.description || '',
         amount: clientAmount,
         currency: 'CLP',
-        meeting_link: null,
+        meet_link: null,
         address: formData.contactMethod === 'presencial' ? formData.address : null
       };
 
@@ -894,10 +894,10 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         console.error('Database error:', appointmentError);
         throw new Error(`Error al crear la cita: ${appointmentError.message}`);
       }
-      
+
       // Create payment with MercadoPago
       try {
-        
+
         const paymentParams = {
           amount: clientAmount,
           originalAmount,
@@ -917,20 +917,20 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         if (!paymentParams.successUrl || !paymentParams.failureUrl || !paymentParams.pendingUrl) {
           throw new Error('Error al generar las URLs de retorno del pago');
         }
-        
+
         // USAR NETLIFY FUNCTIONS - ENDPOINT CORRECTO
         const API_BASE_URL = 'https://uplegal.netlify.app';
         const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
-        
+
         // Test the function with OPTIONS request
         const testResponse = await fetch(FUNCTION_URL, {
           method: 'OPTIONS'
         });
-        
+
         if (!testResponse.ok) {
           throw new Error(`Function not available: ${testResponse.status}`);
         }
-        
+
         // Create the payment
         const response = await fetch(FUNCTION_URL, {
           method: 'POST',
@@ -939,26 +939,26 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           },
           body: JSON.stringify(paymentParams)
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Payment API error response:', errorText);
-          
+
           let errorData;
           try {
             errorData = JSON.parse(errorText);
           } catch {
             errorData = { error: errorText };
           }
-          
+
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
         const paymentResult = await response.json();
-        
+
         // Redirect to payment URL
         if (paymentResult.payment_link) {
-          
+
           // Save appointment data to localStorage for the success page
           const pendingAppointmentData = {
             clientEmail: formData.email,
@@ -972,12 +972,12 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
             description: formData.description,
             contactMethod: formData.contactMethod
           };
-          
+
           localStorage.setItem('pendingAppointment', JSON.stringify(pendingAppointmentData));
-          
+
           // Show redirecting overlay
           setIsRedirecting(true);
-          
+
           // Small delay to allow React to render the overlay before redirecting
           setTimeout(() => {
             window.location.href = paymentResult.payment_link;
@@ -989,17 +989,17 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
         console.error('Error creating payment:', paymentError);
         throw new Error(`Error al crear el pago: ${paymentError.message}`);
       }
-      
+
     } catch (error) {
       let errorMessage = 'Error al procesar la cita. Por favor, inténtalo de nuevo.';
-      
+
       if (error instanceof Error) {
         console.error('Error al procesar la cita:', error);
         errorMessage = error.message;
       }
-      
+
       setError(errorMessage);
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -1031,7 +1031,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
     setSelectedLawyer(lawyerId);
     const lawyer = lawyers.find(l => l.id === lawyerId) || null;
     setSelectedLawyerData(lawyer);
-    
+
     if (lawyer) {
       // Update form data with the selected lawyer's default duration if not set
       if (!formData.duration) {
@@ -1040,7 +1040,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           duration: '60'
         }));
       }
-      
+
       // If we have a selected date, fetch availability
       if (formData.date) {
         fetchAvailableSlots(formData.date, lawyerId);
@@ -1079,255 +1079,253 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
           </div>
         </div>
       )}
-      
+
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[425px] md:max-w-2xl h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] overflow-y-auto p-0 rounded-none sm:rounded-lg"
 
         >
 
-        <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
-          <Button
-            type="button"
-            variant="ghost"
-            className="absolute right-4 top-4 px-2 h-8 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
-            onClick={handleClose}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Cerrar</span>
-          </Button>
-          <DialogTitle className="text-left">
-            Solicita asesoría con {selectedLawyerData?.name || lawyerName}
-          </DialogTitle>
-          <DialogDescription className="text-left">
-            Completa el formulario para agendar tu asesoría. Los campos con * son obligatorios.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6 p-6 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <DialogHeader className="sticky top-0 bg-background z-10 py-4 px-6 border-b border-border/50">
+            <Button
+              type="button"
+              variant="ghost"
+              className="absolute right-4 top-4 px-2 h-8 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Cerrar</span>
+            </Button>
+            <DialogTitle className="text-left">
+              Solicita asesoría con {selectedLawyerData?.name || lawyerName}
+            </DialogTitle>
+            <DialogDescription className="text-left">
+              Completa el formulario para agendar tu asesoría. Los campos con * son obligatorios.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-6 p-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre completo *</Label>
+                <ValidatedInput
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  showCheckmark={!!formData.name}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Teléfono *</Label>
+                <ValidatedInput
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  showCheckmark={!!formData.phone}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre completo *</Label>
+              <Label htmlFor="email">Correo electrónico *</Label>
               <ValidatedInput
-                id="name"
-                name="name"
-                value={formData.name}
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
                 onChange={handleChange}
-                showCheckmark={!!formData.name}
+                showCheckmark={!!formData.email}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono *</Label>
-              <ValidatedInput
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                showCheckmark={!!formData.phone}
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico *</Label>
-            <ValidatedInput
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              showCheckmark={!!formData.email}
-              required
-            />
-          </div>
-          
-          {isAppointmentsPage && (
-            <>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="specialty">Especialidades *</Label>
-                <div className="relative">
-                  <Select 
-                    value={selectedSpecialty} 
-                    onValueChange={(value) => {
-                      setSelectedSpecialty(value);
-                      setSelectedLawyer('');
-                      setSelectedLawyerData(null);
-                    }}
-                    required
-                  >
-                    <SelectTrigger 
-                      ref={specialtySelectRef}
-                      className={cn(
-                        selectedSpecialty && "border-green-500 ring-0.5 ring-green-500"
-                      )}
+
+            {isAppointmentsPage && (
+              <>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="specialty">Especialidades *</Label>
+                  <div className="relative">
+                    <Select
+                      value={selectedSpecialty}
+                      onValueChange={(value) => {
+                        setSelectedSpecialty(value);
+                        setSelectedLawyer('');
+                        setSelectedLawyerData(null);
+                      }}
+                      required
                     >
-                      <SelectValue placeholder="Selecciona una especialidad" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SPECIALTIES.map((specialty) => (
-                        <SelectItem key={specialty} value={specialty}>
-                          {specialty}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <SelectTrigger
+                        ref={specialtySelectRef}
+                        className={cn(
+                          selectedSpecialty && "border-green-500 ring-0.5 ring-green-500"
+                        )}
+                      >
+                        <SelectValue placeholder="Selecciona una especialidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPECIALTIES.map((specialty) => (
+                          <SelectItem key={specialty} value={specialty}>
+                            {specialty}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="lawyer">Abogado *</Label>
+                  <div className="relative">
+                    <Select
+                      value={selectedLawyer}
+                      onValueChange={handleLawyerSelect}
+                      disabled={!selectedSpecialty || isLoadingLawyers}
+                      required
+                    >
+                      <SelectTrigger className={cn(
+                        "w-full",
+                        selectedLawyer && "border-green-500 ring-0.5 ring-green-500"
+                      )}>
+                        <SelectValue
+                          placeholder={
+                            !selectedSpecialty
+                              ? 'Selecciona una especialidad primero'
+                              : isLoadingLawyers
+                                ? 'Cargando abogados...'
+                                : lawyers.length === 0
+                                  ? 'No hay abogados disponibles para esta especialidad'
+                                  : 'Selecciona un abogado'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 overflow-y-auto">
+                        {lawyers.length > 0 ? (
+                          lawyers.map((lawyer) => (
+                            <SelectItem key={lawyer.id} value={lawyer.id} className="py-2">
+                              <div className="flex items-center gap-3 w-full">
+                                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 overflow-hidden">
+                                  {lawyer.avatar_url ? (
+                                    <img
+                                      src={lawyer.avatar_url}
+                                      alt={lawyer.name}
+                                      className="h-full w-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="h-full w-full bg-gray-300 flex items-center justify-center text-gray-500">
+                                      {lawyer.name.charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="w-full flex items-center justify-between">
+                                  <div className="flex-1 min-w-0 max-w-lg">
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {lawyer.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate text-left">
+                                      {lawyer.specialty}
+                                    </p>
+                                  </div>
+                                  <div className="text-sm font-medium text-gray-900 whitespace-nowrap ml-4">
+                                    {formatCurrency(lawyer.hourly_rate)}/hora
+                                  </div>
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-sm text-gray-500 text-center">
+                            No se encontraron abogados para esta especialidad
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Método de contacto *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <input
+                      type="radio"
+                      id="videollamada"
+                      name="contactMethod"
+                      value="videollamada"
+                      checked={formData.contactMethod === 'videollamada'}
+                      onChange={() => setFormData({ ...formData, contactMethod: 'videollamada' })}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor="videollamada"
+                      className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${formData.contactMethod === 'videollamada'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-300 hover:bg-gray-50 text-gray-600'
+                        }`}
+                    >
+                      <Video className="h-6 w-6 mb-2 text-gray-700" />
+                      <span className="text-sm font-medium">Videollamada</span>
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="llamada"
+                      name="contactMethod"
+                      value="llamada"
+                      checked={formData.contactMethod === 'llamada'}
+                      onChange={() => setFormData({ ...formData, contactMethod: 'llamada' })}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor="llamada"
+                      className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${formData.contactMethod === 'llamada'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:bg-gray-50'
+                        }`}
+                    >
+                      <Phone className="h-6 w-6 mb-2 text-gray-700" />
+                      <span className="text-sm font-medium">Llamada</span>
+                    </label>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="lawyer">Abogado *</Label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CalendarField
+                formData={formData}
+                onDateSelect={handleDateSelect}
+                lawyerAvailability={lawyerAvailability || {}}
+                selectedLawyerId={selectedLawyer || lawyerId}
+              />
+              <div className="space-y-2">
+                <Label htmlFor="time">Hora *</Label>
                 <div className="relative">
-                  <Select 
-                    value={selectedLawyer} 
-                    onValueChange={handleLawyerSelect}
-                    disabled={!selectedSpecialty || isLoadingLawyers}
-                    required
+                  <Select
+                    value={formData.time}
+                    onValueChange={(value) => handleSelectChange("time", value)}
+                    disabled={availableSlots.length === 0 || isLoadingSlots}
                   >
                     <SelectTrigger className={cn(
                       "w-full",
-                      selectedLawyer && "border-green-500 ring-0.5 ring-green-500"
+                      formData.time && "border-green-500 ring-0.5 ring-green-500",
+                      (availableSlots.length === 0 || isLoadingSlots) && "opacity-70"
                     )}>
-                      <SelectValue 
-                        placeholder={
-                          !selectedSpecialty 
-                            ? 'Selecciona una especialidad primero' 
-                            : isLoadingLawyers 
-                              ? 'Cargando abogados...'
-                              : lawyers.length === 0 
-                                ? 'No hay abogados disponibles para esta especialidad'
-                                : 'Selecciona un abogado'
-                        } 
-                      />
+                      <SelectValue placeholder={
+                        isLoadingSlots ? "Cargando horarios..." :
+                          availableSlots.length === 0 ? "No hay horarios disponibles" :
+                            "Selecciona una hora"
+                      } />
                     </SelectTrigger>
-                    <SelectContent className="max-h-60 overflow-y-auto">
-                      {lawyers.length > 0 ? (
-                        lawyers.map((lawyer) => (
-                          <SelectItem key={lawyer.id} value={lawyer.id} className="py-2">
-                            <div className="flex items-center gap-3 w-full">
-                              <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gray-200 overflow-hidden">
-                                {lawyer.avatar_url ? (
-                                  <img 
-                                    src={lawyer.avatar_url} 
-                                    alt={lawyer.name}
-                                    className="h-full w-full object-cover"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = '/default-avatar.png';
-                                    }}
-                                  />
-                                ) : (
-                                  <div className="h-full w-full bg-gray-300 flex items-center justify-center text-gray-500">
-                                    {lawyer.name.charAt(0).toUpperCase()}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="w-full flex items-center justify-between">
-                                <div className="flex-1 min-w-0 max-w-lg">
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {lawyer.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate text-left">
-                                    {lawyer.specialty}
-                                  </p>
-                                </div>
-                                <div className="text-sm font-medium text-gray-900 whitespace-nowrap ml-4">
-                                  {formatCurrency(lawyer.hourly_rate)}/hora
-                                </div>
-                              </div>
-                            </div>
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-sm text-gray-500 text-center">
-                          No se encontraron abogados para esta especialidad
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </>
-          )}
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Método de contacto *</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <input
-                    type="radio"
-                    id="videollamada"
-                    name="contactMethod"
-                    value="videollamada"
-                    checked={formData.contactMethod === 'videollamada'}
-                    onChange={() => setFormData({ ...formData, contactMethod: 'videollamada' })}
-                    className="hidden peer"
-                  />
-                  <label 
-                    htmlFor="videollamada"
-                    className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                      formData.contactMethod === 'videollamada' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-300 hover:bg-gray-50 text-gray-600'
-                    }`}
-                  >
-                    <Video className="h-6 w-6 mb-2 text-gray-700" />
-                    <span className="text-sm font-medium">Videollamada</span>
-                  </label>
-                </div>
-                <div>
-                  <input
-                    type="radio"
-                    id="llamada"
-                    name="contactMethod"
-                    value="llamada"
-                    checked={formData.contactMethod === 'llamada'}
-                    onChange={() => setFormData({ ...formData, contactMethod: 'llamada' })}
-                    className="hidden peer"
-                  />
-                  <label 
-                    htmlFor="llamada"
-                    className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${
-                      formData.contactMethod === 'llamada' 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Phone className="h-6 w-6 mb-2 text-gray-700" />
-                    <span className="text-sm font-medium">Llamada</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CalendarField 
-              formData={formData} 
-              onDateSelect={handleDateSelect}
-              lawyerAvailability={lawyerAvailability || {}}
-              selectedLawyerId={selectedLawyer || lawyerId}
-            />
-            <div className="space-y-2">
-              <Label htmlFor="time">Hora *</Label>
-              <div className="relative">
-                <Select
-                  value={formData.time}
-                  onValueChange={(value) => handleSelectChange("time", value)}
-                  disabled={availableSlots.length === 0 || isLoadingSlots}
-                >
-                  <SelectTrigger className={cn(
-                    "w-full",
-                    formData.time && "border-green-500 ring-0.5 ring-green-500",
-                    (availableSlots.length === 0 || isLoadingSlots) && "opacity-70"
-                  )}>
-                    <SelectValue placeholder={
-                      isLoadingSlots ? "Cargando horarios..." : 
-                      availableSlots.length === 0 ? "No hay horarios disponibles" : 
-                      "Selecciona una hora"
-                    } />
-                  </SelectTrigger>
                     <SelectContent>
                       {isLoadingSlots ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
@@ -1348,16 +1346,16 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                           const isToday = selectedDateObj
                             ? selectedDateObj.toDateString() === new Date().toDateString()
                             : false;
-                          
+
                           let isDisabled = false;
                           if (isToday) {
                             const now = new Date();
                             isDisabled = hours < now.getHours() || (hours === now.getHours() && minutes < now.getMinutes());
                           }
-                          
+
                           return (
-                            <SelectItem 
-                              key={slot.value} 
+                            <SelectItem
+                              key={slot.value}
                               value={slot.value}
                               disabled={isDisabled}
                               className={cn(
@@ -1368,7 +1366,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                               <div className="flex items-center gap-2 w-full">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
                                 <span>{slot.label}</span>
-                          </div>
+                              </div>
                             </SelectItem>
                           );
                         })
@@ -1376,170 +1374,170 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
                     </SelectContent>
                   </Select>
                   {formData.time && (
-                    <Check 
-                      className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" 
+                    <Check
+                      className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500"
                       aria-hidden="true"
                       strokeWidth={3}
                     />
                   )}
                 </div>
               </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duración *</Label>
-              <div className="relative">
-                <Select value={formData.duration} onValueChange={(value) => handleSelectChange("duration", value)}>
-                  <SelectTrigger className={cn(
-                    formData.duration && "border-green-500 ring-0.5 ring-green-500"
-                  )}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30 minutos</SelectItem>
-                    <SelectItem value="60">1 hora</SelectItem>
-                    <SelectItem value="90">1.5 horas</SelectItem>
-                    <SelectItem value="120">2 horas</SelectItem>
-                  </SelectContent>
-                </Select>
-                {formData.duration && (
-                  <Check 
-                    className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" 
-                    aria-hidden="true"
-                    strokeWidth={3}
-                  />
-                )}
-              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="consultationType">Tipo de consulta *</Label>
-              <div className="relative">
-                <Select
-                  value={formData.consultationType}
-                  onValueChange={(value) => handleSelectChange("consultationType", value)}
-                >
-                  <SelectTrigger className={cn(
-                    formData.consultationType && "border-green-500 ring-0.5 ring-green-500"
-                  )}>
-                    <SelectValue placeholder="Selecciona un tipo de consulta" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {consultationTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.consultationType && (
-                  <Check 
-                    className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" 
-                    aria-hidden="true"
-                    strokeWidth={3}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Descripción del caso</Label>
-            <div className="relative">
-              <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Describe brevemente el motivo de tu consulta"
-                className={cn(
-                  "min-h-[100px] pr-10",
-                  formData.description && "border-green-500 ring-0.5 ring-green-500"
-                )}
-              />
-              {formData.description && (
-                <Check 
-                  className="absolute right-3 top-3 h-4 w-4 text-green-500" 
-                  aria-hidden="true"
-                  strokeWidth={3}
-                />
-              )}
-            </div>
-          </div>
-          
-          {/* Cost Estimate */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            {/* CORRECCIÓN: Mostrar siempre el precio del abogado seleccionado o de la tarjeta */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Tarifa por hora</span>
-                <span className="font-medium">
-                  {formatCurrency(selectedLawyerData?.hourly_rate || hourlyRate)}/hora
-                </span>
-              </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-700">Duración seleccionada</span>
-                <span className="text-sm font-medium">
-                  hasta {formData.duration || "60"} minutos
-                </span>
-              </div>
-
-              <div className="border-t border-gray-200 my-2"></div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">Subtotal</span>
-                <span className="font-medium">{formatCurrency(estimatedCost)}</span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <div className="flex items-center">
-                  <span className="text-gray-600">Tarifa por servicio</span>
-                  <span className="ml-1 text-xs text-gray-500">*</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duración *</Label>
+                <div className="relative">
+                  <Select value={formData.duration} onValueChange={(value) => handleSelectChange("duration", value)}>
+                    <SelectTrigger className={cn(
+                      formData.duration && "border-green-500 ring-0.5 ring-green-500"
+                    )}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">30 minutos</SelectItem>
+                      <SelectItem value="60">1 hora</SelectItem>
+                      <SelectItem value="90">1.5 horas</SelectItem>
+                      <SelectItem value="120">2 horas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.duration && (
+                    <Check
+                      className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500"
+                      aria-hidden="true"
+                      strokeWidth={3}
+                    />
+                  )}
                 </div>
-                <span className="text-gray-600">
-                  +{formatCurrency(clientSurcharge)}
-                </span>
               </div>
-
-              <div className="border-t border-gray-200 my-2"></div>
-              
-              <div className="flex justify-between items-center font-semibold text-lg">
-                <span className="text-base font-bold">Total a pagar</span>
-                <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
+              <div className="space-y-2">
+                <Label htmlFor="consultationType">Tipo de consulta *</Label>
+                <div className="relative">
+                  <Select
+                    value={formData.consultationType}
+                    onValueChange={(value) => handleSelectChange("consultationType", value)}
+                  >
+                    <SelectTrigger className={cn(
+                      formData.consultationType && "border-green-500 ring-0.5 ring-green-500"
+                    )}>
+                      <SelectValue placeholder="Selecciona un tipo de consulta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {consultationTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.consultationType && (
+                    <Check
+                      className="absolute right-8 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500"
+                      aria-hidden="true"
+                      strokeWidth={3}
+                    />
+                  )}
+                </div>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Descripción del caso</Label>
+              <div className="relative">
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Describe brevemente el motivo de tu consulta"
+                  className={cn(
+                    "min-h-[100px] pr-10",
+                    formData.description && "border-green-500 ring-0.5 ring-green-500"
+                  )}
+                />
+                {formData.description && (
+                  <Check
+                    className="absolute right-3 top-3 h-4 w-4 text-green-500"
+                    aria-hidden="true"
+                    strokeWidth={3}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Cost Estimate */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              {/* CORRECCIÓN: Mostrar siempre el precio del abogado seleccionado o de la tarjeta */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Tarifa por hora</span>
+                  <span className="font-medium">
+                    {formatCurrency(selectedLawyerData?.hourly_rate || hourlyRate)}/hora
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">Duración seleccionada</span>
+                  <span className="text-sm font-medium">
+                    hasta {formData.duration || "60"} minutos
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-200 my-2"></div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Subtotal</span>
+                  <span className="font-medium">{formatCurrency(estimatedCost)}</span>
+                </div>
+
+                <div className="flex justify-between items-center text-sm">
+                  <div className="flex items-center">
+                    <span className="text-gray-600">Tarifa por servicio</span>
+                    <span className="ml-1 text-xs text-gray-500">*</span>
+                  </div>
+                  <span className="text-gray-600">
+                    +{formatCurrency(clientSurcharge)}
+                  </span>
+                </div>
+
+                <div className="border-t border-gray-200 my-2"></div>
+
+                <div className="flex justify-between items-center font-semibold text-lg">
+                  <span className="text-base font-bold">Total a pagar</span>
+                  <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
+                </div>
+              </div>
 
               <p className="text-xs text-gray-500 mt-2">
                 * Incluye 10% de recargo por servicio app.
               </p>
-            
+
             </div>
-            
+
             <div className="flex justify-end space-x-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={handleClose}
                 disabled={isProcessing}
               >
                 Cancelar
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="bg-gray-900 hover:bg-green-900 focus:ring-blue-500 disabled:opacity-70"
                 disabled={isProcessing || !formData.date || !formData.time}
               >
-                {isProcessing 
-                  ? "Redirigendo al Checkout..." 
+                {isProcessing
+                  ? "Redirigendo al Checkout..."
                   : (selectedLawyer || lawyerId)
                     ? `Pagar ${formatCurrency(clientAmount)}`
                     : 'Selecciona un abogado'}
               </Button>
             </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

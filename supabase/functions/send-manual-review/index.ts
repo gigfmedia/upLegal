@@ -73,10 +73,10 @@ serve(async (req) => {
       <body>
         <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
           <div style="text-align: center; padding: 30px 20px;">
-            <div style="color: #1e40af; font-size: 32px; font-weight: 700; margin-bottom: 15px;">
-              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height: 40px; vertical-align: middle; margin-right: 8px;" />
-              <span style="color: #101820; font-size: 28px; position: relative; top: -2px;">LegalUp</span>
-            </div>
+             <div style="text-align:center;margin-bottom:28px;">
+                <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+              </div>
           </div>
           
           <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
@@ -85,7 +85,7 @@ serve(async (req) => {
             <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerName}</strong> haya sido de gran ayuda.</p>
             <p style="color: #475569; line-height: 1.6;">Tu opinión es fundamental para nosotros y para otros usuarios que buscan asesoría legal de calidad.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${reviewUrl}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+              <a href="${reviewUrl}" style="background-color: #101820; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                 Dejar mi reseña ahora
               </a>
             </div>

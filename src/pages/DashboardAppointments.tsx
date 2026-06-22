@@ -13,10 +13,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { 
-  Calendar, 
-  Search, 
-  Clock, 
+import {
+  Calendar,
+  Search,
+  Clock,
   MapPin,
   User,
   Video,
@@ -31,10 +31,9 @@ import {
 import { appointmentsApi, type AppointmentData, type AppointmentStatus, type AppointmentType } from '@/lib/api';
 
 // Local UI type that extends the API type with display-specific fields
-interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'meeting_link' | 'created_at' | 'updated_at'> {
+interface Appointment extends Omit<AppointmentData, 'lawyer_id' | 'client_id' | 'created_at' | 'updated_at'> {
   lawyerName: string;
   lawyerSpecialty: string;
-  meetingLink?: string;
   createdAt: string;
 }
 
@@ -47,7 +46,6 @@ const mapApiToUiAppointment = (apiAppt: AppointmentData, userRole: 'client' | 'l
     id: apiAppt.id,
     lawyerName: userRole === 'lawyer' ? 'Tú' : 'Abogado/a',
     lawyerSpecialty: 'Derecho',
-    meetingLink: apiAppt.meeting_link,
     createdAt: new Date(apiAppt.date).toISOString().split('T')[0],
   };
 };
@@ -69,12 +67,12 @@ export default function DashboardAppointments() {
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<string | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [selectedLawyer, setSelectedLawyer] = useState<{id: string, name: string, rate: number} | null>(null);
+  const [selectedLawyer, setSelectedLawyer] = useState<{ id: string, name: string, rate: number } | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleTime, setRescheduleTime] = useState('');
   const [rescheduleNotes, setRescheduleNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [newAppointment, setNewAppointment] = useState({
     title: '',
     description: '',
@@ -90,10 +88,10 @@ export default function DashboardAppointments() {
   useEffect(() => {
     let isMounted = true;
     let loadingToastId: string | undefined;
-    
+
     const loadAppointments = async () => {
       if (!isMounted) return;
-      
+
       setIsLoading(true);
       loadingToastId = toast({
         title: 'Cargando citas...',
@@ -101,31 +99,31 @@ export default function DashboardAppointments() {
         variant: 'default',
         duration: 2000,
       }).id;
-      
+
       try {
         const userRole = user.role as 'client' | 'lawyer' || 'client';
-        
+
         // Add a small delay to prevent rapid successive requests
         await new Promise(resolve => setTimeout(resolve, 300));
-        
-        const response = await appointmentsApi.list({ 
-          status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus 
+
+        const response = await appointmentsApi.list({
+          status: statusFilter === 'all' ? undefined : statusFilter as AppointmentStatus
         });
-        
+
         if (!isMounted) return;
 
         // Filter appointments based on user role
         const filteredAppointments = response.filter(appt => {
           try {
-            return userRole === 'lawyer' 
-              ? appt.lawyer_id === user.id 
+            return userRole === 'lawyer'
+              ? appt.lawyer_id === user.id
               : appt.client_id === user.id;
           } catch (error) {
             console.error('Error filtering appointments:', error);
             return false;
           }
         });
-        
+
         // Map API appointments to UI appointments with error handling
         const uiAppointments = filteredAppointments
           .map(appt => {
@@ -137,9 +135,9 @@ export default function DashboardAppointments() {
             }
           })
           .filter(Boolean) as Appointment[]; // Filter out any null values from failed mappings
-        
+
         if (!isMounted) return;
-        
+
         // Only update if we have appointments
         if (uiAppointments.length > 0) {
           setAppointments(uiAppointments);
@@ -158,11 +156,11 @@ export default function DashboardAppointments() {
             });
           }
         }
-        
+
         if (!hasLoadedInitialData) {
           setHasLoadedInitialData(true);
         }
-        
+
       } catch (error) {
         console.error('Error loading appointments:', {
           error,
@@ -170,14 +168,14 @@ export default function DashboardAppointments() {
           statusFilter,
           isMounted
         });
-        
+
         if (!isMounted) return;
-        
+
         // Dismiss any loading toasts
         if (loadingToastId) {
           dismiss(loadingToastId);
         }
-        
+
         // Only show network errors, not for empty results
         if (error instanceof Error && error.message.includes('Network')) {
           toast({
@@ -187,7 +185,7 @@ export default function DashboardAppointments() {
             duration: 5000,
           });
         }
-        
+
         // Always set empty array on error to prevent any mock data from showing
         setAppointments([]);
       } finally {
@@ -196,12 +194,12 @@ export default function DashboardAppointments() {
         }
       }
     };
-    
+
     // Add a small delay before loading to prevent rapid successive requests
     const timer = setTimeout(() => {
       loadAppointments();
     }, 300);
-    
+
     // Cleanup function to prevent memory leaks
     return () => {
       isMounted = false;
@@ -210,13 +208,13 @@ export default function DashboardAppointments() {
   }, [user, statusFilter, toast, hasLoadedInitialData]);
 
   const handleJoinMeeting = (appointment: Appointment) => {
-    if (appointment.meetingLink) {
+    if (appointment.meet_link) {
       toast({
         title: "Abriendo reunión",
         description: `Conectando a la videollamada con ${appointment.lawyerName}...`,
       });
       setTimeout(() => {
-        window.open(appointment.meetingLink, '_blank');
+        window.open(appointment.meet_link, '_blank');
       }, 1000);
     }
   };
@@ -243,16 +241,16 @@ export default function DashboardAppointments() {
   const handleCancelAppointment = async (appointmentId: string) => {
     const appointment = appointments.find(a => a.id === appointmentId);
     if (!appointment) return;
-    
+
     setSelectedAppointment(appointment);
     setIsCancelDialogOpen(true);
   };
 
   const handleConfirmCancel = async () => {
     if (!selectedAppointment) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Show loading state
       const toastId = toast({
@@ -260,21 +258,21 @@ export default function DashboardAppointments() {
         description: 'Cancelando la cita...',
         variant: 'default',
       });
-      
+
       // Update the appointment status to 'cancelled' via API
       await appointmentsApi.update(selectedAppointment.id, {
         status: 'cancelled',
       });
-      
+
       // Update the local state
-      setAppointments(prev => 
-        prev.map(apt => 
-          apt.id === selectedAppointment.id 
-            ? { ...apt, status: 'cancelled' } 
+      setAppointments(prev =>
+        prev.map(apt =>
+          apt.id === selectedAppointment.id
+            ? { ...apt, status: 'cancelled' }
             : apt
         )
       );
-      
+
       // Dismiss loading toast and show success
       toast.dismiss(toastId);
       toast({
@@ -282,14 +280,14 @@ export default function DashboardAppointments() {
         description: "La cita ha sido cancelada exitosamente.",
         duration: 5000,
       });
-      
+
       setIsCancelDialogOpen(false);
     } catch (error) {
       console.error('Error cancelling appointment:', error);
-      
+
       // Determine error message based on error type
       let errorMessage = 'No se pudo cancelar la cita. ';
-      
+
       if (error instanceof Error) {
         if (error.message.includes('404')) {
           errorMessage += 'La cita no fue encontrada.';
@@ -301,7 +299,7 @@ export default function DashboardAppointments() {
           errorMessage += 'Por favor, inténtalo de nuevo más tarde.';
         }
       }
-      
+
       toast({
         title: '❌ Error al cancelar',
         description: errorMessage,
@@ -322,11 +320,11 @@ export default function DashboardAppointments() {
       });
       return;
     }
-    
+
     // Validate if the selected date is in the future
     const selectedDateTime = new Date(`${rescheduleDate}T${rescheduleTime}`);
     const now = new Date();
-    
+
     if (selectedDateTime <= now) {
       toast({
         title: 'Fecha inválida',
@@ -335,9 +333,9 @@ export default function DashboardAppointments() {
       });
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Show loading state
       const toastId = toast({
@@ -345,7 +343,7 @@ export default function DashboardAppointments() {
         description: 'Reagendando la cita...',
         variant: 'default',
       });
-      
+
       // Update the appointment via API
       await appointmentsApi.update(selectedAppointment.id, {
         date: rescheduleDate,
@@ -353,27 +351,27 @@ export default function DashboardAppointments() {
         status: 'rescheduled',
         notes: rescheduleNotes || selectedAppointment.notes,
       });
-      
+
       // Update the local state
-      setAppointments(prev => 
-        prev.map(apt => 
-          apt.id === selectedAppointment.id 
-            ? { 
-                ...apt, 
-                date: rescheduleDate,
-                time: rescheduleTime,
-                status: 'rescheduled',
-                notes: rescheduleNotes || apt.notes
-              }
+      setAppointments(prev =>
+        prev.map(apt =>
+          apt.id === selectedAppointment.id
+            ? {
+              ...apt,
+              date: rescheduleDate,
+              time: rescheduleTime,
+              status: 'rescheduled',
+              notes: rescheduleNotes || apt.notes
+            }
             : apt
         )
       );
-      
+
       toast({
         title: "Cita reagendada",
         description: `La cita ha sido reagendada para el ${rescheduleDate} a las ${rescheduleTime}.`,
       });
-      
+
       setIsRescheduleModalOpen(false);
     } catch (error) {
       console.error('Error rescheduling appointment:', error);
@@ -414,22 +412,22 @@ export default function DashboardAppointments() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // In a real app, you would select a lawyer from a list
       // For now, we'll use a placeholder lawyer ID
       const lawyerId = '00000000-0000-0000-0000-000000000000';
       const now = new Date().toISOString();
-      
+
       // Create the appointment data with proper typing
-      let meetingLink: string | null = null;
+      let meetLink: string | null = null;
       let location: string | null = null;
-      
+
       // Generate meeting link for video calls
       if (newAppointment.type === 'video') {
-        meetingLink = `https://meet.google.com/meet-${Date.now()}`;
+        meetLink = `https://meet.google.com/meet-${Date.now()}`;
       }
-      
+
       const appointmentData: Omit<AppointmentData, 'id'> = {
         title: newAppointment.title,
         description: newAppointment.description || '',
@@ -442,7 +440,7 @@ export default function DashboardAppointments() {
         duration: 60,
         price: 50000, // Default price, could be based on lawyer's rate
         notes: newAppointment.notes || '',
-        meeting_link: meetingLink,
+        meet_link: meetLink,
         location: location,
         created_at: now,
         updated_at: now
@@ -450,12 +448,12 @@ export default function DashboardAppointments() {
 
       // Create the appointment via API
       const createdAppointment = await appointmentsApi.create(appointmentData);
-      
+
       // Add the new appointment to the list
       const uiAppointment = mapApiToUiAppointment(createdAppointment, 'client');
-      
+
       setAppointments(prev => [uiAppointment, ...prev]);
-      
+
       // Increment the case count for the lawyer
       try {
         await incrementCaseCount(lawyerId);
@@ -463,7 +461,7 @@ export default function DashboardAppointments() {
         console.error('Error incrementing case count:', error);
         // Don't fail the appointment creation if case count update fails
       }
-      
+
       // Reset form
       setNewAppointment({
         title: '',
@@ -475,12 +473,12 @@ export default function DashboardAppointments() {
         lawyerSpecialty: '',
         notes: ''
       });
-      
+
       toast({
         title: '¡Cita agendada!',
         description: `Tu cita ha sido agendada para el ${newAppointment.date} a las ${newAppointment.time}.`,
       });
-      
+
       setIsScheduleModalOpen(false);
     } catch (error) {
       console.error('Error creating appointment:', error);
@@ -542,15 +540,15 @@ export default function DashboardAppointments() {
 
   const filteredAppointments = appointments.filter(appointment => {
     if (isLoading) return false;
-    
-    const matchesSearch = searchTerm === '' || 
+
+    const matchesSearch = searchTerm === '' ||
       appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (appointment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
       appointment.lawyerName.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || appointment.status === (statusFilter as AppointmentStatus);
     const matchesType = typeFilter === 'all' || appointment.type === (typeFilter as AppointmentType);
-    
+
     return matchesSearch && matchesStatus && matchesType;
   });
 
@@ -598,7 +596,7 @@ export default function DashboardAppointments() {
             </p>
           </div>
           {sortedAppointments.length > 0 && (
-            <Button 
+            <Button
               onClick={handleNewAppointment}
               className="bg-black hover:bg-gray-800"
             >
@@ -610,429 +608,428 @@ export default function DashboardAppointments() {
 
         {/* Filtros y búsqueda */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Buscar citas..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Buscar citas..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="scheduled">Programadas</SelectItem>
+                <SelectItem value="confirmed">Confirmadas</SelectItem>
+                <SelectItem value="completed">Completadas</SelectItem>
+                <SelectItem value="cancelled">Canceladas</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos los tipos</SelectItem>
+                <SelectItem value="video">Videollamada</SelectItem>
+                <SelectItem value="phone">Llamada telefónica</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por estado" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="scheduled">Programadas</SelectItem>
-              <SelectItem value="confirmed">Confirmadas</SelectItem>
-              <SelectItem value="completed">Completadas</SelectItem>
-              <SelectItem value="cancelled">Canceladas</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="video">Videollamada</SelectItem>
-              <SelectItem value="phone">Llamada telefónica</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Lista de citas */}
-      <div className="space-y-6">
-        {sortedAppointments.length > 0 ? (
-          sortedAppointments.map((appointment) => (
-            <Card 
-              key={appointment.id} 
-              className={`hover:shadow-md transition-shadow ${
-                isUpcoming(appointment.date, appointment.time) && appointment.status === 'confirmed' 
-                  ? 'border-l-4 border-l-blue-500' 
-                  : ''
-              }`}
-            >
-              <CardContent className="p-6">
-                <div className="flex flex-col space-y-4">
-                  {/* Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {appointment.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {appointment.lawyerName} • {appointment.lawyerSpecialty}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className={getTypeColor(appointment.type)}>
-                        {getTypeText(appointment.type)}
-                      </Badge>
-                      <Badge className={getStatusColor(appointment.status)}>
-                        {getStatusText(appointment.status)}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {/* Detalles */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+        {/* Lista de citas */}
+        <div className="space-y-6">
+          {sortedAppointments.length > 0 ? (
+            sortedAppointments.map((appointment) => (
+              <Card
+                key={appointment.id}
+                className={`hover:shadow-md transition-shadow ${isUpcoming(appointment.date, appointment.time) && appointment.status === 'confirmed'
+                    ? 'border-l-4 border-l-blue-500'
+                    : ''
+                  }`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex flex-col space-y-4">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Fecha y hora</p>
-                        <p className="text-sm font-medium">
-                          {formatDate(appointment.date)} a las {formatTime(appointment.time)}
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {appointment.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {appointment.lawyerName} • {appointment.lawyerSpecialty}
                         </p>
                       </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="text-sm text-gray-500">Duración</p>
-                        <p className="text-sm font-medium">{appointment.duration} minutos</p>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className={getTypeColor(appointment.type)}>
+                          {getTypeText(appointment.type)}
+                        </Badge>
+                        <Badge className={getStatusColor(appointment.status)}>
+                          {getStatusText(appointment.status)}
+                        </Badge>
                       </div>
                     </div>
-                    {appointment.location && (
-                      <div className="flex items-start space-x-3">
-                        <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm text-gray-500">Ubicación</p>
-                          <p className="text-sm font-medium">{appointment.location}</p>
-                        </div>
-                      </div>
-                    )}
-                    {appointment.meetingLink && (
-                      <div className="flex items-start space-x-3">
-                        <Video className="h-5 w-5 text-gray-400 mt-0.5" />
-                        <div>
-                          <p className="text-sm text-gray-500">Enlace de reunión</p>
-                          <a 
-                            href={appointment.meetingLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm font-medium text-blue-600 hover:underline"
-                          >
-                            Unirse a la reunión
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Acciones */}
-                  <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleViewDetails(appointment.id)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Ver detalles
-                    </Button>
-                    {appointment.status === 'scheduled' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleReschedule(appointment.id)}
+                    {/* Detalles */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex items-start space-x-3">
+                        <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-gray-500">Fecha y hora</p>
+                          <p className="text-sm font-medium">
+                            {formatDate(appointment.date)} a las {formatTime(appointment.time)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <Clock className="h-5 w-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-gray-500">Duración</p>
+                          <p className="text-sm font-medium">{appointment.duration} minutos</p>
+                        </div>
+                      </div>
+                      {appointment.location && (
+                        <div className="flex items-start space-x-3">
+                          <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm text-gray-500">Ubicación</p>
+                            <p className="text-sm font-medium">{appointment.location}</p>
+                          </div>
+                        </div>
+                      )}
+                      {appointment.meet_link && (
+                        <div className="flex items-start space-x-3">
+                          <Video className="h-5 w-5 text-gray-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm text-gray-500">Enlace de reunión</p>
+                            <a
+                              href={appointment.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-blue-600 hover:underline"
+                            >
+                              Unirse a la reunión
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewDetails(appointment.id)}
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Reagendar
+                        <Eye className="h-4 w-4 mr-1" />
+                        Ver detalles
                       </Button>
-                    )}
-                    {appointment.status === 'scheduled' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
-                        onClick={() => handleCancelAppointment(appointment.id)}
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Cancelar
-                      </Button>
-                    )}
-                    {appointment.meetingLink && isUpcoming(appointment.date, appointment.time) && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleJoinMeeting(appointment)}
-                        className="bg-[#00897B] hover:bg-[#00796B] text-white"
-                      >
-                        <Video className="h-4 w-4 mr-1" />
-                        Unirse a Google Meet
-                      </Button>
-                    )}
+                      {appointment.status === 'scheduled' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReschedule(appointment.id)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Reagendar
+                        </Button>
+                      )}
+                      {appointment.status === 'scheduled' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                          onClick={() => handleCancelAppointment(appointment.id)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Cancelar
+                        </Button>
+                      )}
+                      {appointment.meet_link && isUpcoming(appointment.date, appointment.time) && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleJoinMeeting(appointment)}
+                          className="bg-[#00897B] hover:bg-[#00796B] text-white"
+                        >
+                          <Video className="h-4 w-4 mr-1" />
+                          Unirse a Google Meet
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No se encontraron citas
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+                  ? 'Intenta ajustar los filtros de búsqueda o agendar una nueva cita.'
+                  : 'Aún no tienes citas agendadas.'
+                }
+              </p>
+              <Button
+                className="bg-gray-900 hover:bg-green-900"
+                onClick={() => setIsScheduleModalOpen(true)}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Agendar cita
+              </Button>
+            </div>
+          )}
+        </div>
+
+
+        {/* Modal de detalles de la cita */}
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            {selectedAppointment && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Detalles de la cita</DialogTitle>
+                  <DialogDescription>
+                    Información detallada de la cita seleccionada
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-500">Título</Label>
+                    <p className="text-sm">{selectedAppointment.title}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Abogado</Label>
+                      <p className="text-sm">{selectedAppointment.lawyerName}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Especialidad</Label>
+                      <p className="text-sm">{selectedAppointment.lawyerSpecialty}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Fecha</Label>
+                      <p className="text-sm">{formatDate(selectedAppointment.date)}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Hora</Label>
+                      <p className="text-sm">{formatTime(selectedAppointment.time)}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-500">Tipo de consulta</Label>
+                    <div className="flex items-center space-x-2">
+                      {getTypeIcon(selectedAppointment.type)}
+                      <span className="text-sm">{getTypeText(selectedAppointment.type)}</span>
+                    </div>
+                  </div>
+                  {selectedAppointment.location && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Ubicación</Label>
+                      <p className="text-sm">{selectedAppointment.location}</p>
+                    </div>
+                  )}
+                  {selectedAppointment.meet_link && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500 block">Enlace de la reunión</Label>
+                      <a
+                        href={selectedAppointment.meet_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:underline flex space-x-2"
+                      >
+                        {selectedAppointment.meet_link}
+                      </a>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-500 block">Estado</Label>
+                    <Badge className={getStatusColor(selectedAppointment.status)}>
+                      {getStatusText(selectedAppointment.status)}
+                    </Badge>
+                  </div>
+                  {selectedAppointment.notes && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Notas</Label>
+                      <p className="text-sm whitespace-pre-line">{selectedAppointment.notes}</p>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No se encontraron citas
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda o agendar una nueva cita.'
-                : 'Aún no tienes citas agendadas.'
-              }
-            </p>
-            <Button 
-              className="bg-gray-900 hover:bg-green-900"
-              onClick={() => setIsScheduleModalOpen(true)}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Agendar cita
-            </Button>
-          </div>
-        )}
-      </div>
+                <DialogFooter className="flex justify-end gap-2">
+                  {selectedAppointment.status === 'scheduled' && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Add logic for rescheduling
+                        setIsViewModalOpen(false);
+                        handleReschedule(selectedAppointment.id);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Reagendar
+                    </Button>
+                  )}
+                  {selectedAppointment.status === 'scheduled' && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        setIsViewModalOpen(false);
+                        handleCancelAppointment(selectedAppointment.id);
+                      }}
+                    >
+                      Cancelar cita
+                    </Button>
+                  )}
+                  {selectedAppointment.meet_link && isUpcoming(selectedAppointment.date, selectedAppointment.time) && (
+                    <Button
+                      onClick={() => handleJoinMeeting(selectedAppointment)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Video className="h-4 w-4 mr-1" />
+                      Unirse a la reunión
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsViewModalOpen(false)}
+                  >
+                    Cerrar
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
 
-
-      {/* Modal de detalles de la cita */}
-      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          {selectedAppointment && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Detalles de la cita</DialogTitle>
-                <DialogDescription>
-                  Información detallada de la cita seleccionada
-                </DialogDescription>
-              </DialogHeader>
+        {/* Modal de reagendamiento */}
+        <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Reagendar cita</DialogTitle>
+              <DialogDescription>
+                Selecciona una nueva fecha y hora para tu cita
+              </DialogDescription>
+            </DialogHeader>
+            {selectedAppointment && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Título</Label>
-                  <p className="text-sm">{selectedAppointment.title}</p>
+                  <Label>Fecha actual</Label>
+                  <p className="text-sm">
+                    {formatDate(selectedAppointment.date)} a las {formatTime(selectedAppointment.time)}
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Abogado</Label>
-                    <p className="text-sm">{selectedAppointment.lawyerName}</p>
+                    <Label htmlFor="newDate">Nueva fecha</Label>
+                    <Input
+                      id="newDate"
+                      type="date"
+                      value={rescheduleDate}
+                      onChange={(e) => setRescheduleDate(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Especialidad</Label>
-                    <p className="text-sm">{selectedAppointment.lawyerSpecialty}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Fecha</Label>
-                    <p className="text-sm">{formatDate(selectedAppointment.date)}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Hora</Label>
-                    <p className="text-sm">{formatTime(selectedAppointment.time)}</p>
+                    <Label htmlFor="newTime">Nueva hora</Label>
+                    <Input
+                      id="newTime"
+                      type="time"
+                      value={rescheduleTime}
+                      onChange={(e) => setRescheduleTime(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500">Tipo de consulta</Label>
-                  <div className="flex items-center space-x-2">
-                    {getTypeIcon(selectedAppointment.type)}
-                    <span className="text-sm">{getTypeText(selectedAppointment.type)}</span>
-                  </div>
+                  <Label htmlFor="rescheduleNotes">Motivo del reagendamiento (opcional)</Label>
+                  <Textarea
+                    id="rescheduleNotes"
+                    placeholder="¿Por qué necesitas reagendar esta cita?"
+                    value={rescheduleNotes}
+                    onChange={(e) => setRescheduleNotes(e.target.value)}
+                  />
                 </div>
-                {selectedAppointment.location && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Ubicación</Label>
-                    <p className="text-sm">{selectedAppointment.location}</p>
-                  </div>
-                )}
-                {selectedAppointment.meetingLink && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500 block">Enlace de la reunión</Label>
-                    <a 
-                      href={selectedAppointment.meetingLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline flex space-x-2"
-                    >
-                      {selectedAppointment.meetingLink}
-                    </a>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-500 block">Estado</Label>
-                  <Badge className={getStatusColor(selectedAppointment.status)}>
-                    {getStatusText(selectedAppointment.status)}
-                  </Badge>
-                </div>
-                {selectedAppointment.notes && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Notas</Label>
-                    <p className="text-sm whitespace-pre-line">{selectedAppointment.notes}</p>
-                  </div>
-                )}
               </div>
-              <DialogFooter className="flex justify-end gap-2">
-                {selectedAppointment.status === 'scheduled' && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      // Add logic for rescheduling
-                      setIsViewModalOpen(false);
-                      handleReschedule(selectedAppointment.id);
-                    }}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Reagendar
-                  </Button>
-                )}
-                {selectedAppointment.status === 'scheduled' && (
-                  <Button 
-                    variant="destructive"
-                    onClick={() => {
-                      setIsViewModalOpen(false);
-                      handleCancelAppointment(selectedAppointment.id);
-                    }}
-                  >
-                    Cancelar cita
-                  </Button>
-                )}
-                {selectedAppointment.meetingLink && isUpcoming(selectedAppointment.date, selectedAppointment.time) && (
-                  <Button 
-                    onClick={() => handleJoinMeeting(selectedAppointment)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Video className="h-4 w-4 mr-1" />
-                    Unirse a la reunión
-                  </Button>
-                )}
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsViewModalOpen(false)}
-                >
-                  Cerrar
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsRescheduleModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmReschedule}
+                disabled={!rescheduleDate || !rescheduleTime}
+                className="bg-gray-900 hover:bg-green-900"
+              >
+                <Calendar className="h-4 w-4 mr-1" />
+                Confirmar reagendamiento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Modal de reagendamiento */}
-      <Dialog open={isRescheduleModalOpen} onOpenChange={setIsRescheduleModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Reagendar cita</DialogTitle>
-            <DialogDescription>
-              Selecciona una nueva fecha y hora para tu cita
-            </DialogDescription>
-          </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-4">
+        {/* Modal de confirmación de cancelación */}
+        <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Confirmar cancelación</DialogTitle>
+              <DialogDescription>
+                ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedAppointment && (
               <div className="space-y-2">
-                <Label>Fecha actual</Label>
                 <p className="text-sm">
-                  {formatDate(selectedAppointment.date)} a las {formatTime(selectedAppointment.time)}
+                  <span className="font-medium">Cita:</span> {selectedAppointment.title}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Fecha:</span> {formatDate(selectedAppointment.date)} a las {formatTime(selectedAppointment.time)}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Abogado:</span> {selectedAppointment.lawyerName}
                 </p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="newDate">Nueva fecha</Label>
-                  <Input 
-                    id="newDate" 
-                    type="date" 
-                    value={rescheduleDate}
-                    onChange={(e) => setRescheduleDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newTime">Nueva hora</Label>
-                  <Input 
-                    id="newTime" 
-                    type="time" 
-                    value={rescheduleTime}
-                    onChange={(e) => setRescheduleTime(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rescheduleNotes">Motivo del reagendamiento (opcional)</Label>
-                <Textarea 
-                  id="rescheduleNotes" 
-                  placeholder="¿Por qué necesitas reagendar esta cita?"
-                  value={rescheduleNotes}
-                  onChange={(e) => setRescheduleNotes(e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsRescheduleModalOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleConfirmReschedule}
-              disabled={!rescheduleDate || !rescheduleTime}
-              className="bg-gray-900 hover:bg-green-900"
-            >
-              <Calendar className="h-4 w-4 mr-1" />
-              Confirmar reagendamiento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsCancelDialogOpen(false)}
+              >
+                Volver
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmCancel}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Sí, cancelar cita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Modal de confirmación de cancelación */}
-      <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar cancelación</DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-2">
-              <p className="text-sm">
-                <span className="font-medium">Cita:</span> {selectedAppointment.title}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">Fecha:</span> {formatDate(selectedAppointment.date)} a las {formatTime(selectedAppointment.time)}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">Abogado:</span> {selectedAppointment.lawyerName}
-              </p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCancelDialogOpen(false)}
-            >
-              Volver
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleConfirmCancel}
-            >
-              <X className="h-4 w-4 mr-1" />
-              Sí, cancelar cita
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Schedule Modal */}
-      <ScheduleModal
-        isOpen={isScheduleModalOpen}
-        onClose={() => {
-          setIsScheduleModalOpen(false);
-          setSelectedLawyer(null);
-        }}
-        lawyerName={selectedLawyer?.name || ''}
-        hourlyRate={selectedLawyer?.rate || 0}
-        lawyerId={selectedLawyer?.id || ''}
-      />
+        {/* Schedule Modal */}
+        <ScheduleModal
+          isOpen={isScheduleModalOpen}
+          onClose={() => {
+            setIsScheduleModalOpen(false);
+            setSelectedLawyer(null);
+          }}
+          lawyerName={selectedLawyer?.name || ''}
+          hourlyRate={selectedLawyer?.rate || 0}
+          lawyerId={selectedLawyer?.id || ''}
+        />
       </div>
     </div>
   );

@@ -30,7 +30,6 @@ export type Database = {
           id: string
           lawyer_id: string
           meet_link: string | null
-          meeting_link: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -55,7 +54,6 @@ export type Database = {
           id?: string
           lawyer_id: string
           meet_link?: string | null
-          meeting_link?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -80,7 +78,6 @@ export type Database = {
           id?: string
           lawyer_id?: string
           meet_link?: string | null
-          meeting_link?: string | null
           name?: string
           notes?: string | null
           phone?: string | null

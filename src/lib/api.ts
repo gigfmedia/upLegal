@@ -136,7 +136,7 @@ export interface AppointmentData {
   time: string;
   duration: number;
   location?: string;
-  meeting_link?: string;
+  meet_link?: string;
   price: number;
   notes?: string;
   created_at: string;
