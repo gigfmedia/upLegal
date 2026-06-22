@@ -1981,7 +1981,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           console.log('[webhook] step=meet_generation status=fallback provider=' + meetProvider + ' source=lawyer_profile');
         }
 
-        // Update appointment with meet_link, status, and provider
+        // CRITICAL: Always persist meet_link to DB before email dispatch
         if (appointmentId) {
           try {
             const updateData = {
@@ -1995,18 +1995,71 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               updateData.status = 'confirmed';
             }
             
-            await supabase.from('appointments').update(updateData).eq('id', appointmentId);
-            console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus + ' meet_provider=' + meetProvider);
+            // UPDATE (write only)
+            const { error: updateError } = await supabase
+              .from('appointments')
+              .update(updateData)
+              .eq('id', appointmentId);
+            
+            if (updateError) {
+              console.error('[webhook] step=meet_generation status=update_failed', updateError);
+              throw updateError;
+            }
+            
+            // RE-READ DB explicitly (source of truth)
+            const { data: fresh, error: fetchError } = await supabase
+              .from('appointments')
+              .select('id, meet_link')
+              .eq('id', appointmentId)
+              .single();
+            
+            if (fetchError || !fresh) {
+              console.error('[webhook] step=meet_generation status=fetch_after_update_failed', fetchError);
+              throw new Error('Fetch after update failed');
+            }
+            
+            if (!fresh.meet_link) {
+              console.error('[webhook] step=meet_generation status=missing_meet_link_after_update', {
+                appointmentId,
+                fresh
+              });
+              throw new Error('meet_link not persisted');
+            }
+            
+            console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus + ' meet_provider=' + meetProvider + ' meet_link=' + fresh.meet_link);
           } catch (updateError) {
             console.error('[webhook] step=meet_generation status=update_failed', updateError);
+            throw updateError;
           }
         }
 
         // STEP 6: Email dispatch (ONLY IF CONSISTENT STATE)
-        // Only send emails if: meet_link exists AND appointment exists AND booking exists
-        console.log('[webhook] step=email_dispatch meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no') + ' provider=' + meetProvider);
+        // CRITICAL: Always re-fetch from DB to ensure fresh data, never use in-memory state
+        console.log('[webhook] step=email_dispatch appointment_id=' + (appointmentId || 'no'));
         
-        if (meetLink && appointmentId && resend) {
+        if (appointmentId && resend) {
+          // Re-fetch appointment from DB to get fresh meet_link
+          const { data: freshAppointment, error: fetchError } = await supabase
+            .from('appointments')
+            .select('id, meet_link, meet_provider, meet_status, user_id, lawyer_id')
+            .eq('id', appointmentId)
+            .single();
+
+          if (fetchError || !freshAppointment) {
+            console.error('[webhook] step=email_dispatch status=fetch_failed error=', fetchError);
+            return;
+          }
+
+          console.log('[webhook] step=email_dispatch status=fetched_from_db meet_link=' + (freshAppointment.meet_link ? 'yes' : 'no') + ' meet_provider=' + (freshAppointment.meet_provider || 'none'));
+
+          // HARD GUARD: Ensure meet_link exists before sending email
+          if (!freshAppointment.meet_link) {
+            console.error('[webhook] step=email_dispatch status=skipped reason=missing_meet_link appointment_id=' + appointmentId);
+            return;
+          }
+
+          const freshMeetLink = freshAppointment.meet_link;
+          const freshMeetProvider = freshAppointment.meet_provider;
           // Generate Magic Link
           let magicLink = `${appUrl}/login`;
           if (userEmail) {
@@ -2053,11 +2106,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
                       <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
                         <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet</p>
-                        <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                        <a href="${freshMeetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
                           Unirse a la videollamada
                         </a>
                         <p style="margin: 10px 0 0; font-size: 12px; color: #5f6368;">
-                          O copia este enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
+                          O copia este enlace: <span style="word-break: break-all; color: #1967d2;">${freshMeetLink}</span>
                         </p>
                       </div>
 
@@ -2101,11 +2154,11 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
                       <div style="background-color: #e8f0fe; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #4285F4;">
                         <p style="margin: 0 0 10px; color: #1967d2; font-weight: 600;">Enlace de Google Meet para esta cita</p>
-                        <a href="${meetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
+                        <a href="${freshMeetLink}" style="display: inline-block; background-color: #4285F4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
                           Unirse a la videollamada
                         </a>
                         <p style="margin: 10px 0 0; font-size: 12px; color: #5f6368;">
-                          Enlace: <span style="word-break: break-all; color: #1967d2;">${meetLink}</span>
+                          Enlace: <span style="word-break: break-all; color: #1967d2;">${freshMeetLink}</span>
                         </p>
                       </div>
 
