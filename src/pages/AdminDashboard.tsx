@@ -47,7 +47,7 @@ interface ErrorTableProps {
 const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTableProps) => {
   const renderErrorDetails = (error: ErrorData) => {
     if (!error.details) return null;
-    
+
     if (showDatabaseDetails) {
       return (
         <div className="mt-2 text-xs text-muted-foreground space-y-1">
@@ -91,7 +91,7 @@ const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTab
         {isLoading ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
               <p className="mt-2 text-sm text-muted-foreground">Cargando errores...</p>
             </TableCell>
           </TableRow>
@@ -111,7 +111,7 @@ const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTab
                   ) : (
                     <AlertCircle className="h-4 w-4 mr-2 text-amber-500" />
                   )}
-                  <Badge 
+                  <Badge
                     variant={error.type.includes('error') ? 'destructive' : 'outline'}
                     className="text-xs"
                   >
@@ -185,11 +185,11 @@ type TabType = typeof TABS[keyof typeof TABS];
 export default function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabType;
-  
+
   // Use URL param as initial state, fallback to ANALYTICS
   const initialTab = useMemo(() => {
-    return (Object.values(TABS) as string[]).includes(tabParam) 
-      ? tabParam 
+    return (Object.values(TABS) as string[]).includes(tabParam)
+      ? tabParam
       : TABS.ANALYTICS;
   }, [tabParam]);
 
@@ -245,75 +245,75 @@ export default function AdminDashboard() {
               <p className="text-slate-500 mt-1">
                 Configura tarifas, revisa pagos y monitorea transferencias hacia los abogados.
               </p>
-              
+
               <div className="border-b border-gray-200 mt-4 mb-4">
                 <nav className="-mb-px flex space-x-8 overflow-x-auto">
                   <button
                     onClick={() => setActiveTab(TABS.ANALYTICS)}
-                    className={`${activeTab === TABS.ANALYTICS 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.ANALYTICS
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <BarChart2 className="h-4 w-4" />
                     Analytics
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.DASHBOARD)}
-                    className={`${activeTab === TABS.DASHBOARD 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.DASHBOARD
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <DollarSign className="h-4 w-4" />
                     Tarifas
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.PAYMENTS)}
-                    className={`${activeTab === TABS.PAYMENTS 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.PAYMENTS
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <CreditCard className="h-4 w-4" />
                     Pagos
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.USERS)}
-                    className={`${activeTab === TABS.USERS 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.USERS
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <Users className="h-4 w-4" />
                     Usuarios
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.NOTIFICATIONS)}
-                    className={`${activeTab === TABS.NOTIFICATIONS 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.NOTIFICATIONS
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <AlertCircle className="h-4 w-4" />
                     Notificaciones
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.LAWYER_PROFILES)}
-                    className={`${activeTab === TABS.LAWYER_PROFILES 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.LAWYER_PROFILES
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <Users className="h-4 w-4" />
                     Perfiles Abogados
                   </button>
                   <button
                     onClick={() => setActiveTab(TABS.CAE)}
-                    className={`${activeTab === TABS.CAE 
-                      ? 'border-blue-500 text-blue-600' 
+                    className={`${activeTab === TABS.CAE
+                      ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2`}
                   >
                     <Mail className="h-4 w-4" />
                     CAE Leads
@@ -340,9 +340,9 @@ export default function AdminDashboard() {
                           Revisa y gestiona los pagos realizados en la plataforma.
                         </CardDescription>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => refetchPayments()}
                         disabled={isFetchingPayments}
                       >
@@ -368,7 +368,7 @@ export default function AdminDashboard() {
                         </CardDescription>
                       </div>
                     </div>
-                  </CardHeader>  
+                  </CardHeader>
                   <CardContent>
                     <UserManagement />
                   </CardContent>
@@ -418,10 +418,10 @@ function FeeSettingsCard() {
     const platformPercent = parseFloat(formData.get('platformFee') as string) / 100;
 
     try {
-      await save({ 
+      await save({
         ...settings,
-        client_surcharge_percent: clientPercent, 
-        platform_fee_percent: platformPercent 
+        client_surcharge_percent: clientPercent,
+        platform_fee_percent: platformPercent
       });
       toast.success('Configuración guardada exitosamente');
     } catch (err) {
@@ -445,7 +445,7 @@ function FeeSettingsCard() {
             </CardDescription>
           </div>
           <Button variant="ghost" size="icon" onClick={refresh} disabled={isLoading || isSaving}>
-            <RefreshCw className={isLoading ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            <RefreshCw className={isLoading ? 'h-8 w-8 animate-spin' : 'h-8 w-8'} />
           </Button>
         </div>
       </CardHeader>
@@ -531,7 +531,7 @@ function TransferStatusCard() {
     try {
       setIsTriggering(true);
       const { success, error } = await triggerManualPayout();
-      
+
       if (success) {
         toast.success('Proceso de pago iniciado correctamente');
         // Recargar logs después de un pequeño retraso
@@ -554,7 +554,7 @@ function TransferStatusCard() {
       completed: { label: 'Completado', variant: 'default' },
       failed: { label: 'Fallido', variant: 'destructive' },
     };
-    
+
     const { label, variant } = statusMap[status] || { label: status, variant: 'outline' };
     return <Badge variant={variant}>{label}</Badge>;
   };
@@ -569,8 +569,8 @@ function TransferStatusCard() {
               Procesamiento automático los lunes a las 09:00 (America/Santiago)
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleManualTrigger} 
+          <Button
+            onClick={handleManualTrigger}
             disabled={isTriggering}
             className="flex items-center bg-gray-900 hover:bg-green-900 text-white gap-2"
           >
@@ -601,14 +601,14 @@ function TransferStatusCard() {
                 )}
               </p>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={loadLogs}
               disabled={isLoading}
-              className="h-8 w-8 p-0" 
+              className="h-8 w-8 p-0"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-8 w-8 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -618,7 +618,7 @@ function TransferStatusCard() {
           <div className="border rounded-md">
             {isLoading ? (
               <div className="flex justify-center p-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
               </div>
             ) : logs.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">

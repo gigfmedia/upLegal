@@ -23,7 +23,7 @@ export function UserManagement() {
     try {
       setIsLoading(true);
       const { data, error } = await adminService.getUsers();
-      
+
       if (error) throw error;
       setUsers(data || []);
     } catch (error) {
@@ -40,19 +40,19 @@ export function UserManagement() {
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
-    
+
     try {
       setIsDeleting(true);
-      
+
       const { success, error } = await adminService.deleteUser(userToDelete.id);
-      
+
       if (error || !success) {
         throw new Error(error || 'No se pudo eliminar el usuario');
       }
-      
+
       // Refresh the users list
       await fetchUsers();
-      
+
       toast.success(`Usuario ${userToDelete.email} eliminado correctamente`);
       setUserToDelete(null);
     } catch (error) {
@@ -67,20 +67,20 @@ export function UserManagement() {
     try {
       setBlockingUserId(userId);
       const newStatus = !currentBlockedStatus;
-      
+
       const { success, error } = await adminService.toggleBlockUser(userId, newStatus);
-      
+
       if (error || !success) {
         throw new Error(error || 'No se pudo actualizar el estado del usuario');
       }
-      
+
       // Update local state
-      setUsers(prevUsers => 
-        prevUsers.map(user => 
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
           user.id === userId ? { ...user, blocked: newStatus } : user
         )
       );
-      
+
       toast.success(newStatus ? 'Usuario bloqueado' : 'Usuario desbloqueado');
     } catch (error) {
       console.error('Error toggling block status:', error);
@@ -110,7 +110,7 @@ export function UserManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-black-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
       </div>
     );
   }
@@ -149,63 +149,63 @@ export function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-            {adminUsers.map((user) => (
-                <TableRow 
-                  key={user.id} 
-                  className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
-                      {user.blocked && (
-                        <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
-                      )}
-                      {/* Debug - remove after testing */}
-                      <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
-                      {user.role || 'user'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString('es-CL')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 mr-2">
-                        <Switch
-                          checked={!user.blocked}
-                          onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
-                          disabled={user.role === 'admin' || user.id === currentUser?.id || blockingUserId === user.id}
-                          title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
-                        />
-                        <span className="text-xs text-gray-500">
-                          {blockingUserId === user.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin inline" />
-                          ) : user.blocked ? (
-                            'Bloqueado'
-                          ) : (
-                            'Activo'
-                          )}
-                        </span>
+                {adminUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
+                        {user.blocked && (
+                          <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
+                        )}
+                        {/* Debug - remove after testing */}
+                        <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setUserToDelete(user)}
-                        disabled={user.role === 'admin' || user.id === currentUser?.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={user.role === 'admin' ? 'default' : 'outline'}>
+                        {user.role || 'user'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(user.created_at).toLocaleDateString('es-CL')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mr-2">
+                          <Switch
+                            checked={!user.blocked}
+                            onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
+                            disabled={user.role === 'admin' || user.id === currentUser?.id || blockingUserId === user.id}
+                            title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                          />
+                          <span className="text-xs text-gray-500">
+                            {blockingUserId === user.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin inline" />
+                            ) : user.blocked ? (
+                              'Bloqueado'
+                            ) : (
+                              'Activo'
+                            )}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setUserToDelete(user)}
+                          disabled={user.role === 'admin' || user.id === currentUser?.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -231,60 +231,60 @@ export function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {lawyerUsers.map((user) => (
-                <TableRow
-                  key={user.id}
-                  className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
-                      {user.blocked && (
-                        <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
-                      )}
-                      <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-blue-600 border-blue-600">{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString('es-CL')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 mr-2">
-                        <Switch
-                          checked={!user.blocked}
-                          onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
-                          disabled={user.id === currentUser?.id || blockingUserId === user.id}
-                          title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
-                        />
-                        <span className="text-xs text-gray-500">
-                          {blockingUserId === user.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin inline" />
-                          ) : user.blocked ? (
-                            'Bloqueado'
-                          ) : (
-                            'Activo'
-                          )}
-                        </span>
+                {lawyerUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
+                        {user.blocked && (
+                          <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
+                        )}
+                        <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setUserToDelete(user)}
-                        disabled={user.id === currentUser?.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-blue-600 border-blue-600">{user.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(user.created_at).toLocaleDateString('es-CL')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mr-2">
+                          <Switch
+                            checked={!user.blocked}
+                            onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
+                            disabled={user.id === currentUser?.id || blockingUserId === user.id}
+                            title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                          />
+                          <span className="text-xs text-gray-500">
+                            {blockingUserId === user.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin inline" />
+                            ) : user.blocked ? (
+                              'Bloqueado'
+                            ) : (
+                              'Activo'
+                            )}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setUserToDelete(user)}
+                          disabled={user.id === currentUser?.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -310,60 +310,60 @@ export function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-              {clientUsers.map((user) => (
-                <TableRow
-                  key={user.id}
-                  className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
-                      {user.blocked && (
-                        <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
-                      )}
-                      <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-green-600 border-green-600">{user.role || 'client'}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(user.created_at).toLocaleDateString('es-CL')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 mr-2">
-                        <Switch
-                          checked={!user.blocked}
-                          onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
-                          disabled={user.id === currentUser?.id || blockingUserId === user.id}
-                          title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
-                        />
-                        <span className="text-xs text-gray-500">
-                          {blockingUserId === user.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin inline" />
-                          ) : user.blocked ? (
-                            'Bloqueado'
-                          ) : (
-                            'Activo'
-                          )}
-                        </span>
+                {clientUsers.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className={user.blocked ? 'opacity-50 bg-gray-50' : ''}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        {user.display_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Sin nombre'}
+                        {user.blocked && (
+                          <Ban className="h-4 w-4 text-red-500" title="Usuario bloqueado" />
+                        )}
+                        <span className="text-xs text-gray-400">(blocked: {String(user.blocked)})</span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setUserToDelete(user)}
-                        disabled={user.id === currentUser?.id}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-green-600 border-green-600">{user.role || 'client'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(user.created_at).toLocaleDateString('es-CL')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mr-2">
+                          <Switch
+                            checked={!user.blocked}
+                            onCheckedChange={() => handleToggleBlock(user.id, user.blocked)}
+                            disabled={user.id === currentUser?.id || blockingUserId === user.id}
+                            title={user.blocked ? 'Desbloquear usuario' : 'Bloquear usuario'}
+                          />
+                          <span className="text-xs text-gray-500">
+                            {blockingUserId === user.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin inline" />
+                            ) : user.blocked ? (
+                              'Bloqueado'
+                            ) : (
+                              'Activo'
+                            )}
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                          onClick={() => setUserToDelete(user)}
+                          disabled={user.id === currentUser?.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -385,7 +385,7 @@ export function UserManagement() {
               Esta acción no se puede deshacer. Se eliminarán todos los datos del usuario de forma permanente.
             </DialogDescription>
           </DialogHeader>
-          
+
           {userToDelete && (
             <div className="bg-red-50 p-4 rounded-lg flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
@@ -397,17 +397,17 @@ export function UserManagement() {
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setUserToDelete(null)}
               disabled={isDeleting}
             >
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteUser}
               disabled={isDeleting}
             >

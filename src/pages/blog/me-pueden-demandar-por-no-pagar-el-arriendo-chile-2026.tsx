@@ -65,7 +65,7 @@ const BlogArticle = () => {
         dateModified="2026-04-22"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       <div className="bg-green-900 text-white py-16">
@@ -92,7 +92,7 @@ const BlogArticle = () => {
                 "Puedes negociar o pagar y evitar el desalojo en muchos casos",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-green-400 font-bold">✓</span>
+                  <span className="text-green-600 font-bold">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </div>
               ))}
@@ -176,7 +176,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-8 text-gray-900 border-b pb-4">Qué pasa mes a mes cuando no pagas</h2>
-            
+
             <div className="space-y-8 relative before:absolute before:inset-0 before:left-5 before:w-0.5 before:bg-gray-100 before:h-full">
               {/* Mes 1 */}
               <div className="relative pl-12">
@@ -297,10 +297,10 @@ const BlogArticle = () => {
             </div>
 
             <InArticleCTA
-                message="¿Recibiste una orden de desalojo o necesitas iniciar un proceso? Un abogado puede explicarte los plazos y opciones según tu situación."
-                buttonText="Consultar sobre orden de desalojo"
-                category="Derecho Arrendamiento"
-              />
+              message="¿Recibiste una orden de desalojo o necesitas iniciar un proceso? Un abogado puede explicarte los plazos y opciones según tu situación."
+              buttonText="Consultar sobre orden de desalojo"
+              category="Derecho Arrendamiento"
+            />
 
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres ver cómo funciona realmente:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
@@ -329,7 +329,7 @@ const BlogArticle = () => {
               </Link>
             </div>
             <p className="text-gray-600 mb-6 leading-relaxed">El desalojo ocurre en etapas claras:</p>
-            
+
             <div className="space-y-6 mb-8">
               {[
                 { num: "1", title: "Demanda", desc: "El arrendador presenta una demanda por: no pago, término de contrato, restitución" },
@@ -372,7 +372,7 @@ const BlogArticle = () => {
             </div>
             <div className="bg-green-900 rounded-3xl p-8 mb-12 text-white overflow-hidden relative">
               <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 blur-3xl rounded-full -mr-32 -mt-32"></div>
-              <p className="text-green-400 font-bold uppercase tracking-widest text-xs mb-6">Timeline estimado</p>
+              <p className="text-green-600 font-bold uppercase tracking-widest text-xs mb-6">Timeline estimado</p>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 relative">
                 {[
                   { label: "Deuda", time: "Mes 1", icon: <Clock className="h-5 w-5" /> },
@@ -429,23 +429,23 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mb-6 leading-relaxed">Dependiendo del momento:</p>
             <div className="space-y-6 mb-8">
-            <div className="space-y-4 mb-8">
-              {[
-                { title: "Antes de la demanda", desc: "Puedes negociar libremente y firmar un anexo de pago.", note: "Probabilidad de acuerdo: Muy Alta", color: "green" },
-                { title: "Durante el juicio", desc: "Aún puedes pagar la deuda total para detener el proceso.", note: "Probabilidad de acuerdo: Media", color: "amber" },
-                { title: "Después de sentencia", desc: "El desalojo está ordenado y solo depende del arrendador.", note: "Probabilidad de acuerdo: Baja", color: "red" },
-              ].map((item, i) => (
-                <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <p className="font-bold text-gray-900">{item.title}</p>
-                    <p className="text-gray-600 mt-1">{item.desc}</p>
+              <div className="space-y-4 mb-8">
+                {[
+                  { title: "Antes de la demanda", desc: "Puedes negociar libremente y firmar un anexo de pago.", note: "Probabilidad de acuerdo: Muy Alta", color: "green" },
+                  { title: "Durante el juicio", desc: "Aún puedes pagar la deuda total para detener el proceso.", note: "Probabilidad de acuerdo: Media", color: "amber" },
+                  { title: "Después de sentencia", desc: "El desalojo está ordenado y solo depende del arrendador.", note: "Probabilidad de acuerdo: Baja", color: "red" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <p className="font-bold text-gray-900">{item.title}</p>
+                      <p className="text-gray-600 mt-1">{item.desc}</p>
+                    </div>
+                    <div className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold border bg-${item.color}-50 border-${item.color}-200 text-${item.color}-700`}>
+                      {item.note}
+                    </div>
                   </div>
-                  <div className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold border bg-${item.color}-50 border-${item.color}-200 text-${item.color}-700`}>
-                    {item.note}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -508,7 +508,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Casos reales en Chile</h2>
-            
+
             <div className="grid sm:grid-cols-3 gap-6 mb-8">
               {[
                 { title: "Caso 1", tag: "Prevención", color: "green", desc: "1 mes de deuda. Se negocia un plan de pagos.", result: "Sin demanda" },
@@ -533,13 +533,13 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué hacer si no puedes pagar el arriendo</h2>
-            
+
             <div className="space-y-6 mb-8">
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <p className="font-bold text-gray-900 mb-2">Paso 1 — No ignores el problema</p>
                 <p className="text-gray-600">Mientras antes actúes, mejor.</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <p className="font-bold text-gray-900 mb-2">Paso 2 — Revisa tu contrato</p>
                 <p className="text-gray-600 mb-3">Busca:</p>
@@ -592,7 +592,7 @@ const BlogArticle = () => {
                 <div className="grid sm:grid-cols-2 gap-3 mb-6">
                   {[
                     "Debes 2 meses o más",
-                    "Recibiste notificación", 
+                    "Recibiste notificación",
                     "Te amenazan con desalojo",
                     "El arrendador dejó de negociar"
                   ].map((item, i) => (
@@ -645,7 +645,7 @@ const BlogArticle = () => {
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
-            
+
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -666,8 +666,8 @@ const BlogArticle = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/search?category=Derecho+Civil">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={() => {
                   window.gtag?.('event', 'cta_click', {
                     location: 'blog_cta',

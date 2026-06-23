@@ -97,7 +97,7 @@ const BlogArticle = () => {
                                 "La mediación es obligatoria en muchos casos, excepto cuando hay violencia intrafamiliar",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-400 font-bold">✓</span>
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
@@ -233,7 +233,7 @@ const BlogArticle = () => {
                         <div className="grid sm:grid-cols-2 gap-4">
                             {["Amonestaciones formales", "Multas económicas", "Compensación de visitas perdidas", "Apremios (medidas más intensas)", "Modificación del cuidado personal (en casos graves)"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-green-50 p-3 rounded-lg">
-                                    <span className="text-green-400 font-bold">✓</span>
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
                                 </div>
                             ))}

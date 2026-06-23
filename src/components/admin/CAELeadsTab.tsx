@@ -32,7 +32,7 @@ export function CAELeadsTab() {
   const [leads, setLeads] = useState<CAELead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<CAELead | null>(null);
-  
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [replyEmail, setReplyEmail] = useState('');
@@ -46,11 +46,11 @@ export function CAELeadsTab() {
       // Create admin client using service role key to bypass RLS
       const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      
+
       if (!serviceRoleKey || !supabaseUrl) {
         throw new Error('Missing admin credentials');
       }
-      
+
       const { createClient } = await import('@supabase/supabase-js');
       const adminClient = createClient(supabaseUrl, serviceRoleKey, {
         auth: {
@@ -83,7 +83,7 @@ export function CAELeadsTab() {
     setSelectedLead(lead);
     setReplyEmail(lead.email);
     setReplySubject('Tu consulta sobre CAE en LegalUp');
-    
+
     // Determine stage visually from subject
     let stageStr = 'TGR';
     if (lead.subject.includes('Banco')) stageStr = 'el Banco';
@@ -91,7 +91,7 @@ export function CAELeadsTab() {
     else if (lead.subject.includes('TGR')) stageStr = 'TGR';
 
     setReplyMessage(
-`Hola! Te escribo porque hace unos días solicitaste revisar tu caso por deuda CAE en etapa ${stageStr}.
+      `Hola! Te escribo porque hace unos días solicitaste revisar tu caso por deuda CAE en etapa ${stageStr}.
 
 Quería saber si aún necesitas orientación, porque en esa etapa es importante revisar antes de tomar decisiones (como convenios o pagos).
 
@@ -153,12 +153,12 @@ Si quieres, puedo ayudarte a verlo 👍`
             </CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={fetchLeads} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-8 w-8 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Actualizar
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="rounded-md border">
           <Table>
@@ -175,7 +175,7 @@ Si quieres, puedo ayudarte a verlo 👍`
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-6">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-900" />
                   </TableCell>
                 </TableRow>
               ) : leads.length === 0 ? (
@@ -224,38 +224,38 @@ Si quieres, puedo ayudarte a verlo 👍`
               Responde automáticamente al usuario {selectedLead?.name}. El mensaje está precargado con el formato estándar.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="toEmail">Para:</Label>
-              <Input 
-                id="toEmail" 
-                value={replyEmail} 
-                onChange={(e) => setReplyEmail(e.target.value)} 
+              <Input
+                id="toEmail"
+                value={replyEmail}
+                onChange={(e) => setReplyEmail(e.target.value)}
                 type="email"
               />
             </div>
-            
+
             <div className="grid gap-2">
               <Label htmlFor="subject">Asunto:</Label>
-              <Input 
-                id="subject" 
-                value={replySubject} 
-                onChange={(e) => setReplySubject(e.target.value)} 
+              <Input
+                id="subject"
+                value={replySubject}
+                onChange={(e) => setReplySubject(e.target.value)}
               />
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="message">Mensaje:</Label>
-              <Textarea 
-                id="message" 
+              <Textarea
+                id="message"
                 rows={8}
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isSending}>
               Cancelar

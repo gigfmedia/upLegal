@@ -555,7 +555,7 @@ export function LawyerCard({
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-2xl font-bold text-gray-900">
-                    ${formatCLP(displayHourlyRate)} CLP
+                    ${formatCLP(displayHourlyRate)} <small className="text-gray-500 font-normal text-lg">CLP</small>
                   </span>
                   {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
                   <small className="text-gray-500 text-xs block">Consulta 60 min</small>

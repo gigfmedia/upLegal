@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
+import FunnelDashboard from './FunnelDashboard';
 
 // Types
 type PageView = {
@@ -85,7 +86,7 @@ const RecentActivityItem = ({ item, type }) => {
       cancelled: 'bg-red-100 text-red-800',
       confirmed: 'bg-blue-100 text-blue-800',
     };
-    
+
     return (
       <span className={`text-xs px-2 py-1 rounded-full ${statusMap[status] || 'bg-gray-100'}`}>
         {status}
@@ -105,12 +106,12 @@ const RecentActivityItem = ({ item, type }) => {
         </div>
         <div>
           <p className="text-sm font-medium">
-            {type === 'appointment' 
+            {type === 'appointment'
               ? `Nueva cita: ${item.service_title}`
               : item.page_title || item.page_path}
           </p>
           <p className="text-xs text-slate-500">
-            {type === 'appointment' 
+            {type === 'appointment'
               ? `${item.user_name} con ${item.lawyer_name}`
               : item.page_path}
           </p>
@@ -171,29 +172,29 @@ export default function AnalyticsDashboard() {
     queryKey: ['payment-events', user?.id],
     queryFn: async () => {
       // Use the user from auth context that we know is authenticated
-      
+
       if (!user) {
         console.warn('[Analytics] No user found in context, returning empty data');
-        return []; 
+        return [];
       }
-      
+
       // Check admin status
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('user_id', user.id)
         .single();
-      
+
       const { data, error, count } = await supabase
         .from('payment_events')
         .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Error fetching payment events:', error);
         throw error;
       }
-      
+
       return data as PaymentEvent[];
     },
     retry: 1
@@ -218,12 +219,12 @@ export default function AnalyticsDashboard() {
       }
 
       const { data, error } = await query.limit(5000);
-      
+
       if (error) {
         console.error('Error fetching page views:', error);
         throw error;
       }
-      
+
       return (data || []) as PageView[];
     },
     retry: 1
@@ -239,7 +240,7 @@ export default function AnalyticsDashboard() {
         .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time, price', { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       // Also check appointments
       const { data: appts, error: apptsError, count: apptsCount } = await supabase
         .from('appointments')
@@ -256,10 +257,10 @@ export default function AnalyticsDashboard() {
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
         .limit(50);
-      
+
       // Combine both sources, prioritizing bookings (newer system)
       const allAppointments: any[] = [];
-      
+
       // Add bookings first
       if (bookings && bookings.length > 0) {
         const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
@@ -272,7 +273,7 @@ export default function AnalyticsDashboard() {
           acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
           return acc;
         }, {});
-        
+
         bookings.forEach((b: any) => {
           allAppointments.push({
             id: b.id,
@@ -285,7 +286,7 @@ export default function AnalyticsDashboard() {
           });
         });
       }
-      
+
       // Add appointments (avoid duplicates by checking ID)
       if (appts && appts.length > 0 && !apptsError) {
         const existingIds = new Set(allAppointments.map(a => a.id));
@@ -299,7 +300,7 @@ export default function AnalyticsDashboard() {
           acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
           return acc;
         }, {});
-        
+
         appts.forEach((a: any) => {
           if (!existingIds.has(a.id)) {
             allAppointments.push({
@@ -314,12 +315,12 @@ export default function AnalyticsDashboard() {
           }
         });
       }
-      
+
       // Sort by created_at descending
       allAppointments.sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-      
+
       return allAppointments.slice(0, 50) as any[];
 
       // If no appointments, try bookings table
@@ -329,17 +330,17 @@ export default function AnalyticsDashboard() {
           .select('id, created_at, status, user_name, lawyer_id, scheduled_date, scheduled_time', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(50);
-        
+
         if (bookingsError) {
           console.error("[Analytics] Error fetching bookings:", bookingsError);
-        return [];
-      }
+          return [];
+        }
 
         if (!bookings || bookings.length === 0) {
           return [];
         }
 
-      // Fetch lawyer names separately
+        // Fetch lawyer names separately
         const lawyerIds = [...new Set(bookings.map((b: any) => b.lawyer_id).filter(Boolean))];
         const { data: profiles } = await supabase
           .from('profiles')
@@ -350,7 +351,7 @@ export default function AnalyticsDashboard() {
           acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
           return acc;
         }, {});
-        
+
         return bookings.map((b: any) => ({
           id: b.id,
           created_at: b.created_at,
@@ -372,7 +373,7 @@ export default function AnalyticsDashboard() {
         acc[p.id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
         return acc;
       }, {});
-      
+
       return appts.map((a: any) => ({
         id: a.id,
         created_at: a.created_at,
@@ -396,11 +397,11 @@ export default function AnalyticsDashboard() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(1000);
-      
+
       if (error) {
         console.error('Error fetching error logs:', error);
         throw error;
-    }
+      }
       return (data || []) as ErrorLog[];
     },
     retry: 1
@@ -411,7 +412,7 @@ export default function AnalyticsDashboard() {
     queryKey: ['admin-real-stats', pageViews.length], // Depend on filtered pageViews
     queryFn: async () => {
       const now = new Date();
-      
+
       // Calculate date ranges in Chile timezone (GMT-3)
       const todayStart = new Date(now);
       todayStart.setHours(0, 0, 0, 0);
@@ -422,14 +423,14 @@ export default function AnalyticsDashboard() {
 
       const thirtyDaysAgo = new Date(now);
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       const sixtyDaysAgo = new Date(now);
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
       // Total Counts - Check appointments and bookings (page views already filtered above)
       const [
-        { count: totalAppts }, 
-        { count: apptCurrentPeriod }, 
+        { count: totalAppts },
+        { count: apptCurrentPeriod },
         { count: apptPreviousPeriod },
         { count: apptToday },
         { count: totalBookings },
@@ -464,7 +465,7 @@ export default function AnalyticsDashboard() {
           .not('page_path', 'ilike', '%127.0.0.1%')
           .not('referrer', 'ilike', '%localhost%')
           .not('referrer', 'ilike', '%127.0.0.1%');
-        
+
         viewsQuery = applyFilters(viewsQuery);
         currentViewsQuery = applyFilters(currentViewsQuery);
         prevViewsQuery = applyFilters(prevViewsQuery);
@@ -485,29 +486,29 @@ export default function AnalyticsDashboard() {
         const created = new Date(v.created_at);
         return created >= thirtyDaysAgo;
       });
-      
+
       const filteredPrevViews = pageViews.filter(v => {
         const created = new Date(v.created_at);
         return created < thirtyDaysAgo && created >= sixtyDaysAgo;
       });
-      
+
       const currentUnique = new Set(filteredCurrentViews.map(v => v.user_id)).size;
       const prevUnique = new Set(filteredPrevViews.map(v => v.user_id)).size;
 
       // Peak Hours & Avg Duration - Check both appointments and bookings
       const { data: apptData } = await supabase.from('appointments').select('appointment_time, duration').limit(1000);
       const { data: bookingData } = await supabase.from('bookings').select('scheduled_time, duration').limit(1000);
-      
+
       const hourCounts: Record<string, number> = {};
-      
+
       // Process appointments
       (apptData || []).forEach((curr: any) => {
         if (curr.appointment_time) {
-        const hour = curr.appointment_time.split(':')[0];
+          const hour = curr.appointment_time.split(':')[0];
           hourCounts[hour] = (hourCounts[hour] || 0) + 1;
         }
       });
-      
+
       // Process bookings
       (bookingData || []).forEach((curr: any) => {
         if (curr.scheduled_time) {
@@ -515,27 +516,27 @@ export default function AnalyticsDashboard() {
           hourCounts[hour] = (hourCounts[hour] || 0) + 1;
         }
       });
-      
+
       const peakHour = Object.entries(hourCounts).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || '--';
-      
+
       // Calculate avg duration from both sources
       const allDurations = [
         ...(apptData || []).map((a: any) => a.duration || 0),
         ...(bookingData || []).map((b: any) => b.duration || 0)
       ].filter(d => d > 0);
-      const avgDuration = allDurations.length > 0 
-        ? (allDurations.reduce((acc, curr) => acc + curr, 0) / allDurations.length) 
+      const avgDuration = allDurations.length > 0
+        ? (allDurations.reduce((acc, curr) => acc + curr, 0) / allDurations.length)
         : 0;
 
       const calcTrend = (curr: number, prev: number) => {
         if (!prev) return (curr || 0) > 0 ? 100 : 0;
-        return (( (curr || 0) - (prev || 0)) / prev) * 100;
+        return (((curr || 0) - (prev || 0)) / prev) * 100;
       };
 
       // Status Counts - Check both appointments and bookings
       const [
-        { count: apptCompleted }, 
-        { count: apptPending }, 
+        { count: apptCompleted },
+        { count: apptPending },
         { count: apptCancelled },
         { count: bookingCompleted },
         { count: bookingPending },
@@ -577,7 +578,7 @@ export default function AnalyticsDashboard() {
 
   // Calculate unique visitors
   const uniqueVisitors = realStats?.uniqueVisitors || 0;
-  
+
   // Group page views by path
   const pageStats = pageViews.reduce((acc, view) => {
     // Normalize path by removing query parameters (e.g., ?fbclid=...)
@@ -595,12 +596,12 @@ export default function AnalyticsDashboard() {
   const failedPayments = paymentEvents.filter(e => e.event_type === 'failure').length;
   const pendingPayments = paymentEvents.filter(e => e.event_type === 'pending').length;
   const successRate = startedPayments > 0 ? (successfulPayments / startedPayments) * 100 : 0;
-  
+
   // Calculate today's payment stats using local timezone (Chile)
   const now2 = new Date();
   const todayStart2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate(), 0, 0, 0, 0);
   const todayEnd2 = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate(), 23, 59, 59, 999);
-  
+
   const todayPaymentEvents = paymentEvents.filter(e => {
     const created = new Date(e.created_at);
     return created >= todayStart2 && created <= todayEnd2;
@@ -614,8 +615,9 @@ export default function AnalyticsDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
       </div>
+
     );
   }
   if (hasError) {
@@ -631,20 +633,20 @@ export default function AnalyticsDashboard() {
               Monitoreo en tiempo real del rendimiento del sitio
             </p>
           </div>
-          
+
           <div className="flex items-center gap-4">
-               <div className="flex items-center space-x-2 bg-black/40 px-3 py-2 rounded-lg border border-white/10">
-                  <input 
-                    type="checkbox" 
-                    id="showDevDataError" 
-                    checked={showDevData} 
-                    onChange={(e) => setShowDevData(e.target.checked)}
-                    className="rounded border-gray-600 bg-black/50 text-gold-500 focus:ring-gold-500/50"
-                  />
-                  <label htmlFor="showDevDataError" className="text-xs text-gray-300 cursor-pointer select-none">
-                    Mostrar datos de prueba
-                  </label>
-              </div>
+            <div className="flex items-center space-x-2 bg-black/40 px-3 py-2 rounded-lg border border-white/10">
+              <input
+                type="checkbox"
+                id="showDevDataError"
+                checked={showDevData}
+                onChange={(e) => setShowDevData(e.target.checked)}
+                className="rounded border-gray-600 bg-black/50 text-gold-500 focus:ring-gold-500/50"
+              />
+              <label htmlFor="showDevDataError" className="text-xs text-gray-300 cursor-pointer select-none">
+                Mostrar datos de prueba
+              </label>
+            </div>
           </div>
         </div>
         <Card>
@@ -669,8 +671,8 @@ export default function AnalyticsDashboard() {
   successfulPaymentsList.forEach(p => {
     // Filtrar pagos que provienen de migraciones o el ID de pago duplicado específico
     if (
-      p.metadata?.source === 'migration' || 
-      p.payment_id === '146509806436' || 
+      p.metadata?.source === 'migration' ||
+      p.payment_id === '146509806436' ||
       p.metadata?.payment_id === '146509806436'
     ) {
       return; // Skip this event
@@ -705,20 +707,20 @@ export default function AnalyticsDashboard() {
             Estadísticas de visitas y citas en tiempo real
           </p>
         </div>
-        
+
         <div className="flex items-center gap-4">
-             <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
-                <input 
-                  type="checkbox" 
-                  id="showDevDataMain" 
-                  checked={showDevData} 
-                  onChange={(e) => setShowDevData(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="showDevDataMain" className="text-xs text-slate-700 cursor-pointer select-none font-medium">
-                  Mostrar datos de prueba (localhost)
-                </label>
-            </div>
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
+            <input
+              type="checkbox"
+              id="showDevDataMain"
+              checked={showDevData}
+              onChange={(e) => setShowDevData(e.target.checked)}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="showDevDataMain" className="text-xs text-slate-700 cursor-pointer select-none font-medium">
+              Mostrar datos de prueba (localhost)
+            </label>
+          </div>
         </div>
       </div>
 
@@ -777,7 +779,7 @@ export default function AnalyticsDashboard() {
           trendText=""
         />
       </div>
-      
+
       {/* Today's Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -816,6 +818,7 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="pages">Páginas</TabsTrigger>
           <TabsTrigger value="appointments">Citas</TabsTrigger>
           <TabsTrigger value="payments">Pagos (MP)</TabsTrigger>
+          <TabsTrigger value="funnel">Funnel</TabsTrigger>
           <TabsTrigger value="errors">Errores</TabsTrigger>
         </TabsList>
 
@@ -833,8 +836,8 @@ export default function AnalyticsDashboard() {
                     <span className="text-sm font-bold text-green-600">{successRate.toFixed(1)}%</span>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-green-500" 
+                    <div
+                      className="h-full bg-green-500"
                       style={{ width: `${successRate}%` }}
                     />
                   </div>
@@ -852,9 +855,9 @@ export default function AnalyticsDashboard() {
                       <div className="text-[10px] text-muted-foreground uppercase">Abandonos</div>
                     </div>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="w-full mt-2"
                     onClick={() => document.querySelector('[data-value="payments"]')?.click()}
                   >
@@ -871,10 +874,10 @@ export default function AnalyticsDashboard() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {recentAppointments.map((appointment) => (
-                  <RecentActivityItem 
-                    key={appointment.id} 
-                    item={appointment} 
-                    type="appointment" 
+                  <RecentActivityItem
+                    key={appointment.id}
+                    item={appointment}
+                    type="appointment"
                   />
                 ))}
                 {recentAppointments.length === 0 && <p className="text-sm text-muted-foreground">No hay citas recientes</p>}
@@ -944,8 +947,8 @@ export default function AnalyticsDashboard() {
                       </div>
                       <div className="w-1/3 px-4">
                         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500" 
+                          <div
+                            className="h-full bg-blue-500"
                             style={{ width: `${(page.count / pageViews.length) * 100}%` }}
                           />
                         </div>
@@ -1047,8 +1050,8 @@ export default function AnalyticsDashboard() {
                       </div>
                     </div>
                     <div className="h-4 bg-green-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500" 
+                      <div
+                        className="h-full bg-green-500"
                         style={{ width: `${successRate}%` }}
                       />
                     </div>
@@ -1063,8 +1066,8 @@ export default function AnalyticsDashboard() {
                       <span className="text-sm font-bold">{startedPayments - successfulPayments}</span>
                     </div>
                     <div className="h-4 bg-red-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-red-500" 
+                      <div
+                        className="h-full bg-red-500"
                         style={{ width: `${100 - successRate}%` }}
                       />
                     </div>
@@ -1094,9 +1097,9 @@ export default function AnalyticsDashboard() {
                         )}
                         <div>
                           <p className="text-sm font-medium capitalize">
-                            {event.event_type === 'started' ? 'Pago Iniciado' : 
-                             event.event_type === 'success' ? 'Pago Exitoso' : 
-                             event.event_type === 'failure' ? 'Pago Fallido' : 'Pago Pendiente'}
+                            {event.event_type === 'started' ? 'Pago Iniciado' :
+                              event.event_type === 'success' ? 'Pago Exitoso' :
+                                event.event_type === 'failure' ? 'Pago Fallido' : 'Pago Pendiente'}
                           </p>
                           <p className="text-xs text-slate-500">
                             {event.amount ? `$${event.amount.toLocaleString('es-CL')}` : 'Monto no disponible'}
@@ -1118,6 +1121,9 @@ export default function AnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+        <TabsContent value="funnel">
+          <FunnelDashboard />
         </TabsContent>
         <TabsContent value="errors">
           <Card>

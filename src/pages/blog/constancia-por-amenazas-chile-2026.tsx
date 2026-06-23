@@ -87,7 +87,7 @@ const BlogArticle = () => {
                     </h1>
 
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-300/80 mb-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
                             Resumen rápido
                         </p>
                         <ul className="space-y-2">
@@ -99,7 +99,7 @@ const BlogArticle = () => {
                                 "En contexto de violencia intrafamiliar, existen medidas especiales de protección",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-400 font-bold">✓</span>
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}

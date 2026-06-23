@@ -49,7 +49,7 @@ export default function LawyerProfilesPage() {
     try {
       setLoading(true);
       const supabase = getSupabaseAdminClient();
-      
+
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -149,8 +149,8 @@ export default function LawyerProfilesPage() {
   };
 
   const sendBulkReminders = async () => {
-    const incompleteLawyers = lawyers.filter(lawyer => 
-      (lawyer.profile_completion !== undefined && lawyer.profile_completion < 80) || 
+    const incompleteLawyers = lawyers.filter(lawyer =>
+      (lawyer.profile_completion !== undefined && lawyer.profile_completion < 80) ||
       (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0)
     );
 
@@ -227,15 +227,15 @@ export default function LawyerProfilesPage() {
     return 'destructive';
   };
 
-  const incompleteLawyers = lawyers.filter(lawyer => 
-    (lawyer.profile_completion && lawyer.profile_completion < 80) || 
+  const incompleteLawyers = lawyers.filter(lawyer =>
+    (lawyer.profile_completion && lawyer.profile_completion < 80) ||
     (!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0)
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
       </div>
     );
   }
@@ -288,7 +288,7 @@ export default function LawyerProfilesPage() {
               <div className="text-2xl font-bold">{lawyers.length}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Perfiles Completos</CardTitle>
@@ -318,7 +318,7 @@ export default function LawyerProfilesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {lawyers.length > 0 
+                {lawyers.length > 0
                   ? Math.round(lawyers.reduce((sum, lawyer) => sum + (lawyer.profile_completion || 0), 0) / lawyers.length)
                   : 0}%
               </div>
@@ -339,7 +339,7 @@ export default function LawyerProfilesPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button 
+              <Button
                 onClick={sendBulkReminders}
                 disabled={sendingEmails.length > 0}
                 className="flex items-center gap-2 bg-gray-900 hover:bg-green-900 text-white"
@@ -370,8 +370,8 @@ export default function LawyerProfilesPage() {
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0 flex items-center justify-center">
                       {lawyer.avatar_url ? (
-                        <img 
-                          src={lawyer.avatar_url} 
+                        <img
+                          src={lawyer.avatar_url}
                           alt={`${lawyer.first_name} ${lawyer.last_name}`}
                           className="w-12 h-12 rounded-full object-cover"
                         />
@@ -392,51 +392,51 @@ export default function LawyerProfilesPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4">
                     <div className="text-right flex-shrink-0">
                       <div className={`text-sm font-medium ${getCompletionColor(lawyer.profile_completion || 0)}`}>
                         {lawyer.profile_completion || 0}%
                       </div>
-                      <Progress 
-                        value={lawyer.profile_completion || 0} 
+                      <Progress
+                        value={lawyer.profile_completion || 0}
                         className="w-24 sm:w-32 h-2"
                       />
                     </div>
-                    
+
                     <Badge variant={getCompletionVariant(lawyer.profile_completion || 0)} className="whitespace-nowrap">
-                      {lawyer.profile_completion && lawyer.profile_completion >= 80 
-                        ? 'Completo' 
+                      {lawyer.profile_completion && lawyer.profile_completion >= 80
+                        ? 'Completo'
                         : lawyer.profile_completion && lawyer.profile_completion >= 60
-                        ? 'En Progreso'
-                        : 'Incompleto'
+                          ? 'En Progreso'
+                          : 'Incompleto'
                       }
                     </Badge>
 
-                    {((lawyer.profile_completion && lawyer.profile_completion < 80) || 
-                       !lawyer.hourly_rate_clp || 
-                       lawyer.hourly_rate_clp === 0) && (
-                      <div className="flex items-center gap-2">
-                        {(!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0) && (
-                           <div className="flex items-center text-amber-600 mr-1" title="Falta precio por hora">
-                             <AlertTriangle className="h-4 w-4" />
-                           </div>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => sendReminderEmail(lawyer)}
-                          disabled={sendingEmails.includes(lawyer.id)}
-                          className="flex-shrink-0"
-                        >
-                          {sendingEmails.includes(lawyer.id) ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Mail className="h-4 w-4" />
+                    {((lawyer.profile_completion && lawyer.profile_completion < 80) ||
+                      !lawyer.hourly_rate_clp ||
+                      lawyer.hourly_rate_clp === 0) && (
+                        <div className="flex items-center gap-2">
+                          {(!lawyer.hourly_rate_clp || lawyer.hourly_rate_clp === 0) && (
+                            <div className="flex items-center text-amber-600 mr-1" title="Falta precio por hora">
+                              <AlertTriangle className="h-4 w-4" />
+                            </div>
                           )}
-                        </Button>
-                      </div>
-                    )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => sendReminderEmail(lawyer)}
+                            disabled={sendingEmails.includes(lawyer.id)}
+                            className="flex-shrink-0"
+                          >
+                            {sendingEmails.includes(lawyer.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
                   </div>
                 </div>
               ))}
