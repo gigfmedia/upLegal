@@ -163,9 +163,9 @@ const BlogArticle = () => {
 
             {/* Caso 1 */}
             <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 mb-4 shadow-sm">
-              <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+              <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
               <div>
-                <p className="text-xl font-bold mb-2 text-gray-900">Le prestaste la propiedad (comodato)</p>
+                <p className="text-lg font-bold mb-2 text-gray-900">Le prestaste la propiedad (comodato)</p>
                 <p className="text-gray-600 leading-relaxed">
                   Si le prestaste la propiedad formalmente — con o sin documento escrito — existe un contrato de comodato, que es un préstamo de uso gratuito. Para recuperarla, debes seguir las condiciones del acuerdo o, si no hay plazo definido, notificar al familiar que debe restituir el inmueble.
                 </p>
@@ -177,9 +177,9 @@ const BlogArticle = () => {
 
             {/* Caso 2 */}
             <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 mb-4 shadow-sm">
-              <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+              <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
               <div>
-                <p className="text-xl font-bold mb-2 text-gray-900">Vive ahí sin acuerdo formal (precario)</p>
+                <p className="text-lg font-bold mb-2 text-gray-900">Vive ahí sin acuerdo formal (precario)</p>
                 <p className="text-gray-600 leading-relaxed">
                   Esta es la situación más frecuente: el familiar empezó a vivir contigo o en tu propiedad de forma progresiva, sin ningún acuerdo formal. No hay contrato, no hay comodato documentado, simplemente está ahí.
                 </p>
@@ -204,9 +204,9 @@ const BlogArticle = () => {
 
             {/* Caso 3 */}
             <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 mb-4 shadow-sm">
-              <div className="bg-gray-900 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+              <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
               <div>
-                <p className="text-xl font-bold mb-2 text-gray-900">Tenía permiso pero ya no lo tienes</p>
+                <p className="text-lg font-bold mb-2 text-gray-900">Tenía permiso pero ya no lo tienes</p>
                 <p className="text-gray-600 leading-relaxed">
                   Si en algún momento le diste permiso explícito de vivir ahí pero ahora quieres que se vaya, debes revocar ese permiso formalmente antes de iniciar acciones legales. Lo recomendable es hacerlo por escrito — correo, carta notarial o mensaje con registro — dando un plazo razonable para que abandone el inmueble.
                 </p>
@@ -235,7 +235,7 @@ const BlogArticle = () => {
 
             <div className="space-y-4">
               {/* Paso 1 */}
-              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 hover:bg-gray-50 transition-colors shadow-sm">
+              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm">
                 <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">1</div>
                 <div>
                   <p className="text-lg font-bold text-gray-900 mb-1">Intenta el acuerdo directo primero</p>
@@ -249,7 +249,7 @@ const BlogArticle = () => {
               </div>
 
               {/* Paso 2 */}
-              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 hover:bg-gray-50 transition-colors shadow-sm">
+              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm">
                 <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">2</div>
                 <div>
                   <p className="text-lg font-bold text-gray-900 mb-1">Notificación formal si no hay acuerdo</p>
@@ -260,7 +260,7 @@ const BlogArticle = () => {
               </div>
 
               {/* Paso 3 */}
-              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 hover:bg-gray-50 transition-colors shadow-sm">
+              <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm">
                 <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">3</div>
                 <div>
                   <p className="text-lg font-bold text-gray-900 mb-1">Presentar la demanda</p>

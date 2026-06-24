@@ -11,9 +11,19 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "lesiones-leves-chile-2026",
+    title: "Lesiones leves en Chile 2026: penas, denuncia y procedimiento",
+    excerpt: "Aprende qué son las lesiones leves en Chile, cuándo constituyen delito, cuáles son las penas aplicables, cómo denunciar y qué hacer si eres víctima o imputado.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "24 de Junio, 2026",
+    readTime: "10 min",
+    image: "/assets/lesiones-leves-chile-2026.png"
+  },
+  {
     id: "estafa-chile-2026",
-    title: "Estafa en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
-    excerpt: "Aprende qué es la estafa en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
+    title: "Estafa en Chile 2026: qué hacer si te estafaron, cómo denunciar y recuperar tu dinero",
+    excerpt: "Guía completa sobre estafas en Chile. Aprende cómo denunciar una estafa, qué pruebas necesitas, qué hacer si te estafaron y cuáles son las alternativas para recuperar tu dinero.",
     category: "Derecho Penal",
     author: "LegalUp",
     date: "23 de Junio, 2026",
@@ -22,8 +32,8 @@ export const articles: Article[] = [
   },
   {
     id: "constancia-por-amenazas-en-chile-2026",
-    title: "Constancia por amenazas en Chile 2026: qué es, cómo funciona y qué documentos se necesitan",
-    excerpt: "Aprende qué es la constancia por amenazas en Chile 2026, cómo funciona el proceso y qué documentos se necesitan.",
+    title: "Constancia por amenazas en Chile 2026: dónde hacerla y cómo denunciar",
+    excerpt: "Guía completa sobre constancias y denuncias por amenazas en Chile. Aprende cuándo corresponde realizar una constancia, cómo denunciar y qué medidas de protección existen.",
     category: "Derecho Penal",
     author: "LegalUp",
     date: "22 de Junio, 2026",
