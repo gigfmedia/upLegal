@@ -25,20 +25,20 @@ const BlogPage = () => {
 
   const filteredArticles = useMemo(() => {
     let result = articles;
-    
+
     if (selectedCategory) {
       result = result.filter(article => article.category === selectedCategory);
     }
-    
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(article => 
-        article.title.toLowerCase().includes(query) || 
+      result = result.filter(article =>
+        article.title.toLowerCase().includes(query) ||
         article.excerpt.toLowerCase().includes(query) ||
         article.category.toLowerCase().includes(query)
       );
     }
-    
+
     return result;
   }, [selectedCategory, searchQuery, articles]);
 
@@ -64,8 +64,8 @@ const BlogPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {helmetData}
-      <Header onAuthClick={() => {}} />
-      
+      <Header onAuthClick={() => { }} />
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white pt-28 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
@@ -91,19 +91,23 @@ const BlogPage = () => {
             </div>
 
             <div className="w-full md:w-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-              <h2 className="text-xl font-bold font-serif text-green-600 mb-3">¿Necesitas asesoría legal?</h2>
+              <h2 className="text-xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda legal?</h2>
               <p className="text-sm text-white mb-4 leading-relaxed">
-                Conecta con abogados verificados especializados en tu área de necesidad. Consultas online, precios transparentes y disponibilidad inmediata.
+                Compara abogados verificados, revisa precios y agenda una consulta online según tu caso.
               </p>
               <Button
                 size="lg"
                 className="w-full bg-gray-900 text-white hover:bg-green-600 hover:text-white"
                 onClick={() => {
-                  window.gtag?.('event', 'search_started');
+                  window.gtag?.('event', 'search_started', {
+                    source: 'blog_hero',
+                    page_location: window.location.pathname,
+                    page_title: document.title
+                  });
                   window.location.href = '/search';
                 }}
               >
-                Hablar con abogado ahora
+                Comparar abogados
               </Button>
             </div>
           </div>
@@ -112,7 +116,7 @@ const BlogPage = () => {
 
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        
+
         {/* Search Bar */}
         <div className="mb-8 w-full">
           <div className="relative">
@@ -146,7 +150,7 @@ const BlogPage = () => {
             </button>
           </div>
         )}
-        
+
         {/* Categories Pills */}
         <div className="mb-8 flex flex-wrap gap-2">
           <Button
@@ -155,12 +159,11 @@ const BlogPage = () => {
             onClick={() => setSelectedCategory(null)}
             className={selectedCategory === null ? "bg-gray-900 group" : "group"}
           >
-            Todos 
-            <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
-              selectedCategory === null 
-                ? 'bg-white text-gray-900' 
-                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-            }`}>
+            Todos
+            <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${selectedCategory === null
+              ? 'bg-white text-gray-900'
+              : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+              }`}>
               {articles.length}
             </span>
           </Button>
@@ -173,11 +176,10 @@ const BlogPage = () => {
               className={selectedCategory === category ? "bg-gray-900 group" : "group"}
             >
               {category}
-              <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${
-                selectedCategory === category 
-                  ? 'bg-white text-gray-900' 
-                  : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-              }`}>
+              <span className={`ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold transition-colors ${selectedCategory === category
+                ? 'bg-white text-gray-900'
+                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                }`}>
                 {getArticleCount(category)}
               </span>
             </Button>
@@ -185,17 +187,17 @@ const BlogPage = () => {
         </div>
         {featuredArticle && (
           <div key={featuredArticle.id} className="mb-12">
-            <div 
+            <div
               className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-xl transition-shadow group"
               onClick={() => navigate(`/blog/${featuredArticle.id}`)}
             >
               <div className="md:flex">
                 <div className="md:w-1/3">
                   <div className="h-48 md:h-full flex items-center justify-center">
-                    <img 
-                      className="h-full w-full object-cover" 
-                      src={featuredArticle.image || "../assets/arriendo.png"} 
-                      alt={featuredArticle.category} 
+                    <img
+                      className="h-full w-full object-cover"
+                      src={featuredArticle.image || "../assets/arriendo.png"}
+                      alt={featuredArticle.category}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "../assets/arriendo.png";
                       }}
@@ -210,20 +212,20 @@ const BlogPage = () => {
                     <span>•</span>
                     <span>{selectedCategory ? "Resultado de búsqueda" : "Artículo Destacado"}</span>
                   </div>
-                  
+
                   <h2 className="text-2xl font-bold text-green-900 mb-4">
-                    <Link 
+                    <Link
                       to={`/blog/${featuredArticle.id}`}
                       className="group-hover:text-green-600 transition-colors"
                     >
                       {featuredArticle.title}
                     </Link>
                   </h2>
-                  
+
                   <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">
                     {featuredArticle.excerpt}
                   </p>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
@@ -235,9 +237,9 @@ const BlogPage = () => {
                         <span>{featuredArticle.readTime}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Button 
+                      <Button
                         asChild
                         className="bg-gray-900 hover:bg-green-900"
                       >
@@ -246,7 +248,7 @@ const BlogPage = () => {
                           <ChevronRight className="h-4 w-4 ml-1" />
                         </Link>
                       </Button>
-                      
+
                       {selectedCategory && (
                         <Button
                           variant="outline"
@@ -267,24 +269,24 @@ const BlogPage = () => {
           </div>
         )}
 
-        
+
 
         {/* Recent Articles */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
             {selectedCategory ? `Artículos en ${selectedCategory}` : "Artículos Recientes"}
           </h2>
-          
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {recentArticles.map(article => (
-              <Card 
-                key={article.id} 
+              <Card
+                key={article.id}
                 className="hover:shadow-lg transition-shadow flex flex-col h-full cursor-pointer group overflow-hidden"
                 onClick={() => navigate(`/blog/${article.id}`)}
               >
                 <div className="h-48 w-full overflow-hidden">
-                  <img 
-                    src={article.image || "../assets/arriendo.png"} 
+                  <img
+                    src={article.image || "../assets/arriendo.png"}
                     alt={article.title}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     onError={(e) => {
@@ -298,27 +300,27 @@ const BlogPage = () => {
                       {article.category}
                     </span>
                   </div>
-                  
+
                   <h3 className="text-lg font-semibold text-green-900 mb-3">
-                    <Link 
+                    <Link
                       to={`/blog/${article.id}`}
                       className="group-hover:text-green-600 transition-colors"
                     >
                       {article.title}
                     </Link>
                   </h3>
-                  
+
                   <p className="text-gray-600 mb-4 line-clamp-3">
                     {article.excerpt}
                   </p>
-                  
+
                   <div className="flex items-center justify-between text-sm text-gray-500 mt-auto pt-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       <span>{article.date}</span>
                     </div>
-                    
-                    <Link 
+
+                    <Link
                       to={`/blog/${article.id}`}
                       className="text-green-900 hover:text-green-600 font-medium"
                     >
@@ -333,8 +335,8 @@ const BlogPage = () => {
           {filteredArticles.length === 0 && (
             <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
               <p className="text-gray-500">No hay artículos publicados en esta categoría todavía.</p>
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 onClick={() => setSelectedCategory(null)}
                 className="mt-2 text-blue-600"
               >
@@ -347,13 +349,13 @@ const BlogPage = () => {
         {/* Explorer Cards */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 font-primary">Explorar por Categorías</h2>
-          
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {categories.map(category => {
               const count = getArticleCount(category);
               return (
-                <Card 
-                  key={category} 
+                <Card
+                  key={category}
                   className={`hover:shadow-md transition-all cursor-pointer border-2 ${selectedCategory === category ? 'border-gray-900 bg-white' : 'border-transparent'}`}
                   onClick={() => {
                     setSelectedCategory(category);
@@ -379,20 +381,24 @@ const BlogPage = () => {
 
         {/* CTA Section */}
         <div className="bg-white border rounded-xl shadow-sm p-8 text-center">
-          <h2 className="text-2xl font-bold font-serif mb-4">¿Necesitas asesoría legal?</h2>
+          <h2 className="text-2xl font-bold font-serif mb-4">¿Necesitas ayuda legal?</h2>
           <p className="mb-6 max-w-2xl mx-auto">
-            Conecta con abogados verificados especializados en tu área de necesidad. Consultas online, precios transparentes y disponibilidad inmediata.
+            Compara abogados verificados, revisa precios y agenda una consulta online según tu caso.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
               className="bg-gray-900 text-white hover:bg-green-900 hover:text-white px-8 py-3"
               onClick={() => {
-                window.gtag?.('event', 'search_started');
+                window.gtag?.('event', 'search_started', {
+                  source: 'blog_hero',
+                  page_location: window.location.pathname,
+                  page_title: document.title
+                });
                 window.location.href = '/search';
               }}
             >
-              Hablar con abogado ahora
+              Comparar abogados
             </Button>
           </div>
         </div>
