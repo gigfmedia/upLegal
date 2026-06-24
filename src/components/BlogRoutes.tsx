@@ -52,6 +52,7 @@ const AutorizacionSalirPaisArticle = lazy(() => import('../pages/blog/autorizaci
 const ReconocimientoPaternidadArticle = lazy(() => import('../pages/blog/reconocimiento-paternidad-chile-2026'));
 const ImpunacionPaternidadArticle = lazy(() => import('../pages/blog/impugnacion-paternidad-chile-2026'));
 const ConstanciaPorAmenazasArticle = lazy(() => import('../pages/blog/constancia-por-amenazas-chile-2026'));
+const EstafaArticle = lazy(() => import('../pages/blog/estafa-chile-2026'));
 
 
 
@@ -112,6 +113,7 @@ export const BlogRoutes = () => (
       <Route path="reconocimiento-paternidad-chile-2026" element={<ReconocimientoPaternidadArticle />} />
       <Route path="impugnacion-paternidad-chile-2026" element={<ImpunacionPaternidadArticle />} />
       <Route path="constancia-por-amenazas-en-chile-2026" element={<ConstanciaPorAmenazasArticle />} />
+      <Route path="estafa-chile-2026" element={<EstafaArticle />} />
 
     </Routes>
   </Suspense>
