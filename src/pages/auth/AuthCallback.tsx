@@ -49,7 +49,7 @@ export default function AuthCallback() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-900" />
         <h2 className="text-xl font-semibold mb-2">Verificando tu cuenta...</h2>
         <p className="text-gray-600">Estamos configurando tu entorno, esto tomará un momento.</p>
       </div>

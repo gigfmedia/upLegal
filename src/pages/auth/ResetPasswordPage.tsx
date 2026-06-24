@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-600" />
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-900" />
           <p className="mt-4 text-gray-600">Procesando solicitud de restablecimiento...</p>
         </div>
       </div>

@@ -101,7 +101,7 @@ export function ProfileAvatarUpload({
                 {/* Loading spinner */}
                 {uploading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-white/50">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
                   </div>
                 )}
               </>

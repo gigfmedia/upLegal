@@ -78,7 +78,7 @@ export function ConfirmEmail() {
         <div className="max-w-md w-full space-y-8 text-center">
           <div className="bg-white p-8 rounded-lg shadow-md">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
             </div>
             <h2 className="mt-6 text-2xl font-bold text-gray-900">
               Confirmando tu correo electrónico...

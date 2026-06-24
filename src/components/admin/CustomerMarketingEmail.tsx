@@ -248,7 +248,7 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
         {/* Loading state for CSV */}
         {csvUploading && (
           <div className="flex items-center justify-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
         )}
 

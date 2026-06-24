@@ -340,7 +340,7 @@ const AppContent = () => {
           </Suspense>
           <Suspense fallback={
             <div className="flex items-center justify-center min-h-screen">
-              <Loader2 className="h-8 w-8 animate-spin" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
             </div>
           }>
             <Routes>
@@ -489,7 +489,7 @@ const AppContent = () => {
               <Route path="/dashboard" element={
                 <Suspense fallback={
                   <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
                   </div>
                 }>
                   <NotificationProvider>
@@ -515,7 +515,7 @@ const AppContent = () => {
               <Route path="/lawyer" element={
                 <Suspense fallback={
                   <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
                   </div>
                 }>
                   <NotificationProvider>
@@ -539,7 +539,7 @@ const AppContent = () => {
               <Route path="/admin" element={
                 <Suspense fallback={
                   <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
                   </div>
                 }>
                   <NotificationProvider>

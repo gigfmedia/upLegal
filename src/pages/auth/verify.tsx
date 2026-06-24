@@ -50,7 +50,7 @@ export default function VerifyEmail() {
         <div className="text-center">
           {status === 'loading' && (
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+              <Loader2 className="h-12 w-12 animate-spin text-gray-900" />
               <h2 className="text-2xl font-bold text-gray-900">Verificando tu correo...</h2>
               <p className="text-gray-600">Por favor espera mientras confirmamos tu dirección de correo.</p>
             </div>

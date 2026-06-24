@@ -164,7 +164,7 @@ export default function AcceptInvite() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 pt-28">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader2 className="h-10 w-10 animate-spin text-gray-900 mx-auto mb-4" />
           <p className="text-gray-600">Verificando tu invitación...</p>
         </div>
       </div>
@@ -372,7 +372,7 @@ export default function AcceptInvite() {
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-gray-900" />
                   Guardando...
                 </>
               ) : (

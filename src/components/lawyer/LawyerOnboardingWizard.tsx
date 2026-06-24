@@ -256,7 +256,7 @@ export default function LawyerOnboardingWizard() {
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-md">
         <CardContent className="h-64 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
         </CardContent>
       </Card>
     );

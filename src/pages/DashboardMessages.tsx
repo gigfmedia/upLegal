@@ -73,7 +73,7 @@ export default function DashboardMessages() {
   if (isLoading && safeConversations.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
         <span className="ml-2">Cargando conversaciones...</span>
       </div>
     );

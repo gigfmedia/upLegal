@@ -211,7 +211,7 @@ export function DocumentUpload({
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-2">
             {uploading ? (
-              <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+              <Loader2 className="h-8 w-8 text-gray-900 animate-spin" />
             ) : (
               <Upload className="h-8 w-8 text-gray-400" />
             )}

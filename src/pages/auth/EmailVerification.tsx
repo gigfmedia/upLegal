@@ -72,7 +72,7 @@ export default function EmailVerification() {
   if (status === 'loading') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
-        <Loader2 className="w-12 h-12 mb-4 text-blue-600 animate-spin" />
+        <Loader2 className="w-12 h-12 mb-4 animate-spin text-gray-900" />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Verificando tu correo electrónico</h1>
         <p className="text-gray-600">Por favor espera mientras confirmamos tu dirección de correo electrónico...</p>
       </div>

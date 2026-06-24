@@ -227,9 +227,13 @@ function AvailabilityGrid({ lawyerId, onClose, onAvailabilityChange }) {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin" />
-    </div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

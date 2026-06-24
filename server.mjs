@@ -2185,7 +2185,63 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         } else {
           console.log('[webhook] step=email_dispatch status=skipped reason=inconsistent_state meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
         }
-        
+
+        // STEP 7: Admin notification (NON-BLOCKING)
+        console.log('[webhook] step=admin_notification status=sending booking_id=' + bookingId);
+
+        try {
+          const totalAmount = payment.transaction_amount || booking.price || 0;
+          const legalUpCommission = Math.round(totalAmount * 0.30);
+          const lawyerAmount = Math.round(totalAmount * 0.70);
+
+          await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: 'gigfmedia@icloud.com',
+            subject: 'Nuevo pago recibido en LegalUp',
+            html: `
+              <body style="margin:0;padding:16px;background:#f9fafb;">
+                <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                  <div style="text-align:center;margin-bottom:28px;">
+                    <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                    <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                  </div>
+                  <h1 style="color: #1a202c;">Nuevo pago recibido en LegalUp</h1>
+
+                  <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Nombre cliente:</strong> ${userName || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Nombre abogado:</strong> ${lawyerName}</p>
+                    <p style="margin: 5px 0;"><strong>Fecha consulta:</strong> ${booking.scheduled_date || booking.date || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Duración:</strong> ${booking.duration || 'N/A'} minutos</p>
+                  </div>
+
+                  <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #10b981;">
+                    <p style="margin: 5px 0;"><strong>Monto total:</strong> $${totalAmount.toLocaleString('es-CL')}</p>
+                    <p style="margin: 5px 0;"><strong>Comisión LegalUp (30%):</strong> $${legalUpCommission.toLocaleString('es-CL')}</p>
+                    <p style="margin: 5px 0;"><strong>Monto abogado (70%):</strong> $${lawyerAmount.toLocaleString('es-CL')}</p>
+                  </div>
+
+                  <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #3b82f6;">
+                    <p style="margin: 5px 0;"><strong>Booking ID:</strong> ${bookingId}</p>
+                    <p style="margin: 5px 0;"><strong>Appointment ID:</strong> ${appointmentId || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Payment ID:</strong> ${paymentId}</p>
+                    <p style="margin: 5px 0;"><strong>Fecha de pago:</strong> ${new Date(payment.date_created || new Date()).toLocaleString('es-CL')}</p>
+                  </div>
+
+                  <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                    © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                    Todos los derechos reservados.<br />
+                    Este es un correo automático de notificación administrativa.
+                  </p>
+                </div>
+              </body>
+            `
+          });
+          console.log('[webhook] step=admin_notification status=sent booking_id=' + bookingId);
+        } catch (adminEmailError) {
+          console.error('[webhook] step=admin_notification status=failed booking_id=' + bookingId, adminEmailError);
+          // DO NOT interrupt main flow - admin email failure is non-critical
+        }
+
         console.log('[webhook] step=complete booking_id=' + bookingId + ' appointment_id=' + (appointmentId || 'no') + ' meet_status=' + meetStatus);
     };
 

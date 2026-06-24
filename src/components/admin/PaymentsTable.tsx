@@ -23,7 +23,7 @@ export function PaymentsTable({ payments, loading }: PaymentsTableProps) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-black-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
         </div>
       </div>
     );

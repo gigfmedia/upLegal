@@ -978,7 +978,7 @@ export default function BookingPage() {
                     <>
                       {isLoadingSlots && availableSlots.length === 0 ? (
                         <div className="flex justify-center py-8">
-                          <Loader2 className="animate-spin h-6 w-6 text-gray-400" />
+                          <Loader2 className="animate-spin h-8 w-8 text-gray-900" />
                         </div>
                       ) : availableSlots.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-500 bg-gray-50">

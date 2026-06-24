@@ -104,7 +104,7 @@ export function GoogleCalendarConnect() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+            <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
           </div>
         </CardContent>
       </Card>
