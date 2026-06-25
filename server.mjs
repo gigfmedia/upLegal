@@ -2401,6 +2401,44 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
   }
 });
 
+// GET /api/admin/booking-leads-count
+// Returns booking_leads count + daily timestamps using service role key (bypasses RLS)
+app.get('/api/admin/booking-leads-count', async (req, res) => {
+  try {
+    const { start, end } = req.query;
+
+    // Count with date filter
+    let countQuery = supabase.from('booking_leads').select('*', { count: 'exact', head: true });
+    if (start) countQuery = countQuery.gte('created_at', start);
+    if (end) countQuery = countQuery.lte('created_at', end);
+
+    const { count, error: countError } = await countQuery;
+
+    if (countError) {
+      console.error('[/api/admin/booking-leads-count] Count error:', countError);
+      return res.status(500).json({ error: countError.message });
+    }
+
+    // Fetch daily timestamps for chart aggregation
+    let dailyQuery = supabase.from('booking_leads').select('created_at');
+    if (start) dailyQuery = dailyQuery.gte('created_at', start);
+    if (end) dailyQuery = dailyQuery.lte('created_at', end);
+
+    const { data: dailyData, error: dailyError } = await dailyQuery;
+    if (dailyError) {
+      console.error('[/api/admin/booking-leads-count] Daily error:', dailyError);
+    }
+
+    return res.json({
+      count: count || 0,
+      daily: (dailyData || []).map(r => r.created_at)
+    });
+  } catch (err) {
+    console.error('[/api/admin/booking-leads-count] Exception:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Endpoint para notificar abogados
 app.post('/api/admin/notify-lawyers', async (req, res) => {
   try {

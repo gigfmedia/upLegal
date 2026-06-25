@@ -38,7 +38,7 @@ interface SpecialtyConversion {
 interface DailyMetrics {
   date: string;
   visitors: number;
-  forms: number;
+  leads: number;
   bookings: number;
   payments: number;
   revenue: number;
@@ -116,12 +116,14 @@ export default function FunnelDashboard() {
       const commercialVisitorIds = new Set(commercialPageViews.map(pv => pv.visitor_id).filter(Boolean));
       const commercialVisitorsCount = commercialVisitorIds.size;
 
-      // Fetch contact messages (forms)
-      const { data: contactMessages, count: formsCount } = await supabase
-        .from('contact_messages')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString());
+      // Fetch booking leads via server endpoint (service role key bypasses RLS on auth.users FK)
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const leadsRes = await fetch(
+        `${apiBase}/api/admin/booking-leads-count?start=${start.toISOString()}&end=${end.toISOString()}`
+      );
+      const leadsJson = leadsRes.ok ? await leadsRes.json() : { count: 0, daily: [] };
+      const leadsCount = leadsJson.count ?? 0;
+      const dailyLeadTimestamps: string[] = leadsJson.daily ?? [];
 
       // Fetch bookings
       const { data: bookings, count: bookingsCount } = await supabase
@@ -240,18 +242,14 @@ export default function FunnelDashboard() {
 
       // Sanity checks for funnel consistency
       const sanityChecks = {
-        visitorsGTEForms: visitorsCount >= formsCount,
-        formsGTEBookings: formsCount >= bookingsCount,
+        leadsGTEBookings: leadsCount >= bookingsCount,
         bookingsGTEPayments: bookingsCount >= paymentsCount,
         revenueConsistent: totalRevenue > 0 && paymentsCount > 0
       };
 
       // Log warnings if sanity checks fail
-      if (!sanityChecks.visitorsGTEForms) {
-        console.warn('[Funnel] Sanity check failed: visitors < forms', { visitorsCount, formsCount });
-      }
-      if (!sanityChecks.formsGTEBookings) {
-        console.warn('[Funnel] Sanity check failed: forms < bookings', { formsCount, bookingsCount });
+      if (!sanityChecks.leadsGTEBookings) {
+        console.warn('[Funnel] Sanity check: leads < bookings (can happen if bookings were created without going through lead flow)', { leadsCount, bookingsCount });
       }
       if (!sanityChecks.bookingsGTEPayments) {
         console.warn('[Funnel] Sanity check failed: bookings < payments', { bookingsCount, paymentsCount });
@@ -266,11 +264,8 @@ export default function FunnelDashboard() {
         .not('page_path', 'ilike', '%localhost%')
         .not('page_path', 'ilike', '%127.0.0.1%');
 
-      const { data: dailyForms } = await supabase
-        .from('contact_messages')
-        .select('created_at')
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString());
+      // dailyLeads timestamps already fetched above via server endpoint
+      const dailyLeads = dailyLeadTimestamps.map(ts => ({ created_at: ts }));
 
       const { data: dailyBookings } = await supabase
         .from('bookings')
@@ -293,7 +288,7 @@ export default function FunnelDashboard() {
         dailyMetricsMap.set(dateKey, {
           date: dateKey,
           visitors: 0,
-          forms: 0,
+          leads: 0,
           bookings: 0,
           payments: 0,
           revenue: 0
@@ -307,10 +302,10 @@ export default function FunnelDashboard() {
         if (metrics) metrics.visitors++;
       });
 
-      dailyForms?.forEach((form: any) => {
-        const dateKey = format(new Date(form.created_at), 'yyyy-MM-dd');
+      dailyLeads?.forEach((lead: any) => {
+        const dateKey = format(new Date(lead.created_at), 'yyyy-MM-dd');
         const metrics = dailyMetricsMap.get(dateKey);
-        if (metrics) metrics.forms++;
+        if (metrics) metrics.leads++;
       });
 
       dailyBookings?.forEach((booking: any) => {
@@ -333,7 +328,7 @@ export default function FunnelDashboard() {
       return {
         visitors: visitorsCount || 0,
         commercialVisitors: commercialVisitorsCount || 0,
-        forms: formsCount || 0,
+        leads: leadsCount || 0,
         bookings: bookingsCount || 0,
         pendingPayments: pendingPayments || 0,
         confirmedBookings: confirmedBookings || 0,
@@ -358,18 +353,18 @@ export default function FunnelDashboard() {
       dropoff: 0
     },
     {
-      name: 'Formulario enviado',
-      count: funnelData.forms,
-      percentage: funnelData.commercialVisitors > 0 ? (funnelData.forms / funnelData.commercialVisitors) * 100 : 0,
-      previousPercentage: funnelData.commercialVisitors > 0 ? (funnelData.forms / funnelData.commercialVisitors) * 100 : 0,
-      dropoff: funnelData.commercialVisitors - funnelData.forms
+      name: 'Lead creado',
+      count: funnelData.leads,
+      percentage: funnelData.commercialVisitors > 0 ? (funnelData.leads / funnelData.commercialVisitors) * 100 : 0,
+      previousPercentage: funnelData.commercialVisitors > 0 ? (funnelData.leads / funnelData.commercialVisitors) * 100 : 0,
+      dropoff: funnelData.commercialVisitors - funnelData.leads
     },
     {
       name: 'Booking creado',
       count: funnelData.bookings,
       percentage: funnelData.commercialVisitors > 0 ? (funnelData.bookings / funnelData.commercialVisitors) * 100 : 0,
-      previousPercentage: funnelData.forms > 0 ? (funnelData.bookings / funnelData.forms) * 100 : 0,
-      dropoff: funnelData.forms - funnelData.bookings
+      previousPercentage: funnelData.leads > 0 ? (funnelData.bookings / funnelData.leads) * 100 : 0,
+      dropoff: funnelData.leads - funnelData.bookings
     },
     {
       name: 'Pago aprobado',
@@ -494,8 +489,8 @@ export default function FunnelDashboard() {
           trend={null}
         />
         <MetricCard
-          title="Formularios enviados"
-          value={funnelData?.forms || 0}
+          title="Leads creados"
+          value={funnelData?.leads || 0}
           icon={MessageSquare}
           trend={null}
         />
@@ -560,7 +555,7 @@ export default function FunnelDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Evolución Diaria</CardTitle>
-          <CardDescription>Visitas, formularios, bookings, pagos y revenue por día</CardDescription>
+          <CardDescription>Visitas, leads, bookings, pagos y revenue por día</CardDescription>
         </CardHeader>
         <CardContent>
           <DailyEvolutionChart data={funnelData?.dailyMetrics || []} />
@@ -656,7 +651,7 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
 
 function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
   const maxValue = Math.max(
-    ...data.map(d => Math.max(d.visitors, d.forms, d.bookings, d.payments)),
+    ...data.map(d => Math.max(d.visitors, d.leads, d.bookings, d.payments)),
     1
   );
 
@@ -671,12 +666,12 @@ function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
             strokeWidth="2"
             points={data.map((d, i) => `${i * 40 + 20},${200 - (d.visitors / maxValue) * 180}`).join(' ')}
           />
-          {/* Forms line */}
+          {/* Leads line */}
           <polyline
             fill="none"
             stroke="#10b981"
             strokeWidth="2"
-            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.forms / maxValue) * 180}`).join(' ')}
+            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.leads / maxValue) * 180}`).join(' ')}
           />
           {/* Bookings line */}
           <polyline
@@ -701,7 +696,7 @@ function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 bg-green-500 rounded" />
-          <span>Formularios</span>
+          <span>Leads</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 bg-yellow-500 rounded" />
@@ -718,7 +713,7 @@ function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
             <tr>
               <th className="text-left p-2">Fecha</th>
               <th className="text-right p-2">Visitantes</th>
-              <th className="text-right p-2">Formularios</th>
+              <th className="text-right p-2">Leads</th>
               <th className="text-right p-2">Bookings</th>
               <th className="text-right p-2">Pagos</th>
               <th className="text-right p-2">Revenue</th>
@@ -729,7 +724,7 @@ function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
               <tr key={i} className="border-t">
                 <td className="p-2">{format(new Date(d.date), 'dd/MM', { locale: es })}</td>
                 <td className="text-right p-2">{d.visitors}</td>
-                <td className="text-right p-2">{d.forms}</td>
+                <td className="text-right p-2">{d.leads}</td>
                 <td className="text-right p-2">{d.bookings}</td>
                 <td className="text-right p-2">{d.payments}</td>
                 <td className="text-right p-2">${d.revenue.toLocaleString('es-CL')}</td>
@@ -769,7 +764,7 @@ function SpecialtyTable({ data }: { data: SpecialtyConversion[] }) {
           ))}
           {data.length === 0 && (
             <tr>
-              <td colSpan={4} className="text-center p-8 text-mutd-foreground">
+              <td colSpan={4} className="text-center p-8 text-muted-foreground">
                 No hay datos de especialidades disponibles
               </td>
             </tr>
