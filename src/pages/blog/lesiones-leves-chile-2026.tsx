@@ -320,8 +320,8 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas ayuda por una denuncia o acusación de lesiones? Un abogado penalista puede proteger tus derechos y diseñar la mejor estrategia."
-                        buttonText="Habla con un abogado ahora"
+                        message="¿Fuiste víctima de lesiones o te están investigando por este delito? Un abogado penal puede orientarte sobre el proceso y tus derechos."
+                        buttonText="Consultar con abogado penal"
                         category="Derecho Penal"
                     />
 
@@ -483,13 +483,16 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Las lesiones leves constituyen uno de los delitos más frecuentes dentro del sistema penal chileno. Aunque muchas personas consideran que se trata de situaciones menores, una agresión física puede generar investigaciones, medidas cautelares y consecuencias legales relevantes.
+                            Las lesiones leves constituyen uno de los delitos más frecuentes dentro del sistema penal chileno. Aunque muchas personas consideran que se trata de situaciones menores, una agresión física puede generar investigaciones, medidas cautelares y consecuencias legales que afectan directamente la vida cotidiana del imputado.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Por ello, tanto si eres víctima como si estás siendo investigado, resulta fundamental comprender tus derechos, conservar evidencia y buscar orientación jurídica temprana.
+                            Por ello, tanto si eres víctima como si estás siendo investigado, comprender tus derechos y actuar oportunamente marca una diferencia real en el resultado del proceso.
                         </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Actuar oportunamente puede marcar una diferencia importante en el desarrollo y resultado del procedimiento.
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Si eres víctima: conserva toda la evidencia disponible — certificado médico, fotografías de las lesiones, testigos, mensajes — y denuncia lo antes posible. Las lesiones leves tienen plazos de prescripción y la evidencia fresca es clave para acreditar los hechos.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed font-medium">
+                            Si eres imputado: no minimices la situación. Una denuncia por lesiones leves puede derivar en medidas cautelares, suspensión condicional del procedimiento o incluso condena dependiendo de los antecedentes. Buscar asesoría legal antes de la primera audiencia es fundamental para proteger tu posición.
                         </p>
                     </div>
 
@@ -525,7 +528,7 @@ const BlogArticle = () => {
                 <div className="mt-4 text-center">
                     <Link
                         to="/blog"
-                        className="inline-flex items-center gap-2 text-red-900 hover:text-red-600 transition-colors font-medium"
+                        className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors font-medium"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Volver al Blog

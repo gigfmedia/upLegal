@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "apropiacion-indebida-chile-2026",
+    title: "Apropiación indebida en Chile 2026: qué es, cuándo existe delito y cómo denunciar",
+    excerpt: "Aprende qué es la apropiación indebida en Chile, cuándo constituye un delito, cómo denunciar, qué pruebas necesitas y cuáles son las penas aplicables.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "25 de Junio, 2026",
+    readTime: "11 min",
+    image: "/assets/apropiacion-indebida-chile-2026.png"
+  },
+  {
     id: "lesiones-leves-chile-2026",
     title: "Lesiones leves en Chile 2026: penas, denuncia y procedimiento",
     excerpt: "Aprende qué son las lesiones leves en Chile, cuándo constituyen delito, cuáles son las penas aplicables, cómo denunciar y qué hacer si eres víctima o imputado.",
