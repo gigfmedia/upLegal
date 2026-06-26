@@ -55,6 +55,7 @@ const ConstanciaPorAmenazasArticle = lazy(() => import('../pages/blog/constancia
 const EstafaArticle = lazy(() => import('../pages/blog/estafa-chile-2026'));
 const LesionesLevesArticle = lazy(() => import('../pages/blog/lesiones-leves-chile-2026'));
 const ApropiacionIndebidaArticle = lazy(() => import('../pages/blog/apropiacion-indebida-chile-2026'));
+const OrdenAlejamientoArticle = lazy(() => import('../pages/blog/orden-de-alejamiento-chile-2026'));
 
 
 
@@ -118,6 +119,7 @@ export const BlogRoutes = () => (
       <Route path="estafa-chile-2026" element={<EstafaArticle />} />
       <Route path="lesiones-leves-chile-2026" element={<LesionesLevesArticle />} />
       <Route path="apropiacion-indebida-chile-2026" element={<ApropiacionIndebidaArticle />} />
+      <Route path="orden-de-alejamiento-chile-2026" element={<OrdenAlejamientoArticle />} />
 
     </Routes>
   </Suspense>

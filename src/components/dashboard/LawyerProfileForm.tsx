@@ -59,7 +59,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function LawyerProfileForm() {
   const { user, updateProfile, profile } = useAuth();
-  
+
   // Set initial verification status and RUT value based on profile data
   useEffect(() => {
     if (profile) {
@@ -87,15 +87,15 @@ export function LawyerProfileForm() {
     setIsVerifying(true);
     setVerificationStatus('verifying');
     setVerificationError('');
-    
+
     try {
       // In a real implementation, you would call your backend API here
       // which would then call the PJUD API with proper authentication
       await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
-      
+
       // Mock response - in a real app, this would come from your backend
       const isVerified = Math.random() > 0.5; // 50% chance of success for demo
-      
+
       if (isVerified) {
         setVerificationStatus('verified');
         form.setValue('pjudVerified', true, { shouldValidate: true });
@@ -128,7 +128,7 @@ export function LawyerProfileForm() {
     // Formatear el RUT mientras se escribe
     const formattedRut = formatRutInput(value);
     form.setValue('rut', formattedRut, { shouldValidate: true });
-    
+
     // Si el RUT cambia después de estar verificado, reiniciar el estado de verificación
     if (verificationStatus === 'verified') {
       setVerificationStatus('idle');
@@ -154,22 +154,22 @@ export function LawyerProfileForm() {
 
     try {
       const result = await verifyRutWithPJUD(rut);
-      
+
       if (result.verified) {
         setVerificationStatus('verified');
         form.setValue('pjudVerified', true, { shouldValidate: true });
-        
+
         toast({
           title: 'Verificación exitosa',
           description: 'El RUT ha sido verificado exitosamente con el Poder Judicial.',
           variant: 'default',
         });
-        
+
         // Update user's name if available from PJUD data
         if (result.data?.nombre) {
           const [firstName, ...lastNameParts] = result.data.nombre.split(' ');
           const lastName = lastNameParts.join(' ');
-          
+
           if (firstName) form.setValue('firstName', firstName, { shouldValidate: true });
           if (lastName) form.setValue('lastName', lastName, { shouldValidate: true });
         }
@@ -183,7 +183,7 @@ export function LawyerProfileForm() {
         error instanceof Error ? error.message : 'Error al verificar el RUT con el Poder Judicial'
       );
       form.setValue('pjudVerified', false, { shouldValidate: true });
-      
+
       toast({
         title: 'Error de verificación',
         description: 'No se pudo verificar el RUT con el Poder Judicial. Por favor, inténtalo de nuevo más tarde.',
@@ -200,14 +200,14 @@ export function LawyerProfileForm() {
     if (!user) return {} as FormValues;
 
     const metadata = user.user_metadata || {};
-    
+
     // Función para asegurar que los valores numéricos sean cadenas válidas
     const safeNumberToString = (value: any) => {
       if (value === null || value === undefined) return '';
       const num = Number(value);
       return isNaN(num) ? '' : String(Math.round(num));
     };
-    
+
     return {
       firstName: metadata.first_name || '',
       lastName: metadata.last_name || '',
@@ -237,23 +237,23 @@ export function LawyerProfileForm() {
       email: user?.email || ''
     };
   };
-  
+
   // Get the current values directly from user metadata
   const getCurrentValue = (field: string) => {
     if (!user?.user_metadata) return '';
-    
+
     if (field === 'experience') {
       return user.user_metadata.experience_years !== undefined && user.user_metadata.experience_years !== null
         ? String(user.user_metadata.experience_years)
         : '';
     }
-    
+
     if (field === 'hourlyRate') {
       return user.user_metadata.hourly_rate_clp !== undefined && user.user_metadata.hourly_rate_clp !== null
         ? String(user.user_metadata.hourly_rate_clp)
         : '';
     }
-    
+
     return form.getValues(field as keyof FormValues);
   };
 
@@ -263,7 +263,7 @@ export function LawyerProfileForm() {
     defaultValues: useMemo(() => getDefaultValues(), [user]),
     mode: 'onChange'
   });
-  
+
   // Resetear el formulario cuando cambia el usuario
   useEffect(() => {
     if (user) {
@@ -271,7 +271,7 @@ export function LawyerProfileForm() {
       form.reset(defaults);
     }
   }, [user]);
-  
+
   // Actualizar los valores del formulario cuando cambian los datos del usuario
   useEffect(() => {
     if (user) {
@@ -280,12 +280,12 @@ export function LawyerProfileForm() {
       form.reset(newValues, { keepValues: false });
     }
   }, [user?.user_metadata]);
-  
+
   // Efecto para actualizar el formulario cuando cambian los datos del usuario
   useEffect(() => {
     if (user) {
       const values = getDefaultValues();
-      
+
       // Actualizar el formulario sin marcar como dirty
       form.reset(values, {
         keepDirty: false,
@@ -300,25 +300,25 @@ export function LawyerProfileForm() {
 
   const onSubmit = async (data: FormValues) => {
     if (!user) return;
-    
+
     try {
       setIsLoading(true);
-      
+
       // Procesar la tarifa horaria
       const processHourlyRate = (rate: any): number | null => {
         if (rate === null || rate === undefined || rate === '') {
           return null;
         }
-        
+
         const cleanRate = String(rate)
           .replace(/\./g, '')  // Eliminar separadores de miles
           .replace(',', '.')    // Convertir coma decimal a punto
           .replace(/[^0-9.]/g, ''); // Eliminar caracteres no numéricos
-        
+
         const num = Number(cleanRate);
         return isNaN(num) ? null : Math.round(num);
       };
-      
+
       // Procesar años de estudio
       const processYear = (year: string | undefined): number | null => {
         if (!year || year.trim() === '') return null;
@@ -329,7 +329,7 @@ export function LawyerProfileForm() {
       const studyStartYear = processYear(data.studyStartYear);
       const studyEndYear = processYear(data.studyEndYear);
       const hourlyRate = processHourlyRate(data.hourlyRate);
-      
+
       // Preparar los datos del perfil
       const profileData = {
         ...user.user_metadata, // Mantener datos existentes
@@ -350,19 +350,19 @@ export function LawyerProfileForm() {
         meet_link: data.meetLink?.trim() || null,
         rut: data.rut ? cleanRut(data.rut) : null, // Asegurar que el RUT se guarde limpio
         pjud_verified: verificationStatus === 'verified',
-        languages: Array.isArray(data.languages) 
+        languages: Array.isArray(data.languages)
           ? data.languages.filter(lang => lang && lang.trim() !== '')
           : [],
         availability: data.availability || 'disponible'
       };
-      
+
       // Actualizar el perfil
       const result = await updateProfile(profileData);
-      
+
       if (!result) {
         throw new Error('No se pudo actualizar el perfil');
       }
-      
+
       // Actualizar el estado del usuario con la respuesta del servidor
       const updatedUser = {
         ...user,
@@ -370,27 +370,27 @@ export function LawyerProfileForm() {
           ...user.user_metadata,
           ...result,
           // Asegurarse de que los valores numéricos se guarden correctamente
-          hourly_rate_clp: result.hourly_rate_clp !== undefined 
-            ? result.hourly_rate_clp 
+          hourly_rate_clp: result.hourly_rate_clp !== undefined
+            ? result.hourly_rate_clp
             : user.user_metadata?.hourly_rate_clp || null,
           experience_years: result.experience_years !== undefined
             ? result.experience_years
             : user.user_metadata?.experience_years || null
         }
       };
-      
+
       // Actualizar el estado del usuario
       setUser(updatedUser);
-      
+
       // Mostrar notificación de éxito
       toast({
         title: 'Perfil actualizado',
         description: 'Tus cambios se han guardado correctamente.',
         variant: 'default',
       });
-      
+
       return result;
-      
+
     } catch (error) {
       console.error('Error al actualizar el perfil:', error);
       toast({
@@ -511,7 +511,7 @@ export function LawyerProfileForm() {
                       onChange={(e) => {
                         // Solo permitir números
                         const value = e.target.value.replace(/\D/g, '');
-                        form.setValue('experience', value, { 
+                        form.setValue('experience', value, {
                           shouldValidate: true,
                           shouldDirty: true,
                           shouldTouch: true
@@ -526,8 +526,6 @@ export function LawyerProfileForm() {
                 </FormItem>
               )}
             />
-
-// ...
 
             <FormField
               control={form.control}
@@ -543,7 +541,7 @@ export function LawyerProfileForm() {
                       onChange={(e) => {
                         // Solo permitir números
                         const value = e.target.value.replace(/\D/g, '');
-                        form.setValue('hourlyRate', value, { 
+                        form.setValue('hourlyRate', value, {
                           shouldValidate: true,
                           shouldDirty: true,
                           shouldTouch: true
@@ -558,8 +556,6 @@ export function LawyerProfileForm() {
                 </FormItem>
               )}
             />
-
-// ...
           </div>
 
           <div className="flex justify-end pt-4">

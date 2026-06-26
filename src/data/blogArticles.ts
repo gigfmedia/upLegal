@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "orden-de-alejamiento-chile-2026",
+    title: "Orden de alejamiento en Chile 2026: cómo solicitarla y cuándo procede",
+    excerpt: "Aprende qué es una orden de alejamiento en Chile, cuándo procede, cómo solicitarla, cuánto dura, qué ocurre si se incumple y cuáles son tus derechos durante el proceso.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "26 de Junio, 2026",
+    readTime: "11 min",
+    image: "/assets/orden-de-alejamiento-chile-2026.png"
+  },
+  {
     id: "apropiacion-indebida-chile-2026",
     title: "Apropiación indebida en Chile 2026: qué es, cuándo existe delito y cómo denunciar",
     excerpt: "Aprende qué es la apropiación indebida en Chile, cuándo constituye un delito, cómo denunciar, qué pruebas necesitas y cuáles son las penas aplicables.",
