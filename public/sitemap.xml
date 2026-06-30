@@ -469,4 +469,11 @@
     <changefreq>monthly</changefreq>
   </url>
 
+  <url>
+    <loc>https://legalup.cl/blog/hurto-chile-2026</loc>
+    <lastmod>2026-06-30</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
 </urlset>
