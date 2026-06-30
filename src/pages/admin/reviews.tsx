@@ -28,7 +28,7 @@ export default function AdminReviewsPage() {
     try {
       setLoading(true);
       const supabase = getSupabaseAdminClient();
-      
+
       // Load all reviews (not filtered by lawyer)
       const { data, error } = await supabase
         .from('reviews')
@@ -62,12 +62,12 @@ export default function AdminReviewsPage() {
       navigate('/login');
       return;
     }
-    
+
     const isAdmin = user.is_admin === true ||
-                   user.user_metadata?.is_admin === true ||
-                   user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-                   user.role === 'admin';
-    
+      user.user_metadata?.is_admin === true ||
+      user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
+      user.role === 'admin';
+
     if (!isAdmin) {
       toast({
         title: 'Acceso denegado',
@@ -90,7 +90,7 @@ export default function AdminReviewsPage() {
         .eq('id', reviewId);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Éxito',
         description: `Reseña ${status === 'approved' ? 'aprobada' : 'rechazada'} correctamente`,
@@ -113,14 +113,14 @@ export default function AdminReviewsPage() {
       const supabase = getSupabaseAdminClient();
       const { error } = await supabase
         .from('reviews')
-        .update({ 
+        .update({
           comment: updates.comment,
           updated_at: new Date().toISOString()
         })
         .eq('id', reviewId);
 
       if (error) throw error;
-      
+
       toast({
         title: 'Reseña actualizada',
         description: 'La reseña ha sido actualizada correctamente',
@@ -227,7 +227,7 @@ export default function AdminReviewsPage() {
   const handleReject = (reviewId: string) => {
     updateReviewStatus(reviewId, 'rejected');
   };
-  
+
   const handleRefreshClick = () => {
     loadReviews(false);
   };
@@ -242,8 +242,8 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="w-full">
-    <Header />
-      <div className="min-h-screen bg-slate-50 pt-28 pb-10">
+      <Header />
+      <div className="min-h-screen bg-slate-50 pt-32 pb-10">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <div className="flex justify-between items-start">
@@ -257,8 +257,8 @@ export default function AdminReviewsPage() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     if (editingReview) {
@@ -271,8 +271,8 @@ export default function AdminReviewsPage() {
                   <Mail className="h-4 w-4 mr-2" />
                   Email Marketing Clientes
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     if (editingReview) {
@@ -285,8 +285,8 @@ export default function AdminReviewsPage() {
                   <Mail className="h-4 w-4 mr-2" />
                   Email Perfiles Incompletos
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={handleRefreshClick}
                   disabled={loading}
@@ -297,7 +297,7 @@ export default function AdminReviewsPage() {
               </div>
             </div>
           </div>
-          
+
           {displayReviews.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500">No hay reseñas pendientes de revisión</p>
@@ -305,9 +305,9 @@ export default function AdminReviewsPage() {
           ) : (
             <div className="space-y-4">
               {displayReviews.map((review) => (
-                <ReviewCard 
-                  key={review.id} 
-                  review={review} 
+                <ReviewCard
+                  key={review.id}
+                  review={review}
                   onApprove={handleApprove}
                   onReject={handleReject}
                   onEdit={handleEdit}
@@ -317,7 +317,7 @@ export default function AdminReviewsPage() {
           )}
         </div>
       </div>
-      
+
       {/* Edit Review Modal */}
       {editingReview && !showEmailModal && (
         <EditReviewModal
@@ -327,13 +327,13 @@ export default function AdminReviewsPage() {
           onUpdate={updateReviewContent}
         />
       )}
-      
+
       {/* Incomplete Profile Email Modal */}
       {showEmailModal && (
         <div data-modal="open" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-            <IncompleteProfileEmail 
-              onClose={() => setShowEmailModal(false)} 
+            <IncompleteProfileEmail
+              onClose={() => setShowEmailModal(false)}
             />
           </div>
         </div>
@@ -343,8 +343,8 @@ export default function AdminReviewsPage() {
       {showCustomerEmailModal && (
         <div data-modal="open" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto relative">
-            <CustomerMarketingEmail 
-              onClose={() => setShowCustomerEmailModal(false)} 
+            <CustomerMarketingEmail
+              onClose={() => setShowCustomerEmailModal(false)}
             />
           </div>
         </div>

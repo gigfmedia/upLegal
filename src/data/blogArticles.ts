@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "hurto-chile-2026",
+    title: "Hurto en Chile 2026: penas, denuncia y diferencias con el robo",
+    excerpt: "Conoce qué es el delito de hurto en Chile, cuáles son las penas aplicables, cómo denunciar, en qué se diferencia del robo y qué hacer si eres víctima o imputado.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "30 de Junio, 2026",
+    readTime: "11 min",
+    image: "/assets/hurto-chile-2026.png"
+  },
+  {
     id: "orden-de-alejamiento-chile-2026",
     title: "Orden de alejamiento en Chile 2026: cómo solicitarla y cuándo procede",
     excerpt: "Aprende qué es una orden de alejamiento en Chile, cuándo procede, cómo solicitarla, cuánto dura, qué ocurre si se incumple y cuáles son tus derechos durante el proceso.",

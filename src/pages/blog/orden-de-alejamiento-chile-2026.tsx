@@ -86,11 +86,11 @@ const BlogArticle = () => {
                         </p>
                         <ul className="space-y-2">
                             {[
-                                "La orden de alejamiento es una medida de protección dictada por un tribunal para evitar nuevos actos de violencia o amenazas.",
-                                "Puede decretarse en causas de violencia intrafamiliar, delitos sexuales, amenazas y otros delitos donde exista riesgo para la víctima.",
-                                "Su incumplimiento puede generar nuevas consecuencias penales.",
-                                "La medida puede incluir prohibición de acercarse, comunicarse o concurrir a determinados lugares.",
-                                "Contar con asesoría jurídica permite solicitar medidas de protección oportunamente o ejercer una adecuada defensa.",
+                                "La orden de alejamiento es una medida de protección dictada por un tribunal para evitar nuevos actos de violencia o amenazas",
+                                "Puede decretarse en causas de violencia intrafamiliar, delitos sexuales, amenazas y otros delitos donde exista riesgo para la víctima",
+                                "Su incumplimiento puede generar nuevas consecuencias penales",
+                                "La medida puede incluir prohibición de acercarse, comunicarse o concurrir a determinados lugares",
+                                "Contar con asesoría jurídica permite solicitar medidas de protección oportunamente o ejercer una adecuada defensa",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>

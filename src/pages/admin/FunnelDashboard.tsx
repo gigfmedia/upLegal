@@ -567,9 +567,9 @@ export default function FunnelDashboard() {
         <CardHeader>
           <CardTitle>Conversión por Especialidad</CardTitle>
           <CardDescription>
-            Agrupado por especialidades de abogados.
+            Agrupado por especialidades de abogados
             <span className="text-xs text-muted-foreground block mt-1">
-              Nota: Si un abogado tiene múltiples especialidades, su revenue se cuenta en cada categoría.
+              Nota: Si un abogado tiene múltiples especialidades, su revenue se cuenta en cada categoría
             </span>
           </CardDescription>
         </CardHeader>
