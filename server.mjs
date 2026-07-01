@@ -1895,7 +1895,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                   price: booking.price,
                   status: 'pending_meet_link',
                   consultation_type: 'paid',
-                  contact_method: booking.contact_method || 'platform',
+                  contact_method: 'platform',
                   currency: 'CLP',
                   meet_status: 'pending',
                   created_at: new Date().toISOString(),
@@ -1950,7 +1950,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           console.log('[webhook] step=meet_generation status=fixed provider=' + meetProvider + ' source=lawyer_profile meet_link=' + meetLink);
         }
         // PRIORITY 2: Generate dynamic meet link if no fixed link
-        else if (appointmentId && booking.contact_method === 'platform') {
+        else if (appointmentId) {
           try {
             console.log('[webhook] invoking create-google-meeting', {
               appointmentId,
