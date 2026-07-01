@@ -464,7 +464,7 @@ export function ServicesSection({
           ) : service.available ? (
             <>
               {isInitialConsultation && <Calendar className="h-4 w-4 mr-2" />}
-              {isInitialConsultation ? "Agenda consulta" : "Solicitar servicio"}
+              {isInitialConsultation ? "Agenda consulta" : "Solicita servicio"}
             </>
           ) : (
             "No Disponible"

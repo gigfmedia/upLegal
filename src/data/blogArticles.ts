@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "robo-chile-2026",
+    title: "Robo en Chile 2026: tipos, penas y qué hacer si eres víctima o imputado",
+    excerpt: "Conoce los tipos de robo en Chile, las penas aplicables, cómo denunciar, cuáles son tus derechos y qué hacer si eres víctima o estás siendo investigado.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "1 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/robo-chile-2026.png"
+  },
+  {
     id: "hurto-chile-2026",
     title: "Hurto en Chile 2026: penas, denuncia y diferencias con el robo",
     excerpt: "Conoce qué es el delito de hurto en Chile, cuáles son las penas aplicables, cómo denunciar, en qué se diferencia del robo y qué hacer si eres víctima o imputado.",
