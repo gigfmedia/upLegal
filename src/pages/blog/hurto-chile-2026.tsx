@@ -6,7 +6,6 @@ import {
     User,
     Clock,
     ChevronRight,
-    CheckCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";

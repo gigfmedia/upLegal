@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar, CheckCircle, MessageSquare, Plus, FileText, Building2, Scale } from "lucide-react";
+import { Clock, Calendar, MessageSquare, Plus, FileText, Building2, Scale } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
@@ -71,27 +71,62 @@ export function ServicesSection({
   };
   
   const handleServiceSelect = async (service: Service) => {
+    console.log("Servicio seleccionado:", service);
+
     if (!user) {
       if (onAuthRequired) {
         onAuthRequired();
         return;
       }
+
       toast({
         title: "Inicia sesión",
         description: "Debes iniciar sesión para solicitar un servicio.",
-        variant: "destructive"
+        variant: "destructive",
       });
+
       return;
     }
 
     if (!service.available) return;
 
-    // Set processing state for this specific service
-    setProcessingServices(prev => ({ ...prev, [service.id]: true }));
+    // Detectar Consulta Inicial (sin depender del texto exacto)
+    const isInitialConsultation =
+      service.title.toLowerCase().includes("consulta inicial");
+
+    if (isInitialConsultation) {
+      console.log("➡️ ENTRÓ AL BOOKING");
+
+      if (!lawyerIdProp) {
+        toast({
+          title: "Error",
+          description: "No se pudo identificar al abogado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("➡️ Redirigiendo a:", `/booking/${lawyerIdProp}`);
+
+      window.location.assign(`/booking/${lawyerIdProp}`);
+      return;
+    }
+
+    // ==========================
+    // DESDE AQUÍ SIGUE MERCADOPAGO
+    // ==========================
+
+    setProcessingServices(prev => ({
+      ...prev,
+      [service.id]: true
+    }));
 
     try {
-      const lawyerId = lawyerIdProp || window.location.pathname.split('/').pop();
-      if (!lawyerId) throw new Error('No se pudo identificar al abogado');
+      const lawyerId = lawyerIdProp || window.location.pathname.split("/").pop();
+
+      if (!lawyerId) {
+        throw new Error("No se pudo identificar al abogado");
+      }
 
       // Get the current session
       const { data: { session } } = await supabase.auth.getSession();
@@ -281,15 +316,40 @@ export function ServicesSection({
     }
   };
 
+  const clientSurchargePercent = 0.1;
+
+  const roundToThousands = (amount: number): number => {
+    return Math.round(amount / 1000) * 1000;
+  };
+
+  const getDisplayPrice = (service: Service) => {
+    const isInitialConsultation =
+      service.title.toLowerCase().includes("consulta inicial");
+
+    if (isInitialConsultation) {
+      console.log("➡️ Redirigiendo a Booking");
+      return roundToThousands(service.price_clp * (1 + clientSurchargePercent));
+    }
+
+    return service.price_clp * (1 + clientSurchargePercent);
+  };
   // Rest of the component code...
   const renderServiceCard = (service: Service) => {
     if (!service) return null;
     
+    const isInitialConsultation =
+      service.title.toLowerCase().includes("consulta inicial");
+
     const formatDeliveryTime = () => {
+      // Special case for default consultation service (handle both title variations)
+      if (service.title === 'Consulta Inicial (60 minutos)' || service.title === 'Consulta Inicial') {
+        return '60 minutos';
+      }
+
       if (!service.delivery_time) return '';
-      
+
       const raw = service.delivery_time.trim();
-      
+
       // Check if it has the pipe format "horas|dias"
       if (raw.includes('|')) {
         const parts = raw.split('|');
@@ -300,7 +360,7 @@ export function ServicesSection({
         }
         return `${daysRaw} días`;
       }
-      
+
       // Don't add "días" if it's "variable" or already contains "día"
       if (raw.toLowerCase() === 'variable' || raw.toLowerCase().includes('día')) {
         return raw;
@@ -318,64 +378,96 @@ export function ServicesSection({
     };
 
     return (
-      <div key={service.id} className="border border-gray-200 rounded-xl p-6 space-y-5 hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start">
-          {/* Service Icon and Title */}
-          <div className="flex items-center space-x-3">
-            <div className="bg-blue-100 p-2 rounded-lg text-blue-500">
-              {getServiceIcon()}
+      <div key={service.id} className="border border-gray-200 rounded-xl p-6 flex flex-col h-full hover:shadow-md transition-shadow">
+        <div className="flex-1 space-y-5">
+          <div className="flex items-center justify-between">
+            {/* Icono + Título */}
+            <div className="flex items-center space-x-3">
+              <div className="bg-green-900 p-2 rounded-lg text-green-600">
+                {getServiceIcon()}
+              </div>
+
+              <h4 className="text-lg font-semibold text-gray-900">
+                {service.title}
+              </h4>
             </div>
-            <h4 className="text-lg font-semibold text-gray-900">{service.title}</h4>
+
+            {/* Precio */}
+            <div className="flex items-end gap-1">
+              <span className="text-2xl font-bold text-primary">
+                {formatPrice(getDisplayPrice(service))}
+              </span>
+              <span className="text-xs text-gray-500 mb-1">CLP</span>
+            </div>
           </div>
-          
-          {/* Price */}
-          <div className="text-2xl font-bold text-blue-600">
-            {formatPrice(service.price_clp)}
+
+          {/* Delivery Time */}
+          <div className="flex items-center text-sm text-gray-500 bg-gray-50 p-2 rounded-lg w-fit">
+            <Clock className="h-4 w-4 mr-2 text-green-600" />
+            <span>
+              {(service.title === 'Consulta Inicial (60 minutos)' || service.title === 'Consulta Inicial')
+                ? formatDeliveryTime()
+                : `Entrega: ${formatDeliveryTime()}`
+              }
+            </span>
           </div>
-        </div>
 
-        {/* Delivery Time */}
-        <div className="flex items-center text-sm text-gray-500 bg-gray-50 p-2 rounded-lg w-fit">
-          <Clock className="h-4 w-4 mr-2 text-blue-500" />
-          <span>Entrega: {formatDeliveryTime()}</span>
-        </div>
+          {/* Description */}
+          <p className="text-gray-600 text-sm leading-relaxed">
+            {service.description}
+          </p>
 
-        {/* Description */}
-        <p className="text-gray-600 text-sm leading-relaxed">
-          {service.description}
-        </p>
-
-        {/* Features */}
-        <div className="space-y-3 pt-2">
-          <p className="text-sm font-medium text-gray-700">Incluye:</p>
-          <ul className="space-y-2">
-            {service.features.map((feature, index) => (
-              <li key={index} className="flex items-start text-sm text-gray-600">
-                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 mr-2 flex-shrink-0" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
+          {/* Features */}
+          <div className="space-y-3 pt-2">
+            <p className="text-sm font-medium text-gray-700">Incluye:</p>
+            <ul className="space-y-2">
+              {service.features.map((feature, index) => (
+                <li key={index} className="flex items-start text-sm text-gray-600">
+                  <span className="text-green-600 font-bold mr-2 flex-shrink-0">✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Button */}
-        <Button 
-          className="w-full mt-6 py-5 text-base font-medium rounded-lg bg-gray-900 hover:bg-green-900 transition-colors"
+        <Button
+          className="w-full h-11 mt-6 py-5 text-base font-medium rounded-lg bg-gray-900 hover:bg-green-900 transition-colors"
           disabled={!service.available || processingServices[service.id]}
           onClick={() => handleServiceSelect(service)}
         >
           {processingServices[service.id] ? (
             <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
               Procesando...
             </>
           ) : service.available ? (
-            'Solicitar Servicio'
+            <>
+              {isInitialConsultation && <Calendar className="h-4 w-4 mr-2" />}
+              {isInitialConsultation ? "Agenda consulta" : "Solicitar servicio"}
+            </>
           ) : (
-            'No Disponible'
+            "No Disponible"
           )}
         </Button>
       </div>
@@ -408,7 +500,7 @@ export function ServicesSection({
 
   return (
     <div className="space-y-8">
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6 items-stretch">
         {services.map((service) => renderServiceCard(service))}
       </div>
 

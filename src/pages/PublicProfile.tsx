@@ -563,6 +563,55 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     }
   }, [id, fetchProfile]);
 
+  // Fetch services for the lawyer
+  useEffect(() => {
+    const fetchLawyerServices = async () => {
+      if (!lawyer?.user_id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('lawyer_services')
+          .select('*')
+          .eq('lawyer_user_id', lawyer.user_id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching services:', error);
+          return;
+        }
+
+        // Map services to ServiceType format
+        const servicesData = (data || []).map((service: {
+          id: string;
+          title: string;
+          description: string;
+          price_clp: number;
+          delivery_time: string;
+          features: string[] | string | null;
+          available: boolean;
+        }) => ({
+          id: service.id,
+          title: service.title,
+          description: service.description,
+          price_clp: service.price_clp,
+          delivery_time: service.delivery_time,
+          features: Array.isArray(service.features) 
+            ? service.features 
+            : typeof service.features === 'string' 
+              ? service.features.split('\n').filter(Boolean)
+              : [],
+          available: service.available,
+        }));
+
+        setServices(servicesData);
+      } catch (error) {
+        console.error('Error in fetchLawyerServices:', error);
+      }
+    };
+
+    fetchLawyerServices();
+  }, [lawyer?.user_id]);
+
   // Handle scroll to section when hash is present in URL
   useLayoutEffect(() => {
     if (!loading && location.hash) {
@@ -662,6 +711,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   }, [lawyer]);
 
   // Debug logs removed for production
+  const bookingSlug = lawyer
+    ? `${createSlug(`${lawyer.first_name} ${lawyer.last_name}`)}-${lawyer.user_id}`
+    : "";
 
   // Format price in CLP with proper type safety
   const formatPrice = (price: unknown): string => {
@@ -705,8 +757,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       <CardContent className="p-6 md:p-8">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex flex-col items-center">
-            <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-full ring-4 ring-white shadow-md overflow-hidden">
-              <Skeleton className="h-full w-full rounded-full" />
+            <div className="relative h-28 w-28 md:h-32 md:w-32 mb-4 rounded-md ring-4 ring-white shadow-md overflow-hidden">
+              <Skeleton className="h-full w-full rounded-md" />
             </div>
             <Skeleton className="h-5 w-24 rounded-full" />
           </div>
@@ -756,7 +808,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
             <Skeleton className="h-10 w-40 mb-4" />
             <div className="space-y-3 w-full">
               <Skeleton className="h-10 w-full rounded-md" />
-              <Skeleton className="h-10 w-full rounded-md" />
+              {/* <Skeleton className="h-10 w-full rounded-md" /> */}
             </div>
           </div>
         </div>
@@ -1342,9 +1394,12 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
 
             {/* Services Section */}
-            <Card className="border shadow-sm">
+            <Card className="border shadow-sm pb-4">
               <CardHeader className="p-6">
                 <CardTitle className="text-2xl font-semibold leading-none tracking-tight">Servicios ofrecidos</CardTitle>
+                <p className="text-gray-600">
+                  Conoce los servicios legales que ofrece este abogado
+                </p>
 
               </CardHeader>
               <CardContent>
@@ -1353,7 +1408,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   isLoading={loading}
                   isOwner={currentUser?.id === lawyer?.user_id}
                   onAuthRequired={() => setIsAuthModalOpen(true)}
-                  lawyerId={lawyer?.id}
+                  lawyerId={bookingSlug}
                   onContactService={(service) => {
                     if (!currentUser) {
                       handleAuthRequired('service', service);
