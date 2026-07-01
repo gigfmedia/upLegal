@@ -22,7 +22,7 @@ export const initializeFormData = (userMetadata: any) => {
     bar_association_number: userMetadata.bar_association_number || '',
     rut: userMetadata.rut || '',
     pjud_verified: userMetadata.pjud_verified || false,
-    zoom_link: userMetadata.zoom_link || '',
+    meet_link: userMetadata.meet_link || '',
     avatar_url: userMetadata.avatar_url || ''
   };
 };

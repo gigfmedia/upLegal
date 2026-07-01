@@ -55,7 +55,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         verified: Boolean(profile?.verified ?? false),
         available_for_hire: Boolean(profile?.available_for_hire ?? false),
         bar_number: profile?.bar_number ?? null,
-        zoom_link: profile?.zoom_link ?? null,
+        meet_link: profile?.meet_link ?? null,
         education: profile?.education ?? null,
         certifications: profile?.certifications ?? null,
         experience_years: profile?.experience_years ?? null,

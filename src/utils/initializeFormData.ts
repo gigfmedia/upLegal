@@ -20,7 +20,7 @@ interface UserMetadata {
   bar_association_number?: string;
   rut?: string;
   pjud_verified?: boolean;
-  zoom_link?: string;
+  meet_link?: string;
   avatar_url?: string;
 }
 
@@ -58,7 +58,7 @@ export const initializeFormData = (userMetadata: UserMetadata) => {
     bar_association_number: userMetadata.bar_association_number || '',
     rut: userMetadata.rut || '',
     pjud_verified: userMetadata.pjud_verified || false,
-    zoom_link: userMetadata.zoom_link || '',
+    meet_link: userMetadata.meet_link || '',
     avatar_url: userMetadata.avatar_url || ''
   };
 

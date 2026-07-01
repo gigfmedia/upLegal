@@ -46,7 +46,7 @@ const attorneyProfileSchema = z.object({
   barNumber: z.string().optional(),
   languages: z.array(z.string()).optional(),
   availableForHire: z.boolean().default(true),
-  zoomLink: z.string().optional(),
+  meetLink: z.string().optional(),
 });
 
 type BasicInfoData = z.infer<typeof basicInfoSchema>;
@@ -121,7 +121,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       barNumber: user?.profile?.barNumber || "",
       languages: user?.profile?.languages || [],
       availableForHire: user?.profile?.availableForHire ?? true,
-      zoomLink: user?.profile?.zoomLink || "",
+      meetLink: user?.profile?.meetLink || "",
     },
   });
 
@@ -177,7 +177,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
       bar_number: data.barNumber,
       languages: selectedLanguages,
       available_for_hire: data.availableForHire,
-      zoom_link: data.zoomLink
+      meet_link: data.meetLink
     };
     onSave({ type: "attorney", data: profileData });
   };
@@ -456,7 +456,7 @@ export function EditProfileModal({ isOpen, onClose, user, onSave }: EditProfileM
 
                   <FormField
                     control={attorneyForm.control}
-                    name="zoomLink"
+                    name="meetLink"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Enlace de Google Meet</FormLabel>

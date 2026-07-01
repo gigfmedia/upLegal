@@ -42,7 +42,7 @@ export interface Profile {
   verified?: boolean;
   available_for_hire?: boolean;
   bar_association_number?: string | null;
-  zoom_link?: string | null;
+  meet_link?: string | null;
   education?: string | Record<string, unknown> | null;
   university?: string | null;
   study_start_year?: number | string | null;
@@ -249,7 +249,7 @@ export function useProfile(userId?: string) {
         verified: !!data.verified,
         available_for_hire: !!data.available_for_hire,
         bar_association_number: data.bar_association_number as string || null,
-        zoom_link: data.zoom_link as string || null,
+        meet_link: data.meet_link as string || null,
         education: safeParseJsonString(data.education) as string | Record<string, unknown> || null,
         university: data.university as string || null,
         study_start_year: data.study_start_year as number | string || null,
@@ -348,7 +348,7 @@ export function useProfile(userId?: string) {
         verified: !!data.verified,
         available_for_hire: !!data.available_for_hire,
         bar_association_number: data.bar_association_number as string || null,
-        zoom_link: data.zoom_link as string || null,
+        meet_link: data.meet_link as string || null,
         education: data.education as string | Record<string, unknown> || null,
         university: data.university as string || null,
         study_start_year: data.study_start_year as number | string || null,

@@ -1935,7 +1935,22 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         let meetStatus = 'fallback';
         let meetProvider = 'jitsi';
         
-        if (appointmentId && booking.contact_method === 'platform') {
+        // PRIORITY 1: Use lawyer's fixed meet_link if configured
+        if (lawyerProfile?.meet_link) {
+          meetLink = lawyerProfile.meet_link;
+          meetStatus = 'fixed';
+          // Detect provider from URL pattern
+          if (meetLink.includes('meet.google.com') || meetLink.includes('hangouts.google.com')) {
+            meetProvider = 'google';
+          } else if (meetLink.includes('jitsi')) {
+            meetProvider = 'jitsi';
+          } else {
+            meetProvider = 'custom';
+          }
+          console.log('[webhook] step=meet_generation status=fixed provider=' + meetProvider + ' source=lawyer_profile meet_link=' + meetLink);
+        }
+        // PRIORITY 2: Generate dynamic meet link if no fixed link
+        else if (appointmentId && booking.contact_method === 'platform') {
           try {
             console.log('[webhook] invoking create-google-meeting', {
               appointmentId,
@@ -1966,19 +1981,6 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             console.error('[webhook] create-google-meeting exception', meetError);
             console.warn('[webhook] step=meet_generation status=fallback error=exception');
           }
-        }
-
-        // Fallback to lawyer profile meet_link
-        if (!meetLink && lawyerProfile?.meet_link) {
-          meetLink = lawyerProfile.meet_link;
-          meetStatus = 'fallback';
-          // Detect provider from URL pattern
-          if (meetLink.includes('meet.google.com') || meetLink.includes('hangouts.google.com')) {
-            meetProvider = 'google';
-          } else {
-            meetProvider = 'jitsi';
-          }
-          console.log('[webhook] step=meet_generation status=fallback provider=' + meetProvider + ' source=lawyer_profile');
         }
 
         // CRITICAL: Always persist meet_link to DB before email dispatch

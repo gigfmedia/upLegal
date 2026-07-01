@@ -30,6 +30,8 @@ export type Database = {
           id: string
           lawyer_id: string
           meet_link: string | null
+          meet_provider: string | null
+          meet_status: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -54,6 +56,8 @@ export type Database = {
           id?: string
           lawyer_id: string
           meet_link?: string | null
+          meet_provider?: string | null
+          meet_status?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -78,6 +82,8 @@ export type Database = {
           id?: string
           lawyer_id?: string
           meet_link?: string | null
+          meet_provider?: string | null
+          meet_status?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -768,6 +774,7 @@ export type Database = {
           languages: string[] | null
           last_name: string | null
           location: string | null
+          meet_link: string | null
           phone: string | null
           pjud_verified: boolean | null
           profile_setup_completed: boolean | null
@@ -811,6 +818,7 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           location?: string | null
+          meet_link?: string | null
           phone?: string | null
           pjud_verified?: boolean | null
           profile_setup_completed?: boolean | null
@@ -854,6 +862,7 @@ export type Database = {
           languages?: string[] | null
           last_name?: string | null
           location?: string | null
+          meet_link?: string | null
           phone?: string | null
           pjud_verified?: boolean | null
           profile_setup_completed?: boolean | null

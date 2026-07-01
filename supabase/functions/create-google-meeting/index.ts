@@ -61,10 +61,10 @@ serve(async (req) => {
       );
     }
 
-    // 2. Lawyer profile
+    // 2. Lawyer profile (including meet_link for fixed link support)
     const { data: lawyerProfile, error: profileError } = await supabaseClient
       .from('profiles')
-      .select('user_id')
+      .select('user_id, meet_link')
       .eq('user_id', appointment.lawyer_id)
       .single();
 
@@ -76,6 +76,53 @@ serve(async (req) => {
     console.log('🔥 LAWYER PROFILE FOUND:', lawyerProfile);
 
     const lawyerUserId = lawyerProfile.user_id;
+
+    // PRIORITY 1: Use lawyer's fixed meet_link if configured
+    if (lawyerProfile.meet_link) {
+      const fixedMeetLink = lawyerProfile.meet_link;
+      let fixedMeetProvider = 'custom';
+      
+      // Detect provider from URL pattern
+      if (fixedMeetLink.includes('meet.google.com') || fixedMeetLink.includes('hangouts.google.com')) {
+        fixedMeetProvider = 'google';
+      } else if (fixedMeetLink.includes('jitsi')) {
+        fixedMeetProvider = 'jitsi';
+      }
+
+      console.log('🔥 USING FIXED MEET_LINK:', {
+        appointmentId,
+        meetLink: fixedMeetLink,
+        provider: fixedMeetProvider,
+        source: 'lawyer_profile'
+      });
+
+      // Save fixed link to database
+      const { error: updateError } = await supabaseClient
+        .from('appointments')
+        .update({
+          meet_link: fixedMeetLink,
+          meet_provider: fixedMeetProvider,
+          meet_status: 'fixed',
+          status: 'confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', appointmentId);
+
+      if (updateError) {
+        console.error('❌ Failed to update appointment with fixed meet_link:', updateError);
+        throw new Error(`Failed to update appointment: ${updateError.message}`);
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          meetLink: fixedMeetLink,
+          source: fixedMeetProvider,
+          existing: false
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // 3. Google integration (optional)
     const { data: integration, error: intError } = await supabaseClient

@@ -47,7 +47,7 @@ export const calculateProfileCompletion = (profileData: ProfileCompletionData): 
     { name: 'university', value: !!university },
     { name: 'rut', value: !!profileData.rut },
     { name: 'bar_association_number', value: !!profileData.bar_association_number },
-    { name: 'zoom_link', value: !!profileData.zoom_link },
+    { name: 'meet_link', value: !!profileData.meet_link },
     { name: 'avatar_url', value: !!profileData.avatar_url },
     { name: 'has_services', value: (profileData.servicesCount || 0) > 0 }
   ];

@@ -58,7 +58,7 @@ export interface ProfileFormData {
   pjud_verified: boolean;
   avatar_url?: string;
   specialization?: string;
-  zoom_link?: string;
+  meet_link?: string;
 };
 
 export default function LawyerProfilePage() {
@@ -1465,21 +1465,21 @@ export default function LawyerProfilePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="zoom_link">Enlace de Google Meet para tus Citas</Label>
+              <Label htmlFor="meet_link">Enlace de Google Meet para tus Citas</Label>
               <div className="relative">
                 <Input
-                  id="zoom_link"
-                  name="zoom_link"
+                  id="meet_link"
+                  name="meet_link"
                   type="text"
-                  value={formData.zoom_link || ''}
+                  value={formData.meet_link || ''}
                   onChange={handleInputChange}
                   disabled={!isEditing}
                   placeholder="https://meet.google.com/tu-codigo"
                   className="pr-8"
                 />
-                {formData.zoom_link && (
+                {formData.meet_link && (
                   <a 
-                    href={formData.zoom_link.startsWith('http') ? formData.zoom_link : `https://${formData.zoom_link}`} 
+                    href={formData.meet_link.startsWith('http') ? formData.meet_link : `https://${formData.meet_link}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700"

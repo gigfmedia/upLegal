@@ -21,7 +21,7 @@ export interface Profile {
   verified: boolean;
   available_for_hire: boolean;
   bar_number: string | null;
-  zoom_link: string | null;
+  meet_link: string | null;
   education: Json | null;
   certifications: Json | null;
   experience_years: number | null;
