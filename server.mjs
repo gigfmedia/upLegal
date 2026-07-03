@@ -1111,6 +1111,9 @@ app.post('/api/bookings/create', async (req, res) => {
           duration: resolvedDuration || null,
           price,
           booking_id: booking.id,
+          booking_type: booking.booking_type,
+          service_id: booking.service_id,
+          service_title: booking.service_title,
           status: 'started',
         })
         .select('id')
