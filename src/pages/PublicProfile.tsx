@@ -1350,7 +1350,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   services={services}
                   isLoading={loading}
                   isOwner={currentUser?.id === lawyer?.user_id}
-                  lawyerId={bookingSlug}
+                  lawyerId={lawyer.user_id}
                   lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
                 />
               </CardContent>
