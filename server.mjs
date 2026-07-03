@@ -1028,6 +1028,25 @@ app.post('/api/bookings/create', async (req, res) => {
       return false;
     };
 
+    const { data: testInsert, error: testError } = await supabase
+      .from('bookings')
+      .insert({
+        lawyer_id,
+        user_email: 'test@test.cl',
+        user_name: 'Test',
+        price: 1000,
+        status: 'pending',
+        booking_type: 'service',
+        duration: null,
+        scheduled_date: null,
+        scheduled_time: null,
+        requires_meeting: false,
+      })
+      .select();
+
+    console.log('TEST INSERT', testInsert);
+    console.log('TEST ERROR', testError);
+
     const bookingInsert = {
       lawyer_id,
       user_id: user_id || null,
@@ -1046,6 +1065,8 @@ app.post('/api/bookings/create', async (req, res) => {
       service_delivery_time: isServiceBooking ? (service_delivery_time || null) : null,
       requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
     };
+
+    console.log('BOOKING INSERT', bookingInsert);
 
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
