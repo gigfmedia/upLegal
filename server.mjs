@@ -1036,7 +1036,7 @@ app.post('/api/bookings/create', async (req, res) => {
       user_phone: user_phone || null,
       scheduled_date: isServiceBooking ? null : scheduled_date,
       scheduled_time: isServiceBooking ? null : scheduled_time,
-      duration: resolvedDuration,
+      duration: isServiceBooking ? null : resolvedDuration,
       price,
       status: 'pending',
       booking_type: isServiceBooking ? 'service' : 'appointment',
