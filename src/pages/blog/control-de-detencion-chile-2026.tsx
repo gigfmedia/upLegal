@@ -93,7 +93,7 @@ const BlogArticle = () => {
                                 "Contar con un abogado penalista desde las primeras horas puede ser clave para proteger tus derechos.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-400 font-bold">✓</span>
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
@@ -115,7 +115,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <span>Tiempo de lectura: 10 min</span>
                         </div>
                     </div>
                 </div>
@@ -220,7 +220,7 @@ const BlogArticle = () => {
                         <div className="grid sm:grid-cols-2 gap-3">
                             {["Derecho a guardar silencio", "Derecho a conocer el motivo de la detención", "Derecho a comunicarse con un abogado", "Derecho a ser presentada ante un juez", "Derecho a un trato digno", "Derecho a una defensa técnica"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
                                 </div>
                             ))}
@@ -312,7 +312,7 @@ const BlogArticle = () => {
                         <div className="space-y-2">
                             {["Confirmar en qué unidad policial se encuentra", "Reunir antecedentes personales que puedan ser necesarios", "Conocer el horario aproximado de la audiencia", "Contactar a un abogado penalista", "Evitar difundir versiones no confirmadas en redes sociales"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
                                 </div>
                             ))}
@@ -374,7 +374,7 @@ const BlogArticle = () => {
                         <div className="grid sm:grid-cols-2 gap-3">
                             {["Revisar la legalidad de la detención", "Preparar la estrategia de defensa", "Solicitar diligencias de investigación", "Oponerse a medidas cautelares desproporcionadas", "Representar al imputado durante todas las audiencias", "Explicar las alternativas procesales disponibles"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
                                 </div>
                             ))}

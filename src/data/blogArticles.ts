@@ -11,13 +11,23 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "violencia-contra-carabineros-desordenes-publicos-chile-2026",
+    title: "Violencia contra Carabineros y desórdenes públicos en Chile 2026: derechos, detención y defensa penal",
+    excerpt: "Conoce cómo funciona una investigación por violencia contra Carabineros o desórdenes públicos en Chile, qué ocurre durante el control de detención, cuáles son tus derechos y qué hacer si fuiste detenido.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "3 de Julio, 2026",
+    readTime: "10 min",
+    image: "/assets/violencia-contra-carabineros-desordenes-publicos-chile-2026.png"
+  },
+  {
     id: "control-de-detencion-chile-2026",
     title: "Control de detención en Chile 2026: qué es, cómo funciona y qué hacer si fuiste detenido",
     excerpt: "Conoce qué es el control de detención en Chile, cómo funciona la audiencia, cuáles son tus derechos, qué medidas puede decretar el juez y qué hacer si tú o un familiar fueron detenidos.",
     category: "Derecho Penal",
     author: "LegalUp",
     date: "2 de Julio, 2026",
-    readTime: "11 min",
+    readTime: "10 min",
     image: "/assets/control-de-detencion-chile-2026.png"
   },
   {
