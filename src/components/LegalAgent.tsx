@@ -12,8 +12,8 @@ import {
   FileIcon,
   XIcon,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { askMistral } from '../utils/askLLM';
-import { ContactModal } from './ContactModal';
 import { ScheduleModal } from './ScheduleModal';
 
 interface Message {
@@ -49,9 +49,9 @@ export default function LegalAgent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedEspecialidad, setSelectedEspecialidad] = useState<string | null>(null);
-  const [contactModalOpen, setContactModalOpen] = useState(false);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedLawyer, setSelectedLawyer] = useState<Abogado | null>(null);
+  const navigate = useNavigate();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -369,8 +369,7 @@ Mensaje del usuario:
   };
 
   const handleContact = (abogado: Abogado) => {
-    setSelectedLawyer(abogado);
-    setContactModalOpen(true);
+    navigate(`/booking/${abogado.id}`);
   };
 
   const handleSchedule = (abogado: Abogado) => {
@@ -582,20 +581,13 @@ Mensaje del usuario:
 
       {/* Modales */}
       {selectedLawyer && (
-        <>
-          <ContactModal
-            isOpen={contactModalOpen}
-            onClose={() => setContactModalOpen(false)}
-            lawyerName={selectedLawyer.nombre}
-          />
-          <ScheduleModal
-            isOpen={scheduleModalOpen}
-            onClose={() => setScheduleModalOpen(false)}
-            lawyerName={selectedLawyer.nombre}
-            hourlyRate={selectedLawyer.tarifa}
-            lawyerId={selectedLawyer.id}
-          />
-        </>
+        <ScheduleModal
+          isOpen={scheduleModalOpen}
+          onClose={() => setScheduleModalOpen(false)}
+          lawyerName={selectedLawyer.nombre}
+          hourlyRate={selectedLawyer.tarifa}
+          lawyerId={selectedLawyer.id}
+        />
       )}
     </>
   );

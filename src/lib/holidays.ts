@@ -1,6 +1,6 @@
 import { format, parseISO, isSameDay } from 'date-fns';
 
-// Días feriados en Chile para 2024 y 2025
+// Días feriados en Chile para 2025 y 2026
 // Formato: YYYY-MM-DD
 export const CHILEAN_HOLIDAYS = [
 

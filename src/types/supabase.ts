@@ -97,6 +97,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          booking_type: string
           cancelled_at: string | null
           confirmed_at: string | null
           created_at: string | null
@@ -104,18 +105,26 @@ export type Database = {
           id: string
           lawyer_id: string
           mercadopago_preference_id: string | null
+          needs_manual_review: boolean | null
           payment_id: string | null
           payment_status: string | null
           price: number
-          scheduled_date: string
-          scheduled_time: string
+          requires_meeting: boolean | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          service_delivery_time: string | null
+          service_description: string | null
+          service_id: string | null
+          service_title: string | null
           status: string
           updated_at: string | null
           user_email: string
           user_id: string | null
           user_name: string
+          user_phone: string | null
         }
         Insert: {
+          booking_type?: string
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string | null
@@ -123,18 +132,26 @@ export type Database = {
           id?: string
           lawyer_id: string
           mercadopago_preference_id?: string | null
+          needs_manual_review?: boolean | null
           payment_id?: string | null
           payment_status?: string | null
           price: number
-          scheduled_date: string
-          scheduled_time: string
+          requires_meeting?: boolean | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          service_delivery_time?: string | null
+          service_description?: string | null
+          service_id?: string | null
+          service_title?: string | null
           status?: string
           updated_at?: string | null
           user_email: string
           user_id?: string | null
           user_name: string
+          user_phone?: string | null
         }
         Update: {
+          booking_type?: string
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string | null
@@ -142,16 +159,23 @@ export type Database = {
           id?: string
           lawyer_id?: string
           mercadopago_preference_id?: string | null
+          needs_manual_review?: boolean | null
           payment_id?: string | null
           payment_status?: string | null
           price?: number
-          scheduled_date?: string
-          scheduled_time?: string
+          requires_meeting?: boolean | null
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          service_delivery_time?: string | null
+          service_description?: string | null
+          service_id?: string | null
+          service_title?: string | null
           status?: string
           updated_at?: string | null
           user_email?: string
           user_id?: string | null
           user_name?: string
+          user_phone?: string | null
         }
         Relationships: [
           {

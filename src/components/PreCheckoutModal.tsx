@@ -8,7 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
 
-interface BookingData {
+export interface AppointmentCheckoutData {
+  type: 'appointment';
   lawyer_id: string;
   lawyer_name: string;
   scheduled_date: string;
@@ -17,13 +18,27 @@ interface BookingData {
   price: number;
 }
 
+export interface ServiceCheckoutData {
+  type: 'service';
+  lawyer_id: string;
+  lawyer_name: string;
+  service_id: string;
+  service_title: string;
+  service_description: string;
+  service_delivery_time: string;
+  price: number;
+  requires_meeting: boolean;
+}
+
+export type CheckoutData = AppointmentCheckoutData | ServiceCheckoutData;
+
 interface PreCheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  bookingData: BookingData;
+  checkoutData: CheckoutData;
 }
 
-export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCheckoutModalProps) {
+export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreCheckoutModalProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -31,7 +46,8 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Pre-fill fields and capture user_id if the user is already authenticated
+  const isService = checkoutData.type === 'service';
+
   useEffect(() => {
     const loadSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -55,32 +71,29 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
       toast({
         title: 'Campos requeridos',
         description: 'Por favor completa todos los campos',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast({
         title: 'Email inválido',
         description: 'Por favor ingresa un email válido',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
 
-    // Validar teléfono si se ingresó (opcional pero debe ser válido)
     const phoneTrimmed = phone.trim();
     if (phoneTrimmed) {
-      // Acepta formatos chilenos: +569XXXXXXXX, 569XXXXXXXX, 9XXXXXXXX, 09XXXXXXXX
       const phoneRegex = /^(\+?56)?0?9\d{8}$/;
       if (!phoneRegex.test(phoneTrimmed.replace(/\s/g, ''))) {
         toast({
           title: 'Teléfono inválido',
           description: 'Ingresa un número chileno válido, ej: 912345678',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
@@ -89,163 +102,176 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
     setIsSubmitting(true);
 
     try {
-      // Create booking via API
+      const payload =
+        checkoutData.type === 'service'
+          ? {
+            lawyer_id: checkoutData.lawyer_id,
+            user_id: sessionUserId || undefined,
+            user_email: email,
+            user_name: name,
+            user_phone: phoneTrimmed || undefined,
+            price: checkoutData.price,
+            booking_type: 'service',
+            service_id: checkoutData.service_id,
+            service_title: checkoutData.service_title,
+            service_description: checkoutData.service_description,
+            service_delivery_time: checkoutData.service_delivery_time,
+            requires_meeting: checkoutData.requires_meeting,
+          }
+          : {
+            lawyer_id: checkoutData.lawyer_id,
+            user_id: sessionUserId || undefined,
+            user_email: email,
+            user_name: name,
+            user_phone: phoneTrimmed || undefined,
+            scheduled_date: checkoutData.scheduled_date,
+            scheduled_time: checkoutData.scheduled_time,
+            duration: checkoutData.duration,
+            price: checkoutData.price,
+            booking_type: 'appointment',
+          };
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          lawyer_id: bookingData.lawyer_id,
-          user_id: sessionUserId || undefined,
-          user_email: email,
-          user_name: name,
-          user_phone: phoneTrimmed || undefined,   // WhatsApp para seguimiento de abandono
-          scheduled_date: bookingData.scheduled_date,
-          scheduled_time: bookingData.scheduled_time,
-          duration: bookingData.duration,
-          price: bookingData.price
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la reserva');
+        throw new Error(data.error || data.message || 'Error al crear la reserva');
       }
 
-      // lead_created: Se dispara SOLO después de que el backend confirmó exitosamente la creación
-      // de la reserva. Nunca antes de la respuesta del servidor.
-      // Representa que el usuario completó el formulario de contacto y el lead fue registrado.
       window.gtag?.('event', 'lead_created', {
-        lawyer_id: bookingData.lawyer_id,
-        duration: bookingData.duration,
-        price: bookingData.price
+        lawyer_id: checkoutData.lawyer_id,
+        price: checkoutData.price,
+        booking_type: checkoutData.type,
       });
 
-      // Guardar lead_id en sessionStorage para poder marcar el lead como 'paid'
-      // en BookingSuccessPage después de que Mercado Pago confirme el pago.
       if (data.lead_id) {
         sessionStorage.setItem('pending_lead_id', data.lead_id);
       }
 
-      // Redirect to MercadoPago payment
       if (data.payment_link) {
-        // Log payment started event
         await logPaymentEvent({
           event_type: 'started',
           appointment_id: data.booking_id,
-          amount: bookingData.price,
+          amount: checkoutData.price,
           metadata: {
-            lawyer_id: bookingData.lawyer_id,
-            duration: bookingData.duration,
-            source: 'PreCheckoutModal'
-          }
+            lawyer_id: checkoutData.lawyer_id,
+            source: isService ? 'ServicePreCheckoutModal' : 'PreCheckoutModal',
+            booking_type: checkoutData.type,
+          },
         });
 
-        // begin_checkout: Se dispara SOLO cuando el servidor retornó un payment_link válido
-        // y justo antes de redirigir al usuario a Mercado Pago. Nunca antes.
         window.gtag?.('event', 'begin_checkout', {
           booking_id: data.booking_id,
-          value: bookingData.price,
+          value: checkoutData.price,
           currency: 'CLP',
           items: [{
             item_id: data.booking_id,
-            item_name: `Asesoría con ${bookingData.lawyer_name}`,
-            price: bookingData.price,
-            quantity: 1
-          }]
+            item_name: isService
+              ? checkoutData.service_title
+              : `Asesoría con ${checkoutData.lawyer_name}`,
+            price: checkoutData.price,
+            quantity: 1,
+          }],
         });
 
         window.location.href = data.payment_link;
       } else {
         throw new Error('No se recibió el link de pago');
       }
-
     } catch (error) {
       console.error('Error creating booking:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'No se pudo crear la reserva',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       setIsSubmitting(false);
     }
   };
 
+  const summaryTitle = isService ? checkoutData.service_title : 'Resumen de tu asesoría';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Agenda tu asesoría legal</DialogTitle>
+          <DialogTitle>
+            {isService ? 'Solicitar servicio legal' : 'Agenda tu asesoría legal'}
+          </DialogTitle>
           <DialogDescription>
-            Estás a un paso de hablar con un abogado verificado en el <strong>Poder Judicial</strong> mediante videollamada.
+            {isService
+              ? 'Completa tus datos para pagar de forma segura. El abogado recibirá tu solicitud una vez confirmado el pago.'
+              : 'Estás a un paso de hablar con un abogado verificado en el Poder Judicial mediante videollamada.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="space-y-2">
             <Label htmlFor="name">Nombre completo</Label>
-            <div className="relative">
-              {/* <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
-              <Input
-                id="name"
-                type="text"
-                placeholder="Juan Pérez"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Juan Pérez"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <div className="relative">
-              <Input
-                id="email"
-                type="email"
-                placeholder="juan@ejemplo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isSubmitting}
-                required
-              />
-            </div>
+            <Input
+              id="email"
+              type="email"
+              placeholder="juan@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
+              required
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">
-              {/* <Phone className="h-3.5 w-3.5 text-green-700" /> */}
-              WhatsApp
-              {/* <span className="text-xs text-gray-400 font-normal">(opcional)</span> */}
-            </Label>
-            <div className="relative">
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="912 345 678"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={isSubmitting}
-                inputMode="numeric"
-              />
-            </div>
+            <Label htmlFor="phone">WhatsApp</Label>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="912 345 678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={isSubmitting}
+              inputMode="numeric"
+            />
             <p className="text-xs text-gray-500">
-              Si surge algún problema con tu reserva, podremos contactarte por WhatsApp.
+              Si surge algún problema con tu solicitud, podremos contactarte por WhatsApp.
             </p>
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="text-sm text-blue-800 space-y-1">
-              <p className="font-medium">Resumen de tu asesoría:</p>
-              <p>• Abogado: {bookingData.lawyer_name}</p>
-              <p>• Fecha: {bookingData.scheduled_date}</p>
-              <p>• Hora: {bookingData.scheduled_time}</p>
-              <p>• Duración: {bookingData.duration} minutos</p>
-              <p>• Total: ${bookingData.price.toLocaleString('es-CL')}</p>
-              {/* <p>• Reembolso si el abogado no asiste</p> */}
+              <p className="font-medium">{summaryTitle}</p>
+              <p>• Abogado: {checkoutData.lawyer_name}</p>
+              {isService ? (
+                <>
+                  <p>• Entrega: {checkoutData.service_delivery_time || 'Según acuerdo'}</p>
+                  {checkoutData.service_description && (
+                    <p>• {checkoutData.service_description}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p>• Fecha: {checkoutData.scheduled_date}</p>
+                  <p>• Hora: {checkoutData.scheduled_time}</p>
+                  <p>• Duración: {checkoutData.duration} minutos</p>
+                </>
+              )}
+              <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
             </div>
           </div>
 
@@ -260,7 +286,7 @@ export default function PreCheckoutModal({ isOpen, onClose, bookingData }: PreCh
                 Procesando...
               </>
             ) : (
-              'Confirmar y pagar asesoría'
+              isService ? 'Confirmar y pagar servicio' : 'Confirmar y pagar asesoría'
             )}
           </Button>
 

@@ -60,7 +60,7 @@ if (!ga4MeasurementId || !ga4ApiSecret) {
 // Send GA4 Purchase Event using Measurement Protocol
 const sendGA4PurchaseEvent = async (params) => {
   const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id } = params;
-  
+
   if (!ga4MeasurementId || !ga4ApiSecret) {
     console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
     return;
@@ -68,9 +68,9 @@ const sendGA4PurchaseEvent = async (params) => {
 
   try {
     console.log('[GA4] Sending purchase event', { transaction_id, value, currency, booking_id, lawyer_id, appointment_id });
-    
+
     const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
-    
+
     const payload = {
       client_id: transaction_id, // Use transaction_id as client_id for server-side events
       events: [
@@ -97,7 +97,7 @@ const sendGA4PurchaseEvent = async (params) => {
         }
       ]
     };
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -105,13 +105,13 @@ const sendGA4PurchaseEvent = async (params) => {
       },
       body: JSON.stringify(payload)
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[GA4] Purchase event failed', { status: response.status, error: errorText });
       return;
     }
-    
+
     console.log('[GA4] Purchase event sent successfully', { transaction_id, value, currency });
   } catch (error) {
     console.error('[GA4] Purchase event failed', error);
@@ -263,7 +263,7 @@ app.post('/api/profiles', async (req, res) => {
 // Function to validate RUT verifier digit
 const validateRutDV = (rut) => {
   const cleanRut = normalizeRut(rut);
-  
+
   // Validate basic format
   if (!/^\d{7,8}[0-9K]$/i.test(cleanRut)) {
     return false;
@@ -276,15 +276,15 @@ const validateRutDV = (rut) => {
   // Calculate expected verifier digit
   let sum = 0;
   let multiplier = 2;
-  
+
   for (let i = number.length - 1; i >= 0; i--) {
     sum += parseInt(number.charAt(i)) * multiplier;
     multiplier = multiplier === 7 ? 2 : multiplier + 1;
   }
-  
+
   const calculatedDV = (11 - (sum % 11)) % 11;
   const expectedDV = calculatedDV === 10 ? 'K' : calculatedDV.toString();
-  
+
   return dv === expectedDV;
 };
 
@@ -301,7 +301,7 @@ app.post('/verify-rut', async (req, res) => {
 
   try {
     const isValid = validateRutDV(rut);
-    
+
     return res.json({
       valid: isValid,
       message: isValid ? 'RUT válido' : 'RUT inválido'
@@ -346,7 +346,7 @@ app.post('/verify-lawyer', async (req, res) => {
 
     // URL of the Poder Judicial AJAX search endpoint
     const searchUrl = 'https://www.pjud.cl/ajax/Lawyers/search';
-    
+
     // Prepare form data for the search
     const formData = new URLSearchParams();
     formData.append('dni', rutBody);
@@ -358,76 +358,76 @@ app.post('/verify-lawyer', async (req, res) => {
 
     try {
       // Submit the search form with timeout
-    const searchResponse = await axios.post(searchUrl, formData.toString(), {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html, */*; q=0.01',
-        'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://www.pjud.cl',
-        'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
+      const searchResponse = await axios.post(searchUrl, formData.toString(), {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html, */*; q=0.01',
+          'Accept-Language': 'es-CL,es;q=0.9,en-US;q=0.8,en;q=0.7',
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Origin': 'https://www.pjud.cl',
+          'Referer': 'https://www.pjud.cl/transparencia/busqueda-de-abogados',
         },
         signal: controller.signal,
         timeout: 15000 // Additional timeout for axios
-    });
-      
+      });
+
       clearTimeout(timeoutId);
 
-    // Parse the results
-    const $ = load(searchResponse.data);
-    
-    // Check for "No results" alert
-    if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
-      return res.json({
-        verified: false,
+      // Parse the results
+      const $ = load(searchResponse.data);
+
+      // Check for "No results" alert
+      if ($('.alert-warning').length > 0 && $('.alert-warning').text().includes('No se encontraron registros')) {
+        return res.json({
+          verified: false,
           message: 'No se encontró el abogado en los registros del Poder Judicial',
-        details: {
-          rut: cleanRut,
+          details: {
+            rut: cleanRut,
             nombre: fullName || 'No proporcionado',
-          reason: 'No se encontró en los registros del Poder Judicial'
-        }
-      });
-    }
+            reason: 'No se encontró en los registros del Poder Judicial'
+          }
+        });
+      }
 
-    // Check for success table
-    const resultTable = $('table');
-    
-    if (resultTable.length === 0) {
-      return res.status(500).json({
-        verified: false,
-        message: 'Error al interpretar la respuesta del Poder Judicial',
-        details: { requiresHumanVerification: true }
-      });
-    }
+      // Check for success table
+      const resultTable = $('table');
 
-    // Extract data from the result table
-    const rows = resultTable.find('tbody tr');
-    
-    if (rows.length === 0) {
-      return res.json({
-        verified: false,
-        message: 'No se encontraron resultados válidos en la tabla'
-      });
-    }
+      if (resultTable.length === 0) {
+        return res.status(500).json({
+          verified: false,
+          message: 'Error al interpretar la respuesta del Poder Judicial',
+          details: { requiresHumanVerification: true }
+        });
+      }
 
-    // If we found at least one row, the RUT exists as a lawyer
-    const firstRow = rows.first();
-    const cols = firstRow.find('td');
-      
+      // Extract data from the result table
+      const rows = resultTable.find('tbody tr');
+
+      if (rows.length === 0) {
+        return res.json({
+          verified: false,
+          message: 'No se encontraron resultados válidos en la tabla'
+        });
+      }
+
+      // If we found at least one row, the RUT exists as a lawyer
+      const firstRow = rows.first();
+      const cols = firstRow.find('td');
+
       // Extract nombre from the first column - try multiple methods
       let nombre = 'No disponible';
       if (cols.length >= 1) {
         // Try multiple extraction methods
         // Method 1: Direct text extraction
         nombre = $(cols[0]).text().trim();
-        
+
         // Method 2: If empty, try getting inner HTML and cleaning it
         if (!nombre || nombre === '' || nombre.length < 2) {
           const innerHtml = $(cols[0]).html() || '';
           nombre = innerHtml.replace(/<[^>]*>/g, '').trim();
         }
-        
+
         // Method 3: Try finding text in nested elements
         if (!nombre || nombre === '' || nombre.length < 2) {
           const nestedText = $(cols[0]).find('*').first().text().trim();
@@ -435,10 +435,10 @@ app.post('/verify-lawyer', async (req, res) => {
             nombre = nestedText;
           }
         }
-        
+
         // Clean up any extra whitespace and newlines
         nombre = nombre.replace(/\s+/g, ' ').replace(/\n/g, ' ').trim();
-        
+
         // If still empty or too short, try the entire row text
         if (!nombre || nombre === '' || nombre.length < 2) {
           const rowText = firstRow.text().trim();
@@ -449,24 +449,24 @@ app.post('/verify-lawyer', async (req, res) => {
           }
         }
       }
-    
-    // Check for suspension (Sanción Ejecutoriada Permanente)
-    const rowText = firstRow.text();
-    if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
-      return res.json({
-        verified: false,
-        message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
-        details: {
-          rut: cleanRut,
-            nombre: nombre,
-          reason: 'Abogado suspendido indefinidamente',
-          suspensionType: 'Permanente',
-          suspensionDate: '30-12-9999'
-        }
-      });
-    }
 
-    // **Check if RUT is already registered by another user**
+      // Check for suspension (Sanción Ejecutoriada Permanente)
+      const rowText = firstRow.text();
+      if (rowText.includes('Ejecutoriada') && rowText.includes('30-12-9999')) {
+        return res.json({
+          verified: false,
+          message: 'El abogado se encuentra suspendido (Sanción Ejecutoriada Permanente). No es posible registrarse.',
+          details: {
+            rut: cleanRut,
+            nombre: nombre,
+            reason: 'Abogado suspendido indefinidamente',
+            suspensionType: 'Permanente',
+            suspensionDate: '30-12-9999'
+          }
+        });
+      }
+
+      // **Check if RUT is already registered by another user**
       // Moved AFTER PJUD verification for better performance
       // Only check if RUT was found in PJUD
       const rutVariations = [
@@ -475,56 +475,56 @@ app.post('/verify-lawyer', async (req, res) => {
         cleanRut.replace(/\B(?=(\d{3})+(?!\d))/g, '.'), // 12.345.6789
         `${cleanRut.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${cleanRut.slice(-1)}` // 12.345.678-9
       ];
-      
+
       // Try to find existing RUT using a more efficient query
       const { data: existingProfiles, error: dbError } = await supabase
-      .from('profiles')
-      .select('id, first_name, last_name, rut, user_id')
+        .from('profiles')
+        .select('id, first_name, last_name, rut, user_id')
         .in('rut', rutVariations)
         .limit(10);
 
-    if (dbError) {
-      // Continue with verification even if DB check fails
+      if (dbError) {
+        // Continue with verification even if DB check fails
       } else if (existingProfiles && existingProfiles.length > 0) {
         // Double-check by normalizing RUTs (in case of format variations)
         const existingProfile = existingProfiles.find(profile => {
-        if (!profile.rut) return false;
-        const normalizedProfileRut = normalizeRut(profile.rut);
-        return normalizedProfileRut === cleanRut;
-      });
-
-      if (existingProfile) {
-        // RUT is already registered
-        const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
-        
-        // Format RUT for display (12.345.678-9)
-        const formatRutForDisplay = (rut) => {
-          const clean = rut.replace(/[^0-9kK]/g, '');
-          if (clean.length < 2) return clean;
-          
-          const body = clean.slice(0, -1);
-          const dv = clean.slice(-1);
-          
-          // Add dots every 3 digits from right to left
-          const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-          return `${formatted}-${dv}`;
-        };
-        
-        const formattedRut = formatRutForDisplay(cleanRut);
-        
-        return res.json({
-          verified: false,
-          message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
-          details: {
-            rut: cleanRut,
-            formattedRut,
-            registeredBy: existingName,
-            reason: 'RUT duplicado'
-          }
+          if (!profile.rut) return false;
+          const normalizedProfileRut = normalizeRut(profile.rut);
+          return normalizedProfileRut === cleanRut;
         });
+
+        if (existingProfile) {
+          // RUT is already registered
+          const existingName = `${existingProfile.first_name || ''} ${existingProfile.last_name || ''}`.trim();
+
+          // Format RUT for display (12.345.678-9)
+          const formatRutForDisplay = (rut) => {
+            const clean = rut.replace(/[^0-9kK]/g, '');
+            if (clean.length < 2) return clean;
+
+            const body = clean.slice(0, -1);
+            const dv = clean.slice(-1);
+
+            // Add dots every 3 digits from right to left
+            const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return `${formatted}-${dv}`;
+          };
+
+          const formattedRut = formatRutForDisplay(cleanRut);
+
+          return res.json({
+            verified: false,
+            message: `El RUT ${formattedRut} ya está registrado por ${existingName} en nuestra plataforma.`,
+            details: {
+              rut: cleanRut,
+              formattedRut,
+              registeredBy: existingName,
+              reason: 'RUT duplicado'
+            }
+          });
+        }
       }
-    }
-    
+
       // Ensure nombre is valid before returning
       if (nombre === 'No disponible' || !nombre || nombre.trim().length < 2) {
         // Try one more time with all columns
@@ -540,23 +540,23 @@ app.post('/verify-lawyer', async (req, res) => {
         }
       }
 
-    let lawyerData = {
-      rut: cleanRut,
+      let lawyerData = {
+        rut: cleanRut,
         nombre: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
         nombreCompleto: nombre && nombre !== 'No disponible' ? nombre : 'No disponible',
-      region: cols.length > 2 ? $(cols[2]).text().trim() : '',
-      source: 'Poder Judicial de Chile',
-      verifiedAt: new Date().toISOString()
-    };
+        region: cols.length > 2 ? $(cols[2]).text().trim() : '',
+        source: 'Poder Judicial de Chile',
+        verifiedAt: new Date().toISOString()
+      };
 
-    return res.json({
-      verified: true,
-      message: 'Abogado verificado exitosamente',
-      details: lawyerData
-    });
+      return res.json({
+        verified: true,
+        message: 'Abogado verificado exitosamente',
+        details: lawyerData
+      });
     } catch (axiosError) {
       clearTimeout(timeoutId);
-      
+
       // Handle timeout specifically
       if (axiosError.code === 'ECONNABORTED' || axiosError.message?.includes('aborted') || axiosError.name === 'AbortError') {
         return res.status(408).json({
@@ -565,7 +565,7 @@ app.post('/verify-lawyer', async (req, res) => {
           error: 'timeout'
         });
       }
-      
+
       // Re-throw to be caught by outer catch
       throw axiosError;
     }
@@ -578,7 +578,7 @@ app.post('/verify-lawyer', async (req, res) => {
         error: 'timeout'
       });
     }
-    
+
     return res.status(500).json({
       verified: false,
       message: 'Error al realizar la verificación',
@@ -589,7 +589,7 @@ app.post('/verify-lawyer', async (req, res) => {
 
 // Health check endpoint
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'Server is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
@@ -600,24 +600,24 @@ app.get('/', (req, res) => {
 app.post('/create-payment', async (req, res) => {
   try {
     // Log the incoming request
-    
-    const { 
-      amount, 
+
+    const {
+      amount,
       originalAmount,
-      description, 
-      userId, 
-      lawyerId, 
-      appointmentId, 
-      successUrl, 
-      failureUrl, 
-      pendingUrl, 
-      userEmail, 
-      userName 
+      description,
+      userId,
+      lawyerId,
+      appointmentId,
+      successUrl,
+      failureUrl,
+      pendingUrl,
+      userEmail,
+      userName
     } = req.body;
 
     // Validations
     if ((!amount && !originalAmount) || !appointmentId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing required fields',
         required: ['amount or originalAmount', 'appointmentId'],
         received: { amount, originalAmount, appointmentId }
@@ -633,7 +633,7 @@ app.post('/create-payment', async (req, res) => {
       const guestEmail = userEmail || `guest-${Date.now()}@legalup.cl`;
       const { data: existingUser } = await supabase.auth.admin.listUsers();
       const foundUser = existingUser?.users?.find(u => u.email === guestEmail);
-      
+
       if (foundUser) {
         actualUserId = foundUser.id;
       } else {
@@ -655,7 +655,7 @@ app.post('/create-payment', async (req, res) => {
       const systemEmail = 'sistema@legalup.cl';
       const { data: existingLawyer } = await supabase.auth.admin.listUsers();
       const foundLawyer = existingLawyer?.users?.find(u => u.email === systemEmail);
-      
+
       if (foundLawyer) {
         actualLawyerId = foundLawyer.id;
       } else {
@@ -685,22 +685,22 @@ app.post('/create-payment', async (req, res) => {
     let currency = DEFAULT_CURRENCY;
     // Fetch settings safely
     try {
-    const { data: settingsData } = await supabase
-      .from('platform_settings')
-      .select('client_surcharge_percent, platform_fee_percent, currency')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      const { data: settingsData } = await supabase
+        .from('platform_settings')
+        .select('client_surcharge_percent, platform_fee_percent, currency')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (settingsData) {
-      clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
-      platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
-      currency = settingsData.currency ?? currency;
+      if (settingsData) {
+        clientSurchargePercent = Number(settingsData.client_surcharge_percent ?? clientSurchargePercent);
+        platformFeePercent = Number(settingsData.platform_fee_percent ?? platformFeePercent);
+        currency = settingsData.currency ?? currency;
       }
     } catch (settingsError) {
       console.warn('Could not fetch platform settings (using defaults):', settingsError.message);
     }
-    
+
     /* HARDCODED SETTINGS REMOVED - Logic Restored */
 
     const paymentId = uuidv4();
@@ -735,7 +735,7 @@ app.post('/create-payment', async (req, res) => {
       // service_id removed as it does not exist in current DB schema
       metadata: {  // Store additional data in metadata JSON field
         description: description || 'Consulta Legal',
-      appointment_id: appointmentId,
+        appointment_id: appointmentId,
         client_total: clientAmount,  // Actual amount client pays (with surcharge)
         payment_gateway_id: null
       },
@@ -745,7 +745,7 @@ app.post('/create-payment', async (req, res) => {
 
     // Insert payment into database using SECURE RPC (Bypasses RLS)
     let payment;
-    
+
     try {
       const { data, error } = await supabase.rpc('create_payment_secure', {
         p_id: paymentData.id,
@@ -769,9 +769,9 @@ app.post('/create-payment', async (req, res) => {
         console.error('❌ Supabase RPC INSERT Error:', JSON.stringify(error, null, 2));
         throw error;
       }
-      
+
       // Data from RPC might come differently depending on return type, handling jsonb
-      payment = data; 
+      payment = data;
     } catch (insertError) {
       console.error('❌ Exception during RPC INSERT:', insertError);
       throw insertError;
@@ -803,37 +803,37 @@ app.post('/create-payment', async (req, res) => {
       statement_descriptor: 'LEGALUP',
       ...(webhookUrl ? { notification_url: webhookUrl } : {})
     };
-    
+
     // Create preference using raw fetch to bypass any SDK potential issues
     const mpAccessToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
-    
+
     // DEBUG: Check if token looks like Supabase (JWT starts with eyJ)
     const isJwt = mpAccessToken.startsWith('eyJ');
-    
+
     if (isJwt) {
-        console.error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)!');
-        throw new Error('Server Config Error: MercadoPago Token is invalid');
+      console.error('CRITICAL CONFIG ERROR: VITE_MERCADOPAGO_ACCESS_TOKEN appears to be a Supabase Key (JWT)!');
+      throw new Error('Server Config Error: MercadoPago Token is invalid');
     }
-    
+
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${mpAccessToken}`
-        },
-        body: JSON.stringify(preferenceData)
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${mpAccessToken}`
+      },
+      body: JSON.stringify(preferenceData)
     });
 
     const mpData = await mpResponse.json();
 
     if (!mpResponse.ok) {
-        console.error('--- DEBUG: RAW FETCH FAILED ---', mpData);
-        throw new Error(`MercadoPago API Error: ${mpResponse.status} - ${JSON.stringify(mpData)}`);
+      console.error('--- DEBUG: RAW FETCH FAILED ---', mpData);
+      throw new Error(`MercadoPago API Error: ${mpResponse.status} - ${JSON.stringify(mpData)}`);
     }
 
     // Return the payment link
     const paymentLink = mpData.init_point || mpData.sandbox_init_point;
-    
+
     if (!paymentLink) {
       throw new Error('No payment link received from MercadoPago');
     }
@@ -847,13 +847,13 @@ app.post('/create-payment', async (req, res) => {
 
   } catch (error) {
     console.error('Error in create-payment:', error);
-    
+
     // More detailed error logging
     if (error.response) {
       console.error('MercadoPago API error:', error.response);
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Internal server error',
       details: error.message,
       ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
@@ -863,7 +863,7 @@ app.post('/create-payment', async (req, res) => {
 
 // Test endpoint for CORS
 app.get('/test-cors', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'CORS is working!',
     origin: req.get('origin'),
     timestamp: new Date().toISOString()
@@ -904,77 +904,109 @@ app.post('/api/bookings/create', async (req, res) => {
       user_id,
       user_email,
       user_name,
-      user_phone,          // WhatsApp para seguimiento de abandono
+      user_phone,
       scheduled_date,
       scheduled_time,
       duration,
-      price
+      price,
+      booking_type = 'appointment',
+      service_id,
+      service_title,
+      service_description,
+      service_delivery_time,
+      requires_meeting,
     } = req.body;
 
-    // Validate required fields
-    if (!lawyer_id || !user_email || !user_name || !scheduled_date || !scheduled_time || !duration || !price) {
-      return res.status(400).json({ 
+    const isServiceBooking = booking_type === 'service';
+
+    console.log('[booking/create] body:', req.body);
+
+    console.log('[booking/create] validation', {
+      lawyer_id,
+      user_email,
+      user_name,
+      price,
+      booking_type,
+      service_id,
+    });
+
+    if (!lawyer_id || !user_email || !user_name || !price) {
+      return res.status(400).json({
         error: 'Missing required fields',
-        required: ['lawyer_id', 'user_email', 'user_name', 'scheduled_date', 'scheduled_time', 'duration', 'price']
+        required: ['lawyer_id', 'user_email', 'user_name', 'price'],
       });
     }
 
-    // Validate duration
-    // Validate duration
-    if (![30, 60, 90, 120].includes(duration)) {
+    if (isServiceBooking) {
+      if (!service_id || !service_title) {
+        return res.status(400).json({
+          error: 'Missing service fields',
+          required: ['service_id', 'service_title'],
+        });
+      }
+    } else if (!scheduled_date || !scheduled_time || !duration) {
+      return res.status(400).json({
+        error: 'Missing appointment fields',
+        required: ['scheduled_date', 'scheduled_time', 'duration', 'price'],
+      });
+    }
+
+    const resolvedDuration = isServiceBooking ? (duration || 0) : duration;
+
+    if (!isServiceBooking && ![30, 60, 90, 120].includes(resolvedDuration)) {
       return res.status(400).json({ error: 'Duration must be 30, 60, 90 or 120 minutes' });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(user_email)) {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    // Prevent double-booking: block if slot overlaps an existing booking (pending or confirmed)
-    try {
-      const { data: existingBookings, error: existingError } = await supabase
-        .from('bookings')
-        .select('id, scheduled_time, duration, status')
-        .eq('lawyer_id', lawyer_id)
-        .eq('scheduled_date', scheduled_date)
-        .in('status', ['pending', 'confirmed']);
+    // Prevent double-booking for scheduled appointments only
+    if (!isServiceBooking) {
+      try {
+        const { data: existingBookings, error: existingError } = await supabase
+          .from('bookings')
+          .select('id, scheduled_time, duration, status')
+          .eq('lawyer_id', lawyer_id)
+          .eq('scheduled_date', scheduled_date)
+          .in('status', ['pending', 'confirmed']);
 
-      if (existingError) {
-        console.error('Error checking existing bookings:', existingError);
-      } else if (existingBookings && existingBookings.length > 0) {
-        const parseTimeToMinutes = (timeStr = '') => {
-          const [hh, mm] = String(timeStr).slice(0, 5).split(':').map(Number);
-          if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
-          return hh * 60 + mm;
-        };
+        if (existingError) {
+          console.error('Error checking existing bookings:', existingError);
+        } else if (existingBookings && existingBookings.length > 0) {
+          const parseTimeToMinutes = (timeStr = '') => {
+            const [hh, mm] = String(timeStr).slice(0, 5).split(':').map(Number);
+            if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+            return hh * 60 + mm;
+          };
 
-        const reqStart = parseTimeToMinutes(scheduled_time);
-        const reqDur = Number(duration);
-        const reqEnd = reqStart == null ? null : reqStart + reqDur;
+          const reqStart = parseTimeToMinutes(scheduled_time);
+          const reqDur = Number(resolvedDuration);
+          const reqEnd = reqStart == null ? null : reqStart + reqDur;
 
-        if (reqStart != null && reqEnd != null) {
-          const overlaps = existingBookings.some((b) => {
-            const bStart = parseTimeToMinutes(b.scheduled_time);
-            const bDur = Number(b.duration) || 0;
-            const bEnd = bStart == null ? null : bStart + bDur;
-            if (bStart == null || bEnd == null) return false;
-            return reqStart < bEnd && reqEnd > bStart;
-          });
-
-          if (overlaps) {
-            return res.status(409).json({
-              error: 'Time slot not available',
-              message: 'Este horario ya está reservado. Por favor elige otro.'
+          if (reqStart != null && reqEnd != null) {
+            const overlaps = existingBookings.some((b) => {
+              const bStart = parseTimeToMinutes(b.scheduled_time);
+              const bDur = Number(b.duration) || 0;
+              const bEnd = bStart == null ? null : bStart + bDur;
+              if (bStart == null || bEnd == null) return false;
+              return reqStart < bEnd && reqEnd > bStart;
             });
+
+            if (overlaps) {
+              return res.status(409).json({
+                error: 'Time slot not available',
+                message: 'Este horario ya está reservado. Por favor elige otro.',
+              });
+            }
           }
         }
+      } catch (e) {
+        console.error('Exception checking booking overlap:', e);
       }
-    } catch (e) {
-      console.error('Exception checking booking overlap:', e);
     }
 
-    // Check if lawyer exists
     const { data: lawyer, error: lawyerError } = await supabase
       .from('profiles')
       .select('user_id, first_name, last_name')
@@ -986,23 +1018,38 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(404).json({ error: 'Lawyer not found' });
     }
 
-    // TODO: Check lawyer availability for the selected time slot
-    // This would require querying the lawyer's calendar/bookings
+    const inferRequiresMeeting = () => {
+      if (typeof requires_meeting === 'boolean') return requires_meeting;
+      if (!service_title) return true;
+      const title = service_title.toLowerCase();
+      if (title.includes('consulta')) return true;
+      if (title.includes('videollamada')) return true;
+      if (title.includes('reunión') || title.includes('reunion')) return true;
+      return false;
+    };
 
-    // Create booking record
+    const bookingInsert = {
+      lawyer_id,
+      user_id: user_id || null,
+      user_email,
+      user_name,
+      user_phone: user_phone || null,
+      scheduled_date: isServiceBooking ? null : scheduled_date,
+      scheduled_time: isServiceBooking ? null : scheduled_time,
+      duration: resolvedDuration,
+      price,
+      status: 'pending',
+      booking_type: isServiceBooking ? 'service' : 'appointment',
+      service_id: isServiceBooking ? service_id : null,
+      service_title: isServiceBooking ? service_title : null,
+      service_description: isServiceBooking ? (service_description || null) : null,
+      service_delivery_time: isServiceBooking ? (service_delivery_time || null) : null,
+      requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
+    };
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .insert({
-        lawyer_id,
-        user_id: user_id || null,
-        user_email,
-        user_name,
-        scheduled_date,
-        scheduled_time,
-        duration,
-        price,
-        status: 'pending'
-      })
+      .insert(bookingInsert)
       .select()
       .single();
 
@@ -1011,7 +1058,6 @@ app.post('/api/bookings/create', async (req, res) => {
       return res.status(500).json({ error: 'Failed to create booking' });
     }
 
-    // Track payment start for analytics
     try {
       await supabase.from('payment_events').insert({
         event_type: 'started',
@@ -1020,7 +1066,9 @@ app.post('/api/bookings/create', async (req, res) => {
         metadata: {
           booking_id: booking.id,
           lawyer_id,
-          source: 'booking_create'
+          booking_type: booking.booking_type,
+          service_id: booking.service_id || null,
+          source: isServiceBooking ? 'service_checkout' : 'booking_create',
         },
         user_id: user_id || null,
       });
@@ -1028,11 +1076,6 @@ app.post('/api/bookings/create', async (req, res) => {
       console.error('Failed to track payment start:', trackingError);
     }
 
-    // -------------------------------------------------------
-    // Guardar booking_lead con status 'started'.
-    // Se guarda ANTES de Mercado Pago para capturar leads
-    // que abandonen en el checkout externo.
-    // -------------------------------------------------------
     let leadId = null;
     try {
       const { data: leadData, error: leadError } = await supabase
@@ -1042,12 +1085,12 @@ app.post('/api/bookings/create', async (req, res) => {
           name: user_name,
           email: user_email,
           phone: user_phone || null,
-          selected_date: scheduled_date,
-          selected_time: scheduled_time,
-          duration,
+          selected_date: scheduled_date || null,
+          selected_time: scheduled_time || null,
+          duration: resolvedDuration || null,
           price,
           booking_id: booking.id,
-          status: 'started'
+          status: 'started',
         })
         .select('id')
         .single();
@@ -1061,50 +1104,59 @@ app.post('/api/bookings/create', async (req, res) => {
       console.error('Exception saving booking_lead:', leadErr);
     }
 
-    // Create MercadoPago preference
     const webhookUrl = resolveWebhookUrl(req);
+    const mpItemTitle = isServiceBooking
+      ? `${service_title} — ${lawyer.first_name} ${lawyer.last_name}`
+      : `Asesoría Legal - ${lawyer.first_name} ${lawyer.last_name}`;
+    const mpItemDescription = isServiceBooking
+      ? (service_description || service_title)
+      : `Asesoría legal de ${resolvedDuration} minutos`;
+
     const preferenceData = {
       items: [{
         id: booking.id,
-        title: `Asesoría Legal - ${lawyer.first_name} ${lawyer.last_name}`,
-        description: `Asesoría legal de ${duration} minutos`,
+        title: mpItemTitle,
+        description: mpItemDescription,
         category_id: 'services',
         quantity: 1,
-        unit_price: price
+        unit_price: price,
       }],
       payer: {
         name: user_name,
-        email: user_email
+        email: user_email,
       },
       back_urls: {
         success: `${appUrl}/booking/success?booking_id=${booking.id}`,
         failure: `${appUrl}/booking/failure?booking_id=${booking.id}`,
-        pending: `${appUrl}/booking/pending?booking_id=${booking.id}`
+        pending: `${appUrl}/booking/pending?booking_id=${booking.id}`,
       },
       auto_return: 'approved',
       external_reference: booking.id,
       metadata: {
         booking_id: booking.id,
+        booking_type: booking.booking_type,
         lawyer_id,
         user_id: user_id || null,
         user_email,
         user_name,
-        duration,
-        scheduled_date,
-        scheduled_time
+        service_id: booking.service_id || null,
+        service_title: booking.service_title || null,
+        requires_meeting: booking.requires_meeting,
+        duration: resolvedDuration,
+        scheduled_date: scheduled_date || null,
+        scheduled_time: scheduled_time || null,
       },
       statement_descriptor: 'LEGALUP',
-      ...(webhookUrl ? { notification_url: webhookUrl } : {})
+      ...(webhookUrl ? { notification_url: webhookUrl } : {}),
     };
 
-    // Create preference using MercadoPago API
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
+        Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
       },
-      body: JSON.stringify(preferenceData)
+      body: JSON.stringify(preferenceData),
     });
 
     if (!mpResponse.ok) {
@@ -1115,45 +1167,37 @@ app.post('/api/bookings/create', async (req, res) => {
 
     const mpData = await mpResponse.json();
 
-    // Update booking with MercadoPago preference ID
     await supabase
       .from('bookings')
-      .update({ 
+      .update({
         mercadopago_preference_id: mpData.id,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('id', booking.id);
 
-    // Actualizar lead a 'checkout': el usuario recibió el link y será
-    // redirigido a Mercado Pago. Si no vuelve, quedará como abandonado.
     if (leadId) {
       try {
-        await supabase
-          .from('booking_leads')
-          .update({ status: 'checkout' })
-          .eq('id', leadId);
+        await supabase.from('booking_leads').update({ status: 'checkout' }).eq('id', leadId);
       } catch (leadUpdateErr) {
         console.error('Failed to update booking_lead to checkout:', leadUpdateErr);
       }
     }
 
-    // Return booking and payment link
     const paymentLink = mpData.init_point || mpData.sandbox_init_point;
 
     res.json({
       success: true,
       booking_id: booking.id,
-      lead_id: leadId,          // Exponer al frontend por si necesita actualizarlo
+      lead_id: leadId,
       payment_link: paymentLink,
-      message: 'Booking created successfully'
+      message: isServiceBooking ? 'Service booking created successfully' : 'Booking created successfully',
     });
-
   } catch (error) {
     console.error('Error in /api/bookings/create:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       details: error.message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
     });
   }
 });
@@ -1233,62 +1277,62 @@ app.get('/api/bookings/:bookingId', async (req, res) => {
 // MERCADOPAGO OAUTH PKCE HELPERS
 // ============================================
 function base64URLEncode(str) {
-    return str.toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+  return str.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }
 
 function sha256(buffer) {
-    return crypto.createHash('sha256').update(buffer).digest();
+  return crypto.createHash('sha256').update(buffer).digest();
 }
 
 function generateCodeVerifier() {
-    return base64URLEncode(crypto.randomBytes(32));
+  return base64URLEncode(crypto.randomBytes(32));
 }
 
 function generateCodeChallenge(verifier) {
-    return base64URLEncode(sha256(verifier));
+  return base64URLEncode(sha256(verifier));
 }
 
 // OAuth callback endpoint - receives authorization code from MercadoPago
 app.get('/api/mercadopago/auth-url', async (req, res) => {
-    try {
-        const verifier = generateCodeVerifier();
-        const challenge = generateCodeChallenge(verifier);
-        const state = crypto.randomUUID(); // Generate secure state
-        
-        const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
-        const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
-        const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
+  try {
+    const verifier = generateCodeVerifier();
+    const challenge = generateCodeChallenge(verifier);
+    const state = crypto.randomUUID(); // Generate secure state
 
-        // Store verifier in DB (Cookies fail on Render due to cross-site issues)
-        const { error: dbError } = await supabase
-            .from('auth_states')
-            .insert({ state, code_verifier: verifier });
+    const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+    const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
+    const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
 
-        if (dbError) {
-            console.error('Failed to store PKCE state:', dbError);
-            // Fallback for dev? No, strictly require DB for production stability
-            return res.status(500).json({ error: 'Failed to initialize secure session' });
-        }
+    // Store verifier in DB (Cookies fail on Render due to cross-site issues)
+    const { error: dbError } = await supabase
+      .from('auth_states')
+      .insert({ state, code_verifier: verifier });
 
-        // Build Auth URL
-        const authUrl = new URL('https://auth.mercadopago.com/authorization');
-        authUrl.searchParams.append('client_id', clientId);
-        authUrl.searchParams.append('response_type', 'code');
-        authUrl.searchParams.append('platform_id', 'mp');
-        authUrl.searchParams.append('state', state); // Valid state from DB
-        authUrl.searchParams.append('redirect_uri', redirectUri);
-        authUrl.searchParams.append('code_challenge', challenge);
-        authUrl.searchParams.append('code_challenge_method', 'S256');
-
-        res.json({ url: authUrl.toString() });
-
-    } catch (error) {
-        console.error('Error generating Auth URL:', error);
-        res.status(500).json({ error: 'Failed to generate auth url' });
+    if (dbError) {
+      console.error('Failed to store PKCE state:', dbError);
+      // Fallback for dev? No, strictly require DB for production stability
+      return res.status(500).json({ error: 'Failed to initialize secure session' });
     }
+
+    // Build Auth URL
+    const authUrl = new URL('https://auth.mercadopago.com/authorization');
+    authUrl.searchParams.append('client_id', clientId);
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('platform_id', 'mp');
+    authUrl.searchParams.append('state', state); // Valid state from DB
+    authUrl.searchParams.append('redirect_uri', redirectUri);
+    authUrl.searchParams.append('code_challenge', challenge);
+    authUrl.searchParams.append('code_challenge_method', 'S256');
+
+    res.json({ url: authUrl.toString() });
+
+  } catch (error) {
+    console.error('Error generating Auth URL:', error);
+    res.status(500).json({ error: 'Failed to generate auth url' });
+  }
 });
 
 // OAuth callback endpoint - receives authorization code from MercadoPago
@@ -1309,31 +1353,31 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     // Backend-Initiated: Retrieve verifier from TABLE using state
     let codeVerifier = null;
-    
-    if (state) {
-        const { data: authState, error: stateError } = await supabase
-            .from('auth_states')
-            .select('code_verifier')
-            .eq('state', state)
-            .maybeSingle();
 
-        if (authState) {
-            codeVerifier = authState.code_verifier;
-            // Cleanup: delete used state
-            await supabase.from('auth_states').delete().eq('state', state);
-        } else {
-            console.warn('PKCE State not found in DB:', state);
-        }
+    if (state) {
+      const { data: authState, error: stateError } = await supabase
+        .from('auth_states')
+        .select('code_verifier')
+        .eq('state', state)
+        .maybeSingle();
+
+      if (authState) {
+        codeVerifier = authState.code_verifier;
+        // Cleanup: delete used state
+        await supabase.from('auth_states').delete().eq('state', state);
+      } else {
+        console.warn('PKCE State not found in DB:', state);
+      }
     }
 
     if (!codeVerifier) {
-         console.warn('WARNING: code_verifier is missing. Link might have expired or state is invalid.');
+      console.warn('WARNING: code_verifier is missing. Link might have expired or state is invalid.');
     }
 
     // Build redirect_uri - MUST match exactly what was used in the authorization request
     const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
-    
+
     // Exchange code for access token
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -1343,10 +1387,10 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
       redirect_uri: redirectUri,
     });
 
-    
+
     // Add verifier if present
     if (codeVerifier) {
-        params.append('code_verifier', codeVerifier);
+      params.append('code_verifier', codeVerifier);
     }
 
 
@@ -1364,7 +1408,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
       console.error('MercadoPago Token Exchange Error:', errorText);
-      
+
       let errorDetail = 'token_exchange_failed';
       try {
         const errorJson = JSON.parse(errorText);
@@ -1373,7 +1417,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
         // use default or truncated text
         errorDetail = errorText.substring(0, 100);
       }
-      
+
       const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed&details=${encodeURIComponent(errorDetail)}`);
     }
@@ -1400,7 +1444,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // Get the user_id from the state parameter (if provided) or try to get from session
     // For now, we'll need the frontend to save it, but we can also try to get it from a session
     // Since we don't have session info here, we'll redirect with the data and let frontend save it
-    
+
     // However, we can also save it directly if we have a way to identify the user
     // For security, we'll still redirect with the data but also try to save it server-side if possible
 
@@ -1411,7 +1455,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
     redirectUrl.searchParams.append('mp_email', userData.email || '');
     redirectUrl.searchParams.append('mp_nickname', userData.nickname || '');
-    
+
     // Store tokens temporarily in a secure way (you might want to use sessions instead)
     // For now, we'll pass them to the frontend to complete the connection
     redirectUrl.searchParams.append('mp_access_token', tokenData.access_token);
@@ -1582,7 +1626,7 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
       .eq('id', userId);
 
     if (profileError) {
-       console.warn('Warning: Failed to sync disconnection to profiles table:', profileError);
+      console.warn('Warning: Failed to sync disconnection to profiles table:', profileError);
     }
 
     res.json({ success: true });
@@ -1664,277 +1708,280 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     }
 
     const handleApprovedPayment = async (payment) => {
-        const bookingId = payment.external_reference;
-        const paymentId = payment.id.toString();
-        
-        console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
-        
-        // STEP 1: Payment ingestion - Get booking
-        const { data: booking, error: bookingError } = await supabase
-          .from('bookings')
-          .update({ 
-            status: 'confirmed', 
-            payment_status: 'approved',
-            payment_id: paymentId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', bookingId)
-          .select()
+      const bookingId = payment.external_reference;
+      const paymentId = payment.id.toString();
+
+      console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
+
+      // STEP 1: Payment ingestion - Get booking
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'confirmed',
+          payment_status: 'approved',
+          payment_id: paymentId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bookingId)
+        .select()
+        .maybeSingle();
+
+      if (bookingError || !booking) {
+        console.error('[webhook] step=payment_ingestion status=failed error=' + (bookingError?.message || 'booking not found'));
+        return;
+      }
+
+      console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId);
+
+      // STEP 2: Lawyer resolution (STRICT VALIDATION)
+      console.log('[webhook] step=lawyer_resolution lawyer_id=' + booking.lawyer_id);
+
+      let lawyerEmail = '';
+      let lawyerName = 'Abogado';
+      let lawyerProfile = null;
+
+      try {
+        const { data: lawyerData, error: lawyerError } = await supabase
+          .from('profiles')
+          .select('id, display_name, first_name, last_name, user_id, meet_link')
+          .eq('user_id', booking.lawyer_id)
           .maybeSingle();
 
-        if (bookingError || !booking) {
-          console.error('[webhook] step=payment_ingestion status=failed error=' + (bookingError?.message || 'booking not found'));
-          return;
-        }
-        
-        console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId);
+        if (lawyerError || !lawyerData) {
+          console.error('[webhook] step=lawyer_resolution status=failed error=lawyer_not_found lawyer_id=' + booking.lawyer_id);
 
-        // STEP 2: Lawyer resolution (STRICT VALIDATION)
-        console.log('[webhook] step=lawyer_resolution lawyer_id=' + booking.lawyer_id);
-        
-        let lawyerEmail = '';
-        let lawyerName = 'Abogado';
-        let lawyerProfile = null;
-        
-        try {
-          const { data: lawyerData, error: lawyerError } = await supabase
-            .from('profiles')
-            .select('id, display_name, first_name, last_name, user_id, meet_link')
-            .eq('user_id', booking.lawyer_id)
-            .maybeSingle();
-          
-          if (lawyerError || !lawyerData) {
-            console.error('[webhook] step=lawyer_resolution status=failed error=lawyer_not_found lawyer_id=' + booking.lawyer_id);
-            
-            // Mark booking for manual review
-            await supabase
-              .from('bookings')
-              .update({ needs_manual_review: true })
-              .eq('id', bookingId);
-            
-            console.log('[webhook] step=lawyer_resolution action=marked_manual_review booking_id=' + bookingId);
-            return; // STOP automation flow
-          }
-          
-          lawyerProfile = lawyerData;
-          lawyerName = lawyerProfile.display_name || 
-                       `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() || 
-                       'Abogado';
-          
-          // Get email from auth.users
-          const lawyerAuthId = lawyerProfile.user_id || booking.lawyer_id;
-          if (lawyerAuthId) {
-            const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerAuthId);
-            if (lawyerUser?.user) {
-              lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
-              
-              if (lawyerName === 'Abogado' && lawyerUser.user.user_metadata) {
-                const metaName = lawyerUser.user.user_metadata.full_name || 
-                                 lawyerUser.user.user_metadata.first_name;
-                if (metaName) lawyerName = metaName;
-              }
-            }
-          }
-          
-          console.log('[webhook] step=lawyer_resolution status=ok lawyer_id=' + booking.lawyer_id + ' lawyer_email=' + lawyerEmail);
-        } catch (e) {
-          console.error('[webhook] step=lawyer_resolution status=failed error=exception', e);
+          // Mark booking for manual review
           await supabase
             .from('bookings')
             .update({ needs_manual_review: true })
             .eq('id', bookingId);
-          return;
+
+          console.log('[webhook] step=lawyer_resolution action=marked_manual_review booking_id=' + bookingId);
+          return; // STOP automation flow
         }
 
-        // STEP 3: Booking normalization - Client creation/update
-        console.log('[webhook] step=booking_normalization booking_id=' + bookingId);
-        
-        const userEmail = (booking.user_email || '').trim().toLowerCase();
-        const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
-        const [firstName, ...restName] = userName.split(' ').filter(Boolean);
-        const lastName = restName.length > 0 ? restName.join(' ') : '';
-        let userId = null;
+        lawyerProfile = lawyerData;
+        lawyerName = lawyerProfile.display_name ||
+          `${lawyerProfile.first_name || ''} ${lawyerProfile.last_name || ''}`.trim() ||
+          'Abogado';
 
-        // Check if user exists
-        if (userEmail) {
-          try {
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('email', userEmail)
-              .maybeSingle();
-            
-            if (existingProfile) {
-              userId = existingProfile.id;
+        // Get email from auth.users
+        const lawyerAuthId = lawyerProfile.user_id || booking.lawyer_id;
+        if (lawyerAuthId) {
+          const { data: lawyerUser, error: lawyerError } = await supabase.auth.admin.getUserById(lawyerAuthId);
+          if (lawyerUser?.user) {
+            lawyerEmail = (lawyerUser.user.email || '').trim().toLowerCase();
+
+            if (lawyerName === 'Abogado' && lawyerUser.user.user_metadata) {
+              const metaName = lawyerUser.user.user_metadata.full_name ||
+                lawyerUser.user.user_metadata.first_name;
+              if (metaName) lawyerName = metaName;
             }
-          } catch (lookupError) {
-            console.error('[webhook] step=booking_normalization error=user_lookup', lookupError);
           }
         }
 
-        // Create user if not exists
-        if (userEmail && !userId) {
-          try {
-            const tempPassword = crypto.randomBytes(9).toString('hex');
-            const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-              email: userEmail,
-              password: tempPassword,
-              email_confirm: true,
-              user_metadata: {
-                first_name: firstName || userName,
-                last_name: lastName,
-                full_name: userName,
-                role: 'client',
-                signup_method: 'booking'
-              }
-            });
+        console.log('[webhook] step=lawyer_resolution status=ok lawyer_id=' + booking.lawyer_id + ' lawyer_email=' + lawyerEmail);
+      } catch (e) {
+        console.error('[webhook] step=lawyer_resolution status=failed error=exception', e);
+        await supabase
+          .from('bookings')
+          .update({ needs_manual_review: true })
+          .eq('id', bookingId);
+        return;
+      }
 
-            if (!createError && newUser?.user?.id) {
-              userId = newUser.user.id;
-            }
-          } catch (createError) {
-            console.error('[webhook] step=booking_normalization error=user_creation', createError);
+      // STEP 3: Booking normalization - Client creation/update
+      console.log('[webhook] step=booking_normalization booking_id=' + bookingId);
+
+      const userEmail = (booking.user_email || '').trim().toLowerCase();
+      const userName = booking.user_name?.trim() || (userEmail ? userEmail.split('@')[0] : 'Cliente LegalUp');
+      const [firstName, ...restName] = userName.split(' ').filter(Boolean);
+      const lastName = restName.length > 0 ? restName.join(' ') : '';
+      let userId = null;
+
+      // Check if user exists
+      if (userEmail) {
+        try {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', userEmail)
+            .maybeSingle();
+
+          if (existingProfile) {
+            userId = existingProfile.id;
           }
+        } catch (lookupError) {
+          console.error('[webhook] step=booking_normalization error=user_lookup', lookupError);
         }
+      }
 
-        // Ensure profile exists
-        if (userId && userEmail) {
-          try {
-            const { data: existingProfile } = await supabase
-              .from('profiles')
-              .select('user_id')
-              .eq('user_id', userId)
-              .maybeSingle();
-
-            const baseProfile = {
-              email: userEmail,
-              first_name: firstName || null,
-              last_name: lastName || null,
-              display_name: userName,
+      // Create user if not exists
+      if (userEmail && !userId) {
+        try {
+          const tempPassword = crypto.randomBytes(9).toString('hex');
+          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+            email: userEmail,
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: {
+              first_name: firstName || userName,
+              last_name: lastName,
+              full_name: userName,
               role: 'client',
-              updated_at: new Date().toISOString(),
-            };
-
-            if (existingProfile) {
-              await supabase.from('profiles').update(baseProfile).eq('user_id', userId);
-            } else {
-              await supabase.from('profiles').insert({
-                ...baseProfile,
-                id: userId,
-                user_id: userId,
-                created_at: new Date().toISOString(),
-                has_used_free_consultation: false,
-              });
+              signup_method: 'booking'
             }
-          } catch (profileError) {
-            console.error('[webhook] step=booking_normalization error=profile_update', profileError);
-          }
-        }
-
-        // Associate booking with user
-        if (userId && userEmail) {
-          await supabase
-            .from('bookings')
-            .update({
-              user_id: userId,
-              user_email: userEmail,
-              user_name: userName,
-            })
-            .eq('id', bookingId);
-        }
-        
-        console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
-
-        // Track payment event
-        try {
-          await supabase.from('payment_events').insert({
-            event_type: 'success',
-            amount: payment.transaction_amount,
-            status: 'completed',
-            metadata: {
-              payment_id: paymentId,
-              booking_id: bookingId,
-              source: 'webhook',
-              user_email: userEmail || null
-            },
-            user_id: userId || null,
           });
-        } catch (trackingError) {
-          console.error('[webhook] step=booking_normalization error=payment_event', trackingError);
-        }
 
-        // STEP 4: Appointment creation (with pending_meet_link status)
-        console.log('[webhook] step=appointment_creation booking_id=' + bookingId);
-        
-        let appointmentId = null;
-        if (userId) {
-          try {
-            const { data: existingAppointment } = await supabase
+          if (!createError && newUser?.user?.id) {
+            userId = newUser.user.id;
+          }
+        } catch (createError) {
+          console.error('[webhook] step=booking_normalization error=user_creation', createError);
+        }
+      }
+
+      // Ensure profile exists
+      if (userId && userEmail) {
+        try {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('user_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          const baseProfile = {
+            email: userEmail,
+            first_name: firstName || null,
+            last_name: lastName || null,
+            display_name: userName,
+            role: 'client',
+            updated_at: new Date().toISOString(),
+          };
+
+          if (existingProfile) {
+            await supabase.from('profiles').update(baseProfile).eq('user_id', userId);
+          } else {
+            await supabase.from('profiles').insert({
+              ...baseProfile,
+              id: userId,
+              user_id: userId,
+              created_at: new Date().toISOString(),
+              has_used_free_consultation: false,
+            });
+          }
+        } catch (profileError) {
+          console.error('[webhook] step=booking_normalization error=profile_update', profileError);
+        }
+      }
+
+      // Associate booking with user
+      if (userId && userEmail) {
+        await supabase
+          .from('bookings')
+          .update({
+            user_id: userId,
+            user_email: userEmail,
+            user_name: userName,
+          })
+          .eq('id', bookingId);
+      }
+
+      console.log('[webhook] step=booking_normalization status=ok user_id=' + (userId || 'null'));
+
+      const shouldCreateAppointment = booking.requires_meeting !== false;
+
+      // Track payment event
+      try {
+        await supabase.from('payment_events').insert({
+          event_type: 'success',
+          amount: payment.transaction_amount,
+          status: 'completed',
+          metadata: {
+            payment_id: paymentId,
+            booking_id: bookingId,
+            source: 'webhook',
+            user_email: userEmail || null
+          },
+          user_id: userId || null,
+        });
+      } catch (trackingError) {
+        console.error('[webhook] step=booking_normalization error=payment_event', trackingError);
+      }
+
+      // STEP 4: Appointment creation (only when the service requires a meeting)
+      console.log('[webhook] step=appointment_creation booking_id=' + bookingId + ' requires_meeting=' + shouldCreateAppointment);
+
+      let appointmentId = null;
+      if (shouldCreateAppointment && userId) {
+        try {
+          const { data: existingAppointment } = await supabase
+            .from('appointments')
+            .select('id, meet_link, status')
+            .eq('lawyer_id', booking.lawyer_id)
+            .eq('user_id', userId)
+            .eq('appointment_date', booking.scheduled_date)
+            .eq('appointment_time', booking.scheduled_time)
+            .maybeSingle();
+
+          if (existingAppointment) {
+            appointmentId = existingAppointment.id;
+            console.log('[webhook] step=appointment_creation status=exists appointment_id=' + appointmentId);
+          } else {
+            const { data: newAppointment } = await supabase
               .from('appointments')
-              .select('id, meet_link, status')
-              .eq('lawyer_id', booking.lawyer_id)
-              .eq('user_id', userId)
-              .eq('appointment_date', booking.scheduled_date)
-              .eq('appointment_time', booking.scheduled_time)
+              .insert({
+                lawyer_id: booking.lawyer_id,
+                user_id: userId,
+                email: userEmail,
+                name: userName,
+                appointment_date: booking.scheduled_date,
+                appointment_time: booking.scheduled_time,
+                duration: booking.duration,
+                price: booking.price,
+                status: 'pending_meet_link',
+                consultation_type: 'paid',
+                contact_method: 'platform',
+                currency: 'CLP',
+                meet_status: 'pending',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .select('id')
               .maybeSingle();
 
-            if (existingAppointment) {
-              appointmentId = existingAppointment.id;
-              console.log('[webhook] step=appointment_creation status=exists appointment_id=' + appointmentId);
-            } else {
-              const { data: newAppointment } = await supabase
-                .from('appointments')
-                .insert({
-                  lawyer_id: booking.lawyer_id,
-                  user_id: userId,
-                  email: userEmail,
-                  name: userName,
-                  appointment_date: booking.scheduled_date,
-                  appointment_time: booking.scheduled_time,
-                  duration: booking.duration,
-                  price: booking.price,
-                  status: 'pending_meet_link',
-                  consultation_type: 'paid',
-                  contact_method: 'platform',
-                  currency: 'CLP',
-                  meet_status: 'pending',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                })
-                .select('id')
-                .maybeSingle();
-
-              if (newAppointment) {
-                appointmentId = newAppointment.id;
-                console.log('[webhook] step=appointment_creation status=created appointment_id=' + appointmentId);
-              }
+            if (newAppointment) {
+              appointmentId = newAppointment.id;
+              console.log('[webhook] step=appointment_creation status=created appointment_id=' + appointmentId);
             }
-          } catch (appointmentError) {
-            console.error('[webhook] step=appointment_creation status=failed', appointmentError);
           }
+        } catch (appointmentError) {
+          console.error('[webhook] step=appointment_creation status=failed', appointmentError);
         }
+      }
 
-        // Send GA4 Purchase Event
-        try {
-          await sendGA4PurchaseEvent({
-            transaction_id: paymentId,
-            value: payment.transaction_amount,
-            currency: 'CLP',
-            booking_id: bookingId,
-            lawyer_id: booking.lawyer_id,
-            appointment_id: appointmentId
-          });
-        } catch (ga4Error) {
-          console.error('[webhook] step=ga4_event status=failed', ga4Error);
-        }
+      // Send GA4 Purchase Event
+      try {
+        await sendGA4PurchaseEvent({
+          transaction_id: paymentId,
+          value: payment.transaction_amount,
+          currency: 'CLP',
+          booking_id: bookingId,
+          lawyer_id: booking.lawyer_id,
+          appointment_id: appointmentId
+        });
+      } catch (ga4Error) {
+        console.error('[webhook] step=ga4_event status=failed', ga4Error);
+      }
 
-        // STEP 5: Google Meet generation (ASYNC SAFE)
-        console.log('[webhook] step=meet_generation appointment_id=' + appointmentId);
-        
-        let meetLink = '';
-        let meetStatus = 'fallback';
-        let meetProvider = 'jitsi';
-        
+      // STEP 5: Google Meet generation (only for bookings that require a meeting)
+      console.log('[webhook] step=meet_generation appointment_id=' + appointmentId);
+
+      let meetLink = '';
+      let meetStatus = 'fallback';
+      let meetProvider = 'jitsi';
+
+      if (shouldCreateAppointment) {
         // PRIORITY 1: Use lawyer's fixed meet_link if configured
         if (lawyerProfile?.meet_link) {
           meetLink = lawyerProfile.meet_link;
@@ -1956,16 +2003,16 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               appointmentId,
               lawyerId: booking.lawyer_id
             });
-            
+
             const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meeting', {
               body: { appointmentId }
             });
-            
+
             console.log('[webhook] create-google-meeting result', {
               data: meetData,
               error: meetError
             });
-            
+
             if (!meetError && meetData?.meetLink) {
               meetLink = meetData.meetLink;
               meetProvider = meetData.source || 'jitsi';
@@ -1991,35 +2038,35 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               meet_provider: meetProvider,
               updated_at: new Date().toISOString(),
             };
-            
+
             if (meetLink) {
               updateData.meet_link = meetLink;
               updateData.status = 'confirmed';
             }
-            
+
             // UPDATE (write only)
             const { error: updateError } = await supabase
               .from('appointments')
               .update(updateData)
               .eq('id', appointmentId);
-            
+
             if (updateError) {
               console.error('[webhook] step=meet_generation status=update_failed', updateError);
               throw updateError;
             }
-            
+
             // RE-READ DB explicitly (source of truth)
             const { data: fresh, error: fetchError } = await supabase
               .from('appointments')
               .select('id, meet_link')
               .eq('id', appointmentId)
               .single();
-            
+
             if (fetchError || !fresh) {
               console.error('[webhook] step=meet_generation status=fetch_after_update_failed', fetchError);
               throw new Error('Fetch after update failed');
             }
-            
+
             if (!fresh.meet_link) {
               console.error('[webhook] step=meet_generation status=missing_meet_link_after_update', {
                 appointmentId,
@@ -2027,68 +2074,150 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
               });
               throw new Error('meet_link not persisted');
             }
-            
+
             console.log('[webhook] step=meet_generation status=updated appointment_id=' + appointmentId + ' meet_status=' + meetStatus + ' meet_provider=' + meetProvider + ' meet_link=' + fresh.meet_link);
           } catch (updateError) {
             console.error('[webhook] step=meet_generation status=update_failed', updateError);
             throw updateError;
           }
         }
+      }
 
-        // STEP 6: Email dispatch (ONLY IF CONSISTENT STATE)
-        // CRITICAL: Always re-fetch from DB to ensure fresh data, never use in-memory state
-        console.log('[webhook] step=email_dispatch appointment_id=' + (appointmentId || 'no'));
-        
-        if (appointmentId && resend) {
-          // Re-fetch appointment from DB to get fresh meet_link
-          const { data: freshAppointment, error: fetchError } = await supabase
-            .from('appointments')
-            .select('id, meet_link, meet_provider, meet_status, user_id, lawyer_id')
-            .eq('id', appointmentId)
-            .single();
+      // STEP 6: Email dispatch
+      console.log('[webhook] step=email_dispatch appointment_id=' + (appointmentId || 'no') + ' booking_type=' + (booking.booking_type || 'appointment'));
 
-          if (fetchError || !freshAppointment) {
-            console.error('[webhook] step=email_dispatch status=fetch_failed error=', fetchError);
-            return;
-          }
+      if (!shouldCreateAppointment && resend && userEmail) {
+        const serviceTitle = booking.service_title || 'Servicio legal';
+        const deliveryTime = booking.service_delivery_time || 'Según lo acordado con el abogado';
+        const serviceDescription = booking.service_description || '';
 
-          console.log('[webhook] step=email_dispatch status=fetched_from_db meet_link=' + (freshAppointment.meet_link ? 'yes' : 'no') + ' meet_provider=' + (freshAppointment.meet_provider || 'none'));
+        try {
+          await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: userEmail,
+            subject: 'Tu solicitud de servicio ha sido confirmada',
+            html: `
+                <body style="margin:0;padding:16px;background:#f9fafb;">
+                  <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                    <div style="text-align:center;margin-bottom:28px;">
+                      <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                    </div>
+                    <h1 style="color:#1a202c;">Servicio confirmado</h1>
+                    <p>Hola <strong>${userName || 'Usuario'}</strong>,</p>
+                    <p>Tu pago por <strong>${serviceTitle}</strong> fue recibido correctamente.</p>
+                    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+                      <p style="margin:5px 0;"><strong>Abogado:</strong> ${lawyerName}</p>
+                      <p style="margin:5px 0;"><strong>Servicio:</strong> ${serviceTitle}</p>
+                      ${serviceDescription ? `<p style="margin:5px 0;"><strong>Detalle:</strong> ${serviceDescription}</p>` : ''}
+                      <p style="margin:5px 0;"><strong>Plazo de entrega:</strong> ${deliveryTime}</p>
+                      <p style="margin:5px 0;"><strong>Monto pagado:</strong> $${(booking.price || payment.transaction_amount || 0).toLocaleString('es-CL')} CLP</p>
+                    </div>
+                    <p>El abogado recibirá tu solicitud y se pondrá en contacto contigo para iniciar el trabajo.</p>
+                    <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                      Todos los derechos reservados.<br />
+                      Este es un correo automático, por favor no respondas a este mensaje.
+                    </p>
+                  </div>
+                </body>
+              `,
+          });
+          console.log('[webhook] step=email_dispatch status=sent type=service_client');
+        } catch (emailError) {
+          console.error('[webhook] step=email_dispatch status=failed type=service_client', emailError);
+        }
 
-          // HARD GUARD: Ensure meet_link exists before sending email
-          if (!freshAppointment.meet_link) {
-            console.error('[webhook] step=email_dispatch status=skipped reason=missing_meet_link appointment_id=' + appointmentId);
-            return;
-          }
-
-          const freshMeetLink = freshAppointment.meet_link;
-          const freshMeetProvider = freshAppointment.meet_provider;
-          // Generate Magic Link
-          let magicLink = `${appUrl}/login`;
-          if (userEmail) {
-            try {
-              const { data: linkData } = await supabase.auth.admin.generateLink({
-                type: 'magiclink',
-                email: userEmail,
-                options: {
-                  redirectTo: `${appUrl}/dashboard/appointments`
-                }
-              });
-              
-              if (linkData?.properties?.action_link) {
-                magicLink = linkData.properties.action_link;
-              }
-            } catch (e) {
-              console.error('[webhook] step=email_dispatch error=magic_link', e);
-            }
-          }
-
-          // Send client email
+        if (lawyerEmail) {
           try {
             await resend.emails.send({
               from: 'LegalUp <hola@mg.legalup.cl>',
-              to: userEmail,
-              subject: 'Tu cita ha sido confirmada',
+              to: lawyerEmail,
+              subject: 'Nueva solicitud de servicio pagada',
               html: `
+                  <body style="margin:0;padding:16px;background:#f9fafb;">
+                    <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                      <div style="text-align:center;margin-bottom:28px;">
+                        <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                        <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                      </div>
+                      <h1 style="color:#1a202c;">Nuevo servicio contratado</h1>
+                      <p>Un cliente pagó un servicio a través de LegalUp.</p>
+                      <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+                        <p style="margin:5px 0;"><strong>Cliente:</strong> ${userName}</p>
+                        <p style="margin:5px 0;"><strong>Email:</strong> ${userEmail}</p>
+                        <p style="margin:5px 0;"><strong>Servicio:</strong> ${serviceTitle}</p>
+                        <p style="margin:5px 0;"><strong>Plazo:</strong> ${deliveryTime}</p>
+                        <p style="margin:5px 0;"><strong>Monto:</strong> $${(booking.price || payment.transaction_amount || 0).toLocaleString('es-CL')} CLP</p>
+                      </div>
+                      <div style="text-align: center">
+                        <p>Ingresa a tu panel para gestionar la solicitud.</p>
+                        <a href="${appUrl}/dashboard" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a mi panel</a>
+                      </div>
+                      <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                        © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                        Todos los derechos reservados.<br />
+                        Este es un correo automático, por favor no respondas a este mensaje.
+                      </p>
+                    </div>
+                  </body>
+                `,
+            });
+            console.log('[webhook] step=email_dispatch status=sent type=service_lawyer');
+          } catch (emailError) {
+            console.error('[webhook] step=email_dispatch status=failed type=service_lawyer', emailError);
+          }
+        }
+      } else if (appointmentId && resend) {
+        // Re-fetch appointment from DB to get fresh meet_link
+        const { data: freshAppointment, error: fetchError } = await supabase
+          .from('appointments')
+          .select('id, meet_link, meet_provider, meet_status, user_id, lawyer_id')
+          .eq('id', appointmentId)
+          .single();
+
+        if (fetchError || !freshAppointment) {
+          console.error('[webhook] step=email_dispatch status=fetch_failed error=', fetchError);
+          return;
+        }
+
+        console.log('[webhook] step=email_dispatch status=fetched_from_db meet_link=' + (freshAppointment.meet_link ? 'yes' : 'no') + ' meet_provider=' + (freshAppointment.meet_provider || 'none'));
+
+        // HARD GUARD: Ensure meet_link exists before sending email
+        if (!freshAppointment.meet_link) {
+          console.error('[webhook] step=email_dispatch status=skipped reason=missing_meet_link appointment_id=' + appointmentId);
+          return;
+        }
+
+        const freshMeetLink = freshAppointment.meet_link;
+        const freshMeetProvider = freshAppointment.meet_provider;
+        // Generate Magic Link
+        let magicLink = `${appUrl}/login`;
+        if (userEmail) {
+          try {
+            const { data: linkData } = await supabase.auth.admin.generateLink({
+              type: 'magiclink',
+              email: userEmail,
+              options: {
+                redirectTo: `${appUrl}/dashboard/appointments`
+              }
+            });
+
+            if (linkData?.properties?.action_link) {
+              magicLink = linkData.properties.action_link;
+            }
+          } catch (e) {
+            console.error('[webhook] step=email_dispatch error=magic_link', e);
+          }
+        }
+
+        // Send client email
+        try {
+          await resend.emails.send({
+            from: 'LegalUp <hola@mg.legalup.cl>',
+            to: userEmail,
+            subject: 'Tu cita ha sido confirmada',
+            html: `
                 <body style="margin:0;padding:16px;background:#f9fafb;">
                     <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
                       <div style="text-align:center;margin-bottom:28px;">
@@ -2124,20 +2253,20 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                 </body>
               `
-            });
-            console.log('[webhook] step=email_dispatch status=sent type=client');
-          } catch (emailError) {
-            console.error('[webhook] step=email_dispatch status=failed type=client', emailError);
-          }
+          });
+          console.log('[webhook] step=email_dispatch status=sent type=client');
+        } catch (emailError) {
+          console.error('[webhook] step=email_dispatch status=failed type=client', emailError);
+        }
 
-          // Send lawyer email
-          if (lawyerEmail) {
-            try {
-              await resend.emails.send({
-                from: 'LegalUp <hola@mg.legalup.cl>',
-                to: lawyerEmail,
-                subject: 'Tienes una nueva cita agendada',
-                html: `
+        // Send lawyer email
+        if (lawyerEmail) {
+          try {
+            await resend.emails.send({
+              from: 'LegalUp <hola@mg.legalup.cl>',
+              to: lawyerEmail,
+              subject: 'Tienes una nueva cita agendada',
+              html: `
                   <body style="margin:0;padding:16px;background:#f9fafb;">
                     <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
                       <div style="text-align:center;margin-bottom:28px;">
@@ -2164,7 +2293,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                         </p>
                       </div>
 
-                      <p>Ingresa a tu panel para ver más detalles.</p>
+                      <p style="text-align:center">Ingresa a tu panel para ver más detalles.</p>
                       <div style="text-align: center; margin: 30px 0;">
                         <a href="${appUrl}/dashboard/appointments" style="background-color: #111; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                           Ir a mis citas
@@ -2178,29 +2307,29 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                     </div>
                   </body>
                 `
-              });
-              console.log('[webhook] step=email_dispatch status=sent type=lawyer');
-            } catch (emailError) {
-              console.error('[webhook] step=email_dispatch status=failed type=lawyer', emailError);
-            }
+            });
+            console.log('[webhook] step=email_dispatch status=sent type=lawyer');
+          } catch (emailError) {
+            console.error('[webhook] step=email_dispatch status=failed type=lawyer', emailError);
           }
-        } else {
-          console.log('[webhook] step=email_dispatch status=skipped reason=inconsistent_state meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
         }
+      } else {
+        console.log('[webhook] step=email_dispatch status=skipped reason=inconsistent_state meet_link=' + (meetLink ? 'yes' : 'no') + ' appointment_id=' + (appointmentId || 'no'));
+      }
 
-        // STEP 7: Admin notification (NON-BLOCKING)
-        console.log('[webhook] step=admin_notification status=sending booking_id=' + bookingId);
+      // STEP 7: Admin notification (NON-BLOCKING)
+      console.log('[webhook] step=admin_notification status=sending booking_id=' + bookingId);
 
-        try {
-          const totalAmount = payment.transaction_amount || booking.price || 0;
-          const legalUpCommission = Math.round(totalAmount * 0.30);
-          const lawyerAmount = Math.round(totalAmount * 0.70);
+      try {
+        const totalAmount = payment.transaction_amount || booking.price || 0;
+        const legalUpCommission = Math.round(totalAmount * 0.30);
+        const lawyerAmount = Math.round(totalAmount * 0.70);
 
-          await resend.emails.send({
-            from: 'LegalUp <hola@mg.legalup.cl>',
-            to: 'gigfmedia@icloud.com',
-            subject: 'Nuevo pago recibido en LegalUp',
-            html: `
+        await resend.emails.send({
+          from: 'LegalUp <hola@mg.legalup.cl>',
+          to: 'gigfmedia@icloud.com',
+          subject: 'Nuevo pago recibido en LegalUp',
+          html: `
               <body style="margin:0;padding:16px;background:#f9fafb;">
                 <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
                   <div style="text-align:center;margin-bottom:28px;">
@@ -2237,19 +2366,19 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 </div>
               </body>
             `
-          });
-          console.log('[webhook] step=admin_notification status=sent booking_id=' + bookingId);
-        } catch (adminEmailError) {
-          console.error('[webhook] step=admin_notification status=failed booking_id=' + bookingId, adminEmailError);
-          // DO NOT interrupt main flow - admin email failure is non-critical
-        }
+        });
+        console.log('[webhook] step=admin_notification status=sent booking_id=' + bookingId);
+      } catch (adminEmailError) {
+        console.error('[webhook] step=admin_notification status=failed booking_id=' + bookingId, adminEmailError);
+        // DO NOT interrupt main flow - admin email failure is non-critical
+      }
 
-        console.log('[webhook] step=complete booking_id=' + bookingId + ' appointment_id=' + (appointmentId || 'no') + ' meet_status=' + meetStatus);
+      console.log('[webhook] step=complete booking_id=' + bookingId + ' appointment_id=' + (appointmentId || 'no') + ' meet_status=' + meetStatus);
     };
 
     if ((topic === 'payment' || topic === 'payment.created') && paymentId) {
       console.log('About to fetch payment from MercadoPago', paymentId);
-      
+
       const response = await fetch(
         `https://api.mercadopago.com/v1/payments/${paymentId}`,
         {
@@ -2261,7 +2390,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       const payment = await response.json();
       console.log('MP payment status:', payment.status);
-      
+
       if (payment.status === 'approved') {
         await handleApprovedPayment(payment);
       }
@@ -2319,7 +2448,7 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
           .select('id')
           .eq('email', userEmail)
           .maybeSingle();
-          
+
         if (profile) clientUserId = profile.id;
       } catch (e) {
         console.error('Error looking up user by email (reconcile):', e);
@@ -2449,9 +2578,9 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
     // Verificar si estamos en modo de prueba
     if (testMode) {
       if (!testEmail) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Se requiere un correo de prueba en modo test' 
+        return res.status(400).json({
+          success: false,
+          message: 'Se requiere un correo de prueba en modo test'
         });
       }
 
@@ -2502,8 +2631,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
         `
       });
 
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: 'Correo de prueba enviado correctamente',
         testEmail
       });
@@ -2518,10 +2647,10 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 
     if (profileError) {
       console.error('Error al obtener perfiles de abogados:', profileError);
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: 'Error al obtener la lista de abogados',
-        error: profileError.message 
+        error: profileError.message
       });
     }
 
@@ -2532,10 +2661,10 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 
     if (servicesError) {
       console.error('Error al obtener lawyer_services:', servicesError);
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: 'Error al verificar servicios de abogados',
-        error: servicesError.message 
+        error: servicesError.message
       });
     }
 
@@ -2547,8 +2676,8 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 
     // Si no hay abogados para notificar
     if (!lawyers || lawyers.length === 0) {
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         message: 'No hay abogados sin servicios para notificar',
         count: 0
       });
@@ -2563,58 +2692,58 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
     for (const lawyer of lawyers) {
       try {
         const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado/a';
-        
+
         await resend.emails.send({
           from: 'LegalUp <hola@mg.legalup.cl>',
           to: lawyer.email,
           subject: '¡Aún no has cargado servicios en tu perfil!',
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-              <div style="text-align: center; margin-bottom: 20px;">
-                <img src="https://legalup.cl/assets/logo-200.png" alt="LegalUp" style="max-width: 200px; margin-bottom: 20px;">
-                <h1 style="color: #101820; margin-bottom: 10px;">¡Hola ${fullName}!</h1>
-              </div>
+            <body style="margin:0;padding:16px;background:#f9fafb;">
+              <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+                  <div style="text-align:center;margin-bottom:28px;">
+                      <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+                      <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+                  </div>
+                  <h1 style="color: #101820; margin-bottom: 10px;">Hola ${fullName}.</h1>
+            
+            
+                  <p style="color: #101820; line-height: 1.6; margin-bottom: 20px;">
+                      Hemos notado que aún no has cargado ningún servicio en tu perfil de LegalUp. Para que los clientes puedan encontrarte y contratarte, es importante que completes esta información.
+                  </p>
+                
+                  <div style="text-align: center; margin: 30px 0;">
+                      <a href="${appUrl}/lawyer/services" 
+                        style="background-color: #101820; color: white; padding: 12px 30px; 
+                                text-decoration: none; border-radius: 6px; font-weight: bold; 
+                                display: inline-block; font-size: 16px;">
+                        Agregar mi primer servicio
+                      </a>
+                  </div>
               
-              <p style="color: #101820; line-height: 1.6; margin-bottom: 20px;">
-                Hemos notado que aún no has cargado ningún servicio en tu perfil de LegalUp. Para que los clientes puedan encontrarte y contratarte, es importante que completes esta información.
-              </p>
+                  <p style="color: #101820; line-height: 1.6; margin-bottom: 20px;">
+                      Si necesitas ayuda para configurar tus servicios, no dudes en contactarnos a 
+                      <a href="mailto:juan.fercommerce@gmail.com" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
+                  </p>
               
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${appUrl}/lawyer/services" 
-                   style="background-color: #2563eb; color: white; padding: 12px 30px; 
-                          text-decoration: none; border-radius: 6px; font-weight: bold; 
-                          display: inline-block; font-size: 16px;">
-                  Agregar mi primer servicio
-                </a>
+                  <p style="color: #101820; line-height: 1.6; margin-bottom: 30px;">
+                      ¡Estamos aquí para ayudarte a tener éxito en LegalUp!
+                  </p>
+              
+                  <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+                      © 2026 LegalUp — Asesoría legal online en Chile.<br />
+                      Todos los derechos reservados.<br />
+                      Este es un correo automático de notificación administrativa.
+                  </p>
               </div>
-
-              <p style="color: #101820; line-height: 1.6; margin-bottom: 20px;">
-                Si necesitas ayuda para configurar tus servicios, no dudes en contactarnos a 
-                <a href="mailto:juan.fercommerce@gmail.com" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a>.
-              </p>
-
-              <p style="color: #101820; line-height: 1.6; margin-bottom: 30px;">
-                ¡Estamos aquí para ayudarte a tener éxito en LegalUp!
-              </p>
-
-              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 14px; text-align: center;">
-                <p>© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
-                <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
-                  Si ya has cargado tus servicios, por favor ignora este mensaje.
-                </p>
-                <p style="font-size: 12px; color: #94a3b8; margin-top: 5px;">
-                  Este es un correo automático, por favor no respondas a este mensaje.
-                </p>
-              </div>
-            </div>
+          </body>
           `
         });
-        
+
         successCount++;
-        
+
         // Pequeña pausa para evitar saturar el servicio de envío
         await new Promise(resolve => setTimeout(resolve, 200));
-        
+
       } catch (emailError) {
         console.error(`Error al enviar correo a ${lawyer.email}:`, emailError);
         failCount++;
@@ -2686,18 +2815,18 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 // Error handling middleware
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {
-    return res.status(403).json({ 
+    return res.status(403).json({
       error: 'CORS policy blocked this request',
       allowedOrigins: [
         'https://uplegal.netlify.app',
-        'http://localhost:3000', 
+        'http://localhost:3000',
         'http://localhost:3001'
       ]
     });
   }
-  
+
   console.error('Server error:', error);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Internal server error',
     ...(process.env.NODE_ENV === 'development' && { details: error.message })
   });

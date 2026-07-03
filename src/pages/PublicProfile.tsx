@@ -11,7 +11,6 @@ import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { ContactModal } from "@/components/ContactModal";
 import { ScheduleModal } from "@/components/ScheduleModal";
 import { ServicesSection } from "@/components/ServicesSection";
 import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection";
@@ -180,7 +179,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lawyer, setLawyer] = useState<LawyerWithViews | null>(null);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -196,7 +194,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     : lawyer?.hourly_rate_clp;
   const [authAction, setAuthAction] = useState<(() => void) | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
   const [services, setServices] = useState<ServiceType[]>([]);
   const { toast } = useToast();
 
@@ -231,11 +228,10 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   }, [id, lawyer, location.pathname, navigate]);
 
   // Memoize the handleServiceAction function to prevent unnecessary re-renders
-  const handleServiceAction = useCallback((actionType: 'contact' | 'schedule' | 'book', serviceItem?: ServiceType) => {
+  const handleServiceAction = useCallback((actionType: 'schedule' | 'book', serviceItem?: ServiceType) => {
     if (!serviceItem) return;
 
     if (!currentUser) {
-      // Store the intended action to perform after login
       const pendingAction = {
         type: actionType,
         serviceId: serviceItem.id,
@@ -259,11 +255,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       return;
     }
 
-    if (actionType === 'contact') {
-      setSelectedService(serviceItem);
-      setIsContactModalOpen(true);
-    } else if (actionType === 'schedule') {
-      setSelectedService(serviceItem);
+    if (actionType === 'schedule') {
       setIsScheduleModalOpen(true);
     } else if (actionType === 'book') {
       handleBookService(serviceItem);
@@ -273,8 +265,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
     id,
     setAuthMode,
     setIsAuthModalOpen,
-    setSelectedService,
-    setIsContactModalOpen,
     setIsScheduleModalOpen,
     handleBookService
   ]);
@@ -287,9 +277,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
         try {
           const action = JSON.parse(pendingAction);
           if (action.service) {
-            if (action.type === 'contact') {
-              handleServiceAction('contact', action.service);
-            } else if (action.type === 'schedule') {
+            if (action.type === 'schedule') {
               handleServiceAction('schedule', action.service);
             }
           }
@@ -311,51 +299,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       typeof service.id === 'string'
     );
   };
-
-  // Handle service selection with proper type safety
-  const handleServiceSelect = (service: ServiceType) => {
-    if (service && typeof service === 'object' && 'id' in service) {
-      setSelectedService(service);
-    }
-  };
-
-  // Handle authentication required for actions
-  const handleAuthRequired = (action: 'contact' | 'schedule' | 'book' | 'service', service?: ServiceType) => {
-    // Store the pending action in session storage
-    const pendingAction = { action, service };
-    sessionStorage.setItem('pendingAction', JSON.stringify(pendingAction));
-
-    if (!currentUser) {
-      setAuthMode('login');
-      setIsAuthModalOpen(true);
-      setAuthAction(() => () => {
-        // This will be called after successful login
-        if (action === 'contact') {
-          // Open contact modal after successful login
-          setIsContactModalOpen(true);
-        } else if (action === 'schedule') {
-          setIsScheduleModalOpen(true);
-        } else if (action === 'book' && service) {
-          handleBookService(service);
-        } else if (action === 'service' && service) {
-          setSelectedService(service);
-        }
-      });
-      return;
-    }
-
-    // If user is already authenticated, perform the action directly
-    if (action === 'contact') {
-      setIsContactModalOpen(true);
-    } else if (action === 'schedule') {
-      setIsScheduleModalOpen(true);
-    } else if (action === 'book' && service) {
-      handleBookService(service);
-    } else if (action === 'service' && service) {
-      setSelectedService(service);
-    }
-  };
-
 
   // Parse features from string or array
   const parseFeatures = useCallback((features: string | string[] | null | undefined): string[] => {
@@ -573,7 +516,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           .from('lawyer_services')
           .select('*')
           .eq('lawyer_user_id', lawyer.user_id)
-          .order('created_at', { ascending: false });
+          .order('sort_order', { ascending: true });
 
         if (error) {
           console.error('Error fetching services:', error);
@@ -595,9 +538,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           description: service.description,
           price_clp: service.price_clp,
           delivery_time: service.delivery_time,
-          features: Array.isArray(service.features) 
-            ? service.features 
-            : typeof service.features === 'string' 
+          features: Array.isArray(service.features)
+            ? service.features
+            : typeof service.features === 'string'
               ? service.features.split('\n').filter(Boolean)
               : [],
           available: service.available,
@@ -1407,16 +1350,8 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                   services={services}
                   isLoading={loading}
                   isOwner={currentUser?.id === lawyer?.user_id}
-                  onAuthRequired={() => setIsAuthModalOpen(true)}
                   lawyerId={bookingSlug}
-                  onContactService={(service) => {
-                    if (!currentUser) {
-                      handleAuthRequired('service', service);
-                      return;
-                    }
-                    setSelectedService(service);
-                    setIsContactModalOpen(true);
-                  }}
+                  lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
                 />
               </CardContent>
             </Card>
@@ -1440,17 +1375,6 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
       {/* Modals */}
       {lawyer && (
         <>
-          <ContactModal
-            isOpen={isContactModalOpen}
-            onClose={() => {
-              setSelectedService(null);
-              setIsContactModalOpen(false);
-            }}
-            lawyerId={lawyer.id}
-            lawyerName={`${lawyer.first_name} ${lawyer.last_name}`}
-            service={selectedService}
-          />
-
           <ScheduleModal
             isOpen={isScheduleModalOpen}
             onClose={() => setIsScheduleModalOpen(false)}

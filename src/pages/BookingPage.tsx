@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote } from 'lucide-react';
+import { Calendar, Clock, DollarSign, User, ArrowLeft, ShieldCheck, Loader2, Star, Quote, Globe } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, addDays, startOfDay, parseISO, isBefore, isAfter, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -841,8 +841,13 @@ export default function BookingPage() {
                     <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse"></span>
                     <span>Disponible</span>
                   </Badge>
-                  <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-blue-100 text-blue-800">
-                    Atención en todo Chile
+                  <Badge className="mt-2 mb-2 px-3 py-1.5 inline-flex items-center justify-center gap-2 bg-blue-50 text-blue-700">
+                    <div className="p-[2px]">
+                      <Globe className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="text-xs font-medium">
+                      Atención online en Chile
+                    </span>
                   </Badge>
                 </div>
                 <div className="flex-1 md:w-3/4">
@@ -1103,13 +1108,14 @@ export default function BookingPage() {
           <PreCheckoutModal
             isOpen={showPreCheckout}
             onClose={() => setShowPreCheckout(false)}
-            bookingData={{
+            checkoutData={{
+              type: 'appointment',
               lawyer_id: lawyer.user_id,
               lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
               scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
               scheduled_time: selectedTime,
               duration,
-              price: totalPrice
+              price: totalPrice,
             }}
           />
         )}

@@ -28,7 +28,6 @@ import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
 
 const AuthModal = lazy(() => import("@/components/AuthModal").then(m => ({ default: m.AuthModal })));
-const ContactModal = lazy(() => import("@/components/ContactModal").then(m => ({ default: m.ContactModal })));
 const ScheduleModal = lazy(() => import("@/components/ScheduleModal").then(m => ({ default: m.ScheduleModal })));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 
@@ -37,7 +36,6 @@ const Index = () => {
 
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
@@ -106,9 +104,9 @@ const Index = () => {
 
   // Handle contact click - memoized to prevent re-renders
   const handleContactClick = useCallback((lawyer: Lawyer) => {
-    setSelectedLawyer(lawyer);
-    setShowContactModal(true);
-  }, []);
+    const lawyerId = lawyer.user_id || lawyer.id;
+    navigate(`/booking/${lawyerId}`);
+  }, [navigate]);
 
   // Handle schedule click - memoized to prevent re-renders
   const handleScheduleClick = useCallback((lawyer: Lawyer) => {
@@ -1098,27 +1096,15 @@ const Index = () => {
         </Suspense>
       )}
 
-      {selectedLawyer && (showContactModal || showScheduleModal) && (
+      {selectedLawyer && showScheduleModal && (
         <Suspense fallback={null}>
-          <>
-            {showContactModal && (
-              <ContactModal
-                isOpen={showContactModal}
-                onClose={() => setShowContactModal(false)}
-                lawyerName={selectedLawyer.name}
-                lawyerId={selectedLawyer.id}
-              />
-            )}
-            {showScheduleModal && (
-              <ScheduleModal
-                isOpen={showScheduleModal}
-                onClose={() => setShowScheduleModal(false)}
-                lawyerName={selectedLawyer.name}
-                hourlyRate={selectedLawyer.hourlyRate}
-                lawyerId={selectedLawyer.id || ""}
-              />
-            )}
-          </>
+          <ScheduleModal
+            isOpen={showScheduleModal}
+            onClose={() => setShowScheduleModal(false)}
+            lawyerName={selectedLawyer.name}
+            hourlyRate={selectedLawyer.hourlyRate}
+            lawyerId={selectedLawyer.id || ""}
+          />
         </Suspense>
       )}
     </div>
