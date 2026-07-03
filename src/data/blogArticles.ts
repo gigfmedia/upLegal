@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "control-de-detencion-chile-2026",
+    title: "Control de detención en Chile 2026: qué es, cómo funciona y qué hacer si fuiste detenido",
+    excerpt: "Conoce qué es el control de detención en Chile, cómo funciona la audiencia, cuáles son tus derechos, qué medidas puede decretar el juez y qué hacer si tú o un familiar fueron detenidos.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "2 de Julio, 2026",
+    readTime: "11 min",
+    image: "/assets/control-de-detencion-chile-2026.png"
+  },
+  {
     id: "robo-chile-2026",
     title: "Robo en Chile 2026: tipos, penas y qué hacer si eres víctima o imputado",
     excerpt: "Conoce los tipos de robo en Chile, las penas aplicables, cómo denunciar, cuáles son tus derechos y qué hacer si eres víctima o estás siendo investigado.",

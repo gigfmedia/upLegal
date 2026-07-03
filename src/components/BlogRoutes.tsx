@@ -58,6 +58,7 @@ const ApropiacionIndebidaArticle = lazy(() => import('../pages/blog/apropiacion-
 const OrdenAlejamientoArticle = lazy(() => import('../pages/blog/orden-de-alejamiento-chile-2026'));
 const HurtoArticle = lazy(() => import('../pages/blog/hurto-chile-2026'));
 const RoboArticle = lazy(() => import('../pages/blog/robo-chile-2026'));
+const ControlDetencionArticle = lazy(() => import('../pages/blog/control-de-detencion-chile-2026'));
 
 
 
@@ -124,6 +125,7 @@ export const BlogRoutes = () => (
       <Route path="orden-de-alejamiento-chile-2026" element={<OrdenAlejamientoArticle />} />
       <Route path="hurto-chile-2026" element={<HurtoArticle />} />
       <Route path="robo-chile-2026" element={<RoboArticle />} />
+      <Route path="control-de-detencion-chile-2026" element={<ControlDetencionArticle />} />
 
     </Routes>
   </Suspense>
