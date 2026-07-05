@@ -95,6 +95,8 @@ serve(async (req) => {
 
       if (!step) continue;
 
+      console.log(`[service-rescue] booking=${booking.id} minutes=${minutesSinceCreated.toFixed(1)} step=${step}`);
+
       // Evitar duplicados
       const { data: existing } = await supabase
         .from('service_rescue_emails')
@@ -164,6 +166,8 @@ serve(async (req) => {
             .update({ status: 'sent', sent_at: new Date().toISOString() })
             .eq('id', tracking.id);
         }
+
+        console.log(`[service-rescue] sent booking=${booking.id} step=${step}`);
 
         results.push({ bookingId: booking.id, step, status: 'sent' });
       } catch (err) {
