@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Lawyer, LawyerCard } from '@/components/LawyerCard';
 import { searchLawyers } from '@/pages/api/search-lawyers';
 import { Loader2 } from 'lucide-react';
+import { useInView } from 'react-intersection-observer';
 import { 
   Carousel, 
   CarouselContent, 
@@ -18,6 +19,26 @@ interface RelatedLawyersProps {
 export const RelatedLawyers = ({ category, title = "Habla con un abogado especialista" }: RelatedLawyersProps) => {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.2,
+  });
+
+  useEffect(() => {
+    if (inView && lawyers.length > 0) {
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'related_lawyers_shown', { specialty: category });
+      }
+    }
+  }, [inView, lawyers.length, category]);
+
+  const handleLawyerClick = (lawyerId: string) => {
+    sessionStorage.setItem('has_commercial_intent', 'true');
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category });
+    }
+  };
 
   useEffect(() => {
     const fetchLawyers = async () => {
@@ -77,7 +98,7 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
   const showCarousel = lawyers.length > 3;
 
   return (
-    <section className="mt-4 bg-white border-y border-blue-100 w-full py-16">
+    <section ref={ref} className="mt-4 bg-white border-y border-blue-100 w-full py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
@@ -95,7 +116,7 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
             <CarouselContent className="-ml-4">
               {lawyers.map(lawyer => (
                 <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                  <div className="h-full">
+                  <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id)}>
                     <LawyerCard lawyer={lawyer} />
                   </div>
                 </CarouselItem>
@@ -114,7 +135,9 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {lawyers.map(lawyer => (
-              <LawyerCard key={lawyer.id} lawyer={lawyer} />
+              <div key={lawyer.id} onClickCapture={() => handleLawyerClick(lawyer.id)}>
+                <LawyerCard lawyer={lawyer} />
+              </div>
             ))}
           </div>
         )}
