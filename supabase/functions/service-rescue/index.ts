@@ -108,7 +108,7 @@ serve(async (req) => {
       if (existing) continue;
 
       // Crear tracking
-      const { data: tracking } = await supabase
+      const { data: tracking, error: trackingError } = await supabase
         .from('service_rescue_emails')
         .insert({
           booking_id: booking.id,
@@ -117,7 +117,12 @@ serve(async (req) => {
           sent_to: booking.user_email,
         })
         .select('id')
-        .maybeSingle();
+        .single();
+
+      if (trackingError) {
+        console.error('[service-rescue] Error creating tracking for booking', booking.id, 'step', step, ':', trackingError);
+        continue;
+      }
 
       try {
         // Obtener datos del abogado

@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
@@ -28,6 +29,7 @@ export interface ServiceCheckoutData {
   service_delivery_time: string;
   price: number;
   requires_meeting: boolean;
+  requires_quote: boolean;
 }
 
 export type CheckoutData = AppointmentCheckoutData | ServiceCheckoutData;
@@ -42,11 +44,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const isService = checkoutData.type === 'service';
+  const requiresQuote = isService && checkoutData.requires_quote;
 
   useEffect(() => {
     const loadSession = async () => {
@@ -99,9 +103,59 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       }
     }
 
+    // Validar descripción para servicios que requieren cotización
+    if (requiresQuote && !description.trim()) {
+      toast({
+        title: 'Descripción requerida',
+        description: 'Por favor describe tu situación para que el abogado pueda cotizar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Si requiere cotización, usar el endpoint de quote request
+      if (requiresQuote) {
+        const quotePayload = {
+          lawyer_id: checkoutData.lawyer_id,
+          service_id: checkoutData.service_id,
+          service_title: checkoutData.service_title,
+          user_id: sessionUserId || undefined,
+          user_name: name,
+          user_email: email,
+          user_phone: phoneTrimmed || undefined,
+          description: description.trim(),
+        };
+
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/service-quote-request`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(quotePayload),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Error al enviar la solicitud');
+        }
+
+        toast({
+          title: 'Solicitud enviada',
+          description: 'El abogado revisará tu caso y te enviará un presupuesto personalizado.',
+        });
+
+        onClose();
+        setDescription('');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Flujo normal de booking para servicios fijos y citas
       const payload =
         checkoutData.type === 'service'
           ? {
@@ -201,12 +255,14 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isService ? 'Solicitar servicio legal' : 'Agenda tu asesoría legal'}
+            {requiresQuote ? 'Solicitar evaluación' : (isService ? 'Solicitar servicio legal' : 'Agenda tu asesoría legal')}
           </DialogTitle>
           <DialogDescription>
-            {isService
-              ? 'Completa tus datos para pagar de forma segura. El abogado recibirá tu solicitud una vez confirmado el pago.'
-              : 'Estás a un paso de hablar con un abogado verificado en el Poder Judicial mediante videollamada.'}
+            {requiresQuote
+              ? 'Describe tu situación para que el abogado pueda evaluarte y enviar un presupuesto personalizado.'
+              : (isService
+                ? 'Completa tus datos para pagar de forma segura. El abogado recibirá tu solicitud una vez confirmado el pago.'
+                : 'Estás a un paso de hablar con un abogado verificado en el Poder Judicial mediante videollamada.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -253,6 +309,25 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             </p>
           </div>
 
+          {requiresQuote && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Describe tu situación *</Label>
+              <Textarea
+                id="description"
+                placeholder="¿Hace cuánto están separados? ¿Existen hijos? ¿Existe acuerdo entre las partes? Cualquier otro antecedente importante."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                disabled={isSubmitting}
+                required
+                rows={4}
+                className="resize-none"
+              />
+              <p className="text-xs text-gray-500">
+                Cuéntanos brevemente tu situación para que podamos entregarte una cotización personalizada.
+              </p>
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="text-sm text-blue-800 space-y-1">
               <p className="font-medium">{summaryTitle}</p>
@@ -260,8 +335,20 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
               {isService ? (
                 <>
                   <p>• Entrega: {checkoutData.service_delivery_time || 'Según acuerdo'}</p>
-                  {checkoutData.service_description && (
-                    <p>• {checkoutData.service_description}</p>
+                  {requiresQuote ? (
+                    <>
+                      <p>• Precio: Desde ${checkoutData.price.toLocaleString('es-CL')}</p>
+                      <p className="text-xs text-blue-600 mt-2">
+                        El valor definitivo depende de diversos factores jurídicos que deben ser evaluados por el abogado.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {checkoutData.service_description && (
+                        <p>• {checkoutData.service_description}</p>
+                      )}
+                      <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
+                    </>
                   )}
                 </>
               ) : (
@@ -269,9 +356,9 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
                   <p>• Fecha: {checkoutData.scheduled_date}</p>
                   <p>• Hora: {checkoutData.scheduled_time}</p>
                   <p>• Duración: {checkoutData.duration} minutos</p>
+                  <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
                 </>
               )}
-              <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
             </div>
           </div>
 
@@ -286,13 +373,15 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
                 Procesando...
               </>
             ) : (
-              isService ? 'Confirmar y pagar servicio' : 'Confirmar y pagar asesoría'
+              requiresQuote ? 'Solicitar evaluación' : (isService ? 'Confirmar y pagar servicio' : 'Confirmar y pagar asesoría')
             )}
           </Button>
 
-          <p className="text-sm text-gray-500 text-center">
-            Serás redirigido a Mercado Pago para completar tu pago de forma segura.
-          </p>
+          {!requiresQuote && (
+            <p className="text-sm text-gray-500 text-center">
+              Serás redirigido a Mercado Pago para completar tu pago de forma segura.
+            </p>
+          )}
         </form>
       </DialogContent>
     </Dialog>

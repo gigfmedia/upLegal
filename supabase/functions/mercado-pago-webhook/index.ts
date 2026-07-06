@@ -55,23 +55,52 @@ serve(async (req) => {
 
       const payment = await response.json();
       
-      // Update the payment status in your database
-      const { error } = await supabaseAdmin
-        .from('payments')
-        .update({
-          status: payment.status === 'approved' ? 'succeeded' : payment.status,
-          payment_method: payment.payment_type_id,
-          payment_status: payment.status,
-          metadata: {
-            ...payment,
-            last_webhook: new Date().toISOString(),
-          },
-        })
-        .eq('id', payment.external_reference);
+      // Check if this is a service quote request payment
+      const { data: quoteRequest } = await supabaseAdmin
+        .from('service_quote_requests')
+        .select('id, status, quoted_price')
+        .eq('id', payment.external_reference)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error updating payment:', error);
-        throw new Error('Failed to update payment status');
+      if (quoteRequest) {
+        // Handle service quote request payment
+        if (payment.status === 'approved' && quoteRequest.status !== 'paid') {
+          const { error: updateError } = await supabaseAdmin
+            .from('service_quote_requests')
+            .update({
+              status: 'paid',
+              payment_status: payment.status,
+              payment_id: paymentId,
+              paid_at: new Date().toISOString(),
+            })
+            .eq('id', payment.external_reference);
+
+          if (updateError) {
+            console.error('Error updating quote request:', updateError);
+            throw new Error('Failed to update quote request status');
+          }
+
+          console.log(`Quote request ${payment.external_reference} marked as paid`);
+        }
+      } else {
+        // Handle regular payment (existing logic)
+        const { error } = await supabaseAdmin
+          .from('payments')
+          .update({
+            status: payment.status === 'approved' ? 'succeeded' : payment.status,
+            payment_method: payment.payment_type_id,
+            payment_status: payment.status,
+            metadata: {
+              ...payment,
+              last_webhook: new Date().toISOString(),
+            },
+          })
+          .eq('id', payment.external_reference);
+
+        if (error) {
+          console.error('Error updating payment:', error);
+          throw new Error('Failed to update payment status');
+        }
       }
     }
 

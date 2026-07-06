@@ -19,6 +19,7 @@ interface Service {
   delivery_time: string;
   features: string[];
   available: boolean;
+  requires_quote?: boolean;
 }
 
 interface ServicesSectionProps {
@@ -98,6 +99,7 @@ export function ServicesSection({
       service_delivery_time: service.delivery_time,
       price: getDisplayPrice(service),
       requires_meeting: serviceRequiresMeeting(service.title),
+      requires_quote: service.requires_quote || false,
     });
     setShowCheckout(true);
   };
@@ -137,6 +139,7 @@ export function ServicesSection({
               <h4 className="text-lg font-semibold text-gray-900">{service.title}</h4>
             </div>
             <div className="flex items-end gap-1 mt-4 md:mt-0">
+              {service.requires_quote && <span className="text-sm text-gray-500 mb-1 mr-1">Desde</span>}
               <span className="text-2xl font-bold text-primary">{formatPrice(getDisplayPrice(service))}</span>
               <span className="text-sm text-gray-500 mb-1">CLP</span>
             </div>

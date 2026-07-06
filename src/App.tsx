@@ -71,6 +71,7 @@ const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
+const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
@@ -390,6 +391,7 @@ const AppContent = () => {
                 <Route path="dashboard" element={<LawyerDashboardPage />} />
                 <Route path="services" element={<ServicesPage />} />
                 <Route path="profile" element={<ProfilePage />} />
+                <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
                 {/* <Route path="consultas" element={<ConsultasPage />} /> */}
                 <Route path="citas" element={<CitasPage />} />
                 {/* <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} /> */}

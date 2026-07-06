@@ -40,6 +40,7 @@ export type Database = {
           id: string
           lawyer_user_id: string
           price_clp: number
+          requires_quote: boolean | null
           title: string
           updated_at: string
         }
@@ -52,6 +53,7 @@ export type Database = {
           id?: string
           lawyer_user_id: string
           price_clp: number
+          requires_quote?: boolean | null
           title: string
           updated_at?: string
         }
@@ -60,6 +62,7 @@ export type Database = {
           created_at?: string
           delivery_time?: string | null
           description?: string | null
+          requires_quote?: boolean | null
           features?: string[] | null
           id?: string
           lawyer_user_id?: string

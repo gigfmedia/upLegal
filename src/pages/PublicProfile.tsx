@@ -532,6 +532,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
           delivery_time: string;
           features: string[] | string | null;
           available: boolean;
+          requires_quote?: boolean | null;
         }) => ({
           id: service.id,
           title: service.title,
@@ -544,6 +545,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               ? service.features.split('\n').filter(Boolean)
               : [],
           available: service.available,
+          requires_quote: service.requires_quote || false,
         }));
 
         setServices(servicesData);
