@@ -186,7 +186,7 @@ export const createMercadoPagoPreference = async (req: Request) => {
 
     // Force production environment
     const isProduction = true; // Always use production
-    const baseUrl = 'https://uplegal.netlify.app';
+    const baseUrl = 'https://legalup.cl';
     
     log('MercadoPago Environment', { 
       isProduction, 
@@ -245,10 +245,25 @@ export const createMercadoPagoPreference = async (req: Request) => {
     }));
 
     // Always use production URLs - no sandbox fallback
+    // For services, append lawyer slug to redirect back to lawyer profile after payment
+    const lawyerSlug = requestData.metadata?.lawyer_slug as string | undefined;
+
+    const successUrl = lawyerSlug
+      ? `https://legalup.cl/payment/success?lawyer=${lawyerSlug}`
+      : 'https://legalup.cl/payment/success';
+
+    const failureUrl = lawyerSlug
+      ? `https://legalup.cl/payment/failure?lawyer=${lawyerSlug}`
+      : 'https://legalup.cl/payment/failure';
+
+    const pendingUrl = lawyerSlug
+      ? `https://legalup.cl/payment/pending?lawyer=${lawyerSlug}`
+      : 'https://legalup.cl/payment/pending';
+
     const backUrls = {
-      success: 'https://uplegal.netlify.app/payment/success',
-      failure: 'https://uplegal.netlify.app/payment/failure',
-      pending: 'https://uplegal.netlify.app/payment/pending'
+      success: successUrl,
+      failure: failureUrl,
+      pending: pendingUrl
     };
 
     // Log the environment and URLs for debugging

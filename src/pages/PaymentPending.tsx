@@ -1,10 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, ArrowLeft, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
 
 export default function PaymentPending() {
+  const [searchParams] = useSearchParams();
+  const lawyerSlug = searchParams.get('lawyer');
+
   return (
     <>
       <Header />
@@ -26,9 +29,9 @@ export default function PaymentPending() {
           </div>
           <div className="pt-4">
             <Button asChild className="w-full">
-              <Link to="/dashboard" className="flex items-center justify-center">
+              <Link to={lawyerSlug ? `/abogado/${lawyerSlug}` : '/dashboard'} className="flex items-center justify-center">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Volver al inicio
+                {lawyerSlug ? 'Volver al perfil del abogado' : 'Volver al inicio'}
               </Link>
             </Button>
           </div>

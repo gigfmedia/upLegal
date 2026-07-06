@@ -91,16 +91,12 @@ serve(async (req) => {
         <meta charset="UTF-8">
         <title>Califica al Abogado</title>
       </head>
-      <body>
-        <div style="max-width: 600px; margin: 0 auto; font-family: 'Inter', Arial, sans-serif; color: #101820;">
-          <div style="text-align: center; padding: 30px 20px;">
+        <body style="margin:0;padding:16px;background:#f9fafb;">
+            <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
             <div style="text-align:center;margin-bottom:28px;">
               <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
               <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
             </div>
-          </div>
-          
-          <div style="background-color: #ffffff; padding: 30px; border-radius: 4px; border: 1px solid #e2e8f0;">
             <h1 style="color: #101820; margin: 0 0 20px 0; font-size: 22px;">¡Escribe una reseña!</h1>
             <p style="color: #475569; line-height: 1.6; font-size: 16px;">Hola ${clientFirstName},</p>
             <p style="color: #475569; line-height: 1.6;">Esperamos que tu cita con el abogado <strong>${lawyerData.first_name} ${lawyerData.last_name}</strong> haya sido de gran ayuda.</p>
@@ -113,15 +109,13 @@ serve(async (req) => {
             <p style="color: #666; font-size: 14px; text-align: center;">Este enlace será válido por 7 días.</p>
             <p style="color: #475569; line-height: 1.6; margin: 0; margin-top: 20px;">¡Saludos! 👋</p>
             <p style="color: #475569; line-height: 1.6; margin: 0; font-weight: 500;">Equipo de LegalUp</p>
-          </div>
           
-          <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; line-height: 1.5;">
-            <p style="margin: 5px 0;">Si tienes alguna pregunta, no dudes en contactarnos en <a href="mailto:soporte@legalup.cl" style="color: #2563eb; text-decoration: none;">soporte@legalup.cl</a></p>
-            <p style="margin: 5px 0;">© ${new Date().getFullYear()} LegalUp. Todos los derechos reservados.</p>
-            <p style="margin: 5px 0; font-size: 11px; color: #9ca3af;">Este es un correo automático, por favor no respondas a este mensaje.</p>
-          </div>
-        </div>
-      </body>
+            <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+              © 2026 LegalUp — Asesoría legal online en Chile.<br />
+              Todos los derechos reservados.<br />
+              Este es un correo automático, por favor no respondas a este mensaje.
+            </p>
+        </body>
       </html>
       `
     })

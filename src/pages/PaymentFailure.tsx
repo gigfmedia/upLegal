@@ -13,6 +13,7 @@ export default function PaymentFailure() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const appointmentId = searchParams.get('appointmentId') || searchParams.get('booking_id');
+  const lawyerSlug = searchParams.get('lawyer');
 
   useState(() => {
     // Log initial failure event when landing on this page
@@ -28,7 +29,11 @@ export default function PaymentFailure() {
   });
 
   const handleBack = () => {
-    navigate('/');
+    if (lawyerSlug) {
+      navigate(`/abogado/${lawyerSlug}`);
+    } else {
+      navigate('/');
+    }
   };
 
   const handleRetry = async () => {

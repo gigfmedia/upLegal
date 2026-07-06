@@ -36,6 +36,7 @@ export default function PaymentSuccess() {
   const paymentId = searchParams.get('payment_id');
   const status = searchParams.get('status');
   const externalReference = searchParams.get('external_reference');
+  const lawyerSlug = searchParams.get('lawyer');
   
   // Load pending appointment data from localStorage
   useEffect(() => {
@@ -162,9 +163,15 @@ export default function PaymentSuccess() {
         <div className="space-y-3">
           <Button 
             className="w-full bg-gray-900 hover:bg-green-900"
-            onClick={() => window.location.href = '/dashboard/appointments'}
+            onClick={() => {
+              if (lawyerSlug) {
+                window.location.href = `/abogado/${lawyerSlug}`;
+              } else {
+                window.location.href = '/dashboard/appointments';
+              }
+            }}
           >
-            Ver mis citas
+            {lawyerSlug ? 'Volver al perfil del abogado' : 'Ver mis citas'}
           </Button>
           <Button 
             variant="outline" 

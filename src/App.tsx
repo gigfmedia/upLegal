@@ -70,6 +70,7 @@ const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
+const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
@@ -355,6 +356,7 @@ const AppContent = () => {
               {/* Booking Routes */}
               <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
+              <Route path="/checkout/:bookingId" element={<CheckoutResume />} />
 
 
               {/* Blog Routes */}

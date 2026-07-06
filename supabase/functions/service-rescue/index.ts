@@ -113,7 +113,7 @@ serve(async (req) => {
         .insert({
           booking_id: booking.id,
           step,
-          status: 'sending',
+          status: 'pending',
           sent_to: booking.user_email,
         })
         .select('id')
@@ -121,15 +121,28 @@ serve(async (req) => {
 
       try {
         // Obtener datos del abogado
-        const { data: lawyer } = await supabase
+        const { data: lawyer, error: lawyerError } = await supabase
           .from('profiles')
           .select('first_name, last_name, slug')
           .eq('user_id', booking.lawyer_id)
           .single();
 
+        if (lawyerError) {
+          console.log(`[service-rescue] Error fetching lawyer profile for booking ${booking.id}:`, lawyerError);
+        }
+
         const lawyerName =
           `${lawyer?.first_name ?? ''} ${lawyer?.last_name ?? ''}`.trim() || 'tu abogado';
         const lawyerSlug = lawyer?.slug;
+
+        console.log(`[service-rescue] Lawyer data for booking ${booking.id}:`, {
+          lawyerId: booking.lawyer_id,
+          lawyerName,
+          lawyerSlug,
+          hasLawyerData: !!lawyer,
+          firstName: lawyer?.first_name,
+          lastName: lawyer?.last_name
+        });
 
         // Usar datos congelados del booking (no consultar lawyer_services)
         const serviceTitle = booking.service_title || 'Servicio legal';
@@ -137,11 +150,7 @@ serve(async (req) => {
         const deliveryTime = booking.service_delivery_time || 'A convenir';
 
         // Deep link: ir al checkout pendiente
-        // TODO: cuando exista checkout resume, cambiar este link
-        // Por ahora redirige al perfil del abogado con parámetro resume
-        const deepLink = lawyerSlug 
-          ? `${appUrl}/abogado/${lawyerSlug}?resume=${booking.id}`
-          : `${appUrl}/booking/${booking.lawyer_id}`;
+        const deepLink = `${appUrl}/checkout/${booking.id}`;
 
         const { subject, html } = buildEmail({
           step,
