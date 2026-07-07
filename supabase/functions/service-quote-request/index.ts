@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { Resend } from 'https://esm.sh/resend@2.0.0';
 
 // CORS headers
 const corsHeaders = {
@@ -99,41 +100,48 @@ serve(async (req: Request) => {
 
     console.log('[service-quote-request] Lawyer profile fetched:', lawyer ? 'found' : 'not found');
 
-    // Send email notifications (best-effort, don't fail if emails fail)
-    const emailResults = {
-      client: { sent: false, error: null as string | null },
-      lawyer: { sent: false, error: null as string | null },
-    };
+    if (!lawyer || !lawyer.email) {
+      console.error('[service-quote-request] CRITICAL: Lawyer profile or email is missing for user_id:', body.lawyer_id);
+      return new Response(
+        JSON.stringify({ error: 'Lawyer profile or email not found' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Send confirmation email to client
+    console.log('[service-quote-request] Lawyer email:', lawyer.email);
+    console.log('[service-quote-request] Client email:', body.user_email);
+
+    // Initialize Resend
+    const resendApiKey = getEnv('RESEND_API_KEY');
+    const appUrl = getEnv('APP_URL');
+    console.log('[service-quote-request] RESEND_API_KEY exists:', !!resendApiKey);
+    console.log('[service-quote-request] APP_URL:', appUrl);
+
+    const resend = new Resend(resendApiKey);
+    console.log('[service-quote-request] Resend client initialized');
+
+    // Send email notifications - fail if either email fails
     try {
-      await sendClientConfirmation(body, quoteRequest.id);
-      emailResults.client.sent = true;
-      console.log('[service-quote-request] Client confirmation email sent successfully');
+      console.log('[EMAIL] Starting email sending process...');
+      
+      // Send confirmation email to client
+      console.log('[EMAIL] Sending client email to:', body.user_email);
+      await sendClientConfirmation(resend, body, quoteRequest.id, appUrl);
+      console.log('[EMAIL] Client email sent successfully to:', body.user_email);
+
+      // Send notification email to lawyer
+      console.log('[EMAIL] Sending lawyer email to:', lawyer.email);
+      await sendLawyerNotification(resend, lawyer, body, quoteRequest.id, appUrl);
+      console.log('[EMAIL] Lawyer email sent successfully to:', lawyer.email);
+
+      console.log('[service-quote-request] Both emails sent successfully');
     } catch (error) {
-      emailResults.client.error = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[service-quote-request] Failed to send client email:', error);
+      console.error('[EMAIL ERROR] Failed to send emails:', error);
+      throw error; // Re-throw to ensure 500 response
     }
-
-    // Send notification email to lawyer
-    if (lawyer) {
-      try {
-        await sendLawyerNotification(lawyer, body, quoteRequest.id);
-        emailResults.lawyer.sent = true;
-        console.log('[service-quote-request] Lawyer notification email sent successfully');
-      } catch (error) {
-        emailResults.lawyer.error = error instanceof Error ? error.message : 'Unknown error';
-        console.error('[service-quote-request] Failed to send lawyer email:', error);
-      }
-    } else {
-      emailResults.lawyer.error = 'Lawyer profile not found';
-      console.error('[service-quote-request] Lawyer profile not found for user_id:', body.lawyer_id);
-    }
-
-    console.log('[service-quote-request] Email results:', JSON.stringify(emailResults));
 
     return new Response(
-      JSON.stringify({ success: true, data: quoteRequest, emailResults }),
+      JSON.stringify({ success: true, data: quoteRequest }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -147,15 +155,18 @@ serve(async (req: Request) => {
 });
 
 async function sendLawyerNotification(
+  resend: Resend,
   lawyer: LawyerProfile,
   request: QuoteRequest,
-  quoteRequestId: string
+  quoteRequestId: string,
+  appUrl: string
 ) {
-  const resendApiKey = getEnv('RESEND_API_KEY');
-  const appUrl = getEnv('APP_URL');
+  console.log('[EMAIL LAWYER] Function called with lawyer email:', lawyer.email);
 
   const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado';
   const dashboardUrl = `${appUrl}/lawyer/dashboard/quotes/${quoteRequestId}`;
+
+  console.log('[EMAIL LAWYER] Building HTML email...');
 
   const html = `
     <!DOCTYPE html>
@@ -205,34 +216,38 @@ async function sendLawyerNotification(
     </html>
   `;
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: 'LegalUp <noreply@legalup.cl>',
-      to: lawyer.email,
-      subject: 'Nueva solicitud de presupuesto',
-      html
-    })
-  });
+  console.log('[EMAIL LAWYER] HTML built successfully, preparing to send via Resend SDK...');
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+  const emailPayload = {
+    from: 'LegalUp <noreply@legalup.cl>',
+    to: lawyer.email,
+    subject: 'Nueva solicitud de presupuesto',
+    html
+  };
+
+  console.log('[EMAIL LAWYER] Email payload:', JSON.stringify({ to: emailPayload.to, subject: emailPayload.subject }));
+
+  const { data, error } = await resend.emails.send(emailPayload);
+
+  console.log('[EMAIL LAWYER] Resend SDK response received');
+
+  if (error) {
+    console.error('[EMAIL LAWYER ERROR] Resend SDK error:', error);
+    throw new Error(`Resend SDK error: ${JSON.stringify(error)}`);
   }
 
-  console.log('[service-quote-request] Lawyer email sent to:', lawyer.email);
+  console.log('[EMAIL LAWYER SUCCESS] Lawyer email sent to:', lawyer.email, 'Response:', JSON.stringify(data));
 }
 
 async function sendClientConfirmation(
+  resend: Resend,
   request: QuoteRequest,
-  quoteRequestId: string
+  quoteRequestId: string,
+  appUrl: string
 ) {
-  const resendApiKey = getEnv('RESEND_API_KEY');
-  const appUrl = getEnv('APP_URL');
+  console.log('[EMAIL CLIENT] Function called with client email:', request.user_email);
+
+  console.log('[EMAIL CLIENT] Building HTML email...');
 
   const html = `
     <!DOCTYPE html>
@@ -274,24 +289,25 @@ async function sendClientConfirmation(
     </html>
   `;
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: 'LegalUp <noreply@legalup.cl>',
-      to: request.user_email,
-      subject: 'Solicitud de presupuesto recibida',
-      html
-    })
-  });
+  console.log('[EMAIL CLIENT] HTML built successfully, preparing to send via Resend SDK...');
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+  const emailPayload = {
+    from: 'LegalUp <noreply@legalup.cl>',
+    to: request.user_email,
+    subject: 'Solicitud de presupuesto recibida',
+    html
+  };
+
+  console.log('[EMAIL CLIENT] Email payload:', JSON.stringify({ to: emailPayload.to, subject: emailPayload.subject }));
+
+  const { data, error } = await resend.emails.send(emailPayload);
+
+  console.log('[EMAIL CLIENT] Resend SDK response received');
+
+  if (error) {
+    console.error('[EMAIL CLIENT ERROR] Resend SDK error:', error);
+    throw new Error(`Resend SDK error: ${JSON.stringify(error)}`);
   }
 
-  console.log('[service-quote-request] Client confirmation email sent to:', request.user_email);
+  console.log('[EMAIL CLIENT SUCCESS] Client email sent to:', request.user_email, 'Response:', JSON.stringify(data));
 }
