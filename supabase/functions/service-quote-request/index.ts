@@ -231,7 +231,7 @@ async function sendLawyerNotification(
   console.log('[EMAIL LAWYER] HTML built successfully, preparing to send via Resend SDK...');
 
   const emailPayload = {
-    from: 'LegalUp <noreply@legalup.cl>',
+    from: 'LegalUp <hola@mg.legalup.cl>',
     to: lawyer.email,
     subject: 'Nueva solicitud de presupuesto',
     html
@@ -304,7 +304,7 @@ async function sendClientConfirmation(
   console.log('[EMAIL CLIENT] HTML built successfully, preparing to send via Resend SDK...');
 
   const emailPayload = {
-    from: 'LegalUp <noreply@legalup.cl>',
+    from: 'LegalUp <hola@mg.legalup.cl>',
     to: request.user_email,
     subject: 'Solicitud de presupuesto recibida',
     html
