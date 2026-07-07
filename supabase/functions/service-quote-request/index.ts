@@ -92,16 +92,29 @@ serve(async (req: Request) => {
     }
 
     // Fetch lawyer profile for email notification
-    const { data: lawyer } = await supabase
+    console.log('[service-quote-request] Fetching lawyer profile for user_id:', body.lawyer_id);
+    
+    const { data: lawyer, error: lawyerError } = await supabase
       .from('profiles')
       .select('email, first_name, last_name, slug')
       .eq('user_id', body.lawyer_id)
       .single();
 
-    console.log('[service-quote-request] Lawyer profile fetched:', lawyer ? 'found' : 'not found');
+    console.log('[service-quote-request] Lawyer profile fetch result:', lawyer ? 'found' : 'not found');
+    console.log('[service-quote-request] Lawyer profile fetch error:', lawyerError ? JSON.stringify(lawyerError) : 'none');
+    
+    if (lawyer) {
+      console.log('[service-quote-request] Lawyer profile data:', JSON.stringify({ 
+        email: lawyer.email, 
+        first_name: lawyer.first_name, 
+        last_name: lawyer.last_name 
+      }));
+    }
 
     if (!lawyer || !lawyer.email) {
       console.error('[service-quote-request] CRITICAL: Lawyer profile or email is missing for user_id:', body.lawyer_id);
+      console.error('[service-quote-request] Lawyer exists:', !!lawyer);
+      console.error('[service-quote-request] Lawyer email exists:', lawyer?.email);
       return new Response(
         JSON.stringify({ error: 'Lawyer profile or email not found' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
