@@ -61,7 +61,7 @@ const RoboArticle = lazy(() => import('../pages/blog/robo-chile-2026'));
 const ControlDetencionArticle = lazy(() => import('../pages/blog/control-de-detencion-chile-2026'));
 const ViolenciaCarabinerosDesordenesPublicosArticle = lazy(() => import('../pages/blog/violencia-carabineros-desordenes-publicos-chile-2026'));
 const ViolacionMoradaArticle = lazy(() => import('../pages/blog/violacion-de-morada-chile-2026'));
-
+const ReceptacionArticle = lazy(() => import('../pages/blog/receptacion-en-chile-2026'));
 
 
 export const BlogRoutes = () => (
@@ -130,6 +130,7 @@ export const BlogRoutes = () => (
       <Route path="control-de-detencion-chile-2026" element={<ControlDetencionArticle />} />
       <Route path="violencia-contra-carabineros-desordenes-publicos-chile-2026" element={<ViolenciaCarabinerosDesordenesPublicosArticle />} />
       <Route path="violacion-de-morada-chile-2026" element={<ViolacionMoradaArticle />} />
+      <Route path="receptacion-chile-2026" element={<ReceptacionArticle />} />
 
     </Routes>
   </Suspense>

@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "receptacion-chile-2026",
+    title: "Receptación en Chile 2026: qué es este delito y cuáles son las penas",
+    excerpt: "Conoce qué es el delito de receptación en Chile, cuándo se configura, cuáles son las penas aplicables, qué ocurre si compraste un objeto robado y cómo funciona la investigación penal.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "7 de Julio, 2026",
+    readTime: "11 min",
+    image: "/assets/receptacion-chile-2026.png"
+  },
+  {
     id: "violacion-de-morada-chile-2026",
     title: "Violación de morada en Chile 2026: cuándo es delito y cuáles son las penas",
     excerpt: "Conoce qué es la violación de morada en Chile, cuándo constituye un delito, cuáles son las penas aplicables, cómo denunciar y qué hacer si eres víctima o estás siendo investigado.",
