@@ -36,7 +36,6 @@ interface LawyerProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  slug: string | null;
 }
 
 serve(async (req: Request) => {
@@ -96,7 +95,7 @@ serve(async (req: Request) => {
     
     const { data: lawyer, error: lawyerError } = await supabase
       .from('profiles')
-      .select('email, first_name, last_name, slug')
+      .select('email, first_name, last_name')
       .eq('user_id', body.lawyer_id)
       .single();
 
