@@ -97,13 +97,43 @@ serve(async (req: Request) => {
       .eq('user_id', body.lawyer_id)
       .single();
 
-    if (lawyer) {
-      // Send email notification to lawyer
-      await sendLawyerNotification(lawyer, body, quoteRequest.id);
+    console.log('[service-quote-request] Lawyer profile fetched:', lawyer ? 'found' : 'not found');
+
+    // Send email notifications (best-effort, don't fail if emails fail)
+    const emailResults = {
+      client: { sent: false, error: null as string | null },
+      lawyer: { sent: false, error: null as string | null },
+    };
+
+    // Send confirmation email to client
+    try {
+      await sendClientConfirmation(body, quoteRequest.id);
+      emailResults.client.sent = true;
+      console.log('[service-quote-request] Client confirmation email sent successfully');
+    } catch (error) {
+      emailResults.client.error = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[service-quote-request] Failed to send client email:', error);
     }
 
+    // Send notification email to lawyer
+    if (lawyer) {
+      try {
+        await sendLawyerNotification(lawyer, body, quoteRequest.id);
+        emailResults.lawyer.sent = true;
+        console.log('[service-quote-request] Lawyer notification email sent successfully');
+      } catch (error) {
+        emailResults.lawyer.error = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[service-quote-request] Failed to send lawyer email:', error);
+      }
+    } else {
+      emailResults.lawyer.error = 'Lawyer profile not found';
+      console.error('[service-quote-request] Lawyer profile not found for user_id:', body.lawyer_id);
+    }
+
+    console.log('[service-quote-request] Email results:', JSON.stringify(emailResults));
+
     return new Response(
-      JSON.stringify({ success: true, data: quoteRequest }),
+      JSON.stringify({ success: true, data: quoteRequest, emailResults }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -175,7 +205,7 @@ async function sendLawyerNotification(
     </html>
   `;
 
-  await fetch('https://api.resend.com/emails', {
+  const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${resendApiKey}`,
@@ -188,4 +218,80 @@ async function sendLawyerNotification(
       html
     })
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+  }
+
+  console.log('[service-quote-request] Lawyer email sent to:', lawyer.email);
+}
+
+async function sendClientConfirmation(
+  request: QuoteRequest,
+  quoteRequestId: string
+) {
+  const resendApiKey = getEnv('RESEND_API_KEY');
+  const appUrl = getEnv('APP_URL');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Solicitud de presupuesto recibida</title>
+      </head>
+      <body style="margin:0;padding:16px;background:#f9fafb;">
+        <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+          <div style="text-align:center;margin-bottom:28px;">
+            <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+            <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+          </div>
+          
+          <h1 style="color:#101820;margin:0 0 20px 0;font-size:22px;">Solicitud de presupuesto recibida</h1>
+          
+          <p style="color:#475569;line-height:1.6;font-size:16px;">Hola ${request.user_name},</p>
+          <p style="color:#475569;line-height:1.6;">Hemos recibido tu solicitud de presupuesto para el servicio <strong>${request.service_title}</strong>.</p>
+          
+          <div style="background:#f9fafb;padding:20px;border-radius:8px;margin:24px 0;border:1px solid #e5e7eb;">
+            <p style="margin:0 0 12px 0;color:#111827;font-weight:600;">Servicio solicitado</p>
+            <p style="margin:0 0 12px 0;color:#475569;">${request.service_title}</p>
+            
+            <p style="margin:12px 0 8px 0;color:#111827;font-weight:600;">Tu descripción</p>
+            <p style="margin:0;color:#475569;">${request.description}</p>
+          </div>
+          
+          <p style="color:#475569;line-height:1.6;">El abogado revisará tu caso y te enviará un presupuesto personalizado a tu correo electrónico.</p>
+          <p style="color:#475569;line-height:1.6;">Si tienes preguntas adicionales, puedes responder directamente a este correo.</p>
+          
+          <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+            © 2026 LegalUp — Asesoría legal online en Chile.<br />
+            Todos los derechos reservados.<br />
+            Este es un correo automático, por favor no respondas a este mensaje.
+          </p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'LegalUp <noreply@legalup.cl>',
+      to: request.user_email,
+      subject: 'Solicitud de presupuesto recibida',
+      html
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+  }
+
+  console.log('[service-quote-request] Client confirmation email sent to:', request.user_email);
 }
