@@ -13,12 +13,12 @@ const corsHeaders = {
 };
 
 // Helper function to get environment variables
-function getEnv(key: string): string {
+function getEnv(key: string, defaultValue?: string): string {
   const value = Deno.env.get(key);
-  if (!value) {
+  if (!value && !defaultValue) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
-  return value;
+  return value || defaultValue || '';
 }
 
 interface QuoteRequest {
@@ -125,7 +125,7 @@ serve(async (req: Request) => {
 
     // Initialize Resend
     const resendApiKey = getEnv('RESEND_API_KEY');
-    const appUrl = getEnv('APP_URL');
+    const appUrl = getEnv('APP_URL', 'https://legalup.cl');
     console.log('[service-quote-request] RESEND_API_KEY exists:', !!resendApiKey);
     console.log('[service-quote-request] APP_URL:', appUrl);
 
