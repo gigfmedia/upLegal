@@ -11,6 +11,16 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "violacion-de-morada-chile-2026",
+    title: "Violación de morada en Chile 2026: cuándo es delito y cuáles son las penas",
+    excerpt: "Conoce qué es la violación de morada en Chile, cuándo constituye un delito, cuáles son las penas aplicables, cómo denunciar y qué hacer si eres víctima o estás siendo investigado.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "6 de Julio, 2026",
+    readTime: "11 min",
+    image: "/assets/violacion-de-morada-chile-2026.png"
+  },
+  {
     id: "violencia-contra-carabineros-desordenes-publicos-chile-2026",
     title: "Violencia contra Carabineros y desórdenes públicos en Chile 2026: derechos, detención y defensa penal",
     excerpt: "Conoce cómo funciona una investigación por violencia contra Carabineros o desórdenes públicos en Chile, qué ocurre durante el control de detención, cuáles son tus derechos y qué hacer si fuiste detenido.",

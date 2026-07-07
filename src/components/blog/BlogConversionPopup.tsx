@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, CheckCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface BlogConversionPopupProps {
   category?: string;
@@ -128,9 +128,9 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
               </p>
               
               <ul className="text-xs text-gray-600 space-y-1 mb-2">
-                <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-600" /> Videollamada online</li>
-                <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-600" /> Precio transparente</li>
-                <li className="flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-green-600" /> Agenda inmediata</li>
+                <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Videollamada online</li>
+                <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Precio transparente</li>
+                <li className="flex items-center gap-1.5"><span className="text-green-600">✓</span> Agenda inmediata</li>
               </ul>
 
               <div className="w-full">
@@ -166,9 +166,9 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
               </p>
               
               <ul className="text-sm text-gray-600 space-y-1.5 mb-2">
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Videollamada online</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Precio transparente</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Agenda inmediata</li>
+                <li className="flex items-center gap-2"><span className="text-green-600">✓</span> Videollamada online</li>
+                <li className="flex items-center gap-2"><span className="text-green-600">✓</span> Precio transparente</li>
+                <li className="flex items-center gap-2"><span className="text-green-600">✓</span> Agenda inmediata</li>
               </ul>
 
               <div className="w-full pt-2">

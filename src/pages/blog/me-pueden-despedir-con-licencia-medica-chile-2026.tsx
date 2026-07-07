@@ -385,7 +385,7 @@ const BlogArticle = () => {
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="bg-gray-50 rounded-lg p-6">
+                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
                   <p className="text-gray-700">{faq.answer}</p>
                 </div>
@@ -393,30 +393,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Section */}
-        <section className="bg-white sm:rounded-xl sm:shadow-sm p-8 text-center mt-8 border-t sm:border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Te despidieron con licencia médica y no sabes si fue legal?</h2>
-          <p className="text-base text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Un abogado laboral puede revisar tu situación y decirte qué opciones tienes hoy.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Laboral">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'click_consultar_abogado', {
-                    article: window.location.pathname,
-                    location: 'blog_cta_licencia_primary',
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Consultar sobre mi caso
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Laboral" />

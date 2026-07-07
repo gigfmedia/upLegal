@@ -10,11 +10,11 @@ interface InArticleCTAProps {
   buttonText?: string;
 }
 
-const InArticleCTA: React.FC<InArticleCTAProps> = ({ 
+const InArticleCTA: React.FC<InArticleCTAProps> = ({
   category = "Derecho Laboral"
 }) => {
   const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
-  
+
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.5,
@@ -36,23 +36,23 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   };
 
   return (
-    <div ref={ref} className="my-10 p-6 border border-gray-100 bg-gray-50 rounded-xl text-left">
-      <h3 className="text-lg font-bold text-gray-900 mb-2">¿Necesitas ayuda con este caso?</h3>
+    <div ref={ref} className="my-10 p-8 border border-gray-200 bg-gray-50 rounded-2xl text-center shadow-sm">
+      <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">¿Necesitas ayuda con este caso?</h3>
       <p className="text-gray-700 mb-4 font-medium">
         Habla con un abogado especialista en {category}.
       </p>
-      
-      <div className="flex flex-col sm:flex-row gap-4 mb-5">
-        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-          <CheckCircle className="h-4 w-4 text-green-600" /> Videollamada online
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-5 justify-center">
+        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+          <span className="text-green-600">✓</span> Videollamada online
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-600">
-          <CheckCircle className="h-4 w-4 text-green-600" /> Precio transparente
+        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+          <span className="text-green-600">✓</span> Precio transparente
         </div>
       </div>
 
       <Link to={targetUrl} onClick={handleCTA} className="inline-block w-full sm:w-auto">
-        <Button 
+        <Button
           className="bg-gray-900 hover:bg-green-900 text-white px-6 h-11 rounded-lg transition-all shadow-sm active:scale-95 w-full sm:w-auto font-bold"
         >
           Ver abogados disponibles

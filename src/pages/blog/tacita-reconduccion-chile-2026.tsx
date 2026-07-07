@@ -528,13 +528,13 @@ const BlogArticle = () => {
               category="Derecho Inmobiliario"
             /> */}
           </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La tacita reconducción cambia tus derechos como arrendador. Compara abogados especializados antes de actuar por tu cuenta."
             link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
-
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
