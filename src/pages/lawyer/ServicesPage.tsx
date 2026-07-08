@@ -17,9 +17,10 @@ interface Service {
   title: string;
   description: string;
   price_clp: number;
-  delivery_time: string; // Asegurando que sea string según el esquema de la base de datos
+  delivery_time: string;
   features: string[];
   available?: boolean;
+  requires_quote?: boolean;
   lawyer_user_id?: string;
   created_at?: string;
   updated_at?: string;
@@ -34,6 +35,7 @@ interface EditingService {
   delivery_days: string;
   features: string;
   available: boolean;
+  requires_quote: boolean;
 }
 
 export default function ServicesPage() {
@@ -54,7 +56,8 @@ export default function ServicesPage() {
     duration: '',
     delivery_days: '',
     features: '',
-    available: true
+    available: true,
+    requires_quote: false
   });
 
   // Fetch services from Supabase
@@ -96,7 +99,8 @@ export default function ServicesPage() {
       duration: '',
       delivery_days: '',
       features: '',
-      available: true
+      available: true,
+      requires_quote: false
     });
     setIsModalOpen(true);
   };
@@ -135,7 +139,8 @@ export default function ServicesPage() {
       duration: parsedDuration,
       delivery_days: parsedDays,
       features: Array.isArray(service.features) ? service.features.join('\n') : '',
-      available: service.available !== false
+      available: service.available !== false,
+      requires_quote: service.requires_quote === true
     });
     setIsModalOpen(true);
   };
@@ -149,7 +154,8 @@ export default function ServicesPage() {
       duration: '',
       delivery_days: '',
       features: '',
-      available: true
+      available: true,
+      requires_quote: false
     });
     setIsModalOpen(false);
   };
@@ -222,6 +228,7 @@ export default function ServicesPage() {
         delivery_time,
         features,
         available: editingService.available,
+        requires_quote: editingService.requires_quote,
         updated_at: new Date().toISOString()
       };
       
@@ -454,7 +461,7 @@ export default function ServicesPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Mis Servicios</h1>
           <p className="text-muted-foreground">
-            Gestiona los servicios legales que ofreces a tus clientes
+            Catálogo de servicios que ofreces a tus clientes
           </p>
         </div>
         <Button onClick={handleAddService} className="gap-2 w-full sm:w-auto">
@@ -499,11 +506,13 @@ export default function ServicesPage() {
                       {service.description}
                     </CardDescription>
                   </div>
-                  <div className="text-right">
+                    <div className="text-right">
                     <span className="text-2xl font-bold text-blue-600">
-                      ${service.price_clp.toLocaleString('es-CL')}
+                      {service.requires_quote ? 'Desde ' : ''}${service.price_clp.toLocaleString('es-CL')}
                     </span>
-                    <span className="block text-xs text-gray-500">Precio final</span>
+                    <span className="block text-xs text-gray-500">
+                      {service.requires_quote ? 'Precio base' : 'Precio final'}
+                    </span>
                   </div>
                 </div>
               </CardHeader>
@@ -659,6 +668,28 @@ export default function ServicesPage() {
                 <span className="sr-only">Disponible</span>
                 <span
                   className={`${editingService.available ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex-1 pr-4">
+                <Label htmlFor="requires_quote" className="text-sm font-medium text-gray-900">
+                  Requiere presupuesto
+                </Label>
+                <p className="text-xs text-gray-600 mt-1">
+                  Cuando esta opción está activada, el cliente no pagará inmediatamente. En su lugar, enviará una solicitud para que puedas revisar el caso y enviar un presupuesto personalizado.
+                </p>
+              </div>
+              <button
+                type="button"
+                id="requires_quote"
+                onClick={() => setEditingService({...editingService, requires_quote: !editingService.requires_quote})}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full shrink-0 ${editingService.requires_quote ? 'bg-blue-600' : 'bg-gray-200'}`}
+              >
+                <span className="sr-only">Requiere presupuesto</span>
+                <span
+                  className={`${editingService.requires_quote ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}
                 />
               </button>
             </div>

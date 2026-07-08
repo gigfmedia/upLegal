@@ -92,6 +92,7 @@ export interface LawyerService {
   delivery_time: string;
   features: string[];
   available: boolean;
+  requires_quote?: boolean;
 }
 
 // Define the database profile type

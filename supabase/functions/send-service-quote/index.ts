@@ -60,7 +60,10 @@ serve(async (req: Request) => {
     // Get user from auth header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      return new Response(
+        JSON.stringify({ error: 'Se requiere autenticación' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const body: SendQuoteRequest = await req.json();
@@ -87,7 +90,11 @@ serve(async (req: Request) => {
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      console.error('[send-service-quote] Auth error:', userError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Token inválido o expirado. Inicia sesión nuevamente.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Fetch quote request

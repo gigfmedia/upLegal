@@ -101,12 +101,31 @@ export default function QuoteRequestsPage() {
     setSubmitting(true);
 
     try {
-      // Call Edge Function to create MercadoPago preference and send quote
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        toast({
+          title: 'Sesión expirada',
+          description: 'Inicia sesión nuevamente para enviar el presupuesto.',
+          variant: 'destructive',
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      console.log('[QUOTE] Sending quote:', {
+        quoteRequestId,
+        price,
+        hasToken: !!session.access_token,
+      });
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-service-quote`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
           body: JSON.stringify({
             quote_request_id: quoteRequestId,
             quoted_price: price,
@@ -115,11 +134,20 @@ export default function QuoteRequestsPage() {
         }
       );
 
-      const data = await response.json();
+      let errorMessage: string;
+      try {
+        const data = await response.json();
+        errorMessage = data.error || '';
+      } catch {
+        errorMessage = await response.text().catch(() => '');
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al enviar el presupuesto');
+        console.error('[QUOTE] Error response:', { status: response.status, errorMessage });
+        throw new Error(errorMessage || `Error del servidor (${response.status})`);
       }
+
+      console.log('[QUOTE] Quote sent successfully');
 
       toast({
         title: 'Presupuesto enviado',
@@ -162,7 +190,7 @@ export default function QuoteRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
         </div>
@@ -172,7 +200,7 @@ export default function QuoteRequestsPage() {
 
   if (!quoteRequest) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
           <Button onClick={() => navigate('/lawyer/dashboard')} variant="ghost">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -189,11 +217,11 @@ export default function QuoteRequestsPage() {
   const isPaid = quoteRequest.status === 'paid';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-4xl mx-auto">
-        <Button onClick={() => navigate('/lawyer/dashboard')} variant="ghost" className="mb-6">
+        <Button onClick={() => navigate('/lawyer/jobs')} variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver al dashboard
+          Volver atrás
         </Button>
 
         <div className="grid gap-6">
@@ -291,7 +319,7 @@ export default function QuoteRequestsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Comentarios para el cliente (opcional)</Label>
+                    <Label htmlFor="notes">Comentarios para el cliente</Label>
                     <Textarea
                       id="notes"
                       placeholder="Agrega detalles sobre el servicio, condiciones, etc."
