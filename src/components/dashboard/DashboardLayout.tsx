@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
   Activity, 
+  Briefcase,
   Calendar, 
   FileText, 
   Settings, 
@@ -131,6 +132,7 @@ function DashboardLayout() {
     { href: '/dashboard', icon: Activity, label: 'Resumen' },
     // { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
     { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
+    { href: '/dashboard/services', icon: FileText, label: 'Servicios' },
     { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
     // Temporarily hidden: { href: '/dashboard/messages', icon: MessageCircle, label: 'Mensajes' },
@@ -157,6 +159,7 @@ function DashboardLayout() {
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
+        { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems

@@ -61,10 +61,12 @@ const ConsultasPage = lazy(() => import('./pages/lawyer/ConsultasPage'));
 const CitasPage = lazy(() => import('./pages/lawyer/CitasPage'));
 const EarningsPage = lazy(() => import('./pages/lawyer/EarningsPage'));
 const ProfilePage = lazy(() => import('./pages/lawyer/ProfilePage'));
+const JobsPage = lazy(() => import('./pages/lawyer/JobsPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const PaymentSettings = lazy(() => import('./pages/PaymentSettings'));
 const DashboardFavorites = lazy(() => import('./pages/DashboardFavorites'));
+const DashboardServices = lazy(() => import('./pages/DashboardServices'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
@@ -397,6 +399,7 @@ const AppContent = () => {
                 <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
+                <Route path="jobs" element={<JobsPage />} />
               </Route>
 
               {/* Lawyer onboarding wizard — standalone, no sidebar */}
@@ -508,6 +511,7 @@ const AppContent = () => {
                 <Route path="settings" element={<DashboardSettings />} />
                 <Route path="consultations" element={<DashboardConsultations />} />
                 <Route path="appointments" element={<DashboardAppointments />} />
+                <Route path="services" element={<DashboardServices />} />
                 <Route path="payments" element={<DashboardPayments />} />
                 <Route path="messages" element={<DashboardMessages />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
@@ -535,6 +539,7 @@ const AppContent = () => {
                 <Route path="services" element={<ServicesPage />} />
                 <Route path="consultas" element={<ConsultasPage />} />
                 <Route path="citas" element={<CitasPage />} />
+                <Route path="jobs" element={<JobsPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
