@@ -221,6 +221,13 @@ const BlogArticle = () => {
                                 El procedimiento penal exige analizar múltiples antecedentes antes de determinar si efectivamente concurren los requisitos del delito. Por ejemplo, no es igual comprar un computador en una tienda establecida con documentación tributaria que adquirir un teléfono de alta gama por una fracción de su valor real a un desconocido en la vía pública. Todas esas circunstancias pueden ser consideradas durante la investigación.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La respuesta general es no — pero si ya existe una investigación 
+                                en tu contra, lo que importa no es la regla general sino los 
+                                antecedentes específicos de tu caso. Eso requiere revisión profesional.
+                            </p>
+                        </div>
                     </div>
 
                     {/* SITUACIONES QUE GENERAN SOSPECHAS */}
@@ -294,7 +301,7 @@ const BlogArticle = () => {
 
                     {/* CTA IN-ARTICLE */}
                     <InArticleCTA
-                        message="¿Necesitas orientación por una investigación penal por receptación? Un abogado penalista puede ayudarte a comprender tus derechos y preparar tu defensa."
+                        message="¿Ya existe una investigación en tu contra o la policía incautó algo tuyo? El momento de consultar con un abogado es antes de declarar, no después."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -461,7 +468,11 @@ const BlogArticle = () => {
                             El error más frecuente es asumir que "no saber" que el bien era robado elimina automáticamente la responsabilidad. En la práctica, la Fiscalía evaluará si existían señales evidentes de que el origen era ilícito — precio inusualmente bajo, ausencia de documentación, negativa a entregar datos del vendedor. Esos elementos pueden ser suficientes para sostener la investigación.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Si estás siendo investigado, no declares sin asesoría legal previa y conserva toda la documentación que acredite cómo adquiriste el bien. Si descubriste que compraste algo con origen ilícito, denunciarlo oportunamente puede proteger tu posición frente a cualquier investigación posterior, puedes revisar tu situación con un{" "}
+                            Si estás siendo investigado, no declares sin asesoría legal previa y
+                            conserva toda la documentación que acredite cómo adquiriste el bien — 
+                            y si ya existe una citación o investigación formal, no evalúes solo 
+                            tu situación basándote en información general. Los detalles de tu 
+                            caso específico son lo que determina el riesgo real, puedes revisar tu situación con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>

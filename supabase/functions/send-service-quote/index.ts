@@ -264,15 +264,15 @@ async function sendClientNotification(
           <p style="color:#475569;line-height:1.6;">El abogado ha revisado tu caso para el servicio <strong>${quoteRequest.service_title}</strong> y te ha enviado un presupuesto personalizado.</p>
           
           <div style="background:#f9fafb;padding:20px;border-radius:8px;margin:24px 0;border:1px solid #e5e7eb;">
-            <p style="margin:0 0 12px 0;color:#111827;font-weight:600;">Servicio</p>
-            <p style="margin:0 0 20px 0;color:#475569;">${quoteRequest.service_title}</p>
+            <p style="margin:0 0 12px 0;color:#475569;font-weight:600;">Servicio</p>
+            <p style="margin:0 0 20px 0;color:#101820;">${quoteRequest.service_title}</p>
             
-            <p style="margin:0 0 8px 0;color:#111827;font-weight:600;">Precio final</p>
-            <p style="margin:0 0 20px 0;color:#475569;font-size:24px;font-weight:bold;">$${quoteData.quoted_price.toLocaleString('es-CL')}</p>
+            <p style="margin:0 0 8px 0;color:#475569;font-weight:600;">Precio final</p>
+            <p style="margin:0 0 20px 0;color:#101820;font-size:24px;font-weight:bold;">$${quoteData.quoted_price.toLocaleString('es-CL')}</p>
             
             ${quoteData.quote_notes ? `
-              <p style="margin:12px 0 8px 0;color:#111827;font-weight:600;">Comentarios del abogado</p>
-              <p style="margin:0;color:#475569;">${quoteData.quote_notes}</p>
+              <p style="margin:12px 0 8px 0;color:#475569;font-weight:600;">Comentarios del abogado</p>
+              <p style="margin:0;color:#101820;">${quoteData.quote_notes}</p>
             ` : ''}
           </div>
           

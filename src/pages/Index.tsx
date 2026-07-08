@@ -39,6 +39,7 @@ const Index = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedLawyer, setSelectedLawyer] = useState<Lawyer | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -65,10 +66,12 @@ const Index = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'true') {
+      const redirectTo = urlParams.get('redirectTo');
+      if (redirectTo) setPendingRedirect(redirectTo);
       setShowAuthModal(true);
       setAuthMode('login');
-      // Clean up URL without reloading the page
-      window.history.replaceState({}, '', '/');
+      // Clean up URL without reloading the page (keep query params for redirect)
+      window.history.replaceState({}, '', redirectTo ? window.location.pathname : '/');
     }
   }, []);
 
@@ -101,6 +104,15 @@ const Index = () => {
       observer.disconnect();
     };
   }, [shouldLoadFeatured]);
+
+  // Redirect after login if there's a pending redirect
+  useEffect(() => {
+    if (user && pendingRedirect) {
+      const url = decodeURIComponent(pendingRedirect);
+      setPendingRedirect(null);
+      navigate(url, { replace: true });
+    }
+  }, [user, pendingRedirect, navigate]);
 
   // Handle contact click - memoized to prevent re-renders
   const handleContactClick = useCallback((lawyer: Lawyer) => {
@@ -1089,9 +1101,16 @@ const Index = () => {
         <Suspense fallback={null}>
           <AuthModal
             isOpen={showAuthModal}
-            onClose={() => setShowAuthModal(false)}
+            onClose={() => { setShowAuthModal(false); setPendingRedirect(null); }}
             mode={authMode}
             onModeChange={setAuthMode}
+            onLoginSuccess={() => {
+              if (pendingRedirect) {
+                const url = decodeURIComponent(pendingRedirect);
+                setPendingRedirect(null);
+                navigate(url, { replace: true });
+              }
+            }}
           />
         </Suspense>
       )}

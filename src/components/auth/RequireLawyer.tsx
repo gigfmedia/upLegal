@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function RequireLawyer({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) return null;
   if (!user || user.role !== 'lawyer') {
-    return <Navigate to="/" replace />;
+    const redirectTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/?login=true&redirectTo=${redirectTo}`} replace />;
   }
 
   return <>{children}</>;

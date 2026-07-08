@@ -400,7 +400,6 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="jobs" element={<JobsPage />} />
-                <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
               </Route>
 
               {/* Lawyer onboarding wizard — standalone, no sidebar */}

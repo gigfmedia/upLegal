@@ -13,6 +13,7 @@ export default function PaymentFailure() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const appointmentId = searchParams.get('appointmentId') || searchParams.get('booking_id');
+  const quoteRequestId = searchParams.get('type') === 'quote' ? searchParams.get('id') : null;
   const lawyerSlug = searchParams.get('lawyer');
 
   useState(() => {
@@ -37,6 +38,11 @@ export default function PaymentFailure() {
   };
 
   const handleRetry = async () => {
+    if (quoteRequestId) {
+      await handleQuoteRetry();
+      return;
+    }
+
     if (!appointmentId) {
       console.error('No appointmentId found in URL');
       navigate('/');
@@ -147,6 +153,37 @@ export default function PaymentFailure() {
       }
       
       alert(errorMessage);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleQuoteRetry = async () => {
+    setIsRetrying(true);
+    try {
+      const { data: quoteRequest, error } = await supabase
+        .from('service_quote_requests')
+        .select('payment_link, status')
+        .eq('id', quoteRequestId)
+        .single();
+
+      if (error || !quoteRequest) {
+        console.error('Quote request not found:', error);
+        alert('No se encontró la solicitud de presupuesto.');
+        navigate('/');
+        return;
+      }
+
+      if (quoteRequest.payment_link) {
+        window.location.href = quoteRequest.payment_link;
+      } else {
+        alert('No hay un enlace de pago disponible. Contacta al abogado para recibir un nuevo presupuesto.');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Error retrying quote payment:', error);
+      alert('Ocurrió un error al reintentar el pago.');
+      navigate('/');
     } finally {
       setIsRetrying(false);
     }

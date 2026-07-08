@@ -11,6 +11,10 @@ export default function AuthCallback() {
       try {
         // Get the session from the URL hash
         const { data: { session }, error } = await supabase.auth.getSession();
+
+        // Check for redirectTo in URL params
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirectTo');
         
         if (error) {
           console.error('Error getting session:', error);
@@ -19,6 +23,11 @@ export default function AuthCallback() {
         }
 
         if (session) {
+          if (redirectTo) {
+            navigate(decodeURIComponent(redirectTo), { replace: true });
+            return;
+          }
+
           // Check profile to determine redirect
           const { data: profile } = await supabase
             .from('profiles')
