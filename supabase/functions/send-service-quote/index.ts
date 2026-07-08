@@ -94,8 +94,9 @@ serve(async (req: Request) => {
     // Build admin client for DB operations (bypass RLS)
     const supabaseAdmin = createClient(supabaseUrl, getEnv('SUPABASE_SERVICE_ROLE_KEY'));
 
-    // Get current user from JWT
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Extract JWT from auth header and verify user
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
     if (userError || !user) {
       console.error('[send-service-quote] Auth error:', userError?.message);
       return new Response(
