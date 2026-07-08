@@ -144,20 +144,22 @@ function JobDetailDialog({ job, onClose, onStartWork, onMarkDelivered }: JobDeta
             <ServiceTypeBadge type={job.serviceType} />
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1 mt-8">
               Cliente
             </h4>
-            <div className="flex items-center gap-2 text-sm">
+          </div>
+          <div className="bg-gray-50 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-sm mb-3">
               <User className="h-4 w-4 text-gray-400" />
               <span className="font-medium">{job.clientName}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm mb-3">
               <Mail className="h-4 w-4 text-gray-400" />
               <span>{job.clientEmail}</span>
             </div>
             {job.clientPhone && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm mb-3">
                 <Phone className="h-4 w-4 text-gray-400" />
                 <span>{job.clientPhone}</span>
               </div>
@@ -179,7 +181,7 @@ function JobDetailDialog({ job, onClose, onStartWork, onMarkDelivered }: JobDeta
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Precio
                 </h4>
-                <p className="font-medium mt-1">
+                <p className="font-medium bg-gray-50 p-3 rounded-lg mt-1">
                   ${job.price.toLocaleString('es-CL')}
                 </p>
               </div>
@@ -189,7 +191,7 @@ function JobDetailDialog({ job, onClose, onStartWork, onMarkDelivered }: JobDeta
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Tiempo de entrega
                 </h4>
-                <p className="font-medium mt-1">{job.deliveryTime}</p>
+                <p className="font-medium bg-gray-50 p-3 rounded-lg mt-1">{job.deliveryTime}</p>
               </div>
             )}
           </div>
@@ -219,11 +221,12 @@ function JobDetailDialog({ job, onClose, onStartWork, onMarkDelivered }: JobDeta
           )}
           {job.status === 'quote_sent' && (
             <Button
-              variant="outline"
+              //variant="outline"
               onClick={() => {
                 navigate(`/lawyer/quotes/${job.quoteRequestId}`);
                 onClose();
               }}
+              className="bg-gray-900 hover:bg-green-900"
             >
               <Eye className="h-4 w-4 mr-1" />
               Ver presupuesto

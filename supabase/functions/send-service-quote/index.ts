@@ -300,7 +300,7 @@ async function sendClientNotification(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'LegalUp <noreply@legalup.cl>',
+        from: 'LegalUp <hola@mg.legalup.cl>',
         to: quoteRequest.user_email,
         subject: 'Tu presupuesto está listo',
         html
