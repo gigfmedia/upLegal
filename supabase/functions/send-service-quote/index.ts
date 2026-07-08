@@ -238,7 +238,11 @@ async function sendClientNotification(
   quoteData: SendQuoteRequest,
   paymentLink: string
 ) {
-  const resendApiKey = getEnv('RESEND_API_KEY');
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) {
+    console.error('[send-service-quote] RESEND_API_KEY not set, skipping email');
+    return;
+  }
 
   const html = `
     <!DOCTYPE html>
@@ -288,17 +292,28 @@ async function sendClientNotification(
     </html>
   `;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: 'LegalUp <noreply@legalup.cl>',
-      to: quoteRequest.user_email,
-      subject: 'Tu presupuesto está listo',
-      html
-    })
-  });
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'LegalUp <noreply@legalup.cl>',
+        to: quoteRequest.user_email,
+        subject: 'Tu presupuesto está listo',
+        html
+      })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('[send-service-quote] Resend error:', res.status, errText);
+    } else {
+      console.log('[send-service-quote] Email sent successfully to', quoteRequest.user_email);
+    }
+  } catch (err) {
+    console.error('[send-service-quote] Failed to send email:', err);
+  }
 }
