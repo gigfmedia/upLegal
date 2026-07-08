@@ -391,7 +391,6 @@ const AppContent = () => {
                 <Route path="dashboard" element={<LawyerDashboardPage />} />
                 <Route path="services" element={<ServicesPage />} />
                 <Route path="profile" element={<ProfilePage />} />
-                <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
                 {/* <Route path="consultas" element={<ConsultasPage />} /> */}
                 <Route path="citas" element={<CitasPage />} />
                 {/* <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} /> */}
@@ -538,6 +537,7 @@ const AppContent = () => {
                 <Route path="citas" element={<CitasPage />} />
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
+                <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
               </Route>
 
               <Route path="/admin" element={

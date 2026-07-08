@@ -176,7 +176,7 @@ async function sendLawyerNotification(
   console.log('[EMAIL LAWYER] Function called with lawyer email:', lawyer.email);
 
   const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado';
-  const dashboardUrl = `${appUrl}/lawyer/dashboard/quotes/${quoteRequestId}`;
+  const dashboardUrl = `${appUrl}/lawyer/quotes/${quoteRequestId}`;
 
   console.log('[EMAIL LAWYER] Building HTML email...');
 
