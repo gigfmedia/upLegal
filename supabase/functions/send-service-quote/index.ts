@@ -142,6 +142,8 @@ serve(async (req: Request) => {
     // Create MercadoPago preference
     const mpAccessToken = getEnv('MERCADOPAGO_ACCESS_TOKEN');
     const appUrl = Deno.env.get('APP_URL') || 'https://legalup.cl';
+    const supabaseUrl = getEnv('SUPABASE_URL');
+    const webhookUrl = `${supabaseUrl}/functions/v1/mercado-pago-webhook`;
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -168,6 +170,7 @@ serve(async (req: Request) => {
             ? `${appUrl}/payment/pending?lawyer=${lawyer.slug}&type=quote&id=${quoteRequest.id}`
             : `${appUrl}/payment/pending?type=quote&id=${quoteRequest.id}`
         },
+        notification_url: webhookUrl,
         auto_return: 'approved',
         metadata: {
           quote_request_id: quoteRequest.id,
