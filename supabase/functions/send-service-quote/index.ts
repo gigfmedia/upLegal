@@ -76,18 +76,25 @@ serve(async (req: Request) => {
       );
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client with user auth context
     const supabaseUrl = getEnv('SUPABASE_URL');
-    const supabaseKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    const supabaseAnonKey = getEnv('SUPABASE_ANON_KEY');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
-          authorization: authHeader
+          Authorization: authHeader
         }
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
       }
     });
 
-    // Get current user
+    // Build admin client for DB operations (bypass RLS)
+    const supabaseAdmin = createClient(supabaseUrl, getEnv('SUPABASE_SERVICE_ROLE_KEY'));
+
+    // Get current user from JWT
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       console.error('[send-service-quote] Auth error:', userError?.message);
@@ -97,8 +104,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Fetch quote request
-    const { data: quoteRequest, error: quoteError } = await supabase
+    // Fetch quote request (using admin client for DB operations)
+    const { data: quoteRequest, error: quoteError } = await supabaseAdmin
       .from('service_quote_requests')
       .select('*')
       .eq('id', body.quote_request_id)
@@ -125,7 +132,7 @@ serve(async (req: Request) => {
     }
 
     // Fetch lawyer profile for MercadoPago metadata
-    const { data: lawyer } = await supabase
+    const { data: lawyer } = await supabaseAdmin
       .from('profiles')
       .select('email, first_name, last_name, slug')
       .eq('user_id', user.id)
@@ -184,7 +191,7 @@ serve(async (req: Request) => {
     const mpData = await mpResponse.json();
 
     // Update quote request with quote details and MercadoPago data
-    const { error: updateError } = await supabase
+    const { error: updateError } = await supabaseAdmin
       .from('service_quote_requests')
       .update({
         status: 'quoted',
