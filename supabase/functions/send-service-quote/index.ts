@@ -141,7 +141,7 @@ serve(async (req: Request) => {
 
     // Create MercadoPago preference
     const mpAccessToken = getEnv('MERCADOPAGO_ACCESS_TOKEN');
-    const appUrl = getEnv('APP_URL');
+    const appUrl = Deno.env.get('APP_URL') || 'https://legalup.cl';
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
