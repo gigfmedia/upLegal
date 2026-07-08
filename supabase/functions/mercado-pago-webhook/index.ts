@@ -170,7 +170,8 @@ async function sendPaymentNotifications(
         <body style="margin:0;padding:16px;background:#f9fafb;">
           <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
             <div style="text-align:center;margin-bottom:28px;">
-              <span style="color:#1a202c;font-size:22px;font-weight:800;">LegalUp</span>
+              <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+              <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
             </div>
             <h1 style="color:#101820;margin:0 0 20px 0;font-size:22px;">¡Pago recibido!</h1>
             <p style="color:#475569;line-height:1.6;">Hola ${lawyerName},</p>
@@ -184,7 +185,9 @@ async function sendPaymentNotifications(
               </a>
             </div>
             <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
-              © 2026 LegalUp — Asesoría legal online en Chile.
+              © 2026 LegalUp — Asesoría legal online en Chile.<br />
+              Todos los derechos reservados.<br />
+              Este es un correo automático, por favor no respondas a este mensaje.
             </p>
           </div>
         </body>
@@ -225,9 +228,10 @@ async function sendPaymentNotifications(
     <html>
       <head><meta charset="UTF-8"><title>Pago confirmado</title></head>
       <body style="margin:0;padding:16px;background:#f9fafb;">
-        <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+       <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
           <div style="text-align:center;margin-bottom:28px;">
-            <span style="color:#1a202c;font-size:22px;font-weight:800;">LegalUp</span>
+            <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+            <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
           </div>
           <h1 style="color:#101820;margin:0 0 20px 0;font-size:22px;">¡Pago confirmado!</h1>
           <p style="color:#475569;line-height:1.6;">Hola ${clientName},</p>
@@ -241,7 +245,9 @@ async function sendPaymentNotifications(
             </a>
           </div>
           <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
-            © 2026 LegalUp — Asesoría legal online en Chile.
+            © 2026 LegalUp — Asesoría legal online en Chile.<br />
+            Todos los derechos reservados.<br />
+            Este es un correo automático, por favor no respondas a este mensaje.
           </p>
         </div>
       </body>
