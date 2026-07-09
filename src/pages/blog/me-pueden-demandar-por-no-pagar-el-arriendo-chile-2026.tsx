@@ -21,9 +21,9 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -114,7 +114,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 14 min</span>
+              <ReadTime slug="me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" />
             </div>
           </div>
         </div>
@@ -313,6 +313,16 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Actúas a tiempo</h3>
+                <p className="text-green-700">Si pagas o negocias antes de la demanda, detienes el proceso. El arrendador no puede demandar si la deuda está saldada. Esta es la ventana de oportunidad más importante.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">No haces nada</h3>
+                <p className="text-red-700">Si ignoras la deuda, el arrendador puede demandar, obtener una sentencia y ejecutar el desalojo. El proceso toma meses, pero una vez iniciado, pierdes control sobre el resultado.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -392,6 +402,16 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Proceso rápido (3-6 meses)</h3>
+                <p className="text-green-700">Ocurre cuando el arrendatario no responde la demanda. Sin oposición, el juez dicta sentencia más rápido. No pagar puede acelerar el desalojo si no te defiendes.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Proceso largo (6-12 meses)</h3>
+                <p className="text-red-700">Si respondes la demanda y te defiendes, el juicio se extiende. Esto da más tiempo para negociar o pagar, pero también acumula costas judiciales e intereses que aumentan la deuda total.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -418,6 +438,16 @@ const BlogArticle = () => {
               <div>
                 <p className="text-amber-900 font-bold">Consecuencia directa:</p>
                 <p className="text-gray-700 mt-1">Una deuda pequeña puede transformarse en un problema mayor y difícil de saldar si no se detiene a tiempo.</p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Deuda pequeña (1-2 meses)</h3>
+                <p className="text-green-700">Aún tienes margen para negociar. Muchos arrendadores aceptan un plan de pago antes de iniciar acciones legales. Actuar rápido es la clave para evitar que escale.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Deuda grande (3+ meses)</h3>
+                <p className="text-red-700">La demanda es casi segura. Además de los meses impagos, se suman intereses, costas judiciales y honorarios del abogado del arrendador. La deuda puede duplicarse o más.</p>
               </div>
             </div>
           </div>
@@ -610,33 +640,41 @@ const BlogArticle = () => {
 
           </div>
           {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Ignorar una demanda por arriendo impago aumenta el riesgo de desalojo. Compara abogados de arriendo y responde a tiempo."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Debes una o más cuotas de arriendo y no sabes qué hacer?</h3>
+              <p className="text-white mb-6">Ignorar la deuda no la detiene: al contrario, cada mes que pasa se suman intereses, costas judiciales y aumenta el riesgo de desalojo. Un abogado puede ayudarte a negociar un acuerdo o preparar tu defensa antes de que la demanda llegue.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
+
+          {/* ¿Cuándo consultar abogado? */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Cuando el no pago ya ocurrió, cada día cuenta para evitar que el problema escale a un juicio:
+            </p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Ya debes 2 o más meses de arriendo y el arrendador presiona", "Recibiste una notificación judicial o carta de demanda", "El arrendador se niega a negociar y amenaza con desalojo inmediato"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              No pagar el arriendo en Chile no es un problema que “explota” de un día para otro, pero tampoco es algo que puedas dejar pasar sin consecuencias.
+              No pagar el arriendo en Chile no es un problema que "explota" de un día para otro, pero tampoco es algo que puedas dejar pasar sin consecuencias. La ley es clara: con un solo mes de deuda el arrendador ya puede iniciar acciones legales.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La ley es clara: con un solo mes de deuda el arrendador ya puede iniciar acciones legales. Sin embargo, lo que realmente determina el resultado no es solo la deuda, sino cómo evoluciona la situación desde ese primer incumplimiento.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En la práctica, el desalojo es un proceso que toma tiempo —generalmente entre 3 y 12 meses—, pero ese plazo no es una oportunidad para ignorar el problema, sino una ventana para actuar estratégicamente. Durante ese período puedes negociar, pagar, defenderte o buscar alternativas que reduzcan el impacto.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El error más común no es dejar de pagar: es no hacer nada después. Ignorar la deuda, evitar la comunicación o no responder una demanda suele acelerar el conflicto y aumentar significativamente las consecuencias legales y económicas.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Por el contrario, quienes actúan temprano —ya sea regularizando la deuda, llegando a acuerdos o asesorándose legalmente— tienen muchas más probabilidades de evitar el desalojo o, al menos, minimizar el daño.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si estás en esta situación, el enfoque correcto no es preguntarte solo “qué va a pasar”, sino qué puedes hacer hoy para cambiar el resultado.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 
@@ -657,35 +695,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Estás en riesgo de demanda por no pago de arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            No esperes a que el problema escale. Un error en este momento puede significar aumentar la deuda o enfrentar un juicio. Habla con un abogado y evalúa tu caso antes de que sea tarde.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.('event', 'cta_click', {
-                    location: 'blog_cta',
-                    text: 'Habla con un abogado ahora',
-                  });
-                  window.gtag?.("event", "click_consultar_abogado", {
-                    article: window.location.pathname,
-                    location: "blog_cta_demanda_arriendo_primary",
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <RelatedLawyers category="Derecho Civil" />
 

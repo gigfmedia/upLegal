@@ -11,6 +11,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -109,7 +110,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <ReadTime slug="dicom-deuda-arriendo-chile-2026" />
             </div>
           </div>
         </div>
@@ -165,11 +166,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <InArticleCTA
-              message="¿Te reportaron en DICOM por deuda de arriendo? Un abogado puede orientarte sobre cobro, negociación y defensa."
-              buttonText="Ver abogados de arriendo"
-              category="Derecho Civil"
-            />
+        
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <p className="text-gray-700 leading-relaxed font-bold">
                 Pero no cualquier deuda puede ser publicada. Es fundamental entender los requisitos legales antes de alarmarse por una amenaza de este tipo.
@@ -227,6 +224,16 @@ const BlogArticle = () => {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Deuda documentada y validada</h3>
+                <p className="text-green-700">Si existe contrato firmado ante notario, pagaré o sentencia judicial, la deuda sí puede ser informada legalmente a DICOM.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Deuda informal sin respaldo</h3>
+                <p className="text-red-700">Sin documento válido que acredite la deuda, el arrendador no puede reportarte a DICOM. La amenaza probablemente es solo presión.</p>
+              </div>
             </div>
           </div>
 
@@ -400,6 +407,16 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Amenaza sin base legal</h3>
+                <p className="text-green-700">Si la deuda no cumple los requisitos legales, la amenaza es solo presión. No puedes ir a DICOM sin un título válido.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Proceso de cobro en curso</h3>
+                <p className="text-red-700">Si ya existe demanda o pagaré firmado, el riesgo es real. En este caso conviene buscar asesoría legal cuanto antes.</p>
+              </div>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -454,6 +471,16 @@ const BlogArticle = () => {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Registro incorrecto o indebido</h3>
+                <p className="text-green-700">Si la deuda no cumple los requisitos legales, puedes solicitar la eliminación del registro y reclamar por daños.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Deuda válida y exigible</h3>
+                <p className="text-red-700">Si la deuda es legítima y está correctamente documentada, lo mejor es negociar el pago o buscar un acuerdo antes de que el daño crediticio sea mayor.</p>
+              </div>
             </div>
           </div>
 
@@ -538,38 +565,45 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Un reporte en DICOM por arriendo impago puede afectar tu historial crediticio. Compara abogados y define la mejor estrategia."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Saber si una deuda de arriendo puede ir a DICOM depende de varios factores legales. En ciertos casos, conviene actuar rápido con asesoría especializada.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Cuando el arrendador te amenaza con reportarte a DICOM sin tener un título legal que respalde la deuda", "Cuando ya apareces en DICOM por una deuda de arriendo y no sabes si el registro es legal", "Cuando recibes una notificación de demanda o cobro judicial por deuda de arriendo"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
+          {/* CTA before Conclusion */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te amenazaron con reportarte a DICOM por una deuda de arriendo?</h3>
+              <p className="text-white mb-6">No todas las amenazas de DICOM tienen respaldo legal. Un abogado inmobiliario puede evaluar si el reporte es procedente y defender tus derechos antes de que tu historial crediticio se vea afectado.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
-          <div className="mb-12">
+          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               Tener una deuda de arriendo en Chile no significa automáticamente aparecer en DICOM. Para que eso ocurra, normalmente debe existir una deuda exigible, respaldada legalmente y, en muchos casos, un proceso judicial o documento que permita su cobranza formal.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              El problema es que muchas personas descubren demasiado tarde que la situación escaló: primero aparece el atraso, luego la cobranza, después la demanda y finalmente las consecuencias financieras y legales. Por eso, esperar “a ver qué pasa” suele ser uno de los peores errores.
-            </p>
-            <p className="text-gray-600 leading-relaxed mb-4">
-              También es importante entender que no todas las amenazas de “te voy a meter a DICOM” son válidas. Existen límites legales sobre qué deudas pueden informarse y cómo debe hacerse ese tratamiento de datos. En algunos casos, incluso puede existir información indebida que puede reclamarse.
-            </p>
-            <p className="text-gray-600 leading-relaxed mb-4">
-              Si tienes deuda de arriendo, lo más importante es actuar antes de que el problema crezca. Negociar, revisar si existe una demanda, entender el estado real de la deuda y buscar asesoría legal puede ayudarte a evitar consecuencias más graves como juicios, embargos o problemas financieros prolongados.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              En muchos casos, actuar temprano marca la diferencia entre resolver una deuda manejable o enfrentar un conflicto legal mucho más complejo.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 
 
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQs */}
-          <div className="mb-12">
+          <div className="mb-6">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

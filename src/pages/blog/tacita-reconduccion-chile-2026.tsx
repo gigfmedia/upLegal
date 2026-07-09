@@ -9,8 +9,8 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -101,7 +101,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="tacita-reconduccion-chile-2026" />
             </div>
           </div>
         </div>
@@ -191,6 +191,16 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Ventajas para el arrendatario</h3>
+                <p className="text-green-700">Puedes quedarte sin firmar un nuevo contrato y el arriendo sigue siendo el mismo. No hay gastos de notaría ni trámites adicionales. Es una solución práctica cuando ambas partes están conformes.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Riesgos para el arrendatario</h3>
+                <p className="text-red-700">Pierdes la estabilidad de un plazo fijo. El arrendador puede pedir la terminación del contrato con aviso, y sin contrato actualizado, es más difícil probar las condiciones acordadas si surge un conflicto.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -251,7 +261,6 @@ const BlogArticle = () => {
                 </p>
               </div>
             </div>
-
             <InArticleCTA
               message="¿Estás en esta situación y necesitas ayuda con tu arriendo?"
               category="Derecho Inmobiliario"
@@ -298,6 +307,16 @@ const BlogArticle = () => {
             <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto aviso deben dar?</h3>
             <p className="text-gray-600 mb-4 leading-relaxed">Depende del caso.</p>
             <p className="text-gray-600 mb-6 leading-relaxed">Pero generalmente: Debe ser un plazo razonable</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario con buen historial de pago</h3>
+                <p className="text-green-700">Si has pagado siempre a tiempo y no has causado problemas, el arrendador generalmente te dará un aviso razonable (30-60 días) para desocupar o negociar un nuevo contrato.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario con deudas o conflictos</h3>
+                <p className="text-red-700">Si hay impagos o conflictos previos, el arrendador puede actuar más rápido. En estos casos, el aviso puede ser más corto y la disposición a negociar un nuevo contrato será menor.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -315,6 +334,16 @@ const BlogArticle = () => {
                   <span className="text-base text-gray-700">{item}</span>
                 </div>
               ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Reajuste permitido</h3>
+                <p className="text-green-700">Si el contrato original tenía cláusula de reajuste por IPC, esa cláusula se mantiene vigente durante la tácita reconducción. El arrendador puede aplicar el reajuste en los mismos plazos pactados originalmente.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Reajuste no permitido</h3>
+                <p className="text-red-700">Si el contrato original no tenía cláusula de reajuste, el arrendador no puede subir el precio durante la tácita reconducción. Cualquier alza requiere un nuevo contrato firmado por ambas partes.</p>
+              </div>
             </div>
 
             <p className="text-gray-600 mb-4 leading-relaxed font-medium">Esto conecta con:</p>
@@ -529,29 +558,40 @@ const BlogArticle = () => {
             /> */}
           </div>
 
+          {/* ¿Cuándo consultar abogado? */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              La tácita reconducción puede parecer inofensiva, pero hay momentos en que conviene actuar rápido:
+            </p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["El arrendador te pide que desocupes sin previo aviso ni contrato vigente", "El arrendador quiere subir el arriendo sin respaldo y sin firmar un nuevo contrato", "Llevas meses en tácita reconducción y quieres regularizar tu situación para tener seguridad jurídica"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="La tacita reconducción cambia tus derechos como arrendador. Compara abogados especializados antes de actuar por tu cuenta."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Tu contrato de arriendo terminó pero sigues viviendo ahí sin contrato nuevo?</h3>
+              <p className="text-white mb-6">La tácita reconducción es más común de lo que crees, pero puede generar incertidumbre jurídica. Un abogado inmobiliario puede ayudarte a regularizar tu situación o entender qué riesgos corres si el arrendador decide terminar la relación.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base">
+            <p className="text-gray-600 mb-4 leading-relaxed">
               La tácita reconducción es una situación muy común en Chile, especialmente cuando el contrato de arriendo termina y ninguna de las partes toma acciones formales. Aunque en la práctica permite que el arriendo continúe sin interrupciones, también genera un escenario de mayor incertidumbre jurídica.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base">
-              Para el arrendatario, implica menor estabilidad, ya que el contrato deja de tener un plazo definido y puede terminarse con aviso. Para el arrendador, significa menos control sobre las condiciones originales y la necesidad de recurrir a procedimientos legales si quiere recuperar la propiedad.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base">
-              Si bien la tácita reconducción es válida y reconocida por la ley, no es la situación más recomendable a largo plazo. Mantener un arriendo sin contrato actualizado puede generar conflictos innecesarios, dificultades para exigir derechos y problemas en caso de incumplimientos.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base font-bold">
-              Por eso, lo más recomendable en la mayoría de los casos es formalizar un nuevo contrato de arriendo, donde se establezcan claramente las condiciones, plazos y obligaciones de ambas partes.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base">
-              Si ya estás en una situación de tácita reconducción y tienes dudas sobre tus derechos o riesgos, es importante informarte a tiempo y, si es necesario, buscar asesoría legal para evitar problemas futuros.
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

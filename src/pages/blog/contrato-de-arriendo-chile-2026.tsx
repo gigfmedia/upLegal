@@ -8,9 +8,9 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -109,7 +109,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 13 min</span>
+              <ReadTime slug="contrato-de-arriendo-chile-2026" />
             </div>
           </div>
         </div>
@@ -186,6 +186,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Un contrato verbal es válido en Chile, pero en la práctica genera problemas difíciles de resolver. Sin un documento escrito, es muy difícil probar qué acordaron las partes.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Contrato escrito</h3>
+                <p className="text-green-700">Todo queda documentado: puedes probar el monto acordado, las condiciones de uso y el plazo. Ante un conflicto, el contrato es la prueba principal ante el tribunal.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Contrato verbal</h3>
+                <p className="text-red-700">Cualquier conflicto se convierte en "tu palabra contra la mía". Es muy difícil probar el monto pactado o las condiciones, lo que hace que los juicios sean más largos y complejos.</p>
+              </div>
+            </div>
             <div className="space-y-3 mb-6">
               {[
                 "Dificultad para probar el monto del arriendo pactado",
@@ -244,6 +254,16 @@ const BlogArticle = () => {
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                   <p className="text-gray-700 font-medium">Arriendos de alto valor o comerciales → Siempre ante notario para mayor seguridad.</p>
                 </div>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Firma ante notario</h3>
+                <p className="text-green-700">Otorga fecha cierta al documento y mayor peso probatorio. Si el caso llega a juicio, el contrato notarial es mucho más difícil de impugnar. Recomendado para montos altos o arriendos comerciales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Firma privada</h3>
+                <p className="text-red-700">Sigue siendo válido, pero sin fecha cierta. Si una de las partes niega haber firmado, la prueba es más compleja. Es suficiente para arriendos simples de bajo monto, pero implica más riesgo si hay conflicto.</p>
               </div>
             </div>
           </div>
@@ -570,6 +590,16 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Incumplimiento del arrendatario</h3>
+                <p className="text-green-700">No pagar el arriendo es la causa más común. El arrendador puede demandar el término del contrato, cobrar la deuda impaga con intereses y solicitar el desalojo judicial del inmueble.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Incumplimiento del arrendador</h3>
+                <p className="text-red-700">Si el arrendador no cumple sus obligaciones (no hacer reparaciones, cortar servicios, entrar sin permiso), el arrendatario puede demandar el cumplimiento forzado o incluso pedir la terminación del contrato con indemnización.</p>
+              </div>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -583,7 +613,7 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+          <div className="text-center py-4 border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
             <Link
               to="/blog/dicom-deuda-arriendo-chile-2026"
@@ -594,27 +624,20 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* ¿Cuándo necesitas abogado? */}
+          {/* ¿Cuándo consultar abogado? */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo necesitas un abogado?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Muchas personas consultan a un abogado cuando el conflicto ya escaló. En estos casos, actuar a tiempo es clave:
+              Revisar el contrato antes de firmar siempre es la mejor opción, pero hay momentos en que la urgencia es mayor:
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {[
-                "Hay un conflicto contractual activo o en riesgo",
-                "Hay problemas con la devolución de la garantía",
-                "Recibes amenazas de desalojo o ya hay demanda",
-                "Encuentras cláusulas que no entiendes o te parecen abusivas",
-                "El arrendador no cumple sus obligaciones",
-                "Quieres terminar el contrato anticipadamente"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <Shield className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-base text-gray-700">{item}</span>
-                </div>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Ya recibiste una demanda o amenaza de desalojo", "El arrendador no te devuelve la garantía sin una razón clara", "Hay cláusulas abusivas o ilegales en el contrato que firmaste"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Checklist */}
@@ -642,11 +665,15 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Un contrato mal redactado puede generar conflictos costosos. Compara abogados de arriendo antes de firmar."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Revisaste tu contrato y encontraste cláusulas que no entiendes?</h3>
+              <p className="text-white mb-6">Una cláusula mal redactada o abusiva puede costarte meses de conflicto y la pérdida de tu garantía. Un abogado inmobiliario puede revisar tu contrato antes de que firmes y evitar problemas que después son difíciles de resolver.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusión */}
           <div className="mb-12 border-t pt-8">
@@ -655,10 +682,7 @@ const BlogArticle = () => {
               El contrato de arriendo es el documento más importante en cualquier relación de arriendo en Chile. No es solo un trámite: es la base que define tus derechos, tus obligaciones y cómo se resolverán los conflictos.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              La mayoría de los problemas legales —desalojos, conflictos por garantía o deudas— no ocurren por mala fe, sino por contratos mal redactados o poco claros. Un contrato incompleto puede dejar espacios que luego se transforman en discusiones difíciles de resolver.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Revisar cada cláusula, asegurarte de que el reajuste por IPC esté bien definido, documentar el estado del inmueble y guardar respaldos de pago son acciones simples que pueden evitarte meses de problemas. Si estás por firmar o ya tienes problemas con tu contrato, actuar a tiempo hace toda la diferencia.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

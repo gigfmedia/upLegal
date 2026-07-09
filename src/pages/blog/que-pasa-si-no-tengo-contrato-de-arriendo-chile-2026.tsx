@@ -11,29 +11,40 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
     {
-      question: "¿Un contrato verbal tiene valor legal?",
-      answer: "Sí, pero es más difícil de probar."
+      question: "¿Un contrato verbal de arriendo tiene valor legal en Chile?",
+      answer:
+        "Sí. La ley chilena reconoce los contratos verbales de arriendo como válidos si existe evidencia de que la relación arrendataria existió — transferencias bancarias con referencia al arriendo, mensajes que mencionen el pago, testigos o recibos informales. El problema no es la validez del contrato sino la dificultad de probarlo ante un tribunal si hay conflicto.",
     },
     {
-      question: "¿Me pueden desalojar sin contrato?",
-      answer: "Sí, pero solo mediante un juicio."
+      question: "¿Me pueden desalojar si no tengo contrato escrito?",
+      answer:
+        "Sí, pero solo mediante un proceso judicial. El arrendador no puede sacarte por la fuerza ni cambiar la cerradura aunque no haya contrato escrito. Debe demandar el desalojo ante el tribunal civil competente y obtener una orden judicial. Sin esa orden, cualquier intento de desalojo es ilegal independientemente de si hay contrato o no.",
     },
     {
-      question: "¿Puedo exigir condiciones si no hay contrato?",
-      answer: "Sí, pero deberás probar lo acordado."
+      question: "¿Puedo exigir condiciones si no hay contrato escrito?",
+      answer:
+        "Sí, siempre que puedas probar lo que se acordó verbalmente. Si tienes mensajes donde se mencionan el precio, el plazo o las condiciones del arriendo, esa evidencia puede respaldar tus exigencias. Sin evidencia, es muy difícil hacer valer condiciones específicas ante el tribunal.",
     },
     {
-      question: "¿El arrendador puede cambiar las reglas?",
-      answer: "No arbitrariamente, pero puede terminar el arriendo."
+      question: "¿El arrendador puede cambiar las condiciones del arriendo sin contrato?",
+      answer:
+        "No puede modificarlas unilateralmente si ya existe un acuerdo — verbal o escrito. Sin embargo, al no haber contrato escrito con plazo definido, el arrendador puede poner término al arriendo con mayor facilidad. Lo recomendable es formalizar cualquier acuerdo por escrito para proteger la estabilidad del arriendo.",
     },
     {
-      question: "¿Qué pasa si hay conflicto?",
-      answer: "Se resuelve en tribunales con pruebas."
-    }
+      question: "¿Qué pasa si hay un conflicto de arriendo sin contrato escrito?",
+      answer:
+        "El conflicto se resuelve ante el tribunal civil, pero la carga de la prueba es mayor para ambas partes. Quien tenga más y mejor evidencia del acuerdo — mensajes, transferencias, testigos — tendrá mejor posición. Por eso es fundamental guardar todos los comprobantes de pago y comunicaciones desde el primer día.",
+    },
+    {
+      question: "¿Conviene firmar un contrato de arriendo aunque sea tarde?",
+      answer:
+        "Sí, siempre. Aunque ya lleven tiempo arrendando sin contrato, firmarlo establece claramente las condiciones, protege a ambas partes y evita conflictos futuros. El contrato puede firmarse en cualquier momento de la relación arrendataria — no tiene que ser al inicio.",
+    },
   ];
 
   return (
@@ -101,7 +112,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" />
             </div>
           </div>
         </div>
@@ -259,9 +270,21 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+
             
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo judicial</h3>
+                <p className="text-green-700">El arrendador debe iniciar un juicio para desalojarte. Tienes derecho a defensa, a presentar pruebas y a no ser sacado por la fuerza.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Desalojo ilegal o vías de hecho</h3>
+                <p className="text-red-700">Cambiar la cerradura, cortar servicios o sacar tus pertenencias sin orden judicial son acciones ilegales que puedes denunciar.</p>
+              </div>
+            </div>
+
             <InArticleCTA 
-              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
+              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
               category="Derecho Inmobiliario"
             />
           </div>
@@ -277,7 +300,7 @@ const BlogArticle = () => {
                 { title: "3. Usar la Ley 21.461", desc: "Incluso sin contrato, puede intentar aplicar el procedimiento monitorio si logra probar la relación de arriendo." }
               ].map((cause, i) => (
                 <div key={i} className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  {/* <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" /> */}
                   <div>
                     <span className="font-bold text-gray-900 block mb-1">{cause.title}</span>
                     <span className="text-gray-600 text-base">{cause.desc}</span>
@@ -312,10 +335,16 @@ const BlogArticle = () => {
               <p className="text-gray-900 font-bold">Sin contrato escrito, la prueba es tu mejor defensa ante tribunales.</p>
             </div>
 
-            <InArticleCTA 
-              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
-              category="Derecho Inmobiliario"
-            />
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Con pruebas documentales sólidas</h3>
+                <p className="text-green-700">Transferencias bancarias, mensajes de WhatsApp y testigos pueden acreditar la relación de arriendo y las condiciones acordadas.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Sin pruebas documentales</h3>
+                <p className="text-red-700">Sin evidencia de pagos ni comunicaciones, probar la existencia y condiciones del arriendo se vuelve muy difícil ante un tribunal.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -350,6 +379,16 @@ const BlogArticle = () => {
                   <span className="text-base text-gray-700">{item}</span>
                 </div>
               ))}
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario con contrato</h3>
+                <p className="text-green-700">Tiene protección contractual: plazos definidos, condiciones claras y mecanismos establecidos para resolver conflictos.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario sin contrato</h3>
+                <p className="text-red-700">Está en una posición más vulnerable: el arrendador puede terminar el acuerdo más fácilmente y hay menos protecciones legales.</p>
+              </div>
             </div>
           </div>
 
@@ -475,21 +514,43 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Aun sin contrato escrito existen derechos y obligaciones. Compara abogados de arriendo y regulariza tu situación."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">Arrendar sin contrato escrito te deja en una posición más vulnerable. Hay ciertos escenarios donde conviene tener asesoría legal sin demora.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Cuando el arrendador amenaza con desalojarte por la fuerza sin orden judicial", "Cuando hay conflicto sobre el monto del arriendo o las condiciones que se acordaron verbalmente", "Cuando quieres regularizar tu situación pero el arrendador se niega a firmar un contrato escrito"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás arrendando sin contrato y tienes dudas sobre tus derechos?</h3>
+              <p className="text-white mb-6">Sin contrato escrito, tus derechos dependen de lo que puedas probar. Un abogado inmobiliario puede evaluar tu situación y decirte exactamente cómo proceder antes de que surja un conflicto.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed text-base">
-              Arrendar sin contrato en Chile es legal, pero riesgoso. Aunque el acuerdo verbal tiene validez, la falta de un documento escrito genera incertidumbre y debilita la posición de ambas partes.
+              Arrendar sin contrato en Chile es legal, pero riesgoso para ambas partes. El acuerdo verbal tiene validez jurídica, pero la falta de un documento escrito genera incertidumbre sobre las condiciones pactadas y debilita la posición de ambas partes si hay conflicto.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed text-base">
-              Si estás en esta situación, lo más importante es protegerte con pruebas y actuar a tiempo.
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Para el arrendatario, el riesgo principal es no poder probar lo que se acordó — el precio, el plazo, las condiciones de salida — si el arrendador cambia de posición. Para el arrendador, el riesgo es no poder acreditar el incumplimiento ni ejecutar un desalojo de forma expedita sin documentación de respaldo.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              La solución es simple y no cuesta nada: firmar un contrato escrito, aunque sea privado entre las partes sin notario. Un documento firmado que establezca el precio, el plazo y las condiciones básicas protege a ambos y evita la mayoría de los conflictos antes de que ocurran.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si ya estás en una   situación de arriendo sin contrato y hay un conflicto en curso — desalojo, deudas, retención de garantía — lo primero es reunir toda la evidencia disponible del acuerdo y consultar con un abogado antes de tomar cualquier decisión <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">Abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

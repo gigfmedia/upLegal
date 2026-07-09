@@ -10,6 +10,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 
 const BlogArticle = () => {
@@ -109,7 +110,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 15 min</span>
+              <ReadTime slug="ley-devuelveme-mi-casa-chile-2026" />
             </div>
           </div>
         </div>
@@ -255,6 +256,16 @@ const BlogArticle = () => {
                 👉 ¿El arrendador puede cambiar la cerradura en Chile?
                 <ChevronRight className="h-4 w-4" />
               </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Tienes contrato de arriendo vigente</h3>
+                <p className="text-green-700">Puedes acceder al procedimiento monitorio de la Ley 21.461, que permite recuperar el inmueble en menos tiempo si el arrendatario no paga.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">No tienes contrato escrito</h3>
+                <p className="text-red-700">Deberás probar la existencia de la relación de arriendo ante el tribunal con otros medios, lo que hace el proceso más largo y complejo.</p>
+              </div>
             </div>
           </div>
 
@@ -405,6 +416,16 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">El arrendatario no se opone ni responde</h3>
+                <p className="text-green-700">El proceso monitorio puede completarse en 1 a 3 meses, ya que la orden de desalojo queda firme sin necesidad de audiencias adicionales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">El arrendatario presenta oposición</h3>
+                <p className="text-red-700">Si el arrendatario se opone o contrata abogado para defenderse, el caso pasa a un juicio más tradicional y puede extenderse a 6 meses o más.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -485,6 +506,16 @@ const BlogArticle = () => {
               ))}
             </div>
             <p className="text-gray-600 leading-relaxed">Un error puede retrasar todo el proceso.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Caso simple con contrato vigente</h3>
+                <p className="text-green-700">Si el contrato está vigente, la deuda es clara y no hay disputa sobre los hechos, un abogado puede gestionar el proceso sin mayor complejidad.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Caso con disputa o daños al inmueble</h3>
+                <p className="text-red-700">Si hay disputa sobre la validez del contrato, daños a la propiedad o problemas de notificación, la intervención de un abogado especializado es indispensable para evitar errores que retrasen todo.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -551,13 +582,28 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="La ley Devuélveme mi Casa tiene requisitos específicos. Compara abogados especializados y verifica si puedes usar este procedimiento."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Quieres recuperar tu propiedad con la Ley Devuélveme Mi Casa?</h3>
+              <p className="text-white mb-6">Cada caso tiene requisitos específicos. Un abogado especializado puede evaluar si tu situación califica para el procedimiento monitorio y acelerar la recuperación de tu inmueble.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Si estás considerando recuperar tu propiedad bajo la Ley 21.461, hay ciertos escenarios donde conviene actuar rápido y buscar asesoría legal especializada antes de tomar cualquier decisión.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Llevas más de un mes sin recibir el pago del arriendo y el arrendatario no responde", "El arrendatario se niega a desocupar la propiedad después del término del contrato", "Necesitas recuperar el inmueble con urgencia y quieres saber si calificas para el procedimiento monitorio"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -565,13 +611,7 @@ const BlogArticle = () => {
               La Ley "Devuélveme Mi Casa" (Ley 21.461) representa un cambio concreto para los propietarios en Chile: redujo los plazos del juicio de desalojo y simplificó el proceso en casos de no pago y ocupación ilegal. Antes de esta ley, recuperar un inmueble podía tomar años. Hoy el proceso es más rápido, aunque sigue siendo judicial.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Eso es lo más importante que debes entender: más rápido no significa inmediato. Todavía necesitas presentar una demanda, notificar al arrendatario y esperar la resolución del tribunal. No hay atajos legales para recuperar tu propiedad sin pasar por ese proceso.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Lo que sí cambia es que actuar bien desde el inicio — con la documentación correcta y asesoría legal adecuada — puede hacer la diferencia entre un proceso de 3 meses y uno de 12. Los errores en la demanda, las notificaciones mal hechas o los plazos vencidos son las razones más comunes por las que estos juicios se alargan innecesariamente.
-            </p>
-            <p className="text-gray-600 mb-4 font-bold leading-relaxed">
-              Si eres propietario y necesitas recuperar tu inmueble, o si eres arrendatario y te acaban de notificar una demanda bajo esta ley, lo más recomendable es <Link to="/abogados-arriendo" className="text-green-900 underline hover:text-green-600">hablar con un abogado experto en arriendo y desalojo</Link> ahora.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

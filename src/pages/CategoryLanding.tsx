@@ -66,6 +66,13 @@ const CategoryLanding = ({ category: propCategory }: CategoryLandingProps) => {
 
         // Ordenar por cantidad de reseñas (mejores primero)
         const sortedResults = [...completeResults].sort((a, b) => {
+          // Diego Donoso siempre al final (solo en landing arriendo)
+          if (category === 'arriendo') {
+            const aIsDiego = a.first_name?.toLowerCase().includes('diego') && a.last_name?.toLowerCase().includes('donoso');
+            const bIsDiego = b.first_name?.toLowerCase().includes('diego') && b.last_name?.toLowerCase().includes('donoso');
+            if (aIsDiego && !bIsDiego) return 1;
+            if (!aIsDiego && bIsDiego) return -1;
+          }
           return (b.review_count || 0) - (a.review_count || 0);
         });
 

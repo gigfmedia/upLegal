@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertCircle, XCircle, Shield } from "lucide-react";
+import { ReadTime } from "@/components/blog/ReadTime";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -107,7 +108,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="orden-desalojo-chile-2026" />
             </div>
           </div>
         </div>
@@ -165,15 +166,21 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <InArticleCTA
-              message="¿Recibiste una orden de desalojo o estás por obtenerla? Un abogado especializado puede evaluar tus opciones legales."
-              buttonText="Ver abogados de arriendo"
-              category="Derecho Civil"
-            />
+            
             <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded-r-lg">
               <p className="text-indigo-900 leading-relaxed">
                 Es importante entender que la orden de desalojo es el <strong>resultado de un proceso judicial previo</strong>, no una decisión unilateral.
               </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario que entiende el proceso</h3>
+                <p className="text-green-700">Sabe que la orden es el resultado del juicio y actúa antes de que se dicte, negociando o pagando para evitar el desalojo.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario que minimiza la orden</h3>
+                <p className="text-red-700">Cree que puede ignorarla y termina enfrentando un lanzamiento forzado con Carabineros y costos judiciales mayores.</p>
+              </div>
             </div>
           </div>
 
@@ -284,7 +291,23 @@ const BlogArticle = () => {
               </ul>
               <p className="text-amber-900 font-bold">Es el momento en que el desalojo se materializa.</p>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo voluntario</h3>
+                <p className="text-green-700">El arrendatario entrega la propiedad dentro del plazo fijado por el tribunal. Se evita el lanzamiento forzado, los costos adicionales y el uso de la fuerza pública.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Lanzamiento forzado</h3>
+                <p className="text-red-700">El arrendatario no abandona el inmueble y el tribunal coordina el desalojo con Carabineros. Los costos judiciales se multiplican y las pertenencias pueden quedar bajo custodia.</p>
+              </div>
+            </div>
           </div>
+
+          <InArticleCTA
+              message="¿Recibiste una orden de desalojo o estás por obtenerla? Un abogado especializado puede evaluar tus opciones legales."
+              buttonText="Ver abogados de arriendo"
+              category="Derecho Civil"
+            />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia entre orden de desalojo y lanzamiento</h2>
@@ -433,6 +456,16 @@ const BlogArticle = () => {
                 </ul>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario que actúa con abogado</h3>
+                <p className="text-green-700">Responde la orden, presenta sus descargos y logra negociar plazos o un acuerdo de pago que detiene el lanzamiento.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario que no busca ayuda</h3>
+                <p className="text-red-700">Ignora la orden, no presenta defensa y el tribunal ejecuta el lanzamiento sin posibilidad de detenerlo, perdiendo la propiedad y acumulando más deuda.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -484,13 +517,30 @@ const BlogArticle = () => {
               <p className="text-indigo-900 leading-relaxed font-bold">Este es uno de los escenarios más comunes en Chile.</p>
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Una orden de desalojo puede llevar al lanzamiento forzado. Compara abogados especializados en arriendos y desalojos y actúa a tiempo."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Cuando la orden de desalojo ya está emitida o el lanzamiento es inminente, cada día cuenta para encontrar una solución legal.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Si ya te notificaron la demanda de desalojo y no has respondido", "Si el lanzamiento está programado y necesitas saber si puedes suspenderlo", "Si eres arrendador y quieres ejecutar la orden de desalojo sin errores"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Improved CTA */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Recibiste una orden de desalojo y no sabes qué hacer?</h3>
+              <p className="text-white mb-6">El tiempo corre en tu contra. Un abogado puede evaluar si quedan opciones para detener o retrasar el lanzamiento.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -499,13 +549,7 @@ const BlogArticle = () => {
               La orden de desalojo en Chile es una de las etapas más serias dentro de un conflicto de arriendo. Una vez que el tribunal la dicta, el proceso puede avanzar hasta el lanzamiento forzado del ocupante con auxilio de la fuerza pública. Por eso, ignorar una demanda o esperar “a ver qué pasa” suele empeorar rápidamente la situación.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Muchas personas creen que el desalojo ocurre automáticamente después de algunos meses sin pagar, pero la realidad es distinta. Siempre debe existir un proceso judicial, una resolución del tribunal y una ejecución formal. Sin embargo, eso no significa que el riesgo sea bajo: cuando la deuda aumenta y no existe respuesta del arrendatario, las probabilidades de perder el inmueble crecen considerablemente.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Para el arrendador, actuar a tiempo permite recuperar la propiedad más rápido y evitar que la deuda siga aumentando. Para el arrendatario, responder la demanda, negociar o buscar asesoría legal puede marcar una diferencia importante en los plazos y en las consecuencias económicas del caso.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Lo más importante es entender que una orden de desalojo no aparece de un día para otro. Antes existen notificaciones, audiencias y oportunidades para actuar. Mientras antes enfrentes el problema, mayores serán las opciones de encontrar una solución y evitar consecuencias más graves.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

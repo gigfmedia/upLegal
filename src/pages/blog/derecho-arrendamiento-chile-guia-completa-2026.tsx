@@ -11,6 +11,7 @@ import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -111,7 +112,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 16 min</span>
+              <ReadTime slug="derecho-arrendamiento-chile-guia-completa-2026" />
             </div>
           </div>
         </div>
@@ -220,6 +221,17 @@ const BlogArticle = () => {
               <li>El plazo de vigencia y renovación establecido</li>
               <li>Las condiciones de mantención y uso pactadas originalmente</li>
             </ul>
+
+            <div className="grid sm:grid-cols-2 gap-6 mt-6 mb-12">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Contrato con cláusula de reajuste</h3>
+                <p className="text-green-700">Si el contrato tiene una cláusula que permite reajustar el arriendo según IPC, el arrendador puede subir el precio anualmente de forma legal. El límite lo da la fórmula pactada en el mismo documento.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Contrato sin cláusula de reajuste</h3>
+                <p className="text-red-700">El arrendador no puede modificar el precio unilateralmente. Cualquier intento de subida sin respaldo contractual puede ser rechazado por el arrendatario. Para cambiar el valor, se necesita un nuevo contrato o anexo firmado.</p>
+              </div>
+            </div>
 
             <h3 className="text-xl font-bold mb-4 text-gray-800">Derecho a no ser desalojado sin orden judicial</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">En Chile, nadie puede ser desalojado sin un proceso legal.</p>
@@ -431,6 +443,17 @@ const BlogArticle = () => {
                 El dueño podría terminar siendo el demandado o enfrentar cargos penales si actúa de forma agresiva o impide el acceso sin orden de un tribunal.
               </p>
             </div>
+            
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo voluntario</h3>
+                <p className="text-green-700">El arrendatario entrega la propiedad voluntariamente después de un acuerdo o notificación. Es la vía más rápida y evita costas judiciales. Puedes negociar plazos y condiciones de salida.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Desalojo judicial (lanzamiento)</h3>
+                <p className="text-red-700">Requiere demanda, notificación, audiencia y sentencia. El juez ordena la restitución con auxilio de la fuerza pública si es necesario. El proceso tarda meses y genera costas que incrementan la deuda total.</p>
+              </div>
+            </div>
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo profundo</p>
@@ -546,6 +569,16 @@ const BlogArticle = () => {
                 <p className="bg-green-50 p-4 rounded-xl text-green-800 font-bold inline-block">
                   ✓ Respaldo contractual = Reajuste legal
                 </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Reajuste por IPC</h3>
+                <p className="text-green-700">Es la forma más justa y común. Se aplica según la variación del IPC publicada por el INE. El monto se actualiza periódicamente según lo pactado (cada 6 o 12 meses). Ambas partes saben exactamente cuándo y cuánto subirá.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Reajuste arbitrario</h3>
+                <p className="text-red-700">Si el arrendador sube el precio sin respaldo contractual, es ilegal. El arrendatario puede negarse a pagar el alza y el juez le daría la razón. Si quieres conocer más sobre el cálculo legal del IPC, revisa nuestra <Link to="/blog/reajuste-arriendo-ipc-chile-2026" className="text-red-700 underline hover:text-red-500">guía de reajuste por IPC</Link>.</p>
               </div>
             </div>
           </div>
@@ -753,35 +786,6 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo necesitas un abogado por un problema de arriendo?</h2>
-            <p className="text-gray-600 mb-8 leading-relaxed font-medium">
-              No todos los conflictos requieren acciones legales inmediatas, pero hay situaciones donde es clave asesorarse:
-            </p>
-            <div className="grid sm:grid-cols-1 gap-3 mb-8">
-              {[
-                "Si te demandaron por no pago de arriendo",
-                "Si enfrentas un desalojo",
-                "Si no te devuelven la garantía",
-                "Si el arrendador actúa de forma ilegal",
-                "Si hay montos importantes en disputa"
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
-                  <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
-                  <span className="text-gray-700 font-bold text-base">{item}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-gray-700 font-medium leading-relaxed italic border-l-4 border-green-500 pl-4 py-2 bg-green-50/50 rounded-r-lg">
-              Un abogado puede ayudarte a evaluar tu caso, evitar errores y tomar decisiones que protejan tu situación legal desde el inicio.
-            </p>
-          </div>
-
-          <InArticleCTA
-            message="¿Necesitas un abogado para resolver tu problema de arriendo? Conecta con un especialista ahora."
-            category="Derecho Inmobiliario"
-          />
-
-          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué hacer ante un problema de arriendo</h2>
             <div className="space-y-4">
               {[
@@ -803,35 +807,40 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="El arrendamiento tiene reglas específicas en Chile. Encuentra abogados verificados y resuelve tu conflicto con asesoría profesional."
-            link="/abogado-arriendo"
-            buttonText="Ver abogados de arriendo disponibles"
-          />
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              No todos los conflictos de arriendo requieren abogado, pero algunos escenarios ameritan asesoría urgente:
+            </p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Ya te notificaron una demanda por no pago o desalojo", "El arrendador retiene tu garantía sin justificación ni respaldo", "Hay montos importantes en disputa o el conflicto afecta tu vivienda"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          <div className="mb-6 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <div className="prose prose-lg max-w-none text-gray-600 text-base font-medium space-y-4 leading-relaxed italic">
-              <p>
-                El derecho de arrendamiento en Chile es mucho más que un simple acuerdo entre dos personas. Es una relación legal que, cuando no se entiende bien, puede generar conflictos importantes como desalojos, pérdidas económicas, problemas con la garantía o incluso procesos judiciales largos y desgastantes.
-              </p>
-              <p>
-                A lo largo de esta guía viste que muchas de las situaciones más comunes —como el no pago del arriendo, las subidas de precio, la tácita reconducción o las amenazas con DICOM— no siempre funcionan como las personas creen. Existen reglas claras, pero también muchos mitos que terminan perjudicando tanto a arrendatarios como a arrendadores.
-              </p>
-              <p>
-                Por eso, la clave está en anticiparse. Revisar el contrato, entender tus derechos, documentar cualquier problema y actuar a tiempo puede marcar una gran diferencia entre resolver un conflicto rápidamente o enfrentar un proceso legal complejo.
-              </p>
-              <p>
-                Además, es importante entender que cada caso es distinto. Aunque esta guía te da una base sólida, muchas situaciones requieren un análisis específico según el contrato, las pruebas disponibles y el comportamiento de ambas partes.
-              </p>
-              <p className="text-gray-900 font-bold not-italic">
-                Si estás enfrentando un problema de arriendo —ya sea como arrendatario o arrendador— no esperes a que escale. Tomar decisiones informadas desde el inicio es la mejor forma de proteger tu situación legal y evitar consecuencias mayores.
-              </p>
-              <p className="text-gray-900 font-bold not-italic">
-                En un contexto donde los conflictos de arriendo son cada vez más frecuentes en Chile, contar con información clara y actuar a tiempo no solo evita problemas: puede ahorrarte meses de estrés y costos innecesarios.
-              </p>
+          {/* CTA before Conclusion */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás en medio de un conflicto de arriendo sin saber bien cuáles son tus derechos?</h3>
+              <p className="text-white mb-6">Los arrendatarios y arrendadores tienen derechos claros en Chile, pero aplicarlos a tu caso concreto requiere analizar el contrato, las pruebas y el comportamiento de las partes. Un abogado inmobiliario puede orientarte y evitar que el conflicto escale a un juicio innecesario.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
             </div>
+          </div>
+
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              El derecho de arrendamiento en Chile es mucho más que un simple acuerdo entre dos personas. Es una relación legal que, cuando no se entiende bien, puede generar conflictos importantes como desalojos, pérdidas económicas y problemas con la garantía.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
+            </p>
           </div>
 
           <CategoryCTA category="arriendo" topic="arriendo" />

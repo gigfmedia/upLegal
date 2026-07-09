@@ -299,7 +299,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "25 de Mayo, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/como-desalojar-a-un-familiar-de-mi-casa-chile-2026.png"
   },
   {
@@ -379,7 +379,7 @@ export const articles: Article[] = [
     category: "Derecho Civil",
     author: "LegalUp",
     date: "2 de Mayo, 2026",
-    readTime: "14 min",
+    readTime: "15 min",
     image: "/assets/como-desalojar-chile-2026.png"
   },
   {
@@ -399,7 +399,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "22 de Abril, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/demanda-arriendo-chile-2026.png"
   },
   {
@@ -409,7 +409,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "19 de Abril, 2026",
-    readTime: "12 min",
+    readTime: "13 min",
     image: "/assets/contrato-arriendo-chile-2026.png"
   },
   {
@@ -419,7 +419,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "15 de Abril, 2026",
-    readTime: "15 min",
+    readTime: "16 min",
     image: "/assets/derecho-arrendamiento-chile-2026.png"
   },
   {
@@ -429,7 +429,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "13 de Abril, 2026",
-    readTime: "9 min",
+    readTime: "10 min",
     image: "/assets/tacita-reconduccion-chile-2026.png"
   },
   {
@@ -439,7 +439,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "12 de Abril, 2026",
-    readTime: "9 min",
+    readTime: "10 min",
     image: "/assets/reajuste-arriendo-ipc-2026.png"
   },
   {
@@ -449,7 +449,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "10 de Abril, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/desalojo-3-chile-2026.png"
   },
   {
@@ -459,7 +459,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "9 de Abril, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/dicom-arriendo-chile-2026.png"
   },
   {
@@ -469,7 +469,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "8 de Abril, 2026",
-    readTime: "9 min",
+    readTime: "10 min",
     image: "/assets/no-devuelven-garantia-arriendo-chile-2026.png"
   },
   {
@@ -479,7 +479,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "5 de Abril, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/sin-contrato-arriendo-2026.png"
   },
   {
@@ -509,7 +509,7 @@ export const articles: Article[] = [
     category: "Derecho Civil",
     author: "LegalUp",
     date: "24 de Marzo, 2026",
-    readTime: "14 min",
+    readTime: "15 min",
     image: "/assets/ley-devuelveme-mi-casa-2026.png"
   },
   {
@@ -529,7 +529,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "20 de Marzo, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/orden-desalojo-chile-2026.png"
   },
   {
@@ -539,7 +539,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "18 de Marzo, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/cerradura-arriendo-chile-2026.png"
   },
   {
@@ -549,7 +549,7 @@ export const articles: Article[] = [
     category: "Derecho Civil",
     author: "LegalUp",
     date: "16 de Marzo, 2026",
-    readTime: "15 min",
+    readTime: "16 min",
     image: "/assets/desalojo-2-chile-2026.png"
   },
   {
@@ -559,7 +559,7 @@ export const articles: Article[] = [
     category: "Derecho Civil",
     author: "LegalUp",
     date: "13 de Marzo, 2026",
-    readTime: "15 min",
+    readTime: "16 min",
     image: "/assets/desalojo-chile-2026.png"
   },
   {
@@ -599,7 +599,7 @@ export const articles: Article[] = [
     category: "Derecho Inmobiliario",
     author: "LegalUp",
     date: "13 de Enero, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/arriendo-chile-2026.png"
   }
 ];

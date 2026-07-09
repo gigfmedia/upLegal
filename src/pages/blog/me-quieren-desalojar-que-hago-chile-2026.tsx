@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, Search, MessageSquare, AlertCircle } from "lucide-react";
+import { ReadTime } from "@/components/blog/ReadTime";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -104,7 +105,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="me-quieren-desalojar-que-hago-chile-2026" />
             </div>
           </div>
         </div>
@@ -158,6 +159,16 @@ const BlogArticle = () => {
                 <p className="text-gray-600 leading-relaxed">
                   Si el juez determina que corresponde el desalojo, dictará una sentencia que puede incluir una orden de lanzamiento, que es la orden formal para que el arrendatario abandone la propiedad. Esta orden es ejecutada por un receptor judicial, quien puede solicitar el apoyo de Carabineros si es necesario.
                 </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario informado</h3>
+                <p className="text-green-700">Sabe que el desalojo requiere proceso judicial y, al recibir la notificación, responde la demanda o negocia para evitar el lanzamiento.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario desinformado</h3>
+                <p className="text-red-700">Cree que pueden desalojarlo de inmediato, entra en pánico, abandona la propiedad voluntariamente y pierde sus derechos sin oponerse legalmente.</p>
               </div>
             </div>
           </div>
@@ -248,6 +259,16 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Causa válida y documentada</h3>
+                <p className="text-green-700">El arrendador tiene contrato firmado, comprobantes de deuda y el tribunal ordena el desalojo en un proceso rápido y sin contratiempos.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Desalojo sin fundamento sólido</h3>
+                <p className="text-red-700">El arrendador intenta desalojar por una causa no contemplada en la ley o sin pruebas. El tribunal rechaza la demanda y el proceso se alarga innecesariamente.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -283,6 +304,16 @@ const BlogArticle = () => {
                 Esta ley permite procedimientos más rápidos en situaciones donde la deuda está claramente acreditada, por ejemplo cuando existe contrato firmado ante notario. Gracias a esta normativa, algunos desalojos pueden resolverse en plazos más cortos que antes, aunque igualmente requieren intervención judicial.
               </p>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Caso acogido por la Ley Devuélveme mi Casa</h3>
+                <p className="text-green-700">Contrato ante notario, deuda clara y acreditada: el desalojo se tramita en 3 a 5 meses, con menos instancias procesales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Contrato sin firma ante notario</h3>
+                <p className="text-red-700">El arrendador no puede usar el procedimiento acelerado, debe ir por la vía ordinaria y el juicio puede durar el doble de tiempo.</p>
+              </div>
+            </div>
           </div>
 
           <p className="text-gray-600 mb-6 leading-relaxed italic">Puedes leer más sobre la Ley en este artículo.</p>
@@ -315,18 +346,29 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* <InArticleCTA
-            message="Enfrentar un desalojo sin asesoría legal es arriesgado. Un abogado puede revisar tu situación y decirte qué opciones tienes."
-            buttonText="Hablar con abogado ahora"
-            category="Derecho Arrendamiento"
-          /> */}
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Actuar temprano en un desalojo puede marcar la diferencia. Compara abogados de arriendo y protege tus derechos."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* Improved CTA */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te están presionando para que salgas de la propiedad?</h3>
+              <p className="text-white mb-6">Sin orden judicial no pueden desalojarte. Un abogado puede ayudarte a frenar un desalojo ilegal y proteger tus derechos.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Si el arrendador está usando presión o amenazas para que abandones la propiedad, el tiempo de reacción es clave para evitar un desalojo ilegal.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Si el dueño cambió la cerradura o cortó servicios básicos", "Si recibiste una notificación judicial y no sabes cómo responder", "Si el arrendador te amenaza con sacarte por la fuerza sin orden judicial"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -334,10 +376,7 @@ const BlogArticle = () => {
               En Chile, nadie puede ser desalojado de una propiedad sin una orden judicial. Aunque el dueño tenga motivos válidos para recuperar el inmueble, debe seguir el proceso legal establecido por la ley.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Intentar desalojar a un arrendatario por la fuerza, cambiar cerraduras o retirar pertenencias sin autorización judicial son acciones ilegales que pueden tener consecuencias legales. Conocer tus derechos es fundamental para enfrentar correctamente cualquier conflicto de arriendo y evitar abusos.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si tienes dudas sobre tu situación o enfrentas un problema legal relacionado con arriendos, buscar asesoría jurídica puede ayudarte a tomar decisiones informadas y proteger tus derechos.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

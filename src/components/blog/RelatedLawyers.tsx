@@ -73,6 +73,14 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
               emergencyConsultations: true
             }
           }));
+          // Diego Donoso al final
+          formatted.sort((a, b) => {
+            const aIsDiego = a.name.toLowerCase().includes('diego') && a.name.toLowerCase().includes('donoso');
+            const bIsDiego = b.name.toLowerCase().includes('diego') && b.name.toLowerCase().includes('donoso');
+            if (aIsDiego && !bIsDiego) return 1;
+            if (!aIsDiego && bIsDiego) return -1;
+            return 0;
+          });
           setLawyers(formatted);
         }
       } catch (error) {

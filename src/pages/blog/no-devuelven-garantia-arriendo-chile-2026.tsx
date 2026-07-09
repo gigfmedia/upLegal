@@ -11,6 +11,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -110,7 +111,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 11 min</span>
+              <ReadTime slug="no-devuelven-garantia-arriendo-chile-2026" />
             </div>
           </div>
         </div>
@@ -230,6 +231,16 @@ const BlogArticle = () => {
               <p className="text-gray-700 leading-relaxed font-bold">
                 Importante: El arrendador debe justificar cualquier descuento con respaldo documental. No puede retener dinero de forma arbitraria.
               </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Devolución sin descuentos</h3>
+                <p className="text-green-700">Si entregaste la propiedad en buen estado y sin deudas, la garantía debe devolverse íntegramente en el plazo acordado.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Retención con respaldo documental</h3>
+                <p className="text-red-700">El arrendador solo puede descontar si presenta boletas, facturas o presupuestos que acrediten daños reales que excedan el desgaste normal.</p>
+              </div>
             </div>
           </div>
 
@@ -379,6 +390,16 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Demanda con respaldo documental</h3>
+                <p className="text-green-700">Si tienes fotos del estado de la propiedad al entregar, contrato y comunicaciones escritas, tu posición legal es mucho más sólida.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Sin pruebas del estado del inmueble</h3>
+                <p className="text-red-700">Sin evidencia del estado de entrega, el arrendador puede alegar daños que no puedas refutar, debilitando tu caso.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -463,6 +484,16 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Con pruebas de pago y comunicación</h3>
+                <p className="text-green-700">Transferencias bancarias, mensajes y correos electrónicos sirven como prueba para reclamar la devolución de la garantía incluso sin contrato.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Sin registro de pagos ni acuerdos</h3>
+                <p className="text-red-700">Sin evidencia de la relación de arriendo, reclamar la garantía se vuelve significativamente más difícil ante un tribunal.</p>
+              </div>
+            </div>
           </div>
 
           {/* Casos frecuentes */}
@@ -498,11 +529,15 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* <InArticleCTA
-            message="Si el arrendador no cumple, tienes herramientas legales para exigir la devolución de tu garantía. Consulta con un abogado hoy."
-            buttonText="Hablar con un abogado de arriendo"
-            category="Derecho Arriendo"
-          /> */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿El arrendador retiene tu garantía sin justificación?</h3>
+              <p className="text-white mb-6">Un abogado inmobiliario puede evaluar si la retención es legal y ayudarte a recuperar tu dinero sin necesidad de llegar a juicio.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* CTA before Conclusion */}
           <PreConclusionCTA
@@ -511,6 +546,20 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">La devolución de la garantía parece un trámite sencillo, pero hay situaciones donde el arrendador puede aprovecharse si no actúas con asesoría legal.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Cuando el arrendador retiene la garantía sin presentar boletas ni facturas que justifiquen los descuentos", "Cuando han pasado más de 30 días desde la entrega del inmueble y no hay señales de devolución", "Cuando el arrendador descuenta por desgaste normal del inmueble, como pintura o pequeñas marcas en paredes"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Conclusión */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -518,16 +567,7 @@ const BlogArticle = () => {
               La garantía de arriendo no es un pago perdido — es tu dinero, y la ley chilena te da herramientas concretas para recuperarlo.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              El arrendador puede retener la garantía solo si tiene razones justificadas y respaldo documental: boletas, facturas, presupuestos que acrediten daños reales que excedan el desgaste normal. Sin ese respaldo, la retención es arbitraria y puedes demandar su devolución.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El error más frecuente es esperar demasiado. Muchos arrendatarios dejan pasar meses después de entregar el inmueble sin actuar, pierden los registros fotográficos del estado de la propiedad y dejan que el tiempo trabaje en contra. La prescripción existe y los plazos corren desde que terminó el contrato.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si el arrendador no responde o se niega a devolver sin justificación, el camino es claro: carta formal documentando el reclamo, y si no hay respuesta, demanda civil. En muchos casos la sola intervención de un abogado resuelve el problema sin llegar a juicio — el arrendador prefiere devolver antes de enfrentar un proceso legal.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Documenta todo desde el primer día: fotos al entrar, fotos al salir, comunicaciones por escrito. Ese registro es la diferencia entre ganar o perder el caso.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

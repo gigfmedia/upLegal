@@ -7,9 +7,9 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
-import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -105,7 +105,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+               <ReadTime slug="arrendador-puede-cambiar-cerradura-chile-2026" />
             </div>
           </div>
         </div>
@@ -177,6 +177,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed font-medium">
               En estas situaciones, el arrendador debe recurrir a un tribunal.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario con contrato vigente</h3>
+                <p className="text-green-700">Si el contrato sigue vigente y estás al día en los pagos, cambiar la cerradura es claramente ilegal. Puedes exigir el reingreso inmediato y denunciar ante Carabineros.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario con deuda de arriendo</h3>
+                <p className="text-red-700">Incluso si existe deuda, el arrendador no puede tomar justicia por mano propia. Debe iniciar un juicio de desalojo. La deuda no justifica el cambio de cerradura.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -231,6 +241,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               Además, el conflicto puede escalar y terminar siendo más costoso y complejo para ambas partes.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Actuar con abogado</h3>
+                <p className="text-green-700">Si contactas a un abogado de inmediato, puedes obtener una orden de reingreso y demandar por daños. El proceso es más rápido y aumentan las posibilidades de recuperar el acceso.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Esperar o negociar sin asesoría</h3>
+                <p className="text-red-700">Si no actúas con rapidez, el arrendador puede destruir pruebas y el conflicto se alarga. Negociar sin conocer tus derechos puede llevar a acuerdos desfavorables.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -328,6 +348,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-6 leading-relaxed">
               Evitar estos errores permite resolver el problema de forma más segura y rápida.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendador asesorado</h3>
+                <p className="text-green-700">Inicia el juicio de desalojo, espera la orden judicial y recupera la propiedad sin riesgos legales. El proceso puede demorar, pero es el único camino legal.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendador que actúa por su cuenta</h3>
+                <p className="text-red-700">Cambia la cerradura, se expone a demandas por daños, sanciones y debe restituir el acceso. Además, el desalojo legal igual deberá iniciarse desde cero.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -388,36 +418,56 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* <InArticleCTA
-            message="No enfrentes esta situación sin asesoría. Un abogado especialista puede revisar tu caso y defender tus derechos de arrendatario inmediatamente."
-            buttonText="Hablar con un abogado ahora"
-            category="Derecho Arrendamiento"
-          /> */}
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Cambiar cerraduras sin autorización judicial puede ser delito. Compara abogados de arriendo y resuelve el conflicto legalmente."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* CUANDO CONSULTAR */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Actuar rápido puede marcar la diferencia entre resolver el problema o que escale a un conflicto mayor.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {[
+                "Si el arrendador ya cambió la cerradura y no puedes acceder a tu vivienda.",
+                "Cuando recibes amenazas de desalojo sin orden judicial.",
+                "Si el arrendador retiró tus pertenencias del inmueble sin autorización del tribunal.",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
+          {/* CTA before Conclusion */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te cambiaron la cerradura sin aviso?</h3>
+              <p className="text-white mb-6">Cambiar la cerradura sin orden judicial es ilegal en Chile. Si estás en esta situación, necesitas asesoría urgente para recuperar el acceso a tu vivienda.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
-          <div className="mb-12 pt-4">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Sin excepciones.
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Esta guía describe las reglas generales del derecho de arrendamiento y las opciones disponibles cuando ocurre esta situación.En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Sin excepciones.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Aunque existan deudas o conflictos, la ley exige que cualquier desalojo se realice mediante un proceso judicial. El arrendador que actúa por su cuenta — cambiando cerraduras, sacando pertenencias o cortando servicios básicos — está cometiendo un acto ilegal, independientemente de si tienes deuda o no.
+            <p className="text-gray-600 leading-relaxed mb-4">
+              No importa si hay deuda de arriendo, si el contrato venció o si el arrendador es el dueño de la propiedad — actuar por su cuenta es ilegal y puede tener consecuencias legales para él. El único camino válido para recuperar el inmueble es el proceso judicial.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Muchos arrendatarios no saben esto y ceden ante la presión sin que el arrendador tenga ningún respaldo legal para actuar así. Conocer tus derechos es lo que te permite responder correctamente en el momento.
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Si el arrendador ya cambió la cerradura o está ejerciendo presión para que salgas sin seguir el proceso legal, tienes opciones concretas: llamar a Carabineros, denunciar el hecho y solicitar medidas judiciales. No estás obligado a aceptar una situación ilegal aunque tengas deudas pendientes.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si el proceso ya llegó a tribunales, el desalojo puede demorar meses. Ese tiempo existe precisamente para que puedas buscar alternativas: pagar la deuda, negociar un plazo con el arrendador o preparar una salida ordenada. Usarlo bien marca la diferencia.
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Si eres arrendador y necesitas recuperar tu propiedad, el proceso judicial existe precisamente para eso — y con la Ley 21.461 los plazos son más cortos que antes. Actuar dentro del marco legal protege tu posición y evita que una acción apresurada complique el proceso.
             </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si el arrendador ya cambió la cerradura, te está amenazando o no sabes en qué etapa del proceso estás, lo más importante es actuar rápido y con información correcta.
+
+            <p className="text-gray-600 leading-relaxed">
+              En cualquiera de los dos lados, actuar rápido y con información correcta desde el inicio marca la diferencia. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+              <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">
+                abogado inmobiliario en Chile
+              </Link>.
             </p>
           </div>
 

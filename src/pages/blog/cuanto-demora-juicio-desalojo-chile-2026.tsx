@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Table as TableIcon } from "lucide-react";
+import { ReadTime } from "@/components/blog/ReadTime";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -105,7 +106,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="cuanto-demora-juicio-desalojo-chile-2026" />
             </div>
           </div>
         </div>
@@ -158,6 +159,16 @@ const BlogArticle = () => {
               <p className="text-gray-700 leading-relaxed font-medium">
                 <strong>IMPORTANTE:</strong> En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal. La autotutela es ilegal.
               </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendatario proactivo</h3>
+                <p className="text-green-700">Consulta a un abogado desde el primer aviso de demanda, negocia un acuerdo de pago y evita que el juicio se alargue más de 3 meses.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendatario que ignora el problema</h3>
+                <p className="text-red-700">No responde la notificación, deja que la deuda se acumule y enfrenta un juicio que puede extenderse más de 8 meses con lanzamiento incluido.</p>
+              </div>
             </div>
           </div>
 
@@ -226,6 +237,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6">
               Esta legislación define los derechos de ambas partes, las causas de término de contrato y los procedimientos judiciales oficiales para recuperar un inmueble, evitando siempre desalojos arbitrarios o ilegales.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Caso cubierto por la Ley Devuélveme mi Casa</h3>
+                <p className="text-green-700">Deuda clara con contrato ante notario: el procedimiento es más ágil y puede resolverse en 3 a 5 meses desde la demanda.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Caso sin contrato formal</h3>
+                <p className="text-red-700">El arrendador debe probar la relación contractual, lo que alarga el juicio y puede sumar 2 a 3 meses adicionales al proceso.</p>
+              </div>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -315,6 +336,16 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Arrendador con abogado desde el día 1</h3>
+                <p className="text-green-700">Presenta la demanda correctamente, el juicio avanza sin errores y recupera la propiedad en el menor tiempo posible.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Arrendador que intenta el desalojo por su cuenta</h3>
+                <p className="text-red-700">Comete errores procesales, la demanda es rechazada o se retrasa, y el proceso se extiende varios meses más de lo necesario.</p>
+              </div>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -328,18 +359,30 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* <InArticleCTA
-            message="Cada caso de desalojo es distinto. Si quieres saber exactamente cuánto puede demorar el tuyo, consulta hoy con un abogado especialista."
-            buttonText="Evaluar mi caso de desalojo"
-            category="Derecho Arrendamiento"
-          /> */}
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Conocer los plazos del desalojo te permite actuar con anticipación. Compara abogados especializados en arriendos y protege tu propiedad o tus derechos."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* Improved CTA */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿No sabes cuánto puede demorar tu caso de desalojo?</h3>
+              <p className="text-white mb-6">Cada caso es diferente. Un abogado especializado puede revisar tu situación y darte un plazo realista en minutos.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Cuando el conflicto de arriendo escala, el tiempo juega en contra. Consultar a un abogado especializado a tiempo puede marcar la diferencia entre un desalojo rápido y un proceso que se extiende por meses.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Si el arrendatario ya fue notificado y no sabes cómo responder", "Si llevas más de 2 meses sin pago y el arrendador amenaza con demandar", "Si eres arrendador y necesitas saber cuánto puede demorar realmente tu caso"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -347,13 +390,7 @@ const BlogArticle = () => {
               El juicio de desalojo en Chile puede demorar desde algunas semanas hasta varios meses, dependiendo de factores como el tipo de contrato, si existen rentas impagas, la carga del tribunal y si el arrendatario presenta defensa durante el proceso.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Con la implementación de leyes como “Devuélveme mi Casa”, los procedimientos de desalojo por no pago del arriendo se han vuelto más rápidos en comparación con años anteriores. Sin embargo, incluso en estos casos, el desalojo siempre debe realizarse mediante una orden judicial, respetando el debido proceso y los derechos tanto del arrendador como del arrendatario.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed font-semibold">
-              Si enfrentas un conflicto de arriendo, ya sea como dueño o arrendatario, es importante conocer el procedimiento legal y actuar a tiempo para evitar problemas mayores.
-            </p>
-            <p className="text-gray-600 leading-relaxed font-bold">
-              En situaciones complejas, contar con asesoría legal puede ayudarte a entender tus derechos, acelerar el proceso y evitar errores que puedan retrasar el juicio.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 

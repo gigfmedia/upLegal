@@ -6,9 +6,9 @@ import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
-import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 
 const BlogArticle = () => {
@@ -104,7 +104,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+               <ReadTime slug="me-subieron-el-arriendo-que-hago-2026" />
             </div>
           </div>
         </div>
@@ -150,6 +150,16 @@ const BlogArticle = () => {
               <p className="text-gray-700 font-bold text-lg leading-relaxed">
                 Antes de aceptar cualquier aumento, lo primero que debes hacer es revisar cuidadosamente el contrato que firmaste.
               </p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Contrato con cláusula de reajuste</h3>
+                <p className="text-green-700">El arrendador puede aplicar el aumento siempre que respete la fórmula y periodicidad pactada. Revisa que el cálculo sea correcto y que el aviso se haya dado en los plazos acordados.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Contrato sin cláusula de reajuste</h3>
+                <p className="text-red-700">El valor del arriendo no puede modificarse durante la vigencia del contrato. Cualquier aumento exigido sin respaldo contractual es ilegal y puedes rechazarlo.</p>
+              </div>
             </div>
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -204,6 +214,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Por ejemplo, si el contrato establece que el arriendo se reajustará según IPC una vez al año, el arrendador puede aplicar ese aumento cuando corresponda. En ese caso, el reajuste no es arbitrario, sino que simplemente está ejecutando una condición que ambas partes aceptaron al firmar el contrato.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Reajuste por IPC anual</h3>
+                <p className="text-green-700">Si el contrato indica reajuste anual por IPC, el arrendador solo puede aumentar una vez al año según la variación del índice. Es un aumento predecible y acordado por ambas partes.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Aumento sin cláusula o fuera de plazo</h3>
+                <p className="text-red-700">Si no hay cláusula de reajuste o el arrendador intenta subir antes del plazo estipulado, el aumento no es válido. Puedes rechazarlo y seguir pagando el monto original.</p>
+              </div>
+            </div>
           </div>
 
           <InArticleCTA
@@ -233,6 +253,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Por ejemplo, si el contrato indica un reajuste anual y el dueño intenta subir el arriendo a los seis meses, ese aumento no sería válido. En estos casos, el arrendatario tiene derecho a rechazar el aumento y continuar pagando el monto establecido en el contrato vigente.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Rechazo fundamentado</h3>
+                <p className="text-green-700">Si identificas que el aumento no corresponde, puedes rechazarlo por escrito señalando la cláusula del contrato que lo respalda. Guarda una copia de la comunicación.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Aceptación sin revisar</h3>
+                <p className="text-red-700">Si pagas el aumento sin cuestionarlo, podrías estar aceptando tácitamente una modificación del contrato. Siempre revisa antes de pagar un valor distinto al pactado.</p>
+              </div>
+            </div>
           </div>
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -323,29 +353,51 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* <InArticleCTA
-            message="Si el aumento no está respaldado por tu contrato, tienes derechos. Habla con un abogado de arriendo y aclara tu situación hoy."
-            buttonText="Consultar sobre mi arriendo"
-            category="Derecho Arrendamiento"
-          /> */}
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Aceptar un aumento ilegal puede perjudicarte a largo plazo. Compara abogados de arriendo y evalúa tus opciones."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* CUANDO CONSULTAR */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Algunas situaciones requieren asesoría legal urgente para evitar que el problema escale.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {[
+                "Si el arrendador te exige un aumento sin respaldo en el contrato.",
+                "Cuando el arrendador amenaza con desalojarte por no aceptar un reajuste.",
+                "Si el aumento aplicado no corresponde al método de cálculo pactado en el contrato.",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
+          {/* CTA */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te subieron el arriendo y no sabes si es legal?</h3>
+              <p className="text-white mb-6">No todos los aumentos son válidos. Si tu contrato no contempla el reajuste que te están cobrando, puedes rechazarlo. Un abogado puede revisar tu caso en 24 horas.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
+          {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El aumento del arriendo en Chile está regulado principalmente por el contrato de arriendo. Esto significa que el dueño no puede modificar el precio de forma arbitraria durante la vigencia del contrato.
+            <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El aumento del arriendo en Chile está regulado principalmente por el contrato. Esta guía describe las reglas generales sobre cuándo un reajuste es válido y qué hacer si no lo es.El aumento del arriendo en Chile está regulado principalmente por el contrato — no por la voluntad unilateral del arrendador. Si el contrato no tiene cláusula de reajuste, el precio no puede modificarse durante su vigencia sin acuerdo de ambas partes. Si la tiene, el aumento debe calcularse exactamente como lo establece el contrato, usando el IPC oficial del período correcto.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Antes de aceptar cualquier aumento, es fundamental revisar las cláusulas de reajuste y verificar si el cambio corresponde a lo pactado. Si el aumento no está contemplado en el contrato, el arrendatario tiene derecho a rechazarlo y mantener el monto original.
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El error más frecuente es asumir que el arrendador puede subir el arriendo cuando quiera porque "así son las cosas". No es así. Un aumento sin respaldo contractual puede ser rechazado, y si el arrendador insiste en cobrarlo, tienes herramientas legales para cuestionarlo.
             </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Conocer tus derechos y entender cómo funcionan los contratos de arriendo puede ayudarte a evitar conflictos y tomar decisiones informadas cuando enfrentas un aumento en el valor del arriendo.
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El error más frecuente es asumir que el arrendador puede subir el arriendo cuando quiera porque "así son las cosas". No es así. Un aumento sin respaldo contractual puede ser rechazado, y si el arrendador insiste en cobrarlo, tienes herramientas legales para cuestionarlo.Si te llegó un aviso de aumento, lo primero es revisar tu contrato. Si no hay cláusula de reajuste, puedes rechazar el aumento por escrito. Si la hay, verifica que el cálculo use el IPC correcto del período indicado en el contrato — los errores administrativos son frecuentes y muchas veces se resuelven con un simple correo bien fundamentado.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Si el conflicto persiste o el arrendador amenaza con desalojo por no pagar el aumento, ese es el momento de buscar asesoría legal. Un {" "}
+              <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">
+              abogado de arriendo</Link> puede revisar tu contrato y decirte exactamente qué corresponde según tu situación específica.
             </p>
           </div>
 

@@ -22,6 +22,7 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const faqs = [
   {
@@ -112,7 +113,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="como-desalojar-a-un-familiar-de-mi-casa-chile-2026" />
             </div>
           </div>
         </div>
@@ -150,6 +151,16 @@ const BlogArticle = () => {
                 <p className="text-amber-900 font-bold text-base">
                   El único camino legal es a través de un tribunal. Sin orden judicial, no hay desalojo posible.
                 </p>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">El familiar acepta irse voluntariamente</h3>
+                <p className="text-green-700">Si hay diálogo y el familiar está dispuesto a buscar otra vivienda, el proceso puede resolverse sin necesidad de juicio en cuestión de semanas.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">El familiar se niega a irse</h3>
+                <p className="text-red-700">Si no hay acuerdo y el familiar se niega a abandonar la propiedad, el único camino es judicial. No puedes forzar la salida por tu cuenta bajo ninguna circunstancia.</p>
               </div>
             </div>
           </div>
@@ -374,6 +385,16 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">No hay menores ni disputa sobre derechos</h3>
+                <p className="text-green-700">Si no hay niños involucrados ni el familiar alega derechos sobre la propiedad, el proceso puede avanzar sin complicaciones adicionales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Hay menores o el familiar alega derechos</h3>
+                <p className="text-red-700">El tribunal puede fijar plazos más largos si hay menores de edad, y si el familiar alega algún derecho sobre el inmueble, el proceso se vuelve significativamente más complejo.</p>
+              </div>
+            </div>
           </div>
 
           {/* Interlink */}
@@ -430,14 +451,41 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Caso simple sin disputa legal</h3>
+                <p className="text-green-700">Si el familiar reconoce que no tiene derecho a ocupar la propiedad y hay disposición al diálogo, puede resolverse con asesoría legal básica o incluso sin abogado.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">El familiar alega derechos o hay conflicto</h3>
+                <p className="text-red-700">Si el familiar argumenta tener derechos sobre el inmueble o hay menores involucrados, la asesoría de un abogado especializado se vuelve indispensable para evitar errores costosos.</p>
+              </div>
+            </div>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Desalojar a un familiar requiere el procedimiento correcto. Compara abogados y evita errores que retrasen el proceso."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Si estás enfrentando una situación compleja con un familiar que ocupa tu propiedad, hay ciertos escenarios donde conviene buscar asesoría legal especializada lo antes posible.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["El familiar no quiere irse y ya has agotado todas las opciones de diálogo", "Hay menores de edad viviendo en la propiedad y necesitas entender cómo afecta el proceso", "El familiar alega tener algún derecho sobre el inmueble (herencia, aportes económicos, etc.)"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Necesitas recuperar tu propiedad de un familiar?</h3>
+              <p className="text-white mb-6">Desalojar a un familiar requiere el procedimiento legal correcto. Un abogado especializado puede evaluar tu situación y determinar la acción judicial que corresponde según tu caso.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusión */}
           <div className="mb-12 border-t pt-8">
@@ -446,10 +494,7 @@ const BlogArticle = () => {
               Desalojar a un familiar en Chile es un proceso legal que requiere paciencia y los pasos correctos. No existe forma de hacerlo por la fuerza aunque seas el dueño — el único camino es judicial.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Lo más importante es actuar con claridad desde el inicio: intenta el acuerdo directo, documenta todo por escrito, y si no hay solución, presenta la demanda dentro de los plazos correctos. La acción de precario existe precisamente para estas situaciones y los tribunales chilenos la conocen bien.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed font-bold">
-              Si hay menores involucrados, si el familiar alega derechos sobre el inmueble o si la situación es especialmente conflictiva, busca asesoría legal antes de tomar cualquier paso. Un error en la demanda puede costar meses adicionales de ocupación.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 
@@ -477,26 +522,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
-        {/* CTA Final */}
-        <section className="bg-white rounded-xl shadow-sm p-8 text-center mt-8 border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">
-            ¿Necesitas recuperar tu propiedad de un familiar?
-          </h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            Conectamos a personas con abogados especialistas en desalojo y recuperación de inmuebles. Evalúa tu caso hoy y entiende cuáles son tus opciones legales concretas.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil" onClick={() => window.gtag?.('event', 'search_started')}>
-              <Button
-                size="lg"
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </section>
       </div>
 
       <RelatedLawyers category="Derecho Civil" />

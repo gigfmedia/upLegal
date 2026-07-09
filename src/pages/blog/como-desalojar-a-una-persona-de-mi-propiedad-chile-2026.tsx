@@ -11,6 +11,7 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -108,7 +109,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 14 min</span>
+              <ReadTime slug="como-desalojar-a-una-persona-de-mi-propiedad-chile-2026" />
             </div>
           </div>
         </div>
@@ -166,12 +167,22 @@ const BlogArticle = () => {
                   <p className="text-gray-600 leading-relaxed">
                     Cualquiera de estas acciones puede derivar en una denuncia en tu contra por violación de morada u otros delitos, incluso si eres el propietario legítimo. El único camino seguro es el proceso judicial.
                   </p>
-                </div>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Tienes contrato de arriendo escrito y vigente</h3>
+                <p className="text-green-700">Puedes acceder al procedimiento monitorio de la Ley 21.461, que permite recuperar tu propiedad en menos tiempo que el proceso tradicional.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">No tienes ningún documento que acredite la relación</h3>
+                <p className="text-red-700">Deberás probar la existencia del arriendo o iniciar un juicio de precario, lo que hace el proceso más complejo y extiende los plazos significativamente.</p>
+              </div>
+            </div>
+          </div>
 
-            <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 1 — Cómo desalojar a un arrendatario con contrato escrito</h2>
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 1 — Cómo desalojar a un arrendatario con contrato escrito</h2>
               <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
                 Esta es la situación ideal para el propietario. El contrato escrito es tu "ley privada" y la prueba reina en el juicio.
               </p>
@@ -312,6 +323,16 @@ const BlogArticle = () => {
                   Si aún tienes una relación cordial con el ocupante, intenta que firme un <strong>Anexo de Reconocimiento de Arriendo</strong> o un contrato simple ahora. Esto "formaliza" el pasado y te permitirá usar la Ley Devuélveme Mi Casa si decide dejar de pagar en el futuro.
                 </p>
               </div>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-green-800 text-lg mb-2">Tienes evidencia de pagos periódicos del ocupante</h3>
+                  <p className="text-green-700">Las cartolas bancarias, transferencias y mensajes de WhatsApp pueden servir como prueba de la relación de arriendo ante el tribunal.</p>
+                </div>
+                <div className="bg-red-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-red-800 text-lg mb-2">No hay ningún registro de pagos</h3>
+                  <p className="text-red-700">Si no puedes probar la existencia de un arriendo, el caso podría tratarse como precario, lo que requiere un procedimiento judicial distinto y más lento.</p>
+                </div>
+              </div>
             </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
@@ -423,6 +444,16 @@ const BlogArticle = () => {
                   </div>
                 ))}
               </div>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-green-800 text-lg mb-2">Actúas rápido con asesoría legal desde el inicio</h3>
+                  <p className="text-green-700">Una estrategia bien planificada desde el principio, con la documentación correcta, puede reducir significativamente los plazos del proceso de desalojo.</p>
+                </div>
+                <div className="bg-red-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-red-800 text-lg mb-2">Intentas negociar por meses sin respaldo legal</h3>
+                  <p className="text-red-700">Las negociaciones informales sin una demanda presentada suelen prolongar innecesariamente la ocupación y aumentar la deuda acumulada.</p>
+                </div>
+              </div>
             </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
@@ -473,12 +504,28 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            {/* CTA before Conclusion */}
-            <PreConclusionCTA
-              description="Desalojar por tu cuenta puede ser ilegal. Compara abogados especializados y recupera tu propiedad por la vía judicial."
-              link="/abogado-arriendo"
-              buttonText="Ver abogados de arriendo disponibles"
-            />
+            <div className="mb-12">
+              <div className="bg-green-900 rounded-2xl p-8 text-center">
+                <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Tienes a alguien ocupando tu propiedad y quieres desalojarlo legalmente?</h3>
+                <p className="text-white mb-6">Cada situación requiere un procedimiento legal distinto. Un abogado especializado puede evaluar tu caso y determinar la mejor estrategia para recuperar tu inmueble.</p>
+                <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                  Ver abogados inmobiliarios disponibles
+                </Link>
+              </div>
+            </div>
+
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+              <p className="text-gray-600 mb-4">Si estás pensando en desalojar a alguien de tu propiedad, hay ciertos escenarios donde conviene actuar rápido y buscar asesoría legal especializada antes de tomar cualquier decisión por tu cuenta.</p>
+              <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                {["No sabes si la persona que ocupa tu propiedad tiene algún derecho legal sobre ella", "Han pasado varios meses y el ocupante no paga ni muestra intención de irse", "Has intentado negociar sin éxito y necesitas saber cuál es el primer paso legal concreto"].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-green-600 flex-shrink-0">•</span>
+                    <span className="text-gray-700 font-bold">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión: Recuperar tu propiedad es posible</h2>
@@ -486,10 +533,7 @@ const BlogArticle = () => {
                 Recuperar una propiedad en Chile es un proceso legal que requiere paciencia y los pasos correctos. No existe un atajo fuera del sistema judicial, pero con la Ley 21.461 los plazos son más razonables que nunca.
               </p>
               <p className="text-gray-600 leading-relaxed mb-6">
-                La clave del éxito reside en dos puntos: <strong>la evidencia y la celeridad</strong>. Mientras antes inicies el proceso con las pruebas correctas (contratos, mensajes, pagos), más rápido podrá el tribunal dictar la orden de lanzamiento. El tiempo es el mejor aliado del ocupante; la ley y la acción rápida son los tuyos.
-              </p>
-              <p className="text-gray-600 leading-relaxed">
-                Independientemente de tu situación —contrato escrito, acuerdo verbal u ocupante sin permiso— existen herramientas legales efectivas para que las llaves de tu casa vuelvan a tus manos de forma definitiva y legítima.
+                Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
               </p>
             </div>
 

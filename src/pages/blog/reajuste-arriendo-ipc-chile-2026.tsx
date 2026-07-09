@@ -12,6 +12,7 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const [rentValue, setRentValue] = useState<string>("500000");
@@ -120,7 +121,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 9 min</span>
+              <ReadTime slug="reajuste-arriendo-ipc-chile-2026" />
             </div>
           </div>
         </div>
@@ -180,6 +181,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed font-bold text-lg">
               Esto es lo primero que debes revisar si te llegó un aviso de aumento: ¿tu contrato menciona IPC?
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Contrato con cláusula de IPC</h3>
+                <p className="text-green-700">El reajuste es contractual y debe respetar exactamente el período y mecanismo que establece el contrato.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Contrato sin cláusula de reajuste</h3>
+                <p className="text-red-700">El arrendador no puede subir el arriendo de forma unilateral. Cualquier aumento requiere acuerdo de ambas partes.</p>
+              </div>
+            </div>
           </div>
 
           {/* Cluster link equivalent */}
@@ -386,7 +397,23 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed font-bold text-lg">
               Si el arrendador quiere subir más del IPC sin que el contrato lo permita, necesita tu acuerdo. Sin acuerdo, el aumento no corresponde.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Aumento permitido por contrato</h3>
+                <p className="text-green-700">Si el contrato establece "IPC + X%" o un mecanismo de reajuste específico, ese aumento es válido mientras respete lo pactado.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Aumento sin respaldo contractual</h3>
+                <p className="text-red-700">Si el contrato solo menciona IPC y el arrendador exige un porcentaje mayor, puedes rechazar la diferencia por escrito.</p>
+              </div>
+            </div>
           </div>
+
+          <InArticleCTA
+            message="¿Te subieron el arriendo y no sabes si el cálculo es correcto? Un abogado puede revisar tu contrato y decirte si el reajuste corresponde."
+            buttonText="Revisar mi reajuste con un abogado"
+            category="Derecho Civil"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Errores comunes al aplicar el reajuste</h2>
@@ -502,13 +529,17 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Error administrativo</h3>
+                <p className="text-green-700">El arrendador usó el IPC mensual en vez del acumulado, o calculó mal el período. Se resuelve con un correo y el dato del INE.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Cobro indebido reiterado</h3>
+                <p className="text-red-700">El arrendador insiste en un reajuste incorrecto pese a los antecedentes. En este caso corresponde buscar asesoría legal.</p>
+              </div>
+            </div>
           </div>
-
-          <InArticleCTA
-            message="¿Te subieron el arriendo y no sabes si el cálculo es correcto? Un abogado puede revisar tu contrato y decirte si el reajuste corresponde."
-            buttonText="Revisar mi reajuste con un abogado"
-            category="Derecho Civil"
-          />
 
           <div className="mb-12 mt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Dónde obtener el IPC oficial en Chile?</h2>
@@ -563,13 +594,30 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="No todo reajuste de arriendo es válido. Compara abogados especializados y verifica si el aumento cumple la ley."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
 
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">El reajuste de arriendo por IPC parece un cálculo sencillo, pero hay situaciones donde conviene tener asesoría legal especializada antes de que el problema escale.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Cuando el arrendador aplica un reajuste sin que el contrato tenga cláusula de IPC", "Cuando el cálculo del IPC del arrendador no coincide con el valor oficial publicado por el INE", "Cuando el arrendador amenaza con desalojo por no aceptar un reajuste que parece incorrecto"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿El reajuste de tu arriendo está bien calculado?</h3>
+              <p className="text-white mb-6">Un error en la aplicación del IPC puede significar que estás pagando más de lo que corresponde cada mes. Un abogado inmobiliario puede revisar tu contrato y verificar si el aumento es legal.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -577,21 +625,11 @@ const BlogArticle = () => {
               El reajuste de arriendo según IPC es un mecanismo legítimo y común en Chile, pero para que sea válido debe cumplir tres condiciones: estar establecido en el contrato, calcularse con el IPC oficial del período correcto según el INE, y aplicarse en la fecha que corresponde. Si falla cualquiera de esas tres condiciones, el aumento puede ser cuestionado.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Si te llegó un aviso de aumento, lo primero es revisar el contrato — no el mensaje del arrendador, el contrato. Busca la cláusula de reajuste y verifica qué período de IPC debe usarse. Luego entra al sitio del INE y calcula tú mismo el monto correcto con la fórmula que explicamos arriba. En la mayoría de los casos, los errores son administrativos y se resuelven con un correo bien fundamentado.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si el cálculo no cuadra y el arrendador insiste, tienes herramientas concretas: puedes pagar el monto que corresponde según el IPC correcto, dejar constancia escrita de la diferencia y solicitar explicación formal. No estás obligado a pagar un reajuste incorrecto solo porque te lo exigen.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed font-bold">
-              Y si el conflicto escala — el arrendador amenaza con desalojo o cobra montos que no corresponden de forma reiterada — ese es el momento de buscar asesoría legal. Un abogado de arriendo puede evaluar si existe cobro indebido y qué acciones corresponden según tu contrato específico.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
 
-          <InArticleCTA
-            message="¿Tienes dudas sobre si el reajuste de tu arriendo es correcto? Consulta con un abogado de arriendo y aclara tu situación hoy."
-            buttonText="Consultar sobre mi arriendo"
-            category="Derecho Civil"
-          />
+          
           <CategoryCTA category="arriendo" topic="arriendo" />
 
 

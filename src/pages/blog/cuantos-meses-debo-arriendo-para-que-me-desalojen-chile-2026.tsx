@@ -11,6 +11,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -123,7 +124,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 15 min</span>
+              <ReadTime slug="cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" />
             </div>
           </div>
         </div>
@@ -171,6 +172,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               La confusión viene porque en la práctica muchos arrendadores esperan, se intenta negociar antes y el proceso judicial demora, pero eso no es una obligación legal.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Debes solo 1 mes y estás dispuesto a pagar</h3>
+                <p className="text-green-700">El arrendador puede iniciar el proceso, pero aún estás a tiempo de negociar y evitar el juicio si pagas la deuda o llegas a un acuerdo.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Debes 3 meses o más sin contacto con el arrendador</h3>
+                <p className="text-red-700">El riesgo de demanda es alto. El arrendador probablemente ya inició o iniciará pronto el proceso judicial para recuperar el inmueble.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -386,6 +397,16 @@ const BlogArticle = () => {
               <p className="text-gray-700 font-bold text-lg leading-relaxed">Lo importante:</p>
               <p className="text-gray-600 mt-2 leading-relaxed">Puedes pasar de atraso a demanda mucho más rápido de lo que crees.</p>
             </div>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Estás en etapa de atraso (días o semanas)</h3>
+                <p className="text-green-700">Aún puedes resolver la situación con una conversación o un acuerdo de pago antes de que la deuda escale a un proceso judicial.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Ya estás en mora o te notificaron una demanda</h3>
+                <p className="text-red-700">El proceso legal ya está en marcha. Necesitas asesoría legal urgente para definir tu estrategia de defensa y evitar el desalojo.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -581,6 +602,16 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed font-medium">
               Por eso, mientras antes actúes, mejores opciones tendrás.
             </p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Pagas la deuda en las primeras etapas del juicio</h3>
+                <p className="text-green-700">Puedes negociar un acuerdo con el arrendador para suspender el proceso judicial y evitar el desalojo, especialmente si es la primera vez.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">El juicio está avanzado y hay orden de lanzamiento</h3>
+                <p className="text-red-700">Ya no basta con pagar la deuda. La orden de desalojo puede ejecutarse y el proceso es mucho más difícil de detener en esta etapa.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -616,47 +647,38 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="La deuda acumulada puede derivar en demanda y desalojo. Compara abogados de arriendo y evalúa si conviene negociar o defender tu caso."
-            link="/abogado-arriendo"
-            buttonText="Ver abogados de arriendo disponibles"
-          />
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
+            <p className="text-gray-600 mb-4">Si estás acumulando deuda de arriendo o ya te notificaron una demanda, hay ciertos escenarios donde conviene buscar asesoría legal especializada lo antes posible para evitar que la situación empeore.</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Ya debes 2 meses o más de arriendo y el arrendador ha dejado de responder", "Recibiste una notificación judicial o citación por demanda de desalojo", "No estás seguro de si puedes negociar un acuerdo de pago o si es mejor defender tu caso en el juicio"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          <div className="mb-8 pt-4">
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás en riesgo de desalojo y no sabes qué hacer?</h3>
+              <p className="text-white mb-6">La deuda de arriendo puede escalar rápidamente a un juicio. Un abogado especializado puede evaluar tu caso y ayudarte a definir la mejor estrategia para evitar el desalojo.</p>
+              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
+                Ver abogados inmobiliarios disponibles
+              </Link>
+            </div>
+          </div>
+
+          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No existe un número mágico de meses para que ocurra un desalojo en Chile. La ley es clara: <strong>con 1 mes de deuda ya pueden iniciar un proceso judicial</strong> para poner término al contrato y recuperar la propiedad.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Sin embargo, en la práctica, el desalojo no depende solo de la cantidad de meses que debas. Factores como la decisión del arrendador, las condiciones del contrato, la existencia de intentos de acuerdo y los tiempos del tribunal influyen directamente en cómo evoluciona el proceso.
+              Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Por eso, enfocarse únicamente en “cuántos meses debo” es un error común. Lo realmente importante es <strong>cómo reaccionas frente al primer incumplimiento</strong>. Ignorar la situación, dejar pasar el tiempo o no responder una demanda puede agravar rápidamente el problema y llevar a consecuencias más complejas, como un juicio, una orden de lanzamiento o una deuda judicial.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En cambio, actuar a tiempo —ya sea negociando, regularizando la deuda o buscando asesoría legal— puede marcar una diferencia significativa en el resultado. En muchos casos, una acción oportuna permite evitar el desalojo o, al menos, reducir el impacto económico y legal.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si estás enfrentando atrasos en el arriendo o ya existe riesgo de desalojo, lo peor que puedes hacer es esperar. <strong>Tomar decisiones informadas desde el inicio es la mejor forma de proteger tu situación, tu historial y tu tranquilidad.</strong>
-            </p>
-
-            <div className="bg-gray-50 rounded-2xl p-8 mb-12 border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">También te puede interesar</h3>
-              <div className="grid gap-4">
-                <Link to="/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Qué pasa si no pago el arriendo en Chile?
-                </Link>
-                <Link to="/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 ¿Cuántos meses debo para que me desalojen?
-                </Link>
-                <Link to="/blog/orden-desalojo-chile-2026" className="flex items-center gap-3 text-blue-600 font-semibold hover:underline">
-                  👉 Orden de desalojo en Chile
-                </Link>
-              </div>
-            </div>
           </div>
-
 
           <CategoryCTA category="arriendo" topic="arriendo" />
           <div className="mb-6" data-faq-section>
@@ -672,52 +694,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 border">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">¿Cuándo debes actuar inmediatamente?</h2>
-          <p className="text-gray-700 mb-6 leading-relaxed">Debes buscar ayuda urgente si:</p>
-          <div className="grid sm:grid-cols-2 gap-4 mb-6">
-            {[
-              "Debes 2 meses o más",
-              "Recibiste notificación judicial",
-              "El arrendador dejó de responder",
-              "Te amenazan con desalojo",
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100">
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <span className="text-gray-700 font-medium text-base">{item}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-gray-700 font-medium">En estas situaciones, el riesgo de demanda o desalojo es alto.</p>
-        </div>
-      </section>
-
-      <section className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-8">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center border">
-          <h2 className="text-2xl font-bold font-serif text-gray-900 mb-4">¿Estás en riesgo de desalojo o ya tienes deuda de arriendo?</h2>
-          <p className="text-lg text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
-            No esperes a que el problema escale. Un error en este momento puede significar aumentar la deuda o enfrentar un juicio. Habla con un abogado y evalúa tu caso antes de que sea tarde.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/search?category=Derecho+Civil">
-              <Button
-                size="lg"
-                onClick={() => {
-                  window.gtag?.("event", "click_consultar_abogado", {
-                    article: window.location.pathname,
-                    location: "blog_cta_meses_desalojo_primary",
-                  });
-                }}
-                className="bg-gray-900 hover:bg-green-900 text-white px-8 py-3 w-full sm:w-auto shadow-md"
-              >
-                Hablar con abogado ahora
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <RelatedLawyers category="Derecho Civil" />
 
