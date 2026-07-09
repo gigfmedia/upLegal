@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldAlert, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -11,6 +11,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const MediationChecker = () => {
@@ -194,7 +195,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="mediacion-familiar-chile-2026" />
             </div>
           </div>
         </div>
@@ -244,6 +245,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               La mediación familiar busca disminuir el conflicto, reducir los costos emocionales y económicos de un juicio y permitir soluciones más rápidas que las obtenidas mediante una sentencia judicial.
             </p>
+            <p className="text-gray-600 mt-4 leading-relaxed">Es importante entender que la mediación no suspende los plazos de prescripción de las acciones judiciales. Si existe un plazo próximo a vencer para ejercer un derecho (como el cese de convivencia para el divorcio), la mediación no lo detendrá. Además, los acuerdos alcanzados en mediación, una vez homologados judicialmente, tienen fuerza ejecutiva y pueden ser exigibles como una sentencia, lo que los diferencia de los simples acuerdos privados entre las partes.</p>
           </div>
 
           {/* ¿La mediación familiar es obligatoria en Chile? */}
@@ -300,6 +302,7 @@ const BlogArticle = () => {
                 Muchas personas preparan una demanda, reúnen documentos e incluso contratan un abogado para luego descubrir que el tribunal exige acreditar una mediación previa. Conocer este requisito desde el principio permite ahorrar tiempo, dinero y frustraciones innecesarias.
               </p>
             </div>
+            <p className="text-gray-600 mt-4 leading-relaxed">La obligatoriedad de la mediación tiene matices importantes. No todas las materias de familia la exigen: los casos de violencia intrafamiliar, por ejemplo, están excluidos de la mediación obligatoria. Tampoco se requiere cuando una de las partes reside fuera del país o cuando existe urgencia manifiesta. Conocer estas excepciones es relevante para no incurrir en dilaciones innecesarias ni en gastos de mediación que podrían no ser exigibles según el caso concreto.</p>
           </div>
 
           {/* Interlink: Pensión de Alimentos */}
@@ -350,6 +353,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed font-semibold">
               La necesidad o no de mediación dependerá siempre de la materia específica y de las características concretas del caso.
             </p>
+            <p className="text-gray-600 mt-4 leading-relaxed">Aunque las exclusiones legales parezcan claras, en la práctica surgen disputas sobre si la mediación era exigible en un caso concreto. Por ejemplo, si una parte alega violencia intrafamiliar para evitar la mediación, el tribunal puede requerir antecedentes que acrediten dicha situación. Del mismo modo, si la mediación se inicia y una de las partes no asiste, se genera un certificado de mediación frustrada que permite acceder al tribunal, pero la consecuencia procesal puede variar según si la inasistencia fue justificada o no.</p>
           </div>
 
           {/* ¿Cuáles son los objetivos de la mediación familiar? */}
@@ -485,6 +489,21 @@ const BlogArticle = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Interlink: Derecho de Familia */}
+          <div className="mb-6 space-y-3">
+            <div className="text-center py-4 border-t border-gray-100 my-8">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/blog/derecho-de-familia-chile-2026"
+                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
+                >
+                  👉 Derecho de Familia en Chile
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -687,19 +706,17 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* Interlink: Derecho de Familia */}
-          <div className="mb-6 space-y-3">
-            <div className="text-center py-4 border-t border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <div className="flex flex-col sm:flex-row justify-center gap-3">
-                <Link
-                  to="/blog/derecho-de-familia-chile-2026"
-                  className="inline-flex items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 py-3 rounded-xl transition-all hover:bg-blue-100"
-                >
-                  👉 Derecho de Familia en Chile
-                </Link>
-              </div>
-            </div>
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">La información general es útil, pero la asesoría temprana marca la diferencia en estos escenarios:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si necesitas iniciar una mediación obligatoria y no sabes cómo prepararte ni qué documentos presentar.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando la mediación se frustró y requieres preparar una demanda sólida con todos los antecedentes.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen antecedentes de violencia intrafamiliar y se necesita determinar si la mediación es procedente.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando la otra parte no asiste a la mediación y se requiere el certificado de mediación frustrada para acceder al tribunal.</span></li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed mt-4">Conocer las excepciones y los pasos correctos puede ahorrarte tiempos y costos innecesarios en el proceso.</p>
           </div>
 
 
@@ -717,26 +734,23 @@ const BlogArticle = () => {
               La mediación familiar obligatoria constituye una de las etapas más importantes dentro del sistema de justicia de familia en Chile. Antes de iniciar numerosas demandas relacionadas con pensión de alimentos, cuidado personal o relación directa y regular, la ley exige intentar primero una solución colaborativa mediante este procedimiento.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Aunque muchas personas la perciben como un simple requisito administrativo, la mediación cumple una función mucho más profunda. Permite reducir conflictos, fomentar acuerdos voluntarios y proteger de mejor manera el bienestar de los hijos involucrados. Además, suele ser más rápida, menos costosa y emocionalmente menos desgastante que un juicio prolongado.
+              Aunque muchas personas la perciben como un simple requisito administrativo, la mediación cumple una función mucho más profunda. Permite reducir conflictos, fomentar acuerdos voluntarios y proteger de mejor manera el bienestar de los hijos involucrados.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Sin embargo, es importante comprender que la mediación no reemplaza al Tribunal de Familia. El mediador no actúa como juez ni tiene facultades para imponer soluciones. Su labor consiste en facilitar el diálogo y ayudar a construir acuerdos que beneficien a todas las partes.
+              Sin embargo, es importante comprender que la mediación no reemplaza al Tribunal de Familia. El mediador no actúa como juez ni tiene facultades para imponer soluciones.
             </p>
             <p className="text-gray-600 leading-relaxed mb-4">
               Cuando existe voluntad de colaboración, la mediación puede resolver completamente el conflicto. Cuando ello no ocurre, el proceso igualmente cumple una función esencial: generar el certificado de mediación frustrada que permitirá continuar mediante una demanda judicial.
             </p>
-            <p className="text-gray-600 leading-relaxed font-semibold">
-              Por ello, conocer cómo funciona la mediación familiar obligatoria, cuáles son sus etapas
-              y qué documentos genera puede evitar retrasos innecesarios y errores procesales. Si estás
-              enfrentando un conflicto de pensión de alimentos, puedes revisar tu caso con un{" "}
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Este artículo contiene información de carácter general. La obligatoriedad de la mediación, las excepciones aplicables y los efectos del certificado de mediación frustrada dependen de la materia específica y las circunstancias de cada caso.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Si necesitas iniciar una mediación o enfrentas un conflicto familiar, un{" "}
               <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
-                abogado especialista en alimentos en Chile
-              </Link>
-              . Si el conflicto es sobre divorcio o cuidado personal, encuentra un{" "}
-              <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
-                abogado de familia online
+                abogado especialista en derecho de familia
               </Link>{" "}
-              en LegalUp.
+              puede orientarte sobre los pasos a seguir según tu situación concreta.
             </p>
           </div>
 

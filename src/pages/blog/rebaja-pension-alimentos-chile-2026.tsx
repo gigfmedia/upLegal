@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -11,6 +11,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const RebajaSimulator = () => {
   const [currentPension, setCurrentPension] = useState(300000);
@@ -187,7 +188,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="rebaja-pension-alimentos-chile-2026" />
             </div>
           </div>
         </div>
@@ -244,7 +245,11 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-4">
+              La rebaja de pensión se fundamenta en el principio de alteración de las circunstancias, recogido en el artículo 323 del Código Civil chileno. Para que proceda, el cambio en la situación económica del alimentante debe ser objetivo, relevante y de cierta permanencia. Los tribunales han establecido que las fluctuaciones temporales de ingresos o las disminuciones voluntarias no configuran causal suficiente, pues la obligación alimenticia debe cumplirse con esfuerzo y sacrificio.
+            </p>
           </div>
+
 
           {/* ¿Se puede bajar porque quiero? */}
           <div className="mb-12">
@@ -457,7 +462,12 @@ const BlogArticle = () => {
                 *En este caso existe una base razonable para pedir rebaja, pero el resultado final dependerá de la capacidad de probar los hechos y las necesidades reales del hijo.
               </p>
             </div>
+
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic">
+              El monto de la rebaja no está predeterminado legalmente, pero los tribunales suelen aplicar un criterio de proporcionalidad inversa: a mayor disminución de ingresos, mayor posibilidad de rebaja, siempre que el nuevo monto no desatienda las necesidades básicas del alimentario. En la práctica, rebajas superiores al 40% del monto original solo prosperan cuando el alimentante acredita una disminución drástica y permanente de su capacidad económica.
+            </p>
           </div>
+          
 
           {/* Enlaces relacionados */}
           <div className="mb-6 space-y-3">
@@ -489,6 +499,9 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-4">
+              La jurisprudencia chilena ha precisado que el tribunal no solo verifica los ingresos formales del alimentante, sino que puede ordenar diligencias probatorias oficiosas para determinar su capacidad económica real. Entre estas diligencias destaca el informe socioeconómico del consejo técnico, que puede revelar gastos inconsistentes con los ingresos declarados. La buena fe procesal es esencial: el ocultamiento de ingresos puede ser sancionado con el rechazo de la solicitud de rebaja.
+            </p>
           </div>
 
           {/* Enlaces relacionados */}
@@ -506,9 +519,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando has perdido tu empleo o tus ingresos han disminuido drásticamente y necesitas adecuar la pensión a tu nueva realidad económica.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si han nacido nuevos hijos o has adquirido nuevas cargas familiares que hacen insostenible el monto actual.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando padeces una enfermedad grave o discapacidad que afecta tu capacidad de generar ingresos.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si ya has reducido el pago por tu cuenta y necesitas regularizar la situación antes de que la deuda acumulada active medidas de apremio.</span></li>
+            </ul>
+            <p className="text-gray-600 mt-4">Una evaluación temprana permite reunir las pruebas correctas y evitar que la deuda siga creciendo mientras tramitas la rebaja.</p>
+          </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="La rebaja de alimentos no es automática: debes acreditar un cambio en tu capacidad económica. Compara abogados especializados y evalúa tu caso."
+            description="Si tus ingresos bajaron y ya no puedes mantener el mismo monto de pensión, un abogado de familia puede orientarte para solicitar la rebaja judicial antes de que la deuda se acumule."
             link="/abogado-pension-alimentos"
             buttonText="Ver abogados de pensión de alimentos"
           />
@@ -525,14 +551,22 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4">
               La diferencia entre una rebaja exitosa y una solicitud rechazada está casi siempre en la documentación y en el momento en que actúas. Quien presenta la solicitud rápido, con liquidaciones de sueldo, finiquito, certificados médicos o cualquier evidencia que respalde el cambio real en su situación, tiene muchas más posibilidades de obtener una modificación justa.
             </p>
-            <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
+            <p className="text-gray-600 leading-relaxed mb-4">
               Si tu situación económica cambió y ya no puedes mantener el monto actual, no esperes a
               acumular deuda antes de actuar. El tribunal puede considerar la rebaja desde la fecha de
-              la solicitud — no desde el momento en que empezaste a tener dificultades. Un{" "}
+              la solicitud — no desde el momento en que empezaste a tener dificultades.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Este artículo entrega información de carácter general sobre la rebaja de pensión de alimentos en Chile. Las particularidades de cada caso, la existencia de otros hijos, las necesidades del alimentario y la capacidad económica real del solicitante pueden incidir en la decisión del tribunal de familia.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed">
+              Si necesitas solicitar una rebaja de pensión y no sabes cómo hacerlo, un{" "}
               <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
-                abogado para reducir la pensión alimenticia
+                abogado de familia
               </Link>{" "}
-              puede ayudarte a documentar correctamente tu caso desde el primer día.
+              puede ayudarte a documentar tu caso y representarte ante el tribunal.
             </p>
           </div>
 

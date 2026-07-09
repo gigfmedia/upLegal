@@ -127,7 +127,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "19 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/impugnacion-paternidad-chile-2026.png"
   },
   {
@@ -137,7 +137,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "18 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/reconocimiento-paternidad-chile-2026.png"
   },
   {
@@ -147,7 +147,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "17 de Junio, 2026",
-    readTime: "9 min",
+    readTime: "10 min",
     image: "/assets/autorizacion-salir-pais-menores-chile-2026.png"
   },
   {
@@ -157,7 +157,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "16 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/pension-alimentos-hijos-mayores-18-chile-2026.png"
   },
   {
@@ -167,7 +167,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "15 de Junio, 2026",
-    readTime: "9 min",
+    readTime: "10 min",
     image: "/assets/incumplimiento-regimen-visitas-chile-2026.png"
   },
   {
@@ -187,7 +187,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "11 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/liquidacion-bienes-divorcio-chile-2026.png"
   },
   {
@@ -197,7 +197,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "10 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/acuerdo-completo-suficiente-chile-2026.png"
   },
   {
@@ -207,7 +207,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "9 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/liquidacion-sociedad-conyugal-chile-2026.png"
   },
   {
@@ -217,7 +217,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "8 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/cese-de-convivencia-chile-2026.png"
   },
   {
@@ -227,7 +227,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "4 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/compensacion-economica-divorcio-chile-2026.png"
   },
   {
@@ -237,7 +237,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "2 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/divorcio-unilateral-chile-2026.png"
   },
   {
@@ -247,7 +247,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "2 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/mediacion-familiar-chile-2026.png"
   },
   {
@@ -258,7 +258,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "1 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/cuidado-personal-hijos-chile-2026.png"
   },
   {
@@ -269,7 +269,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "29 de Mayo, 2026",
-    readTime: "8 min",
+    readTime: "9 min",
     image: "/assets/regimen-de-visitas-chile-2026.png"
   },
   {
@@ -279,7 +279,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "28 de Mayo, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/aumento-pension-alimentos-chile-2026.png"
   },
   {
@@ -289,7 +289,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "27 de Mayo, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/rebaja-pension-chile-2026.png"
   },
   {
@@ -319,7 +319,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "18 de Mayo, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/divorcio-mutuo-acuerdo-chile-2026.png"
   },
   {
@@ -389,7 +389,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "28 de Abril, 2026",
-    readTime: "12 min",
+    readTime: "13 min",
     image: "/assets/pension-alimentos-chile-2026.png"
   },
   {
@@ -579,7 +579,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "25 de Febrero, 2026",
-    readTime: "15 min",
+    readTime: "16 min",
     image: "/assets/derecho-de-familia-chile-2026.png"
   },
   {

@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -18,6 +19,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -134,7 +136,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="compensacion-economica-divorcio-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -190,6 +192,7 @@ const BlogArticle = () => {
                                 La compensación económica busca corregir el desequilibrio cuando una persona se encuentra en una situación económica significativamente peor que la del otro cónyuge tras el divorcio.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">Es relevante distinguir la compensación económica de figuras afines como la pensión de alimentos o la liquidación de sociedad conyugal. Mientras los alimentos cubren necesidades futuras y la liquidación reparte bienes existentes, la compensación mira hacia atrás: busca reparar un perjuicio causado durante el matrimonio por la dedicación preferente al hogar o a los hijos. Esta distinción es relevante porque una persona puede tener derecho a compensación económica incluso si ya recibió su parte de la sociedad conyugal o si no tiene hijos menores.</p>
                     </div>
 
                     {/* QUIEN PUEDE PEDIR */}
@@ -213,6 +216,7 @@ const BlogArticle = () => {
                                 ))}
                             </div>
                         </div>
+                        <p className="text-gray-600 mt-4">La carga de acreditar el perjuicio económico recae en quien solicita la compensación. Esto significa que no basta con haber estado casado y haberse dedicado al hogar; se requiere demostrar que dicha dedicación se tradujo en un menoscabo patrimonial concreto. Los tribunales valoran elementos como la duración efectiva de la dedicación, la empleabilidad previa y posterior al matrimonio, los ingresos que se dejaron de percibir y las posibilidades reales de reinserción laboral. La ausencia de prueba suficiente es una de las causas más frecuentes de rechazo de estas solicitudes.</p>
                     </div>
 
                     {/* CUANDO PROCEDE */}
@@ -331,13 +335,8 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
+                        <p className="text-gray-600 mt-4">La forma de pago tiene implicancias prácticas relevantes. Un pago único puede ser más conveniente para el cónyuge que recibe la compensación, pero puede resultar difícil de cumplir para quien debe pagarla si no cuenta con liquidez. Por otro lado, el pago en cuotas ofrece flexibilidad pero introduce el riesgo de incumplimiento, lo que podría requerir medidas de apremio posteriores. El tribunal determina la forma de pago considerando la capacidad económica de ambas partes y la naturaleza del perjuicio a reparar.</p>
                     </div>
-
-                    <InArticleCTA
-                        message="¿Crees que tienes derecho a compensación económica? Un abogado de familia puede evaluar tu caso y ayudarte a solicitar lo que te corresponde."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho de Familia"
-                    />
 
                     {/* PRUEBAS */}
                     <div className="mb-12">
@@ -451,6 +450,19 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4 text-center italic">La decisión siempre será caso a caso.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo entrega información general, pero la consulta temprana es determinante en estos escenarios:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si te dedicaste al cuidado del hogar o los hijos durante el matrimonio y tu desarrollo profesional se vio afectado.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el divorcio está próximo y no has evaluado si tienes derecho a compensación económica.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si tu cónyuge tiene un patrimonio significativamente mayor y existe desequilibrio económico post-divorcio.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el divorcio se tramita de mutuo acuerdo y se necesita incluir la compensación en el ACS.</span></li>
+                        </ul>
+                        <p className="text-gray-600">La compensación económica no se otorga de oficio: debe solicitarse expresamente y acreditarse con pruebas. Consultar a tiempo puede marcar la diferencia entre obtenerla o perder el derecho.</p>
+                    </div>
+
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
                         description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
@@ -462,20 +474,23 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La compensación económica es uno de los derechos más importantes que pueden surgir durante un proceso de divorcio en Chile. Su objetivo no es castigar a uno de los cónyuges ni generar una ventaja injustificada para la otra parte, sino corregir el desequilibrio económico que pudo producirse cuando una persona sacrificó parte de su desarrollo laboral o profesional en beneficio de la familia.
+                            La compensación económica es uno de los derechos más importantes que pueden surgir durante un proceso de divorcio en Chile. Su objetivo es corregir el desequilibrio económico cuando una persona sacrificó parte de su desarrollo laboral o profesional en beneficio de la familia.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Muchas personas desconocen este derecho y llegan al divorcio sin solicitarlo, perdiendo una oportunidad que la ley reconoce expresamente. Por eso resulta fundamental analizar cada situación de manera individual, considerando la duración del matrimonio, la dedicación al hogar, el cuidado de los hijos y las consecuencias económicas que ello generó.
+                            Muchas personas desconocen este derecho y llegan al divorcio sin solicitarlo, perdiendo una oportunidad que la ley reconoce expresamente. Por eso resulta fundamental analizar cada situación de manera individual, considerando la duración del matrimonio, la dedicación al hogar y las consecuencias económicas que ello generó.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            También es importante recordar que no existe una fórmula automática ni un monto garantizado. El éxito de la solicitud dependerá principalmente de la capacidad para acreditar el perjuicio económico mediante pruebas sólidas y antecedentes concretos.
+                            También es importante recordar que no existe una fórmula automática ni un monto garantizado. El éxito de la solicitud dependerá principalmente de la capacidad para acreditar el perjuicio económico mediante pruebas sólidas.
                         </p>
-                        <p className="text-gray-600 leading-relaxed font-bold mb-4">
-                            Si estás enfrentando un divorcio y crees que tu desarrollo profesional se vio afectado por las responsabilidades familiares asumidas durante el matrimonio, es recomendable buscar orientación jurídica antes de iniciar el procedimiento. Un{" "}
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo entrega información de carácter general sobre la compensación económica. La procedencia y el monto dependen de las circunstancias particulares de cada matrimonio y de la prueba que se pueda presentar ante el tribunal.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed">
+                            Si crees que tu desarrollo profesional se vio afectado durante el matrimonio, un{" "}
                             <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
-                                abogado de divorcio y patrimonio familiar en Chile
+                                abogado de divorcio y patrimonio familiar
                             </Link>{" "}
-                            puede evaluar si corresponde solicitar compensación y ayudarte a reunir las pruebas necesarias.
+                            puede evaluar si corresponde solicitar compensación económica en tu caso.
                         </p>
                     </div>
 

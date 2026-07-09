@@ -19,6 +19,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -121,7 +122,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="reconocimiento-paternidad-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -174,6 +175,7 @@ const BlogArticle = () => {
                             ))}
                         </div>
                         <p className="text-gray-600 mt-4">La filiación no solo tiene consecuencias emocionales o familiares. También produce efectos legales importantes durante toda la vida.</p>
+                        <p className="text-gray-600 mt-4">Un punto que suele pasar inadvertido es que no todos los reconocimientos producen los mismos efectos jurídicos. La filiación derivada de un reconocimiento voluntario puede ser cuestionada judicialmente si se acredita que no se ajusta a la realidad biológica, mientras que la filiación establecida por sentencia firme tiene un régimen de impugnación más restringido. Esta diferencia es relevante al evaluar la estabilidad del vínculo filiativo en el tiempo.</p>
                     </div>
 
                     {/* POR QUE ES IMPORTANTE */}
@@ -223,6 +225,7 @@ const BlogArticle = () => {
                                 <p className="text-gray-600">Cuando existe conflicto o negativa, puede intervenir el tribunal para determinar la filiación.</p>
                             </div>
                         </div>
+                        <p className="text-gray-600 mt-4">Sin embargo, no todo reconocimiento formal es definitivo. Si se otorga mediante escritura pública o por acta ante el Registro Civil sin que el hijo haya prestado consentimiento (tratándose de un mayor de edad), la validez del acto puede ser discutida. Además, cuando el reconocimiento se realiza bajo error, dolo o violencia, podría eventualmente impugnarse, aunque las causales y plazos difieren de los aplicables a la impugnación de paternidad propiamente tal.</p>
                     </div>
 
                     {/* QUE OCURRE SI EL PADRE NO QUIERE RECONOCER */}
@@ -318,7 +321,14 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
+                        <p className="text-gray-600 mt-4">La extensión de estos derechos puede generar conflictos prácticos relevantes. Por ejemplo, si el padre tiene otros hijos previamente reconocidos, la irrupción de un nuevo hijo puede alterar las cuotas hereditarias o la distribución de la pensión de alimentos. La determinación de la filiación no solo afecta la relación entre padre e hijo, sino que puede repercutir en derechos de terceros que ya tenían un vínculo jurídico consolidado.</p>
                     </div>
+                    
+                    <InArticleCTA
+                        message="¿Necesitas iniciar una demanda de paternidad? Un abogado especializado en derecho de familia puede ayudarte a reunir pruebas y representarte ante el Tribunal de Familia."
+                        buttonText="Ver abogados especializados en familia"
+                        category="Derecho de Familia"
+                    />
 
                     {/* RECLAMACIÓN DE PATERNIDAD SI EL HIJO ES ADULTO */}
                     <div className="mb-12">
@@ -370,12 +380,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600">La muerte del supuesto padre no necesariamente impide ejercer acciones relacionadas con la filiación. Dependiendo de las circunstancias, pueden existir mecanismos judiciales para determinar la relación biológica y sus efectos legales. Este tipo de casos suele requerir un análisis jurídico más complejo.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas iniciar una demanda de paternidad? Un abogado especializado en derecho de familia puede ayudarte a reunir pruebas y representarte ante el Tribunal de Familia."
-                        buttonText="Ver abogados especializados en familia"
-                        category="Derecho de Familia"
-                    />
-
+                    {/* DIFERENCIA ENTRE RECONOCIMIENTO E IMPUGNACIÓN */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">Diferencia entre reconocimiento e impugnación de paternidad</h2>
+                        <p className="text-gray-600 mb-4">
+                            El reconocimiento busca establecer una filiación. La impugnación de paternidad busca cuestionar una filiación ya existente. Aunque ambas materias se relacionan, corresponden a procedimientos distintos. De hecho, la impugnación de paternidad será el siguiente tema dentro de nuestro cluster de Derecho de Familia.
+                        </p>
+                    </div>
+                            
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -411,19 +423,24 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    {/* DIFERENCIA ENTRE RECONOCIMIENTO E IMPUGNACIÓN */}
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">Diferencia entre reconocimiento e impugnación de paternidad</h2>
-                        <p className="text-gray-600 mb-4">
-                            El reconocimiento busca establecer una filiación. La impugnación de paternidad busca cuestionar una filiación ya existente. Aunque ambas materias se relacionan, corresponden a procedimientos distintos. De hecho, la impugnación de paternidad será el siguiente tema dentro de nuestro cluster de Derecho de Familia.
-                        </p>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay momentos en que la consulta temprana con un abogado puede ser determinante:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el padre se niega a reconocer voluntariamente y es necesario evaluar la viabilidad de una demanda de reclamación de paternidad.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si han transcurrido varios años desde el nacimiento y se requiere determinar si la acción está prescrita o si aún es posible ejercerla.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existen otros herederos o hijos previamente reconocidos que podrían verse afectados por el nuevo vínculo filiativo.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el supuesto padre ha fallecido y se necesita determinar si la acción puede dirigirse contra la sucesión.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">En cada uno de estos escenarios, la asesoría jurídica especializada permite tomar decisiones informadas y evitar riesgos procesales.</p>
                     </div>
 
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda para iniciar una demanda de paternidad?</h3>
-                            <p className="text-white mb-6">Si necesitas establecer legalmente la filiación de un hijo, solicitar alimentos o enfrentar un conflicto relacionado con reconocimiento de paternidad, contar con asesoría especializada puede ayudarte a proteger adecuadamente tus derechos.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Recibiste una negativa o tienes dudas sobre cómo reconocer a tu hijo?</h3>
+                            <p className="text-white mb-6">El momento de consultar a un abogado es antes de presentar cualquier solicitud o demanda. Un especialista en derecho de familia puede evaluar los antecedentes, determinar la vía más adecuada (voluntaria o judicial) y preparar la estrategia probatoria incluyendo la prueba de ADN si fuera necesaria.</p>
                             <Link
                                 to="/abogado-pension-alimentos"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -442,14 +459,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Cuando existe reconocimiento voluntario, el proceso es simple y rápido. Cuando hay negativa o conflicto, los tribunales cuentan con herramientas eficaces — incluyendo la prueba de ADN y la valoración de la negativa injustificada — para determinar la filiación y proteger al hijo.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            La información de este artículo tiene un carácter general y no constituye asesoría legal. Cada caso de reconocimiento de paternidad involucra plazos, medios de prueba y situaciones familiares distintas que solo un abogado puede evaluar en su contexto específico.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Lo más importante es no esperar. Cada año que pasa sin filiación establecida es un año
-                            sin pensión de alimentos, sin derechos hereditarios y sin identidad legal completa. Si
-                            tienes dudas sobre cómo iniciar el proceso o si el padre se niega a cooperar, un{" "}
+                            Si necesitas iniciar una demanda de paternidad o enfrentas una negativa, un{" "}
                             <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
                                 abogado de familia para demanda de paternidad en Chile
                             </Link>{" "}
-                            puede orientarte desde el primer paso.
+                            puede analizar las particularidades de tu caso y recomendarte el mejor curso de acción.
                         </p>
                     </div>
 

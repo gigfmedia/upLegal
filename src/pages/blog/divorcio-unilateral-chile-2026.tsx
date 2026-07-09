@@ -19,6 +19,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -144,7 +145,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="divorcio-unilateral-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -197,6 +198,7 @@ const BlogArticle = () => {
                                 El objetivo es evitar que una persona quede obligada a permanecer casada indefinidamente por la sola negativa del otro cónyuge.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">Existen dos modalidades de divorcio unilateral que suelen confundirse: el divorcio por cese de convivencia (que exige tres años de separación) y el divorcio por falta imputable al otro cónyuge (causales como violencia intrafamiliar, abandono o infracción del deber de fidelidad). Cada una tiene requisitos probatorios distintos y plazos diferentes. Mientras el divorcio por cese requiere solo acreditar el tiempo de separación, el divorcio por falta exige probar la conducta del otro cónyuge, lo que puede hacer el procedimiento más complejo.</p>
                     </div>
 
                     {/* NO NECESITA FIRMA */}
@@ -236,6 +238,7 @@ const BlogArticle = () => {
                                 ))}
                             </ul>
                         </div>
+                        <p className="text-gray-600 mt-4">Acreditar el cese de convivencia por tres años no siempre es sencillo. El tribunal exige pruebas robustas y no se conforma con la mera declaración del demandante. Si el otro cónyuge niega la separación o sostiene una fecha distinta, el juez puede requerir prueba testimonial, documental e incluso informes sociales. Por eso, contar con un acta de cese de convivencia ante el Registro Civil o una escritura pública suele simplificar significativamente la acreditación de este requisito.</p>
                     </div>
 
                     {/* PLAZO LEGAL */}
@@ -271,9 +274,9 @@ const BlogArticle = () => {
 
                     {/* CTA after Requisitos */}
                     <div className="my-10 border rounded-md px-6 rounded-2xl p-6 sm:p-8 text-center">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">¿Necesitas iniciar un divorcio unilateral?</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">¿Llevas más de tres años separado y tu cónyuge no firma?</h3>
                         <p className="text-gray-600 mb-6">
-                            Compara abogados especializados en derecho de familia, revisa sus perfiles y agenda una consulta online.
+                            Si cumples el requisito legal de cese de convivencia por tres años pero tu cónyuge se niega a firmar, el divorcio unilateral es la vía indicada. Un abogado especializado puede guiarte desde la recopilación de pruebas hasta obtener la sentencia.
                         </p>
                         <Link
                             to="/abogado-divorcio-unilateral"
@@ -295,6 +298,7 @@ const BlogArticle = () => {
                                 El tribunal puede autorizar mecanismos especiales de notificación cuando se acredita que el domicilio es desconocido. Por eso resulta recomendable contar con asesoría jurídica desde el inicio.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">Cuando se desconoce el paradero del otro cónyuge, se puede solicitar la notificación por avisos o mediante publicación en un diario de circulación nacional. Sin embargo, este mecanismo requiere que el demandante acredite haber agotado las gestiones razonables para ubicar al demandado. Si posteriormente se descubre que el domicilio era conocido o que no se realizaron las diligencias suficientes, la sentencia de divorcio podría ser impugnada, lo que obligaría a rehacer el procedimiento.</p>
                     </div>
 
                     {/* PROCESO PASO A PASO */}
@@ -464,6 +468,19 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo entrega información general, pero la asesoría oportuna es especialmente relevante en estos casos:</p>
+                        <ul className="space-y-2 mb-4">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600">Si llevas más de tres años separado pero no tienes pruebas documentales del cese de convivencia.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600">Cuando tu cónyuge se opone activamente al divorcio y necesitas preparar una estrategia procesal.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600">Si no sabes dónde vive tu cónyuge y se requiere gestionar notificaciones por avisos.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600">Cuando existen hijos, bienes o compensaciones económicas que deben resolverse paralelamente.</span></li>
+                        </ul>
+                        <p className="text-gray-600">Iniciar el procedimiento con asesoría desde el primer paso puede evitar errores procesales que retrasen la sentencia.</p>
+                    </div>
+
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
                         description="Si cumples los requisitos para divorciarte pero no sabes cómo iniciar la demanda, puedes comparar abogados especializados en divorcio unilateral y agendar una consulta online."
@@ -480,14 +497,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El requisito más importante es acreditar un cese efectivo de convivencia de al menos tres años. Para ello será necesario presentar documentos, testigos u otros medios de prueba que permitan demostrar que la vida matrimonial terminó de manera permanente.
                         </p>
-                        <p className="text-gray-600 leading-relaxed font-bold mb-4">
-                            Si llevas años separado de hecho y tu cónyuge no quiere firmar el divorcio, la ley
-                            contempla mecanismos para que puedas regularizar tu situación y cerrar jurídicamente
-                            una etapa que ya terminó en la práctica. Un{" "}
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo entrega información de carácter general sobre el divorcio unilateral. La procedencia de la acción y los plazos aplicables dependen de la fecha del matrimonio, la existencia de causales adicionales y las circunstancias particulares de cada caso.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed">
+                            Si llevas años separado y tu cónyuge no quiere firmar el divorcio, un{" "}
                             <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
                                 abogado para divorcio sin acuerdo del cónyuge
                             </Link>{" "}
-                            puede guiarte desde la recopilación de pruebas hasta la sentencia final.
+                            puede evaluar tu situación y guiarte en el proceso.
                         </p>
                     </div>
 

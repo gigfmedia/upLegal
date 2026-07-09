@@ -19,6 +19,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -121,7 +122,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="impugnacion-paternidad-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -162,6 +163,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-blue-900">Finalidad</p>
                             <p className="text-blue-800">Corregir una filiación que no corresponde a la realidad biológica o jurídica. Una sentencia favorable puede producir importantes consecuencias respecto de apellidos, alimentos, herencia y derechos sucesorios.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">Conviene precisar que esta acción no persigue simplemente un resultado biológico, sino que ataca la presunción legal de paternidad. Dependiendo de si la filiación proviene de un reconocimiento voluntario o de una sentencia judicial, las reglas procesales y los plazos para impugnar pueden variar significativamente, lo que marca una diferencia sustancial en la estrategia jurídica que corresponda adoptar.</p>
                     </div>
 
                     {/* CUANDO PUEDE EXISTIR UNA IMPUGNACION */}
@@ -184,6 +186,7 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
+                        <p className="text-gray-600 mt-4">En la práctica, la carga de la prueba puede distribuirse de forma distinta según quién sea el demandante. Si quien impugna es el padre legal, este debe acreditar los antecedentes que demuestran que la filiación no se ajusta a la realidad. En cambio, si la acción la ejerce el hijo o un tercero legitimado, el tribunal puede valorar la prueba con criterios distintos, incluyendo la eventual negativa a someterse a una prueba genética como indicio en contra.</p>
                     </div>
 
                     {/* DIFERENCIA ENTRE RECONOCIMIENTO E IMPUGNACION */}
@@ -229,6 +232,7 @@ const BlogArticle = () => {
                             <p className="text-yellow-700">Actualmente los exámenes genéticos presentan porcentajes de certeza extremadamente elevados, por lo que suelen tener un peso decisivo al momento de resolver.</p>
                         </div>
                         <p className="text-gray-600 mt-4">El procedimiento consiste en comparar muestras biológicas de las personas involucradas. Posteriormente un laboratorio especializado emite un informe técnico que puede confirmar o excluir la paternidad.</p>
+                        <p className="text-gray-600 mt-4">Sin embargo, la prueba de ADN no es un requisito de procedencia de la acción. El tribunal puede resolver la impugnación con otros medios de prueba cuando la prueba genética no está disponible, por ejemplo, si alguna de las partes ha fallecido o se niega a participar. En esos escenarios, la valoración judicial se apoya en indicios, documentación y testimonios, y el estándar probatorio se vuelve considerablemente más exigente.</p>
                     </div>
 
                     {/* NEGATIVA A REALIZAR LA PRUEBA */}
@@ -408,6 +412,19 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Aunque este artículo entrega información general sobre la impugnación de paternidad, existen escenarios donde la asesoría jurídica resulta particularmente urgente:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el padre legal recibe una demanda de reclamación de filiación y necesita preparar su defensa antes de la audiencia preparatoria.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen procesos paralelos de pensión de alimentos o relación directa y regular que dependen de la filiación actual.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando se avecina una partición de herencia y la filiación del hijo puede afectar la masa hereditaria.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si han transcurrido varios años desde el reconocimiento y el plazo para impugnar podría estar vencido según la causal invocada.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">Cada caso tiene particularidades que pueden modificar el análisis jurídico. La revisión temprana con un abogado permite identificar la estrategia más adecuada y evitar la pérdida de plazos o derechos.</p>
+                    </div>
+
                     {/* RELACIÓN CON OTRAS MATERIAS */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Relación con otras materias de Derecho de Familia</h2>
@@ -423,8 +440,8 @@ const BlogArticle = () => {
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">¿Necesitas ayuda con una impugnación de paternidad?</h3>
-                            <p className="text-white mb-6">Si tienes dudas sobre una filiación existente, necesitas iniciar una acción judicial o enfrentar un conflicto relacionado con paternidad, contar con asesoría especializada puede ayudarte a proteger adecuadamente tus derechos y comprender las consecuencias legales de cada decisión.</p>
+                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">Revisa tu caso con un abogado de familia antes de iniciar cualquier gestión</h3>
+                            <p className="text-white mb-6">Si estás pensando en impugnar una paternidad o recibiste una notificación que cuestiona la filiación actual, el momento de consultar es antes de presentar cualquier escrito o responder ante el tribunal. Un abogado especializado puede evaluar los antecedentes, verificar los plazos aplicables y definir si la acción tiene viabilidad procesal.</p>
                             <Link
                                 to="/abogado-pension-alimentos"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -446,16 +463,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Un resultado positivo en una prueba de ADN no modifica automáticamente la filiación — se requiere una sentencia judicial. Y esa sentencia puede tener efectos que van mucho más allá de lo que inicialmente se anticipa.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            La información contenida en este artículo tiene un carácter general y no constituye asesoría legal. Cada caso de impugnación de paternidad presenta particularidades que solo un abogado puede evaluar después de revisar los antecedentes específicos, los plazos transcurridos y la situación familiar concreta.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Los juicios de impugnación de paternidad suelen involucrar aspectos legales,
-                            emocionales y familiares complejos. Actuar sin asesoría puede significar perder tiempo,
-                            recursos o incluso afectar derechos importantes. Si tienes dudas sobre la filiación
-                            existente o necesitas iniciar una acción judicial, un{" "}
+                            Si te encuentras ante una situación donde la filiación está siendo cuestionada o necesitas iniciar una acción, un{" "}
                             <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
                                 abogado de familia especializado en impugnación de paternidad
                             </Link>{" "}
-                            puede ayudarte a evaluar el caso, reunir las pruebas necesarias y representarte ante el
-                            Tribunal de Familia.
+                            puede analizar tu caso particular y recomendar el curso de acción más adecuado según tus circunstancias.
                         </p>
                     </div>
 

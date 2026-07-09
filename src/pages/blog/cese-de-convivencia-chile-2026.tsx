@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
@@ -124,7 +126,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 12 min</span>
+                            <ReadTime slug="cese-de-convivencia-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -187,6 +189,7 @@ const BlogArticle = () => {
                                 El cese de convivencia no es lo mismo que el divorcio. Mientras el primero acredita el fin de la vida en común, el segundo disuelve legalmente el matrimonio.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">La fecha de cese de convivencia tiene efectos que van más allá del divorcio: determina el momento a partir del cual los cónyuges dejan de generar bienes en la sociedad conyugal, influye en el cálculo de la compensación económica y puede afectar derechos sucesorios si uno de los cónyuges fallece antes de formalizar el divorcio. Por eso, fijar una fecha precisa no es un mero formalismo, sino una decisión con consecuencias patrimoniales relevantes.</p>
                     </div>
 
                     {/* POR QUE EXISTE */}
@@ -372,6 +375,7 @@ const BlogArticle = () => {
                             </div>
                         </div>
                         <p className="text-gray-600">La prueba suele ser más flexible que en los matrimonios posteriores a 2004, pero sigue siendo necesario contar con antecedentes sólidos.</p>
+                        <p className="text-gray-600 mt-4">Un aspecto que genera litigios es la determinación de la fecha exacta del cese cuando no existe un acta formal. Los tribunales evalúan el conjunto de pruebas para fijar una fecha, considerando factores como el último domicilio común, la fecha de mudanza de uno de los cónyuges, la existencia de denuncias por violencia intrafamiliar o el inicio de demandas de alimentos. Cuando las partes presentan versiones contradictorias, el juez puede requerir informes sociales o peritajes para determinar cuál de las fechas propuestas es más verosímil.</p>
                     </div>
 
                     {/* QUE PRUEBAS SIRVEN */}
@@ -455,6 +459,7 @@ const BlogArticle = () => {
                             </p>
                         </div>
                         <p className="text-gray-600 mt-4">Cada caso debe evaluarse según sus circunstancias particulares.</p>
+                        <p className="text-gray-600 mt-4">La prueba de la reconciliación puede ser controvertida. No cualquier encuentro esporádico o intento de retomar la relación constituye reconciliación a los ojos del tribunal. Se requiere una reanudación estable de la convivencia, con cierta permanencia y vocación de continuidad. Por el contrario, encuentros puntuales o períodos breves que no reflejan una verdadera reconciliación no necesariamente interrumpen el cómputo del plazo de separación. Cada caso se evalúa según sus circunstancias específicas y la carga de la prueba recae en quien afirma que hubo reconciliación.</p>
                     </div>
 
                     {/* EJEMPLO PRACTICO */}
@@ -547,25 +552,17 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    {/* CUANDO CONVIENE CONSULTAR A UN ABOGADO */}
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">¿Cuándo conviene consultar a un abogado?</h2>
-                        <p className="text-gray-600 mb-4">
-                            Aunque algunas actuaciones pueden realizarse personalmente, existen situaciones donde la asesoría profesional resulta especialmente recomendable.
-                        </p>
-                        <div className="grid sm:grid-cols-2 gap-3 mb-6">
-                            {["Cuando existen hijos menores", "Si hay desacuerdo respecto de la fecha de separación", "Cuando se pretende solicitar compensación económica", "Si existen bienes relevantes que deben dividirse", "Cuando se proyecta presentar una demanda de divorcio unilateral", "Si hay conflictos relacionados con alimentos o visitas"].map((item, i) => (
-                                <div key={i} className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                                    {/* <CheckCircle className="h-4 w-4 text-green-600" /> */}
-                                    <span>{item}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="bg-blue-50 p-5 rounded-xl">
-                            <p className="text-blue-800">
-                                Una evaluación temprana suele evitar errores que posteriormente pueden resultar costosos o difíciles de corregir.
-                            </p>
-                        </div>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existe desacuerdo respecto de la fecha exacta del cese de convivencia, lo que puede retrasar el divorcio.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si se necesita formalizar el cese de convivencia para iniciar el cómputo del plazo de separación.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando uno de los cónyuges ha intentado retomar la convivencia y se requiere determinar si hubo reconciliación efectiva.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen bienes o hijos que hacen urgente contar con una fecha de separación clara y documentada.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">Una evaluación temprana permite evitar errores probatorios que pueden retrasar el divorcio o generar litigios innecesarios.</p>
                     </div>
 
                     {/* CTA before Conclusion */}
@@ -585,17 +582,17 @@ const BlogArticle = () => {
                             Formalizarlo oportunamente, especialmente en matrimonios celebrados después de noviembre de 2004, puede evitar conflictos probatorios, acelerar procesos judiciales y facilitar la resolución de materias relacionadas con hijos, alimentos y compensaciones económicas.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Muchas personas desconocen la importancia de contar con una fecha clara de separación y enfrentan dificultades innecesarias al momento de tramitar el divorcio. Un pequeño descuido en esta materia puede significar esperar años adicionales para poder terminar legalmente el matrimonio.
+                            Muchas personas desconocen la importancia de contar con una fecha clara de separación y enfrentan dificultades innecesarias al momento de tramitar el divorcio.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo entrega información de carácter general sobre el cese de convivencia. La forma de acreditarlo y sus efectos dependen de la fecha del matrimonio, la existencia de hijos y las circunstancias particulares de cada caso.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Si estás separado y no has formalizado el cese de convivencia, el momento de hacerlo es ahora
-                            — no cuando ya necesites el divorcio. Una escritura ante notario o un acta ante el Registro
-                            Civil puede ahorrarte meses de trámites y discusiones probatorias más adelante. Si tienes
-                            dudas sobre cómo proceder, un{" "}
+                            Si estás separado y necesitas formalizar el cese de convivencia para avanzar hacia el divorcio, un{" "}
                             <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
-                                abogado de familia para divorcio en Chile
+                                abogado de familia
                             </Link>{" "}
-                            puede orientarte desde el primer paso.
+                            puede orientarte sobre el procedimiento más adecuado según tu situación específica.
                         </p>
                     </div>
 

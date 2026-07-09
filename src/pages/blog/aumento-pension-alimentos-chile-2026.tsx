@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -11,6 +11,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const AumentoSimulator = () => {
   const [currentPension, setCurrentPension] = useState(180000);
@@ -194,7 +195,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 11 min</span>
+              <ReadTime slug="aumento-pension-alimentos-chile-2026" />
             </div>
           </div>
         </div>
@@ -251,6 +252,9 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
+            <p className="text-green-800 leading-relaxed text-sm border-l-4 border-green-500 bg-green-50 p-4 mb-12">
+              El aumento de pensión se funda en el principio de proporcionalidad y en la obligación legal de adecuar el monto a las necesidades reales y actuales del alimentario. La doctrina de los tribunales de familia chilenos exige que el cambio de circunstancias sea relevante y permanente, no meramente transitorio. Un aumento temporal de ingresos o un gasto extraordinario aislado no constituyen causal suficiente para modificar la pensión.
+            </p>
           </div>
 
           {/* Cuándo se puede pedir */}
@@ -342,6 +346,9 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+            <p className="text-gray-800 leading-relaxed text-sm border-l-4 border-green-500 bg-green-50 p-4">
+              El tribunal evalúa la capacidad contributiva del alimentante considerando no solo sus ingresos formales, sino también su patrimonio y nivel de vida. La jurisprudencia ha establecido que el ocultamiento de rentas o la subdeclaración pueden ser inferidos a partir de indicios como la tenencia de vehículos de alta gama, viajes frecuentes o inversiones inmobiliarias. Este análisis integral busca evitar que el alimentante eluda su obligación mediante estructuras patrimoniales complejas.
+            </p>
           </div>
 
           {/* Qué pruebas sirven */}
@@ -488,6 +495,9 @@ const BlogArticle = () => {
                 *En este caso podría existir una base sólida para solicitar aumento. El resultado dependerá de las pruebas que se aporten y del criterio del juez de familia.
               </p>
             </div>
+            <p className="text-green-800 leading-relaxed text-sm border-l-4 border-green-500 bg-green-50 p-4">
+              No existe un porcentaje fijo legal para el aumento, pero los tribunales suelen guiarse por la relación entre los ingresos del alimentante y las necesidades acreditadas del hijo. El alza no puede ser tan elevada que comprometa la subsistencia del obligado, pues el principio de proporcionalidad exige un equilibrio. En la práctica, los aumentos aprobados oscilan entre un 15% y un 40% del monto original, dependiendo de la magnitud del cambio de circunstancias.
+            </p>
           </div>
 
           {/* Interlink */}
@@ -515,9 +525,9 @@ const BlogArticle = () => {
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo suele aprobarse y cuándo rechazarse?</h2>
             <div className="grid sm:grid-cols-1 gap-4">
-              <div className="bg-green-50 border border-green-100 rounded-2xl p-6">
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
                 <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-                  <span className="text-lg">✓</span> Suele aprobarse cuando:
+                  Suele aprobarse cuando:
                 </h4>
                 <ul className="space-y-2">
                   {[
@@ -528,7 +538,7 @@ const BlogArticle = () => {
                     "La documentación es sólida y ordenada",
                   ].map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-green-800">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-green-500 font-bold flex-shrink-0">✓</span>
                       {item}
                     </li>
                   ))}
@@ -536,7 +546,7 @@ const BlogArticle = () => {
               </div>
               <div className="bg-red-50 border border-red-100 rounded-2xl p-6">
                 <h4 className="font-bold text-red-900 mb-4 flex items-center gap-2">
-                  <span className="text-lg">✕</span> Suele rechazarse cuando:
+                  Suele rechazarse cuando:
                 </h4>
                 <ul className="space-y-2">
                   {[
@@ -618,9 +628,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando las necesidades del hijo han aumentado significativamente y la pensión actual ya no cubre los gastos básicos mensuales.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el alimentante ha tenido un aumento comprobable de ingresos y se necesita acreditarlo ante el tribunal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando han pasado varios años sin reajuste real y la inflación ha erosionado el valor de la pensión original.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el hijo ha iniciado estudios superiores o requiere tratamientos de salud que la pensión actual no contempla.</span></li>
+            </ul>
+            <p className="text-gray-600 mt-4">Una evaluación temprana permite reunir la documentación correcta y evitar rechazos por falta de pruebas suficientes.</p>
+          </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="El aumento de alimentos requiere acreditar un cambio sustancial en las necesidades o ingresos. Compara abogados y revisa tu caso antes de demandar."
+            description="Si las necesidades de tu hijo superan la pensión actual y el alimentante tiene capacidad económica para pagar más, un abogado de familia puede preparar la demanda con las pruebas necesarias."
             link="/abogado-pension-alimentos"
             buttonText="Ver abogados de pensión de alimentos"
           />
@@ -637,12 +660,20 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4">
               Los tribunales sí pueden modificar la pensión cuando existen fundamentos reales: mayores gastos educacionales, salud, crecimiento del hijo, inflación o aumento en los ingresos del alimentante. Pero todo debe acreditarse correctamente.
             </p>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              No esperes a que el desequilibrio sea insostenible para actuar. El tribunal puede considerar el aumento desde la fecha de la solicitud — no desde el momento en que los gastos empezaron a subir. Cada mes que pasa sin presentar la solicitud es un mes más que absorbes tú solo los costos que deberían distribuirse entre ambos padres.
+            </p>
+
             <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
-              No esperes a que el desequilibrio sea insostenible para actuar. El tribunal puede considerar el aumento desde la fecha de la solicitud — no desde el momento en que los gastos empezaron a subir. Cada mes que pasa sin presentar la solicitud es un mes más que absorbes tú solo los costos que deberían distribuirse entre ambos padres. {" "}
-  <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
-    Un abogado para aumento de pensión alimenticia
-  </Link>{" "}
-  puede ayudarte a preparar el caso correctamente desde el primer día.
+              Este artículo entrega información de carácter general sobre el aumento de pensión de alimentos en Chile. Las particularidades de cada caso, la capacidad económica real del alimentante y las necesidades específicas del hijo pueden incidir en la decisión del tribunal de familia.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed">
+              Si necesitas solicitar un aumento de pensión y no sabes por dónde empezar, un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                abogado de familia
+              </Link>{" "}
+              puede ayudarte a preparar la documentación y representarte ante el tribunal.
             </p>
           </div>
 

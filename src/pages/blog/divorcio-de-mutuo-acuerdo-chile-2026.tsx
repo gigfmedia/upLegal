@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Calendar, User, Clock, ChevronRight, CheckCircle, Scale, Shield, FileText, XCircle, ArrowLeft, HelpCircle } from "lucide-react";
+import { Calendar, User, Clock, ChevronRight, CheckCircle, Scale, Shield, FileText, XCircle, ArrowLeft, HelpCircle, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -11,6 +11,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { Button } from "@/components/ui/button";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -102,7 +103,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="divorcio-mutuo-acuerdo-chile-2026" />
             </div>
           </div>
         </div>
@@ -214,6 +215,10 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic">
+            El "acuerdo completo y suficiente" exigido por el artículo 55 de la Ley de Matrimonio Civil no es una mera formalidad: el tribunal debe verificar que el acuerdo regule íntegramente todas las materias susceptibles de convención entre las partes. Si falta alguna materia relevante, como el régimen de visitas o la compensación económica, el juez puede rechazar la demanda y ordenar que se complete el acuerdo antes de proseguir.
+          </p>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Pasos del proceso de divorcio de mutuo acuerdo</h2>
@@ -338,6 +343,10 @@ const BlogArticle = () => {
               El factor que más alarga el proceso no es el tribunal — es el tiempo que tarda la pareja en llegar a acuerdo sobre los hijos y los bienes. Parejas que llegan con todo resuelto pueden terminar el proceso en el límite inferior. Las que negocian durante el proceso pueden tardar el doble.
             </p>
           </div>
+
+          <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic">
+            Los plazos del divorcio de mutuo acuerdo dependen en gran medida de la carga del tribunal y de la complejidad del acuerdo patrimonial. En tribunales con alta litigiosidad, como los de Santiago, la audiencia preparatoria puede fijarse hasta 12 semanas después de la demanda. Si existen bienes inmuebles inscritos a nombre de la sociedad conyugal, se requiere liquidación previa, lo que extiende el proceso entre 2 y 4 meses adicionales.
+          </p>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Cuánto cuesta el divorcio de mutuo acuerdo?</h2>
@@ -471,11 +480,27 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed font-medium">
               Si tienes la posibilidad de llegar a acuerdo con tu cónyuge, el divorcio de mutuo acuerdo es siempre la mejor opción en términos de tiempo, costo y desgaste emocional.
             </p>
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-6">
+              La diferencia práctica más relevante entre ambas vías radica en el control del proceso. En el mutuo acuerdo, las partes definen los términos de la compensación económica y la liquidación de bienes; en el unilateral, estos aspectos quedan entregados a la decisión del tribunal, lo que introduce incertidumbre. Además, el divorcio unilateral requiere acreditar tres años de cese de convivencia, mientras que el mutuo acuerdo solo exige uno, lo que puede adelantar significativamente la obtención del divorcio.
+            </p>
+          </div>
+
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existen hijos menores y se necesita estructurar un acuerdo completo sobre cuidado personal, visitas y pensión que sea suficiente para el tribunal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si hay desacuerdo sobre la compensación económica o la liquidación de bienes de la sociedad conyugal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando se necesita formalizar el cese de convivencia para acreditar el año de separación exigido por ley.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si una de las partes duda de que el acuerdo propuesto sea equitativo y quiere evaluar sus derechos antes de firmar.</span></li>
+            </ul>
+            <p className="text-gray-600 mt-4">Una evaluación temprana permite evitar acuerdos insuficientes que el tribunal pueda rechazar, y acelera todo el proceso.</p>
           </div>
 
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="Si ambos están de acuerdo en divorciarse, un abogado especializado puede preparar el acuerdo sobre hijos y bienes y acelerar el trámite."
+            description="Si ambos están de acuerdo en divorciarse pero necesitan orientación sobre cómo estructurar el acuerdo sobre hijos, bienes y compensación económica, un abogado de familia puede preparar todo el expediente."
             link="/abogados-divorcio"
             buttonText="Comparar abogados especializados"
           />
@@ -488,14 +513,21 @@ const BlogArticle = () => {
               <p>
                 El divorcio de mutuo acuerdo en Chile es el proceso más rápido, económico y controlado para disolver un matrimonio cuando ambas partes están de acuerdo. El requisito más importante es el año de cese de convivencia — y el factor que más determina la duración es qué tan rápido pueden llegar a acuerdo sobre los hijos y los bienes.
               </p>
-              <p className="font-medium">
+              <p>
                 Si tienes todo resuelto y la documentación en orden, el proceso judicial en sí no debería
-                tomarte más de 3 a 4 meses. Si hay temas pendientes que resolver, un{" "}
+                tomarte más de 3 a 4 meses.
+              </p>
+
+              <p>
+                Este artículo entrega información de carácter general sobre el divorcio de mutuo acuerdo en Chile. Los plazos y requisitos específicos dependen del tribunal competente, la existencia de hijos menores y la complejidad del acuerdo patrimonial entre las partes.
+              </p>
+
+              <p>
+                Si estás pensando en divorciarte de mutuo acuerdo y necesitas asesoría, un{" "}
                 <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
-                  abogado de familia para divorcio en Chile
+                  abogado de familia
                 </Link>{" "}
-                puede ayudarte a estructurar el acuerdo de forma que sea suficiente para el tribunal y
-                equitativo para ambas partes.
+                puede ayudarte a preparar el acuerdo y presentar la demanda ante el tribunal.
               </p>
             </div>
           </div>

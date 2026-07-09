@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -10,6 +10,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 import InArticleCTA from "@/components/blog/InArticleCTA";
 
@@ -165,7 +166,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <ReadTime slug="deuda-pension-alimentos-chile-2026" />
             </div>
           </div>
         </div>
@@ -269,6 +270,10 @@ const BlogArticle = () => {
               puede guiarte desde la liquidación hasta las medidas de apremio.
             </p>
           </div>
+
+          <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic">
+            El cobro judicial de la deuda de pensión de alimentos se rige por el procedimiento especial del artículo 14 de la Ley de Pensiones de Alimentos. Este procedimiento permite que el tribunal decrete medidas de apremio sin necesidad de un juicio declarativo previo, lo que acelera significativamente la recuperación. La liquidación de la deuda puede solicitarse en cualquier momento mientras la obligación alimenticia esté vigente, sin perjuicio de las cuotas futuras.
+          </p>
 
           {/* Paso a paso */}
           <div className="mb-8 mt-8">
@@ -405,7 +410,11 @@ const BlogArticle = () => {
             <div className="mt-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl">
               <p className="text-blue-900 font-medium"><strong>Clave:</strong> Un error en esta etapa puede significar perder tiempo o recibir una pensión menor a la que corresponde.</p>
             </div>
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-6">
+              Los errores en la demanda de pensión suelen derivar de una deficiente preparación probatoria. El tribunal de familia exige que el demandante acredite no solo la relación filiativa, sino también las necesidades concretas del alimentario y la capacidad económica del demandado. La omisión de alguno de estos elementos puede provocar que el juez fije un monto menor al solicitado o que rechace la demanda, obligando a reiniciar el proceso desde la mediación obligatoria.
+            </p>
           </div>
+
 
           {/* Links relacionados */}
           <div className="mb-8 space-y-3">
@@ -538,12 +547,13 @@ const BlogArticle = () => {
               <p className="font-bold text-red-200 uppercase tracking-widest text-xs mb-2">Importante 2026</p>
               <p className="text-lg font-serif">👉 Sí, puede ocurrir arresto. En caso de incumplimiento reiterado, el tribunal puede decretar arresto.</p>
             </div>
+            <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-8">
+              Las medidas de apremio no son excluyentes entre sí: el tribunal puede aplicarlas simultáneamente para aumentar la presión sobre el deudor. La retención judicial del sueldo es la medida más eficaz, ya que asegura el pago mensual sin necesidad de nuevas gestiones. El arresto, en cambio, tiene un efecto disuasivo inmediato, pero no genera pago directo. La jurisprudencia ha establecido que el arresto procede incluso cuando el deudor acredita falta de ingresos formales, si existen indicios de capacidad económica real.
+            </p>
           </div>
 
           {/* Ejemplo de cálculo */}
-          <div className="mb-12 bg-green-900 text-white p-8 rounded-3xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 blur-3xl rounded-full -mr-32 -mt-32"></div>
-
+          <div className="mb-12 bg-gray-100 text-green-900 p-8 rounded-3xl relative overflow-hidden">
             <h2 className="text-2xl font-bold mb-2">
               Ejemplo real: cálculo de deuda de pensión de alimentos
             </h2>
@@ -554,7 +564,7 @@ const BlogArticle = () => {
 
             <div className="grid sm:grid-cols-2 gap-8 mb-8">
               <div className="space-y-4">
-                <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
+                <div className="bg-gray-200 border border-gray-300 p-4 rounded-xl">
                   <p className="text-sm mb-1">Caso:</p>
                   <ul className="space-y-1">
                     <li className="font-bold">Pensión fijada: $200.000</li>
@@ -563,8 +573,8 @@ const BlogArticle = () => {
                 </div>
 
                 <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl">
-                  <p className="text-sm text-green-400 mb-1">Resultado base:</p>
-                  <p className="text-2xl font-bold text-green-500">$1.200.000</p>
+                  <p className="text-sm text-green-800 mb-1">Resultado base:</p>
+                  <p className="text-2xl font-bold text-green-900">$1.200.000</p>
                 </div>
               </div>
 
@@ -587,21 +597,34 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="bg-white/5 border-l-4 border-green-500 p-6 rounded-r-xl mb-6">
-              <p className="text-sm mb-1">Deuda total estimada:</p>
-              <p className="text-xl font-bold text-white">Puede superar los $1.200.000 fácilmente</p>
-              <p className="text-sm mt-1">Dependiendo del tiempo y condiciones.</p>
+            <div className="bg-amber-100 border-l-4 border-yellow-500 p-6 rounded-r-xl mb-6">
+              <p className="text-sm mb-1 text-amber-800">Deuda total estimada:</p>
+              <p className="text-xl font-bold text-amber-900">Puede superar los $1.200.000 fácilmente</p>
+              <p className="text-sm text-amber-800 mt-1">Dependiendo del tiempo y condiciones.</p>
             </div>
 
-            <div className="pt-4 border-t border-white/10">
-              <p className="font-bold text-green-400">Importante:</p>
-              <p>Mientras más tiempo pase sin pagar, mayor será la deuda acumulada. Por eso, iniciar la liquidación lo antes posible es clave para evitar que el monto siga creciendo.</p>
+            <div className="pt-4 border-t border-green/10">
+              <p className="font-bold text-amber-600">Importante:</p>
+              <p className="text-amber-900">Mientras más tiempo pase sin pagar, mayor será la deuda acumulada. Por eso, iniciar la liquidación lo antes posible es clave para evitar que el monto siga creciendo.</p>
             </div>
+          </div>
+
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el deudor lleva meses sin pagar y la deuda acumulada ya supera varios meses de pensión.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si necesitas iniciar el proceso de liquidación judicial para que el tribunal calcule el monto exacto adeudado.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el deudor oculta ingresos o bienes y se requiere investigar su situación económica real ante el tribunal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si las medidas de apremio actuales no han sido efectivas y se necesita solicitar otras más gravosas como el arresto.</span></li>
+            </ul>
+            <p className="text-gray-600 mt-4">Una evaluación temprana permite activar las medidas correctas sin demora y evitar que la deuda siga creciendo.</p>
           </div>
 
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="¿Necesitas iniciar una demanda de alimentos, solicitar un aumento o cobrar una deuda?"
+            description="Si llevas meses sin recibir la pensión y la deuda no deja de crecer, un abogado de familia puede solicitar la liquidación judicial y activar medidas de apremio como retención de sueldo o embargo."
             link="/abogado-pension-alimentos"
             buttonText="Compara abogados especializados"
           />
@@ -621,8 +644,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4">
               Además, el hecho de que el deudor no tenga ingresos formales no lo libera de su obligación. Existen mecanismos para investigar su situación económica real y aplicar medidas igualmente efectivas sobre sus bienes o ingresos informales.
             </p>
-            <p className="text-gray-600 font-semibold leading-relaxed">
-              Si llevas meses esperando el pago o no sabes por dónde empezar, el momento de actuar es ahora y <Link to="/abogado-pension-alimentos" className="text-green-900 underline hover:text-green-600">buscar asesoría con un abogado de pensión de alimentos</Link>.
+
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Este artículo entrega información de carácter general sobre la deuda de pensión de alimentos en Chile. La procedencia de cada medida de apremio depende de las circunstancias específicas del caso, la magnitud de la deuda y la capacidad económica real del deudor.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed">
+              Si necesitas cobrar una deuda de pensión de alimentos y no sabes por dónde empezar, un{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                abogado de familia
+              </Link>{" "}
+              puede orientarte sobre el proceso de liquidación y las medidas de apremio disponibles.
             </p>
           </div>
 

@@ -18,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -120,7 +121,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="autorizacion-salir-pais-menores-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -161,6 +162,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-blue-900">Finalidad</p>
                             <p className="text-blue-800">Proteger los derechos del niño, niña o adolescente y evitar situaciones de sustracción internacional o traslados no autorizados.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">La regla de autorización no aplica solo a viajes turísticos. También cubre viajes por estudios, tratamientos médicos en el extranjero, visitas a familiares o cualquier otra salida del territorio nacional. Además, el nivel de exigencia puede variar según el país de destino: algunos destinos requieren documentación adicional o trámites consulares que deben coordinarse con suficiente antelación.</p>
                     </div>
 
                     {/* QUÉ SE CONSIDERA MENOR DE EDAD */}
@@ -219,6 +221,7 @@ const BlogArticle = () => {
                             </ul>
                         </div>
                         <p className="text-gray-600 mt-4">Mientras más específico sea el documento, menos problemas existirán al momento del viaje.</p>
+                        <p className="text-gray-600 mt-4">No obstante, la autorización notarial no es la única forma válida. Cuando un progenitor se encuentra en el extranjero, puede otorgar autorización ante el cónsul chileno en ese país. Asimismo, si existe una resolución judicial que regula la relación directa y regular, el juez puede haber establecido reglas especiales para viajes internacionales, caso en el cual la autorización notarial podría no ser necesaria si el fallo ya contempla la facultad de viajar.</p>
                     </div>
 
                     {/* NEGATIVA DE UN PADRE */}
@@ -231,6 +234,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-red-800">Solución</p>
                             <p className="text-red-700">Cuando no existe acuerdo, puede ser necesario acudir al Tribunal de Familia para solicitar autorización judicial.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">En la práctica, la negativa sostenida puede ser indicio de otros conflictos familiares subyacentes. El tribunal, al evaluar la solicitud, podrá considerar no solo los motivos del viaje, sino también el historial de relación entre los padres, el cumplimiento previo del régimen comunicacional y si existe riesgo de sustracción internacional. Países como Argentina y Perú forman parte del Acuerdo de Cooperación en materia de sustracción internacional, mientras que destinos fuera del Mercosur presentan un nivel de riesgo distinto que el juez evaluará caso a caso.</p>
                     </div>
 
                     {/* AUTORIZACIÓN JUDICIAL */}
@@ -390,11 +394,24 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">La información general es útil, pero hay momentos donde la asesoría legal urgente marca la diferencia:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el otro progenitor se niega a firmar la autorización y el viaje está próximo (menos de 30 días).</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen sospechas fundadas de riesgo de no retorno o sustracción internacional del menor.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el viaje responde a una oportunidad académica o terapéutica y no se puede postergar.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si uno de los padres se encuentra en el extranjero y se requiere coordinar la autorización consular.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">Cada situación tiene plazos y requisitos distintos que un abogado de familia puede evaluar rápidamente para evitar la pérdida del viaje o del derecho a salir del país.</p>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">¿Necesitas ayuda para obtener autorización de salida del país?</h3>
-                            <p className="text-blue-100 mb-6">Si uno de los padres se niega a autorizar el viaje de tu hijo o necesitas tramitar una autorización judicial urgente, un abogado especializado en derecho de familia puede ayudarte a proteger los derechos del niño y resolver el procedimiento correctamente.</p>
+                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">El viaje está planificado pero la autorización no está lista</h3>
+                            <p className="text-white mb-6">Si compraste los pasajes y el otro padre no firma, no esperes al día antes del vuelo. Un abogado de familia puede evaluar si corresponde una autorización judicial urgente y preparar la solicitud ante el Tribunal de Familia para que resuelva antes de la fecha de viaje.</p>
                             <Link
                                 to="/abogado-pension-alimentos"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -416,8 +433,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Cuando hay negativa injustificada, el tribunal puede autorizar el viaje evaluando el interés superior del niño. Pero ese proceso toma tiempo — solicitar la autorización judicial con semanas o meses de anticipación es fundamental para no llegar al aeropuerto sin los papeles en orden.
                         </p>
-                        <p className="text-gray-600 leading-relaxed font-bold mb-4">
-                            Si tienes un viaje planificado con tus hijos y no estás seguro de qué documentos necesitas o el otro padre se niega a cooperar, actúa ahora. Un abogado de familia puede orientarte sobre el procedimiento correcto según tu situación específica.
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo contiene información de carácter general. Las reglas sobre autorización de salida del país varían según la situación familiar específica, el país de destino y las resoluciones judiciales vigentes aplicables al menor. Solo un abogado puede determinar qué documentación se requiere en tu caso concreto.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed">
+                            Si tienes un viaje planificado con tus hijos y no estás seguro de qué documentos necesitas o el otro padre se niega a cooperar, un{" "}
+                            <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia especializado
+                            </Link>{" "}
+                            puede orientarte sobre el procedimiento correcto según tu situación específica.
                         </p>
                     </div>
 

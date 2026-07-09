@@ -16,6 +16,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -122,7 +123,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="pension-alimentos-mayores-18-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -157,6 +158,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-red-800">Advertencia</p>
                             <p className="text-red-700">Dejar de pagar únicamente porque el hijo cumplió 18 años puede transformarse en un problema importante y generar deuda de alimentos.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">Para que proceda la extensión de la pensión más allá de los 18 años, el hijo debe carecer de medios para subsistir por sí mismo. Este concepto es más amplio que el simple desempleo: un hijo que trabaja puede seguir necesitando alimentos si sus ingresos son insuficientes para cubrir todas sus necesidades. La jurisprudencia ha interpretado que debe tratarse de una autosuficiencia real, no meramente formal, valorando cada caso según las circunstancias.</p>
                     </div>
 
                     {/* HASTA QUÉ EDAD */}
@@ -201,6 +203,7 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 p-5 rounded-xl">
                             <p className="text-blue-800">La finalidad no es financiar indefinidamente estudios sin progreso, sino permitir una formación profesional real.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">La carga de acreditar la continuidad de los estudios recae inicialmente en quien solicita mantener la pensión. Sin embargo, una vez presentados los certificados de alumno regular, corresponde al obligado al pago demostrar que los estudios no se están realizando efectivamente o que el hijo cuenta con ingresos propios suficientes. Esta distribución probatoria es relevante al momento de decidir si se solicita el cese o se espera a que el tribunal resuelva.</p>
                     </div>
 
                     {/* HIJO TRABAJA */}
@@ -239,7 +242,14 @@ const BlogArticle = () => {
                             <p className="font-bold text-blue-900">¿Qué evalúa el juez?</p>
                             <p className="text-blue-800">Certificados de alumno regular, historial académico, duración efectiva de los estudios, situación económica de ambas partes, y siempre el principio de proporcionalidad y las necesidades reales del hijo.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">Cuando el hijo cambia de carrera o se demora más del tiempo habitual de titulación, el tribunal no aplica una regla automática. Se evalúa si existe un plan de estudios coherente, si ha habido cambios injustificados o si la demora responde a circunstancias objetivas como problemas de salud o falta de cupos. En casos de abandono reiterado, puede proceder el cese, pero cada periodo debe analizarse por separado, no siendo válido suspender pagos por un cambio que aisladamente podría considerarse razonable.</p>
                     </div>
+
+                    <InArticleCTA
+                        message="¿Necesitas ayuda con una pensión de alimentos para hijo mayor de edad? Un abogado especializado puede asesorarte sobre el cese, rebaja o continuidad de la obligación."
+                        buttonText="Abogados especializados en alimentos"
+                        category="Derecho de Familia"
+                    />
 
                     {/* PENSIÓN TERMINA AUTOMÁTICAMENTE? */}
                     <div className="mb-12">
@@ -326,12 +336,6 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas ayuda con una pensión de alimentos para hijo mayor de edad? Un abogado especializado puede asesorarte sobre el cese, rebaja o continuidad de la obligación."
-                        buttonText="Abogados especializados en alimentos"
-                        category="Derecho de Familia"
-                    />
-
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -373,11 +377,24 @@ const BlogArticle = () => {
                         <p className="text-gray-600">Los conflictos sobre alimentos suelen aparecer junto a otras materias familiares relevantes como cuidado personal de hijos, relación directa y regular, incumplimiento de visitas, divorcio o violencia intrafamiliar. Por ello resulta frecuente que una misma familia tenga varios procedimientos relacionados simultáneamente.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo ofrece un marco general, pero la asesoría oportuna puede marcar la diferencia en estos escenarios:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl"> font-bold
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el hijo está próximo a cumplir 18 años y se necesita anticipar si la obligación continuará o se extinguirá.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el hijo abandonó los estudios o cambió de carrera y se quiere solicitar el cese de la pensión judicialmente.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el hijo mayor de edad comienza a trabajar con ingresos estables que podrían justificar una rebaja.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si se han acumulado meses de deuda por no haber gestionado oportunamente el cese de la pensión.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">En cada caso, el análisis de los plazos y las pruebas disponibles determina la viabilidad de la acción.</p>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda con una pensión de alimentos?</h3>
-                            <p className="text-white mb-6">Si necesitas solicitar el término, rebaja, aumento o cumplimiento de una pensión de alimentos, contar con asesoría jurídica especializada puede ayudarte a evitar errores y proteger adecuadamente tus derechos.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Crees que la pensión debería terminar o necesitas mantenerla?</h3>
+                            <p className="text-white mb-6">Si tu hijo cumplió 18 años y no sabes si la obligación continúa, o si eres el hijo mayor de edad que necesita seguir recibiendo alimentos, el momento de consultar es antes de que surja un conflicto. Un abogado de familia puede revisar tu situación y determinar si corresponde solicitar el cese, la rebaja o la continuación de la pensión.</p>
                             <Link
                                 to="/abogado-pension-alimentos"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -396,8 +413,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El error más frecuente es asumir que la mayoría de edad extingue la obligación y suspender los pagos sin resolución judicial. Eso genera deuda acumulada desde el primer mes impago, con intereses y posibles medidas de apremio — exactamente lo que se quiere evitar.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            La información de este artículo es de carácter general. La procedencia del término, la rebaja o la continuación de una pensión de alimentos depende de circunstancias específicas como la situación económica actual, la continuidad efectiva de los estudios y los antecedentes particulares de cada familia.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Si tu hijo cumplió 18 años y crees que la pensión debería terminar o reducirse, el camino correcto es solicitar judicialmente el cese o rebaja, acreditando las circunstancias que lo justifican. Y si tienes dudas sobre si la obligación sigue vigente en tu caso específico, consultar con un abogado de familia antes de tomar cualquier decisión es siempre la mejor opción.
+                            Si necesitas determinar si la obligación sigue vigente o solicitar una modificación, un{" "}
+                            <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                                abogado especializado en pensión de alimentos
+                            </Link>{" "}
+                            puede evaluar tu caso y recomendarte el curso de acción más adecuado.
                         </p>
                     </div>
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldAlert, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -12,6 +12,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const CuidadoFeasibilityTest = () => {
   const [answers, setAnswers] = useState({
@@ -253,7 +254,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 11 min</span>
+              <ReadTime slug="cuidado-personal-hijos-chile-2026" />
             </div>
           </div>
         </div>
@@ -315,6 +316,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               No significa que el otro progenitor desaparezca de la vida del niño, niña o adolescente. Por el contrario, la ley busca mantener la participación activa de ambos padres siempre que ello sea beneficioso para el niño.
             </p>
+            <p className="text-gray-600 mt-4 leading-relaxed">El cuidado personal no implica una facultad absoluta de decisión sobre todos los aspectos de la vida del hijo. Ciertas decisiones relevantes —como las relativas a la educación, la salud o el cambio de residencia— requieren el consentimiento de ambos padres o, en su defecto, autorización judicial. Esta distinción entre cuidado personal y patria potestad (que sigue siendo compartida salvo excepción judicial) es frecuentemente malentendida y genera conflictos cuando el padre no custodio pretende participar en decisiones importantes.</p>
           </div>
 
           {/* ¿La tuición y el cuidado personal son lo mismo? */}
@@ -433,6 +435,7 @@ const BlogArticle = () => {
                 </p>
               </div>
             </div>
+            <p className="text-gray-600 mt-4 leading-relaxed">Cuando el cuidado personal se otorga a un tercero (abuelos, tíos u otros familiares), el tribunal debe verificar que ninguno de los padres está en condiciones de ejercerlo adecuadamente. Esta situación suele requerir informes psicosociales y peritajes que acrediten la idoneidad del tercero y la inconveniencia de que el menor permanezca con sus padres. Además, el tercero que obtiene el cuidado personal asume las mismas responsabilidades legales que un padre, incluyendo la toma de decisiones sobre educación y salud del menor.</p>
           </div>
 
           <div className="my-8">
@@ -708,6 +711,19 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">Este artículo entrega información general, pero la asesoría temprana es clave en estos escenarios:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existe desacuerdo entre los padres y se necesita iniciar una mediación o demanda de cuidado personal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el otro progenitor quiere mudarse con el hijo a otra ciudad o país, lo que podría afectar el régimen existente.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existen denuncias de violencia intrafamiliar que podrían influir en la determinación del cuidado personal.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si se necesita modificar el cuidado personal vigente por un cambio sustancial de circunstancias.</span></li>
+            </ul>
+            <p className="text-gray-600 leading-relaxed">Actuar oportunamente puede marcar una diferencia en el resultado del proceso y en el bienestar del niño.</p>
+          </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="El cuidado personal define con quién viven los hijos. Compara abogados especializados y recibe orientación antes de presentar tu demanda."
@@ -734,7 +750,10 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4 font-semibold">
               Si enfrentas un conflicto relacionado con cuidado personal, tuición, custodia o crianza,
               actuar oportunamente puede marcar una diferencia importante en el resultado del proceso.
-              Un{" "}
+              Este artículo entrega información de carácter general. El cuidado personal se determina caso a caso según el interés superior del niño y las circunstancias específicas de cada familia.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Si enfrentas un conflicto relacionado con cuidado personal, un{" "}
               <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
                 abogado especializado en tuición y cuidado personal
               </Link>{" "}

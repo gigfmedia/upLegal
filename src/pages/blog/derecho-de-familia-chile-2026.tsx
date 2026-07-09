@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -10,6 +10,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
   const faqs = [
@@ -108,7 +109,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <ReadTime slug="derecho-de-familia-chile-2026" />
             </div>
           </div>
         </div>
@@ -196,12 +197,14 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <p className="text-base text-gray-500">
+            <p className="text-base text-gray-500 mb-4">
               Debido a la naturaleza sensible de estos conflictos, los tribunales de familia aplican criterios especiales orientados a proteger el bienestar de los niños y promover acuerdos entre las partes.
             </p>
-          </div>
 
-          {/* Important Topics */}
+            <p className="text-green-800 leading-relaxed text-sm border-l-4 border-green-500 p-4 bg-green-50">
+              El Derecho de Familia chileno se distingue de otras ramas por su marcado carácter tuitivo y su orientación hacia la protección de los más vulnerables. Los principios de interés superior del niño, autonomía progresiva y no discriminación informan cada decisión judicial. A diferencia del derecho civil patrimonial, aquí la voluntad de las partes está limitada por normas de orden público familiar que imponen mínimos irrenunciables en materia de alimentos y cuidado personal.
+            </p>
+          </div>
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">¿Cuáles son los temas más importantes del Derecho de Familia en Chile?</h2>
             <p className="text-gray-600 mb-6">
@@ -462,6 +465,10 @@ const BlogArticle = () => {
               ))}
             </div>
 
+            <p className="text-green-800 leading-relaxed text-sm border-l-4 border-green-500 p-4 bg-green-50 mt-6 mb-8">
+              El procedimiento ante los Tribunales de Familia se rige por la Ley N° 19.968, que establece un sistema oral, concentrado y con inmediación del juez. A diferencia de los procedimientos civiles tradicionales, aquí el juez tiene un rol activo en la dirección del proceso y puede decretar pruebas de oficio. La mediación obligatoria previa busca descongestionar los tribunales y promover soluciones colaborativas, pero no suspende los plazos para solicitar medidas cautelares urgentes.
+            </p>
+
             <p className="text-gray-600 mb-4 leading-relaxed">Explora nuestras guías legales completas en Chile para más información sobre procesos judiciales:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -488,9 +495,22 @@ const BlogArticle = () => {
             </div>
             <p className="mt-6 text-base text-gray-500 italic">Contar con estos documentos facilita el desarrollo del proceso judicial.</p>
           </div>
+          {/* CUANDO CONSULTAR A UN ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+            <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando enfrentas un conflicto familiar complejo como pensión de alimentos, divorcio o cuidado personal de hijos.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si necesitas iniciar un juicio en tribunales de familia y no sabes qué documentos reunir ni cómo preparar la demanda.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existe violencia intrafamiliar y se requieren medidas de protección inmediatas para ti o tus hijos.</span></li>
+              <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si la otra parte ya tiene abogado y necesitas representación legal para equilibrar la relación procesal.</span></li>
+            </ul>
+            <p className="text-gray-600">Una evaluación temprana puede evitar errores procesales que retrasen la resolución de tu conflicto familiar.</p>
+          </div>
+
           {/* CTA before Conclusion */}
           <PreConclusionCTA
-            description="Los conflictos familiares requieren estrategia y plazos estrictos. Encuentra abogados verificados y agenda tu consulta online."
+            description="Si enfrentas un conflicto de pensión de alimentos, divorcio, cuidado personal o régimen de visitas, un abogado de familia puede orientarte sobre tus derechos y el mejor camino a seguir."
             link="/search?specialty=Derecho%20de%20Familia"
             buttonText="Comparar abogados especializados"
           />
@@ -508,8 +528,20 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mb-4">
               Si enfrentas un conflicto relacionado con pensión de alimentos, divorcio, cuidado personal o régimen de visitas, conocer cómo funciona el sistema legal puede ayudarte a tomar mejores decisiones y defender tus derechos.
             </p>
-            <p className="text-gray-600 font-semibold leading-relaxed">
+            <p className="text-gray-600 leading-relaxed mb-4">
               En situaciones complejas, buscar asesoría legal especializada en derecho de familia puede marcar una gran diferencia en el resultado del proceso.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed mb-4">
+              Este artículo entrega información de carácter general sobre el Derecho de Familia en Chile. Las particularidades de cada caso, la legislación aplicable y la jurisprudencia vigente pueden incidir en las soluciones disponibles para cada conflicto familiar.
+            </p>
+
+            <p className="text-gray-600 leading-relaxed">
+              Si necesitas orientación sobre un tema de derecho de familia, un{" "}
+              <Link to="/search?specialty=Derecho%20de%20Familia" className="text-green-700 underline hover:text-green-600">
+                abogado de familia
+              </Link>{" "}
+              puede analizar tu situación y recomendarte el mejor curso de acción.
             </p>
           </div>
 

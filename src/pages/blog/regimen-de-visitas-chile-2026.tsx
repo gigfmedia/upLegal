@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -18,6 +19,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const VisitScheduleCalculator = () => {
     const [weekends, setWeekends] = useState(2);
@@ -187,7 +189,7 @@ const BlogArticle = () => {
 
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 8 min</span>
+                            <ReadTime slug="regimen-de-visitas-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -361,7 +363,12 @@ const BlogArticle = () => {
                                 </li>
                             ))}
                         </ul>
+                        <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-8">
+                            La jurisprudencia chilena ha reiterado que el listado de factores que considera el juez no es taxativo, sino enunciativo. El tribunal puede valorar circunstancias no previstas expresamente en la ley, siempre que resulten relevantes para el interés superior del niño. Por ejemplo, la opinión del adolescente manifestada en audiencia reservada tiene un peso creciente en la jurisprudencia actual, especialmente cuando existe madurez suficiente para formarse un juicio propio.
+                        </p>
                     </div>
+
+                    
 
                     {/* INCUMPLIMIENTO */}
                     <div className="mb-12">
@@ -427,52 +434,9 @@ const BlogArticle = () => {
                                 ))}
                             </ul>
                         </div>
-                    </div>
-
-                    {/* ERRORES */}
-                    <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">
-                            Errores comunes en conflictos por visitas
-                        </h2>
-
-                        <div className="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
-                            <div className="space-y-6">
-                                {[
-                                    {
-                                        title: "Usar al hijo como herramienta de presión",
-                                        desc: "El conflicto entre adultos no debe afectar el vínculo con el niño, niña o adolecente.",
-                                    },
-                                    {
-                                        title: "No dejar registro de incumplimientos",
-                                        desc: "Guardar mensajes y antecedentes puede ser clave ante el tribunal.",
-                                    },
-                                    {
-                                        title: "Pensar que la pensión y las visitas son lo mismo",
-                                        desc: "Son obligaciones independientes legalmente.",
-                                    },
-                                    {
-                                        title: "Incumplir horarios reiteradamente",
-                                        desc: "Esto puede perjudicar futuras solicitudes judiciales.",
-                                    },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <div className="text-red-500 font-bold text-lg flex-shrink-0">
-                                            ✕
-                                        </div>
-
-                                        <div>
-                                            <h4 className="font-bold text-red-900">
-                                                {item.title}
-                                            </h4>
-
-                                            <p className="text-red-800 opacity-90">
-                                                {item.desc}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-8">
+                            Desde una perspectiva jurisprudencial, los tribunales de familia chilenos han precisado que las visitas supervisadas no constituyen una sanción para el progenitor, sino una medida de protección. Su procedencia exige un análisis ponderado del riesgo concreto, sin que baste una mera alegación de peligro. La Corte Suprema ha establecido que deben preferirse medidas menos restrictivas del vínculo parental antes de recurrir a esta modalidad.
+                        </p>
                     </div>
 
                     {/* CASOS */}
@@ -561,7 +525,12 @@ const BlogArticle = () => {
                                 Mientras antes se inicie el proceso, más rápido puede regularizarse la relación con el hijo. Esperar demasiado tiempo suele aumentar el conflicto y dificultar los acuerdos.
                             </p>
                         </div>
+                        <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic mt-8">
+                            En la práctica, la duración del proceso depende en buena medida de la carga del tribunal y de la complejidad probatoria. Los tribunales de familia con mayor volumen de causas en Santiago pueden demorar hasta 10 meses en audiencia de juicio, mientras que en regiones el plazo suele ser menor. Además, si se requiere evaluación psicológica o informe social, el tiempo se extiende naturalmente por la espera de dichas pericias.
+                        </p>
                     </div>
+
+                    
 
                     {/* DOCUMENTOS */}
                     <div className="mb-12">
@@ -628,9 +597,68 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* ERRORES */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">
+                            Errores comunes en conflictos por visitas
+                        </h2>
+
+                        <div className="bg-red-50 border border-red-100 rounded-2xl p-6 sm:p-8">
+                            <div className="space-y-6">
+                                {[
+                                    {
+                                        title: "Usar al hijo como herramienta de presión",
+                                        desc: "El conflicto entre adultos no debe afectar el vínculo con el niño, niña o adolecente.",
+                                    },
+                                    {
+                                        title: "No dejar registro de incumplimientos",
+                                        desc: "Guardar mensajes y antecedentes puede ser clave ante el tribunal.",
+                                    },
+                                    {
+                                        title: "Pensar que la pensión y las visitas son lo mismo",
+                                        desc: "Son obligaciones independientes legalmente.",
+                                    },
+                                    {
+                                        title: "Incumplir horarios reiteradamente",
+                                        desc: "Esto puede perjudicar futuras solicitudes judiciales.",
+                                    },
+                                ].map((item, i) => (
+                                    <div key={i} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-lg flex-shrink-0">
+                                            ✕
+                                        </div>
+
+                                        <div>
+                                            <h4 className="font-bold text-red-900">
+                                                {item.title}
+                                            </h4>
+
+                                            <p className="text-red-800 opacity-90">
+                                                {item.desc}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo ofrece información general, pero hay escenarios donde la asesoría temprana marca la diferencia:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el otro progenitor impide las visitas de forma reiterada y se necesita activar medidas de cumplimiento forzado ante el tribunal.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existe riesgo de que el niño sea trasladado a otra ciudad o país sin autorización, lo que requiere medidas cautelares urgentes.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando se necesita modificar el régimen vigente por cambio de domicilio, horarios laborales o ingreso escolar del hijo.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen denuncias cruzadas entre los padres que puedan afectar la determinación del régimen de visitas.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">Una evaluación temprana puede evitar la pérdida de contacto prolongado con el hijo y facilitar una solución judicial más rápida.</p>
+                    </div>
+
                     {/* CTA before Conclusion */}
                     <PreConclusionCTA
-                        description="El régimen de visitas protege el vínculo con tus hijos. Compara abogados de familia y agenda una consulta para evaluar tu situación."
+                        description="Si no te permiten ver a tu hijo o el régimen actual ya no funciona, un abogado de familia puede solicitar medidas de cumplimiento o modificar el acuerdo ante el tribunal."
                         link="/abogado-pension-alimentos"
                         buttonText="Comparar abogados especializados"
                     />
@@ -655,8 +683,16 @@ const BlogArticle = () => {
                             Actuar rápido frente a incumplimientos es importante. Mientras más tiempo pasa sin contacto, más difícil puede volverse reconstruir el vínculo familiar, especialmente en niños pequeños.
                         </p>
 
-                        <p className="text-gray-600 font-semibold leading-relaxed">
-                            Si tienes problemas con el régimen de visitas, necesitas modificarlo o no te permiten ver a tu hijo, buscar asesoría con un abogado de familia puede ayudarte a proteger tus derechos y encontrar una solución legal efectiva.
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo entrega información de carácter general sobre el régimen de visitas en Chile. Las particularidades de cada caso, la existencia de antecedentes de violencia intrafamiliar o la edad de los hijos pueden incidir en la decisión del tribunal de familia.
+                        </p>
+
+                        <p className="text-gray-600 leading-relaxed">
+                            Si necesitas fijar, modificar o exigir el cumplimiento de un régimen de visitas, un{" "}
+                            <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia
+                            </Link>{" "}
+                            puede evaluar tu situación y representarte ante el tribunal.
                         </p>
                     </div>
 

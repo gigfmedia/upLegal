@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -119,7 +120,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 9 min</span>
+                            <ReadTime slug="incumplimiento-regimen-visitas-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -160,6 +161,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Si todavía no conoces el funcionamiento general de esta institución, revisa nuestra guía sobre <Link to="/blog/regimen-visitas-chile-2026" className="underline">Régimen de visitas en Chile 2026</Link>.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">La relación directa y regular no se limita a la entrega y devolución del niño en fechas determinadas. Comprende también el derecho a mantener comunicaciones regulares, a recibir información sobre la educación y salud del hijo, y a participar en decisiones relevantes de su vida. El incumplimiento de cualquiera de estas facetas puede ser igualmente reclamable ante el tribunal, aunque muchas personas se concentran únicamente en el régimen presencial.</p>
                     </div>
 
                     {/* QUE SE CONSIDERA INCUMPLIMIENTO */}
@@ -238,6 +240,7 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
+                        <p className="text-gray-600 mt-4">En la práctica, la imposición de sanciones no es automática. El tribunal requiere que se acredite fehacientemente el incumplimiento y que se hayan agotado las instancias previas de diálogo o mediación. Las multas suelen fijarse en unidades tributarias y pueden repetirse si el incumplimiento persiste, pero el tribunal también puede optar por medidas correctivas como la compensación del tiempo perdido o la modificación del régimen si el actual no se ajusta a la realidad familiar.</p>
                     </div>
 
                     {/* INCUMPLIMIENTO REITERADO (nuevo) */}
@@ -253,6 +256,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-red-800">Consecuencia:</p>
                             <p className="text-red-700">La reiteración de incumplimientos suele influir negativamente en la evaluación judicial y puede justificar medidas más severas para asegurar el cumplimiento futuro, incluyendo la modificación del cuidado personal.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">Sin embargo, modificar el cuidado personal no es una decisión que el tribunal adopte a la ligera. Debe acreditarse que el incumplimiento reiterado afecta el bienestar del niño y que el cambio de cuidado personal es beneficioso para su desarrollo. No basta con demostrar que el otro progenitor incumple; se requiere una evaluación integral del interés superior del menor, incluyendo informes psicosociales y peritajes que respalden la medida.</p>
                     </div>
 
                     {/* QUE EVALÚA EL TRIBUNAL (nuevo) */}
@@ -388,11 +392,24 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">La información general es orientativa, pero hay escenarios donde la consulta urgente puede cambiar el resultado:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el otro progenitor ha impedido las visitas de forma reiterada durante semanas o meses.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen indicios de alienación parental o interferencia en el vínculo afectivo con el hijo.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando se requiere modificar el régimen de visitas por cambio de domicilio, horarios laborales o necesidades del niño.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el incumplimiento es mutuo y se necesita reestructurar completamente el régimen para evitar nuevos conflictos.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">La evidencia temprana es clave para acreditar la conducta ante el tribunal y obtener las medidas más efectivas.</p>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3 sm:px-10">¿Necesitas ayuda para exigir el cumplimiento del régimen de visitas?</h3>
-                            <p className="text-white mb-6">Si no te permiten ver a tus hijos o existen incumplimientos reiterados de la relación directa y regular, un abogado de familia puede ayudarte a solicitar medidas judiciales para proteger tus derechos y el bienestar del niño.</p>
+                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3 sm:px-10">Llevas semanas sin ver a tu hijo y no sabes qué hacer</h3>
+                            <p className="text-white mb-6">No intentes resolverlo reteniendo alimentos o enfrentando al otro progenitor. Un abogado de familia puede solicitar al Tribunal de Familia medidas de cumplimiento inmediato, incluyendo la compensación del tiempo perdido y la imposición de multas si el incumplimiento se acredita.</p>
                             <Link
                                 to="/abogado-pension-alimentos"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -414,8 +431,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El error más frecuente es esperar demasiado o intentar resolver el conflicto por cuenta propia — retener al hijo como respuesta, dejar de pagar alimentos o enfrentar al otro padre directamente. Ninguna de esas acciones ayuda al niño ni mejora tu posición legal. Al contrario, pueden perjudicarte ante el tribunal.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4 font-bold">
-                            Si enfrentas esta situación, lo más importante es documentar cada incumplimiento desde el primer episodio, acudir al Tribunal de Familia con esa evidencia y solicitar el cumplimiento forzado. Mientras antes actúes, más clara es la señal para el tribunal de que el incumplimiento es sistemático y no un hecho aislado.
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo presenta información general. Cada caso de incumplimiento de visitas involucra circunstancias específicas — frecuencia del régimen, edad del niño, historial de cumplimiento y contexto familiar — que un tribunal evaluará de forma particular.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed">
+                            Si enfrentas esta situación, un{" "}
+                            <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia
+                            </Link>{" "}
+                            puede ayudarte a documentar los incumplimientos y solicitar las medidas judiciales adecuadas para restablecer el vínculo con tu hijo.
                         </p>
                     </div>
 

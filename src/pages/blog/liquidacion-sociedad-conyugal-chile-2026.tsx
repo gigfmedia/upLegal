@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -127,7 +129,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 9 min</span>
+                            <ReadTime slug="liquidacion-sociedad-conyugal-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -188,6 +190,7 @@ const BlogArticle = () => {
                                 Muchas personas creen que el divorcio automáticamente divide los bienes. Sin embargo, esto no ocurre. Primero termina el matrimonio y luego debe liquidarse la sociedad conyugal para repartir el patrimonio común.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">Es importante distinguir entre la disolución de la sociedad conyugal (que ocurre automáticamente con el divorcio, la nulidad o el cambio de régimen) y su liquidación (que requiere un procedimiento posterior). Durante el período entre la disolución y la liquidación efectiva, los bienes quedan en un estado de comunidad que puede generar problemas de administración si no se gestiona adecuadamente. Cualquier acto de disposición de bienes comunes durante este período requiere el consentimiento de ambos ex cónyuges.</p>
                     </div>
 
                     {/* QUE ES SOCIEDAD CONYUGAL */}
@@ -258,7 +261,15 @@ const BlogArticle = () => {
                             ))}
                         </div>
                         <p className="text-gray-600">Cada caso debe analizarse individualmente.</p>
+                        <p className="text-gray-600 mt-4">Un aspecto que genera frecuentes controversias son las recompensas que los cónyuges se deben entre sí o a la sociedad conyugal. Por ejemplo, si uno de los cónyuges usó fondos de la sociedad para pagar una deuda personal o, inversamente, si usó dinero propio para adquirir un bien que ingresó a la sociedad. Estas recompensas deben calcularse y compensarse durante la liquidación, y su determinación puede requerir una revisión contable detallada de los movimientos patrimoniales durante todo el matrimonio.</p>
                     </div>
+
+                    {/* CTA PRINCIPAL */}
+                    <InArticleCTA
+                        message="¿Necesitas ayuda para dividir bienes, propiedades o deudas después del divorcio? Un abogado especializado puede ayudarte a proteger tus derechos."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
                     {/* CASA FAMILIAR */}
                     <div className="mb-12">
@@ -356,13 +367,8 @@ const BlogArticle = () => {
                             </div>
                         </div>
                         <p className="text-gray-600 mt-4">En estos casos resulta fundamental contar con asesoría legal especializada.</p>
+                        <p className="text-gray-600 mt-4">Cuando el desacuerdo persiste, el juicio de liquidación puede extenderse por varios meses o incluso años, dependiendo de la cantidad de bienes, la necesidad de peritajes y la disposición de las partes a negociar. Durante este período, los bienes comunes no pueden administrarse libremente: cualquier acto de disposición importante requiere autorización judicial o el consentimiento de ambos, lo que puede paralizar decisiones como la venta de un inmueble o el retiro de inversiones.</p>
                     </div>
-
-                    <InArticleCTA
-                        message="¿Necesitas ayuda para dividir bienes, propiedades o deudas después del divorcio? Un abogado especializado puede ayudarte a proteger tus derechos."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho de Familia"
-                    />
 
                     {/* RELACION CON DIVORCIO */}
                     <div className="mb-12">
@@ -424,16 +430,29 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">Este artículo entrega información general, pero la consulta temprana es clave en estos casos:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el divorcio ya está en curso y no se ha iniciado ninguna gestión para liquidar la sociedad conyugal.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existen bienes inmuebles, empresas o inversiones que requerirán valoración pericial.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando sospechas que tu cónyuge ha realizado movimientos patrimoniales para disminuir los activos de la sociedad.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si se necesita acordar el uso de la vivienda familiar mientras se tramita la liquidación.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">Actuar oportunamente puede evitar la pérdida de derechos patrimoniales y facilitar un acuerdo más rápido.</p>
+                    </div>
+
                     {/* CTA FINAL */}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda para dividir bienes, propiedades o deudas después del divorcio?</h3>
-                            <p className="text-white mb-6">Compara abogados de familia especializados y agenda una consulta online.</p>
+                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
+                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿El divorcio avanza y los bienes comunes siguen sin dividirse?</h3>
+                            <p className="text-white mb-6">Si el matrimonio terminó pero la sociedad conyugal sigue pendiente de liquidación, cada día sin resolver puede generar conflictos sobre la administración de los bienes. Un abogado de familia puede iniciar el proceso de liquidación y proteger tu parte del patrimonio.</p>
                             <Link
                                 to="/abogado-divorcio-unilateral"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
                             >
-                                Ver abogados de familia disponibles
+                                Ver abogados especializados en familia
                             </Link>
                         </div>
                     </div>
@@ -450,8 +469,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Comprender qué bienes se reparten, cómo se valoran y cuáles son las alternativas disponibles permite tomar mejores decisiones y evitar conflictos que pueden prolongarse durante años.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            La información de este artículo tiene carácter general. Cada liquidación de sociedad conyugal depende del régimen matrimonial aplicable, los bienes existentes, las deudas y las circunstancias particulares de cada pareja.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Cuando existen propiedades, empresas, inversiones o desacuerdos importantes, la asesoría de un abogado especializado suele marcar una diferencia significativa en el resultado final.
+                            Si necesitas iniciar una liquidación o enfrentas un conflicto patrimonial post-divorcio, un{" "}
+                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                abogado especializado en liquidación de bienes
+                            </Link>{" "}
+                            puede evaluar tu caso y proteger tus intereses patrimoniales.
                         </p>
                     </div>
 

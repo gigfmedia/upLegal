@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -137,7 +139,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="acuerdo-completo-suficiente-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -198,6 +200,7 @@ const BlogArticle = () => {
                                 La Ley de Matrimonio Civil exige que, para solicitar un divorcio de mutuo acuerdo, exista un acuerdo que regule estas materias. Sin ACS, el tribunal no puede decretar el divorcio de común acuerdo.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">Desde una perspectiva jurídica, el ACS no es un simple contrato entre privados: una vez aprobado por el tribunal, adquiere fuerza de cosa juzgada y solo puede modificarse mediante un nuevo procedimiento judicial si cambian las circunstancias que lo fundamentaron. Esto significa que los términos acordados no pueden alterarse unilateralmente ni por acuerdo extrajudicial posterior, lo que exige especial cuidado al negociar cada cláusula.</p>
                     </div>
 
                     {/* CUANDO SE EXIGE */}
@@ -241,6 +244,7 @@ const BlogArticle = () => {
                             <p className="font-bold text-amber-800">Ejemplo de insuficiencia:</p>
                             <p className="text-amber-700">Padres acuerdan una pensión de $10.000 mensuales, regulan visitas y cuidado personal. Aunque cubre todas las materias, probablemente el juez considerará insuficiente la pensión y rechazará el ACS.</p>
                         </div>
+                        <p className="text-gray-600 mt-4">El tribunal no se limita a verificar que el ACS contenga todas las materias: evalúa si cada una de ellas está resuelta de manera que proteja adecuadamente los derechos de los hijos y del cónyuge más vulnerable. Esto implica que un acuerdo que formalmente cubre alimentos, visitas y cuidado personal puede ser considerado insuficiente si, por ejemplo, el monto de pensión es irrisorio o el régimen de visitas es tan ambiguo que genera conflictos futuros.</p>
                     </div>
 
                     {/* QUE DEBE INCLUIR */}
@@ -375,6 +379,7 @@ const BlogArticle = () => {
                             ))}
                         </div>
                         <p className="text-gray-600 mt-4">Si detecta problemas, puede exigir modificaciones.</p>
+                        <p className="text-gray-600 mt-4">En la práctica, el juez puede devolver el ACS con observaciones incluso si ambas partes están de acuerdo con su contenido. Esto ocurre cuando, a criterio del tribunal, ciertas cláusulas no protegen suficientemente a los hijos o a uno de los cónyuges. El rechazo no implica que el divorcio fracase, sino que las partes deben corregir el acuerdo y presentar una nueva versión, lo que retrasa el proceso si no se anticiparon adecuadamente los estándares que el tribunal aplica.</p>
                     </div>
 
                     {/* DIFERENCIAS */}
@@ -431,11 +436,24 @@ const BlogArticle = () => {
                         <p className="text-gray-600">Una vez corregidos los problemas, el acuerdo puede volver a ser revisado.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">La información general es útil, pero la asesoría temprana es clave en estos escenarios:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existe una gran disparidad económica entre los cónyuges y se necesita asegurar un acuerdo equilibrado.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el abogado de la otra parte ya está redactando el ACS y se requiere revisar las cláusulas para proteger tus derechos.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando hay hijos menores y se necesita determinar alimentos, visitas y cuidado personal con cláusulas claras.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si el juez ya rechazó un primer ACS y se requiere redactar una nueva versión que cumpla con los estándares judiciales.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">La correcta redacción del ACS puede evitar retrasos en el divorcio y conflictos posteriores difíciles de resolver.</p>
+                    </div>
+
                     {/* CTA FINAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Necesitas ayuda para redactar un Acuerdo Completo y Suficiente?</h3>
-                            <p className="text-white mb-6">Un error en el acuerdo puede retrasar significativamente el divorcio o generar problemas futuros. Compara abogados especializados en Derecho de Familia.</p>
+                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Tienes un borrador de acuerdo y no sabes si cumple los requisitos?</h3>
+                            <p className="text-white mb-6">Un ACS mal redactado puede ser rechazado por el tribunal, retrasando tu divorcio y generando costos adicionales. Un abogado de familia puede revisar el borrador, corregir las cláusulas deficientes y asegurar que el acuerdo sea aprobado a la primera.</p>
                             <Link
                                 to="/abogado-divorcio-unilateral"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -457,8 +475,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Una correcta redacción evita conflictos futuros, acelera el procedimiento y permite que el divorcio se desarrolle de manera más eficiente.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo entrega información general sobre el ACS. Cada acuerdo debe reflejar las circunstancias específicas de la familia, y los tribunales evalúan su suficiencia caso a caso según los ingresos, cargas familiares y necesidades de los involucrados.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Por ello, antes de firmar cualquier acuerdo, es recomendable contar con asesoría jurídica especializada para asegurarse de que cumpla todos los requisitos legales exigidos por los tribunales de familia.
+                            Si necesitas redactar o revisar un Acuerdo Completo y Suficiente, un{" "}
+                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                abogado de familia
+                            </Link>{" "}
+                            puede asesorarte para que el documento cumpla con los estándares judiciales y evitar rechazos que retrasen el proceso.
                         </p>
                     </div>
 

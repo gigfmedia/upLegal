@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -17,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -117,7 +119,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="liquidacion-de-bienes-divorcio-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -168,6 +170,7 @@ const BlogArticle = () => {
                                 El divorcio termina el matrimonio. La liquidación resuelve las consecuencias patrimoniales. Por esta razón, una pareja puede estar legalmente divorciada y seguir manteniendo bienes sin repartir durante años.
                             </p>
                         </div>
+                        <p className="text-gray-600 mt-4">La liquidación de bienes involucra dos etapas que a menudo se confunden: primero, la disolución del régimen patrimonial (que determina el momento desde el cual los cónyuges dejan de generar bienes comunes), y segundo, la partición o división de los bienes existentes a esa fecha. Los efectos jurídicos de cada etapa son distintos y los plazos para impugnar o solicitar la nulidad de ciertos actos pueden variar según cuál de ellas se trate.</p>
                     </div>
 
                     {/* TODOS LOS DIVORCIOS REQUIEREN LIQUIDACION */}
@@ -231,6 +234,7 @@ const BlogArticle = () => {
                                 <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-green-600" /> Donaciones personales</li>
                             </ul>
                         </div>
+                        <p className="text-gray-600 mt-4">Uno de los puntos más complejos en la práctica es la valoración de los bienes. El valor comercial de un inmueble no siempre coincide con el valor fiscal o el valor de tasación pericial, y cada parte puede tener incentivos para presentar valoraciones divergentes. Cuando no hay acuerdo sobre el valor, el tribunal puede ordenar peritajes independientes, lo que agrega tiempo al procedimiento. Lo mismo ocurre con bienes muebles de difícil tasación como obras de arte o participaciones societarias.</p>
                     </div>
 
                     {/* DEUDAS */}
@@ -332,6 +336,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600">
                             Cuando existen sospechas fundadas, el abogado puede solicitar diversas diligencias destinadas a identificar patrimonio oculto. Intentar ocultar bienes suele generar consecuencias negativas para quien lo hace y puede afectar gravemente la negociación patrimonial.
                         </p>
+                        <p className="text-gray-600 mt-4">Desde el punto de vista procesal, la acción de reclamación de bienes ocultos tiene plazos de prescripción específicos que es importante conocer. Además, la prueba del ocultamiento puede ser compleja: no basta con sospechar, se requieren indicios concretos como transferencias bancarias recientes, cambios en la titularidad de bienes o movimientos patrimoniales inusuales en los meses previos al divorcio. Los tribunales pueden ordenar oficios a bancos, al Conservador de Bienes Raíces y al Registro Civil para rastrear el patrimonio.</p>
                     </div>
 
                     {/* DIFERENCIA CON ACS */}
@@ -424,11 +429,24 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR A UN ABOGADO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado de familia?</h2>
+                        <p className="text-gray-600 mb-4">La información general ayuda a entender el proceso, pero la consulta temprana es especialmente relevante en estos casos:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando existen bienes inmuebles, empresas familiares o patrimonios complejos que requerirán peritajes y valoraciones.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si sospechas que tu cónyuge ha ocultado bienes o los ha transferido a terceros antes de la separación.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Cuando el divorcio ya está en curso y no se ha iniciado paralelamente la gestión de liquidación de bienes.</span></li>
+                            <li className="flex items-start gap-2"><AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" /> <span className="text-gray-600 font-bold">Si existe una vivienda familiar y se necesita determinar su destino antes de que la otra parte tome decisiones unilaterales.</span></li>
+                        </ul>
+                        <p className="text-gray-600 mt-4">En materia patrimonial, los plazos para impugnar ciertos actos pueden ser cortos y la demora puede significar la pérdida de derechos.</p>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3 sm:px-24">¿Buscas ayuda para resolver la división de bienes después de un divorcio?</h3>
-                            <p className="text-white mb-6">La distribución del patrimonio puede impactar significativamente tu situación financiera futura. Compara abogados especializados en divorcio, sociedad conyugal y conflictos patrimoniales familiares.</p>
+                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3 sm:px-24">El divorcio está en curso y los bienes no se han dividido</h3>
+                            <p className="text-white mb-6">Si el divorcio avanza y los bienes comunes siguen sin repartirse, cada día que pasa aumenta el riesgo de que se pierdan activos o se consoliden situaciones patrimoniales desfavorables. Un abogado de familia puede iniciar las gestiones para asegurar tu parte del patrimonio.</p>
                             <Link
                                 to="/abogado-divorcio-unilateral"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -447,8 +465,15 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Comprender qué bienes se reparten, cómo funcionan los distintos regímenes matrimoniales y cuáles son las alternativas para llegar a acuerdos permite evitar conflictos costosos y proteger mejor el patrimonio construido durante la relación.
                         </p>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            Este artículo contiene información de carácter general sobre liquidación de bienes. La distribución del patrimonio depende del régimen matrimonial aplicable, del tipo de bienes involucrados y de las circunstancias particulares de cada pareja.
+                        </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Cuando existen bienes importantes o desacuerdos entre las partes, contar con asesoría jurídica especializada suele marcar una diferencia significativa en el resultado final.
+                            Si necesitas iniciar una liquidación de bienes o enfrentas un conflicto patrimonial post-divorcio, un{" "}
+                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                abogado especializado en liquidación de bienes
+                            </Link>{" "}
+                            puede evaluar tu caso y proteger tus intereses patrimoniales.
                         </p>
                     </div>
 
