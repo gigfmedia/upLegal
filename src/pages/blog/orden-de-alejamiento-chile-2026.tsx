@@ -464,19 +464,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando te notificaron una orden de alejamiento y necesitas entender sus alcances antes de la audiencia de medidas cautelares.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si eres víctima y quieres solicitar una orden pero no sabes qué antecedentes presentar para que el tribunal la conceda.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando existe una denuncia cruzada donde ambas partes alegan agresiones y necesitas evaluar tu posición procesal.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Cuando te notificaron una orden de alejamiento y necesitas entender sus alcances antes de la audiencia de medidas cautelares.",
+                                "Si eres víctima y quieres solicitar una orden pero no sabes qué antecedentes presentar para que el tribunal la conceda.",
+                                "Cuando existe una denuncia cruzada donde ambas partes alegan agresiones y necesitas evaluar tu posición procesal.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 

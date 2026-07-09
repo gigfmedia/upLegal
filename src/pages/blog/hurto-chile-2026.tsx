@@ -454,14 +454,14 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Tanto las víctimas como las personas investigadas pueden beneficiarse de recibir asesoría temprana.</p>
-                        <div className="grid sm:grid-cols-2 gap-3">
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Evaluar si los hechos efectivamente constituyen un delito de hurto", "Revisar las pruebas existentes", "Solicitar diligencias adicionales", "Preparar declaraciones", "Representar a la víctima durante la investigación", "Diseñar una estrategia de defensa cuando existe una imputación"].map((item, i) => (
-                                <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                    <span className="text-green-600 font-bold">✓</span>
-                                    <span className="text-sm">{item}</span>
-                                </div>
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                         <p className="text-gray-600 mt-4">Cada procedimiento penal presenta particularidades, por lo que una evaluación individual suele ser la mejor forma de proteger los derechos de quien interviene en el proceso.</p>
                     </div>
 

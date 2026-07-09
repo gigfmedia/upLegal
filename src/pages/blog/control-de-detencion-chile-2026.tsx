@@ -387,14 +387,14 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">En la práctica, la primera audiencia suele definir gran parte del desarrollo posterior del proceso.</p>
-                        <div className="grid sm:grid-cols-2 gap-3">
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Revisar la legalidad de la detención", "Preparar la estrategia de defensa", "Solicitar diligencias de investigación", "Oponerse a medidas cautelares desproporcionadas", "Representar al imputado durante todas las audiencias", "Explicar las alternativas procesales disponibles"].map((item, i) => (
-                                <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                    <span className="text-green-600 font-bold">✓</span>
-                                    <span>{item}</span>
-                                </div>
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                         <p className="text-gray-600 mt-4">Mientras antes exista asesoría jurídica, mayores son las posibilidades de tomar decisiones informadas desde el inicio de la investigación.</p>
                     </div>
 

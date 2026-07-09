@@ -450,19 +450,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Inmediatamente después de una detención, antes de la audiencia de control de detención.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando Carabineros levantó un parte o denuncia en tu contra y aún no has sido notificado formalmente.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si la Fiscalía te citó a declarar como imputado y no sabes qué antecedentes existen en tu contra.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Inmediatamente después de una detención, antes de la audiencia de control de detención.",
+                                "Cuando Carabineros levantó un parte o denuncia en tu contra y aún no has sido notificado formalmente.",
+                                "Si la Fiscalía te citó a declarar como imputado y no sabes qué antecedentes existen en tu contra.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 

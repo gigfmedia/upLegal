@@ -425,19 +425,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Inmediatamente después de una agresión, antes de la primera audiencia donde se evalúan las medidas de protección.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando existe una denuncia cruzada y necesitas evaluar tu posición procesal antes de declarar.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si te notificaron una orden de alejamiento o medidas cautelares y necesitas entender sus alcances.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Inmediatamente después de una agresión, antes de la primera audiencia donde se evalúan las medidas de protección.",
+                                "Cuando existe una denuncia cruzada y necesitas evaluar tu posición procesal antes de declarar.",
+                                "Si te notificaron una orden de alejamiento o medidas cautelares y necesitas entender sus alcances.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 

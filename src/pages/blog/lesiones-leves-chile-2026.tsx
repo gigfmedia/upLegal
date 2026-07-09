@@ -485,19 +485,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el rumbo del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando recibes una citación a declarar como imputado por una denuncia de lesiones y aún no conoces los antecedentes de la carpeta.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si la Fiscalía ya solicitó medidas cautelares en tu contra y necesitas evaluar tu situación procesal antes de la audiencia.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando eres víctima de una agresión y necesitas orientación sobre la constatación de lesiones y los pasos para formalizar la denuncia.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Cuando recibes una citación a declarar como imputado por una denuncia de lesiones y aún no conoces los antecedentes de la carpeta.",
+                                "Si la Fiscalía ya solicitó medidas cautelares en tu contra y necesitas evaluar tu situación procesal antes de la audiencia.",
+                                "Cuando eres víctima de una agresión y necesitas orientación sobre la constatación de lesiones y los pasos para formalizar la denuncia.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 

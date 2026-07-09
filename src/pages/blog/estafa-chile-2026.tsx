@@ -441,19 +441,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando acabas de descubrir la estafa y el dinero fue transferido hace pocas horas — la Fiscalía puede solicitar medidas urgentes sobre cuentas bancarias.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si la otra parte ya presentó una denuncia en tu contra por estafa y aún no has declarado.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando la Fiscalía te notifica una citación a declarar como imputado sin que conozcas el contenido de la carpeta investigativa.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Cuando acabas de descubrir la estafa y el dinero fue transferido hace pocas horas — la Fiscalía puede solicitar medidas urgentes sobre cuentas bancarias.",
+                                "Si la otra parte ya presentó una denuncia en tu contra por estafa y aún no has declarado.",
+                                "Cuando la Fiscalía te notifica una citación a declarar como imputado sin que conozcas el contenido de la carpeta investigativa.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 

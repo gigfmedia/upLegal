@@ -481,19 +481,17 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
-                        <ul className="space-y-3 text-gray-600">
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando la otra persona ya presentó una denuncia en Fiscalía por ingreso no autorizado y aún no has declarado.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Si Carabineros te notificó una citación por violación de morada y no sabes qué antecedentes existen en tu contra.</span>
-                            </li>
-                            <li className="flex items-start gap-3">
-                                <span className="text-green-600 font-bold mt-0.5">•</span>
-                                <span>Cuando existe un conflicto entre ex parejas o familiares por el uso de una vivienda y necesitas determinar si es un tema penal o civil.</span>
-                            </li>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Cuando la otra persona ya presentó una denuncia en Fiscalía por ingreso no autorizado y aún no has declarado.",
+                                "Si Carabineros te notificó una citación por violación de morada y no sabes qué antecedentes existen en tu contra.",
+                                "Cuando existe un conflicto entre ex parejas o familiares por el uso de una vivienda y necesitas determinar si es un tema penal o civil.",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
                         </ul>
                     </div>
 
