@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="apropiacion-indebida-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -168,6 +169,11 @@ const BlogArticle = () => {
                                 El problema no está en cómo recibió los bienes, sino en el uso indebido que realiza posteriormente.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe la figura penal en abstracto. En la práctica, acreditar que hubo intención de apropiarse de los bienes y no un mero retraso en la devolución requiere analizar las comunicaciones entre las partes, el destino de los fondos y las gestiones de cobro previas. Esa diferencia entre la regla general y la prueba concreta es la que define el rumbo de cada investigación.
+                            </p>
+                        </div>
                     </div>
 
                     {/* CUANDO EXISTE */}
@@ -212,6 +218,11 @@ const BlogArticle = () => {
                             </div>
                         </div>
                         <p className="text-gray-600 mt-4">Esta diferencia resulta fundamental al momento de presentar una denuncia.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La diferencia entre uno y otro delito parece clara en la teoría. En la práctica, una misma relación de hechos puede ser calificada como estafa o apropiación indebida según lo que las pruebas muestren sobre la intención inicial de quien recibió los bienes. La Fiscalía debe determinar si existió engaño desde el origen, y esa calificación cambia la estrategia de defensa.
+                            </p>
+                        </div>
                     </div>
 
                     {/* EJEMPLOS FRECUENTES */}
@@ -301,7 +312,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas ayuda por una denuncia o acusación de apropiación indebida? Un abogado penalista puede evaluar tu caso y proteger tus derechos."
+                        message="Si te imputan apropiación indebida, el momento más importante es antes de que la Fiscalía formalice la investigación — después puede ser tarde para definir una estrategia."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -320,6 +331,11 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Cuando el delito afecta importantes sumas de dinero o involucra múltiples víctimas, la investigación suele ser más compleja y puede requerir peritajes contables y financieros para determinar el monto exacto del perjuicio.
                         </p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal ayuda a dimensionar el riesgo abstracto. Pero dos personas imputadas por apropiación indebida pueden transitar caminos procesales distintos: una puede quedar con una suspensión condicional del procedimiento, la otra puede enfrentar un juicio oral si los antecedentes así lo justifican. Esa diferencia no la determina solo el monto sino los elementos concretos de la carpeta investigativa.
+                            </p>
+                        </div>
                     </div>
 
                     {/* INCUMPLIMIENTO DE CONTRATO */}
@@ -449,11 +465,31 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Por ello resulta importante evaluar la estrategia jurídica más conveniente desde el inicio del conflicto.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el resultado del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando la otra parte ya presentó una denuncia en Fiscalía y aún no has sido notificado — puedes anticiparte con una estrategia de defensa.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si la Fiscalía te citó a declarar como imputado sin que sepas exactamente qué antecedentes existen en tu contra.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando te notifican medidas cautelares o una formalización inminente y necesitas evaluar las salidas alternativas disponibles.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda por una apropiación indebida?</h3>
-                            <p className="text-white mb-6">Los casos de apropiación indebida suelen involucrar importantes sumas de dinero y requieren analizar cuidadosamente si los hechos constituyen un delito o una controversia civil. Tanto si eres víctima como si estás siendo investigado, recibir asesoría jurídica desde las primeras etapas puede marcar una diferencia importante en la estrategia del caso.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una denuncia en tu contra?</h3>
+                            <p className="text-white mb-6">Si ya existe una denuncia en Fiscalía o fuiste formalizado por apropiación indebida, el momento para definir tu estrategia de defensa es antes de la audiencia — no después de haber declarado. Un abogado penalista puede revisar los antecedentes y evaluar las salidas alternativas disponibles.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -467,22 +503,13 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La apropiación indebida es uno de los delitos patrimoniales más frecuentes y, al mismo tiempo, uno de los que genera mayor confusión entre las personas. La línea entre una deuda impaga, un incumplimiento contractual y un delito penal no siempre es evidente — y equivocarse en esa distinción puede llevar a tomar decisiones que perjudiquen el caso.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si crees que fuiste víctima de apropiación indebida, lo primero es reunir toda la documentación que acredite que entregaste bienes o dinero a quien los retiene: contratos, recibos, transferencias, mensajes. Esa evidencia es la base de cualquier denuncia y determina si los hechos constituyen un delito o solo un conflicto civil.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si estás siendo investigado o denunciado, no minimices la situación. La apropiación indebida puede derivar en formalización, medidas cautelares y condena penal. Buscar asesoría legal antes de la primera diligencia es fundamental — lo que digas o hagas en esa etapa puede afectar directamente el resultado del proceso.
+                            La apropiación indebida es uno de los delitos patrimoniales que más dudas genera porque su frontera con un incumplimiento civil no siempre es evidente. Esta guía ha descrito las reglas generales y los elementos que la Fiscalía debe acreditar.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            En ambos casos, actuar rápido y con información correcta desde el inicio marca la
-                            diferencia entre resolver el conflicto oportunamente o enfrentar un proceso largo y
-                            costoso. Un{" "}
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada situación — y esa respuesta depende de los antecedentes concretos, de las comunicaciones entre las partes y del destino de los fondos. Si quieres revisar tu caso particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-600">
                                 abogado penal para casos de apropiación indebida en Chile
-                            </Link>{" "}
-                            puede orientarte desde la primera diligencia.
+                            </Link>.
                         </p>
                     </div>
 

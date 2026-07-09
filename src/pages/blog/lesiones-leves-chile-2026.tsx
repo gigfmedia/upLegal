@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -119,7 +120,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="lesiones-leves-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -177,6 +178,11 @@ const BlogArticle = () => {
                                 Aunque puedan parecer situaciones de poca gravedad, siguen siendo conductas sancionadas por la legislación penal chilena.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La descripción anterior clasifica las lesiones según su gravedad física. Sin embargo, en la práctica penal el resultado de una investigación no depende solo del tipo de lesión, sino de lo que las pruebas logren acreditar: quién inició la agresión, si hubo testigos y si la versión de los hechos se sostiene ante el tribunal.
+                            </p>
+                        </div>
                     </div>
 
                     {/* CUANDO ES DELITO */}
@@ -216,6 +222,11 @@ const BlogArticle = () => {
                                     <p className="text-gray-600 mt-1">{item.desc}</p>
                                 </div>
                             ))}
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Los criterios anteriores entregan una referencia general. La calificación concreta de una lesión no la determina solo el tiempo de recuperación, sino cómo el Servicio Médico Legal evalúa los antecedentes del caso y cómo la Fiscalía presenta esos elementos ante el tribunal. Dos lesiones similares pueden tener clasificaciones distintas según el contexto de la agresión.
+                            </p>
                         </div>
                     </div>
 
@@ -302,6 +313,11 @@ const BlogArticle = () => {
                                 La determinación específica corresponde a los tribunales de justicia. No obstante, incluso una agresión considerada menor puede generar antecedentes penales y consecuencias jurídicas relevantes.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal es una referencia, pero dos personas imputadas por lesiones similares pueden enfrentar resultados procesales distintos: una puede acceder a una suspensión condicional si cumple los requisitos; la otra puede llegar a un juicio oral. Esa diferencia no la determina solo la lesión sino los antecedentes de la carpeta investigativa.
+                            </p>
+                        </div>
                     </div>
 
                     {/* VIF */}
@@ -320,7 +336,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Fuiste víctima de lesiones o te están investigando por este delito? Un abogado penal puede orientarte sobre el proceso y tus derechos."
+                        message="Si te notificaron una denuncia por lesiones, el momento más importante es antes de la primera audiencia — no después de haber prestado declaración sin asesoría."
                         buttonText="Consultar con abogado penal"
                         category="Derecho Penal"
                     />
@@ -465,11 +481,31 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el rumbo del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando recibes una citación a declarar como imputado por una denuncia de lesiones y aún no conoces los antecedentes de la carpeta.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si la Fiscalía ya solicitó medidas cautelares en tu contra y necesitas evaluar tu situación procesal antes de la audiencia.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando eres víctima de una agresión y necesitas orientación sobre la constatación de lesiones y los pasos para formalizar la denuncia.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Necesitas ayuda por una denuncia o acusación de lesiones?</h3>
-                            <p className="text-white mb-6">Las causas por lesiones pueden tener consecuencias importantes tanto para víctimas como para imputados. Contar con asesoría jurídica desde las primeras etapas del procedimiento permite tomar mejores decisiones y proteger adecuadamente tus derechos.</p>
+                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Ya te citaron a declarar por lesiones?</h3>
+                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación o recibiste una citación como imputado, el momento para contar con defensa penal es antes de prestar declaración — no después de haber entregado tu versión.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -483,16 +519,13 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Las lesiones leves constituyen uno de los delitos más frecuentes dentro del sistema penal chileno. Aunque muchas personas consideran que se trata de situaciones menores, una agresión física puede generar investigaciones, medidas cautelares y consecuencias legales que afectan directamente la vida cotidiana del imputado.
+                            Las lesiones leves son uno de los delitos más frecuentes en Chile. Esta guía describe las reglas generales y los pasos iniciales para víctimas e imputados.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Por ello, tanto si eres víctima como si estás siendo investigado, comprender tus derechos y actuar oportunamente marca una diferencia real en el resultado del proceso.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si eres víctima: conserva toda la evidencia disponible — certificado médico, fotografías de las lesiones, testigos, mensajes — y denuncia lo antes posible. Las lesiones leves tienen plazos de prescripción y la evidencia fresca es clave para acreditar los hechos.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed font-medium">
-                            Si eres imputado: no minimices la situación. Una denuncia por lesiones leves puede derivar en medidas cautelares, suspensión condicional del procedimiento o incluso condena dependiendo de los antecedentes. Buscar asesoría legal antes de la primera audiencia es fundamental para proteger tu posición.
+                        <p className="text-gray-600 leading-relaxed">
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso — y esa respuesta depende de los antecedentes concretos de la carpeta investigativa. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
+                                abogado penalista en Chile
+                            </Link>.
                         </p>
                     </div>
 

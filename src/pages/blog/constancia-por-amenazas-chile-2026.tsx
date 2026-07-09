@@ -19,6 +19,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -121,7 +122,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="constancia-por-amenazas-en-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -161,6 +162,11 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">La constancia no equivale necesariamente a una denuncia penal. Su principal objetivo es dejar registro de los hechos.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La constancia descrita en términos generales tiene un valor práctico que depende del uso que se le dé después. Si los hechos escalan, ese registro puede ser un antecedente relevante, pero por sí solo no inicia una investigación. La diferencia entre tener una constancia y tener una investigación en curso depende de los pasos que se tomen posteriormente.
+                            </p>
                         </div>
                     </div>
 
@@ -243,6 +249,11 @@ const BlogArticle = () => {
                             </div>
                         </div>
                         <p className="text-gray-600 mt-4">Esta diferencia es fundamental para actuar correctamente.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La diferencia conceptual entre constancia y denuncia parece clara, pero en la práctica la autoridad puede tratar una constancia como antecedente para una investigación si los hechos lo ameritan. La decisión de iniciar o no una investigación no la toma quien presenta la constancia sino la Fiscalía, y esa evaluación depende de los antecedentes concretos del caso.
+                            </p>
+                        </div>
                     </div>
 
                     {/* DONDE SE REALIZA LA CONSTANCIA */}
@@ -373,7 +384,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Estás recibiendo amenazas y no sabes cómo actuar? Un abogado penalista puede orientarte sobre los pasos a seguir y proteger tus derechos."
+                        message="Si estás recibiendo amenazas y no sabes si corresponde una constancia o una denuncia, el momento de consultar es antes de que los hechos escalen."
                         buttonText="Ver abogados penalistas disponibles"
                         category="Derecho Penal"
                     />
@@ -411,6 +422,11 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Por esta razón, cuando una persona recibe amenazas, resulta importante no minimizar la situación y recopilar toda la evidencia disponible para facilitar una eventual investigación.
                         </p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal entrega una referencia sobre las sanciones posibles, pero el resultado concreto depende de lo que la Fiscalía logre acreditar. Dos amenazas similares pueden tener consecuencias procesales distintas según la gravedad del daño anunciado, la relación entre las partes y los antecedentes de violencia previa que existan.
+                            </p>
+                        </div>
                     </div>
 
                     {/* GRABACIONES COMO PRUEBA */}
@@ -512,11 +528,31 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando recibes amenazas de muerte o con daño grave y no sabes si debes hacer una constancia o una denuncia formal.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si la persona que amenaza tiene antecedentes de violencia o acceso a armas.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando existe una denuncia cruzada y necesitas evaluar tu posición procesal antes de declarar.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda frente a amenazas o una denuncia penal?</h3>
-                            <p className="text-white mb-6">Las amenazas pueden transformarse rápidamente en situaciones complejas, especialmente cuando existen conflictos familiares, violencia intrafamiliar, hostigamiento reiterado o riesgo para la integridad física. Si necesitas orientación sobre cómo denunciar, qué pruebas reunir o qué medidas legales adoptar, contar con asesoría especializada puede ayudarte a proteger adecuadamente tus derechos.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te están amenazando y no sabes qué hacer?</h3>
+                            <p className="text-white mb-6">Si las amenazas son graves o reiteradas, el momento de actuar es antes de que los hechos escalen — no después. Un abogado penalista puede orientarte sobre si corresponde una constancia o una denuncia y qué pruebas reunir.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -530,13 +566,11 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La constancia por amenazas puede ser una herramienta útil para dejar registro formal de situaciones preocupantes, especialmente cuando existe temor de que el conflicto escale en el futuro.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Sin embargo, cuando las amenazas son graves, reiteradas o implican riesgo para la integridad física de una persona, normalmente corresponde presentar una denuncia formal para que las autoridades investiguen los hechos.
+                            La constancia por amenazas puede ser una herramienta útil para dejar registro formal de situaciones preocupantes. Esta guía describe los pasos iniciales y la diferencia entre constancia y denuncia.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Actuar oportunamente, conservar evidencia y buscar orientación jurídica adecuada puede marcar una diferencia importante en la protección de tus derechos y seguridad.
+                            La pregunta que queda abierta es si en el caso concreto los hechos constituyen un delito que la Fiscalía deba investigar o si corresponde solo un registro preventivo. Esa respuesta depende de la gravedad y reiteración de las amenazas. Si quieres revisar tu situación, puedes consultar con un{" "}
+                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
 

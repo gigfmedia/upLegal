@@ -17,7 +17,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "7 de Julio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/receptacion-chile-2026.png"
   },
   {
@@ -27,7 +27,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "6 de Julio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/violacion-de-morada-chile-2026.png"
   },
   {
@@ -37,7 +37,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "3 de Julio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/violencia-contra-carabineros-desordenes-publicos-chile-2026.png"
   },
   {
@@ -47,7 +47,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "2 de Julio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/control-de-detencion-chile-2026.png"
   },
   {
@@ -57,7 +57,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "1 de Julio, 2026",
-    readTime: "12 min",
+    readTime: "13 min",
     image: "/assets/robo-chile-2026.png"
   },
   {
@@ -67,7 +67,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "30 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/hurto-chile-2026.png"
   },
   {
@@ -77,7 +77,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "26 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/orden-de-alejamiento-chile-2026.png"
   },
   {
@@ -87,7 +87,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "25 de Junio, 2026",
-    readTime: "11 min",
+    readTime: "12 min",
     image: "/assets/apropiacion-indebida-chile-2026.png"
   },
   {
@@ -97,7 +97,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "24 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/lesiones-leves-chile-2026.png"
   },
   {
@@ -107,7 +107,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "23 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/estafa-chile-2026.png"
   },
   {
@@ -117,7 +117,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "22 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/constancia-por-amenazas-en-chile-2026.png"
   },
   {
@@ -177,7 +177,7 @@ export const articles: Article[] = [
     category: "Derecho de Familia",
     author: "LegalUp",
     date: "12 de Junio, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/violencia-intrafamiliar-chile-2026.png"
   },
   {
@@ -569,7 +569,7 @@ export const articles: Article[] = [
     category: "Derecho Penal",
     author: "LegalUp",
     date: "10 de Marzo, 2026",
-    readTime: "10 min",
+    readTime: "11 min",
     image: "/assets/derecho-penal-chile-2026.png"
   },
   {

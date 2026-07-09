@@ -10,6 +10,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 
 const BlogArticle = () => {
@@ -97,7 +98,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="derecho-penal-chile-2026" />
             </div>
           </div>
         </div>
@@ -139,6 +140,11 @@ const BlogArticle = () => {
                 IMPORTANTE: Ser imputado simplemente significa que existen antecedentes que justifican investigar si la persona tuvo participación en el delito. Durante esta etapa, gozas de la presunción de inocencia.
               </p>
             </div>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+              <p className="text-amber-800 text-sm">
+                Lo anterior describe la situación jurídica general de un imputado. Sin embargo, el desarrollo concreto de una investigación depende de múltiples factores que la Fiscalía evalúa caso a caso: el tipo de delito, las pruebas disponibles, los antecedentes personales y las decisiones procesales que se adopten durante el procedimiento.
+              </p>
+            </div>
             <h3 className="text-xl font-bold mb-4 text-gray-900 font-primary">Tus derechos fundamentales como imputado:</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               {[
@@ -177,7 +183,7 @@ const BlogArticle = () => {
               ))}
             </div>
             <InArticleCTA
-              message="¿Necesitas defensa penal o quieres interponer una querella? Compara abogados penalistas disponibles para ayudarte."
+              message="¿Ya te citaron a declarar o recibiste una notificación de formalización? El momento más importante para contar con defensa penal es antes de prestar declaración, no después."
               buttonText="Ver abogados penales"
               category="Derecho Penal"
             />
@@ -261,6 +267,11 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-4 leading-relaxed">
               Es importante entender que la prisión preventiva no equivale a una condena. La persona sigue siendo inocente mientras no exista una sentencia firme que establezca lo contrario.
             </p>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+              <p className="text-amber-800 text-sm">
+                La decisión sobre qué medida cautelar se aplica no es automática. El juez evalúa antecedentes específicos como el peligro de fuga, el riesgo para la víctima o la existencia de condenas previas. Dos personas investigadas por el mismo delito pueden enfrentar medidas completamente distintas según los antecedentes que presente la Fiscalía.
+              </p>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -343,6 +354,11 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-4 leading-relaxed">
               La procedencia de estas alternativas dependerá del delito investigado, de los antecedentes del imputado y de las circunstancias específicas del caso.
             </p>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+              <p className="text-amber-800 text-sm">
+                El acceso a una salida alternativa no depende solo del tipo de delito. La Fiscalía evalúa la existencia de condenas previas, la disposición del imputado a reparar el daño y la opinión de la víctima. Dos personas acusadas del mismo delito pueden tener opciones distintas según esos antecedentes específicos.
+              </p>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -374,8 +390,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En el sistema penal chileno, enfrentar una acusación requiere conocimiento de tus derechos y rapidez en la defensa. No declarar sin asesoría y contar con un abogado especialista son las claves para proteger tu libertad y futuro.
             </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si tienes dudas sobre tu situación legal o necesitas ayuda inmediata por una detención o denuncia, lo más importante es <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-700">hablar con un abogado penalista</Link> ahora para buscar una solución justa.
+            <p className="text-gray-600 leading-relaxed">
+              Esta guía explica el funcionamiento general del sistema penal chileno. La pregunta que queda abierta es cómo se aplican esas reglas al caso concreto de cada persona. La respuesta depende de los antecedentes específicos de cada investigación. Si quieres revisar tu situación particular, puedes <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-700">consultar con un abogado penalista</Link>.
             </p>
           </div>
 

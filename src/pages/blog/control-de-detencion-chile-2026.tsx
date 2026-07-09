@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="control-de-detencion-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -176,6 +177,11 @@ const BlogArticle = () => {
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Es una garantía fundamental del debido proceso reconocida por la legislación chilena.</p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe la función del control de detención en abstracto. En la práctica, el desarrollo de la audiencia y lo que ocurra después depende de la calidad de los antecedentes que la Fiscalía presente y de la capacidad de la defensa para cuestionarlos. Dos detenciones por hechos similares pueden tener resultados muy distintos según la preparación de cada interviniente.
+                            </p>
+                        </div>
                     </div>
 
                     {/* CUANDO SE REALIZA */}
@@ -211,6 +217,11 @@ const BlogArticle = () => {
                                 <p className="text-gray-600">El tribunal fija un plazo para que la Fiscalía continúe reuniendo antecedentes. Durante ese período podrán realizarse diversas diligencias investigativas antes de decidir si corresponde acusar, solicitar una salida alternativa o poner término al procedimiento.</p>
                             </div>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Las etapas anteriores describen el procedimiento estándar. En un caso concreto, cada una de esas fases puede desarrollarse de manera distinta según los antecedentes disponibles. La defensa puede impugnar la legalidad de la detención, la Fiscalía puede formalizar por un delito distinto al inicial, o el tribunal puede aplicar medidas cautelares inesperadas. Esa imprevisibilidad es propia de cada caso.
+                            </p>
+                        </div>
                     </div>
 
                     {/* DERECHOS */}
@@ -240,7 +251,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas ayuda urgente tras una detención? Un abogado penalista puede proteger tus derechos desde las primeras horas."
+                        message="Si detuvieron a un familiar o a ti, las primeras horas antes de la audiencia son el único momento para preparar una defensa."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -302,6 +313,11 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-red-800">Prisión preventiva</h3>
                                 <p className="text-red-700">Constituye la medida cautelar más gravosa del sistema penal chileno. No se aplica automáticamente. La Fiscalía debe acreditar ante el tribunal que concurren los requisitos establecidos por la ley y el juez debe resolver si corresponde aplicarla considerando los antecedentes del caso.</p>
                             </div>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Los escenarios descritos son los posibles, pero cuál de ellos ocurre en un caso concreto depende de los antecedentes específicos que la Fiscalía presente en la audiencia y de la capacidad de la defensa para impugnarlos. Dos personas detenidas por los mismos hechos pueden obtener medidas cautelares distintas según cómo se desarrolle la audiencia.
+                            </p>
                         </div>
                     </div>
 
@@ -369,7 +385,7 @@ const BlogArticle = () => {
 
                     {/* CUANDO CONSULTAR ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">¿Cuándo conviene contactar a un abogado penalista?</h2>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">En la práctica, la primera audiencia suele definir gran parte del desarrollo posterior del proceso.</p>
                         <div className="grid sm:grid-cols-2 gap-3">
                             {["Revisar la legalidad de la detención", "Preparar la estrategia de defensa", "Solicitar diligencias de investigación", "Oponerse a medidas cautelares desproporcionadas", "Representar al imputado durante todas las audiencias", "Explicar las alternativas procesales disponibles"].map((item, i) => (
@@ -385,8 +401,8 @@ const BlogArticle = () => {
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Necesitas ayuda tras una detención?</h3>
-                            <p className="text-white mb-6">Si tú o un familiar enfrentan una audiencia de control de detención, recibir orientación jurídica desde las primeras horas puede ser determinante para proteger sus derechos y comprender las etapas del procedimiento penal.</p>
+                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Detuvieron a un familiar o a ti?</h3>
+                            <p className="text-white mb-6">Las primeras horas antes de la audiencia de control de detención son el único momento para preparar una estrategia de defensa. Después de la formalización, las decisiones del tribunal ya están tomadas sobre la base de los antecedentes presentados.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -400,17 +416,13 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            El control de detención constituye una de las etapas más relevantes del proceso penal chileno. En esta audiencia el juez revisa si la detención fue legal, escucha a la Fiscalía y a la defensa, y decide cómo continuará la investigación. Aunque suele realizarse pocas horas después de la detención, las decisiones adoptadas en este momento pueden influir significativamente en el desarrollo del caso.
+                            El control de detención es una de las etapas más relevantes del proceso penal chileno. Esta guía describe el procedimiento general y los derechos del detenido.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Además, muchas investigaciones relacionadas con desórdenes públicos, robos, lesiones u otros delitos comienzan precisamente con esta audiencia, por lo que conocer los derechos del imputado y comprender el funcionamiento del sistema resulta fundamental.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed font-semibold">
-                            Si tú o un familiar fueron detenidos y deben enfrentar una audiencia de control de detención, actuar rápidamente puede marcar una diferencia importante en la protección de sus derechos. Si necesitas orientación sobre una detención, una formalización o una medida cautelar, puedes consultar con un{" "}
+                        <p className="text-gray-600 leading-relaxed">
+                            La pregunta que queda abierta es cómo se desarrolla esa audiencia en un caso concreto, qué antecedentes presenta la Fiscalía y cómo la defensa puede impugnarlos. Esa respuesta depende de los hechos específicos de cada detención. Si quieres revisar una situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
-                            </Link>{" "}
-                            para recibir asesoría especializada desde el inicio del procedimiento.
+                            </Link>.
                         </p>
                     </div>
 

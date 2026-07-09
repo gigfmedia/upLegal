@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -111,7 +112,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="receptacion-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -181,6 +182,11 @@ const BlogArticle = () => {
                                 No solo se persigue a quien comete el robo o el hurto original, sino también a quienes posteriormente participan en la cadena de adquisición, ocultamiento o comercialización de esos bienes cuando concurren los requisitos legales.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Lo anterior describe el concepto general del delito. Sin embargo, esa evaluación rara vez depende de un solo antecedente. Declaraciones del vendedor, comprobantes de pago, mensajes entre las partes y cámaras de seguridad pueden modificar completamente la interpretación jurídica de los hechos.
+                            </p>
+                        </div>
                     </div>
 
                     {/* QUE BIENES */}
@@ -208,6 +214,11 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Cada investigación es distinta.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición legal sugiere que la receptación es sencilla de acreditar. En la práctica, la Fiscalía debe reunir evidencia suficiente para cada elemento, y esa valoración probatoria varía según el caso. No es igual contar con un peritaje que confirme la procedencia ilícita que enfrentar declaraciones contradictorias del vendedor o ausencia de documentación que respalde la compra.
+                            </p>
+                        </div>
                     </div>
 
                     {/* COMPRAR OBJETO ROBADO */}
@@ -316,6 +327,11 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Por esa razón, no todas las investigaciones por receptación terminan con la misma consecuencia jurídica. Cada caso requiere un análisis individual de los antecedentes reunidos por la Fiscalía.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal ayuda a comprender el riesgo teórico, pero dos personas formalizadas por receptación pueden enfrentar resultados distintos. Una puede acceder a una suspensión condicional del procedimiento si cumple los requisitos; otra puede llegar a juicio oral. La diferencia no la determina solo la ley sino los antecedentes específicos que la Fiscalía reúna durante la investigación y la documentación que cada persona pueda aportar.
+                            </p>
+                        </div>
                     </div>
 
                     {/* MARKETPLACE */}
@@ -444,11 +460,34 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen situaciones concretas donde la asesoría jurídica suele ser especialmente relevante:</p>
+                        <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+                            {[
+                                "Carabineros encontró especies en tu poder durante un control",
+                                "Recibiste una citación de la Fiscalía a declarar",
+                                "Te notificaron una formalización de la investigación",
+                                "La policía incautó especies que compraste",
+                                "Existe una audiencia programada en el tribunal",
+                                "La Fiscalía solicitó medidas cautelares en tu contra",
+                                "Eres imputado en una causa penal por receptación",
+                                "Quieres evaluar una salida alternativa como un acuerdo reparatorio",
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="text-green-600 flex-shrink-0">•</span>
+                                    <span className="text-gray-700 font-bold">{item}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas orientación por un delito relacionado con una propiedad?</h3>
-                            <p className="text-white mb-6">Si estás siendo investigado por receptación o compraste un bien que resultó ser robado, contar con asesoría jurídica desde el inicio puede marcar una diferencia importante en tu defensa.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya existe una investigación formal en tu contra?</h3>
+                            <p className="text-white mb-6">Si la Fiscalía ya te citó a declarar o formalizó la investigación, el momento más importante para contar con asesoría jurídica es antes de presentarte a declarar — no después de haber prestado declaración.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
@@ -465,14 +504,7 @@ const BlogArticle = () => {
                             La receptación busca evitar que los bienes provenientes de delitos continúen circulando en el mercado. Por ello, tanto quienes compran como quienes venden objetos usados deben actuar con la debida diligencia y conservar antecedentes que acrediten el origen de las especies — boletas, contratos de compraventa, datos del vendedor.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            El error más frecuente es asumir que "no saber" que el bien era robado elimina automáticamente la responsabilidad. En la práctica, la Fiscalía evaluará si existían señales evidentes de que el origen era ilícito — precio inusualmente bajo, ausencia de documentación, negativa a entregar datos del vendedor. Esos elementos pueden ser suficientes para sostener la investigación.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Si estás siendo investigado, no declares sin asesoría legal previa y
-                            conserva toda la documentación que acredite cómo adquiriste el bien — 
-                            y si ya existe una citación o investigación formal, no evalúes solo 
-                            tu situación basándote en información general. Los detalles de tu 
-                            caso específico son lo que determina el riesgo real, puedes revisar tu situación con un{" "}
+                            Esta guía describe las reglas generales del delito de receptación en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de cómo se combinen y valoren los antecedentes concretos del caso. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>

@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="orden-de-alejamiento-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -168,6 +169,11 @@ const BlogArticle = () => {
                                 Dependiendo del caso, puede ser decretada por un tribunal de garantía o por un tribunal de familia.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe la orden de alejamiento como medida general. En la práctica, el tribunal evalúa los antecedentes concretos para determinar si existe riesgo real. No todas las solicitudes se conceden automáticamente: la Fiscalía o la víctima deben presentar evidencia suficiente que justifique la restricción, y la defensa puede oponerse.
+                            </p>
+                        </div>
                     </div>
 
                     {/* OBJETIVO */}
@@ -203,6 +209,11 @@ const BlogArticle = () => {
                                     <p className="text-gray-600">{item.desc}</p>
                                 </div>
                             ))}
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Los supuestos anteriores describen escenarios donde puede solicitarse la medida. Pero en cada caso, el tribunal resuelve en función de los antecedentes concretos: dos situaciones de violencia intrafamiliar similares pueden tener resoluciones distintas si los medios de prueba disponibles son diferentes. La decisión depende de lo que cada parte logre acreditar.
+                            </p>
                         </div>
                     </div>
 
@@ -290,7 +301,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas solicitar una orden de alejamiento o defenderte de una? Un abogado penalista puede ayudarte a proteger tus derechos."
+                        message="Si te notificaron una orden de alejamiento o necesitas solicitar una, el momento de actuar es antes de la audiencia donde el tribunal resolverá las medidas cautelares."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -309,6 +320,11 @@ const BlogArticle = () => {
                             </ul>
                         </div>
                         <p className="text-gray-600 mt-4">Por esta razón resulta fundamental cumplir íntegramente todas las restricciones decretadas por el tribunal.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El incumplimiento descrito tiene consecuencias graves, pero la valoración que el tribunal haga de ese incumplimiento depende de las circunstancias: no es lo mismo un contacto accidental que una infracción deliberada. La diferencia entre una y otra situación puede determinar si la consecuencia es una modificación de medidas o una prisión preventiva.
+                            </p>
+                        </div>
                     </div>
 
                     {/* MODIFICACION */}
@@ -444,11 +460,31 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Mientras más rápido se comunique el incumplimiento, más fácilmente podrán adoptarse nuevas medidas de protección.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando te notificaron una orden de alejamiento y necesitas entender sus alcances antes de la audiencia de medidas cautelares.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si eres víctima y quieres solicitar una orden pero no sabes qué antecedentes presentar para que el tribunal la conceda.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando existe una denuncia cruzada donde ambas partes alegan agresiones y necesitas evaluar tu posición procesal.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda para solicitar o defender una orden de alejamiento?</h3>
-                            <p className="text-white mb-6">Las medidas cautelares pueden tener un impacto importante tanto para quien necesita protección como para quien enfrenta una investigación penal. Por ello resulta recomendable contar con asesoría jurídica desde el inicio del procedimiento.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te notificaron una orden de alejamiento?</h3>
+                            <p className="text-white mb-6">Si el tribunal ya decretó una orden en tu contra, el momento de preparar tu defensa es antes de la audiencia donde se evalúan las medidas cautelares — no después de haber infringido la restricción.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -462,16 +498,11 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La orden de alejamiento constituye una de las principales herramientas de protección disponibles en el sistema judicial chileno para prevenir nuevas agresiones, amenazas o situaciones de riesgo.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Aunque muchas personas la asocian exclusivamente a casos de violencia intrafamiliar, también puede aplicarse en diversas investigaciones penales cuando existen antecedentes que justifican proteger a la víctima.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si te encuentras en una situación de riesgo, denunciar oportunamente y reunir la mayor cantidad posible de evidencia puede facilitar la adopción de medidas de protección. Del mismo modo, si eres objeto de una orden de alejamiento, es fundamental respetarla íntegramente y buscar asesoría jurídica para ejercer adecuadamente tu defensa.
+                            La orden de alejamiento es una de las principales herramientas de protección en el sistema judicial chileno. Esta guía describe los tipos de órdenes, cómo solicitarlas y las consecuencias de incumplirlas.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Actuar con rapidez y conocer tus derechos puede marcar una diferencia importante en el desarrollo del procedimiento.
+                            La pregunta que queda abierta es si en el caso concreto existen antecedentes suficientes para que el tribunal conceda o mantenga la medida — y esa respuesta depende de las pruebas que cada parte presente. Si quieres revisar tu situación, puedes consultar con un{" "}
+                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
 

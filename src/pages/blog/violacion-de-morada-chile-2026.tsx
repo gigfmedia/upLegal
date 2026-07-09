@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="violacion-de-morada-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -185,6 +186,11 @@ const BlogArticle = () => {
                                 El delito no protege únicamente la propiedad del inmueble. Lo que protege principalmente es el derecho de quien ocupa el lugar a decidir quién puede entrar y quién no. Por esa razón, incluso un propietario puede enfrentar problemas legales si ingresa arbitrariamente a una vivienda que se encuentra legítimamente ocupada por otra persona.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe el delito en abstracto. Acreditarlo en un caso concreto exige demostrar no solo que existió un ingreso, sino que el ocupante se oponía a ese acceso y que el imputado actuó contra esa voluntad. Esa distinción —entre una entrada tolerada y una intrusion— depende de los antecedentes específicos de cada investigación.
+                            </p>
+                        </div>
                     </div>
 
                     {/* QUE SE ENTIENDE POR MORADA */}
@@ -221,6 +227,11 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-gray-900">3. Debe existir oposición del ocupante</h3>
                                 <p className="text-gray-600">La oposición puede manifestarse de distintas maneras: cerrar el acceso, pedir expresamente que la persona no ingrese, solicitar que abandone el inmueble o impedir físicamente el acceso dentro de los límites legales. La negativa puede ser verbal o deducirse claramente de las circunstancias.</p>
                             </div>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Los elementos anteriores describen la estructura del delito. En la práctica, la Fiscalía debe probar cada uno de ellos con los antecedentes disponibles. La ausencia de testigos, la inexistencia de grabaciones o la falta de una negativa expresa pueden dificultar esa acreditación y la defensa puede impugnar cada elemento según las circunstancias del caso.
+                            </p>
                         </div>
                     </div>
 
@@ -287,6 +298,11 @@ const BlogArticle = () => {
                             ))}
                         </div>
                         <p className="text-gray-600 mt-4">Por ello resulta indispensable revisar cada situación concreta antes de determinar las consecuencias penales.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal indica el riesgo teórico, pero la consecuencia concreta depende de los antecedentes de cada investigación. Dos ingresos sin autorización similares pueden tener resultados procesales distintos según lo que la Fiscalía logre acreditar y la capacidad de la defensa para impugnar esos elementos.
+                            </p>
+                        </div>
                     </div>
 
                     {/* QUE HACER SI ALGUIEN ENTRA */}
@@ -306,7 +322,7 @@ const BlogArticle = () => {
 
                     {/* CTA IN-ARTICLE */}
                     <InArticleCTA
-                        message="¿Necesitas orientación por un delito relacionado con una propiedad? Un abogado penalista puede analizar tu caso y proteger tus derechos."
+                        message="Si te imputan violación de morada o ingresaste a un domicilio sin autorización, el momento de preparar tu defensa es antes de declarar ante la Fiscalía."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -461,11 +477,31 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando la otra persona ya presentó una denuncia en Fiscalía por ingreso no autorizado y aún no has declarado.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si Carabineros te notificó una citación por violación de morada y no sabes qué antecedentes existen en tu contra.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando existe un conflicto entre ex parejas o familiares por el uso de una vivienda y necesitas determinar si es un tema penal o civil.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas orientación por un delito relacionado con una propiedad?</h3>
-                            <p className="text-white mb-6">Si fuiste víctima de una violación de morada o estás siendo investigado por este delito, contar con asesoría jurídica desde el inicio puede marcar una diferencia importante en la investigación y en tu estrategia de defensa.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una denuncia por ingreso no autorizado?</h3>
+                            <p className="text-white mb-6">Si la otra persona ya denunció un ingreso no autorizado a su domicilio, el momento clave es antes de que la Fiscalía formalice la investigación — después de la formalización, las opciones de defensa se reducen significativamente.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
@@ -479,16 +515,11 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La violación de morada es un delito que busca proteger uno de los derechos fundamentales de toda persona: la inviolabilidad de su domicilio. Aunque muchas situaciones parecen simples conflictos entre particulares, ingresar o permanecer en una vivienda sin autorización puede dar origen a una investigación penal con consecuencias reales para el imputado.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Lo que muchas personas no saben es que este delito no requiere fuerza ni daños materiales — basta con que el ingreso o la permanencia hayan sido sin autorización. Eso amplía significativamente los casos que pueden configurarlo, incluyendo situaciones entre ex parejas, familiares o vecinos que parecen menores pero tienen respaldo penal.
+                            La violación de morada protege uno de los derechos fundamentales de toda persona: la inviolabilidad del hogar. Esta guía describe las reglas generales del delito y los pasos iniciales para víctimas e imputados.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Si fuiste víctima, denuncia lo antes posible y conserva toda la evidencia disponible — registros de cámaras, testigos, mensajes que acrediten que el acceso no fue autorizado. Si estás siendo investigado, no declares sin asesoría legal previa.
-                            Puedes revisar tu situación con un{" "}
+                            La pregunta que queda abierta es si en el caso concreto existía o no autorización, si el ingreso fue realmente contra la voluntad del ocupante y qué pruebas existen para acreditarlo. Esa respuesta depende de los antecedentes específicos. Si quieres revisar tu situación, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
-                            La calificación jurídica de los hechos puede marcar una diferencia importante en el resultado del proceso.
                         </p>
                     </div>
 

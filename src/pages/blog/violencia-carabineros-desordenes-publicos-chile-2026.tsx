@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="violencia-contra-carabineros-desordenes-publicos-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -195,6 +196,11 @@ const BlogArticle = () => {
                                 Sin embargo, cuando durante una manifestación ocurren hechos como daños, barricadas, lanzamiento de objetos o agresiones, la Fiscalía puede iniciar una investigación para determinar la eventual responsabilidad de las personas involucradas. Cada caso debe analizarse según las pruebas disponibles.
                             </p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La descripción anterior define los desórdenes públicos en términos generales. En un caso concreto, la Fiscalía debe acreditar que la persona participó de manera activa en los hechos y no que estuvo presente en el lugar. Esa diferencia —entre asistir a una manifestación y participar en actos específicos— es determinante para la imputación.
+                            </p>
+                        </div>
                     </div>
 
                     {/* VIOLENCIA CONTRA CARABINEROS */}
@@ -208,6 +214,11 @@ const BlogArticle = () => {
                         </p>
                         <div className="bg-amber-50 p-5 rounded-xl">
                             <p className="text-amber-800">Es importante recordar que toda investigación debe respetar la presunción de inocencia. La sola denuncia no basta para acreditar responsabilidad penal.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La afirmación anterior es correcta en teoría. En la práctica, una denuncia de Carabineros suele tener peso probatorio inicial, por lo que la defensa debe preparar los antecedentes para impugnar esa versión. La diferencia entre una denuncia y una condena depende de lo que las pruebas logren acreditar durante la investigación.
+                            </p>
                         </div>
                     </div>
 
@@ -283,6 +294,11 @@ const BlogArticle = () => {
                             Si quieres conocer esta audiencia en detalle, puedes revisar nuestra guía completa sobre{" "}
                             <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline">Control de detención en Chile 2026</Link>.
                         </p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El control de detención descrito sigue un procedimiento estándar, pero el resultado concreto depende de los antecedentes que la Fiscalía presente y de la preparación de la defensa. Dos personas detenidas en la misma manifestación pueden obtener medidas cautelares distintas según lo que logre acreditarse respecto de su participación.
+                            </p>
+                        </div>
                     </div>
 
                     {/* DECLARAR */}
@@ -298,7 +314,7 @@ const BlogArticle = () => {
 
                     {/* CTA IN-ARTICLE */}
                     <InArticleCTA
-                        message="¿Necesitas ayuda tras una detención durante una manifestación? Un abogado penalista puede proteger tus derechos desde las primeras horas."
+                        message="Si te detuvieron durante una manifestación, las primeras horas antes del control de detención definen tu estrategia de defensa. Después de formalizar, las decisiones del tribunal ya están tomadas."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -430,11 +446,31 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Mientras antes intervenga la defensa, mayores serán las posibilidades de identificar problemas procesales o antecedentes favorables para el caso.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Inmediatamente después de una detención, antes de la audiencia de control de detención.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando Carabineros levantó un parte o denuncia en tu contra y aún no has sido notificado formalmente.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si la Fiscalía te citó a declarar como imputado y no sabes qué antecedentes existen en tu contra.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL (antes de la conclusión) */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Necesitas ayuda tras una detención?</h3>
-                            <p className="text-white mb-6">Si tú o un familiar fueron detenidos durante una manifestación o enfrentan una investigación penal, contar con asesoría jurídica desde el inicio puede ser clave para proteger sus derechos.</p>
+                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Detuvieron a un familiar o a ti en una manifestación?</h3>
+                            <p className="text-white mb-6">Las primeras horas antes de la audiencia de control de detención son el único momento para preparar una defensa efectiva. Después de la formalización, las decisiones del tribunal ya se adoptan sobre la base de los antecedentes presentados.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -448,14 +484,11 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                        Las investigaciones por desórdenes públicos o presunta violencia contra Carabineros pueden tener consecuencias importantes para quienes resultan detenidos. Sin embargo, la detención no equivale a condena — cada caso debe analizarse individualmente y respetando siempre la presunción de inocencia y el debido proceso.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                        Comprender cómo funciona el control de detención, cuáles son las facultades de la Fiscalía y qué medidas puede adoptar el tribunal permite enfrentar esta situación con mayor claridad y evitar decisiones apresuradas durante las primeras horas de la investigación.
+                            Las investigaciones por desórdenes públicos o presunta violencia contra Carabineros pueden tener consecuencias importantes. Esta guía describe el procedimiento general y los derechos del detenido.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                        Lo más importante si tú o un familiar fueron detenidos: no declarar sin asistencia legal previa. El derecho a guardar silencio existe precisamente para proteger a las personas en ese momento — ejercerlo no es un indicio de culpabilidad.{" "}
-                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">Un abogado penal</Link> puede evaluar la legalidad de la detención, plantear las defensas correspondientes y acompañarte desde la primera audiencia.
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada detención, qué pruebas existen y cómo la defensa puede impugnarlas. Esa respuesta depende de los antecedentes concretos. Si quieres revisar una situación particular, puedes consultar con un{" "}
+                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
 

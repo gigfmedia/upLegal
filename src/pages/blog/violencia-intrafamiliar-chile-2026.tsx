@@ -18,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -129,7 +130,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="violencia-intrafamiliar-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -179,6 +180,11 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Personas protegidas por la ley</p>
                             <p className="text-blue-800">Cónyuges, ex cónyuges, convivientes, ex convivientes, padres e hijos, hermanos, abuelos y nietos, y personas que comparten un hogar. No es necesario estar casado para que exista violencia intrafamiliar.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe el concepto legal de violencia intrafamiliar. En un caso concreto, acreditar que existe violencia no depende solo del relato de la víctima, sino de los antecedentes que puedan presentarse: certificados médicos, mensajes, testigos o registros de llamadas. La valoración que el tribunal haga de esas pruebas determina si concede o no las medidas de protección.
+                            </p>
                         </div>
                     </div>
 
@@ -245,6 +251,11 @@ const BlogArticle = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El proceso descrito sigue una estructura general, pero cada caso avanza a un ritmo distinto según los antecedentes disponibles. Dos denuncias con hechos similares pueden tener resoluciones diferentes si los medios de prueba aportados por cada víctima no son equivalentes. La rapidez del proceso y las medidas que se decreten dependen de lo que se logre acreditar.
+                            </p>
                         </div>
                     </div>
 
@@ -336,7 +347,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas medidas de protección urgentes? Si enfrentas una situación de violencia intrafamiliar, puedes comparar abogados especializados en derecho de familia y derecho penal, revisar honorarios y agendar una consulta online."
+                        message="Si sufres violencia intrafamiliar, el momento más importante para pedir medidas de protección es antes de la próxima agresión — no después de que el tribunal haya evaluado los primeros antecedentes."
                         buttonText="Ver Abogados disponibles"
                         category="Derecho Familia"
                     />
@@ -403,13 +414,38 @@ const BlogArticle = () => {
                                 <li>Acude a centros de atención a víctimas (como los CAVAD) o al Sernameg para apoyo psicológico y social.</li>
                             </ol>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Los pasos anteriores son una guía general. La efectividad de cada uno depende de las circunstancias concretas: no todas las denuncias terminan en medidas de protección inmediatas, y la evaluación de riesgo que realice la autoridad puede variar según los antecedentes disponibles. Por eso es importante contar con asesoría que ayude a presentar la situación del modo más completo posible.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Inmediatamente después de una agresión, antes de la primera audiencia donde se evalúan las medidas de protección.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando existe una denuncia cruzada y necesitas evaluar tu posición procesal antes de declarar.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si te notificaron una orden de alejamiento o medidas cautelares y necesitas entender sus alcances.</span>
+                            </li>
+                        </ul>
                     </div>
 
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Necesitas ayuda legal urgente?</h3>
-                            <p className="text-white mb-6">Si enfrentas una situación de violencia intrafamiliar, medidas de protección, conflictos familiares o problemas relacionados con hijos, puedes comparar abogados especializados y recibir orientación profesional.</p>
+                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Sufriste una agresión en contexto familiar?</h3>
+                            <p className="text-white mb-6">Si hubo una agresión física o psicológica, el momento de pedir medidas de protección es antes de que los hechos se repitan — no después. Un abogado especializado puede orientarte sobre los pasos inmediatos para proteger tu integridad.</p>
                             <Link
                                 to="/abogados-divorcio"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -423,23 +459,13 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La violencia intrafamiliar es un problema serio que afecta a miles de personas en Chile. La ley contempla diversas herramientas destinadas a proteger rápidamente a quienes se encuentran en riesgo: órdenes de alejamiento, prohibiciones de contacto, protección policial y medidas especiales para niños, niñas y adolescentes.
+                            La violencia intrafamiliar es un problema serio que afecta a miles de personas en Chile. Esta guía describe las herramientas legales disponibles y los pasos iniciales para buscar protección.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Comprender los derechos disponibles y actuar oportunamente puede marcar una diferencia fundamental para detener situaciones de violencia y proteger la integridad de las víctimas. No existe una única forma de violencia — todas las manifestaciones, física, psicológica, económica y sexual, son igualmente graves y merecen una respuesta del sistema.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Es importante recordar que la víctima nunca es responsable de la violencia que sufre. El agresor es el único responsable de sus actos. Buscar ayuda no es un signo de debilidad — es un paso valiente hacia la recuperación de la seguridad y la dignidad.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si estás en una situación de riesgo ahora mismo, no esperes. Llama al{" "}
-                            <strong>133</strong> (Carabineros) o al <strong>800 104 008</strong> (SernamEG, línea
-                            gratuita para mujeres). Si necesitas orientación legal sobre medidas de protección,
-                            cuidado de tus hijos o el proceso judicial, un{" "}
+                        <p className="text-gray-600 leading-relaxed">
+                            La pregunta que queda abierta es cómo se aplican esas herramientas a los hechos específicos de cada caso — qué medidas de protección concede el tribunal, con qué rapidez avanza el proceso y qué pruebas resultan determinantes. Esa respuesta depende de los antecedentes concretos. Si quieres revisar tu situación, puedes consultar con un{" "}
                             <Link to="/abogados-divorcio" className="text-green-700 underline hover:text-green-500">
-                                abogado de familia para protección por violencia intrafamiliar
-                            </Link>{" "}
-                            puede acompañarte desde el primer paso.
+                                abogado especializado en violencia intrafamiliar
+                            </Link>.
                         </p>
                     </div>
 

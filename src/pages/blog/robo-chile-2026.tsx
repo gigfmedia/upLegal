@@ -17,6 +17,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -115,7 +116,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 12 min</span>
+                            <ReadTime slug="robo-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -175,6 +176,11 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">El objetivo del legislador es sancionar con mayor severidad aquellas conductas que, además del perjuicio económico, ponen en riesgo la seguridad o integridad de las personas.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe el concepto general de robo. Sin embargo, en una investigación concreta la calificación jurídica depende de cómo la Fiscalía evalúe los antecedentes específicos: si existió violencia, si hubo intimidación real o si el ingreso fue forzado. Esa diferencia entre la regla general y su aplicación práctica es la que determina el curso de cada caso.
+                            </p>
                         </div>
                     </div>
 
@@ -243,6 +249,11 @@ const BlogArticle = () => {
                                 <p className="text-gray-600">Conocido popularmente como "lanzazo". Consiste en quitar rápidamente una especie desde la víctima aprovechando el factor sorpresa, como arrebatar un celular mientras la persona camina.</p>
                             </div>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La clasificación del robo en uno u otro tipo no es automática. La Fiscalía debe reunir evidencia suficiente para acreditar cada elemento, y esa valoración probatoria varía según el caso. No es igual contar con una grabación que muestre el uso de violencia que enfrentar versiones contradictorias sobre lo ocurrido.
+                            </p>
+                        </div>
                     </div>
 
                     {/* PENAS */}
@@ -259,6 +270,11 @@ const BlogArticle = () => {
                         </div>
                         <div className="bg-amber-50 p-5 rounded-xl">
                             <p className="text-amber-800">La calificación jurídica realizada por la Fiscalía será uno de los aspectos más relevantes durante la investigación. Mientras algunas modalidades pueden implicar penas privativas de libertad importantes, otras requieren un análisis específico según las circunstancias del caso.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal ayuda a comprender el riesgo teórico, pero dos personas investigadas por el mismo tipo de robo pueden enfrentar resultados distintos. Una puede acceder a una suspensión condicional si cumple los requisitos; otra puede llegar a juicio oral. La diferencia no la determina solo la ley sino los antecedentes específicos que la Fiscalía reúna durante la investigación.
+                            </p>
                         </div>
                     </div>
 
@@ -332,7 +348,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas ayuda en un caso de robo? Un abogado penalista puede orientarte y proteger tus derechos."
+                        message="¿Fuiste víctima de un robo o te acusan de este delito? El momento más importante para contar con asesoría penal es antes de prestar declaración, no después."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -447,7 +463,7 @@ const BlogArticle = () => {
 
                     {/* CUANDO CONSULTAR ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">¿Cuándo conviene consultar con un abogado penalista?</h2>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Tanto las víctimas como quienes son investigados pueden beneficiarse de recibir asesoría desde las primeras etapas del procedimiento.</p>
                         <div className="grid sm:grid-cols-2 gap-3">
                             {["Analizar la calificación jurídica del delito", "Revisar la evidencia reunida por la Fiscalía", "Representar a la víctima durante la investigación", "Preparar una estrategia de defensa", "Solicitar diligencias relevantes", "Asistir en audiencias ante el tribunal", "Explicar las distintas alternativas procesales disponibles"].map((item, i) => (
@@ -463,8 +479,8 @@ const BlogArticle = () => {
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda en un caso de robo?</h3>
-                            <p className="text-white mb-6">Si fuiste víctima de un robo o estás siendo investigado por este delito, contar con asesoría jurídica desde las primeras etapas puede marcar una diferencia importante en el desarrollo del procedimiento.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya existe una investigación o denuncia en tu contra?</h3>
+                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación o te citaron a declarar por un delito de robo, el momento más importante para contar con defensa penal es antes de presentarte a la audiencia — no después de haber declarado.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -483,12 +499,11 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Además, distinguir correctamente el robo de otros delitos patrimoniales, como el hurto, la estafa o la apropiación indebida, permite entender mejor cómo se desarrollará la investigación y cuáles pueden ser sus consecuencias legales.
                         </p>
-                        <p className="text-gray-600 leading-relaxed font-semibold">
-                            Si fuiste víctima de un robo o estás siendo investigado por este delito, actuar desde las primeras etapas del procedimiento puede marcar una diferencia importante en el resultado del caso. Si necesitas orientación sobre una denuncia, una defensa penal o quieres evaluar tu situación jurídica, puedes consultar con un{" "}
+                        <p className="text-gray-600 leading-relaxed">
+                            Esta guía describe las reglas generales del delito de robo en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de los antecedentes concretos que la Fiscalía reúna durante el procedimiento. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
-                            </Link>{" "}
-                            para recibir asesoría personalizada.
+                            </Link>.
                         </p>
                     </div>
 

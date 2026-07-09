@@ -18,6 +18,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -128,7 +129,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 10 min</span>
+                            <ReadTime slug="estafa-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -163,6 +164,11 @@ const BlogArticle = () => {
                             La estafa es un delito patrimonial que ocurre cuando una persona utiliza engaños o maniobras fraudulentas para inducir a otra persona a realizar una disposición patrimonial que le genera un perjuicio económico.
                         </p>
                         <p className="text-gray-600">En términos simples, existe una estafa cuando alguien engaña a otra persona para obtener dinero, bienes o beneficios económicos. Lo importante no es solamente la pérdida económica, sino la existencia de un engaño previo que provoca el perjuicio.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La definición anterior describe la estafa en abstracto. Acreditarla en un caso concreto exige demostrar no solo que existió una pérdida, sino que hubo una intención fraudulenta desde el origen. Esa diferencia —entre un negocio que salió mal y un engaño planificado— es la que la Fiscalía debe probar con los antecedentes de cada investigación.
+                            </p>
+                        </div>
                     </div>
 
                     {/* ELEMENTOS DE UNA ESTAFA */}
@@ -302,6 +308,11 @@ const BlogArticle = () => {
                             </ul>
                             <p className="text-blue-800 mt-2">Mientras más rápido se actúe, mejores posibilidades existirán.</p>
                         </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La posibilidad de recuperar el dinero no depende solo de la denuncia, sino de la calidad de los antecedentes que se aporten y de la rapidez con que se actúe sobre las cuentas o bienes del autor. Esa gestión requiere coordinación entre la Fiscalía y las instituciones financieras, y el resultado varía según el caso.
+                            </p>
+                        </div>
                     </div>
 
                     {/* DIFERENCIA ENTRE INCUMPLIMIENTO CONTRACTUAL Y ESTAFA */}
@@ -362,6 +373,11 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué penas existen para la estafa en Chile?</h2>
                         <p className="text-gray-600 mb-4">Las sanciones dependen de diversos factores. Entre ellos: monto defraudado, forma de ejecución, existencia de agravantes y antecedentes previos. La determinación concreta de las penas corresponde a los tribunales de justicia.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal indica el riesgo teórico, pero el resultado procesal concreto depende de los antecedentes que la Fiscalía logre reunir. Dos personas investigadas por estafas de monto similar pueden enfrentar cursos distintos: una puede acceder a una suspensión condicional, la otra puede llegar a juicio oral según las circunstancias específicas del caso.
+                            </p>
+                        </div>
                     </div>
 
                     {/* NECESITO UN ABOGADO */}
@@ -377,7 +393,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Fuiste víctima de una estafa? Un abogado penalista puede orientarte sobre cómo denunciar, qué pruebas reunir y cómo perseguir la recuperación de tu dinero."
+                        message="Si descubriste que te estafaron, las primeras horas definen si la Fiscalía puede rastrear las cuentas. No esperes a reunir todos los antecedentes."
                         buttonText="Ver abogados penalistas disponibles"
                         category="Derecho Penal"
                     />
@@ -421,11 +437,31 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Un análisis prudente puede evitar pérdidas económicas importantes.</p>
                     </div>
 
+                    {/* CUANDO CONSULTAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
+                        <p className="text-gray-600 mb-4">Existen momentos específicos donde la asesoría legal urgente puede cambiar el curso del caso:</p>
+                        <ul className="space-y-3 text-gray-600">
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando acabas de descubrir la estafa y el dinero fue transferido hace pocas horas — la Fiscalía puede solicitar medidas urgentes sobre cuentas bancarias.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Si la otra parte ya presentó una denuncia en tu contra por estafa y aún no has declarado.</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <span className="text-green-600 font-bold mt-0.5">•</span>
+                                <span>Cuando la Fiscalía te notifica una citación a declarar como imputado sin que conozcas el contenido de la carpeta investigativa.</span>
+                            </li>
+                        </ul>
+                    </div>
+
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Necesitas ayuda por una estafa o fraude?</h3>
-                            <p className="text-white mb-6">Si fuiste víctima de una estafa, recibiste engaños para transferir dinero o necesitas orientación para presentar una denuncia, contar con asesoría legal temprana puede ayudarte a proteger tus derechos y evaluar las acciones disponibles.</p>
+                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Ya transferiste dinero a un estafador?</h3>
+                            <p className="text-white mb-6">Si acabas de hacer una transferencia y crees que fuiste estafado, las primeras horas son críticas. La Fiscalía puede solicitar el congelamiento de cuentas si actúas rápido y aportas los antecedentes necesarios.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -439,13 +475,13 @@ const BlogArticle = () => {
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Las estafas continúan aumentando en Chile y afectan a personas de todas las edades y niveles socioeconómicos. Aunque las modalidades cambian constantemente, el elemento común sigue siendo el mismo: el uso de engaños para obtener un beneficio económico indebido.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si descubres que fuiste víctima de una estafa, actuar rápidamente es fundamental. Conservar evidencia, denunciar oportunamente y buscar asesoría especializada puede mejorar significativamente las posibilidades de identificar responsables y perseguir las responsabilidades correspondientes.
+                            Las estafas continúan aumentando en Chile y afectan a personas de todas las edades. Esta guía describe las reglas generales del delito y los pasos iniciales para denunciar.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La rapidez con que reacciones durante las primeras horas y días posteriores al fraude puede marcar una diferencia importante en el resultado del caso.
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso — y esa respuesta depende de los antecedentes concretos y de la rapidez con que se actúe. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+                            <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
+                                abogado penalista en Chile
+                            </Link>.
                         </p>
                     </div>
 

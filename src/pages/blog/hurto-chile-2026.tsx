@@ -16,6 +16,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 
 const BlogArticle = () => {
     const faqs = [
@@ -114,7 +115,7 @@ const BlogArticle = () => {
                         </div>
                         <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            <span>Tiempo de lectura: 11 min</span>
+                            <ReadTime slug="hurto-chile-2026" />
                         </div>
                     </div>
                 </div>
@@ -175,6 +176,11 @@ const BlogArticle = () => {
                             </ul>
                         </div>
                         <p className="text-gray-600 mt-4">En todos estos casos puede configurarse el delito de hurto, siempre que concurran los requisitos establecidos por la ley.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                Que exista una sustracción no significa que la Fiscalía tenga elementos suficientes para acreditar el delito. La valoración de la prueba —testigos, cámaras, cadena de custodia— puede variar considerablemente. En algunos casos la evidencia es clara; en otros, la defensa puede cuestionar cada uno de esos elementos.
+                            </p>
+                        </div>
                     </div>
 
                     {/* ELEMENTOS */}
@@ -239,6 +245,11 @@ const BlogArticle = () => {
                             </p>
                         </div>
                         <p className="text-gray-600 mt-4">Comprender correctamente esta diferencia resulta fundamental porque determina tanto las penas como el procedimiento aplicable.</p>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                La tabla anterior describe la diferencia conceptual. En una investigación real, la Fiscalía puede imputar un hurto y los antecedentes revelar después que hubo fuerza en las cosas o intimidación, modificando la calificación. El momento en que se determina esa calificación y las consecuencias que de ello derivan dependen de la carpeta investigativa.
+                            </p>
+                        </div>
                     </div>
 
                     {/* PENAS */}
@@ -257,6 +268,11 @@ const BlogArticle = () => {
                         </div>
                         <div className="bg-amber-50 p-5 rounded-xl">
                             <p className="text-amber-800">No todos los delitos de hurto terminan con penas privativas de libertad efectivas. En determinados casos pueden existir medidas alternativas contempladas por la legislación chilena, especialmente cuando se trata de personas sin antecedentes penales y el hecho reviste menor gravedad. Cada caso debe analizarse individualmente.</p>
+                        </div>
+                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
+                            <p className="text-amber-800 text-sm">
+                                El marco penal descrito entrega una referencia general. Pero dos personas imputadas por el mismo tipo de hurto pueden tener trayectorias procesales distintas: una puede acceder a una suspensión condicional si concurren los requisitos; otra puede enfrentar un juicio oral. Esa diferencia se construye con los antecedentes específicos de cada carpeta investigativa.
+                            </p>
                         </div>
                     </div>
 
@@ -330,7 +346,7 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        message="¿Necesitas ayuda por un delito de hurto? Un abogado penalista puede orientarte y proteger tus derechos."
+                        message="Si te imputan un hurto o fuiste sorprendido en flagrancia, el momento más importante es antes de prestar declaración — no después de haber firmado."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Penal"
                     />
@@ -436,7 +452,7 @@ const BlogArticle = () => {
 
                     {/* CUANDO CONSULTAR ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">¿Cuándo conviene consultar con un abogado penalista?</h2>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado penal?</h2>
                         <p className="text-gray-600 mb-4">Tanto las víctimas como las personas investigadas pueden beneficiarse de recibir asesoría temprana.</p>
                         <div className="grid sm:grid-cols-2 gap-3">
                             {["Evaluar si los hechos efectivamente constituyen un delito de hurto", "Revisar las pruebas existentes", "Solicitar diligencias adicionales", "Preparar declaraciones", "Representar a la víctima durante la investigación", "Diseñar una estrategia de defensa cuando existe una imputación"].map((item, i) => (
@@ -452,8 +468,8 @@ const BlogArticle = () => {
                     {/* CTA PRINCIPAL */}
                     <div className="mb-12">
                         <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda por un delito de hurto?</h3>
-                            <p className="text-white mb-6">Si necesitas orientación porque sufriste un hurto o enfrentas una investigación penal, puedes contactar a un abogado penalista para analizar tu situación y recibir asesoría personalizada.</p>
+                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una investigación abierta en tu contra?</h3>
+                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación por hurto o fuiste citado a declarar, el momento clave para tener defensa penal es antes de la audiencia — no después de haber entregado tu versión.</p>
                             <Link
                                 to="/abogados-penales"
                                 className="inline-block bg-white text-green-800 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
@@ -469,21 +485,11 @@ const BlogArticle = () => {
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El delito de hurto en Chile continúa siendo una de las infracciones patrimoniales más investigadas por la Fiscalía. Aunque muchas personas lo consideran un hecho menor, sus consecuencias pueden ser importantes tanto para la víctima como para quien resulta imputado.
                         </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Comprender la diferencia entre hurto y robo, conocer las penas aplicables, saber cómo denunciar correctamente y entender cuáles son los derechos durante la investigación permite enfrentar el procedimiento con mayor seguridad y tomar decisiones informadas.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            Si además existen dudas respecto de la calificación jurídica de los hechos, es importante recordar que algunos casos pueden corresponder realmente a otros delitos patrimoniales, como la estafa o la apropiación indebida, los cuales poseen requisitos y consecuencias distintas.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed font-semibold">
-                            Tanto si fuiste víctima de un hurto como si estás siendo investigado por este delito,
-                            conocer tus derechos y actuar oportunamente puede marcar una diferencia importante en el
-                            desarrollo del procedimiento. Si necesitas orientación sobre una denuncia, una defensa
-                            penal o quieres evaluar las alternativas disponibles en tu caso, puedes consultar con un{" "}
+                        <p className="text-gray-600 leading-relaxed">
+                            Esta guía describe las reglas generales del hurto en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación — y esa respuesta depende de los antecedentes concretos que la Fiscalía reúna. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
-                            </Link>{" "}
-                            para recibir asesoría personalizada desde las primeras etapas de la investigación.
+                            </Link>.
                         </p>
                     </div>
 
