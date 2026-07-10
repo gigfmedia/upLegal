@@ -51,8 +51,8 @@ const BlogArticle = () => {
                 description="Conoce cuándo procede una demanda de tutela laboral en Chile, qué derechos protege, cuáles son los plazos, qué pruebas sirven y cómo reclamar frente a una vulneración de derechos fundamentales."
                 image="/assets/tutela-laboral-chile-2026.png"
                 url="https://legalup.cl/blog/tutela-laboral-chile-2026"
-                datePublished="2026-07-10"
-                dateModified="2026-07-10"
+                datePublished="2026-07-09"
+                dateModified="2026-07-09"
                 faqs={faqs}
             />
 
