@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Shield } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, Shield } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -103,7 +102,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="que-pasa-si-no-firmo-el-finiquito-chile-2026" />
             </div>
           </div>
         </div>
@@ -214,6 +213,21 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Firmar apenas te entregan el finiquito o tomarte tiempo para revisarlo?</h2>
+              <p className="text-gray-600 mb-4">La decisión de firmar inmediatamente o tomarte un tiempo para revisar puede cambiar completamente el resultado de tu finiquito.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Tomarte tiempo para revisar</h3>
+                      <p className="text-green-700">Tienes derecho a leer el documento, consultar con un abogado y verificar los montos antes de firmar. Esto te permite detectar errores, negociar mejores condiciones y proteger tus derechos laborales.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Firmar de inmediato bajo presión</h3>
+                      <p className="text-red-700">Firmar sin revisar puede hacer que aceptes montos incorrectos, renuncies a acciones legales futuras y pierdas indemnizaciones que legalmente te corresponden.</p>
+                  </div>
+              </div>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si no firmo el finiquito?</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">Depende de la situación.</p>
 
@@ -312,6 +326,21 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Negarte a firmar el finiquito o firmar con reserva de derechos?</h2>
+              <p className="text-gray-600 mb-4">Muchos trabajadores creen que negarse a firmar es la única opción para proteger sus derechos, pero existe una alternativa estratégica.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con reserva de derechos</h3>
+                      <p className="text-green-700">Recibes los pagos inmediatos del empleador mientras te reservas el derecho de demandar diferencias después. Es la opción más equilibrada cuando necesitas el dinero pero crees que te deben más.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Negarte completamente a firmar</h3>
+                      <p className="text-red-700">El empleador puede retener los pagos mientras no haya acuerdo, generando incertidumbre económica. Además, el contrato termina igual y los plazos legales para demandar siguen corriendo.</p>
+                  </div>
+              </div>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa firmar con reserva de derechos?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               La reserva de derechos es probablemente una de las herramientas laborales más importantes en Chile.
@@ -361,6 +390,21 @@ const BlogArticle = () => {
               ))}
             </div>
             <p className="text-gray-600 font-bold">En muchos casos, es más conveniente que negarse completamente a firmar.</p>
+          </div>
+
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Consultar con un abogado antes de firmar o firmar primero y preguntar después?</h2>
+              <p className="text-gray-600 mb-4">El momento en que buscas asesoría legal puede determinar si recuperas lo que te deben o si pierdes derechos importantes.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Consultar con un abogado antes de firmar</h3>
+                      <p className="text-green-700">Un abogado laboral puede revisar el finiquito, detectar errores en los cálculos, evaluar la causal de despido y recomendar la mejor estrategia antes de que tomes una decisión irrevocable.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Firmar primero y consultar después</h3>
+                      <p className="text-red-700">Una vez firmado sin reserva de derechos, las opciones legales se reducen significativamente. El empleador puede argumentar que aceptaste los montos y renunciaste a reclamar.</p>
+                  </div>
+              </div>
           </div>
 
           <div className="mb-12">
@@ -428,12 +472,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-          <InArticleCTA
-            message="No cometas estos errores: un abogado laboral puede revisar tu finiquito antes de que firmes y proteger todos tus derechos."
-            buttonText="Revisar mi finiquito con un abogado"
-            category="Derecho Laboral"
-          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Puedo firmar después?</h2>
@@ -591,33 +629,41 @@ const BlogArticle = () => {
               <li>Vacaciones omitidas</li>
             </ul>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="No firmar el finiquito no significa perder tus derechos. Compara abogados laborales y define la mejor estrategia para tu caso."
-            link="/abogado-finiquito"
-            buttonText="Comparar abogados especializados"
-          />
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Aunque no firmar el finiquito no implica perder automáticamente tus derechos, hay situaciones donde esperar demasiado puede complicar tu caso. Si el empleador te presiona para firmar, si sospechas que los montos son incorrectos, si las cotizaciones están impagas o si el despido te parece injustificado, lo recomendable es buscar asesoría legal antes de tomar una decisión.
+            </p>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Los plazos laborales en Chile son cortos y cada día que pasa puede reducir tus opciones. Un abogado laboral puede evaluar tu caso en minutos y decirte si conviene firmar con reserva, negociar el finiquito o preparar una demanda.
+            </p>
+          </div>
+
+          <div className="mb-12 bg-green-900 rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿No firmaste el finiquito y el empleador te presiona o te debe dinero?</h3>
+            <p className="text-white mb-6">Consulta con un abogado laboral especializado antes de que venzan los plazos. Revisaremos tu caso y te diremos qué opciones tienes.</p>
+            <Link
+              to="/abogado-laboral"
+              className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+            >
+              Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
 
           {/* Conclusion */}
-          <div className="mb-12">
+          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              No firmar el finiquito en Chile no significa automáticamente perder tus derechos ni impedir el término del contrato. Lo importante es entender que el finiquito tiene efectos legales relevantes y que firmarlo apresuradamente puede perjudicar futuras acciones.
+              No firmar el finiquito no te protege del despido ni revive el contrato laboral, pero sí te da un margen para revisar los montos, consultar con un abogado y decidir la estrategia más conveniente. La clave está en entender que el finiquito es un documento con efectos legales importantes y que cada alternativa —firmar, no firmar, firmar con reserva— tiene consecuencias distintas según el caso.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Muchos trabajadores aceptan documentos sin revisar cálculos, indemnizaciones, vacaciones, cotizaciones y cláusulas legales; y después descubren errores importantes cuando ya es más difícil reclamar.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              En muchos casos, la mejor estrategia no es negarse completamente a firmar, sino hacerlo con reserva de derechos para proteger futuras acciones legales mientras recibes los pagos inmediatos.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si tienes dudas sobre el monto, la causal de despido o posibles incumplimientos del empleador, revisar el finiquito antes de firmar puede marcar una diferencia enorme en el resultado económico final.
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender tus derechos es solo el primer paso. Si estás en medio de un despido o término de contrato y tienes dudas sobre tu finiquito, lo más inteligente es actuar rápido. <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> para que revise tu caso y te indique el mejor camino a seguir antes de que los plazos legales se cierren.
             </p>
           </div>
 
 
-          <CategoryCTA category="laboral" topic="finiquito" />
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

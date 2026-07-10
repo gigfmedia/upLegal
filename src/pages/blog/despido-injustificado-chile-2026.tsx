@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, AlertCircle, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, Info, AlertCircle, XCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -9,7 +9,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -100,7 +100,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 15 min</span>
+              <ReadTime slug="despido-injustificado-chile-2026" />
             </div>
           </div>
         </div>
@@ -224,6 +224,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* COMPLEJIDAD 1: CAUSAL VALIDA VS INJUSTIFICADA */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Despido válido o injustificado? La diferencia clave</h2>
+            <p className="text-gray-600 mb-4">El mismo despido puede terminar siendo válido o injustificado dependiendo de si el empleador logra acreditar la causal invocada.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Despido válido: el empleador acredita la causal</h3>
+                <p className="text-green-700">La empresa demuestra que existió una causa real contemplada en la ley, presenta pruebas suficientes y cumple el procedimiento. El trabajador recibe solo la indemnización legal sin recargos.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado: la causal no se prueba</h3>
+                <p className="text-red-700">El empleador invoca una causal sin respaldo real, no presenta pruebas o utiliza la causal de forma incorrecta. El tribunal puede declarar el despido injustificado y aplicar recargos de entre 30% y 100% sobre la indemnización.</p>
+              </div>
+            </div>
+          </div>
+
           {/* Section 3: Derechos */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué derechos tienes si te despiden injustificadamente?</h2>
@@ -335,6 +351,22 @@ const BlogArticle = () => {
                 👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
                 <ChevronRight className="h-4 w-4" />
               </Link>
+            </div>
+          </div>
+
+          {/* COMPLEJIDAD 2: CALCULO CORRECTO VS INCORRECTO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Qué diferencia hay entre un cálculo correcto y uno incorrecto de la indemnización?</h2>
+            <p className="text-gray-600 mb-4">El cálculo de las indemnizaciones laborales no siempre es tan simple como parece. Pequeños errores pueden significar diferencias de millones de pesos.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Cálculo correcto: revisión profesional</h3>
+                <p className="text-green-700">Considera la antigüedad exacta, la última remuneración con todos sus componentes (bonos, comisiones, gratificaciones), los topes legales aplicables y las cláusulas contractuales. Detecta diferencias que pueden aumentar el monto final significativamente.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Cálculo incorrecto: conformarse con lo que ofrece la empresa</h3>
+                <p className="text-red-700">La empresa puede omitir conceptos remuneracionales, aplicar mal los topes legales o no considerar beneficios contractuales. El trabajador que acepta sin revisar puede recibir menos de lo que le corresponde, perdiendo miles o millones de pesos.</p>
+              </div>
             </div>
           </div>
 
@@ -468,6 +500,22 @@ const BlogArticle = () => {
             />
           </div>
 
+          {/* COMPLEJIDAD 3: ACTUAR A TIEMPO VS DEJAR PASAR */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Qué cambia entre actuar rápido y dejar pasar el tiempo?</h2>
+            <p className="text-gray-600 mb-4">En materia laboral, el tiempo juega un rol fundamental. Actuar durante los primeros días puede marcar una gran diferencia en el resultado del caso.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Actuar dentro del plazo legal</h3>
+                <p className="text-green-700">Conservas todos tus derechos para impugnar el despido. Puedes reunir pruebas frescas, testigos disponibles y documentos completos. Tienes tiempo para elegir una buena estrategia y negociar desde una posición más sólida, incluyendo la posibilidad de un acuerdo antes del juicio.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Dejar pasar los días</h3>
+                <p className="text-red-700">Las pruebas se debilitan, los testigos se vuelven difíciles de localizar y algunos documentos pueden perderse. Si vence el plazo de 60 días hábiles, pierdes la posibilidad de demandar judicialmente, incluso si el despido fue claramente injustificado.</p>
+              </div>
+            </div>
+          </div>
+
           {/* Section 8: Errores comunes */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Errores comunes que debes evitar</h2>
@@ -535,33 +583,45 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Muchos despidos no cumplen los requisitos legales. Compara abogados laborales y evalúa si conviene demandar o negociar."
-            link="/abogado-despido-injustificado"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* CUANDO CONSULTAR ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Recibiste una carta de despido sin una causal clara", "La empresa invocó necesidades de la empresa sin cambios reales", "Dudas del cálculo de tus indemnizaciones y del finiquito", "Te ofrecieron firmar el finiquito inmediatamente después del despido", "Sospechas que el despido fue una represalia o discriminación", "La empresa contrató rápidamente a otra persona para tu mismo cargo", "Ya pasaron varios días desde el despido sin que hayas buscado asesoría", "Recibiste una citación o notificación judicial"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-gray-600 mt-4">Mientras antes se revise la documentación, mayores serán las posibilidades de preparar una estrategia adecuada.</p>
+          </div>
 
-          {/* Conclusion */}
+          {/* CTA PRINCIPAL */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y crees que fue injustificado?</h3>
+              <p className="text-white mb-6">Si tu empleador invocó una causal sin fundamento real o no cumplió el procedimiento legal, es recomendable revisar el caso antes de firmar documentos o dejar transcurrir los plazos. Un abogado laboral puede analizar la carta de despido, calcular correctamente las indemnizaciones y evaluar si existen fundamentos para demandar con recargo.</p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+              >
+                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+
+          {/* CONCLUSION */}
           <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse.
+            <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse. Muchos empleadores invocan causales sin respaldo suficiente o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales, incluyendo recargos de hasta 100%.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Muchos empleadores invocan causales sin respaldo suficiente, utilizan “necesidades de la empresa” de forma incorrecta o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales ante los tribunales laborales.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Por eso, actuar rápido es fundamental. Revisar la carta de despido, guardar documentos, no firmar el finiquito sin analizarlo y buscar asesoría legal puede marcar una diferencia importante en el resultado del caso.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Además, muchas personas no saben que el despido injustificado puede aumentar significativamente las indemnizaciones mediante recargos legales, especialmente cuando la causal no logra probarse correctamente.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El error más común es pensar que “ya no hay nada que hacer” después del despido o firmar documentos sin entender sus consecuencias. En la práctica, muchos trabajadores logran acuerdos o compensaciones mayores cuando reclaman dentro de plazo y presentan un caso sólido.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si crees que tu despido fue injusto, arbitrario o sin pruebas reales, lo más importante es actuar antes de que expire el plazo legal. Un análisis temprano del caso puede ayudarte a proteger tus derechos y evitar perder indemnizaciones que podrían corresponderte.
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender las reglas generales no permite determinar si tu despido fue injustificado o si tienes derecho a mayores indemnizaciones. Esa respuesta depende de antecedentes específicos como la carta de despido, la causal invocada, la documentación de la empresa y las pruebas disponibles. Si tienes dudas sobre la legalidad de tu despido, puedes revisar tu situación con un{" "}
+              <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+              a través de LegalUp.
             </p>
           </div>
 

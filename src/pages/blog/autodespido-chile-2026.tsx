@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Calendar, User, Clock, ChevronRight, AlertCircle, CheckCircle, Scale, Shield, FileText, XCircle, ArrowLeft } from "lucide-react";
+import { Calendar, User, Clock, ChevronRight, AlertCircle, CheckCircle, Scale, Shield, FileText, XCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
@@ -8,7 +8,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+import { ReadTime } from "@/components/blog/ReadTime";
 import { Button } from "@/components/ui/button";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -103,7 +103,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 12 min</span>
+              <ReadTime slug="autodespido-chile-2026" />
             </div>
           </div>
         </div>
@@ -123,12 +123,6 @@ const BlogArticle = () => {
               En esta guía 2026 te explicamos qué es el autodespido en Chile, cuándo aplica, qué debes probar, cuánto podrías recibir y cómo iniciar el proceso correctamente.
             </p>
           </div>
-
-          <InArticleCTA
-            message="¿Tu empleador no paga tus cotizaciones o sueldo? Asesórate antes de renunciar y asegura tu indemnización."
-            buttonText="Hablar con un abogado laboral"
-            category="Derecho Laboral"
-          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Qué es el autodespido en Chile?</h2>
@@ -178,6 +172,28 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          {/* COMPLEJIDAD 1: AUTODESPIDO FUNDAMENTADO VS SIN PRUEBAS */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Autodespido válido o rechazado? La diferencia clave</h2>
+            <p className="text-gray-600 mb-4">El mismo autodespido puede terminar siendo acogido o rechazado por el tribunal dependiendo de las pruebas que tengas para acreditar los incumplimientos del empleador.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Autodespido acogido: pruebas sólidas</h3>
+                <p className="text-green-700">El trabajador acredita incumplimientos graves con documentos (cotizaciones impagas, liquidaciones, correos, testigos). El tribunal declara el autodespido válido y ordena pagar todas las indemnizaciones más recargos de hasta 80%.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Autodespido rechazado: pruebas insuficientes</h3>
+                <p className="text-red-700">El trabajador no logra demostrar los incumplimientos o la causal invocada no es lo suficientemente grave. El tribunal rechaza la demanda y el caso se trata como renuncia voluntaria, perdiendo toda posibilidad de indemnización.</p>
+              </div>
+            </div>
+          </div>
+
+          <InArticleCTA
+            message="¿Tu empleador no paga tus cotizaciones o sueldo? Asesórate antes de renunciar y asegura tu indemnización."
+            buttonText="Hablar con un abogado laboral"
+            category="Derecho Laboral"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Qué diferencia hay entre renuncia y autodespido?</h2>
@@ -308,6 +324,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* COMPLEJIDAD 2: CALCULO CORRECTO VS INCORRECTO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Qué diferencia hay entre un cálculo correcto y uno incorrecto de la indemnización?</h2>
+            <p className="text-gray-600 mb-4">El cálculo de las indemnizaciones laborales no siempre es tan simple como parece. Pequeños errores pueden significar diferencias de millones de pesos.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Cálculo correcto: revisión profesional</h3>
+                <p className="text-green-700">Considera la antigüedad exacta, la última remuneración con todos sus componentes (bonos, comisiones, gratificaciones), los topes legales aplicables y las cláusulas contractuales. Detecta diferencias que pueden aumentar el monto final significativamente.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Cálculo incorrecto: conformarse con lo que ofrece la empresa</h3>
+                <p className="text-red-700">La empresa puede omitir conceptos remuneracionales, aplicar mal los topes legales o no considerar beneficios contractuales. El trabajador que acepta sin revisar puede recibir menos de lo que le corresponde, perdiendo miles o millones de pesos.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
             <Link
@@ -380,27 +412,62 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="El autodespido exige pruebas sólidas de incumplimiento. Compara abogados laborales antes de renunciar con derecho a indemnización."
-            link="/abogado-despido-injustificado"
-            buttonText="Comparar abogados especializados"
-          />
-
-          <div className="mb-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
-            <div className="space-y-4 text-gray-600 leading-relaxed text-sm sm:text-base">
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                El autodespido en Chile existe precisamente para proteger a trabajadores frente a incumplimientos graves del empleador. No se trata de renunciar y perder todo — es una herramienta legal que te permite terminar la relación laboral y exigir las mismas indemnizaciones que corresponderían a un despido injustificado, más recargos.
-              </p>
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                La diferencia entre una renuncia común y un autodespido bien ejecutado puede ser de varios millones de pesos. Un trabajador con 5 años de antigüedad y sueldo de $800.000 que renuncia recibe solo las vacaciones proporcionales. El mismo trabajador que hace un autodespido exitoso puede recibir $4.000.000 o más en indemnizaciones. Esa diferencia justifica tomarse el tiempo de hacerlo bien.
-              </p>
-              <p className="text-gray-600 mb-4 leading-relaxed">Antes de enviar la carta de autodespido, asegúrate de tener todo en orden: pruebas del incumplimiento, cotizaciones verificadas, documentos laborales y el plazo claro. Un error en la causal invocada o en la redacción de la carta puede hacer que el tribunal rechace la demanda completamente — y en ese caso habrás terminado el contrato sin derecho a indemnización.</p>
-              <p className="text-gray-600 font-bold leading-relaxed">
-                Si el empleador lleva meses sin pagar cotizaciones, modificando condiciones unilateralmente o incurriendo en conductas graves, el autodespido puede ser la alternativa correcta. Pero la estrategia y el momento de actuar son tan importantes como el derecho en sí mismo.
-              </p>
+          {/* COMPLEJIDAD 3: ACTUAR A TIEMPO VS DEJAR PASAR */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Qué cambia entre actuar rápido y dejar pasar el tiempo?</h2>
+            <p className="text-gray-600 mb-4">En materia laboral, el tiempo juega un rol fundamental. Actuar durante los primeros días puede marcar una gran diferencia en el resultado del caso.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Actuar dentro del plazo legal</h3>
+                <p className="text-green-700">Conservas todos tus derechos para impugnar. Puedes reunir pruebas frescas, testigos disponibles y documentos completos. Tienes tiempo para elegir una buena estrategia y negociar desde una posición más sólida.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Dejar pasar los días</h3>
+                <p className="text-red-700">Las pruebas se debilitan, los testigos se vuelven difíciles de localizar y algunos documentos pueden perderse. Si vence el plazo de 60 días hábiles, pierdes la posibilidad de demandar judicialmente y quedas sin derecho a indemnización.</p>
+              </div>
             </div>
+          </div>
+
+          {/* CUANDO CONSULTAR ABOGADO */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
+            <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
+              {["Tu empleador no paga cotizaciones previsionales desde hace meses", "Llevas varios meses sin recibir tu sueldo completo o a tiempo", "Sufres acoso laboral o sexual y no sabes cómo proceder", "Te cambiaron las condiciones de trabajo sin tu acuerdo", "Estás pensando en renunciar pero quieres conservar tus indemnizaciones", "No sabes si los incumplimientos de tu empleador son suficientes para demandar", "Ya recibiste una carta de respuesta del empleador o una citación"].map((item, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-green-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700 font-bold">{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-gray-600 mt-4">Mientras antes se revise la documentación, mayores serán las posibilidades de preparar una estrategia adecuada.</p>
+          </div>
+
+          {/* CTA PRINCIPAL */}
+          <div className="mb-12">
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Tu empleador incumple sus obligaciones y estás pensando en hacer un autodespido?</h3>
+              <p className="text-white mb-6">Si tu empleador no paga cotizaciones, atrasa sueldos o modificó tus condiciones sin acuerdo, un autodespido bien ejecutado puede permitirte recibir las mismas indemnizaciones que en un despido injustificado. Antes de renunciar o enviar cualquier carta, es recomendable evaluar las pruebas disponibles con un abogado laboral.</p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+              >
+                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+
+          {/* CONCLUSION */}
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              El autodespido en Chile existe precisamente para proteger a trabajadores frente a incumplimientos graves del empleador. No se trata de renunciar y perder todo — es una herramienta legal que te permite terminar la relación laboral y exigir las mismas indemnizaciones que corresponderían a un despido injustificado, más recargos. La diferencia entre una renuncia común y un autodespido bien ejecutado puede ser de varios millones de pesos.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender cómo funciona el autodespido en términos generales no permite determinar si tu caso es viable o si tienes pruebas suficientes para ganar. Esa respuesta depende de antecedentes específicos como las cotizaciones impagas, los correos electrónicos, las liquidaciones de sueldo y los testigos disponibles. Si estás pensando en hacer un autodespido, puedes revisar tu situación con un{" "}
+              <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+              a través de LegalUp.
+            </p>
           </div>
 
           {/* <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100 mb-12">

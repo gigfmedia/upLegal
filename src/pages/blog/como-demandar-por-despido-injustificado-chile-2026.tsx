@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, AlertCircle, CheckCircle, XCircle, Gavel, Shield, MessageSquare, FileText, Search, DollarSign } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, AlertCircle, CheckCircle, XCircle, Gavel, Shield, MessageSquare, FileText, Search, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
@@ -7,10 +7,10 @@ import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 
 const BlogArticle = () => {
@@ -107,7 +107,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 15 min</span>
+              <ReadTime slug="como-demandar-por-despido-injustificado-chile-2026" />
             </div>
           </div>
         </div>
@@ -126,12 +126,6 @@ const BlogArticle = () => {
                 En esta guía 2026 te explico cómo funciona el proceso real, qué debes hacer paso a paso, cuánto dinero puedes obtener y los errores que te pueden hacer perder todo.
               </p>
             </div>
-
-            <InArticleCTA
-              message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
-              buttonText="Hablar con un abogado laboral"
-              category="Derecho Laboral"
-            />
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué es un despido injustificado en Chile?</h2>
@@ -165,6 +159,22 @@ const BlogArticle = () => {
                 El problema es que muchas veces estas causales se usan mal o sin respaldo. Ahí es donde nace la oportunidad real de demandar.
               </p>
             </div>
+
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿El empleador puede probar la causal o solo lanzó una excusa?</h2>
+              <p className="text-gray-600 mb-4">La diferencia entre ganar o perder un juicio por despido injustificado suele estar en la capacidad del empleador de probar lo que escribió en la carta de despido. Si no tiene pruebas, tienes un caso muy fuerte.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-green-800 text-lg mb-2">El empleador no puede probar la causal</h3>
+                  <p className="text-green-700">El juez declarará el despido injustificado automáticamente y deberá pagar indemnización con recargo de hasta 80%. Tienes una posición negociadora muy fuerte.</p>
+                </div>
+                <div className="bg-red-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-red-800 text-lg mb-2">El empleador tiene pruebas sólidas</h3>
+                  <p className="text-red-700">Si presentan documentos, testigos o registros que respaldan la causal, el caso se vuelve más complejo y puede requerir una estrategia legal diferente para minimizar pérdidas.</p>
+                </div>
+              </div>
+            </div>
+
 
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puedes ganar al demandar?</h2>
@@ -207,8 +217,13 @@ const BlogArticle = () => {
                   </div>
                 </div>
 
+                <InArticleCTA
+                  message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
+                  buttonText="Hablar con un abogado laboral"
+                  category="Derecho Laboral"
+                />
 
-                <div className="text-center py-6 border-t border-b border-gray-100 my-8">
+                <div className="text-center py-6 border-t border-b border-gray-100 mb-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu indemnización</p>
                   <Link
                     to="/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
@@ -220,6 +235,21 @@ const BlogArticle = () => {
                 </div>
               </div>
 
+            </div>
+
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Llevas muchos años o pocos meses en la empresa?</h2>
+              <p className="text-gray-600 mb-4">El monto de la indemnización depende directamente de tu antigüedad. No es lo mismo tener 6 meses que 10 años: el cálculo cambia completamente y también la estrategia legal recomendada.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-green-800 text-lg mb-2">Más de 3 años trabajados</h3>
+                  <p className="text-green-700">La indemnización base es alta y el recargo legal la multiplica. Con varios años de servicio, demandar casi siempre es rentable incluso descontando costos legales.</p>
+                </div>
+                <div className="bg-red-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-red-800 text-lg mb-2">Menos de 1 año trabajado</h3>
+                  <p className="text-red-700">La indemnización base es baja. En algunos casos puede no justificar el tiempo del juicio, aunque si hay otras deudas (vacaciones, horas extra) igual puede convenir.</p>
+                </div>
+              </div>
             </div>
 
             <div className="mb-12 bg-gray-50 border border-gray-100 rounded-2xl p-4 sm:p-8">
@@ -440,6 +470,21 @@ const BlogArticle = () => {
             </div>
 
             <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Tienes pruebas contundentes o solo tu palabra?</h2>
+              <p className="text-gray-600 mb-4">En materia laboral, la prueba es el factor más importante. Un caso con evidencia escrita tiene muchas más probabilidades de éxito que uno que depende solo del testimonio del trabajador.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                <div className="bg-green-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-green-800 text-lg mb-2">Tienes correos, WhatsApp y testigos</h3>
+                  <p className="text-green-700">La evidencia escrita y los testigos presenciales fortalecen tu demanda y presionan al empleador a negociar un acuerdo antes del juicio. El caso es mucho más sólido.</p>
+                </div>
+                <div className="bg-red-50 p-5 rounded-xl">
+                  <h3 className="font-bold text-red-800 text-lg mb-2">Solo tienes tu testimonio</h3>
+                  <p className="text-red-700">Sin respaldo documental, el juez puede inclinarse a favor del empleador si este presenta alguna evidencia. Es fundamental reunir pruebas antes de demandar.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si el empleador miente?</h2>
               <p className="text-gray-600 mb-4 leading-relaxed">Es muy común que en la carta de despido se relaten hechos inflados o derechamente falsos.</p>
               <div className="bg-amber-50 p-6 rounded-2xl border border-amber-200">
@@ -517,27 +562,32 @@ const BlogArticle = () => {
               <p className="mt-6 text-gray-700 font-bold text-lg">Estos factores pueden duplicar el resultado económico.</p>
             </div>
 
-            {/* CTA before Conclusion */}
-            <PreConclusionCTA
-              description="El plazo para demandar por despido injustificado es corto. Compara abogados laborales verificados y actúa antes de que venza tu derecho."
-              link="/abogado-despido-injustificado"
-              buttonText="Ver abogados laborales disponibles"
-            />
+            {/* Cuándo consultar a un abogado */}
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                Si te despidieron y tienes dudas sobre si fue justo o no, hay señales claras que indican que debes buscar asesoría legal inmediatamente. El tiempo corre y cada día que pasa reduce tus opciones legales.
+              </p>
+              <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
+                <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y crees que fue injusto?</h3>
+                <p className="text-white mb-6">Un abogado laboral puede evaluar tu caso en minutos y decirte si tienes opciones reales de recuperar dinero. No esperes a que venza el plazo de 60 días.</p>
+                <Link
+                  to="/abogado-laboral"
+                  className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+                >
+                  Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
               <div className="prose prose-lg text-gray-600 leading-relaxed space-y-6">
                 <p>
-                  Demandar por despido injustificado en Chile no es solo una opción legal: es una herramienta real para recuperar dinero que puedes estar perdiendo sin darte cuenta.
+                  Demandar por despido injustificado en Chile no es solo una opción legal: es una herramienta real para recuperar dinero que puedes estar perdiendo sin darte cuenta. La mayoría de las personas comete el mismo error: espera demasiado, firma sin entender o simplemente no actúa por miedo o desconocimiento. Y eso tiene un costo directo, porque un despido mal aplicado puede significar millones en indemnización… pero solo si reclamas correctamente.
                 </p>
                 <p>
-                  La mayoría de las personas comete el mismo error: espera demasiado, firma sin entender o simplemente no actúa por miedo o desconocimiento. Y eso tiene un costo directo, porque un despido mal aplicado puede significar millones en indemnización… pero solo si reclamas correctamente.
-                </p>
-                <p>
-                  Además, el sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto y no <Link to="/abogados-laborales" className="text-green-900 underline hover:text-green-600">revisar tu despido con un abogado laboral</Link>.
-                </p>
-                <p className="font-bold text-gray-900 bg-gray-100 p-8 rounded-2xl border">
-                  Porque cada día que pasa, reduces tus opciones. Actuar a tiempo no solo te permite defenderte: te permite recuperar lo que legítimamente te corresponde.
+                  Sin embargo, comprender tus derechos es solo el primer paso. El sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto. <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> y asegúrate de recibir lo que te corresponde.
                 </p>
               </div>
             </div>

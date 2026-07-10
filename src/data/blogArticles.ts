@@ -21,13 +21,23 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "tutela-laboral-chile-2026",
+    title: "Tutela laboral en Chile 2026: cuándo procede, qué derechos protege y cómo demandar",
+    excerpt: "Conoce cuándo procede una demanda de tutela laboral en Chile, qué derechos fundamentales protege, cuáles son los plazos, qué pruebas sirven y qué hacer si tus derechos fueron vulnerados por el empleador.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "9 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/tutela-laboral-chile-2026.png"
+  },
+  {
     id: "despido-necesidades-empresa-chile-2026",
     title: "Despido por necesidades de la empresa en Chile 2026: requisitos, indemnización y qué hacer",
     excerpt: "Conoce cuándo procede el despido por necesidades de la empresa en Chile, qué indemnizaciones corresponden, cómo impugnar la causal y qué hacer si recibiste una carta de despido.",
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "8 de Julio, 2026",
-    readTime: "11 min",
+    readTime: "13 min",
     image: "/assets/despido-necesidades-empresa-chile-2026.png"
   },
   {
@@ -329,7 +339,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "20 de Mayo, 2026",
-    readTime: "8 min",
+    readTime: "11 min",
     image: "/assets/que-pasa-si-no-firmo-finiquito-chile-2026.png"
   },
   {
@@ -349,7 +359,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "15 de Mayo, 2026",
-    readTime: "12 min",
+    readTime: "14 min",
     image: "/assets/autodespido-chile-2026.png"
   },
   {
@@ -359,7 +369,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "11 de Mayo, 2026",
-    readTime: "6 min",
+    readTime: "8 min",
     image: "/assets/reserva-derechos-finiquito-chile-2026.png"
   },
   {
@@ -369,7 +379,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "8 de Mayo, 2026",
-    readTime: "8 min",
+    readTime: "11 min",
     image: "/assets/despido-licencia-medica-chile-2026.png"
   },
   {
@@ -379,7 +389,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "6 de Mayo, 2026",
-    readTime: "9 min",
+    readTime: "12 min",
     image: "/assets/duracion-juicio-laboral-chile-2026.png"
   },
   {
@@ -389,7 +399,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "4 de Mayo, 2026",
-    readTime: "12 min",
+    readTime: "14 min",
     image: "/assets/demandar-despido-injustificado-chile-2026.png"
   },
   {
@@ -509,7 +519,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "1 de Abril, 2026",
-    readTime: "15 min",
+    readTime: "16 min",
     image: "/assets/despido-injustificado-chile-2026.png"
   },
   {
@@ -519,7 +529,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "30 de Marzo, 2026",
-    readTime: "10 min",
+    readTime: "13 min",
     image: "/assets/anos-de-servicio-chile-2026.png"
   },
   {
@@ -539,7 +549,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "22 de Marzo, 2026",
-    readTime: "11 min",
+    readTime: "14 min",
     image: "/assets/despido-sin-motivo-chile-2026.png"
   },
   {
@@ -609,7 +619,7 @@ export const articles: Article[] = [
     category: "Derecho Laboral",
     author: "LegalUp",
     date: "18 de Febrero, 2026",
-    readTime: "12 min",
+    readTime: "14 min",
     image: "/assets/calcular-finiquito-chile-2026.png"
   },
   {

@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -97,7 +96,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 9 min</span>
+              <ReadTime slug="cuanto-dura-juicio-laboral-despido-injustificado-chile-2026" />
             </div>
           </div>
         </div>
@@ -117,6 +116,21 @@ const BlogArticle = () => {
             <p className="text-base text-gray-600 leading-relaxed mb-6">
               Esta guía te explica cuánto dura cada etapa del juicio laboral en Chile, qué puede acelerarlo o frenarlo, y qué opciones tienes si quieres resolver más rápido.
             </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Es mejor intentar conciliar en la Inspección o demandar directamente?</h2>
+            <p className="text-gray-600 mb-4">La decisión entre conciliar en la Inspección del Trabajo o presentar una demanda directa puede definir cuánto dura tu proceso legal. Cada opción tiene ventajas y riesgos según tu caso.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Conciliar en Inspección del Trabajo</h3>
+                <p className="text-green-700">Si hay disposición a negociar, puedes resolver en 2 a 6 semanas sin costo judicial. Además, el plazo para demandar se extiende hasta 90 días hábiles si no hay acuerdo.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Demandar sin intentar conciliación</h3>
+                <p className="text-red-700">Ir directo a tribunales puede alargar el proceso a 4 u 8 meses desde el inicio, y pierdes la oportunidad de un acuerdo rápido que evite el juicio.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -167,6 +181,21 @@ const BlogArticle = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Tu empleador está dispuesto a negociar o se niega al diálogo?</h2>
+            <p className="text-gray-600 mb-4">La actitud del empleador frente a una negociación es uno de los factores que más impacta en la duración del proceso. Saber esto desde el principio te ayuda a decidir la mejor estrategia.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Empleador dispuesto a negociar</h3>
+                <p className="text-green-700">Si el empleador está abierto al diálogo, puedes resolver en semanas mediante un acuerdo en la Inspección del Trabajo, ahorrándote meses de litigio y costos legales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Empleador se niega a negociar</h3>
+                <p className="text-red-700">Si el empleador se niega a cualquier acuerdo, el caso necesariamente irá a juicio, extendiéndose entre 4 y 8 meses — o más si presenta apelaciones o recursos dilatorios.</p>
+              </div>
             </div>
           </div>
 
@@ -243,6 +272,21 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               La audiencia de juicio puede durar entre 2 horas y un día completo dependiendo de la complejidad. En casos simples el juez puede fallar en el acto. En casos complejos puede tomarse <strong>hasta 15 días hábiles</strong> para dictar sentencia.
             </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Tienes toda la documentación ordenada o te faltan pruebas clave?</h2>
+            <p className="text-gray-600 mb-4">La calidad y completez de tu documentación puede acelerar o retrasar significativamente el juicio laboral. Tener todo listo desde el día uno marca una gran diferencia.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Documentación completa y ordenada</h3>
+                <p className="text-green-700">Si tienes contratos, liquidaciones de sueldo, finiquito, correos y cualquier prueba organizada desde el inicio, el juicio avanza sin contratiempos y el juez puede fallar más rápido.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Documentación incompleta o desordenada</h3>
+                <p className="text-red-700">La falta de documentos clave obliga a suspender audiencias, solicitar oficios a terceros y extender los plazos de prueba, agregando semanas o meses adicionales al proceso.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -402,13 +446,35 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Conocer la duración del juicio te ayuda a planificar. Compara abogados laborales especializados en despidos y agenda una consulta."
-            link="/abogado-despido-injustificado"
-            buttonText="Comparar abogados especializados"
-          />
+          {/* Cuando consultar */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <div className="space-y-3 mb-6">
+              {[
+                "Si te despidieron hace menos de 60 días hábiles y no has iniciado acciones legales",
+                "Si el empleador no te ha pagado el finiquito o las indemnizaciones que corresponden",
+                "Si tienes dudas sobre si el despido fue realmente justificado o no",
+                "Si quieres saber cuánto podrías recuperar antes de decidir si demandar o negociar"
+              ].map((item, i) => (
+                <div key={i} className="flex items-start gap-2 text-gray-700">
+                  {/* <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" /> */}
+                  <span>· {item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
+          {/* CTA - cuándo consultar */}
+          <div className="mb-12 bg-green-900 rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Sabes cuánto tiempo podría durar tu juicio laboral?</h3>
+            <p className="text-white mb-6">Un abogado laboral puede analizar tu caso y darte una estimación realista de plazos y resultados según tu situación específica.</p>
+            <Link
+              to="/abogado-laboral"
+                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -417,10 +483,7 @@ const BlogArticle = () => {
               Un juicio laboral por despido injustificado en Chile no es inmediato, pero tampoco tiene que ser interminable. Con el procedimiento correcto, documentación en orden y asesoría legal adecuada, la mayoría de los casos se resuelve entre 3 y 8 meses — y muchos antes si hay disposición a negociar.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Lo más importante es actuar dentro del plazo. Tienes 60 días hábiles desde el despido para demandar, y ese tiempo pasa rápido. Ir a la Inspección del Trabajo primero es una buena estrategia en la mayoría de los casos — no pierdes nada y puedes ganar semanas o meses de proceso.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si ya pasaste por el despido y estás evaluando qué hacer, la consulta con un abogado laboral es el mejor primer paso. En una sola sesión puedes saber si tu caso es sólido, cuánto podrías recuperar y cuál es la mejor estrategia según tu situación.
+              Sin embargo, comprender los plazos del juicio es solo el primer paso. La diferencia entre un caso que se resuelve en semanas y uno que se extiende por más de un año suele ser la calidad de la asesoría legal. Si estás evaluando demandar por despido injustificado, <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">agendar una consulta con un abogado laboral</Link> es la mejor inversión de tiempo que puedes hacer.
             </p>
           </div>
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowLeft,
+    ArrowRight,
     Calendar,
     User,
     Clock,
@@ -22,24 +23,29 @@ import { ReadTime } from "@/components/blog/ReadTime";
 const BlogArticle = () => {
     const faqs = [
         {
-            question: "¿La empresa puede despedirme por necesidades de la empresa cuando quiera?",
-            answer: "No. Debe existir una causa objetiva relacionada con el funcionamiento de la empresa y cumplir los requisitos establecidos por la legislación laboral.",
+            question: "¿La empresa puede invocar necesidades de la empresa cuando quiera?",
+            answer:
+            "No. Debe existir una causa objetiva relacionada con el funcionamiento de la empresa — razones económicas, tecnológicas, estructurales o de modernización. Si la causal es invocada sin justificación real o como pretexto para deshacerse de un trabajador específico, puede ser impugnada judicialmente y el tribunal puede declararla injustificada.",
         },
         {
-            question: "¿Siempre corresponde indemnización?",
-            answer: "Generalmente sí, aunque dependerá del tipo de contrato, la antigüedad del trabajador y las circunstancias del despido.",
+            question: "¿Siempre corresponde indemnización por necesidades de la empresa?",
+            answer:
+            "Generalmente sí. Si tienes más de un año de antigüedad, corresponde indemnización por años de servicio — un mes de remuneración por año trabajado, con tope de 11 años — más la indemnización sustitutiva del aviso previo si no avisaron con 30 días de anticipación. Si el despido es declarado injustificado, se agregan recargos de entre 30% y 100% sobre la indemnización.",
         },
         {
-            question: "¿Puedo demandar si creo que la causal es falsa?",
-            answer: "Sí. Si consideras que la empresa utilizó indebidamente esta causal, puedes impugnar el despido ante los tribunales laborales dentro de los plazos legales.",
+            question: "¿Puedo demandar si creo que la causal de necesidades de la empresa es falsa?",
+            answer:
+            "Sí. Si consideras que la empresa utilizó indebidamente esta causal — por ejemplo, si contrataron a otra persona para tu mismo cargo poco después — puedes impugnar el despido ante el Juzgado del Trabajo dentro de los 60 días hábiles desde el término del contrato. Si la Fiscalía Laboral acoge el reclamo, el despido puede ser declarado injustificado.",
         },
         {
             question: "¿Qué pasa si contrataron a otra persona para mi mismo cargo?",
-            answer: "Ese antecedente podría ser relevante para cuestionar la existencia real de las necesidades de la empresa, aunque deberá analizarse junto con el resto de la prueba disponible.",
+            answer:
+            "Es uno de los antecedentes más relevantes para cuestionar la existencia real de las necesidades de la empresa. Si la empresa despidió a un trabajador por 'necesidades' y luego contrató a otro para el mismo puesto, eso contradice la justificación del despido y puede ser usado como prueba en el juicio. Guarda cualquier evidencia de esa contratación.",
         },
         {
-            question: "¿Debo firmar inmediatamente el finiquito?",
-            answer: "No existe una obligación de firmarlo sin comprender previamente su contenido y sus efectos jurídicos.",
+            question: "¿Estoy obligado a firmar el finiquito de inmediato?",
+            answer:
+            "No. No existe obligación de firmar el finiquito sin haber revisado su contenido y comprendido sus efectos. Puedes tomarte el tiempo necesario para revisar los montos, consultar con un abogado y, si no estás de acuerdo, firmar con reserva de derechos o negarte a firmar. El empleador no puede forzarte a firmar en el acto.",
         },
     ];
 
@@ -194,6 +200,22 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Lo importante es que la decisión no responda únicamente a una evaluación subjetiva del desempeño del trabajador.</p>
                     </div>
 
+                    {/* COMPLEJIDAD 1: CAUSAL VALIDA VS INJUSTIFICADA */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿Despido válido o injustificado? La diferencia clave</h2>
+                        <p className="text-gray-600 mb-4">El mismo despido por necesidades de la empresa puede terminar siendo válido o injustificado dependiendo de los antecedentes que la empresa tenga para respaldarlo.</p>
+                        <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                            <div className="bg-green-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-green-800 text-lg mb-2">Despido válido: la empresa acredita las necesidades</h3>
+                                <p className="text-green-700">La empresa demuestra que existió una reestructuración real, cierre de un área, cambios tecnológicos o disminución de actividad. El tribunal verifica que los antecedentes respaldan la decisión. Solo corresponde indemnización legal.</p>
+                            </div>
+                            <div className="bg-red-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado: la causal no se prueba</h3>
+                                <p className="text-red-700">La empresa invocó necesidades de la empresa sin cambios reales, contrató a otra persona para el mismo cargo o no pudo acreditar los hechos. El trabajador puede obtener indemnización con recargos de hasta 100%.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* CARTA DE DESPIDO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué debe contener la carta de despido?</h2>
@@ -251,6 +273,29 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    {/* COMPLEJIDAD 2: CALCULO CORRECTO VS INCORRECTO */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿Qué diferencia hay entre un cálculo correcto y uno incorrecto de la indemnización?</h2>
+                        <p className="text-gray-600 mb-4">El cálculo de las indemnizaciones laborales no siempre es tan simple como parece. Pequeños errores pueden significar diferencias de millones de pesos.</p>
+                        <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                            <div className="bg-green-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-green-800 text-lg mb-2">Cálculo correcto: revisión profesional</h3>
+                                <p className="text-green-700">Considera la antigüedad exacta, la última remuneración con todos sus componentes (bonos, comisiones, gratificaciones), los topes legales aplicables y las cláusulas contractuales. Detecta diferencias que pueden aumentar el monto final.</p>
+                            </div>
+                            <div className="bg-red-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-red-800 text-lg mb-2">Cálculo incorrecto: conformarse con lo que ofrece la empresa</h3>
+                                <p className="text-red-700">La empresa puede omitir conceptos remuneracionales, aplicar mal los topes legales o no considerar beneficios contractuales. El trabajador que acepta sin revisar puede recibir menos de lo que le corresponde por ley.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA IN-ARTICLE */}
+                    <InArticleCTA
+                        message="¿Recibiste una carta de despido por necesidades de la empresa y tienes dudas sobre su legalidad? Un abogado laboral puede analizar tu caso antes de que firmes el finiquito."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
                     {/* INJUSTIFICADO */}
                     <div className="mb-12">
@@ -313,6 +358,22 @@ const BlogArticle = () => {
                             </ul>
                         </div>
                         <p className="text-gray-600 mt-4">Actuar rápidamente suele aumentar las posibilidades de preparar una mejor estrategia de defensa.</p>
+                    </div>
+
+                    {/* COMPLEJIDAD 3: ACTUAR A TIEMPO VS DEJAR PASAR */}
+                    <div className="mb-12">
+                        <h2 className="text-2xl font-bold mb-4">¿Qué cambia entre actuar rápido y dejar pasar el tiempo?</h2>
+                        <p className="text-gray-600 mb-4">En materia laboral, el tiempo juega un rol fundamental. Actuar durante los primeros días puede marcar una gran diferencia en el resultado del caso.</p>
+                        <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                            <div className="bg-green-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-green-800 text-lg mb-2">Actuar dentro del plazo legal</h3>
+                                <p className="text-green-700">Conservas todos tus derechos para impugnar el despido. Puedes reunir pruebas frescas, testigos disponibles y documentos completos. Tienes tiempo para elegir una buena estrategia y negociar desde una posición más sólida.</p>
+                            </div>
+                            <div className="bg-red-50 p-5 rounded-xl">
+                                <h3 className="font-bold text-red-800 text-lg mb-2">Dejar pasar los días</h3>
+                                <p className="text-red-700">Las pruebas se debilitan, los testigos se vuelven difíciles de localizar y algunos documentos pueden perderse. Si vence el plazo de 60 días hábiles, pierdes la posibilidad de demandar judicialmente, incluso si el despido fue injustificado.</p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* ERRORES FRECUENTES */}
@@ -386,13 +447,6 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        message="¿Recibiste una carta de despido por necesidades de la empresa y tienes dudas sobre su legalidad? Un abogado laboral puede analizar tu caso antes de que firmes el finiquito."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
-
                     {/* DEMOSTRAR NO EXISTIAN */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Cómo demostrar que no existían necesidades de la empresa?</h2>
@@ -407,7 +461,7 @@ const BlogArticle = () => {
 
                     {/* CUANDO CONSULTAR ABOGADO */}
                     <div className="mb-12">
-                        <h2 className="text-2xl font-bold mb-4">¿Cuándo conviene consultar cuanto antes a un abogado laboral?</h2>
+                        <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
                         <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Recibiste una carta por necesidades de la empresa", "Te ofrecieron firmar un finiquito inmediatamente", "Dudas del cálculo de tus indemnizaciones", "La empresa contrató rápidamente a otra persona para tu mismo cargo", "Sospechas que la causal fue utilizada para ocultar otra razón del despido", "Existían conflictos previos con la empresa", "Sufriste represalias antes del despido", "Ya recibiste una citación judicial o administrativa"].map((item, i) => (
@@ -427,9 +481,9 @@ const BlogArticle = () => {
                             <p className="text-white mb-6">Si tu empleador invocó esta causal y tienes dudas sobre la legalidad del despido, es recomendable revisar el caso antes de firmar documentos o dejar transcurrir los plazos legales. Un abogado laboral puede analizar la carta de despido, calcular correctamente las indemnizaciones y evaluar si existen fundamentos para demandar.</p>
                             <Link
                                 to="/abogado-laboral"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
+                                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
                             >
-                                Hablar con un abogado laboral
+                                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>
@@ -447,7 +501,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="laboral" />
+                    <CategoryCTA category="laboral" topic="despido" />
 
                     {/* FAQS */}
                     <div className="mb-6" data-faq-section>

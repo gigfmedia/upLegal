@@ -1,15 +1,15 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -384,7 +384,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 11 min</span>
+              <ReadTime slug="como-calcular-tu-finiquito-chile-2026" />
             </div>
           </div>
         </div>
@@ -459,6 +459,22 @@ const BlogArticle = () => {
             <p className="text-base text-gray-500 italic">
               Una vez firmado, el finiquito tiene valor legal y puede utilizarse como prueba de que las obligaciones laborales fueron pagadas. Desde 2021, en Chile también es posible firmar el finiquito de manera electrónica a través de la Dirección del Trabajo.
             </p>
+          </div>
+
+          {/* Complexity Block 1 */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Tu finiquito es simple o tienes un caso complejo?</h2>
+            <p className="text-gray-600 mb-4">No todos los finiquitos se calculan igual. Dependiendo de la causal de término y las condiciones de tu contrato, el monto puede variar significativamente.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Renuncia voluntaria o mutuo acuerdo</h3>
+                <p className="text-green-700">Solo recibes vacaciones proporcionales. El cálculo es simple y rara vez hay discrepancias. Puedes firmar con tranquilidad si verificaste los días de vacaciones.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Despido con indemnizaciones múltiples</h3>
+                <p className="text-red-700">Cuando hay años de servicio, aviso previo, bonos y horas extras de por medio, el cálculo se vuelve más complejo. Es fácil cometer errores o que la empresa calcule mal los montos.</p>
+              </div>
+            </div>
           </div>
 
           {/* When corresponds */}
@@ -597,6 +613,22 @@ const BlogArticle = () => {
                 </div>
               </section>
 
+              {/* Complexity Block 2 */}
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold mb-4">¿El cálculo de tus años de servicio es correcto?</h2>
+                <p className="text-gray-600 mb-4">El número de años trabajados es el factor que más impacta en el monto de tu indemnización. Un error en este cálculo puede significar miles de pesos de diferencia.</p>
+                <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                    <h3 className="font-bold text-green-800 text-lg mb-2">Cálculo correcto de años trabajados</h3>
+                    <p className="text-green-700">La empresa considera todos tus años continuos e incluye fracciones superiores a 6 meses como año completo. Revisas las fechas en tu contrato y coinciden con la liquidación.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                    <h3 className="font-bold text-red-800 text-lg mb-2">Años mal contados o topados incorrectamente</h3>
+                    <p className="text-red-700">La empresa omite meses trabajados, no aplica correctamente el tope de 11 años o no considera períodos de licencia médica. Esto reduce tu indemnización significativamente.</p>
+                  </div>
+                </div>
+              </div>
+
               <section>
                 <h3 className="text-xl font-bold mb-4 text-gray-900 flex items-center gap-2">
                   <span className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm">4</span>
@@ -721,6 +753,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* Complexity Block 3 */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Firmarías el finiquito tal como está?</h2>
+            <p className="text-gray-600 mb-4">Antes de estampar tu firma, es importante saber si los montos son correctos. Firmar sin revisar puede significar perder derechos que no podrás reclamar después.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Firmar después de verificar con un profesional</h3>
+                <p className="text-green-700">Un abogado laboral revisa tu finiquito, confirma que todos los conceptos estén incluidos y te da tranquilidad al firmar. Si hay errores, los corriges antes de firmar.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin revisar o bajo presión</h3>
+                <p className="text-red-700">Firmar apurado o sin entender los montos puede llevar a aceptar un pago menor al que te corresponde. Una vez firmado sin reserva, reclamar después es mucho más difícil.</p>
+              </div>
+            </div>
+          </div>
+
           {/* What to Review */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué revisar antes de firmar el finiquito?</h2>
@@ -790,29 +838,39 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Antes de firmar, verifica que tu finiquito incluya todas las indemnizaciones y vacaciones que te corresponden. Compara abogados laborales y revisa tu caso."
-            link="/abogado-finiquito"
-            buttonText="Revisar mi finiquito con un abogado"
-          />
+          {/* ¿Cuándo consultar a un abogado? */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Calcular el finiquito puede parecer sencillo, pero hay situaciones donde una revisión profesional marca la diferencia entre recibir lo justo o perder miles de pesos.
+            </p>
+            <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te ofrecieron un finiquito y no sabes si el monto es correcto?</h3>
+              <p className="text-white mb-6">
+                Un abogado laboral puede revisar tu liquidación, verificar que todos los conceptos estén incluidos y negociar por ti si falta algún pago.
+              </p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              El finiquito laboral en Chile es un documento clave al momento de terminar una relación laboral, ya se que establece todos los pagos e indemnizaciones que corresponden al trabajador. Entender cómo se calcula el finiquito permite revisar correctamente los montos incluidos y asegurarse de que se respeten los derechos laborales.
+              El finiquito laboral en Chile es un documento clave al momento de terminar una relación laboral, ya que establece todos los pagos e indemnizaciones que corresponden al trabajador. Entender cómo se calcula permite revisar correctamente los montos incluidos y asegurarse de que se respeten los derechos laborales. La calculadora de finiquito que incluimos en esta guía te entrega una estimación referencial, pero siempre es recomendable verificar los números con un profesional.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Antes de firmar el documento, es fundamental revisar aspectos como las indemnizaciones, vacaciones pendientes y cotizaciones previsionales.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              Si existen dudas o diferencias en los montos, es recomendable <Link to="/abogados-laborales" className="text-green-900 underline hover:text-green-700">hablar con un abogado laboral en Chile</Link> para evitar perder beneficios que corresponden por ley.
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender el cálculo no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el monto final: desde cláusulas del contrato hasta acuerdos verbales o pagos informales. Si tienes dudas sobre tu finiquito, lo más seguro es <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento.
             </p>
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="laboral" topic="finiquito" />
+          <CategoryCTA category="laboral" topic="despido" />
 
           {/* FAQ (SEO structured) */}
           <div className="mb-6" data-faq-section>

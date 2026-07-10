@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, MessageSquare } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -116,7 +116,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 10 min</span>
+              <ReadTime slug="cuanto-me-corresponde-anos-de-servicio-chile-2026" />
             </div>
           </div>
         </div>
@@ -256,6 +256,22 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+          {/* Complexity Block 1 */}
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Te corresponde indemnización por necesidades de la empresa o renunciaste?</h2>
+              <p className="text-gray-600 mb-4">La diferencia entre recibir o no la indemnización por años de servicio depende del motivo del término de tu contrato.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades de la empresa</h3>
+                      <p className="text-green-700">Tienes derecho a indemnización por años de servicio completa. El empleador debe pagarte un mes de sueldo por cada año trabajado, con tope de 11 años.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Renuncia voluntaria</h3>
+                      <p className="text-red-700">No recibes indemnización por años de servicio. Solo te corresponden vacaciones proporcionales y días trabajados del mes.</p>
+                  </div>
+              </div>
+          </div>
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula la indemnización por años de servicio??</h2>
             <p className="text-gray-600 mb-6">La fórmula base es:</p>
@@ -341,12 +357,28 @@ const BlogArticle = () => {
                 <p className="font-bold text-blue-900 mt-2">Resultado: $5.250.000</p>
               </div>
             </div>
-
-            <InArticleCTA 
-              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
-              category="Derecho Laboral"
-            />
           </div>
+
+          {/* Complexity Block 2 */}
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Tu finiquito incluye todos los conceptos o falta alguno?</h2>
+              <p className="text-gray-600 mb-4">Un cálculo incorrecto puede significar miles de pesos de diferencia. Revisa que tu finiquito considere todo lo que corresponde por ley.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Finiquito completo</h3>
+                      <p className="text-green-700">Incluye indemnización por años de servicio, vacaciones proporcionales, días trabajados, indemnización sustitutiva de aviso previo si corresponde, y bonos habituales.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Finiquito incompleto</h3>
+                      <p className="text-red-700">Falta uno o más conceptos importantes. El empleador omitió bonos, gratificaciones o no aplicó correctamente el tope de 11 años.</p>
+                  </div>
+              </div>
+          </div>
+
+          <InArticleCTA 
+            message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
+            category="Derecho Laboral"
+          />
 
           {/* Additional Info */}
           <div className="mb-12">
@@ -455,6 +487,22 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          {/* Complexity Block 3 */}
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Reclamaste a tiempo o dejaste pasar los plazos?</h2>
+              <p className="text-gray-600 mb-4">Los plazos para reclamar diferencias en tu indemnización son cortos y estrictos en Chile.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Reclamas dentro del plazo</h3>
+                      <p className="text-green-700">Tienes 60 días hábiles desde el despido para presentar un reclamo en la Inspección del Trabajo o demandar en el Juzgado Laboral. Firmar con reserva de derechos te permite reclamar después.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Dejas pasar el plazo</h3>
+                      <p className="text-red-700">Si no reclamas dentro de los 60 días hábiles, pierdes el derecho a reclamar diferencias en la indemnización. Firmar el finiquito sin reserva limita aún más tus opciones.</p>
+                  </div>
+              </div>
+          </div>
+
           <div className="mb-12 bg-blue-50 p-8 rounded-xl border border-blue-100">
             <h2 className="text-2xl font-bold mb-6 text-blue-900">¿Qué pasa si firmo el finiquito?</h2>
             <p className="text-gray-700 mb-4">Si firmas sin observaciones:</p>
@@ -491,22 +539,38 @@ const BlogArticle = () => {
           </div>
 
           <div className="text-center py-4 border-t border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el cálculo de tus años de servicio?</p>
-              <Link
-                to="/blog/reserva-de-derechos-finiquito-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 Guía: Cómo firmar con reserva de derechos
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="La indemnización por años de servicio depende de tu sueldo y tiempo trabajado. Compara abogados laborales y confirma que el cálculo sea correcto."
-            link="/abogado-finiquito"
-            buttonText="Comparar abogados especializados"
-          />
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">¿No estás de acuerdo con el cálculo de tus años de servicio?</p>
+            <Link
+              to="/blog/reserva-de-derechos-finiquito-chile-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía: Cómo firmar con reserva de derechos
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
 
+          {/* Cuando consultar */}
+          <div className="mb-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si tu empleador te despidió y el cálculo de la indemnización por años de servicio no coincide con lo que esperabas, o si tienes dudas sobre si el despido fue realmente justificado, consultar a un abogado laboral a tiempo puede marcar la diferencia entre recibir lo que te corresponde o perder miles de pesos.
+            </p>
+            <p className="text-gray-600 mb-8 leading-relaxed">
+              Los plazos legales son cortos y cada detalle cuenta. Un abogado especializado puede revisar tu caso, calcular correctamente tu indemnización y guiarte en el proceso de reclamo.
+            </p>
+          </div>
+
+          {/* Scenario CTA */}
+          <div className="bg-green-900 rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y no sabes cuánto te corresponde por años de servicio?</h3>
+            <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y calcular exactamente lo que te deben pagar.</p>
+            <Link
+              to="/abogado-laboral"
+              className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -516,7 +580,7 @@ const BlogArticle = () => {
                 La indemnización por años de servicio es uno de los derechos más importantes para los trabajadores en Chile. Saber cómo se calcula y cuándo corresponde puede marcar una gran diferencia económica al momento de terminar una relación laboral.
               </p>
               <p>
-                Si estás enfrentando un despido, es clave revisar bien tu finiquito y entender exactamente qué te corresponde antes de firmar cualquier documento.
+                Sin embargo, comprender la ley es solo el primer paso. Si tienes dudas sobre el cálculo de tu indemnización o crees que tu empleador no te pagó lo correcto, lo mejor es consultar con un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que revise tu caso antes de que los plazos legales se agoten.
               </p>
             </div>
           </div>
@@ -537,7 +601,6 @@ const BlogArticle = () => {
             </div>
           </div>
         </div>
-
       </div>
 
       <RelatedLawyers category="Derecho Laboral" />

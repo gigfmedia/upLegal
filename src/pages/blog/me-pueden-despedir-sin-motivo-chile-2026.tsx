@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, MessageSquare, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, MessageSquare, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 
 const BlogArticle = () => {
   const faqs = [
@@ -102,7 +102,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 11 min</span>
+              <ReadTime slug="me-pueden-despedir-sin-motivo-chile-2026" />
             </div>
           </div>
         </div>
@@ -162,11 +162,6 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <InArticleCTA
-              message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
-              buttonText="Ver abogados laborales"
-              category="Derecho Laboral"
-            />
             <p className="text-gray-600 mb-6 leading-relaxed font-bold italic">
               Si no cumple esto → el despido puede ser ilegal.
             </p>
@@ -174,6 +169,27 @@ const BlogArticle = () => {
               Entonces, ¿por qué dicen que sí se puede despedir “sin motivo”? Porque existe una causal clave: <strong>Necesidades de la empresa</strong>. Esta causal permite despedir aunque no hiciste nada malo, no cometiste faltas y tu desempeño era correcto.
             </p>
           </div>
+
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Necesidades de la empresa o despido injustificado?</h2>
+              <p className="text-gray-600 mb-4">Ambas son causales válidas, pero la diferencia está en si el empleador puede probar los hechos que justifican el despido. Un mismo caso puede terminar en un pago justo o en una demanda millonaria.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades comprobables</h3>
+                      <p className="text-green-700">La empresa demuestra que hubo una baja real de ingresos o una reestructuración legítima, paga la indemnización completa y el trabajador recibe lo que le corresponde sin necesidad de juicio.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado encubierto</h3>
+                      <p className="text-red-700">La empresa invoca "necesidades" sin pruebas reales, pero sigue contratando para el mismo cargo. En este caso el trabajador puede demandar y obtener un recargo de hasta 80% sobre la indemnización.</p>
+                  </div>
+              </div>
+          </div>
+
+          <InArticleCTA
+              message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
+              buttonText="Ver abogados laborales"
+              category="Derecho Laboral"
+            />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa “necesidades de la empresa”?</h2>
@@ -263,6 +279,21 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+          </div>
+
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Firmar finiquito con o sin reserva de derechos?</h2>
+              <p className="text-gray-600 mb-4">Firmar el finiquito es el paso más importante después de un despido. La decisión que tomes en ese momento determinará si puedes reclamar más dinero después o si pierdes ese derecho para siempre.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con reserva de derechos</h3>
+                      <p className="text-green-700">Agregas la frase "con reserva de derechos" antes de firmar, lo que te permite cobrar el finiquito sin renunciar a demandar si después descubres que el monto era incorrecto o el despido fue injustificado.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin reserva de derechos</h3>
+                      <p className="text-red-700">Aceptas el finiquito tal como está y renuncias a cualquier reclamo futuro. Si después te das cuenta de que te pagaron menos de lo que correspondía, ya no podrás hacer nada para recuperar esa diferencia.</p>
+                  </div>
+              </div>
           </div>
 
           <div className="mb-12">
@@ -437,29 +468,47 @@ const BlogArticle = () => {
               <p className="text-gray-600">Te despiden → Reclamas → Demandas → La empresa negocia para evitar costos → <strong>Recibes tu pago más rápido y con menos riesgo.</strong></p>
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Aunque pueden despedirte sin acreditar una falta, deben pagarte indemnización. Compara abogados laborales y revisa si el monto es correcto."
-            link="/abogado-despido-injustificado"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-4">¿Demandar o negociar directamente con la empresa?</h2>
+              <p className="text-gray-600 mb-4">Después de un despido, muchos trabajadores dudan entre aceptar lo que les ofrecen o iniciar una demanda. La decisión correcta depende del tipo de despido, las pruebas disponibles y el tiempo que estés dispuesto a esperar.</p>
+              <div className="grid sm:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-green-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-green-800 text-lg mb-2">Demandar con un abogado laboral</h3>
+                      <p className="text-green-700">Si el despido fue injustificado, tienes pruebas sólidas y actúas dentro del plazo legal, una demanda puede aumentar tu indemnización hasta en un 80%. Además, muchas empresas prefieren llegar a un acuerdo antes del juicio.</p>
+                  </div>
+                  <div className="bg-red-50 p-5 rounded-xl">
+                      <h3 className="font-bold text-red-800 text-lg mb-2">Negociar solo sin asesoría</h3>
+                      <p className="text-red-700">Sin un abogado que conozca la ley laboral, es fácil que termines aceptando un monto menor al que te corresponde o firmando un finiquito que te cierre la puerta a futuros reclamos. El empleador tiene experiencia en estas negociaciones; tú probablemente no.</p>
+                  </div>
+              </div>
+          </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si te despidieron invocando "necesidades de la empresa" pero sospechas que no es real, si no estás seguro de que el monto del finiquito sea correcto o si ya pasaron varias semanas desde el despido, el tiempo juega en tu contra. En estos casos, una consulta temprana con un abogado laboral puede marcar la diferencia entre recibir lo justo o perder miles de pesos.
+            </p>
 
+            <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron sin motivo claro?</h3>
+              <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido en minutos y decirte si tienes un caso sólido. No arriesgues tu indemnización.</p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+              >
+                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, todo despido debe estar respaldado por una causal legal. Sin embargo, causales como "necesidades de la empresa" le dan al empleador cierta flexibilidad para terminar contratos sin acreditar una falta específica del trabajador — siempre que pague las indemnizaciones que corresponden.
+              En Chile, el despido sin motivo aparente existe bajo la causal de necesidades de la empresa, pero no es un cheque en blanco: el empleador debe pagar indemnización y, si no puede justificar realmente la causal, el despido puede ser declarado injustificado. La clave está en saber leer la carta de despido, no firmar el finiquito sin entenderlo y actuar dentro de los 60 días hábiles.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              El problema más frecuente no es el despido en sí, sino que muchos trabajadores no saben exactamente qué les corresponde recibir, firman el finiquito sin revisarlo y pierden el derecho a reclamar diferencias que pueden ser significativas.
-            </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si te despidieron y tienes dudas sobre si la causal es válida, si el monto del finiquito es correcto o si puedes demandar, el momento de actuar es antes de que venzan los plazos. Tienes 60 días hábiles desde el despido — ese tiempo se acaba rápido.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              No firmes nada que no entiendas. Si no estás de acuerdo con algún monto, firma con reserva de derechos. Y si crees que el despido fue injustificado, consulta con un abogado laboral antes de decidir qué hacer.
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender tus derechos solo es el primer paso. La diferencia entre recibir una indemnización justa y quedarte con menos de lo que te corresponde está en la asesoría legal oportuna. Si tienes dudas sobre tu caso particular, lo mejor es consultar con un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> antes de que los plazos se venzan.
             </p>
           </div>
 

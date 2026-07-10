@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldCheck, FileText, Gavel } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, ShieldCheck, FileText, Gavel } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const faqs = [
@@ -98,7 +98,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 6 min</span>
+              <ReadTime slug="reserva-de-derechos-finiquito-chile-2026" />
             </div>
           </div>
         </div>
@@ -125,6 +125,21 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
               En resumen: La reserva de derechos es tu salvavidas legal para poder cobrar tu dinero hoy y demandar mañana.
             </p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Firmar con reserva o firmar sin reserva?</h2>
+            <p className="text-gray-600 mb-4">La diferencia entre firmar un finiquito con reserva de derechos versus hacerlo sin ella puede determinar si puedes o no reclamar judicialmente después. Ambas opciones son válidas, pero sus consecuencias son radicalmente distintas.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con reserva de derechos</h3>
+                <p className="text-green-700">Recibes el pago inmediato del finiquito, pero te reservas el derecho a demandar por diferencias. Conservas tu capacidad de reclamar despido injustificado, recargos, o montos mal calculados dentro de los 60 días hábiles siguientes.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin reserva de derechos</h3>
+                <p className="text-red-700">Al firmar "pura y simplemente", el finiquito tiene poder liberatorio total. Renuncias a todo derecho de reclamar, incluso si después descubres que los montos eran incorrectos o si te pagaron menos de lo que correspondía por ley.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -199,6 +214,21 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Redactar una reserva específica o una genérica?</h2>
+            <p className="text-gray-600 mb-4">La precisión de tu reserva de derechos determina qué puedes reclamar después en tribunales. No todas las frases tienen el mismo efecto legal, y una redacción equivocada puede dejarte sin protección.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Reserva específica y detallada</h3>
+                <p className="text-green-700">Mencionar exactamente los conceptos que reclamas (despido injustificado, descuento AFC, horas extras, bonos no pagados) le indica al juez exactamente qué estás disputando. Una reserva bien redactada tiene alta probabilidad de ser acogida en tribunales.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Reserva vaga o genérica</h3>
+                <p className="text-red-700">Escribir frases como "No estoy de acuerdo" o "me reservo derechos genéricamente" suele ser insuficiente. Los tribunales pueden interpretar que no hubo una intención clara de disputar montos específicos, debilitando gravemente tu demanda.</p>
+              </div>
+            </div>
+          </div>
+
           <InArticleCTA
             message="¿No sabes qué escribir en tu reserva de derechos? Un abogado puede redactarte el texto exacto según tu caso antes de que vayas a la notaría."
             buttonText="Consultar con abogado"
@@ -229,13 +259,41 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Firmar con reserva de derechos te permite cobrar y aún reclamar diferencias. Compara abogados laborales antes de tomar una decisión."
-            link="/abogado-finiquito"
-            buttonText="Comparar abogados especializados"
-          />
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Asesorarte con un abogado o firmar por tu cuenta?</h2>
+            <p className="text-gray-600 mb-4">La decisión de ir a la notaría con asesoría legal o sin ella puede marcar la diferencia entre un finiquito bien protegido y uno que deje tu demanda inviable. Conocer tus derechos no siempre es suficiente.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con asesoría legal previa</h3>
+                <p className="text-green-700">Un abogado laboral revisa tu finiquito antes de la notaría, verifica los montos, identifica irregularidades y te redacta la reserva de derechos exacta para tu caso. Llegas preparado, sabes qué escribir y reduces el riesgo de errores.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin asesoría legal</h3>
+                <p className="text-red-700">Sin conocimiento legal, puedes pasar por alto descuentos indebidos, aceptar una causal incorrecta o redactar una reserva insuficiente. Muchos trabajadores descubren demasiado tarde que firmaron mal y ya no pueden reclamar.</p>
+              </div>
+            </div>
+          </div>
 
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si te despidieron por Necesidades de la Empresa pero tu puesto sigue ocupado, si te descontaron el aporte del empleador al Seguro de Cesantía (AFC), si estabas con licencia médica al momento del despido, o simplemente si los montos del finiquito no te cuadran, consultar a un abogado laboral antes de firmar puede significar la diferencia entre recibir lo justo o perder miles de pesos.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Incluso si ya firmaste con reserva de derechos, un abogado evaluará si tu caso tiene mérito y te guiará en los pasos para presentar la demanda dentro del plazo de 60 días hábiles.
+            </p>
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te finiquitaron y crees que los montos no son correctos?</h3>
+              <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y decirte si vale la pena demandar. La reserva de derechos solo funciona si actúas a tiempo.</p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
+              >
+                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
@@ -244,12 +302,12 @@ const BlogArticle = () => {
               Firmar un finiquito es el punto final de tu contrato, pero no tiene por qué ser el final de tus derechos. La reserva de derechos es una herramienta legal perfectamente válida en Chile que protege tu dinero y te da la libertad de buscar justicia laboral.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              No te dejes presionar por empleadores o notarios. Es tu derecho constitucional acceder a los tribunales de justicia, y la reserva de derechos es la llave que mantiene esa puerta abierta. Escríbela con seguridad, cobra tu dinero, y luego busca la asesoría adecuada para evaluar tu demanda.
+              Sin embargo, comprender cómo funciona la reserva de derechos y redactarla correctamente es solo el primer paso. Para maximizar tus posibilidades de éxito en una eventual demanda, lo más recomendable es buscar asesoría de un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que evalúe los detalles de tu caso y te represente en tribunales si corresponde.
             </p>
           </div>
 
 
-          <CategoryCTA category="laboral" topic="finiquito" />
+          <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>

@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, User, Clock, ChevronRight, CheckCircle, Info, Shield, AlertCircle } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
 import { RelatedLawyers } from "@/components/blog/RelatedLawyers";
 import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import { ReadTime } from "@/components/blog/ReadTime";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -97,7 +97,7 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2 text-gray-300">
               <Clock className="h-4 w-4" />
-              <span>Tiempo de lectura: 8 min</span>
+              <ReadTime slug="me-pueden-despedir-con-licencia-medica-chile-2026" />
             </div>
           </div>
         </div>
@@ -173,6 +173,21 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Despido por necesidades de la empresa o despido disciplinario durante licencia?</h2>
+            <p className="text-gray-600 mb-4">La causal que use tu empleador define el nivel de protección que tienes durante la licencia. Mientras algunas causales objetivas son aceptables, otras aumentan el riesgo de que el despido sea declarado injustificado.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Necesidades de la empresa</h3>
+                <p className="text-green-700">Causal objetiva que puede notificarse durante licencia, pero el término del contrato debe ser posterior al fin de la licencia. Si el empleador no logra probarla, tienes derecho a indemnización con recargo.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Conducta indebida o falta de probidad</h3>
+                <p className="text-red-700">Invocar causales disciplinarias durante una licencia activa es jurídicamente riesgoso. En la práctica, aumenta significativamente la probabilidad de que el despido sea declarado injustificado por un tribunal.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">El punto clave: notificación vs. ejecución del despido</h2>
             <p className="mb-6 font-medium">Esta distinción es fundamental y muchos trabajadores no la conocen:</p>
 
@@ -199,6 +214,21 @@ const BlogArticle = () => {
               <p className="text-amber-900 leading-relaxed font-medium">
                 En términos prácticos: si recibes una carta de despido mientras estás con licencia, el contrato debería seguir vigente hasta que termines la licencia, y solo entonces comenzarían a correr los plazos del finiquito.
               </p>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Licencia por enfermedad común o licencia con fuero maternal?</h2>
+            <p className="text-gray-600 mb-4">El tipo de licencia que tengas cambia drásticamente el nivel de protección contra el despido. No todas las licencias reciben el mismo tratamiento legal.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Fuero maternal o licencia prenatal</h3>
+                <p className="text-green-700">Las trabajadoras embarazadas o con fuero maternal tienen protección especial: el empleador necesita autorización judicial previa para despedir. Sin esa autorización, el despido es nulo.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Licencia por enfermedad común</h3>
+                <p className="text-red-700">No existe una prohibición absoluta de despido. El empleador puede despedir con causales objetivas, aunque con la restricción de que el término no puede hacerse efectivo durante la vigencia de la licencia.</p>
+              </div>
             </div>
           </div>
 
@@ -249,6 +279,21 @@ const BlogArticle = () => {
               <div className="p-5 bg-gray-50 border border-gray-100 rounded-xl">
                 <h4 className="font-bold text-gray-900 mb-2">No respetar la fecha</h4>
                 <p className="text-gray-600">Si el empleador hace efectivo el término del contrato durante la licencia (sin esperar a que termine), puede ser impugnado.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4">¿Actuaste rápido o dejaste pasar los días?</h2>
+            <p className="text-gray-600 mb-4">Los plazos para reclamar un despido injustificado durante licencia médica son cortos. La diferencia entre actuar a tiempo o no puede definir si recuperas tu indemnización.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Actuaste dentro del plazo de 60 días</h3>
+                <p className="text-green-700">Tienes tiempo para reunir pruebas, consultar con un abogado, firmar con reserva de derechos y preparar una demanda o reclamo en la Inspección del Trabajo con todas las opciones abiertas.</p>
+              </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Dejaste pasar los 60 días hábiles</h3>
+                <p className="text-red-700">Una vez vencido el plazo, pierdes el derecho a reclamar el despido injustificado. Solo quedan acciones excepcionales y más limitadas que rara vez prosperan.</p>
               </div>
             </div>
           </div>
@@ -356,25 +401,32 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-          {/* CTA before Conclusion */}
-          <PreConclusionCTA
-            description="Despedir durante licencia médica puede ser ilegal. Compara abogados laborales y actúa rápido para proteger tus derechos."
-            link="/abogado-despido-injustificado"
-            buttonText="Comparar abogados especializados"
-          />
-
+          {/* ¿Cuándo consultar a un abogado? */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
+              Si te despidieron mientras estabas con licencia médica, hay señales claras que indican que debes buscar asesoría legal inmediatamente. El tiempo corre y cada día que pasa reduce tus opciones legales.
+            </p>
+            <div className="bg-green-900 rounded-2xl p-8 text-center">
+              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron durante una licencia médica y no sabes si fue legal?</h3>
+              <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido, verificar si las fechas son correctas y decirte si tienes opciones reales de recuperar indemnización.</p>
+              <Link
+                to="/abogado-laboral"
+                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
 
           {/* Conclusion */}
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              En Chile, el despido durante licencia médica no es automáticamente ilegal, pero tampoco es libre. El empleador enfrenta restricciones importantes sobre cuándo puede hacer efectivo el término del contrato, y algunos tipos de despido durante licencia tienen alta probabilidad de ser declarados injustificados.
+              El despido durante licencia médica en Chile no es automáticamente ilegal, pero el empleador enfrenta restricciones importantes que muchos desconocen. La diferencia entre notificar y ejecutar el despido, la causal utilizada y el tipo de licencia son factores que determinan si el término del contrato fue válido o si puedes reclamar una indemnización. Conocer estos detalles marca la diferencia entre perder tus derechos o recibir lo que te corresponde.
             </p>
-            <p className="text-gray-600 mb-4 leading-relaxed">
-              Si te despidieron mientras estabas con licencia, lo más importante es no actuar por impulso. No firmes el finiquito sin leerlo, guarda toda la documentación y actúa dentro del plazo de 60 días hábiles.
-            </p>
-            <p className="text-gray-600 font-bold leading-relaxed">
-              La diferencia entre un despido legal y uno injustificado puede ser de varios meses de indemnización más recargos. Esa diferencia justifica consultar con un abogado laboral antes de tomar cualquier decisión.
+            <p className="text-gray-600 leading-relaxed">
+              Sin embargo, comprender la teoría no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el resultado: desde la redacción de la carta de despido hasta el momento exacto en que se comunicó la decisión. Si te despidieron mientras estabas con licencia médica, lo más seguro es <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento o tomar una decisión que pueda cerrar tus opciones legales.
             </p>
           </div>
 

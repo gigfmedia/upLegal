@@ -62,7 +62,8 @@ const ControlDetencionArticle = lazy(() => import('../pages/blog/control-de-dete
 const ViolenciaCarabinerosDesordenesPublicosArticle = lazy(() => import('../pages/blog/violencia-carabineros-desordenes-publicos-chile-2026'));
 const ViolacionMoradaArticle = lazy(() => import('../pages/blog/violacion-de-morada-chile-2026'));
 const ReceptacionArticle = lazy(() => import('../pages/blog/receptacion-en-chile-2026'));
-const DespidoNecesidadesEmpresa = lazy (() => import('../pages/blog/despido-por-necesidades-de-la-empresa-chile-2026'));
+const DespidoNecesidadesEmpresaArticle = lazy (() => import('../pages/blog/despido-por-necesidades-de-la-empresa-chile-2026'));
+const TutelaLaboralArticle = lazy(() => import('../pages/blog/tutela-laboral-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
  
 
@@ -135,7 +136,8 @@ export const BlogRoutes = () => (
       <Route path="violencia-contra-carabineros-desordenes-publicos-chile-2026" element={<ViolenciaCarabinerosDesordenesPublicosArticle />} />
       <Route path="violacion-de-morada-chile-2026" element={<ViolacionMoradaArticle />} />
       <Route path="receptacion-chile-2026" element={<ReceptacionArticle />} />
-      <Route path="despido-necesidades-empresa-chile-2026" element={<DespidoNecesidadesEmpresa />} />
+      <Route path="despido-necesidades-empresa-chile-2026" element={<DespidoNecesidadesEmpresaArticle />} />
+      <Route path="tutela-laboral-chile-2026" element={<TutelaLaboralArticle />} />
       {/* <Route path="ley-del-consumidor-chile-2026" element={<LeyConsumidorArticle />} /> */}
 
     </Routes>
