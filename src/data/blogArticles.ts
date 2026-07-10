@@ -10,6 +10,26 @@ export interface Article {
 }
 
 export const articles: Article[] = [
+  // {
+  //   id: "ley-del-consumidor-chile-2026",
+  //   title: "Ley del Consumidor en Chile 2026: derechos, garantías y cómo reclamar",
+  //   excerpt: "Conoce cuáles son tus derechos como consumidor en Chile, cómo funciona la Ley del Consumidor, cuándo reclamar ante el SERNAC, qué hacer frente a incumplimientos y cuándo conviene acudir a un abogado.",
+  //   category: "Derecho del Consumidor",
+  //   author: "LegalUp",
+  //   date: "8 de Julio, 2026",
+  //   readTime: "11 min",
+  //   image: "/assets/ley-del-consumidor-chile-2026.png"
+  // },
+  {
+    id: "despido-necesidades-empresa-chile-2026",
+    title: "Despido por necesidades de la empresa en Chile 2026: requisitos, indemnización y qué hacer",
+    excerpt: "Conoce cuándo procede el despido por necesidades de la empresa en Chile, qué indemnizaciones corresponden, cómo impugnar la causal y qué hacer si recibiste una carta de despido.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "8 de Julio, 2026",
+    readTime: "11 min",
+    image: "/assets/despido-necesidades-empresa-chile-2026.png"
+  },
   {
     id: "receptacion-chile-2026",
     title: "Receptación en Chile 2026: qué es este delito y cuáles son las penas",

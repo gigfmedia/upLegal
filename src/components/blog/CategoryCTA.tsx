@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import type { BlogTopic } from './blogConversionConfig';
 
 interface CategoryCTAProps {
-  category: 'laboral' | 'arriendo' | 'familia' | 'penal';
+  category: 'laboral' | 'arriendo' | 'familia' | 'penal' | 'consumidor';
   topic?: BlogTopic;
 }
 
@@ -33,6 +33,12 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
       description: 'Cada minuto cuenta. Obtén una defensa técnica sólida o recibe asesoría para interponer querellas criminales.',
       link: '/search?specialty=Derecho%20Penal',
       linkText: 'Ver abogados penales disponibles',
+    },
+    consumidor: {
+      title: '¿Tienes un problema como consumidor?',
+      description: 'Un abogado especializado en derecho del consumidor puede ayudarte a presentar reclamos, exigir garantías y defender tus derechos.',
+      link: '/search?specialty=Derecho%20del%20Consumidor',
+      linkText: 'Ver abogados disponibles',
     },
   };
 
