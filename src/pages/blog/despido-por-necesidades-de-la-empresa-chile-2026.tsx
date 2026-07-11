@@ -140,17 +140,17 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Si estás enfrentando un conflicto laboral, revisa también nuestras guías sobre{" "}
                             <Link
-                                to="/blog/ley-del-consumidor-chile-2026"
+                                to="/blog/despido-injustificado-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
-                                Ley del Consumidor
+                                despido injustificado
                             </Link>{" "}
                             y{" "}
                             <Link
-                                to="/blog/receptacion-chile-2026"
+                                to="/blog/como-calcular-tu-finiquito-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
-                                receptación
+                                cálculo de finiquito
                             </Link>.
                         </p>
                         <p className="text-gray-600 mt-4">
@@ -333,7 +333,7 @@ const BlogArticle = () => {
                                 Si realmente existían necesidades de la empresa que justificaban la eliminación del cargo, una contratación inmediata para reemplazar al mismo trabajador podría transformarse en un antecedente relevante dentro de un juicio laboral. Sin embargo, no toda contratación posterior significa automáticamente que el despido fue ilegal.
                             </p>
                         </div>
-                        <p className="text-gray-600 mt-4">Será necesario analizar aspectos como:</p>
+                        <p className="text-gray-600 my-4">Será necesario analizar aspectos como:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Si el cargo era realmente el mismo", "Las funciones asignadas", "El momento de la contratación", "La reorganización interna", "Los documentos que respaldan la decisión empresarial"].map((item, i) => (
                                 <li key={i} className="flex items-center gap-2">• {item}</li>
