@@ -70,7 +70,8 @@ const BlogArticle = () => {
               {[
                 "Un juicio laboral por despido injustificado dura entre 3 y 8 meses en promedio",
                 "El procedimiento tiene etapas fijas pero los tiempos reales varían por tribunal",
-                "Ir primero a la Inspección del Múltiples testigos que deben declara puede resolver el caso en semanas",
+                "Ir primero a la Inspección del Trabajo con todos los antecedentes puede agilizar el proceso significativamente",
+                "Múltiples testigos y documentos bien organizados aceleran las etapas del juicio",
                 "No responder la demanda es el error que más alarga el proceso"
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-2">

@@ -171,25 +171,25 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Necesidades de la empresa o despido injustificado?</h2>
-              <p className="text-gray-600 mb-4">Ambas son causales válidas, pero la diferencia está en si el empleador puede probar los hechos que justifican el despido. Un mismo caso puede terminar en un pago justo o en una demanda millonaria.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades comprobables</h3>
-                      <p className="text-green-700">La empresa demuestra que hubo una baja real de ingresos o una reestructuración legítima, paga la indemnización completa y el trabajador recibe lo que le corresponde sin necesidad de juicio.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado encubierto</h3>
-                      <p className="text-red-700">La empresa invoca "necesidades" sin pruebas reales, pero sigue contratando para el mismo cargo. En este caso el trabajador puede demandar y obtener un recargo de hasta 80% sobre la indemnización.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Necesidades de la empresa o despido injustificado?</h2>
+            <p className="text-gray-600 mb-4">Ambas son causales válidas, pero la diferencia está en si el empleador puede probar los hechos que justifican el despido. Un mismo caso puede terminar en un pago justo o en una demanda millonaria.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades comprobables</h3>
+                <p className="text-green-700">La empresa demuestra que hubo una baja real de ingresos o una reestructuración legítima, paga la indemnización completa y el trabajador recibe lo que le corresponde sin necesidad de juicio.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado encubierto</h3>
+                <p className="text-red-700">La empresa invoca "necesidades" sin pruebas reales, pero sigue contratando para el mismo cargo. En este caso el trabajador puede demandar y obtener un recargo de hasta 80% sobre la indemnización.</p>
+              </div>
+            </div>
           </div>
 
           <InArticleCTA
-              message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
-              buttonText="Ver abogados laborales"
-              category="Derecho Laboral"
-            />
+            message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
+            buttonText="Ver abogados laborales"
+            category="Derecho Laboral"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa “necesidades de la empresa”?</h2>
@@ -282,18 +282,18 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Firmar finiquito con o sin reserva de derechos?</h2>
-              <p className="text-gray-600 mb-4">Firmar el finiquito es el paso más importante después de un despido. La decisión que tomes en ese momento determinará si puedes reclamar más dinero después o si pierdes ese derecho para siempre.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con reserva de derechos</h3>
-                      <p className="text-green-700">Agregas la frase "con reserva de derechos" antes de firmar, lo que te permite cobrar el finiquito sin renunciar a demandar si después descubres que el monto era incorrecto o el despido fue injustificado.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin reserva de derechos</h3>
-                      <p className="text-red-700">Aceptas el finiquito tal como está y renuncias a cualquier reclamo futuro. Si después te das cuenta de que te pagaron menos de lo que correspondía, ya no podrás hacer nada para recuperar esa diferencia.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Firmar finiquito con o sin reserva de derechos?</h2>
+            <p className="text-gray-600 mb-4">Firmar el finiquito es el paso más importante después de un despido. La decisión que tomes en ese momento determinará si puedes reclamar más dinero después o si pierdes ese derecho para siempre.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Firmar con reserva de derechos</h3>
+                <p className="text-green-700">Agregas la frase "con reserva de derechos" antes de firmar, lo que te permite cobrar el finiquito sin renunciar a demandar si después descubres que el monto era incorrecto o el despido fue injustificado.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Firmar sin reserva de derechos</h3>
+                <p className="text-red-700">Aceptas el finiquito tal como está y renuncias a cualquier reclamo futuro. Si después te das cuenta de que te pagaron menos de lo que correspondía, ya no podrás hacer nada para recuperar esa diferencia.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
@@ -360,6 +360,12 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+
+          <InArticleCTA
+            message="Si te despidieron y todavía no sabes cuánto deberían pagarte en el finiquito, un abogado laboral puede calcular tu indemnización exacta con tus años de servicio y tu último sueldo."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho Laboral"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-8 text-gray-900">¿Qué hacer si te despiden?</h2>
@@ -469,18 +475,18 @@ const BlogArticle = () => {
             </div>
           </div>
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Demandar o negociar directamente con la empresa?</h2>
-              <p className="text-gray-600 mb-4">Después de un despido, muchos trabajadores dudan entre aceptar lo que les ofrecen o iniciar una demanda. La decisión correcta depende del tipo de despido, las pruebas disponibles y el tiempo que estés dispuesto a esperar.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Demandar con un abogado laboral</h3>
-                      <p className="text-green-700">Si el despido fue injustificado, tienes pruebas sólidas y actúas dentro del plazo legal, una demanda puede aumentar tu indemnización hasta en un 80%. Además, muchas empresas prefieren llegar a un acuerdo antes del juicio.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Negociar solo sin asesoría</h3>
-                      <p className="text-red-700">Sin un abogado que conozca la ley laboral, es fácil que termines aceptando un monto menor al que te corresponde o firmando un finiquito que te cierre la puerta a futuros reclamos. El empleador tiene experiencia en estas negociaciones; tú probablemente no.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Demandar o negociar directamente con la empresa?</h2>
+            <p className="text-gray-600 mb-4">Después de un despido, muchos trabajadores dudan entre aceptar lo que les ofrecen o iniciar una demanda. La decisión correcta depende del tipo de despido, las pruebas disponibles y el tiempo que estés dispuesto a esperar.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Demandar con un abogado laboral</h3>
+                <p className="text-green-700">Si el despido fue injustificado, tienes pruebas sólidas y actúas dentro del plazo legal, una demanda puede aumentar tu indemnización hasta en un 80%. Además, muchas empresas prefieren llegar a un acuerdo antes del juicio.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Negociar solo sin asesoría</h3>
+                <p className="text-red-700">Sin un abogado que conozca la ley laboral, es fácil que termines aceptando un monto menor al que te corresponde o firmando un finiquito que te cierre la puerta a futuros reclamos. El empleador tiene experiencia en estas negociaciones; tú probablemente no.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
