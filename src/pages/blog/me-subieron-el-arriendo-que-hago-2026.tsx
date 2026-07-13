@@ -133,6 +133,11 @@ const BlogArticle = () => {
             </p>
           </div>
 
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Me pueden subir el arriendo de un día para otro?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">No. En Chile, el arriendo no puede subir de un día para otro sin previo aviso ni respaldo contractual. Cualquier aumento debe estar pactado en el contrato o, al menos, notificarse con la anticipación que establezca el acuerdo entre las partes. Si el arrendador intenta subir el arriendo sin aviso ni justificación, puedes negarte y exigir el cumplimiento del contrato vigente.</p>
+          </div>
+
           <div className="mb-12 py-2">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Me pueden subir el arriendo cuando quieran?</h2>
             <p className="text-gray-600 mb-4 font-semibold text-lg">

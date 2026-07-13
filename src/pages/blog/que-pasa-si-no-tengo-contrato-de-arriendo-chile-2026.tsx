@@ -98,7 +98,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
-            Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Muchas personas viven en una propiedad con acuerdos verbales, sin firmar ningún documento formal. Pero cuando surgen problemas, ¿qué pasa legalmente?
+            Sí. Aunque no exista contrato escrito, sí pueden desalojarte mediante un procedimiento judicial dependiendo del caso. Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Muchas personas viven en una propiedad con acuerdos verbales, sin firmar ningún documento formal. Pero cuando surgen problemas, ¿qué pasa legalmente?
           </p>
           
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">

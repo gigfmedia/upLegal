@@ -135,6 +135,11 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Me pueden desalojar si tengo hijos menores o niños?</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">Sí, legalmente pueden desalojarte aunque tengas hijos menores, pero el proceso debe cumplir con todas las garantías judiciales. El tribunal evaluará las circunstancias familiares antes de ordenar el lanzamiento. En la práctica, los jueces suelen considerar el interés superior del niño y pueden otorgar plazos adicionales para reubicarte antes de ejecutar el desalojo.</p>
+          </div>
+
+          <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Proceso judicial obligatorio para desalojar</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.

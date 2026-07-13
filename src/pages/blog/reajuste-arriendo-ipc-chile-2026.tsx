@@ -35,6 +35,10 @@ const BlogArticle = () => {
 
   const faqs = [
     {
+      question: "¿Existe una calculadora oficial del IPC para arriendos?",
+      answer: "No existe una calculadora oficial del INE específica para arriendos. Sin embargo, el INE publica el IPC oficial mensualmente. Puedes usar la calculadora incluida en esta guía para estimar el reajuste, pero el cálculo exacto debe basarse en el porcentaje de variación del IPC que establezca tu contrato y el período correspondiente.",
+    },
+    {
       question: "¿Cuánto pueden subir el arriendo según el IPC en Chile 2026?",
       answer: "El aumento depende del IPC acumulado del período definido en el contrato. Si el IPC fue de 5%, un arriendo de $500.000 sube a $525.000. No existe un tope legal fijo, pero el aumento debe respetar exactamente lo que establece la cláusula de reajuste del contrato."
     },
@@ -107,7 +111,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
-            El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Muchas personas ven subir el precio mensual sin entender cómo se calcula realmente ni si el aumento es correcto.
+            Si buscas una calculadora de arriendo por IPC, aquí puedes calcular el reajuste y además entender cómo funciona legalmente el aumento del canon de arriendo. El reajuste del arriendo según IPC es una de las dudas más frecuentes tanto para arrendadores como arrendatarios en Chile. Muchas personas ven subir el precio mensual sin entender cómo se calcula realmente ni si el aumento es correcto.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">

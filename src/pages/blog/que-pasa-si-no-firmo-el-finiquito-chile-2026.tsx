@@ -64,7 +64,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)
+            ¿Qué pasa si no firmo el finiquito? Guía completa Chile 2026
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -88,7 +88,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl leading-relaxed">
-            Después de un despido o término de contrato, muchas personas sienten presión para firmar el finiquito rápidamente. A veces el empleador dice frases como "firma ahora" o "si no firmas, no te pagaremos".
+            Si no firmas el finiquito no pierdes automáticamente tus derechos laborales. Sin embargo, las consecuencias dependen del motivo por el cual decides no firmarlo. Después de un despido o término de contrato, muchas personas sienten presión para firmar el finiquito rápidamente. A veces el empleador dice frases como "firma ahora" o "si no firmas, no te pagaremos".
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-base sm:text-base">

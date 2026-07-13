@@ -130,9 +130,12 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                     <p className="text-xl max-w-3xl">
                         El divorcio unilateral es uno de los procedimientos de familia más consultados en Chile. Muchas personas llevan años separadas de hecho, sin convivencia, sin proyectos en común y sin intención de retomar la relación, pero enfrentan una dificultad importante: su cónyuge simplemente no quiere firmar el divorcio.
                     </p>
+
+                    <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuánto demora un divorcio unilateral en Chile?</h2>
+                    <p className="text-gray-600 mb-4 leading-relaxed">Un divorcio unilateral en Chile puede demorar entre 6 meses y 2 años, dependiendo de la carga del tribunal, la complejidad de las pruebas y si hay oposición del otro cónyuge. El plazo mínimo legal es de 3 años de cese de convivencia, pero el proceso judicial en sí puede extenderse varios meses más. Con un abogado especializado y todos los antecedentes preparados, algunos casos se resuelven en aproximadamente 6 a 12 meses desde la presentación de la demanda.</p>
 
                     <div className="flex flex-wrap items-center gap-4 mt-6">
                         <div className="flex items-center gap-2">
