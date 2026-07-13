@@ -20,6 +20,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -430,8 +431,14 @@ const BlogArticle = () => {
                         <h2 className="text-2xl font-bold mb-4">Relación con otras materias de Derecho de Familia</h2>
                         <p className="text-gray-600 mb-4">Los conflictos de filiación suelen relacionarse con otros procedimientos familiares importantes.</p>
                         <div className="flex flex-wrap gap-2">
-                            {["Reconocimiento de paternidad", "Pensión de alimentos", "Cuidado personal", "Relación directa y regular", "Autorización para salir del país con menores"].map((item, i) => (
-                                <span key={i} className="bg-gray-200 px-3 py-1 rounded-full">{item}</span>
+                            {[
+                                { label: "Reconocimiento de paternidad", to: "/blog/reconocimiento-paternidad-chile-2026" },
+                                { label: "Pensión de alimentos", to: "/blog/pension-alimentos-chile-2026" },
+                                { label: "Cuidado personal", to: "/blog/cuidado-personal-hijos-chile-2026" },
+                                { label: "Relación directa y regular", to: "/blog/regimen-de-visitas-chile-2026" },
+                                { label: "Autorización para salir del país con menores", to: "/blog/autorizacion-salir-pais-menores-chile-2026" }
+                            ].map((item, i) => (
+                                <Link key={i} to={item.to} className="text-green-700 underline hover:text-green-500">{item.label}</Link>
                             ))}
                         </div>
                         <p className="text-gray-600 mt-4">Por ello resulta frecuente que varias materias deban abordarse simultáneamente.</p>
@@ -514,6 +521,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+            <BlogConversionPopup category="Derecho de Familia" topic="impugnacion-paternidad" />
         </div>
     );
 };

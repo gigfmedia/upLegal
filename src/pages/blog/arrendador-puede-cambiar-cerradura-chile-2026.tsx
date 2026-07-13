@@ -10,6 +10,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import { ReadTime } from "@/components/blog/ReadTime";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -510,6 +511,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Arrendamiento" topic="cambio-cerradura" />
     </div>
   );
 };

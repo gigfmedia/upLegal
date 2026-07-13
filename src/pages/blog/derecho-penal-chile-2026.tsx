@@ -11,7 +11,7 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
-
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -127,6 +127,22 @@ const BlogArticle = () => {
 
             <p className="text-lg text-gray-600 leading-relaxed font-semibold">
               Conocer cómo funciona el sistema penal puede ayudarte a tomar decisiones informadas y evitar errores que podrían perjudicar tu defensa.
+            </p>
+            <p className="text-gray-600 mt-4">
+              Si quieres conocer delitos específicos, revisa nuestras guías sobre{" "}
+              <Link to="/blog/robo-chile-2026" className="text-green-900 underline hover:text-green-600">robo en Chile</Link>
+              ,{" "}
+              <Link to="/blog/hurto-chile-2026" className="text-green-900 underline hover:text-green-600">hurto en Chile</Link>
+              ,{" "}
+              <Link to="/blog/estafa-chile-2026" className="text-green-900 underline hover:text-green-600">estafa en Chile</Link>
+              ,{" "}
+              <Link to="/blog/apropiacion-indebida-chile-2026" className="text-green-900 underline hover:text-green-600">apropiación indebida</Link>
+              ,{" "}
+              <Link to="/blog/lesiones-leves-chile-2026" className="text-green-900 underline hover:text-green-600">lesiones leves</Link>
+              ,{" "}
+              <Link to="/blog/control-de-detencion-chile-2026" className="text-green-900 underline hover:text-green-600">control de detención</Link>{" "}
+              y{" "}
+              <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-900 underline hover:text-green-600">violación de morada</Link>.
             </p>
           </div>
 
@@ -391,7 +407,14 @@ const BlogArticle = () => {
               En el sistema penal chileno, enfrentar una acusación requiere conocimiento de tus derechos y rapidez en la defensa. No declarar sin asesoría y contar con un abogado especialista son las claves para proteger tu libertad y futuro.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Esta guía explica el funcionamiento general del sistema penal chileno. La pregunta que queda abierta es cómo se aplican esas reglas al caso concreto de cada persona. La respuesta depende de los antecedentes específicos de cada investigación. Si quieres revisar tu situación particular, puedes <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-700">consultar con un abogado penalista</Link>.
+              Esta guía explica el funcionamiento general del sistema penal chileno. La pregunta que queda abierta es cómo se aplican esas reglas al caso concreto de cada persona. La respuesta depende de los antecedentes específicos de cada investigación. Si quieres revisar tu situación particular, puedes <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-700">consultar con un abogado penalista</Link>. También te recomendamos nuestras guías específicas sobre{" "}
+              <Link to="/blog/robo-chile-2026" className="text-green-900 underline hover:text-green-700">robo</Link>
+              ,{" "}
+              <Link to="/blog/hurto-chile-2026" className="text-green-900 underline hover:text-green-700">hurto</Link>
+              ,{" "}
+              <Link to="/blog/estafa-chile-2026" className="text-green-900 underline hover:text-green-700">estafa</Link>{" "}
+              y{" "}
+              <Link to="/blog/control-de-detencion-chile-2026" className="text-green-900 underline hover:text-green-700">control de detención</Link>.
             </p>
           </div>
 
@@ -438,6 +461,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+    <BlogConversionPopup category="Derecho Penal" topic="derecho-penal" />
     </div>
   );
 };

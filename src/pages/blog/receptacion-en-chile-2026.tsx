@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -149,13 +150,34 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 hurto en Chile
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/apropiacion-indebida-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 apropiación indebida en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/estafa-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                estafa en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/violacion-de-morada-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                violación de morada en Chile
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/control-de-detencion-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                control de detención en Chile
                             </Link>.
                         </p>
                         <p className="text-gray-600 mt-4">
@@ -504,7 +526,12 @@ const BlogArticle = () => {
                             La receptación busca evitar que los bienes provenientes de delitos continúen circulando en el mercado. Por ello, tanto quienes compran como quienes venden objetos usados deben actuar con la debida diligencia y conservar antecedentes que acrediten el origen de las especies — boletas, contratos de compraventa, datos del vendedor.
                         </p>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            Esta guía describe las reglas generales del delito de receptación en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de cómo se combinen y valoren los antecedentes concretos del caso. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+                            Esta guía describe las reglas generales del delito de receptación en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de cómo se combinen y valoren los antecedentes concretos del caso. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/orden-de-alejamiento-chile-2026" className="text-green-700 underline hover:text-green-500">Orden de alejamiento en Chile: guía legal 2026</Link>
+                            ,{" "}
+                            <Link to="/blog/lesiones-leves-chile-2026" className="text-green-700 underline hover:text-green-500">Lesiones leves en Chile: qué dice la ley</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/derecho-penal-chile-2026" className="text-green-700 underline hover:text-green-500">derecho penal en Chile</Link>. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
@@ -548,6 +575,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="receptacion" />
         </div>
     );
 };

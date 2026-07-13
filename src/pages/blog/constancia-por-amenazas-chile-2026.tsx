@@ -20,6 +20,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -321,7 +322,15 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">
                             Puedes revisar también nuestra guía sobre{" "}
-                            <Link to="/blog/violencia-intrafamiliar-chile-2026" className="text-green-700 underline">Violencia Intrafamiliar en Chile</Link>.
+                            <Link to="/blog/violencia-intrafamiliar-chile-2026" className="text-green-700 underline">Violencia Intrafamiliar en Chile</Link>
+                            . También puedes revisar nuestras guías sobre{" "}
+                            <Link to="/blog/orden-de-alejamiento-chile-2026" className="text-green-700 underline">orden de alejamiento</Link>
+                            ,{" "}
+                            <Link to="/blog/lesiones-leves-chile-2026" className="text-green-700 underline">lesiones leves</Link>
+                            ,{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline">control de detención</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/robo-chile-2026" className="text-green-700 underline">robo en Chile</Link>.
                         </p>
                     </div>
 
@@ -567,7 +576,12 @@ const BlogArticle = () => {
                             La constancia por amenazas puede ser una herramienta útil para dejar registro formal de situaciones preocupantes. Esta guía describe los pasos iniciales y la diferencia entre constancia y denuncia.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es si en el caso concreto los hechos constituyen un delito que la Fiscalía deba investigar o si corresponde solo un registro preventivo. Esa respuesta depende de la gravedad y reiteración de las amenazas. Si quieres revisar tu situación, puedes consultar con un{" "}
+                            La pregunta que queda abierta es si en el caso concreto los hechos constituyen un delito que la Fiscalía deba investigar o si corresponde solo un registro preventivo. Esa respuesta depende de la gravedad y reiteración de las amenazas. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/estafa-chile-2026" className="text-green-700 underline hover:text-green-500">Estafa en Chile: tipos, penas y cómo denunciar</Link>
+                            ,{" "}
+                            <Link to="/blog/receptacion-en-chile-2026" className="text-green-700 underline hover:text-green-500">Receptación en Chile: qué es y cuáles son las penas</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/apropiacion-indebida-chile-2026" className="text-green-700 underline hover:text-green-500">Apropiación indebida en Chile: qué dice la ley</Link>. Si quieres revisar tu situación, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
@@ -611,6 +625,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="constancia-amenazas" />
         </div>
     );
 };

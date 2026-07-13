@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -143,17 +144,38 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Si estás enfrentando una situación legal, revisa también nuestras guías sobre{" "}
                             <Link
-                                to="/blog/divorcio-unilateral-chile-2026"
+                                to="/blog/violencia-carabineros-desordenes-publicos-chile-2026"
                                 className="text-green-900 underline hover:text-green-600"
                             >
-                                divorcio unilateral
+                                violencia contra Carabineros
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/constancia-por-amenazas-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                constancia por amenazas
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/robo-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                robo en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/hurto-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                hurto en Chile
                             </Link>{" "}
                             y{" "}
                             <Link
-                                to="/blog/compensacion-economica-divorcio-chile-2026"
+                                to="/blog/orden-de-alejamiento-chile-2026"
                                 className="text-green-900 underline hover:text-green-600"
                             >
-                                compensación económica
+                                orden de alejamiento
                             </Link>.
                         </p>
                     </div>
@@ -523,7 +545,12 @@ const BlogArticle = () => {
                             La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso — y esa respuesta depende de los antecedentes concretos de la carpeta investigativa. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
-                            </Link>.
+                            </Link>. También puedes informarte sobre{" "}
+                            <Link to="/blog/derecho-penal-chile-2026" className="text-green-700 underline hover:text-green-500">Derecho penal en Chile: guía completa 2026</Link>
+                            ,{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline hover:text-green-500">control de detención</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-700 underline hover:text-green-500">violación de morada</Link>.
                         </p>
                     </div>
 
@@ -566,6 +593,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="lesiones-leves" />
         </div>
     );
 };

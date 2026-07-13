@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -170,13 +171,27 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 lesiones leves en Chile
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/constancia-por-amenazas-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 constancia por amenazas
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/violacion-de-morada-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                violación de morada
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/orden-de-alejamiento-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                orden de alejamiento
                             </Link>.
                         </p>
                     </div>
@@ -485,7 +500,12 @@ const BlogArticle = () => {
                             Las investigaciones por desórdenes públicos o presunta violencia contra Carabineros pueden tener consecuencias importantes. Esta guía describe el procedimiento general y los derechos del detenido.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada detención, qué pruebas existen y cómo la defensa puede impugnarlas. Esa respuesta depende de los antecedentes concretos. Si quieres revisar una situación particular, puedes consultar con un{" "}
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada detención, qué pruebas existen y cómo la defensa puede impugnarlas. Esa respuesta depende de los antecedentes concretos. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/estafa-chile-2026" className="text-green-700 underline hover:text-green-500">Estafa en Chile: tipos, penas y cómo denunciar</Link>
+                            ,{" "}
+                            <Link to="/blog/receptacion-en-chile-2026" className="text-green-700 underline hover:text-green-500">Receptación en Chile: qué es y cuáles son las penas</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/apropiacion-indebida-chile-2026" className="text-green-700 underline hover:text-green-500">Apropiación indebida en Chile: qué dice la ley</Link>. Si quieres revisar una situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
@@ -529,6 +549,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="violencia-carabineros" />
         </div>
     );
 };

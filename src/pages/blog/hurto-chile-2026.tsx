@@ -17,6 +17,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -145,13 +146,34 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 apropiación indebida
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/orden-de-alejamiento-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 orden de alejamiento
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/robo-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                robo en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/estafa-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                estafa en Chile
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/receptacion-en-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                receptación en Chile
                             </Link>.
                         </p>
                     </div>
@@ -489,7 +511,12 @@ const BlogArticle = () => {
                             Esta guía describe las reglas generales del hurto en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación — y esa respuesta depende de los antecedentes concretos que la Fiscalía reúna. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
-                            </Link>.
+                            </Link>. También puedes revisar nuestras guías sobre{" "}
+                            <Link to="/blog/derecho-penal-chile-2026" className="text-green-700 underline hover:text-green-500">Derecho penal en Chile: guía completa 2026</Link>
+                            ,{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline hover:text-green-500">control de detención</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-700 underline hover:text-green-500">violación de morada</Link>.
                         </p>
                     </div>
 
@@ -532,6 +559,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="hurto" />
         </div>
     );
 };

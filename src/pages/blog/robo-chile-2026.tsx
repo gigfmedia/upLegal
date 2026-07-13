@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -153,13 +154,27 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 apropiación indebida
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/orden-de-alejamiento-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 orden de alejamiento
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/receptacion-en-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                receptación en Chile
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/estafa-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                estafa en Chile
                             </Link>.
                         </p>
                     </div>
@@ -500,7 +515,12 @@ const BlogArticle = () => {
                             Además, distinguir correctamente el robo de otros delitos patrimoniales, como el hurto, la estafa o la apropiación indebida, permite entender mejor cómo se desarrollará la investigación y cuáles pueden ser sus consecuencias legales.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            Esta guía describe las reglas generales del delito de robo en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de los antecedentes concretos que la Fiscalía reúna durante el procedimiento. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+                            Esta guía describe las reglas generales del delito de robo en Chile. La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada investigación. Esa respuesta depende de los antecedentes concretos que la Fiscalía reúna durante el procedimiento. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/derecho-penal-chile-2026" className="text-green-700 underline hover:text-green-500">Derecho penal en Chile: guía completa 2026</Link>
+                            ,{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline hover:text-green-500">control de detención</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-700 underline hover:text-green-500">violación de morada</Link>. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
                             </Link>.
@@ -546,6 +566,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="robo" />
         </div>
     );
 };

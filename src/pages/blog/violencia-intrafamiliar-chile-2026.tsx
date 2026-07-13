@@ -19,6 +19,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -506,6 +507,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+            <BlogConversionPopup category="Derecho de Familia" topic="violencia-intrafamiliar" />
         </div>
     );
 };

@@ -13,6 +13,7 @@ import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const PensionCalculator = () => {
   const [income, setIncome] = useState(500000);
@@ -701,6 +702,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Derecho de Familia" topic="deuda-pension" />
     </div>
   );
 };

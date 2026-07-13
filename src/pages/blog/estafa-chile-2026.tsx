@@ -19,6 +19,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -154,6 +155,16 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             En esta guía completa revisaremos cómo funciona el delito de estafa en Chile, cómo realizar una denuncia por estafa, qué hacer inmediatamente después de ser víctima de un fraude y cuáles son las alternativas legales disponibles.
+                        </p>
+                        <p className="text-gray-600 mt-4">
+                            Si estás enfrentando un conflicto patrimonial, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/apropiacion-indebida-chile-2026" className="text-green-700 underline hover:text-green-500">apropiación indebida</Link>
+                            ,{" "}
+                            <Link to="/blog/robo-chile-2026" className="text-green-700 underline hover:text-green-500">robo en Chile</Link>
+                            ,{" "}
+                            <Link to="/blog/hurto-chile-2026" className="text-green-700 underline hover:text-green-500">hurto en Chile</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/receptacion-en-chile-2026" className="text-green-700 underline hover:text-green-500">receptación en Chile</Link>.
                         </p>
                     </div>
 
@@ -366,7 +377,9 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
-                        <p className="text-gray-600 mt-4">La duración de estas investigaciones puede variar considerablemente.</p>
+                        <p className="text-gray-600 mt-4">La duración de estas investigaciones puede variar considerablemente. Si el caso avanza a una formalización, se realizará una audiencia de{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-700 underline hover:text-green-500">control de detención</Link>{" "}
+                            donde un juez revisará la legalidad del procedimiento.</p>
                     </div>
 
                     {/* QUE PENAS EXISTEN */}
@@ -476,7 +489,12 @@ const BlogArticle = () => {
                             Las estafas continúan aumentando en Chile y afectan a personas de todas las edades. Esta guía describe las reglas generales del delito y los pasos iniciales para denunciar.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso — y esa respuesta depende de los antecedentes concretos y de la rapidez con que se actúe. Si quieres revisar tu situación particular, puedes consultar con un{" "}
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso — y esa respuesta depende de los antecedentes concretos y de la rapidez con que se actúe. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/orden-de-alejamiento-chile-2026" className="text-green-700 underline hover:text-green-500">Orden de alejamiento en Chile: guía legal 2026</Link>
+                            ,{" "}
+                            <Link to="/blog/lesiones-leves-chile-2026" className="text-green-700 underline hover:text-green-500">Lesiones leves en Chile: qué dice la ley</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-700 underline hover:text-green-500">Violación de morada en Chile: penas y consecuencias</Link>. Si quieres revisar tu situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
                             </Link>.
@@ -522,6 +540,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="estafa" />
         </div>
     );
 };

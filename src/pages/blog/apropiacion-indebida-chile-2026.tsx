@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -139,17 +140,38 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">
                             Si estás enfrentando un conflicto patrimonial, revisa también nuestras guías sobre{" "}
                             <Link
-                                to="/blog/lesiones-leves-chile-2026"
+                                to="/blog/robo-chile-2026"
                                 className="text-green-900 underline hover:text-green-600"
                             >
-                                lesiones leves
+                                robo en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/hurto-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                hurto en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/estafa-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                estafa en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/receptacion-en-chile-2026"
+                                className="text-green-900 underline hover:text-green-600"
+                            >
+                                receptación en Chile
                             </Link>{" "}
                             y{" "}
                             <Link
-                                to="/blog/divorcio-unilateral-chile-2026"
+                                to="/blog/orden-de-alejamiento-chile-2026"
                                 className="text-green-900 underline hover:text-green-600"
                             >
-                                divorcio unilateral
+                                orden de alejamiento
                             </Link>.
                         </p>
                     </div>
@@ -504,7 +526,12 @@ const BlogArticle = () => {
                             La apropiación indebida es uno de los delitos patrimoniales que más dudas genera porque su frontera con un incumplimiento civil no siempre es evidente. Esta guía ha descrito las reglas generales y los elementos que la Fiscalía debe acreditar.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada situación — y esa respuesta depende de los antecedentes concretos, de las comunicaciones entre las partes y del destino de los fondos. Si quieres revisar tu caso particular, puedes consultar con un{" "}
+                            La pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada situación — y esa respuesta depende de los antecedentes concretos, de las comunicaciones entre las partes y del destino de los fondos. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/control-de-detencion-chile-2026" className="text-green-900 underline hover:text-green-600">Control de detención en Chile: guía legal</Link>
+                            ,{" "}
+                            <Link to="/blog/lesiones-leves-chile-2026" className="text-green-900 underline hover:text-green-600">Lesiones leves en Chile: qué dice la ley</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/violacion-de-morada-chile-2026" className="text-green-900 underline hover:text-green-600">Violación de morada en Chile: penas y consecuencias</Link>. Si quieres revisar tu caso particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-900 underline hover:text-green-600">
                                 abogado penal para casos de apropiación indebida en Chile
                             </Link>.
@@ -550,6 +577,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="apropiacion-indebida" />
         </div>
     );
 };

@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -153,13 +154,27 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 hurto en Chile
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/lesiones-leves-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 lesiones leves
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/violencia-carabineros-desordenes-publicos-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                violencia contra Carabineros
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/estafa-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                estafa en Chile
                             </Link>.
                         </p>
                     </div>
@@ -419,7 +434,12 @@ const BlogArticle = () => {
                             El control de detención es una de las etapas más relevantes del proceso penal chileno. Esta guía describe el procedimiento general y los derechos del detenido.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es cómo se desarrolla esa audiencia en un caso concreto, qué antecedentes presenta la Fiscalía y cómo la defensa puede impugnarlos. Esa respuesta depende de los hechos específicos de cada detención. Si quieres revisar una situación particular, puedes consultar con un{" "}
+                            La pregunta que queda abierta es cómo se desarrolla esa audiencia en un caso concreto, qué antecedentes presenta la Fiscalía y cómo la defensa puede impugnarlos. Esa respuesta depende de los hechos específicos de cada detención. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/apropiacion-indebida-chile-2026" className="text-green-700 underline hover:text-green-500">Apropiación indebida en Chile: qué dice la ley</Link>
+                            ,{" "}
+                            <Link to="/blog/orden-de-alejamiento-chile-2026" className="text-green-700 underline hover:text-green-500">Orden de alejamiento en Chile: guía legal 2026</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/derecho-penal-chile-2026" className="text-green-700 underline hover:text-green-500">derecho penal en Chile</Link>. Si quieres revisar una situación particular, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">
                                 abogado penalista en Chile
                             </Link>.
@@ -465,6 +485,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="control-detencion" />
         </div>
     );
 };

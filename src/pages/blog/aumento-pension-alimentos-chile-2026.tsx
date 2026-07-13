@@ -12,6 +12,7 @@ import CategoryCTA from "@/components/blog/CategoryCTA";
 import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const AumentoSimulator = () => {
   const [currentPension, setCurrentPension] = useState(180000);
@@ -717,6 +718,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Derecho de Familia" topic="aumento-pension" />
     </div>
   );
 };

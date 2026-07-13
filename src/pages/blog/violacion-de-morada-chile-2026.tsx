@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -160,13 +161,27 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 lesiones leves
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/control-de-detencion-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 control de detención en Chile
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/apropiacion-indebida-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                apropiación indebida
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/orden-de-alejamiento-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                orden de alejamiento
                             </Link>.
                         </p>
                     </div>
@@ -516,7 +531,12 @@ const BlogArticle = () => {
                             La violación de morada protege uno de los derechos fundamentales de toda persona: la inviolabilidad del hogar. Esta guía describe las reglas generales del delito y los pasos iniciales para víctimas e imputados.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es si en el caso concreto existía o no autorización, si el ingreso fue realmente contra la voluntad del ocupante y qué pruebas existen para acreditarlo. Esa respuesta depende de los antecedentes específicos. Si quieres revisar tu situación, puedes consultar con un{" "}
+                            La pregunta que queda abierta es si en el caso concreto existía o no autorización, si el ingreso fue realmente contra la voluntad del ocupante y qué pruebas existen para acreditarlo. Esa respuesta depende de los antecedentes específicos. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/estafa-chile-2026" className="text-green-700 underline hover:text-green-500">Estafa en Chile: tipos, penas y cómo denunciar</Link>
+                            ,{" "}
+                            <Link to="/blog/constancia-por-amenazas-chile-2026" className="text-green-700 underline hover:text-green-500">Constancia por amenazas en Chile: guía legal</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/receptacion-en-chile-2026" className="text-green-700 underline hover:text-green-500">receptación en Chile</Link>. Si quieres revisar tu situación, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
@@ -560,6 +580,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="violacion-morada" />
         </div>
     );
 };

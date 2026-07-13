@@ -10,6 +10,7 @@ import { ReadTime } from "@/components/blog/ReadTime";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
   const faqs = [
@@ -440,6 +441,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
+      <BlogConversionPopup category="Derecho Civil" topic="me-subieron-el-arriendo-que-hago-2026.tsx" />
     </div>
   );
 };

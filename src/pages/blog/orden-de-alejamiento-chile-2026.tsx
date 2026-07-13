@@ -18,6 +18,7 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
+import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
     const faqs = [
@@ -143,13 +144,34 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 lesiones leves
-                            </Link>{" "}
-                            y{" "}
+                            </Link>
+                            ,{" "}
                             <Link
                                 to="/blog/apropiacion-indebida-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 apropiación indebida
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/constancia-por-amenazas-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                constancia por amenazas
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/violacion-de-morada-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                violación de morada
+                            </Link>{" "}
+                            y{" "}
+                            <Link
+                                to="/blog/control-de-detencion-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                control de detención
                             </Link>.
                         </p>
                     </div>
@@ -499,7 +521,12 @@ const BlogArticle = () => {
                             La orden de alejamiento es una de las principales herramientas de protección en el sistema judicial chileno. Esta guía describe los tipos de órdenes, cómo solicitarlas y las consecuencias de incumplirlas.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
-                            La pregunta que queda abierta es si en el caso concreto existen antecedentes suficientes para que el tribunal conceda o mantenga la medida — y esa respuesta depende de las pruebas que cada parte presente. Si quieres revisar tu situación, puedes consultar con un{" "}
+                            La pregunta que queda abierta es si en el caso concreto existen antecedentes suficientes para que el tribunal conceda o mantenga la medida — y esa respuesta depende de las pruebas que cada parte presente. Si quieres profundizar, revisa también nuestras guías sobre{" "}
+                            <Link to="/blog/estafa-chile-2026" className="text-green-700 underline hover:text-green-500">Estafa en Chile: tipos, penas y cómo denunciar</Link>
+                            ,{" "}
+                            <Link to="/blog/hurto-chile-2026" className="text-green-700 underline hover:text-green-500">Hurto en Chile: diferencias con el robo y penas</Link>{" "}
+                            y{" "}
+                            <Link to="/blog/robo-chile-2026" className="text-green-700 underline hover:text-green-500">robo en Chile</Link>. Si quieres revisar tu situación, puedes consultar con un{" "}
                             <Link to="/abogados-penales" className="text-green-700 underline hover:text-green-500">abogado penalista en Chile</Link>.
                         </p>
                     </div>
@@ -543,6 +570,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
+        <BlogConversionPopup category="Derecho Penal" topic="orden-alejamiento" />
         </div>
     );
 };
