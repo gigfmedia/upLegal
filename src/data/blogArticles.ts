@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "ley-karin-chile-2026",
+    title: "Ley Karin en Chile 2026: qué es, cómo funciona y cuáles son tus derechos",
+    excerpt: "Conoce qué establece la Ley Karin en Chile, cómo denunciar acoso laboral, acoso sexual o violencia en el trabajo, cuáles son las obligaciones del empleador y qué hacer para proteger tus derechos.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "13 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/ley-karin-chile-2026.png"
+  },
+  {
     id: "acoso-laboral-chile-2026",
     title: "Acoso laboral en Chile 2026: qué es, cómo denunciar y cuáles son tus derechos",
     excerpt: "Conoce qué es el acoso laboral en Chile, cuándo constituye una infracción, cómo denunciar, qué pruebas sirven, cuáles son tus derechos y qué hacer si eres víctima de hostigamiento en el trabajo.",
