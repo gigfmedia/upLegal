@@ -61,7 +61,7 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
       
       const timeElapsedSecs = (Date.now() - startTime) / 1000;
 
-      if (scrollPercentage > 70 || (timeElapsedSecs > 45 && scrollPercentage > 40)) {
+      if (scrollPercentage > 50 || (timeElapsedSecs > 35 && scrollPercentage > 30)) {
         triggerPhase();
         window.removeEventListener('scroll', handleScroll);
       }
