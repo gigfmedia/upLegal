@@ -84,7 +84,6 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-
           <p className="text-xl max-w-3xl leading-relaxed">
             Ser despedido del trabajo es una situación difícil. Pero cuando el despido ocurre sin una causa válida o sin respetar la ley, se trata de un despido injustificado, y tienes derecho a reclamar.
           </p>
@@ -107,7 +106,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
@@ -149,6 +148,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, el empleador debe basarse en causales establecidas en el Código del Trabajo. Si no lo hace, o no puede demostrarlo, el despido puede ser declarado injustificado por un tribunal.
             </p>
+
+            <InArticleCTA category="Derecho Laboral" />
 
             <div className="text-center py-6 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
@@ -337,10 +338,7 @@ const BlogArticle = () => {
               </Link>
             </div>
 
-            <InArticleCTA
-              message="¿Quieres saber cuánto te corresponde exactamente? Un abogado puede calcularlo contigo."
-              category="Derecho Laboral"
-            />
+
 
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -494,10 +492,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <InArticleCTA
-              message="Cada día cuenta. Un abogado puede evaluar si aún estás dentro del plazo."
-              category="Derecho Laboral"
-            />
+
           </div>
 
           {/* COMPLEJIDAD 3: ACTUAR A TIEMPO VS DEJAR PASAR */}
@@ -613,7 +608,11 @@ const BlogArticle = () => {
           </div>
 
           {/* CONCLUSION */}
+
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse. Muchos empleadores invocan causales sin respaldo suficiente o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales, incluyendo recargos de hasta 100%.
@@ -625,10 +624,10 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="laboral" topic="despido" />
 
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -643,7 +642,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

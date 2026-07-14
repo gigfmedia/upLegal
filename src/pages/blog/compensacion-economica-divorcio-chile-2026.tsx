@@ -143,7 +143,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Compensación económica en el divorcio en Chile 2026"
@@ -186,6 +186,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             No se trata de una indemnización por sufrimiento emocional. Tampoco es un castigo para quien solicita el divorcio. Su finalidad es equilibrar el impacto económico que pudo generar la distribución de roles dentro del matrimonio.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -471,7 +474,11 @@ const BlogArticle = () => {
                     />
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La compensación económica es uno de los derechos más importantes que pueden surgir durante un proceso de divorcio en Chile. Su objetivo es corregir el desequilibrio económico cuando una persona sacrificó parte de su desarrollo laboral o profesional en beneficio de la familia.
@@ -497,6 +504,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" topic="divorcio" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre compensación económica en Chile</h2>
                         <div className="space-y-4">
@@ -511,7 +519,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

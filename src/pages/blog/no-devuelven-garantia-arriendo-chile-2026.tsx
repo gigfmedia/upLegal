@@ -118,7 +118,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)"
@@ -149,6 +149,9 @@ const BlogArticle = () => {
               La garantía de arriendo es un monto que el arrendatario entrega al inicio del contrato como respaldo frente a posibles incumplimientos. Generalmente equivale a uno o dos meses de arriendo.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-medium">Su objetivo es cubrir:</p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <div className="space-y-3 mb-6">
               {[
                 "Daños a la propiedad",
@@ -281,11 +284,7 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          <InArticleCTA
-            message="¿El arrendador no te devuelve la garantía? Un abogado puede orientarte sobre cómo recuperar tu dinero."
-            buttonText="Hablar con abogado ahora"
-            category="Derecho Arriendo"
-          />
+
 
           {/* Qué hacer */}
           <div className="mb-12">
@@ -546,7 +545,6 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">La devolución de la garantía parece un trámite sencillo, pero hay situaciones donde el arrendador puede aprovecharse si no actúas con asesoría legal.</p>
@@ -561,7 +559,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               La garantía de arriendo no es un pago perdido — es tu dinero, y la ley chilena te da herramientas concretas para recuperarlo.
@@ -582,9 +583,9 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre la devolución de la garantía de arriendo</h2>
             <div className="space-y-4">
@@ -599,7 +600,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

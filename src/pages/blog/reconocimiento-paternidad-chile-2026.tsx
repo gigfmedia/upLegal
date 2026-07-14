@@ -130,7 +130,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Reconocimiento de paternidad en Chile 2026"
@@ -167,10 +167,13 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Como consecuencia, nacen diversos derechos y obligaciones:
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <div className="grid sm:grid-cols-2 gap-2">
                             {["Derecho a alimentos", "Derechos hereditarios", "Derechos de identidad", "Relación directa y regular", "Derechos sucesorios", "Obligaciones parentales"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-                                   <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
                                 </div>
                             ))}
@@ -324,12 +327,8 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">La extensión de estos derechos puede generar conflictos prácticos relevantes. Por ejemplo, si el padre tiene otros hijos previamente reconocidos, la irrupción de un nuevo hijo puede alterar las cuotas hereditarias o la distribución de la pensión de alimentos. La determinación de la filiación no solo afecta la relación entre padre e hijo, sino que puede repercutir en derechos de terceros que ya tenían un vínculo jurídico consolidado.</p>
                     </div>
-                    
-                    <InArticleCTA
-                        message="¿Necesitas iniciar una demanda de paternidad? Un abogado especializado en derecho de familia puede ayudarte a reunir pruebas y representarte ante el Tribunal de Familia."
-                        buttonText="Ver abogados especializados en familia"
-                        category="Derecho de Familia"
-                    />
+
+
 
                     {/* RECLAMACIÓN DE PATERNIDAD SI EL HIJO ES ADULTO */}
                     <div className="mb-12">
@@ -388,7 +387,7 @@ const BlogArticle = () => {
                             El reconocimiento busca establecer una filiación. La impugnación de paternidad busca cuestionar una filiación ya existente. Aunque ambas materias se relacionan, corresponden a procedimientos distintos. De hecho, la impugnación de paternidad será el siguiente tema dentro de nuestro cluster de Derecho de Familia.
                         </p>
                     </div>
-                            
+
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -452,7 +451,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El reconocimiento de paternidad es mucho más que un trámite administrativo. Se trata de un procedimiento fundamental para garantizar derechos esenciales relacionados con identidad, alimentos, herencia y relaciones familiares — derechos que existen independientemente de si el padre quiere reconocerlos o no.
@@ -475,6 +478,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre reconocimiento de paternidad en Chile</h2>
                         <div className="space-y-4">
@@ -489,7 +493,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

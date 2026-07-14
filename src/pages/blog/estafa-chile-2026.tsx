@@ -26,42 +26,42 @@ const BlogArticle = () => {
         {
             question: "¿Dónde denunciar una estafa en Chile?",
             answer:
-            "Puedes denunciar ante Carabineros (133), la Policía de Investigaciones (PDI) o directamente en la Fiscalía. Si la estafa ocurrió por internet, la PDI tiene una unidad especializada en cibercrimen (BRICEF) que investiga este tipo de delitos. Lo más importante es denunciar lo antes posible y llevar toda la evidencia disponible.",
+                "Puedes denunciar ante Carabineros (133), la Policía de Investigaciones (PDI) o directamente en la Fiscalía. Si la estafa ocurrió por internet, la PDI tiene una unidad especializada en cibercrimen (BRICEF) que investiga este tipo de delitos. Lo más importante es denunciar lo antes posible y llevar toda la evidencia disponible.",
         },
         {
             question: "¿Qué hago si me estafaron por internet en Chile?",
             answer:
-            "Lo primero es guardar toda la evidencia: capturas de pantalla de las conversaciones, comprobantes de transferencia, correos, perfiles de redes sociales y cualquier dato del estafador. No borres nada. Luego presenta la denuncia en la PDI o Fiscalía. Mientras más rápido actúes, mayores son las posibilidades de rastrear al responsable.",
+                "Lo primero es guardar toda la evidencia: capturas de pantalla de las conversaciones, comprobantes de transferencia, correos, perfiles de redes sociales y cualquier dato del estafador. No borres nada. Luego presenta la denuncia en la PDI o Fiscalía. Mientras más rápido actúes, mayores son las posibilidades de rastrear al responsable.",
         },
         {
             question: "¿Las capturas de pantalla sirven como prueba de estafa?",
             answer:
-            "Sí. Las capturas de pantalla, correos, mensajes de WhatsApp y registros de transferencias pueden transformarse en antecedentes relevantes para la investigación. Es importante no editarlas ni recortarlas — presentarlas en su forma original y, si es posible, acompañadas del dispositivo donde fueron tomadas.",
+                "Sí. Las capturas de pantalla, correos, mensajes de WhatsApp y registros de transferencias pueden transformarse en antecedentes relevantes para la investigación. Es importante no editarlas ni recortarlas — presentarlas en su forma original y, si es posible, acompañadas del dispositivo donde fueron tomadas.",
         },
         {
             question: "¿Puedo recuperar el dinero perdido en una estafa?",
             answer:
-            "Depende de las circunstancias del caso. Si se identifica al responsable y existe una condena, el tribunal puede ordenar la restitución del dinero. En estafas bancarias o de tarjeta, también es posible reclamar al banco según las circunstancias. En estafas por redes sociales o marketplace, la recuperación es más difícil si el estafador no es identificado.",
+                "Depende de las circunstancias del caso. Si se identifica al responsable y existe una condena, el tribunal puede ordenar la restitución del dinero. En estafas bancarias o de tarjeta, también es posible reclamar al banco según las circunstancias. En estafas por redes sociales o marketplace, la recuperación es más difícil si el estafador no es identificado.",
         },
         {
             question: "¿Necesito abogado para denunciar una estafa?",
             answer:
-            "No es obligatorio para presentar la denuncia inicial — puedes hacerla directamente en Carabineros, PDI o Fiscalía. Sin embargo, si el monto es significativo, si quieres ejercer acciones civiles para recuperar el dinero, o si el caso es complejo, contar con un abogado penalista puede mejorar significativamente el resultado.",
+                "No es obligatorio para presentar la denuncia inicial — puedes hacerla directamente en Carabineros, PDI o Fiscalía. Sin embargo, si el monto es significativo, si quieres ejercer acciones civiles para recuperar el dinero, o si el caso es complejo, contar con un abogado penalista puede mejorar significativamente el resultado.",
         },
         {
             question: "¿Cuánto demora una investigación por estafa en Chile?",
             answer:
-            "No existe un plazo único — depende de la complejidad del caso, la carga de la Fiscalía y las diligencias necesarias para identificar al responsable. Casos simples con evidencia clara pueden resolverse en meses. Casos complejos con múltiples víctimas o imputados pueden tomar años. La rapidez con que se denuncia influye directamente en el resultado.",
+                "No existe un plazo único — depende de la complejidad del caso, la carga de la Fiscalía y las diligencias necesarias para identificar al responsable. Casos simples con evidencia clara pueden resolverse en meses. Casos complejos con múltiples víctimas o imputados pueden tomar años. La rapidez con que se denuncia influye directamente en el resultado.",
         },
         {
             question: "¿Una transferencia voluntaria impide denunciar por estafa?",
             answer:
-            "No. Muchas estafas se concretan precisamente mediante transferencias realizadas por la propia víctima bajo engaño. El elemento clave no es si la transferencia fue voluntaria, sino si existió un engaño que indujo a realizarla. El cuento del tío, las estafas de marketplace y el phishing bancario funcionan exactamente así.",
+                "No. Muchas estafas se concretan precisamente mediante transferencias realizadas por la propia víctima bajo engaño. El elemento clave no es si la transferencia fue voluntaria, sino si existió un engaño que indujo a realizarla. El cuento del tío, las estafas de marketplace y el phishing bancario funcionan exactamente así.",
         },
         {
             question: "¿Qué diferencia existe entre estafa e incumplimiento contractual?",
             answer:
-            "La estafa requiere la existencia de un engaño deliberado desde el inicio, destinado a provocar un perjuicio económico. El incumplimiento contractual ocurre cuando alguien no cumple lo pactado, pero sin necesariamente haber actuado con dolo desde el principio. La diferencia es relevante porque la estafa es un delito penal, mientras que el incumplimiento se persigue por la vía civil.",
+                "La estafa requiere la existencia de un engaño deliberado desde el inicio, destinado a provocar un perjuicio económico. El incumplimiento contractual ocurre cuando alguien no cumple lo pactado, pero sin necesariamente haber actuado con dolo desde el principio. La diferencia es relevante porque la estafa es un delito penal, mientras que el incumplimiento se persigue por la vía civil.",
         },
     ];
 
@@ -77,7 +77,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -137,7 +137,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Estafa en Chile 2026"
@@ -175,6 +175,9 @@ const BlogArticle = () => {
                             La estafa es un delito patrimonial que ocurre cuando una persona utiliza engaños o maniobras fraudulentas para inducir a otra persona a realizar una disposición patrimonial que le genera un perjuicio económico.
                         </p>
                         <p className="text-gray-600">En términos simples, existe una estafa cuando alguien engaña a otra persona para obtener dinero, bienes o beneficios económicos. Lo importante no es solamente la pérdida económica, sino la existencia de un engaño previo que provoca el perjuicio.</p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La definición anterior describe la estafa en abstracto. Acreditarla en un caso concreto exige demostrar no solo que existió una pérdida, sino que hubo una intención fraudulenta desde el origen. Esa diferencia —entre un negocio que salió mal y un engaño planificado— es la que la Fiscalía debe probar con los antecedentes de cada investigación.
@@ -405,11 +408,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Especialmente cuando los montos involucrados son significativos.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="Si descubriste que te estafaron, las primeras horas definen si la Fiscalía puede rastrear las cuentas. No esperes a reunir todos los antecedentes."
-                        buttonText="Ver abogados penalistas disponibles"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* ERRORES FRECUENTES */}
                     <div className="mb-12">
@@ -483,7 +482,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Las estafas continúan aumentando en Chile y afectan a personas de todas las edades. Esta guía describe las reglas generales del delito y los pasos iniciales para denunciar.
@@ -504,6 +507,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre estafas en Chile</h2>
                         <div className="space-y-4">
@@ -518,7 +522,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -540,7 +544,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="estafa" />
+            <BlogConversionPopup category="Derecho Penal" topic="estafa" />
         </div>
     );
 };

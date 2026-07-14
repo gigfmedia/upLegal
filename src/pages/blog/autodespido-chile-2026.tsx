@@ -110,7 +110,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare title={title} url={url} showBorder={false} />
 
@@ -132,6 +132,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               En vez de renunciar, el trabajador comunica que el empleador incumplió sus obligaciones legales o contractuales y luego demanda para exigir indemnizaciones. En términos simples:
             </p>
+
+            <InArticleCTA category="Derecho Laboral" />
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
               <p className="font-bold text-blue-900 flex items-center gap-2">
@@ -189,11 +191,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Tu empleador no paga tus cotizaciones o sueldo? Asesórate antes de renunciar y asegura tu indemnización."
-            buttonText="Hablar con un abogado laboral"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Qué diferencia hay entre renuncia y autodespido?</h2>
@@ -458,7 +456,11 @@ const BlogArticle = () => {
           </div>
 
           {/* CONCLUSION */}
+
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               El autodespido en Chile existe precisamente para proteger a trabajadores frente a incumplimientos graves del empleador. No se trata de renunciar y perder todo — es una herramienta legal que te permite terminar la relación laboral y exigir las mismas indemnizaciones que corresponderían a un despido injustificado, más recargos. La diferencia entre una renuncia común y un autodespido bien ejecutado puede ser de varios millones de pesos.
@@ -483,10 +485,10 @@ const BlogArticle = () => {
             </Link>
           </div> */}
 
-
           <CategoryCTA category="laboral" topic="despido" />
 
           {/* FAQs */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -501,7 +503,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

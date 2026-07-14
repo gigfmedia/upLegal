@@ -131,7 +131,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Pensión de alimentos para hijos mayores de 18 años en Chile 2026"
@@ -157,6 +157,9 @@ const BlogArticle = () => {
                         </p>
                         <div className="bg-red-50 p-5 rounded-xl">
                             <p className="font-bold text-red-800">Advertencia</p>
+
+                            <InArticleCTA category="Derecho de Familia" />
+
                             <p className="text-red-700">Dejar de pagar únicamente porque el hijo cumplió 18 años puede transformarse en un problema importante y generar deuda de alimentos.</p>
                         </div>
                         <p className="text-gray-600 mt-4">Para que proceda la extensión de la pensión más allá de los 18 años, el hijo debe carecer de medios para subsistir por sí mismo. Este concepto es más amplio que el simple desempleo: un hijo que trabaja puede seguir necesitando alimentos si sus ingresos son insuficientes para cubrir todas sus necesidades. La jurisprudencia ha interpretado que debe tratarse de una autosuficiencia real, no meramente formal, valorando cada caso según las circunstancias.</p>
@@ -246,11 +249,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Cuando el hijo cambia de carrera o se demora más del tiempo habitual de titulación, el tribunal no aplica una regla automática. Se evalúa si existe un plan de estudios coherente, si ha habido cambios injustificados o si la demora responde a circunstancias objetivas como problemas de salud o falta de cupos. En casos de abandono reiterado, puede proceder el cese, pero cada periodo debe analizarse por separado, no siendo válido suspender pagos por un cambio que aisladamente podría considerarse razonable.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas ayuda con una pensión de alimentos para hijo mayor de edad? Un abogado especializado puede asesorarte sobre el cese, rebaja o continuidad de la obligación."
-                        buttonText="Abogados especializados en alimentos"
-                        category="Derecho de Familia"
-                    />
+
 
                     {/* PENSIÓN TERMINA AUTOMÁTICAMENTE? */}
                     <div className="mb-12">
@@ -406,7 +405,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La pensión de alimentos no termina automáticamente cuando un hijo cumple 18 años. Dependiendo de las circunstancias — especialmente cuando existen estudios superiores en curso — la obligación puede mantenerse hasta los 21 o los 28 años, y en situaciones excepcionales incluso más allá.
@@ -429,6 +432,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre pensión de alimentos para hijos mayores de 18 años</h2>
                         <div className="space-y-4">
@@ -443,7 +447,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

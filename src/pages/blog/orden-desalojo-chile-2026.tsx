@@ -58,7 +58,7 @@ const BlogArticle = () => {
         dateModified="2026-03-20"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero Section */}
@@ -116,7 +116,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)"
@@ -155,6 +155,9 @@ const BlogArticle = () => {
               Una orden de desalojo en Chile es una <strong>resolución judicial dictada por un tribunal</strong> que obliga al arrendatario a abandonar un inmueble.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esta orden:</p>
+
+            <InArticleCTA category="Arrendamiento" />
+
             <div className="space-y-3 mb-6">
               {[
                 { text: "No es inmediata", icon: <XCircle className="h-5 w-5 text-red-500" /> },
@@ -167,7 +170,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            
+
             <div className="bg-indigo-50 border-l-4 border-indigo-600 p-5 rounded-r-lg">
               <p className="text-indigo-900 leading-relaxed">
                 Es importante entender que la orden de desalojo es el <strong>resultado de un proceso judicial previo</strong>, no una decisión unilateral.
@@ -304,11 +307,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-              message="¿Recibiste una orden de desalojo o estás por obtenerla? Un abogado especializado puede evaluar tus opciones legales."
-              buttonText="Ver abogados de arriendo"
-              category="Derecho Civil"
-            />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia entre orden de desalojo y lanzamiento</h2>
@@ -544,7 +543,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Arrendamiento" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               La orden de desalojo en Chile es una de las etapas más serias dentro de un conflicto de arriendo. Una vez que el tribunal la dicta, el proceso puede avanzar hasta el lanzamiento forzado del ocupante con auxilio de la fuerza pública. Por eso, ignorar una demanda o esperar “a ver qué pasa” suele empeorar rápidamente la situación.
@@ -566,8 +568,8 @@ const BlogArticle = () => {
           </div> */}
           <CategoryCTA category="arriendo" topic="arriendo" />
 
-
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -582,7 +584,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Arrendamiento" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

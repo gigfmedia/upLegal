@@ -158,6 +158,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Cuando un contrato de arriendo incluye una cláusula de reajuste por IPC, significa que el valor mensual se ajusta periódicamente según la inflación acumulada del período. Esto protege al arrendador de que el valor real del arriendo se erosione con el tiempo, y al arrendatario le da certeza de que el aumento no es arbitrario — está anclado a un índice oficial.
             </p>
+
+          <InArticleCTA category="Derecho Civil" />
+
           </div>
 
           <div className="mb-12">
@@ -413,11 +416,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Te subieron el arriendo y no sabes si el cálculo es correcto? Un abogado puede revisar tu contrato y decirte si el reajuste corresponde."
-            buttonText="Revisar mi reajuste con un abogado"
-            category="Derecho Civil"
-          />
+          
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Errores comunes al aplicar el reajuste</h2>
@@ -599,7 +598,6 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">El reajuste de arriendo por IPC parece un cálculo sencillo, pero hay situaciones donde conviene tener asesoría legal especializada antes de que el problema escale.</p>
@@ -623,7 +621,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               El reajuste de arriendo según IPC es un mecanismo legítimo y común en Chile, pero para que sea válido debe cumplir tres condiciones: estar establecido en el contrato, calcularse con el IPC oficial del período correcto según el INE, y aplicarse en la fecha que corresponde. Si falla cualquiera de esas tres condiciones, el aumento puede ser cuestionado.
@@ -636,9 +637,9 @@ const BlogArticle = () => {
           
           <CategoryCTA category="arriendo" topic="arriendo" />
 
-
           {/* FAQ */}
-          <div className="mb-6 pt-6" data-faq-section>
+
+      <div className="mb-6 pt-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
@@ -652,7 +653,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+      
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">

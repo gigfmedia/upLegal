@@ -108,7 +108,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)"
@@ -146,6 +146,9 @@ const BlogArticle = () => {
               La tácita reconducción ocurre cuando un contrato de arriendo termina, pero ambas partes continúan la relación como si nada hubiera cambiado.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-bold">Es decir:</p>
+
+            <InArticleCTA category="Arrendamiento" />
+
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
                 "El arrendatario sigue ocupando la propiedad",
@@ -261,10 +264,7 @@ const BlogArticle = () => {
                 </p>
               </div>
             </div>
-            <InArticleCTA
-              message="¿Estás en esta situación y necesitas ayuda con tu arriendo?"
-              category="Derecho Inmobiliario"
-            />
+
           </div>
 
           <div className="mb-12">
@@ -552,10 +552,7 @@ const BlogArticle = () => {
               ))}
             </div>
 
-            {/* <InArticleCTA 
-              message="¿Necesitas regularizar tu situación de arriendo con asesoría legal?" 
-              category="Derecho Inmobiliario"
-            /> */}
+
           </div>
 
           {/* ¿Cuándo consultar abogado? */}
@@ -585,7 +582,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Arrendamiento" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               La tácita reconducción es una situación muy común en Chile, especialmente cuando el contrato de arriendo termina y ninguna de las partes toma acciones formales. Aunque en la práctica permite que el arriendo continúe sin interrupciones, también genera un escenario de mayor incertidumbre jurídica.
@@ -595,9 +595,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -612,7 +612,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Arrendamiento" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

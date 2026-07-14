@@ -58,9 +58,9 @@ const BlogArticle = () => {
         dateModified="2026-03-26"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -71,11 +71,11 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
             ¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)
           </h1>
-          
+
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
               Resumen rápido
@@ -100,7 +100,7 @@ const BlogArticle = () => {
           <p className="text-xl max-w-3xl leading-relaxed">
             Sí. Aunque no exista contrato escrito, sí pueden desalojarte mediante un procedimiento judicial dependiendo del caso. Arrendar sin contrato escrito es mucho más común de lo que parece en Chile. Muchas personas viven en una propiedad con acuerdos verbales, sin firmar ningún documento formal. Pero cuando surgen problemas, ¿qué pasa legalmente?
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -119,14 +119,14 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)" 
-            url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" 
+          <BlogShare
+            title="¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)"
+            url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"
             showBorder={false}
           />
-          
+
           {/* Introduction */}
           <div className="prose prose-lg max-w-none mb-12">
             <p className="text-lg text-gray-600 leading-relaxed font-medium">
@@ -160,11 +160,14 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, un arriendo no necesita estar por escrito para ser válido. Esto significa que un acuerdo verbal entre arrendador y arrendatario sí tiene valor legal. Este tipo de acuerdo se conoce como:
             </p>
+
+            <InArticleCTA category="Arrendamiento" />
+
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-2">Contrato verbal o tácito</h3>
               <p className="text-gray-700 leading-relaxed font-medium">Aunque legalmente tiene validez, recuerda que en caso de conflicto es mucho más difícil de probar ante un tribunal.</p>
             </div>
-            
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900 mt-8">¿Qué implica no tener contrato escrito?</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No tener contrato genera incertidumbre en aspectos clave:
@@ -206,7 +209,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Aunque no exista contrato escrito, el arrendatario sigue teniendo derechos:
             </p>
-            
+
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-bold mb-3 text-gray-900">1. Derecho a no ser desalojado arbitrariamente</h3>
@@ -271,7 +274,7 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            
+
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
                 <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo judicial</h3>
@@ -283,16 +286,13 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <InArticleCTA 
-              message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
-              category="Derecho Inmobiliario"
-            />
+
           </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puede hacer el arrendador si no hay contrato?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">El dueño igual tiene herramientas legales.</p>
-            
+
             <div className="grid sm:grid-cols-1 gap-6 mb-8">
               {[
                 { title: "1. Poner término al arriendo", desc: "Al no haber plazo fijo, generalmente se considera un arriendo indefinido. El arrendador puede: Solicitar la restitución del inmueble o dar aviso previo." },
@@ -425,7 +425,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Riesgos y Soluciones</h2>
-            
+
             <h3 className="text-xl font-bold mb-4 text-gray-900">Riesgos de arrendar sin contrato</h3>
             <p className="text-gray-600 mb-4 leading-relaxed">Estos son los principales problemas:</p>
             <div className="grid sm:grid-cols-2 gap-3 mb-8">
@@ -488,7 +488,7 @@ const BlogArticle = () => {
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
                   <div className="bg-gray-900 p-2 rounded-lg text-white w-7 h-7 flex items-center justify-center flex-shrink-0 font-normal text-sm">
-                    {i+1}
+                    {i + 1}
                   </div>
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
@@ -538,7 +538,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Arrendamiento" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed text-base">
               Arrendar sin contrato en Chile es legal, pero riesgoso para ambas partes. El acuerdo verbal tiene validez jurídica, pero la falta de un documento escrito genera incertidumbre sobre las condiciones pactadas y debilita la posición de ambas partes si hay conflicto.
@@ -554,9 +557,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -571,20 +574,20 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Arrendamiento" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)" 
-            url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" 
+          <BlogShare
+            title="¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)"
+            url="https://legalup.cl/blog/que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026"
           />
         </div>
         <BlogNavigation currentArticleId="que-pasa-si-no-tengo-contrato-de-arriendo-chile-2026" />
 
         <div className="mt-8 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 font-medium transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -592,7 +595,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      
+
       <BlogConversionPopup category="Derecho Inmobiliario" topic="sin-contrato" />
     </div>
   );

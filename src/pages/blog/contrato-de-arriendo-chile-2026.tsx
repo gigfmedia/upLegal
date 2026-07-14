@@ -116,7 +116,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Contrato de arriendo en Chile: modelo, cláusulas clave y errores que debes evitar (Guía 2026)"
@@ -145,6 +145,9 @@ const BlogArticle = () => {
             </p>
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg leading-relaxed mb-4">Base legal del arriendo</p>
+
+              <InArticleCTA category="Derecho Civil" />
+
               <p className="text-gray-700 leading-relaxed font-medium">
                 En Chile, un contrato de arriendo debe incluir monto, duración, forma de pago, condiciones de uso y término del contrato. Este documento es la base de cualquier acción legal en caso de conflicto.
               </p>
@@ -295,11 +298,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Estás por firmar un contrato de arriendo y tienes dudas sobre alguna cláusula? Un abogado puede revisarlo antes de que lo hagas."
-            buttonText="Revisar mi contrato con un abogado"
-            category="Derecho Arrendamiento"
-          />
+
 
           {/* Qué debe incluir */}
           <div className="mb-12">
@@ -440,11 +439,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Encontraste un modelo de contrato y no estás seguro si te protege bien? Un abogado puede revisarlo y adaptarlo a tu caso."
-            buttonText="Revisar mi contrato"
-            category="Derecho Arrendamiento"
-          />
+
 
           {/* Cláusulas abusivas */}
           <div className="mb-12">
@@ -676,7 +671,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               El contrato de arriendo es el documento más importante en cualquier relación de arriendo en Chile. No es solo un trámite: es la base que define tus derechos, tus obligaciones y cómo se resolverán los conflictos.
@@ -686,9 +684,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre el contrato de arriendo en Chile</h2>
             <div className="space-y-4">
@@ -703,7 +701,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

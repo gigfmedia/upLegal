@@ -113,7 +113,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
@@ -144,6 +144,8 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.
             </p>
+
+            <InArticleCTA category="Arrendamiento" />
 
             <div className="space-y-6">
               <div>
@@ -236,11 +238,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="Si te están presionando para que salgas o crees que el proceso no está siguiendo la ley, un abogado puede orientarte hoy mismo."
-            buttonText="Quiero saber mis derechos"
-            category="Derecho Arrendamiento"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuándo SÍ pueden desalojarte legalmente</h2>
@@ -376,7 +374,10 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+          <RelatedLawyers category="Arrendamiento" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, nadie puede ser desalojado de una propiedad sin una orden judicial. Aunque el dueño tenga motivos válidos para recuperar el inmueble, debe seguir el proceso legal establecido por la ley.
@@ -386,9 +387,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre desalojos</h2>
             <div className="space-y-4">
@@ -403,7 +404,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Arrendamiento" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

@@ -12,7 +12,6 @@ import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 
-
 const BlogArticle = () => {
   const faqs = [
     {
@@ -95,7 +94,6 @@ const BlogArticle = () => {
             Si te despidieron y sientes que no fue justo, es normal preguntarse: <strong>¿Cómo demandar por despido injustificado en Chile?</strong> La respuesta simple es que puedes demandar dentro de 60 días hábiles y exigir indemnización con la ayuda de un <Link to="/abogados-laborales" className="text-green-600 underline hover:text-green-400">abogado laboral en Chile</Link>.
           </p>
 
-
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -135,6 +133,9 @@ const BlogArticle = () => {
 
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
                 <p className="font-bold text-blue-900 mb-2">Ejemplo real:</p>
+
+          <InArticleCTA category="Derecho Laboral" />
+
                 <p className="text-blue-800 leading-relaxed">
                   Te despiden por “necesidades de la empresa”, pero la empresa sigue contratando, no hay reducción real y no pueden justificar la decisión. En ese caso, el despido puede ser declarado injustificado.
                 </p>
@@ -174,7 +175,6 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
-
 
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puedes ganar al demandar?</h2>
@@ -217,11 +217,7 @@ const BlogArticle = () => {
                   </div>
                 </div>
 
-                <InArticleCTA
-                  message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
-                  buttonText="Hablar con un abogado laboral"
-                  category="Derecho Laboral"
-                />
+                
 
                 <div className="text-center py-6 border-t border-b border-gray-100 mb-8">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Calcula tu indemnización</p>
@@ -365,11 +361,7 @@ const BlogArticle = () => {
               <p className="text-gray-600">Total estimado: <strong>3 a 8 meses</strong></p>
             </div>
 
-            <InArticleCTA
-              message="¿Te despidieron y crees que fue injusto? Evalúa tu caso ahora y calcula cuánto podrías recibir antes de que venza el plazo."
-              buttonText="Hablar con un abogado laboral"
-              category="Derecho Laboral"
-            />
+            
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede ganar sin juicio?</h2>
@@ -580,7 +572,10 @@ const BlogArticle = () => {
               </div>
             </div>
 
+            <RelatedLawyers category="Derecho Laboral" />
+
             <div className="mb-12 border-t border-gray-100 pt-12">
+
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
               <div className="prose prose-lg text-gray-600 leading-relaxed space-y-6">
                 <p>
@@ -595,8 +590,7 @@ const BlogArticle = () => {
             {/* CTA Section - Specific Category */}
             <CategoryCTA category="laboral" topic="despido" />
 
-
-            <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
+      <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
               <h2 className="text-2xl font-bold mb-8 text-gray-900">Preguntas frecuentes</h2>
               <div className="space-y-4">
                 {faqs.map((faq, i) => (
@@ -609,11 +603,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
         </div>
 
         <div className="w-full bg-gray-100/50">
-          <RelatedLawyers category="Derecho Laboral" />
+          
         </div>
 
         <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">

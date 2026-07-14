@@ -105,7 +105,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026"
@@ -156,6 +156,8 @@ const BlogArticle = () => {
                 IMPORTANTE: Ser imputado simplemente significa que existen antecedentes que justifican investigar si la persona tuvo participación en el delito. Durante esta etapa, gozas de la presunción de inocencia.
               </p>
             </div>
+
+            <InArticleCTA category="Derecho Penal" />
             <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
               <p className="text-amber-800 text-sm">
                 Lo anterior describe la situación jurídica general de un imputado. Sin embargo, el desarrollo concreto de una investigación depende de múltiples factores que la Fiscalía evalúa caso a caso: el tipo de delito, las pruebas disponibles, los antecedentes personales y las decisiones procesales que se adopten durante el procedimiento.
@@ -198,11 +200,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <InArticleCTA
-              message="¿Ya te citaron a declarar o recibiste una notificación de formalización? El momento más importante para contar con defensa penal es antes de prestar declaración, no después."
-              buttonText="Ver abogados penales"
-              category="Derecho Penal"
-            />
+
           </div>
 
           <div className="mb-12">
@@ -400,8 +398,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Derecho Penal" />
 
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               En el sistema penal chileno, enfrentar una acusación requiere conocimiento de tus derechos y rapidez en la defensa. No declarar sin asesoría y contar con un abogado especialista son las claves para proteger tu libertad y futuro.
@@ -421,8 +421,8 @@ const BlogArticle = () => {
           {/* CTA Section - Specific Category */}
           <CategoryCTA category="penal" topic="penal" />
 
-
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre Derecho Penal</h2>
             <div className="space-y-4">
@@ -436,10 +436,9 @@ const BlogArticle = () => {
           </div>
         </div>
 
-
       </div>
 
-      <RelatedLawyers category="Derecho Penal" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
@@ -461,7 +460,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-    <BlogConversionPopup category="Derecho Penal" topic="derecho-penal" />
+      <BlogConversionPopup category="Derecho Penal" topic="derecho-penal" />
     </div>
   );
 };

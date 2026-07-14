@@ -261,7 +261,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Cuidado personal de hijos en Chile: qué es, quién puede obtenerlo y cómo funciona (Guía 2026)"
@@ -294,6 +294,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               La persona que tiene el cuidado personal es quien vive habitualmente con el menor y se encarga de aspectos esenciales como:
             </p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
             <ul className="grid sm:grid-cols-2 gap-3 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
                 "Alimentación",
@@ -439,11 +442,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="my-8">
-            <InArticleCTA
-              message="¿Necesitas regularizar el cuidado personal o estás enfrentando un conflicto de tuición? Consúltanos para guiarte de forma experta en los Tribunales de Familia."
-              buttonText="Hablar con un especialista"
-              category="Derecho de Familia"
-            />
+
           </div>
 
           {/* ¿Qué evalúa el juez para decidir? */}
@@ -731,9 +730,11 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               El cuidado personal de hijos en Chile es una de las instituciones más importantes del Derecho de Familia.
@@ -765,6 +766,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="familia" />
 
           {/* FAQs Schema */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -779,7 +781,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

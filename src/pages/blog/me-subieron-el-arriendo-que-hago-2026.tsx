@@ -105,14 +105,14 @@ const BlogArticle = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-               <ReadTime slug="me-subieron-el-arriendo-que-hago-2026" />
+              <ReadTime slug="me-subieron-el-arriendo-que-hago-2026" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)"
@@ -143,6 +143,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 font-semibold text-lg">
               La respuesta corta es no.
             </p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <p className="text-gray-600 mb-6 leading-relaxed">
               En Chile, el valor del arriendo no puede modificarse arbitrariamente durante la vigencia del contrato. El precio solo puede aumentar si existe una cláusula específica en el contrato que indique cómo se realizará el reajuste.
             </p>
@@ -232,11 +235,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿No sabes si el aumento que te están cobrando es legal según tu contrato? Un abogado puede revisarlo y orientarte en 24 horas."
-            buttonText="Revisar si el aumento es legal"
-            category="Derecho Arrendamiento"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo NO es legal subir el arriendo?</h2>
@@ -389,7 +388,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               El aumento del arriendo en Chile está regulado principalmente por el contrato. Esta guía describe las reglas generales sobre cuándo un reajuste es válido y qué hacer si no lo es.El aumento del arriendo en Chile está regulado principalmente por el contrato — no por la voluntad unilateral del arrendador. Si el contrato no tiene cláusula de reajuste, el precio no puede modificarse durante su vigencia sin acuerdo de ambas partes. Si la tiene, el aumento debe calcularse exactamente como lo establece el contrato, usando el IPC oficial del período correcto.
@@ -403,13 +405,13 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               Si el conflicto persiste o el arrendador amenaza con desalojo por no pagar el aumento, ese es el momento de buscar asesoría legal. Un {" "}
               <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">
-              abogado de arriendo</Link> puede revisar tu contrato y decirte exactamente qué corresponde según tu situación específica.
+                abogado de arriendo</Link> puede revisar tu contrato y decirte exactamente qué corresponde según tu situación específica.
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre el aumento del arriendo</h2>
             <div className="space-y-4">
@@ -424,7 +426,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

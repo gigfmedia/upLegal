@@ -203,7 +203,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)"
@@ -226,12 +226,12 @@ const BlogArticle = () => {
               En esta guía 2026 te explicamos cuándo se puede pedir aumento de pensión de alimentos, qué debe probarse, cómo funciona el proceso y qué factores considera el juez.
             </p>
             <p className="text-gray-600 leading-relaxed">
-  Si ya tienes claro que necesitas actuar, puedes{" "}
-  <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
-    consultar con un abogado especialista en pensión de alimentos
-  </Link>{" "}
-  directamente online para evaluar tu caso.
-</p>
+              Si ya tienes claro que necesitas actuar, puedes{" "}
+              <Link to="/abogado-pension-alimentos" className="text-green-700 underline hover:text-green-600">
+                consultar con un abogado especialista en pensión de alimentos
+              </Link>{" "}
+              directamente online para evaluar tu caso.
+            </p>
           </div>
 
           {/* Qué es un aumento */}
@@ -256,6 +256,9 @@ const BlogArticle = () => {
             <p className="text-green-800 leading-relaxed text-sm border-l-4 border-green-500 bg-green-50 p-4 mb-12">
               El aumento de pensión se funda en el principio de proporcionalidad y en la obligación legal de adecuar el monto a las necesidades reales y actuales del alimentario. La doctrina de los tribunales de familia chilenos exige que el cambio de circunstancias sea relevante y permanente, no meramente transitorio. Un aumento temporal de ingresos o un gasto extraordinario aislado no constituyen causal suficiente para modificar la pensión.
             </p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
           </div>
 
           {/* Cuándo se puede pedir */}
@@ -309,11 +312,7 @@ const BlogArticle = () => {
           <AumentoSimulator />
 
           <div className="mb-12">
-            <InArticleCTA
-              message="¿Las necesidades de tu hijo aumentaron y la pensión actual ya no alcanza? Un abogado de familia puede evaluar tu caso y orientarte en el proceso de aumento."
-              buttonText="Consultar sobre aumento de pensión"
-              category="Derecho Familia"
-            />
+
           </div>
 
           {/* Qué revisa el juez */}
@@ -568,11 +567,7 @@ const BlogArticle = () => {
           </div>
 
           {/* InArticle CTA */}
-          <InArticleCTA
-            message="¿La mediación se frustró o necesitas preparar la demanda de aumento con pruebas sólidas? Consulta con un abogado especialista de LegalUp."
-            buttonText="Obtén asesoría legal ahora"
-            category="Derecho de Familia"
-          />
+
 
           {/* Preguntas frecuentes adicionales */}
           <div className="mb-8 mt-8">
@@ -650,7 +645,10 @@ const BlogArticle = () => {
           />
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               Sí es posible pedir aumento de pensión de alimentos en Chile cuando las necesidades del hijo aumentan o cuando la capacidad económica del padre o madre que paga mejora de manera relevante. Sin embargo, el cambio no ocurre automáticamente. Aunque hayan pasado años desde que se fijó la pensión original o el costo de vida haya subido considerablemente, el aumento debe solicitarse formalmente ante el tribunal.
@@ -682,6 +680,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="pension" />
 
           {/* FAQs Schema */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -696,7 +695,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

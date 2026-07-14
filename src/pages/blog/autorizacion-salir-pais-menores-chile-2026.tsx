@@ -129,7 +129,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Autorización para salir del país con menores en Chile 2026"
@@ -161,6 +161,9 @@ const BlogArticle = () => {
                         </p>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Finalidad</p>
+
+                            <InArticleCTA category="Derecho de Familia" />
+
                             <p className="text-blue-800">Proteger los derechos del niño, niña o adolescente y evitar situaciones de sustracción internacional o traslados no autorizados.</p>
                         </div>
                         <p className="text-gray-600 mt-4">La regla de autorización no aplica solo a viajes turísticos. También cubre viajes por estudios, tratamientos médicos en el extranjero, visitas a familiares o cualquier otra salida del territorio nacional. Además, el nivel de exigencia puede variar según el país de destino: algunos destinos requieren documentación adicional o trámites consulares que deben coordinarse con suficiente antelación.</p>
@@ -355,11 +358,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas ayuda para obtener autorización de salida del país? Si uno de los padres se niega a autorizar el viaje de tu hijo, un abogado especializado puede ayudarte a tramitar una autorización judicial urgente."
-                        buttonText="Ver abogados especializados en familia"
-                        category="Derecho de Familia"
-                    />
+
 
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
@@ -423,7 +422,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La autorización para salir del país con niños es una herramienta destinada a proteger el interés superior del niño y garantizar que las decisiones importantes se adopten de forma responsable por ambos padres.
@@ -449,6 +452,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre autorización para salir del país con menores</h2>
                         <div className="space-y-4">
@@ -463,7 +467,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

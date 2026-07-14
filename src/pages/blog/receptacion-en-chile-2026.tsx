@@ -60,7 +60,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -120,7 +120,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Receptación en Chile 2026"
@@ -198,6 +198,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Su objetivo es evitar que exista un mercado para especies obtenidas ilícitamente.
                         </p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -256,8 +259,8 @@ const BlogArticle = () => {
                         </div>
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
-                                La respuesta general es no — pero si ya existe una investigación 
-                                en tu contra, lo que importa no es la regla general sino los 
+                                La respuesta general es no — pero si ya existe una investigación
+                                en tu contra, lo que importa no es la regla general sino los
                                 antecedentes específicos de tu caso. Eso requiere revisión profesional.
                             </p>
                         </div>
@@ -333,11 +336,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        message="¿Ya existe una investigación en tu contra o la policía incautó algo tuyo? El momento de consultar con un abogado es antes de declarar, no después."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* PENAS */}
                     <div className="mb-12">
@@ -520,7 +519,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La receptación busca evitar que los bienes provenientes de delitos continúen circulando en el mercado. Por ello, tanto quienes compran como quienes venden objetos usados deben actuar con la debida diligencia y conservar antecedentes que acrediten el origen de las especies — boletas, contratos de compraventa, datos del vendedor.
@@ -539,6 +542,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -553,7 +557,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -575,7 +579,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="receptacion" />
+            <BlogConversionPopup category="Derecho Penal" topic="receptacion" />
         </div>
     );
 };

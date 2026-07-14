@@ -202,7 +202,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Mediación familiar obligatoria en Chile: cuándo es necesaria y cómo funciona (Guía 2026)"
@@ -237,6 +237,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               Su principal objetivo es evitar litigios innecesarios y fomentar acuerdos voluntarios que beneficien a todas las partes involucradas, especialmente a los hijos.
             </p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 my-4">
               <p className="text-blue-900 leading-relaxed">
                 A diferencia de un juez, el mediador no impone soluciones ni decide quién tiene razón. Su función consiste en facilitar la comunicación, identificar intereses comunes y ayudar a construir acuerdos que puedan ser aceptados por ambas partes.
@@ -386,11 +389,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="my-8">
-            <InArticleCTA
-              message="¿Necesitas iniciar una mediación de alimentos o visitas, o se frustró la instancia y requieres preparar una demanda sólida?"
-              buttonText="Hablar con un abogado"
-              category="Derecho de Familia"
-            />
+
           </div>
 
           {/* ¿Cómo funciona el proceso paso a paso? */}
@@ -719,7 +718,6 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed mt-4">Conocer las excepciones y los pasos correctos puede ahorrarte tiempos y costos innecesarios en el proceso.</p>
           </div>
 
-
           {/* CTA before Conclusion */}
           <PreConclusionCTA
             description="La mediación familiar es obligatoria en muchos conflictos. Un abogado especializado puede orientarte antes, durante y después del proceso."
@@ -728,7 +726,10 @@ const BlogArticle = () => {
           />
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               La mediación familiar obligatoria constituye una de las etapas más importantes dentro del sistema de justicia de familia en Chile. Antes de iniciar numerosas demandas relacionadas con pensión de alimentos, cuidado personal o relación directa y regular, la ley exige intentar primero una solución colaborativa mediante este procedimiento.
@@ -758,6 +759,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="familia" />
 
           {/* FAQs Schema */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -772,7 +774,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

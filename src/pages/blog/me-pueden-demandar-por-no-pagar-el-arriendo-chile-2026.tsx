@@ -120,7 +120,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)"
@@ -147,6 +147,9 @@ const BlogArticle = () => {
               El no pago del arriendo es el incumplimiento más grave del contrato.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto permite al arrendador:</p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { text: "Terminar el contrato", icon: <FileText className="h-5 w-5" /> },
@@ -296,11 +299,7 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <InArticleCTA
-              message="¿Recibiste una orden de desalojo o necesitas iniciar un proceso? Un abogado puede explicarte los plazos y opciones según tu situación."
-              buttonText="Consultar sobre orden de desalojo"
-              category="Derecho Arrendamiento"
-            />
+
 
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres ver cómo funciona realmente:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
@@ -666,9 +665,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No pagar el arriendo en Chile no es un problema que "explota" de un día para otro, pero tampoco es algo que puedas dejar pasar sin consecuencias. La ley es clara: con un solo mes de deuda el arrendador ya puede iniciar acciones legales.
@@ -678,9 +679,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ (SEO structured) */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
 
@@ -696,7 +697,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

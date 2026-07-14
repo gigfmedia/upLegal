@@ -117,7 +117,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía 2026)"
@@ -149,6 +149,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Aparecer en DICOM puede afectar:
             </p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { title: "Acceso a créditos", desc: "Dificultad para obtener préstamos bancarios o refinanciamiento." },
@@ -166,7 +169,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-        
+
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <p className="text-gray-700 leading-relaxed font-bold">
                 Pero no cualquier deuda puede ser publicada. Es fundamental entender los requisitos legales antes de alarmarse por una amenaza de este tipo.
@@ -590,6 +593,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+
+
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -599,7 +606,6 @@ const BlogArticle = () => {
               Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
-
 
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQs */}
@@ -617,7 +623,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

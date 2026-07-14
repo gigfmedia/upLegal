@@ -63,7 +63,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -123,7 +123,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Hurto en Chile 2026"
@@ -187,6 +187,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             En otras palabras, la persona toma un bien que pertenece a otro con la intención de hacerlo suyo, pero lo hace aprovechando un descuido, una distracción o una oportunidad, sin agredir físicamente a la víctima.
                         </p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-gray-50 p-5 rounded-xl">
                             <p className="font-bold mb-2">Ejemplos frecuentes:</p>
                             <ul className="space-y-1 text-gray-700">
@@ -367,11 +370,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="Si te imputan un hurto o fuiste sorprendido en flagrancia, el momento más importante es antes de prestar declaración — no después de haber firmado."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* FLAGRANCIA */}
                     <div className="mb-12">
@@ -502,7 +501,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El delito de hurto en Chile continúa siendo una de las infracciones patrimoniales más investigadas por la Fiscalía. Aunque muchas personas lo consideran un hecho menor, sus consecuencias pueden ser importantes tanto para la víctima como para quien resulta imputado.
@@ -523,6 +526,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre el delito de hurto en Chile</h2>
                         <div className="space-y-4">
@@ -537,7 +541,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -559,7 +563,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="hurto" />
+            <BlogConversionPopup category="Derecho Penal" topic="hurto" />
         </div>
     );
 };

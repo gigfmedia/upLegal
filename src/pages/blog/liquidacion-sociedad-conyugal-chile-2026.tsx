@@ -137,7 +137,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Liquidación de sociedad conyugal en Chile 2026"
@@ -185,6 +185,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             La liquidación puede realizarse después de un divorcio, una nulidad matrimonial, la sustitución del régimen matrimonial o la muerte de uno de los cónyuges.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -266,11 +269,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA PRINCIPAL */}
-                    <InArticleCTA
-                        message="¿Necesitas ayuda para dividir bienes, propiedades o deudas después del divorcio? Un abogado especializado puede ayudarte a proteger tus derechos."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho de Familia"
-                    />
+
 
                     {/* CASA FAMILIAR */}
                     <div className="mb-12">
@@ -459,7 +458,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La liquidación de sociedad conyugal es el procedimiento que permite repartir los bienes y deudas acumulados durante el matrimonio bajo este régimen patrimonial.
@@ -485,6 +488,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -499,7 +503,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

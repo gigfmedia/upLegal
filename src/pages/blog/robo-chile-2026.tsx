@@ -64,7 +64,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -124,7 +124,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Robo en Chile 2026"
@@ -188,6 +188,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Estos elementos distinguen al robo del delito de hurto, donde la apropiación ocurre sin violencia ni fuerza.
                         </p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">El objetivo del legislador es sancionar con mayor severidad aquellas conductas que, además del perjuicio económico, ponen en riesgo la seguridad o integridad de las personas.</p>
@@ -362,11 +365,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Fuiste víctima de un robo o te acusan de este delito? El momento más importante para contar con asesoría penal es antes de prestar declaración, no después."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* DETENCION */}
                     <div className="mb-12">
@@ -506,7 +505,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El delito de robo en Chile constituye una de las infracciones patrimoniales más graves debido a que no solo afecta el patrimonio de la víctima, sino también su seguridad e integridad. Por ello, comprender las diferencias entre las distintas modalidades de robo, conocer las penas aplicables y actuar rápidamente frente a una denuncia resulta fundamental tanto para víctimas como para personas investigadas.
@@ -530,6 +533,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre el robo en Chile</h2>
                         <div className="space-y-4">
@@ -544,7 +548,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -566,7 +570,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="robo" />
+            <BlogConversionPopup category="Derecho Penal" topic="robo" />
         </div>
     );
 };

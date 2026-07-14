@@ -13,7 +13,6 @@ import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
-
 const BlogArticle = () => {
   const faqs = [
     {
@@ -42,7 +41,6 @@ const BlogArticle = () => {
         "Si el tribunal dicta la orden de desalojo y el arrendatario se niega a abandonar el inmueble, se puede solicitar el lanzamiento con auxilio de la fuerza pública. Carabineros puede intervenir para ejecutar la orden judicial y permitir al propietario recuperar el inmueble.",
     },
   ];
-
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,7 +97,6 @@ const BlogArticle = () => {
             La Ley &quot;Devuélveme Mi Casa&quot; (Ley 21.461) se ha convertido en una de las normas más relevantes en Chile para propietarios que enfrentan problemas con arrendatarios que no pagan o se niegan a abandonar una propiedad, quienes a menudo necesitan <Link to="/abogados-arriendo" className="text-green-600 underline hover:text-green-400">abogados de arriendo en Chile</Link> para recuperar su inmueble.
           </p>
 
-
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -118,7 +115,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title='Ley "Devuélveme Mi Casa" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026'
@@ -157,6 +154,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               Antes de esta ley, los juicios de arriendo podían tardar varios meses o incluso años. Con esta nueva normativa, se establecen procedimientos más rápidos para:
             </p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {["Recuperar la propiedad por no pago", "Terminar contratos de arriendo", "Obtener el desalojo del arrendatario"].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 h-full min-h-[3rem]">
@@ -165,11 +165,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <InArticleCTA
-              message="¿Quieres recuperar tu propiedad bajo la ley Devuélveme mi Casa? Un abogado puede evaluar si tu caso califica."
-              buttonText="Ver abogados de arriendo"
-              category="Derecho Civil"
-            />
+
             <p className="text-gray-600 leading-relaxed">
               En simple: le da más herramientas al propietario para recuperar su inmueble en menos tiempo.
             </p>
@@ -606,7 +602,10 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               La Ley "Devuélveme Mi Casa" (Ley 21.461) representa un cambio concreto para los propietarios en Chile: redujo los plazos del juicio de desalojo y simplificó el proceso en casos de no pago y ocupación ilegal. Antes de esta ley, recuperar un inmueble podía tomar años. Hoy el proceso es más rápido, aunque sigue siendo judicial.
@@ -618,7 +617,6 @@ const BlogArticle = () => {
 
           {/* CTA Section - Specific Category */}
           <CategoryCTA category="arriendo" topic="arriendo" />
-
 
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes sobre la Ley 21.461</h2>
@@ -633,10 +631,9 @@ const BlogArticle = () => {
           </div>
         </div>
 
-
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

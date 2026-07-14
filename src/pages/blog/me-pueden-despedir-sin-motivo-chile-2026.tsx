@@ -110,7 +110,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
@@ -160,6 +160,9 @@ const BlogArticle = () => {
                 <div key={i} className="p-5 bg-gray-50 rounded-xl border border-gray-100 text-center">
                   <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
                   <p className="text-gray-600">{item.desc}</p>
+
+                  <InArticleCTA category="Derecho Laboral" />
+
                 </div>
               ))}
             </div>
@@ -186,11 +189,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Te despidieron invocando necesidades de la empresa? Un abogado laboral puede verificar si el despido cumple la ley y qué te corresponde cobrar."
-            buttonText="Ver abogados laborales"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa “necesidades de la empresa”?</h2>
@@ -362,11 +361,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="Si te despidieron y todavía no sabes cuánto deberían pagarte en el finiquito, un abogado laboral puede calcular tu indemnización exacta con tus años de servicio y tu último sueldo."
-            buttonText="Habla con un abogado ahora"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-8 text-gray-900">¿Qué hacer si te despiden?</h2>
@@ -509,7 +504,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               En Chile, el despido sin motivo aparente existe bajo la causal de necesidades de la empresa, pero no es un cheque en blanco: el empleador debe pagar indemnización y, si no puede justificar realmente la causal, el despido puede ser declarado injustificado. La clave está en saber leer la carta de despido, no firmar el finiquito sin entenderlo y actuar dentro de los 60 días hábiles.
@@ -519,9 +517,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -536,7 +534,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

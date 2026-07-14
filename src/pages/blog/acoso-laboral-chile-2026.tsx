@@ -25,27 +25,27 @@ const BlogArticle = () => {
         {
             question: "¿Un solo hecho constituye acoso laboral?",
             answer:
-            "No necesariamente. Los tribunales habitualmente analizan la reiteración, gravedad y contexto de las conductas. El acoso laboral se caracteriza por ser sistemático — conductas repetidas que afectan la dignidad o integridad del trabajador. Un hecho aislado grave puede configurar otros delitos o infracciones laborales, pero generalmente no es suficiente por sí solo para acreditar acoso.",
+                "No necesariamente. Los tribunales habitualmente analizan la reiteración, gravedad y contexto de las conductas. El acoso laboral se caracteriza por ser sistemático — conductas repetidas que afectan la dignidad o integridad del trabajador. Un hecho aislado grave puede configurar otros delitos o infracciones laborales, pero generalmente no es suficiente por sí solo para acreditar acoso.",
         },
         {
             question: "¿Puedo denunciar acoso laboral si proviene de un compañero?",
             answer:
-            "Sí. El acoso laboral puede provenir de compañeros, superiores jerárquicos u otras personas dentro del entorno laboral. El empleador tiene la obligación de investigar y adoptar medidas cuando toma conocimiento de una situación de acoso, independientemente de quién sea el agresor.",
+                "Sí. El acoso laboral puede provenir de compañeros, superiores jerárquicos u otras personas dentro del entorno laboral. El empleador tiene la obligación de investigar y adoptar medidas cuando toma conocimiento de una situación de acoso, independientemente de quién sea el agresor.",
         },
         {
             question: "¿Necesito testigos para demostrar el acoso laboral?",
             answer:
-            "No siempre. Correos electrónicos, mensajes de WhatsApp, documentos, registros de asistencia, informes médicos o psicológicos y otros antecedentes también pueden servir como prueba. Lo importante es conservar toda la evidencia disponible desde el primer momento — incluyendo fechas, lugares y descripción de cada incidente.",
+                "No siempre. Correos electrónicos, mensajes de WhatsApp, documentos, registros de asistencia, informes médicos o psicológicos y otros antecedentes también pueden servir como prueba. Lo importante es conservar toda la evidencia disponible desde el primer momento — incluyendo fechas, lugares y descripción de cada incidente.",
         },
         {
             question: "¿Puedo renunciar y luego demandar por acoso laboral?",
             answer:
-            "Depende de las circunstancias. Si el acoso fue tan grave que hizo insostenible continuar trabajando, podrías invocar la figura del autodespido — también llamado despido indirecto — que permite terminar el contrato por incumplimiento grave del empleador y exigir indemnizaciones. Esta acción debe presentarse dentro de los 60 días hábiles desde el término del contrato.",
+                "Depende de las circunstancias. Si el acoso fue tan grave que hizo insostenible continuar trabajando, podrías invocar la figura del autodespido — también llamado despido indirecto — que permite terminar el contrato por incumplimiento grave del empleador y exigir indemnizaciones. Esta acción debe presentarse dentro de los 60 días hábiles desde el término del contrato.",
         },
         {
             question: "¿La empresa puede despedirme por denunciar acoso laboral?",
             answer:
-            "No legalmente. La legislación protege a los trabajadores frente a represalias por denunciar vulneraciones de derechos fundamentales. Si la empresa te despide después de una denuncia por acoso, ese despido puede ser impugnado como vulneratorio de derechos fundamentales ante el Juzgado del Trabajo, con indemnizaciones adicionales significativas.",
+                "No legalmente. La legislación protege a los trabajadores frente a represalias por denunciar vulneraciones de derechos fundamentales. Si la empresa te despide después de una denuncia por acoso, ese despido puede ser impugnado como vulneratorio de derechos fundamentales ante el Juzgado del Trabajo, con indemnizaciones adicionales significativas.",
         },
     ];
 
@@ -61,7 +61,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -121,7 +121,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Acoso laboral en Chile 2026"
@@ -171,6 +171,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Estas conductas pueden provocar consecuencias psicológicas, emocionales e incluso económicas para la persona afectada.
                         </p>
+
+                        <InArticleCTA category="Derecho Laboral" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -332,11 +335,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        message="¿Estás sufriendo acoso laboral o tu denuncia fue ignorada? Un abogado laboral puede ayudarte a evaluar tu caso y determinar las acciones legales disponibles."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
 
                     {/* TUTELA LABORAL */}
                     <div className="mb-12">
@@ -489,7 +488,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El acoso laboral puede tener consecuencias importantes tanto para el trabajador como para el empleador. Conocer qué conductas pueden constituir acoso, cómo funciona una investigación y cuáles son las herramientas legales disponibles permite comprender el marco general que regula estas situaciones.
@@ -504,6 +507,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="laboral" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -518,7 +522,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Laboral" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

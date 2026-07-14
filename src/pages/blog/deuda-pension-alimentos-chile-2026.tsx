@@ -155,7 +155,6 @@ const BlogArticle = () => {
             Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse con el apoyo de un <Link to="/abogado-pension-alimentos" className="text-green-600 underline hover:text-green-400">abogado especializado en cobro de pensión de alimentos</Link>.
           </p>
 
-
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -174,7 +173,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
@@ -206,6 +205,8 @@ const BlogArticle = () => {
               <p className="font-bold text-amber-900">Importante</p>
               <p className="text-amber-800">La deuda se acumula mes a mes y puede aumentar con el tiempo.</p>
             </div>
+
+            <InArticleCTA category="Derecho de Familia" />
           </div>
 
           {/* Cómo calcula el juez */}
@@ -238,11 +239,7 @@ const BlogArticle = () => {
 
           <PensionCalculator />
           <div className="mb-12">
-            <InArticleCTA
-              message="¿Quieres saber el monto exacto según tu caso? La calculadora es una estimación referencial."
-              buttonText="Habla con un abogado ahora"
-              category="Derecho de Familia"
-            />
+
           </div>
 
           {/* ¿Se puede cobrar? */}
@@ -328,11 +325,6 @@ const BlogArticle = () => {
           </div>
 
 
-          <InArticleCTA
-            message="¿Tienes deuda de pensión de alimentos y no sabes cómo cobrarla? Un abogado especialista puede guiarte para activar liquidación, embargo y medidas de apremio de forma efectiva."
-            buttonText="Habla con un abogado ahora"
-            category="Derecho de Familia"
-          />
 
           {/* Preguntas frecuentes de situaciones */}
           <div className="mb-12">
@@ -415,7 +407,6 @@ const BlogArticle = () => {
               Los errores en la demanda de pensión suelen derivar de una deficiente preparación probatoria. El tribunal de familia exige que el demandante acredite no solo la relación filiativa, sino también las necesidades concretas del alimentario y la capacidad económica del demandado. La omisión de alguno de estos elementos puede provocar que el juez fije un monto menor al solicitado o que rechace la demanda, obligando a reiniciar el proceso desde la mediación obligatoria.
             </p>
           </div>
-
 
           {/* Links relacionados */}
           <div className="mb-8 space-y-3">
@@ -631,7 +622,10 @@ const BlogArticle = () => {
           />
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               La deuda de pensión de alimentos en Chile no es un problema sin solución. A diferencia de otras obligaciones, el sistema legal chileno contempla herramientas concretas y efectivas para exigir el cumplimiento, incluso en casos donde el deudor intenta evitar el pago.
@@ -663,6 +657,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="pension" />
 
           {/* FAQs */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -677,10 +672,9 @@ const BlogArticle = () => {
 
         </div>
 
-
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

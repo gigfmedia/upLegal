@@ -117,7 +117,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
@@ -163,6 +163,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">
               En Chile, estas normas buscan proteger los vínculos familiares, especialmente cuando existen hijos o personas en situación de vulnerabilidad.
             </p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
             <p className="text-gray-600 mb-4">
               El derecho de familia regula aspectos como:
             </p>
@@ -301,11 +304,7 @@ const BlogArticle = () => {
                   <p className="font-bold text-red-200 uppercase tracking-widest text-xs mb-2">Actualización 2026</p>
                   <p className="text-lg font-serif">"La ley ha incorporado herramientas adicionales para mejorar el cumplimiento de las pensiones alimenticias."</p>
                 </div>
-                <InArticleCTA
-                  message="¿No te están pagando la pensión? Si existe deuda de pensión de alimentos, puedes iniciar acciones legales para exigir el pago y aplicar medidas como retención de sueldo, embargo de bienes o incluso arresto."
-                  buttonText="Habla con un abogado ahora"
-                  category="Derecho de Familia"
-                />
+
               </div>
 
               {/* 2. Cuidado personal */}
@@ -516,9 +515,11 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               El Derecho de Familia en Chile regula algunos de los aspectos más importantes de la vida personal y familiar, desde la crianza de los hijos hasta la resolución de conflictos entre parejas.
@@ -549,6 +550,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="familia" />
 
           {/* Preguntas frecuentes */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre Derecho de Familia en Chile</h2>
 
@@ -566,7 +568,7 @@ const BlogArticle = () => {
 
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}

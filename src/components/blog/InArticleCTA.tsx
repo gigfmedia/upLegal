@@ -11,7 +11,8 @@ interface InArticleCTAProps {
 }
 
 const InArticleCTA: React.FC<InArticleCTAProps> = ({
-  category = "Derecho Laboral"
+  category = "Derecho Laboral",
+  buttonText
 }) => {
   const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
 
@@ -35,6 +36,17 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
     }
   };
 
+  const getButtonText = () => {
+    if (buttonText) return buttonText;
+    const cat = category.toLowerCase();
+    if (cat.includes('penal')) return 'Habla hoy con un abogado penal';
+    if (cat.includes('laboral')) return 'Consulta tu caso con un abogado laboral';
+    if (cat.includes('familia')) return 'Habla con un abogado de familia';
+    if (cat.includes('arrendamiento') || cat.includes('arriendo')) return 'Revisa tu caso con un abogado especialista en arriendos';
+    if (cat.includes('consumidor')) return 'Consulta con un abogado especialista';
+    return 'Ver abogados disponibles';
+  };
+
   return (
     <div ref={ref} className="my-10 p-8 border border-gray-200 bg-gray-50 rounded-2xl text-center shadow-sm">
       <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">¿Necesitas ayuda con este caso?</h3>
@@ -55,7 +67,7 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
         <Button
           className="bg-gray-900 hover:bg-green-900 text-white px-6 h-11 rounded-lg transition-all shadow-sm active:scale-95 w-full sm:w-auto font-bold"
         >
-          Ver abogados disponibles
+          {getButtonText()}
           <ChevronRight className="ml-1 h-4 w-4" />
         </Button>
       </Link>

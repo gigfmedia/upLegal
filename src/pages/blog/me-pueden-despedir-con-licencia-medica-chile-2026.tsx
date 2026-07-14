@@ -104,7 +104,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026"
@@ -126,6 +126,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               La protección depende principalmente de dos factores:
             </p>
+
+            <InArticleCTA category="Derecho Laboral" />
+
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-gray-700 text-base">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -232,11 +235,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Te notificaron el despido mientras estás con licencia médica? Un abogado laboral puede revisar si el proceso fue correcto y qué opciones tienes."
-            buttonText="Consultar sobre mi despido"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa con el sueldo durante la licencia médica?</h2>
@@ -333,11 +332,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Te despidieron con licencia médica y no sabes si fue legal? Un abogado laboral puede revisar tu caso hoy."
-            buttonText="Revisar mi despido con un abogado"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto puedes recibir si el despido fue injustificado?</h2>
@@ -420,7 +415,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               El despido durante licencia médica en Chile no es automáticamente ilegal, pero el empleador enfrenta restricciones importantes que muchos desconocen. La diferencia entre notificar y ejecutar el despido, la causal utilizada y el tipo de licencia son factores que determinan si el término del contrato fue válido o si puedes reclamar una indemnización. Conocer estos detalles marca la diferencia entre perder tus derechos o recibir lo que te corresponde.
@@ -430,9 +428,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -447,7 +445,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

@@ -142,6 +142,9 @@ const BlogArticle = () => {
               En general, el arrendador <strong>no puede cambiar la cerradura sin una orden judicial</strong>. Aunque exista deuda de arriendo o incumplimiento del contrato, el propietario no puede tomar medidas por su cuenta para recuperar el inmueble.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">Cambiar la cerradura sin autorización puede:</p>
+
+          <InArticleCTA category="Arrendamiento" />
+
             <div className="space-y-3 mb-6">
               {[
                 "Impedir el acceso a la vivienda",
@@ -280,11 +283,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Tu arrendador cambió la cerradura o te está presionando para que salgas? Un abogado puede orientarte sobre cómo actuar hoy mismo."
-            buttonText="Hablar con un abogado ahora"
-            category="Derecho Arrendamiento"
-          />
+          
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo denunciar si el arrendador cambió la cerradura?</h2>
@@ -449,7 +448,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Arrendamiento" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Esta guía describe las reglas generales del derecho de arrendamiento y las opciones disponibles cuando ocurre esta situación.En Chile, el arrendador no puede cambiar la cerradura sin una orden judicial. Sin excepciones.
@@ -472,10 +474,10 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
           {/* FAQ */}
-          <div className="mb-6" data-faq-section>
+
+      <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (
@@ -489,7 +491,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Arrendamiento" />
+      
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

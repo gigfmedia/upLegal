@@ -129,11 +129,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <InArticleCTA
-              message="¿Necesitas iniciar un proceso de desalojo? Un abogado puede evaluar tu caso y explicarte los plazos exactos según tu situación."
-              buttonText="Consultar sobre desalojo"
-              category="Derecho Arrendamiento"
-            />
+            
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué dice la ley sobre el desalojo en Chile?</h2>
@@ -145,6 +141,9 @@ const BlogArticle = () => {
                 <p className="font-bold text-red-900 mb-4 flex items-center gap-2">
                   Acciones Prohibidas (Nunca las realices por tu cuenta)
                 </p>
+
+          <InArticleCTA category="Derecho Civil" />
+
                 <div className="grid sm:grid-cols-2 gap-3">
                   {[
                     "Cambiar la cerradura con el ocupante dentro",
@@ -273,11 +272,7 @@ const BlogArticle = () => {
                 </Link>
               </div>
 
-              <InArticleCTA
-                message="¿Necesitas iniciar un proceso de desalojo de forma urgente? Un abogado experto puede evaluar tu caso y calcular los plazos exactos según tu contrato."
-                buttonText="Consultar sobre desalojo"
-                category="Derecho Arrendamiento"
-              />
+              
             </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
@@ -403,11 +398,7 @@ const BlogArticle = () => {
                 <strong>Plazos del Precario:</strong> Al ser un juicio sumario, el tiempo estimado de tramitación es de <strong>10 a 14 meses</strong>. La lentitud se debe a que el tribunal debe cerciorarse de que no existe ningún derecho del ocupante antes de ordenar el lanzamiento.
               </p>
 
-              <InArticleCTA
-                message="¿Tienes a alguien ocupando tu propiedad sin pagar o sin permiso? Un abogado puede orientarte sobre la acción legal correcta según tu caso."
-                buttonText="Evaluar mi caso ahora"
-                category="Derecho Arrendamiento"
-              />
+              
             </div>
 
             <div className="mb-12 border-t border-gray-100 pt-12">
@@ -527,7 +518,10 @@ const BlogArticle = () => {
               </ul>
             </div>
 
+            <RelatedLawyers category="Derecho Civil" />
+
             <div className="mb-12 border-t border-gray-100 pt-12">
+
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión: Recuperar tu propiedad es posible</h2>
               <p className="text-gray-600 leading-relaxed mb-6">
                 Recuperar una propiedad en Chile es un proceso legal que requiere paciencia y los pasos correctos. No existe un atajo fuera del sistema judicial, pero con la Ley 21.461 los plazos son más razonables que nunca.
@@ -539,7 +533,7 @@ const BlogArticle = () => {
 
             <CategoryCTA category="arriendo" topic="arriendo" />
 
-            <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
+      <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
               <h2 className="text-2xl font-bold mb-8 text-gray-900">Preguntas frecuentes sobre Desalojo</h2>
               <div className="space-y-4">
                 {faqs.map((faq, i) => (
@@ -554,7 +548,7 @@ const BlogArticle = () => {
         </div>
 
         <div className="w-full bg-gray-100/50">
-          <RelatedLawyers category="Derecho Civil" />
+          
         </div>
 
         <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">

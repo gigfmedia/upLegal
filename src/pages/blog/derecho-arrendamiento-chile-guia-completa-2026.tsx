@@ -118,7 +118,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Derecho de arrendamiento en Chile: guía completa 2026"
@@ -149,6 +149,9 @@ const BlogArticle = () => {
               El arrendamiento es un contrato mediante el cual una persona (arrendador) entrega el uso de un inmueble a otra (arrendatario), a cambio de un pago periódico.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Este contrato regula aspectos clave como:</p>
+
+            <InArticleCTA category="Derecho Civil" />
+
             <div className="space-y-4 mb-8">
               {[
                 "Uso del inmueble",
@@ -264,10 +267,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Estás enfrentando un problema con tu arriendo y necesitas saber tus derechos?"
-            category="Derecho Inmobiliario"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Derechos del arrendador en Chile</h2>
@@ -443,7 +443,7 @@ const BlogArticle = () => {
                 El dueño podría terminar siendo el demandado o enfrentar cargos penales si actúa de forma agresiva o impide el acceso sin orden de un tribunal.
               </p>
             </div>
-            
+
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
                 <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo voluntario</h3>
@@ -530,10 +530,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Te enfrentas a un desalojo o amenaza de desalojo? Un abogado puede ayudarte a defenderte."
-            category="Derecho Civil"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Subida de arriendo: ¿cuándo es legal y cómo se aplica el IPC?</h2>
@@ -635,10 +632,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Tienes problemas con la garantía de arriendo o no te la quieren devolver? Habla con un especialista."
-            category="Derecho Inmobiliario"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Deudas de arriendo y DICOM: ¿te pueden boletear?</h2>
@@ -807,6 +801,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -832,6 +828,8 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+
+
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -859,7 +857,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

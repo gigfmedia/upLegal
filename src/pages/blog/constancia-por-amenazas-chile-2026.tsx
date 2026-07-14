@@ -130,7 +130,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Constancia por amenazas en Chile 2026"
@@ -160,6 +160,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Muchas personas utilizan este mecanismo cuando desean dejar evidencia de una situación que podría agravarse posteriormente. Por ejemplo: amenazas verbales, mensajes intimidatorios, hostigamiento reiterado, conflictos vecinales, problemas familiares o situaciones de acoso.
                         </p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">La constancia no equivale necesariamente a una denuncia penal. Su principal objetivo es dejar registro de los hechos.</p>
@@ -392,11 +395,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="Si estás recibiendo amenazas y no sabes si corresponde una constancia o una denuncia, el momento de consultar es antes de que los hechos escalen."
-                        buttonText="Ver abogados penalistas disponibles"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
@@ -570,7 +569,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La constancia por amenazas puede ser una herramienta útil para dejar registro formal de situaciones preocupantes. Esta guía describe los pasos iniciales y la diferencia entre constancia y denuncia.
@@ -589,6 +592,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre constancia por amenazas en Chile</h2>
                         <div className="space-y-4">
@@ -603,7 +607,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -625,7 +629,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="constancia-amenazas" />
+            <BlogConversionPopup category="Derecho Penal" topic="constancia-amenazas" />
         </div>
     );
 };

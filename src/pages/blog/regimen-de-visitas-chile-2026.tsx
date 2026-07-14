@@ -197,7 +197,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
                     <BlogShare
@@ -222,8 +222,6 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-
-
                     {/* QUE ES */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">
@@ -237,6 +235,8 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Actualmente, la legislación chilena utiliza el concepto de “relación directa y regular”, porque no se trata solamente de “visitar” al hijo, sino de mantener una relación activa, estable y permanente.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -296,11 +296,7 @@ const BlogArticle = () => {
                     <VisitScheduleCalculator />
 
                     <div className="mb-12">
-                        <InArticleCTA
-                            message="¿Quieres fijar o modificar un régimen de visitas? Un abogado de familia puede ayudarte a proteger tus derechos y los de tus hijos."
-                            buttonText="Habla con un abogado ahora"
-                            category="Derecho de Familia"
-                        />
+
                     </div>
 
                     {/* COMO SE FIJA */}
@@ -369,7 +365,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    
+
 
                     {/* INCUMPLIMIENTO */}
                     <div className="mb-12">
@@ -531,7 +527,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    
+
 
                     {/* DOCUMENTOS */}
                     <div className="mb-12">
@@ -665,7 +661,11 @@ const BlogArticle = () => {
                     />
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
 
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -700,6 +700,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" topic="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">
                             Preguntas frecuentes
@@ -722,7 +723,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
 

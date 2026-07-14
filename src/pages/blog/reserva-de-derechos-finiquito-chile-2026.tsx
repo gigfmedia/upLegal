@@ -47,7 +47,7 @@ const BlogArticle = () => {
         dateModified="2026-05-11"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       {/* Hero */}
@@ -105,7 +105,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
@@ -122,6 +122,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si firmas un finiquito de manera pura y simple (es decir, sin escribir nada y solo poniendo tu firma), la ley chilena asume que estás 100% de acuerdo con lo que te pagaron. Esto genera un "poder liberatorio", lo que significa que el empleador queda libre de cualquier obligación futura contigo y tú pierdes automáticamente tu derecho a presentar una demanda laboral.
             </p>
+
+            <InArticleCTA category="Derecho Laboral" />
+
             <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
               En resumen: La reserva de derechos es tu salvavidas legal para poder cobrar tu dinero hoy y demandar mañana.
             </p>
@@ -168,8 +171,8 @@ const BlogArticle = () => {
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-            <Link 
-              to="/blog/como-calcular-tu-finiquito-chile-2026" 
+            <Link
+              to="/blog/como-calcular-tu-finiquito-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
             >
               👉 ¿Cuánto te deben pagar en el finiquito? Calculadora 2026
@@ -229,11 +232,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿No sabes qué escribir en tu reserva de derechos? Un abogado puede redactarte el texto exacto según tu caso antes de que vayas a la notaría."
-            buttonText="Consultar con abogado"
-            category="Derecho Laboral"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">El momento clave: La Notaría</h2>
@@ -274,7 +273,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">¿En qué situaciones conviene consultar cuanto antes a un abogado laboral?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -296,7 +294,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Firmar un finiquito es el punto final de tu contrato, pero no tiene por qué ser el final de tus derechos. La reserva de derechos es una herramienta legal perfectamente válida en Chile que protege tu dinero y te da la libertad de buscar justicia laboral.
@@ -306,9 +307,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -324,21 +325,21 @@ const BlogArticle = () => {
 
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
-          <BlogShare 
-            title="Reserva de derechos en el finiquito en Chile: qué es y cómo usarla (Guía 2026)" 
-            url="https://legalup.cl/blog/reserva-de-derechos-finiquito-chile-2026" 
+          <BlogShare
+            title="Reserva de derechos en el finiquito en Chile: qué es y cómo usarla (Guía 2026)"
+            url="https://legalup.cl/blog/reserva-de-derechos-finiquito-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="reserva-de-derechos-finiquito-chile-2026" />
 
         <div className="mt-4 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -346,7 +347,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      
+
       <BlogConversionPopup category="Derecho Laboral" topic="reserva de derechos" />
     </div>
   );

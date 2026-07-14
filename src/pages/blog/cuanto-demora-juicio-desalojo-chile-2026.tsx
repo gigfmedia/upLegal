@@ -114,7 +114,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cuánto demora un juicio de desalojo en Chile? Guía 2026"
@@ -157,6 +157,9 @@ const BlogArticle = () => {
             </ul>
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Marco legal del desalojo</p>
+
+              <InArticleCTA category="Derecho Civil" />
+
               <p className="text-gray-700 leading-relaxed font-medium">
                 <strong>IMPORTANTE:</strong> En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal. La autotutela es ilegal.
               </p>
@@ -297,11 +300,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Necesitas iniciar un proceso de desalojo o te están demandando? Un abogado puede decirte en qué etapa estás y cuánto puede tomar tu caso."
-            buttonText="Hablar con abogado de arriendo"
-            category="Derecho Arrendamiento"
-          />
+
 
           <div className="mb-12 py-2">
             <h2 className="text-2xl font-bold mb-6">¿Qué hacer si enfrentas un juicio de desalojo?</h2>
@@ -371,7 +370,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-4">Cuando el conflicto de arriendo escala, el tiempo juega en contra. Consultar a un abogado especializado a tiempo puede marcar la diferencia entre un desalojo rápido y un proceso que se extiende por meses.</p>
@@ -385,7 +383,10 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               El juicio de desalojo en Chile puede demorar desde algunas semanas hasta varios meses, dependiendo de factores como el tipo de contrato, si existen rentas impagas, la carga del tribunal y si el arrendatario presenta defensa durante el proceso.
@@ -395,8 +396,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="arriendo" topic="arriendo" />
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre desalojos en Chile</h2>
             <div className="space-y-4">
@@ -411,7 +412,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

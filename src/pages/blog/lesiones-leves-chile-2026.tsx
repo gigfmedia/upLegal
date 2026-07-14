@@ -128,7 +128,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Lesiones leves en Chile 2026"
@@ -200,6 +200,8 @@ const BlogArticle = () => {
                                 Aunque puedan parecer situaciones de poca gravedad, siguen siendo conductas sancionadas por la legislación penal chilena.
                             </p>
                         </div>
+
+                        <InArticleCTA category="Derecho Penal" />
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La descripción anterior clasifica las lesiones según su gravedad física. Sin embargo, en la práctica penal el resultado de una investigación no depende solo del tipo de lesión, sino de lo que las pruebas logren acreditar: quién inició la agresión, si hubo testigos y si la versión de los hechos se sostiene ante el tribunal.
@@ -357,11 +359,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En estos casos pueden intervenir normas especiales de protección y medidas cautelares destinadas a resguardar a la víctima.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="Si te notificaron una denuncia por lesiones, el momento más importante es antes de la primera audiencia — no después de haber prestado declaración sin asesoría."
-                        buttonText="Consultar con abogado penal"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* NEGACION */}
                     <div className="mb-12">
@@ -536,7 +534,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             Las lesiones leves son uno de los delitos más frecuentes en Chile. Esta guía describe las reglas generales y los pasos iniciales para víctimas e imputados.
@@ -557,6 +559,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre lesiones leves en Chile</h2>
                         <div className="space-y-4">
@@ -571,7 +574,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -593,7 +596,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="lesiones-leves" />
+            <BlogConversionPopup category="Derecho Penal" topic="lesiones-leves" />
         </div>
     );
 };

@@ -110,7 +110,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare title={title} url={url} showBorder={false} />
 
@@ -136,6 +136,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 leading-relaxed">
               Está regulado en el artículo 55 de la Ley de Matrimonio Civil y requiere que ambas partes cumplan ciertos requisitos y presenten un acuerdo completo sobre las materias que el tribunal debe resolver.
             </p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
           </div>
 
           <div className="mb-12">
@@ -261,11 +264,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Quieres iniciar un divorcio de mutuo acuerdo y no sabes por dónde empezar? Un abogado de familia puede guiarte en el proceso."
-            buttonText="Consultar sobre divorcio"
-            category="Derecho Familia"
-          />
+
 
           <div className="mb-12">
             <div className="space-y-6 mt-8">
@@ -505,9 +504,11 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="mb-12 border-t border-gray-100 pt-8">
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <div className="space-y-4 text-gray-600 leading-relaxed">
               <p>
@@ -546,9 +547,9 @@ const BlogArticle = () => {
             </Link>
           </div> */}
 
-
           <CategoryCTA category="familia" topic="divorcio" />
           {/* FAQs */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -563,7 +564,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho de Familia" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

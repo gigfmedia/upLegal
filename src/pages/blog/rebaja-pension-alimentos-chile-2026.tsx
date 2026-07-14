@@ -196,7 +196,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Rebaja de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)"
@@ -234,6 +234,9 @@ const BlogArticle = () => {
               Es una solicitud judicial para disminuir el monto de una pensión de alimentos que ya fue fijada previamente de manera formal, ya sea por una sentencia del tribunal, un acuerdo en mediación aprobada, o una transacción judicial.
             </p>
             <p className="text-gray-600 mb-4">La idea es ajustar el aporte cuando:</p>
+
+            <InArticleCTA category="Derecho de Familia" />
+
             <ul className="space-y-2 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
                 "Cambió sustancialmente la situación económica de quien paga.",
@@ -250,7 +253,6 @@ const BlogArticle = () => {
               La rebaja de pensión se fundamenta en el principio de alteración de las circunstancias, recogido en el artículo 323 del Código Civil chileno. Para que proceda, el cambio en la situación económica del alimentante debe ser objetivo, relevante y de cierta permanencia. Los tribunales han establecido que las fluctuaciones temporales de ingresos o las disminuciones voluntarias no configuran causal suficiente, pues la obligación alimenticia debe cumplirse con esfuerzo y sacrificio.
             </p>
           </div>
-
 
           {/* ¿Se puede bajar porque quiero? */}
           <div className="mb-12">
@@ -311,11 +313,7 @@ const BlogArticle = () => {
           <RebajaSimulator />
 
           <div className="mb-12">
-            <InArticleCTA
-              message="¿Tu situación económica cambió y necesitas pedir rebaja de pensión de alimentos? Un abogado de familia puede evaluar tu caso y orientarte en el proceso."
-              buttonText="Consultar sobre rebaja de pensión"
-              category="Derecho Familia"
-            />
+
           </div>
 
           {/* ¿Qué no suele servir? */}
@@ -427,11 +425,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿La mediación de alimentos se frustró o necesitas preparar la demanda de rebaja con pruebas sólidas? Consulta con un abogado especialista de LegalUp."
-            buttonText="Obtén asesoría legal ahora"
-            category="Derecho de Familia"
-          />
+
 
           {/* Cuánto puede rebajarse */}
           <div className="mb-12">
@@ -468,7 +462,7 @@ const BlogArticle = () => {
               El monto de la rebaja no está predeterminado legalmente, pero los tribunales suelen aplicar un criterio de proporcionalidad inversa: a mayor disminución de ingresos, mayor posibilidad de rebaja, siempre que el nuevo monto no desatienda las necesidades básicas del alimentario. En la práctica, rebajas superiores al 40% del monto original solo prosperan cuando el alimentante acredita una disminución drástica y permanente de su capacidad económica.
             </p>
           </div>
-          
+
 
           {/* Enlaces relacionados */}
           <div className="mb-6 space-y-3">
@@ -541,7 +535,10 @@ const BlogArticle = () => {
           />
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho de Familia" />
+
           <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               Sí es posible pedir una rebaja de pensión de alimentos en Chile, pero el cambio nunca ocurre automáticamente ni por decisión unilateral de quien paga. El error más peligroso es comenzar a pagar menos sin autorización judicial pensando que "después se arreglará". En la práctica, eso suele transformarse rápidamente en deuda acumulada, intereses y medidas de apremio que pueden empeorar muchísimo tu situación personal y financiera.
@@ -575,6 +572,7 @@ const BlogArticle = () => {
           <CategoryCTA category="familia" topic="pension" />
 
           {/* FAQs */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -590,7 +588,6 @@ const BlogArticle = () => {
       </div>
 
 
-      <RelatedLawyers category="Derecho de Familia" />
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

@@ -130,7 +130,7 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                     <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl">
                         El divorcio unilateral es uno de los procedimientos de familia más consultados en Chile. Muchas personas llevan años separadas de hecho, sin convivencia, sin proyectos en común y sin intención de retomar la relación, pero enfrentan una dificultad importante: su cónyuge simplemente no quiere firmar el divorcio.
                     </p>
 
@@ -155,7 +155,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Divorcio unilateral en Chile 2026"
@@ -168,6 +168,9 @@ const BlogArticle = () => {
                         <p className="text-lg text-gray-600 leading-relaxed">
                             En esta guía actualizada para 2026 aprenderás: qué es el divorcio unilateral, cuándo procede, cuántos años de separación exige la ley, qué pruebas necesitas, cómo funciona el juicio, qué ocurre con los hijos, qué pasa con las pensiones alimenticias, cuánto demora el procedimiento y cuáles son los errores más comunes.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <p className="text-gray-600 mt-4">
                             Si además tienes conflictos por pensión de alimentos, revisa también nuestra guía sobre{" "}
                             <Link
@@ -310,18 +313,19 @@ const BlogArticle = () => {
                         <div className="space-y-4">
                             {[
                                 { step: "Paso 1: Reunir antecedentes", desc: "Certificado de matrimonio, certificados de nacimiento, documentos que acrediten separación." },
-                                { step: "Paso 2: Presentar la demanda", 
-                                  desc: (
-                                    <>
-                                    El abogado presenta la demanda de divorcio unilateral ante el Tribunal de Familia.{" "}
-                                    En este paso es fundamental contar con un{" "}
-                                    <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
-                                        abogado de divorcio unilateral
-                                    </Link>{" "}
-                                    que redacte la demanda con los fundamentos y pruebas correctas desde el primer escrito.
-                                    </>
+                                {
+                                    step: "Paso 2: Presentar la demanda",
+                                    desc: (
+                                        <>
+                                            El abogado presenta la demanda de divorcio unilateral ante el Tribunal de Familia.{" "}
+                                            En este paso es fundamental contar con un{" "}
+                                            <Link to="/abogado-divorcio-unilateral" className="text-green-700 underline hover:text-green-500">
+                                                abogado de divorcio unilateral
+                                            </Link>{" "}
+                                            que redacte la demanda con los fundamentos y pruebas correctas desde el primer escrito.
+                                        </>
                                     )
-                                 },
+                                },
                                 { step: "Paso 3: Notificación", desc: "El cónyuge demandado debe ser informado formalmente." },
                                 { step: "Paso 4: Audiencia preparatoria", desc: "El tribunal revisa las pruebas y fija los puntos a discutir." },
                                 { step: "Paso 5: Audiencia de juicio", desc: "Se presentan testigos, documentos y declaraciones." },
@@ -492,7 +496,11 @@ const BlogArticle = () => {
                     />
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El divorcio unilateral es una herramienta legal que permite poner término al matrimonio cuando una de las partes ya no desea continuar la relación y el otro cónyuge se niega a colaborar. En Chile, este procedimiento existe precisamente para evitar que una persona permanezca unida legalmente de forma indefinida por la sola oposición de su pareja.
@@ -515,6 +523,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" topic="divorcio" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -529,7 +538,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

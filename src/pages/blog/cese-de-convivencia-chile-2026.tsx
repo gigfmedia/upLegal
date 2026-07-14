@@ -134,7 +134,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Cese de convivencia en Chile 2026"
@@ -169,7 +169,7 @@ const BlogArticle = () => {
                                 consultar con un abogado de divorcio en Chile
                             </Link>{" "}
                             online.
-                            </p>
+                        </p>
                     </div>
 
                     {/* QUE ES */}
@@ -181,6 +181,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             No basta con una discusión o una separación temporal. Debe existir una decisión real de terminar la convivencia matrimonial.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <p className="text-gray-600 mb-4">
                             Desde el punto de vista jurídico, el cese de convivencia permite demostrar que la relación se encuentra terminada y constituye uno de los requisitos esenciales para solicitar determinados tipos de divorcio.
                         </p>
@@ -478,12 +481,6 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Este ejemplo demuestra la importancia práctica de contar con una fecha claramente acreditada.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas acreditar el cese de convivencia para divorciarte? Un abogado de familia puede ayudarte a reunir las pruebas y formalizar el proceso correctamente."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho de Familia"
-                    />
-
                     {/* CESE Y COMPENSACION ECONOMICA */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Cómo influye el cese de convivencia en la compensación económica?</h2>
@@ -574,7 +571,11 @@ const BlogArticle = () => {
                     />
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El cese de convivencia es uno de los conceptos más importantes del Derecho de Familia chileno. No solo marca el término efectivo de la vida matrimonial, sino que además constituye un requisito fundamental para acceder al divorcio, ya sea de mutuo acuerdo o unilateral.
@@ -613,8 +614,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-            <RelatedLawyers category="Derecho de Familia" />
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

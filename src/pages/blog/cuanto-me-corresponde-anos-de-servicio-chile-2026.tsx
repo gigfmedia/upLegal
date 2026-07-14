@@ -61,9 +61,9 @@ const BlogArticle = () => {
         dateModified="2026-03-30"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
-      
+
       {/* Hero Section */}
       <div className="bg-green-900 text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
@@ -74,7 +74,7 @@ const BlogArticle = () => {
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
             ¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)
           </h1>
@@ -100,11 +100,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          
+
           <p className="text-xl max-w-3xl">
             Cuando una persona es despedida en Chile, una de las primeras dudas que surgen es cuánto dinero le corresponde recibir. Dentro del finiquito, uno de los conceptos más importantes es la indemnización por años de servicio.
           </p>
-          
+
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
@@ -123,11 +123,11 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
-          <BlogShare 
-            title="¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)" 
-            url="https://legalup.cl/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" 
+          <BlogShare
+            title="¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)"
+            url="https://legalup.cl/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
             showBorder={false}
           />
           {/* Introduction */}
@@ -164,6 +164,9 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Este monto busca compensar el tiempo que trabajaste en la empresa.
             </p>
+
+            <InArticleCTA category="Derecho Laboral" />
+
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 font-bold">
               <p className="text-gray-900 flex items-center gap-2 font-bold">
                 Regla general: Se paga 1 sueldo por cada año trabajado, con un tope.
@@ -177,7 +180,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               No todos los despidos generan derecho a indemnización. Corresponde principalmente cuando:
             </p>
-            
+
             <div className="space-y-6">
               <div className="flex items-start gap-4 p-6 border rounded-xl hover:bg-blue-50/30 transition-colors">
                 <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0">1</div>
@@ -231,11 +234,8 @@ const BlogArticle = () => {
                 </div>
               </div>
             </div>
-            
-            <InArticleCTA 
-              message="Si estás en esta situación, puedes hablar con un abogado ahora mismo." 
-              category="Derecho Laboral"
-            />
+
+
           </div>
 
           {/* Section 3 */}
@@ -258,25 +258,25 @@ const BlogArticle = () => {
 
           {/* Complexity Block 1 */}
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Te corresponde indemnización por necesidades de la empresa o renunciaste?</h2>
-              <p className="text-gray-600 mb-4">La diferencia entre recibir o no la indemnización por años de servicio depende del motivo del término de tu contrato.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades de la empresa</h3>
-                      <p className="text-green-700">Tienes derecho a indemnización por años de servicio completa. El empleador debe pagarte un mes de sueldo por cada año trabajado, con tope de 11 años.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Renuncia voluntaria</h3>
-                      <p className="text-red-700">No recibes indemnización por años de servicio. Solo te corresponden vacaciones proporcionales y días trabajados del mes.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Te corresponde indemnización por necesidades de la empresa o renunciaste?</h2>
+            <p className="text-gray-600 mb-4">La diferencia entre recibir o no la indemnización por años de servicio depende del motivo del término de tu contrato.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Despido por necesidades de la empresa</h3>
+                <p className="text-green-700">Tienes derecho a indemnización por años de servicio completa. El empleador debe pagarte un mes de sueldo por cada año trabajado, con tope de 11 años.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Renuncia voluntaria</h3>
+                <p className="text-red-700">No recibes indemnización por años de servicio. Solo te corresponden vacaciones proporcionales y días trabajados del mes.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula la indemnización por años de servicio??</h2>
             <p className="text-gray-600 mb-6">La fórmula base es:</p>
             <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 mb-8 text-center text-xl font-bold text-indigo-900">
-               1 sueldo mensual × años trabajados
+              1 sueldo mensual × años trabajados
             </div>
             <p className="text-gray-600 mb-8">Pero hay reglas importantes.</p>
 
@@ -361,24 +361,21 @@ const BlogArticle = () => {
 
           {/* Complexity Block 2 */}
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Tu finiquito incluye todos los conceptos o falta alguno?</h2>
-              <p className="text-gray-600 mb-4">Un cálculo incorrecto puede significar miles de pesos de diferencia. Revisa que tu finiquito considere todo lo que corresponde por ley.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Finiquito completo</h3>
-                      <p className="text-green-700">Incluye indemnización por años de servicio, vacaciones proporcionales, días trabajados, indemnización sustitutiva de aviso previo si corresponde, y bonos habituales.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Finiquito incompleto</h3>
-                      <p className="text-red-700">Falta uno o más conceptos importantes. El empleador omitió bonos, gratificaciones o no aplicó correctamente el tope de 11 años.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Tu finiquito incluye todos los conceptos o falta alguno?</h2>
+            <p className="text-gray-600 mb-4">Un cálculo incorrecto puede significar miles de pesos de diferencia. Revisa que tu finiquito considere todo lo que corresponde por ley.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Finiquito completo</h3>
+                <p className="text-green-700">Incluye indemnización por años de servicio, vacaciones proporcionales, días trabajados, indemnización sustitutiva de aviso previo si corresponde, y bonos habituales.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Finiquito incompleto</h3>
+                <p className="text-red-700">Falta uno o más conceptos importantes. El empleador omitió bonos, gratificaciones o no aplicó correctamente el tope de 11 años.</p>
+              </div>
+            </div>
           </div>
 
-          <InArticleCTA 
-            message="Cada caso es distinto — un abogado puede decirte exactamente qué hacer." 
-            category="Derecho Laboral"
-          />
+
 
           {/* Additional Info */}
           <div className="mb-12">
@@ -434,7 +431,7 @@ const BlogArticle = () => {
                 ))}
               </ul>
             </div>
-            
+
             <p className="text-gray-600 mb-4 leading-relaxed">Para calcular el monto total que te corresponde recibir, revisa esta guía:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <Link
@@ -489,18 +486,18 @@ const BlogArticle = () => {
 
           {/* Complexity Block 3 */}
           <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-4">¿Reclamaste a tiempo o dejaste pasar los plazos?</h2>
-              <p className="text-gray-600 mb-4">Los plazos para reclamar diferencias en tu indemnización son cortos y estrictos en Chile.</p>
-              <div className="grid sm:grid-cols-2 gap-6 mt-6">
-                  <div className="bg-green-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-green-800 text-lg mb-2">Reclamas dentro del plazo</h3>
-                      <p className="text-green-700">Tienes 60 días hábiles desde el despido para presentar un reclamo en la Inspección del Trabajo o demandar en el Juzgado Laboral. Firmar con reserva de derechos te permite reclamar después.</p>
-                  </div>
-                  <div className="bg-red-50 p-5 rounded-xl">
-                      <h3 className="font-bold text-red-800 text-lg mb-2">Dejas pasar el plazo</h3>
-                      <p className="text-red-700">Si no reclamas dentro de los 60 días hábiles, pierdes el derecho a reclamar diferencias en la indemnización. Firmar el finiquito sin reserva limita aún más tus opciones.</p>
-                  </div>
+            <h2 className="text-2xl font-bold mb-4">¿Reclamaste a tiempo o dejaste pasar los plazos?</h2>
+            <p className="text-gray-600 mb-4">Los plazos para reclamar diferencias en tu indemnización son cortos y estrictos en Chile.</p>
+            <div className="grid sm:grid-cols-2 gap-6 mt-6">
+              <div className="bg-green-50 p-5 rounded-xl">
+                <h3 className="font-bold text-green-800 text-lg mb-2">Reclamas dentro del plazo</h3>
+                <p className="text-green-700">Tienes 60 días hábiles desde el despido para presentar un reclamo en la Inspección del Trabajo o demandar en el Juzgado Laboral. Firmar con reserva de derechos te permite reclamar después.</p>
               </div>
+              <div className="bg-red-50 p-5 rounded-xl">
+                <h3 className="font-bold text-red-800 text-lg mb-2">Dejas pasar el plazo</h3>
+                <p className="text-red-700">Si no reclamas dentro de los 60 días hábiles, pierdes el derecho a reclamar diferencias en la indemnización. Firmar el finiquito sin reserva limita aún más tus opciones.</p>
+              </div>
+            </div>
           </div>
 
           <div className="mb-12 bg-blue-50 p-8 rounded-xl border border-blue-100">
@@ -573,7 +570,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
               <p>
@@ -585,12 +585,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
           <CategoryCTA category="laboral" topic="finiquito" />
           {/* FAQ (SEO structured) */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes</h2>
-            
+
             <div className="space-y-4">
               {faqs.map((faq, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
@@ -603,22 +603,22 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
-          <BlogShare 
-            title="¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)" 
-            url="https://legalup.cl/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026" 
+          <BlogShare
+            title="¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)"
+            url="https://legalup.cl/blog/cuanto-me-corresponde-anos-de-servicio-chile-2026"
           />
         </div>
 
         <BlogNavigation currentArticleId="cuanto-me-corresponde-anos-de-servicio-chile-2026" />
 
         <div className="mt-4 text-center">
-          <Link 
-            to="/blog" 
+          <Link
+            to="/blog"
             className="inline-flex items-center gap-2 text-green-900 hover:text-green-600 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -626,7 +626,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      
+
       <BlogConversionPopup category="Derecho Laboral" topic="finiquito" />
     </div>
   );

@@ -127,8 +127,8 @@ export function CalculadoraFiniquito() {
                 key={c.value}
                 onClick={() => setCausal(c.value)}
                 className={`text-left rounded-lg border px-4 py-3 transition-all ${causal === c.value
-                    ? "border-gray-900 bg-white ring-1 ring-gray-900"
-                    : "border-gray-200 bg-white hover:border-gray-400"
+                  ? "border-gray-900 bg-white ring-1 ring-gray-900"
+                  : "border-gray-200 bg-white hover:border-gray-400"
                   }`}
               >
                 <p className="text-sm font-semibold text-gray-900">
@@ -368,7 +368,6 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-
           <p className="text-xl max-w-3xl">
             Calcular el finiquito en Chile puede generar muchas dudas, especialmente porque intervienen distintos factores como indemnizaciones, vacaciones pendientes, pagos proporcionales y otros beneficios laborales.
           </p>
@@ -391,7 +390,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
@@ -441,6 +440,9 @@ const BlogArticle = () => {
             </p>
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6">
               <p className="text-gray-700 font-semibold mb-4">En el finiquito normalmente se incluyen:</p>
+
+              <InArticleCTA category="Derecho Laboral" />
+
               <ul className="grid sm:grid-cols-2 gap-3 list-none p-0">
                 {[
                   "Remuneraciones pendientes",
@@ -512,11 +514,7 @@ const BlogArticle = () => {
               </Link>
             </div>
 
-            <InArticleCTA
-              message="¿No estás seguro si el monto que te ofrecen es correcto? Un abogado laboral puede revisar tu finiquito antes de que lo firmes."
-              buttonText="Revisar mi finiquito con un abogado"
-              category="Derecho Laboral"
-            />
+
           </div>
 
           {/* Elements Included */}
@@ -684,11 +682,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <InArticleCTA
-              message="Si tienes dudas sobre tu liquidación o crees que te están pagando menos de lo que corresponde, consulta con un abogado laboral ahora."
-              buttonText="Consultar sobre mi finiquito"
-              category="Derecho Laboral"
-            />
+
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile 2026</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
@@ -859,7 +853,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               El finiquito laboral en Chile es un documento clave al momento de terminar una relación laboral, ya que establece todos los pagos e indemnizaciones que corresponden al trabajador. Entender cómo se calcula permite revisar correctamente los montos incluidos y asegurarse de que se respeten los derechos laborales. La calculadora de finiquito que incluimos en esta guía te entrega una estimación referencial, pero siempre es recomendable verificar los números con un profesional.
@@ -873,6 +870,7 @@ const BlogArticle = () => {
           <CategoryCTA category="laboral" topic="despido" />
 
           {/* FAQ (SEO structured) */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">Preguntas frecuentes sobre finiquitos</h2>
 
@@ -887,11 +885,9 @@ const BlogArticle = () => {
           </div>
         </div>
 
-
-
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}

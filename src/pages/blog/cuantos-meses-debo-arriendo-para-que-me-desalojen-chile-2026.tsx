@@ -70,7 +70,7 @@ const BlogArticle = () => {
         dateModified="2026-04-20"
         faqs={faqs}
       />
-      <Header onAuthClick={() => {}} />
+      <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
       <div className="bg-green-900 text-white py-16">
@@ -130,7 +130,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)"
@@ -166,8 +166,11 @@ const BlogArticle = () => {
             </p>
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <p className="text-gray-700 font-medium leading-relaxed">
-                 No existe una regla como “3 meses” o “6 meses”. Eso es un mito.
+                No existe una regla como “3 meses” o “6 meses”. Eso es un mito.
               </p>
+
+              <InArticleCTA category="Derecho Civil" />
+
             </div>
             <p className="text-gray-600 leading-relaxed">
               La confusión viene porque en la práctica muchos arrendadores esperan, se intenta negociar antes y el proceso judicial demora, pero eso no es una obligación legal.
@@ -214,10 +217,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Estás en riesgo de desalojo o ya acumulaste deuda de arriendo? Un abogado puede ayudarte a definir estrategia y evitar errores."
-            category="Derecho Civil"
-          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Proceso real de desalojo en Chile (paso a paso)</h2>
@@ -239,17 +239,17 @@ const BlogArticle = () => {
                   </div>
                 </div>
               ))}
-            <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-              <Link
-                to="/blog/orden-desalojo-chile-2026"
-                className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-              >
-                👉 ¿Qué es y cómo funciona una orden de desalojo?
-                <ChevronRight className="h-4 w-4" />
-              </Link>
+              <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+                <Link
+                  to="/blog/orden-desalojo-chile-2026"
+                  className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+                >
+                  👉 ¿Qué es y cómo funciona una orden de desalojo?
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
-          </div>
           </div>
 
           <div className="mb-12">
@@ -509,10 +509,7 @@ const BlogArticle = () => {
               </Link>
             </div>
 
-            <InArticleCTA
-              message="¿Te notificaron demanda o ya debes 2 meses o más? Actuar a tiempo puede evitar un lanzamiento y reducir el daño económico." 
-              category="Desalojo"
-            />
+
           </div>
 
           <div className="mb-12">
@@ -670,7 +667,10 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               No existe un número mágico de meses para que ocurra un desalojo en Chile. La ley es clara: <strong>con 1 mes de deuda ya pueden iniciar un proceso judicial</strong> para poner término al contrato y recuperar la propiedad.
@@ -681,6 +681,7 @@ const BlogArticle = () => {
           </div>
 
           <CategoryCTA category="arriendo" topic="arriendo" />
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -695,7 +696,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

@@ -26,27 +26,27 @@ const BlogArticle = () => {
         {
             question: "¿La empresa puede invocar necesidades de la empresa cuando quiera?",
             answer:
-            "No. Debe existir una causa objetiva relacionada con el funcionamiento de la empresa — razones económicas, tecnológicas, estructurales o de modernización. Si la causal es invocada sin justificación real o como pretexto para deshacerse de un trabajador específico, puede ser impugnada judicialmente y el tribunal puede declararla injustificada.",
+                "No. Debe existir una causa objetiva relacionada con el funcionamiento de la empresa — razones económicas, tecnológicas, estructurales o de modernización. Si la causal es invocada sin justificación real o como pretexto para deshacerse de un trabajador específico, puede ser impugnada judicialmente y el tribunal puede declararla injustificada.",
         },
         {
             question: "¿Siempre corresponde indemnización por necesidades de la empresa?",
             answer:
-            "Generalmente sí. Si tienes más de un año de antigüedad, corresponde indemnización por años de servicio — un mes de remuneración por año trabajado, con tope de 11 años — más la indemnización sustitutiva del aviso previo si no avisaron con 30 días de anticipación. Si el despido es declarado injustificado, se agregan recargos de entre 30% y 100% sobre la indemnización.",
+                "Generalmente sí. Si tienes más de un año de antigüedad, corresponde indemnización por años de servicio — un mes de remuneración por año trabajado, con tope de 11 años — más la indemnización sustitutiva del aviso previo si no avisaron con 30 días de anticipación. Si el despido es declarado injustificado, se agregan recargos de entre 30% y 100% sobre la indemnización.",
         },
         {
             question: "¿Puedo demandar si creo que la causal de necesidades de la empresa es falsa?",
             answer:
-            "Sí. Si consideras que la empresa utilizó indebidamente esta causal — por ejemplo, si contrataron a otra persona para tu mismo cargo poco después — puedes impugnar el despido ante el Juzgado del Trabajo dentro de los 60 días hábiles desde el término del contrato. Si la Fiscalía Laboral acoge el reclamo, el despido puede ser declarado injustificado.",
+                "Sí. Si consideras que la empresa utilizó indebidamente esta causal — por ejemplo, si contrataron a otra persona para tu mismo cargo poco después — puedes impugnar el despido ante el Juzgado del Trabajo dentro de los 60 días hábiles desde el término del contrato. Si la Fiscalía Laboral acoge el reclamo, el despido puede ser declarado injustificado.",
         },
         {
             question: "¿Qué pasa si contrataron a otra persona para mi mismo cargo?",
             answer:
-            "Es uno de los antecedentes más relevantes para cuestionar la existencia real de las necesidades de la empresa. Si la empresa despidió a un trabajador por 'necesidades' y luego contrató a otro para el mismo puesto, eso contradice la justificación del despido y puede ser usado como prueba en el juicio. Guarda cualquier evidencia de esa contratación.",
+                "Es uno de los antecedentes más relevantes para cuestionar la existencia real de las necesidades de la empresa. Si la empresa despidió a un trabajador por 'necesidades' y luego contrató a otro para el mismo puesto, eso contradice la justificación del despido y puede ser usado como prueba en el juicio. Guarda cualquier evidencia de esa contratación.",
         },
         {
             question: "¿Estoy obligado a firmar el finiquito de inmediato?",
             answer:
-            "No. No existe obligación de firmar el finiquito sin haber revisado su contenido y comprendido sus efectos. Puedes tomarte el tiempo necesario para revisar los montos, consultar con un abogado y, si no estás de acuerdo, firmar con reserva de derechos o negarte a firmar. El empleador no puede forzarte a firmar en el acto.",
+                "No. No existe obligación de firmar el finiquito sin haber revisado su contenido y comprendido sus efectos. Puedes tomarte el tiempo necesario para revisar los montos, consultar con un abogado y, si no estás de acuerdo, firmar con reserva de derechos o negarte a firmar. El empleador no puede forzarte a firmar en el acto.",
         },
     ];
 
@@ -62,7 +62,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -122,7 +122,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Despido por necesidades de la empresa en Chile 2026"
@@ -182,6 +182,8 @@ const BlogArticle = () => {
                                 No obstante, la ley no permite utilizar esta causal simplemente porque el empleador quiera reemplazar a un trabajador o reducir costos sin una justificación suficiente.
                             </p>
                         </div>
+
+                        <InArticleCTA category="Derecho Laboral" />
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La existencia de una reorganización o una reducción de personal no significa automáticamente que el despido sea válido. En un eventual juicio laboral, el tribunal analizará los antecedentes concretos del caso, la documentación de la empresa y las razones invocadas para determinar si realmente existían las necesidades alegadas.
@@ -292,11 +294,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        message="¿Recibiste una carta de despido por necesidades de la empresa y tienes dudas sobre su legalidad? Un abogado laboral puede analizar tu caso antes de que firmes el finiquito."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
 
                     {/* INJUSTIFICADO */}
                     <div className="mb-12">
@@ -490,7 +488,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La causal de necesidades de la empresa busca permitir que los empleadores enfrenten cambios reales en su organización, pero no puede utilizarse de forma arbitraria ni como una justificación automática para despedir trabajadores. Si recibiste una carta de despido, es importante conservar toda la documentación relacionada, revisar correctamente el cálculo de las indemnizaciones y conocer los plazos para ejercer tus derechos.
@@ -505,6 +507,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="laboral" topic="despido" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -519,7 +522,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Laboral" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

@@ -104,7 +104,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?"
@@ -126,6 +126,9 @@ const BlogArticle = () => {
               <div className="bg-green-50 p-5 rounded-xl">
                 <h3 className="font-bold text-green-800 text-lg mb-2">Conciliar en Inspección del Trabajo</h3>
                 <p className="text-green-700">Si hay disposición a negociar, puedes resolver en 2 a 6 semanas sin costo judicial. Además, el plazo para demandar se extiende hasta 90 días hábiles si no hay acuerdo.</p>
+
+                <InArticleCTA category="Derecho Laboral" />
+
               </div>
               <div className="bg-red-50 p-5 rounded-xl">
                 <h3 className="font-bold text-red-800 text-lg mb-2">Demandar sin intentar conciliación</h3>
@@ -241,11 +244,7 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Si las partes llegan a acuerdo en esta etapa, el caso termina aquí.</p>
 
-            <InArticleCTA
-              message="¿Estás evaluando demandar por despido injustificado y no sabes si conviene? Un abogado laboral puede revisar tu caso y decirte qué esperar."
-              buttonText="Evaluar mi caso con un abogado"
-              category="Derecho Laboral"
-            />
+
           </div>
 
           <div className="mb-12">
@@ -430,11 +429,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          {/* <InArticleCTA
-            message="¿No sabes si conviene demandar o llegar a un acuerdo? Un abogado laboral puede decirte qué esperar según tu caso específico."
-            buttonText="Consultar con abogado laboral"
-            category="Derecho Laboral"
-          /> */}
+
 
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Relacionado</p>
@@ -471,14 +466,17 @@ const BlogArticle = () => {
             <p className="text-white mb-6">Un abogado laboral puede analizar tu caso y darte una estimación realista de plazos y resultados según tu situación específica.</p>
             <Link
               to="/abogado-laboral"
-                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
 
           {/* Conclusion */}
+          <RelatedLawyers category="Derecho Laboral" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Un juicio laboral por despido injustificado en Chile no es inmediato, pero tampoco tiene que ser interminable. Con el procedimiento correcto, documentación en orden y asesoría legal adecuada, la mayoría de los casos se resuelve entre 3 y 8 meses — y muchos antes si hay disposición a negociar.
@@ -488,9 +486,9 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
           <CategoryCTA category="laboral" topic="despido" />
           {/* FAQ */}
+
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -505,7 +503,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Laboral" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

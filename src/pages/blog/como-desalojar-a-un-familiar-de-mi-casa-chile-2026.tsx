@@ -120,7 +120,7 @@ const BlogArticle = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso"
@@ -151,6 +151,9 @@ const BlogArticle = () => {
                 <p className="text-amber-900 font-bold text-base">
                   El único camino legal es a través de un tribunal. Sin orden judicial, no hay desalojo posible.
                 </p>
+
+                <InArticleCTA category="Derecho Civil" />
+
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
@@ -296,11 +299,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            message="¿Necesitas recuperar tu propiedad de un familiar y no sabes por dónde empezar? Un abogado puede orientarte sobre la acción legal correcta."
-            buttonText="Consultar sobre mi caso"
-            category="Derecho Arrendamiento"
-          />
+
 
           <div className="space-y-4 mt-12 mb-12">
             {/* Paso 4 */}
@@ -463,7 +462,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-4">Si estás enfrentando una situación compleja con un familiar que ocupa tu propiedad, hay ciertos escenarios donde conviene buscar asesoría legal especializada lo antes posible.</p>
@@ -488,7 +486,10 @@ const BlogArticle = () => {
           </div>
 
           {/* Conclusión */}
+          <RelatedLawyers category="Derecho Civil" />
+
           <div className="mb-12 border-t pt-8">
+
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
               Desalojar a un familiar en Chile es un proceso legal que requiere paciencia y los pasos correctos. No existe forma de hacerlo por la fuerza aunque seas el dueño — el único camino es judicial.
@@ -498,15 +499,11 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          {/* <InArticleCTA
-            message="¿Necesitas recuperar tu propiedad de un familiar y no sabes cómo hacerlo legalmente? Un abogado puede evaluar tu caso y explicarte el proceso exacto."
-            buttonText="Consultar sobre mi caso"
-            category="Derecho Arrendamiento"
-          /> */}
+
           <CategoryCTA category="arriendo" topic="arriendo" />
 
-
           {/* FAQ */}
+
           <div className="mb-6 pt-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
             <div className="space-y-4">
@@ -524,7 +521,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <RelatedLawyers category="Derecho Civil" />
+
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">

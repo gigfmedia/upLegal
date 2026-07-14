@@ -56,7 +56,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -116,7 +116,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Ley Karin en Chile 2026"
@@ -173,6 +173,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             Su objetivo principal es prevenir: el acoso laboral, el acoso sexual y la violencia ejercida en el contexto laboral. Además, establece obligaciones concretas para los empleadores respecto de la recepción de denuncias, investigación de los hechos y adopción de medidas preventivas.
                         </p>
+
+                        <InArticleCTA category="Derecho Laboral" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -296,11 +299,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        message="¿Ya presentaste una denuncia bajo la Ley Karin y la empresa no responde? Un abogado laboral puede ayudarte a evaluar tus opciones legales."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
 
                     {/* MEDIDAS DE PROTECCION */}
                     <div className="mb-12">
@@ -429,7 +428,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La Ley Karin representa un avance importante en la protección de los trabajadores frente al acoso laboral, el acoso sexual y la violencia en el trabajo. Sin embargo, conocer las reglas generales no siempre permite determinar cuál es la mejor decisión cuando ya existe una denuncia, una investigación interna o un conflicto con el empleador.
@@ -444,6 +447,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="laboral" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
@@ -458,7 +462,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Laboral" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

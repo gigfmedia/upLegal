@@ -128,7 +128,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Incumplimiento del régimen de relación directa y regular en Chile 2026"
@@ -158,6 +158,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             La relación directa y regular puede establecerse por acuerdo entre los padres, mediante mediación familiar o por resolución judicial. El tribunal siempre priorizará el interés superior del niño al momento de definir este régimen.
                         </p>
+
+                        <InArticleCTA category="Derecho de Familia" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Si todavía no conoces el funcionamiento general de esta institución, revisa nuestra guía sobre <Link to="/blog/regimen-visitas-chile-2026" className="underline">Régimen de visitas en Chile 2026</Link>.</p>
@@ -363,11 +366,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Necesitas ayuda para exigir el cumplimiento del régimen de visitas? Un abogado de familia puede ayudarte a solicitar medidas judiciales para proteger tus derechos y el bienestar del niño."
-                        buttonText="Ver abogados especializados en familia"
-                        category="Derecho de Familia"
-                    />
+
 
                     {/* ERRORES FRECUENTES */}
                     <div className="mb-12">
@@ -421,7 +420,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El incumplimiento del régimen de relación directa y regular no afecta únicamente al padre o madre perjudicado. También genera consecuencias importantes para el desarrollo emocional y psicológico del niño, que tiene derecho a mantener un vínculo real y regular con ambos padres independientemente de los conflictos entre ellos.
@@ -447,6 +450,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre incumplimiento del régimen de visitas</h2>
                         <div className="space-y-4">
@@ -461,7 +465,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

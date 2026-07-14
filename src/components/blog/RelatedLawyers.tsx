@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Lawyer, LawyerCard } from '@/components/LawyerCard';
+import { Lawyer } from '@/components/LawyerCard';
+import { LawyerCardV2 } from '@/components/LawyerCardV2';
 import { searchLawyers } from '@/pages/api/search-lawyers';
 import { Loader2 } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem, 
-  CarouselNext, 
-  CarouselPrevious 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious
 } from '@/components/ui/carousel';
 
 interface RelatedLawyersProps {
@@ -19,6 +20,14 @@ interface RelatedLawyersProps {
 export const RelatedLawyers = ({ category, title = "Habla con un abogado especialista" }: RelatedLawyersProps) => {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [slidesToScroll, setSlidesToScroll] = useState(1);
+
+  useEffect(() => {
+    const update = () => setSlidesToScroll(window.innerWidth >= 1024 ? 2 : 1);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -103,11 +112,11 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
 
   if (lawyers.length === 0) return null;
 
-  const showCarousel = lawyers.length > 3;
+  const showCarousel = lawyers.length >= 2;
 
   return (
-    <section ref={ref} className="mt-4 bg-white border-y border-blue-100 w-full py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section ref={ref} className="w-full py-8">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
           <p className="text-gray-600">Abogados verificados disponibles para asesorarte en {category}.</p>
@@ -118,14 +127,15 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
             opts={{
               align: "start",
               loop: false,
+              slidesToScroll,
             }}
             className="w-full"
           >
             <CarouselContent className="-ml-4">
               {lawyers.map(lawyer => (
-                <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
                   <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id)}>
-                    <LawyerCard lawyer={lawyer} />
+                    <LawyerCardV2 lawyer={lawyer} />
                   </div>
                 </CarouselItem>
               ))}
@@ -144,7 +154,7 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado especia
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {lawyers.map(lawyer => (
               <div key={lawyer.id} onClickCapture={() => handleLawyerClick(lawyer.id)}>
-                <LawyerCard lawyer={lawyer} />
+                <LawyerCardV2 lawyer={lawyer} />
               </div>
             ))}
           </div>

@@ -130,7 +130,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Impugnación de paternidad en Chile 2026"
@@ -162,6 +162,9 @@ const BlogArticle = () => {
                         </p>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Finalidad</p>
+
+                            <InArticleCTA category="Derecho de Familia" />
+
                             <p className="text-blue-800">Corregir una filiación que no corresponde a la realidad biológica o jurídica. Una sentencia favorable puede producir importantes consecuencias respecto de apellidos, alimentos, herencia y derechos sucesorios.</p>
                         </div>
                         <p className="text-gray-600 mt-4">Conviene precisar que esta acción no persigue simplemente un resultado biológico, sino que ataca la presunción legal de paternidad. Dependiendo de si la filiación proviene de un reconocimiento voluntario o de una sentencia judicial, las reglas procesales y los plazos para impugnar pueden variar significativamente, lo que marca una diferencia sustancial en la estrategia jurídica que corresponda adoptar.</p>
@@ -359,11 +362,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600">La filiación produce efectos hereditarios relevantes. Por ello las acciones relacionadas con paternidad suelen tener consecuencias patrimoniales importantes. Dependiendo del caso, una sentencia puede afectar la calidad de heredero, la participación sucesoria y los derechos hereditarios futuros.</p>
                     </div>
 
-                    <InArticleCTA
-                        message="¿Tienes dudas sobre una filiación existente? Un abogado especializado en derecho de familia puede ayudarte a evaluar tu caso y determinar si procede una impugnación de paternidad."
-                        buttonText="Ver abogados especializados en familia"
-                        category="Derecho de Familia"
-                    />
+
 
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
@@ -459,7 +458,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho de Familia" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             La impugnación de paternidad es una de las acciones más relevantes y sensibles dentro del Derecho de Familia chileno. A través de este procedimiento es posible cuestionar una filiación previamente establecida cuando existen antecedentes que justifican dicha revisión.
@@ -485,6 +488,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="familia" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre impugnación de paternidad en Chile</h2>
                         <div className="space-y-4">
@@ -499,7 +503,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho de Familia" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

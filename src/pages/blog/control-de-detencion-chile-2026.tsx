@@ -64,7 +64,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -124,7 +124,7 @@ const BlogArticle = () => {
             </div>
 
             {/* CONTENT */}
-            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 py-12">
+            <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Control de detención en Chile 2026"
@@ -188,6 +188,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">
                             No se trata de un juicio ni implica determinar la culpabilidad del detenido. Su finalidad principal consiste en responder preguntas como: ¿La detención fue legal? ¿Existían motivos suficientes para detener? ¿Se respetaron los derechos del detenido? ¿Debe mantenerse privado de libertad? ¿La Fiscalía formalizará la investigación?
                         </p>
+
+                        <InArticleCTA category="Derecho Penal" />
+
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Es una garantía fundamental del debido proceso reconocida por la legislación chilena.</p>
@@ -265,11 +268,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA
-                        message="Si detuvieron a un familiar o a ti, las primeras horas antes de la audiencia son el único momento para preparar una defensa."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Penal"
-                    />
+
 
                     {/* DESORDENES PUBLICOS */}
                     <div className="mb-12">
@@ -428,7 +427,11 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CONCLUSION */}
+
+                    <RelatedLawyers category="Derecho Penal" />
+
                     <div className="mb-12 border-t pt-8">
+
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
                             El control de detención es una de las etapas más relevantes del proceso penal chileno. Esta guía describe el procedimiento general y los derechos del detenido.
@@ -449,6 +452,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="penal" />
 
                     {/* FAQS */}
+
                     <div className="mb-6" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes sobre el control de detención</h2>
                         <div className="space-y-4">
@@ -463,7 +467,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            <RelatedLawyers category="Derecho Penal" />
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
@@ -485,7 +489,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-        <BlogConversionPopup category="Derecho Penal" topic="control-detencion" />
+            <BlogConversionPopup category="Derecho Penal" topic="control-detencion" />
         </div>
     );
 };
