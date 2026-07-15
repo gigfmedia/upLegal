@@ -159,7 +159,6 @@ const BlogArticle = () => {
                             La relación directa y regular puede establecerse por acuerdo entre los padres, mediante mediación familiar o por resolución judicial. El tribunal siempre priorizará el interés superior del niño al momento de definir este régimen.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -167,6 +166,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">La relación directa y regular no se limita a la entrega y devolución del niño en fechas determinadas. Comprende también el derecho a mantener comunicaciones regulares, a recibir información sobre la educación y salud del hijo, y a participar en decisiones relevantes de su vida. El incumplimiento de cualquiera de estas facetas puede ser igualmente reclamable ante el tribunal, aunque muchas personas se concentran únicamente en el régimen presencial.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Incumplen el régimen de visitas de tus hijos?" message="Un abogado de familia puede evaluar el incumplimiento, solicitar modificaciones y buscar medidas para proteger el derecho de relación." />
+
 
                     {/* QUE SE CONSIDERA INCUMPLIMIENTO */}
                     <div className="mb-12">

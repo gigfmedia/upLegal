@@ -145,7 +145,7 @@ const BlogArticle = () => {
               Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.
             </p>
 
-            <InArticleCTA category="Arrendamiento" />
+            <InArticleCTA category="Arrendamiento"  title="¿Te quieren desalojar de tu vivienda?" message="Un abogado inmobiliario puede revisar la notificación, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
 
             <div className="space-y-6">
               <div>

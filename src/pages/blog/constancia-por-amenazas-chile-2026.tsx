@@ -161,8 +161,6 @@ const BlogArticle = () => {
                             Muchas personas utilizan este mecanismo cuando desean dejar evidencia de una situación que podría agravarse posteriormente. Por ejemplo: amenazas verbales, mensajes intimidatorios, hostigamiento reiterado, conflictos vecinales, problemas familiares o situaciones de acoso.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">La constancia no equivale necesariamente a una denuncia penal. Su principal objetivo es dejar registro de los hechos.</p>
@@ -173,6 +171,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Recibes amenazas y necesitas una constancia?" message="Un abogado penal puede ayudarte a denunciar, obtener la constancia de Carabineros y evaluar medidas de protección." />
 
                     {/* QUE SE CONSIDERA UNA AMENAZA */}
                     <div className="mb-12">

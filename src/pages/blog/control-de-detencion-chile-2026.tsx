@@ -189,8 +189,6 @@ const BlogArticle = () => {
                             No se trata de un juicio ni implica determinar la culpabilidad del detenido. Su finalidad principal consiste en responder preguntas como: ¿La detención fue legal? ¿Existían motivos suficientes para detener? ¿Se respetaron los derechos del detenido? ¿Debe mantenerse privado de libertad? ¿La Fiscalía formalizará la investigación?
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Es una garantía fundamental del debido proceso reconocida por la legislación chilena.</p>
@@ -201,6 +199,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal" title="¿Te detuvieron o te citaron a control de detención?" message="Un abogado penal puede asistirte en la audiencia y definir tu estrategia de defensa desde el inicio." />
 
                     {/* CUANDO SE REALIZA */}
                     <div className="mb-12">

@@ -64,6 +64,9 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
         <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
           <span className="text-green-600">✓</span> Precio transparente
         </div>
+        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+          <span className="text-green-600">✓</span> Agenda inmediata
+        </div>
       </div>
 
       <Link to={targetUrl} onClick={handleCTA} className="inline-block w-full sm:w-auto">

@@ -162,12 +162,14 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Finalidad</p>
 
-                            <InArticleCTA category="Derecho de Familia" />
 
                             <p className="text-blue-800">Proteger los derechos del niño, niña o adolescente y evitar situaciones de sustracción internacional o traslados no autorizados.</p>
                         </div>
                         <p className="text-gray-600 mt-4">La regla de autorización no aplica solo a viajes turísticos. También cubre viajes por estudios, tratamientos médicos en el extranjero, visitas a familiares o cualquier otra salida del territorio nacional. Además, el nivel de exigencia puede variar según el país de destino: algunos destinos requieren documentación adicional o trámites consulares que deben coordinarse con suficiente antelación.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas autorización para que tu hijo salga del país?" message="Un abogado de familia puede tramitar la autorización judicial, preparar los documentos y agilizar el proceso de viaje." />
+
 
                     {/* QUÉ SE CONSIDERA MENOR DE EDAD */}
                     <div className="mb-12">

@@ -174,7 +174,6 @@ const BlogArticle = () => {
                             Su finalidad es equilibrar una relación donde normalmente la empresa posee mayor información, recursos y capacidad de negociación que el consumidor.
                         </p>
 
-                        <InArticleCTA category="Derecho del Consumidor" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -193,6 +192,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho del Consumidor"  title="¿Tienes un problema con un producto o servicio?" message="Un abogado especialista en consumo puede revisar tu caso, identificar tus derechos y buscar la reparación que corresponde." />
+
 
                     {/* DERECHOS */}
                     <div className="mb-12">

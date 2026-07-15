@@ -147,7 +147,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-bold">Es decir:</p>
 
-            <InArticleCTA category="Arrendamiento" />
 
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
@@ -174,6 +173,9 @@ const BlogArticle = () => {
               Se basa en el comportamiento de las partes, no en un nuevo documento.
             </p>
           </div>
+
+          <InArticleCTA category="Arrendamiento" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa cuando hay tácita reconducción?</h2>

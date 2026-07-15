@@ -186,7 +186,6 @@ const BlogArticle = () => {
                             La liquidación puede realizarse después de un divorcio, una nulidad matrimonial, la sustitución del régimen matrimonial o la muerte de uno de los cónyuges.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -196,6 +195,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Es importante distinguir entre la disolución de la sociedad conyugal (que ocurre automáticamente con el divorcio, la nulidad o el cambio de régimen) y su liquidación (que requiere un procedimiento posterior). Durante el período entre la disolución y la liquidación efectiva, los bienes quedan en un estado de comunidad que puede generar problemas de administración si no se gestiona adecuadamente. Cualquier acto de disposición de bienes comunes durante este período requiere el consentimiento de ambos ex cónyuges.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia" title="¿Vas a divorciarte y debes liquidar bienes?" message="Un abogado de familia puede calcular tu participación en la sociedad conyugal y proteger tus derechos patrimoniales." />
+
 
                     {/* QUE ES SOCIEDAD CONYUGAL */}
                     <div className="mb-12">

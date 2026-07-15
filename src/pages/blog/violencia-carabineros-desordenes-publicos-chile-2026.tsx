@@ -206,8 +206,6 @@ const BlogArticle = () => {
                             No toda manifestación constituye un delito. De hecho, la gran mayoría de las reuniones públicas se desarrollan sin consecuencias penales.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -220,6 +218,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te investigan por violencia contra Carabineros o desórdenes públicos?" message="Un abogado penal puede revisar los antecedentes, cuestionar la participación y definir tu estrategia de defensa." />
 
                     {/* VIOLENCIA CONTRA CARABINEROS */}
                     <div className="mb-12">

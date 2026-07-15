@@ -187,7 +187,6 @@ const BlogArticle = () => {
                             No se trata de una indemnización por sufrimiento emocional. Tampoco es un castigo para quien solicita el divorcio. Su finalidad es equilibrar el impacto económico que pudo generar la distribución de roles dentro del matrimonio.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -197,6 +196,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Es relevante distinguir la compensación económica de figuras afines como la pensión de alimentos o la liquidación de sociedad conyugal. Mientras los alimentos cubren necesidades futuras y la liquidación reparte bienes existentes, la compensación mira hacia atrás: busca reparar un perjuicio causado durante el matrimonio por la dedicación preferente al hogar o a los hijos. Esta distinción es relevante porque una persona puede tener derecho a compensación económica incluso si ya recibió su parte de la sociedad conyugal o si no tiene hijos menores.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y crees que corresponde compensación económica?" message="Un abogado de familia puede evaluar si cumples los requisitos, calcular el monto y demandar la compensación que te corresponde." />
+
 
                     {/* QUIEN PUEDE PEDIR */}
                     <div className="mb-12">

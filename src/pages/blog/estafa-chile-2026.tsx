@@ -176,14 +176,14 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600">En términos simples, existe una estafa cuando alguien engaña a otra persona para obtener dinero, bienes o beneficios económicos. Lo importante no es solamente la pérdida económica, sino la existencia de un engaño previo que provoca el perjuicio.</p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La definición anterior describe la estafa en abstracto. Acreditarla en un caso concreto exige demostrar no solo que existió una pérdida, sino que hubo una intención fraudulenta desde el origen. Esa diferencia —entre un negocio que salió mal y un engaño planificado— es la que la Fiscalía debe probar con los antecedentes de cada investigación.
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de estafa o fuiste víctima de una?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
 
                     {/* ELEMENTOS DE UNA ESTAFA */}
                     <div className="mb-12">

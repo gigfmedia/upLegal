@@ -166,7 +166,6 @@ const BlogArticle = () => {
                             Su objetivo es: identificar los bienes existentes, determinar quién es propietario de cada uno, valorar económicamente el patrimonio y distribuir los bienes o su valor entre las partes.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -176,6 +175,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">La liquidación de bienes involucra dos etapas que a menudo se confunden: primero, la disolución del régimen patrimonial (que determina el momento desde el cual los cónyuges dejan de generar bienes comunes), y segundo, la partición o división de los bienes existentes a esa fecha. Los efectos jurídicos de cada etapa son distintos y los plazos para impugnar o solicitar la nulidad de ciertos actos pueden variar según cuál de ellas se trate.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y necesitas liquidar los bienes?" message="Un abogado de familia puede inventariar los activos, calcular las participaciones y asegurar una partición justa." />
+
 
                     {/* TODOS LOS DIVORCIOS REQUIEREN LIQUIDACION */}
                     <div className="mb-12">

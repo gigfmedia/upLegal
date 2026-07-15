@@ -189,8 +189,6 @@ const BlogArticle = () => {
                             Estos elementos distinguen al robo del delito de hurto, donde la apropiación ocurre sin violencia ni fuerza.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">El objetivo del legislador es sancionar con mayor severidad aquellas conductas que, además del perjuicio económico, ponen en riesgo la seguridad o integridad de las personas.</p>
@@ -201,6 +199,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de robo o fuiste víctima de uno?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
 
                     {/* DIFERENCIA ROBO Y HURTO */}
                     <div className="mb-12">

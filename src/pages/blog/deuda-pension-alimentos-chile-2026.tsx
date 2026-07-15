@@ -206,8 +206,10 @@ const BlogArticle = () => {
               <p className="text-amber-800">La deuda se acumula mes a mes y puede aumentar con el tiempo.</p>
             </div>
 
-            <InArticleCTA category="Derecho de Familia" />
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Tienes deuda de pensión de alimentos?" message="Un abogado de familia puede evaluar tu situación, negociar el pago y buscar alternativas para evitar consecuencias graves." />
+
 
           {/* Cómo calcula el juez */}
           <div className="mb-12">

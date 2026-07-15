@@ -183,13 +183,15 @@ const BlogArticle = () => {
                             </p>
                         </div>
 
-                        <InArticleCTA category="Derecho Laboral" />
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La existencia de una reorganización o una reducción de personal no significa automáticamente que el despido sea válido. En un eventual juicio laboral, el tribunal analizará los antecedentes concretos del caso, la documentación de la empresa y las razones invocadas para determinar si realmente existían las necesidades alegadas.
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Laboral" title="¿Te despidieron por necesidades de la empresa?" message="Un abogado laboral puede verificar si la causal es real, calcular tus indemnizaciones y evaluar si puedes demandar por más." />
+
 
                     {/* CUANDO PUEDE UTILIZARSE */}
                     <div className="mb-12">

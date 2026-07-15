@@ -174,7 +174,6 @@ const BlogArticle = () => {
                             Su objetivo principal es prevenir: el acoso laboral, el acoso sexual y la violencia ejercida en el contexto laboral. Además, establece obligaciones concretas para los empleadores respecto de la recepción de denuncias, investigación de los hechos y adopción de medidas preventivas.
                         </p>
 
-                        <InArticleCTA category="Derecho Laboral" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -188,6 +187,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral, acoso sexual o violencia en el trabajo?" message="Un abogado laboral puede evaluar tu caso bajo la Ley Karin, preparar la denuncia y buscar medidas de protección." />
+
 
                     {/* CONDUCTAS QUE PROTEGE */}
                     <div className="mb-12">

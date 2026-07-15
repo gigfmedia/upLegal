@@ -185,7 +185,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia" />
+                        <InArticleCTA category="Derecho de Familia" title="¿Tu cónyuge no quiere divorciarse y tú sí?" message="Un abogado de familia puede evaluar si cumples los requisitos, preparar la demanda y guiar el proceso de divorcio unilateral." />
 
                     {/* QUE ES */}
                     <div className="mb-12">

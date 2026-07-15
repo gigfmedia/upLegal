@@ -441,7 +441,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6">
               <p className="text-gray-700 font-semibold mb-4">En el finiquito normalmente se incluyen:</p>
 
-              <InArticleCTA category="Derecho Laboral" />
 
               <ul className="grid sm:grid-cols-2 gap-3 list-none p-0">
                 {[
@@ -462,6 +461,9 @@ const BlogArticle = () => {
               Una vez firmado, el finiquito tiene valor legal y puede utilizarse como prueba de que las obligaciones laborales fueron pagadas. Desde 2021, en Chile también es posible firmar el finiquito de manera electrónica a través de la Dirección del Trabajo.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Te entregaron el finiquito y no estás seguro de los montos?" message="Un abogado laboral puede revisar tu finiquito, detectar errores y negociar mejoras antes de que lo firmes." />
+
 
           {/* Complexity Block 1 */}
           <div className="mb-12">

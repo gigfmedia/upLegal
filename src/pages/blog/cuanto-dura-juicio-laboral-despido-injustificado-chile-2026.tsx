@@ -127,7 +127,6 @@ const BlogArticle = () => {
                 <h3 className="font-bold text-green-800 text-lg mb-2">Conciliar en Inspección del Trabajo</h3>
                 <p className="text-green-700">Si hay disposición a negociar, puedes resolver en 2 a 6 semanas sin costo judicial. Además, el plazo para demandar se extiende hasta 90 días hábiles si no hay acuerdo.</p>
 
-                <InArticleCTA category="Derecho Laboral" />
 
               </div>
               <div className="bg-red-50 p-5 rounded-xl">
@@ -136,6 +135,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Estás evaluando demandar por despido injustificado?" message="Un abogado laboral puede estimar los plazos reales de tu juicio y definir la estrategia más conveniente para tu caso." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo funciona el procedimiento laboral en Chile?</h2>

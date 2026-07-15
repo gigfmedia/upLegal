@@ -156,7 +156,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esta orden:</p>
 
-            <InArticleCTA category="Arrendamiento" />
 
             <div className="space-y-3 mb-6">
               {[
@@ -187,6 +186,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se dicta una orden de desalojo?</h2>

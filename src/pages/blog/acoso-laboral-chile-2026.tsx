@@ -172,7 +172,6 @@ const BlogArticle = () => {
                             Estas conductas pueden provocar consecuencias psicológicas, emocionales e incluso económicas para la persona afectada.
                         </p>
 
-                        <InArticleCTA category="Derecho Laboral" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -186,6 +185,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral en tu trabajo?" message="Un abogado laboral puede evaluar tu caso, reunir pruebas y determinar si corresponde una tutela laboral o demanda." />
+
 
                     {/* CONDUCTAS */}
                     <div className="mb-12">

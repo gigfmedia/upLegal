@@ -238,7 +238,6 @@ const BlogArticle = () => {
               Su principal objetivo es evitar litigios innecesarios y fomentar acuerdos voluntarios que beneficien a todas las partes involucradas, especialmente a los hijos.
             </p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 my-4">
               <p className="text-blue-900 leading-relaxed">
@@ -250,6 +249,9 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mt-4 leading-relaxed">Es importante entender que la mediación no suspende los plazos de prescripción de las acciones judiciales. Si existe un plazo próximo a vencer para ejercer un derecho (como el cese de convivencia para el divorcio), la mediación no lo detendrá. Además, los acuerdos alcanzados en mediación, una vez homologados judicialmente, tienen fuerza ejecutiva y pueden ser exigibles como una sentencia, lo que los diferencia de los simples acuerdos privados entre las partes.</p>
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Estás considerando mediación familiar para resolver un conflicto?" message="Un abogado de familia puede asesorarte en el proceso, preparar los temas a negociar y asegurar que los acuerdos sean legalmente válidos." />
+
 
           {/* ¿La mediación familiar es obligatoria en Chile? */}
           <div className="mb-12">

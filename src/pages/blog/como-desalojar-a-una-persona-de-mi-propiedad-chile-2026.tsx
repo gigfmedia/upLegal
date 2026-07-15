@@ -142,7 +142,6 @@ const BlogArticle = () => {
                   Acciones Prohibidas (Nunca las realices por tu cuenta)
                 </p>
 
-          <InArticleCTA category="Derecho Civil" />
 
                 <div className="grid sm:grid-cols-2 gap-3">
                   {[
@@ -179,6 +178,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+            <InArticleCTA category="Derecho Civil"  title="¿Necesitas desalojar a alguien de tu propiedad?" message="Un abogado especializado puede identificar la acción legal correcta según tu caso y guiar todo el процессo de desalojo." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 1 — Cómo desalojar a un arrendatario con contrato escrito</h2>

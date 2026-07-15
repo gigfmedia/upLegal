@@ -143,7 +143,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">Cambiar la cerradura sin autorización puede:</p>
 
-          <InArticleCTA category="Arrendamiento" />
 
             <div className="space-y-3 mb-6">
               {[
@@ -161,6 +160,9 @@ const BlogArticle = () => {
               Este tipo de acciones se considera una forma de <strong>autotutela</strong>, lo que en Chile no está permitido en la mayoría de los casos.
             </p>
           </div>
+
+          <InArticleCTA category="Arrendamiento" title="¿Tu arrendador cambió la cerradura sin autorización?" message="Un abogado inmobiliario puede ayudarte a recuperar el acceso y denunciar esta acción ilegal." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo es ilegal cambiar la cerradura?</h2>

@@ -168,8 +168,6 @@ const BlogArticle = () => {
                             Como consecuencia, nacen diversos derechos y obligaciones:
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
-
                         <div className="grid sm:grid-cols-2 gap-2">
                             {["Derecho a alimentos", "Derechos hereditarios", "Derechos de identidad", "Relación directa y regular", "Derechos sucesorios", "Obligaciones parentales"].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
@@ -181,6 +179,8 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">La filiación no solo tiene consecuencias emocionales o familiares. También produce efectos legales importantes durante toda la vida.</p>
                         <p className="text-gray-600 mt-4">Un punto que suele pasar inadvertido es que no todos los reconocimientos producen los mismos efectos jurídicos. La filiación derivada de un reconocimiento voluntario puede ser cuestionada judicialmente si se acredita que no se ajusta a la realidad biológica, mientras que la filiación establecida por sentencia firme tiene un régimen de impugnación más restringido. Esta diferencia es relevante al evaluar la estabilidad del vínculo filiativo en el tiempo.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas reconocer la paternidad de tu hijo?" message="Un abogado de familia puede guiar el reconocimiento voluntario o judicial, preparar los documentos y asegurar los derechos del niño." />
 
                     {/* POR QUE ES IMPORTANTE */}
                     <div className="mb-12">

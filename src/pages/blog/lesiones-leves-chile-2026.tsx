@@ -201,13 +201,14 @@ const BlogArticle = () => {
                             </p>
                         </div>
 
-                        <InArticleCTA category="Derecho Penal" />
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
                                 La descripción anterior clasifica las lesiones según su gravedad física. Sin embargo, en la práctica penal el resultado de una investigación no depende solo del tipo de lesión, sino de lo que las pruebas logren acreditar: quién inició la agresión, si hubo testigos y si la versión de los hechos se sostiene ante el tribunal.
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de lesiones leves o estás siendo investigado?" message="Un abogado penal puede revisar las pruebas, evaluar la gravedad imputada y definir la mejor estrategia de defensa." />
 
                     {/* CUANDO ES DELITO */}
                     <div className="mb-12">

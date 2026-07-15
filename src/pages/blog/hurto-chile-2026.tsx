@@ -188,7 +188,6 @@ const BlogArticle = () => {
                             En otras palabras, la persona toma un bien que pertenece a otro con la intención de hacerlo suyo, pero lo hace aprovechando un descuido, una distracción o una oportunidad, sin agredir físicamente a la víctima.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
 
                         <div className="bg-gray-50 p-5 rounded-xl">
                             <p className="font-bold mb-2">Ejemplos frecuentes:</p>
@@ -207,6 +206,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal" title="¿Te acusan de hurto o estás siendo investigado?" message="Un abogado penal puede revisar los antecedentes de tu caso y definir la mejor estrategia de defensa." />
+
 
                     {/* ELEMENTOS */}
                     <div className="mb-12">

@@ -162,13 +162,12 @@ const BlogArticle = () => {
                         </p>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Finalidad</p>
-
-                            <InArticleCTA category="Derecho de Familia" />
-
                             <p className="text-blue-800">Corregir una filiación que no corresponde a la realidad biológica o jurídica. Una sentencia favorable puede producir importantes consecuencias respecto de apellidos, alimentos, herencia y derechos sucesorios.</p>
                         </div>
                         <p className="text-gray-600 mt-4">Conviene precisar que esta acción no persigue simplemente un resultado biológico, sino que ataca la presunción legal de paternidad. Dependiendo de si la filiación proviene de un reconocimiento voluntario o de una sentencia judicial, las reglas procesales y los plazos para impugnar pueden variar significativamente, lo que marca una diferencia sustancial en la estrategia jurídica que corresponda adoptar.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia" title="¿Dudas de la paternidad de un hijo?" message="Un abogado de familia puede evaluar los plazos, preparar la demanda de impugnación y proteger tus derechos patrimoniales." />
 
                     {/* CUANDO PUEDE EXISTIR UNA IMPUGNACION */}
                     <div className="mb-12">

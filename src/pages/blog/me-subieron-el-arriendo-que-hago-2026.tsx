@@ -144,7 +144,7 @@ const BlogArticle = () => {
               La respuesta corta es no.
             </p>
 
-            <InArticleCTA category="Derecho Civil" />
+            <InArticleCTA category="Derecho Civil"  title="¿Te subieron el arriendo sin justificación?" message="Un abogado especializado puede revisar tu contrato, verificar si el aumento es legal y defender tus derechos como arrendatario." />
 
             <p className="text-gray-600 mb-6 leading-relaxed">
               En Chile, el valor del arriendo no puede modificarse arbitrariamente durante la vigencia del contrato. El precio solo puede aumentar si existe una cláusula específica en el contrato que indique cómo se realizará el reajuste.

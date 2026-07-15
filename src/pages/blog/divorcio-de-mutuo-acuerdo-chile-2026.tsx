@@ -137,9 +137,11 @@ const BlogArticle = () => {
               Está regulado en el artículo 55 de la Ley de Matrimonio Civil y requiere que ambas partes cumplan ciertos requisitos y presenten un acuerdo completo sobre las materias que el tribunal debe resolver.
             </p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
           </div>
+
+          <InArticleCTA category="Derecho de Familia" title="¿Quieres divorciarte de mutuo acuerdo y no sabes por dónde empezar?" message="Un abogado de familia puede redactar el acuerdo, preparar los documentos y guiar todo el trámite judicial." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">Requisitos para el divorcio de mutuo acuerdo en Chile 2026</h2>

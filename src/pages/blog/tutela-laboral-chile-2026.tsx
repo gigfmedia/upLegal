@@ -168,7 +168,6 @@ const BlogArticle = () => {
                             Su finalidad no es únicamente obtener una indemnización económica, sino también restablecer los derechos afectados y reparar las consecuencias de la vulneración.
                         </p>
 
-                        <InArticleCTA category="Derecho Laboral" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -182,6 +181,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Laboral" title="¿Vulneraron tus derechos fundamentales en el trabajo?" message="Un abogado laboral puede evaluar si corresponde una tutela laboral y buscar reparación por el daño sufrido." />
+
 
                     {/* DERECHOS QUE PROTEGE */}
                     <div className="mb-12">

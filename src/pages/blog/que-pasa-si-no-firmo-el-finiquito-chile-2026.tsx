@@ -173,10 +173,12 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mb-4 font-medium">Una vez firmado, el finiquito tiene valor legal importante.</p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <p className="text-gray-600 font-bold">Por eso revisarlo antes de firmar es fundamental.</p>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿No firmaste el finiquito y el empleador te presiona?" message="Un abogado laboral puede revisar el documento, explicar tus opciones y ayudarte a firmar con reserva si corresponde." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Estoy obligado a firmar el finiquito?</h2>

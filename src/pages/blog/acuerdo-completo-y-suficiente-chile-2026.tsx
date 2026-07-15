@@ -196,7 +196,6 @@ const BlogArticle = () => {
                             Su objetivo principal es evitar conflictos futuros y garantizar que los derechos de ambos cónyuges y de los hijos queden adecuadamente protegidos.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -206,6 +205,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Desde una perspectiva jurídica, el ACS no es un simple contrato entre privados: una vez aprobado por el tribunal, adquiere fuerza de cosa juzgada y solo puede modificarse mediante un nuevo procedimiento judicial si cambian las circunstancias que lo fundamentaron. Esto significa que los términos acordados no pueden alterarse unilateralmente ni por acuerdo extrajudicial posterior, lo que exige especial cuidado al negociar cada cláusula.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia" title="¿Necesitas redactar o revisar un Acuerdo Completo y Suficiente?" message="Un abogado de familia puede diseñar el ACS, proteger tus intereses y asegurar que cumpla todos los requisitos legales para tu divorcio." />
+
 
                     {/* CUANDO SE EXIGE */}
                     <div className="mb-12">

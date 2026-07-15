@@ -165,7 +165,6 @@ const BlogArticle = () => {
               Este monto busca compensar el tiempo que trabajaste en la empresa.
             </p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 font-bold">
               <p className="text-gray-900 flex items-center gap-2 font-bold">
@@ -173,6 +172,9 @@ const BlogArticle = () => {
               </p>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Te despidieron y no sabes cuánto te corresponde?" message="Un abogado laboral puede calcular tu indemnización por años de servicio y verificar que te paguen lo correcto." />
+
 
           {/* Section 2 */}
           <div className="mb-12">

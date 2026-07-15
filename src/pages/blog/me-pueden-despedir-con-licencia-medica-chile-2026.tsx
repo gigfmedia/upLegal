@@ -127,7 +127,6 @@ const BlogArticle = () => {
               La protección depende principalmente de dos factores:
             </p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-gray-700 text-base">
@@ -140,6 +139,9 @@ const BlogArticle = () => {
               </li>
             </ul>
           </div>
+
+          <InArticleCTA category="Derecho Laboral"  title="¿Te despidieron estando con licencia médica?" message="Un abogado laboral puede revisar si el despido es legal, calcular las indemnizaciones y evaluar si corresponde una demanda." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué causales puede usar el empleador para despedirte con licencia?</h2>

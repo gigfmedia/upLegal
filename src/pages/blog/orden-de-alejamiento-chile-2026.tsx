@@ -186,8 +186,6 @@ const BlogArticle = () => {
                             No constituye una condena. Tampoco significa que la persona ya haya sido declarada culpable. Se trata de una medida preventiva destinada a proteger a la víctima mientras el proceso judicial continúa su curso.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -200,6 +198,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te impusieron o te solicitan una orden de alejamiento?" message="Un abogado penal puede revisar los antecedentes, evaluar si la medida es procedente y definir tu estrategia de defensa." />
 
                     {/* OBJETIVO */}
                     <div className="mb-12">

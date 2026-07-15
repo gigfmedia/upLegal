@@ -123,12 +123,14 @@ const BlogArticle = () => {
               Si firmas un finiquito de manera pura y simple (es decir, sin escribir nada y solo poniendo tu firma), la ley chilena asume que estás 100% de acuerdo con lo que te pagaron. Esto genera un "poder liberatorio", lo que significa que el empleador queda libre de cualquier obligación futura contigo y tú pierdes automáticamente tu derecho a presentar una demanda laboral.
             </p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
               En resumen: La reserva de derechos es tu salvavidas legal para poder cobrar tu dinero hoy y demandar mañana.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho Laboral"  title="¿Te entregaron el finiquito y no estás seguro si firmar con reserva?" message="Un abogado laboral puede revisar el documento, evaluar si corresponde reserva de derechos y proteger tu derecho a demandar." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Firmar con reserva o firmar sin reserva?</h2>

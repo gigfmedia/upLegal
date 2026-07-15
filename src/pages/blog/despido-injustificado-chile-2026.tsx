@@ -149,7 +149,6 @@ const BlogArticle = () => {
               En Chile, el empleador debe basarse en causales establecidas en el Código del Trabajo. Si no lo hace, o no puede demostrarlo, el despido puede ser declarado injustificado por un tribunal.
             </p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <div className="text-center py-6 border-t border-b border-gray-100 my-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Paso a Paso</p>
@@ -162,6 +161,9 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Laboral"  title="¿Crees que te despidieron injustificadamente?" message="Un abogado laboral puede revisar la causal, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+
 
           {/* Section 2: Cuándo */}
           <div className="mb-12">

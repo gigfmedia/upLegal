@@ -182,7 +182,6 @@ const BlogArticle = () => {
                             No basta con una discusión o una separación temporal. Debe existir una decisión real de terminar la convivencia matrimonial.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <p className="text-gray-600 mb-4">
                             Desde el punto de vista jurídico, el cese de convivencia permite demostrar que la relación se encuentra terminada y constituye uno de los requisitos esenciales para solicitar determinados tipos de divorcio.
@@ -195,6 +194,9 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">La fecha de cese de convivencia tiene efectos que van más allá del divorcio: determina el momento a partir del cual los cónyuges dejan de generar bienes en la sociedad conyugal, influye en el cálculo de la compensación económica y puede afectar derechos sucesorios si uno de los cónyuges fallece antes de formalizar el divorcio. Por eso, fijar una fecha precisa no es un mero formalismo, sino una decisión con consecuencias patrimoniales relevantes.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas acreditar el cese de convivencia para divorciarte?" message="Un abogado de familia puede ayudarte a reunir pruebas, fijar la fecha correcta y proteger tus derechos patrimoniales." />
+
 
                     {/* POR QUE EXISTE */}
                     <div className="mb-12">

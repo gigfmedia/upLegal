@@ -134,7 +134,6 @@ const BlogArticle = () => {
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
                 <p className="font-bold text-blue-900 mb-2">Ejemplo real:</p>
 
-          <InArticleCTA category="Derecho Laboral" />
 
                 <p className="text-blue-800 leading-relaxed">
                   Te despiden por “necesidades de la empresa”, pero la empresa sigue contratando, no hay reducción real y no pueden justificar la decisión. En ese caso, el despido puede ser declarado injustificado.
@@ -160,6 +159,9 @@ const BlogArticle = () => {
                 El problema es que muchas veces estas causales se usan mal o sin respaldo. Ahí es donde nace la oportunidad real de demandar.
               </p>
             </div>
+
+            <InArticleCTA category="Derecho Laboral" title="¿Te despidieron y crees que fue injusto?" message="Un abogado laboral puede revisar tu carta de despido, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-4">¿El empleador puede probar la causal o solo lanzó una excusa?</h2>

@@ -235,7 +235,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4">La idea es ajustar el aporte cuando:</p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
             <ul className="space-y-2 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
@@ -253,6 +252,9 @@ const BlogArticle = () => {
               La rebaja de pensión se fundamenta en el principio de alteración de las circunstancias, recogido en el artículo 323 del Código Civil chileno. Para que proceda, el cambio en la situación económica del alimentante debe ser objetivo, relevante y de cierta permanencia. Los tribunales han establecido que las fluctuaciones temporales de ingresos o las disminuciones voluntarias no configuran causal suficiente, pues la obligación alimenticia debe cumplirse con esfuerzo y sacrificio.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Tu situación económica cambió y necesitas rebajar la pensión?" message="Un abogado de familia puede evaluar si corresponde la rebaja, reunir los antecedentes y presentar la demanda judicial." />
+
 
           {/* ¿Se puede bajar porque quiero? */}
           <div className="mb-12">

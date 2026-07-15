@@ -196,8 +196,6 @@ const BlogArticle = () => {
                             Su finalidad es proteger uno de los derechos fundamentales de toda persona: la inviolabilidad del hogar. Esto significa que nadie puede ingresar libremente a la vivienda de otra persona sin autorización, salvo en los casos expresamente permitidos por la ley.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -210,6 +208,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+                    
+                     <InArticleCTA category="Derecho Penal"  title="¿Te acusan de violación de morada?" message="Un abogado penal puede revisar si hubo consentimiento de acceso, evaluar las pruebas y definir tu estrategia de defensa." />
 
                     {/* QUE SE ENTIENDE POR MORADA */}
                     <div className="mb-12">

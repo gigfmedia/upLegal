@@ -199,8 +199,6 @@ const BlogArticle = () => {
                             Su objetivo es evitar que exista un mercado para especies obtenidas ilícitamente.
                         </p>
 
-                        <InArticleCTA category="Derecho Penal" />
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -213,6 +211,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de receptación o estás siendo investigado?" message="Un abogado penal puede revisar si conocías el origen de los bienes, evaluar las pruebas y definir tu estrategia de defensa." />
 
                     {/* QUE BIENES */}
                     <div className="mb-12">

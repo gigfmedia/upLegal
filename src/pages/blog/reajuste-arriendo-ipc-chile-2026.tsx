@@ -159,9 +159,11 @@ const BlogArticle = () => {
               Cuando un contrato de arriendo incluye una cláusula de reajuste por IPC, significa que el valor mensual se ajusta periódicamente según la inflación acumulada del período. Esto protege al arrendador de que el valor real del arriendo se erosione con el tiempo, y al arrendatario le da certeza de que el aumento no es arbitrario — está anclado a un índice oficial.
             </p>
 
-          <InArticleCTA category="Derecho Civil" />
 
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Es obligatorio aplicar el IPC en el arriendo?</h2>

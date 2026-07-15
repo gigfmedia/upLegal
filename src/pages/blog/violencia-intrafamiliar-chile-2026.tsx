@@ -179,7 +179,6 @@ const BlogArticle = () => {
                             No es necesario que la agresión se repita en el tiempo; un solo episodio grave puede ser suficiente para solicitar medidas de protección. Tampoco se requiere que exista una relación de parentesco directo: las parejas en convivencia, incluso si no están casadas, también están protegidas.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Personas protegidas por la ley</p>
@@ -191,6 +190,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Sufres o presencias violencia intrafamiliar?" message="Un abogado de familia puede ayudarte a denunciar, solicitar medidas de protección y buscar reparación por el daño sufrido." />
+
 
                     {/* TIPOS DE VIF - Más detalles */}
                     <div className="mb-12">

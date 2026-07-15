@@ -164,7 +164,6 @@ const BlogArticle = () => {
               En Chile, estas normas buscan proteger los vínculos familiares, especialmente cuando existen hijos o personas en situación de vulnerabilidad.
             </p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
             <p className="text-gray-600 mb-4">
               El derecho de familia regula aspectos como:
@@ -209,6 +208,9 @@ const BlogArticle = () => {
               El Derecho de Familia chileno se distingue de otras ramas por su marcado carácter tuitivo y su orientación hacia la protección de los más vulnerables. Los principios de interés superior del niño, autonomía progresiva y no discriminación informan cada decisión judicial. A diferencia del derecho civil patrimonial, aquí la voluntad de las partes está limitada por normas de orden público familiar que imponen mínimos irrenunciables en materia de alimentos y cuidado personal.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Tienes un problema de derecho de familia?" message="Un abogado de familia puede analizar tu caso, identificar la vía correcta y proteger tus derechos y los de tu familia." />
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">¿Cuáles son los temas más importantes del Derecho de Familia en Chile?</h2>
             <p className="text-gray-600 mb-6">

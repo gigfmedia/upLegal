@@ -133,7 +133,6 @@ const BlogArticle = () => {
               En vez de renunciar, el trabajador comunica que el empleador incumplió sus obligaciones legales o contractuales y luego demanda para exigir indemnizaciones. En términos simples:
             </p>
 
-            <InArticleCTA category="Derecho Laboral" />
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
               <p className="font-bold text-blue-900 flex items-center gap-2">
@@ -144,6 +143,9 @@ const BlogArticle = () => {
               Legalmente, esto se conoce como “despido indirecto” y está regulado por el Código del Trabajo.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Tu empleador no paga cotizaciones o atrasa sueldos?" message="Un abogado laboral puede evaluar si tu caso califica para autodespido y calcular las indemnizaciones que puedes obtener." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Cuándo puedes hacer autodespido?</h2>

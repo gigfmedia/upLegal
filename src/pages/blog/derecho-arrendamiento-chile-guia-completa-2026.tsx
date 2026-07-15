@@ -150,7 +150,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Este contrato regula aspectos clave como:</p>
 
-            <InArticleCTA category="Derecho Civil" />
 
             <div className="space-y-4 mb-8">
               {[
@@ -174,6 +173,9 @@ const BlogArticle = () => {
               </p>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Tienes conflictos con tu arrendador o arrendatario?" message="Un abogado especializado puede revisar el contrato, identificar derechos vulnerados y definir la mejor estrategia legal." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Derechos del arrendatario en Chile: qué puedes exigir legalmente</h2>

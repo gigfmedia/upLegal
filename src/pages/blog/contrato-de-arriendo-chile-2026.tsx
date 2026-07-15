@@ -146,7 +146,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg leading-relaxed mb-4">Base legal del arriendo</p>
 
-              <InArticleCTA category="Derecho Civil" />
 
               <p className="text-gray-700 leading-relaxed font-medium">
                 En Chile, un contrato de arriendo debe incluir monto, duración, forma de pago, condiciones de uso y término del contrato. Este documento es la base de cualquier acción legal en caso de conflicto.
@@ -169,6 +168,9 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Estás por firmar un contrato de arriendo?" message="Un abogado especializado puede revisar las cláusulas, detectar abusos y proteger tus derechos antes de que firmes." />
+
 
           {/* Link pilar */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

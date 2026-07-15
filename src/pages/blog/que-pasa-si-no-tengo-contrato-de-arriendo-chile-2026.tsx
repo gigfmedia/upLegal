@@ -161,7 +161,6 @@ const BlogArticle = () => {
               En Chile, un arriendo no necesita estar por escrito para ser válido. Esto significa que un acuerdo verbal entre arrendador y arrendatario sí tiene valor legal. Este tipo de acuerdo se conoce como:
             </p>
 
-            <InArticleCTA category="Arrendamiento" />
 
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-2">Contrato verbal o tácito</h3>
@@ -203,6 +202,9 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
+          <InArticleCTA category="Arrendamiento"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué derechos tiene el arrendatario sin contrato?</h2>

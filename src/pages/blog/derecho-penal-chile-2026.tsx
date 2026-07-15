@@ -157,7 +157,6 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <InArticleCTA category="Derecho Penal" />
             <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
               <p className="text-amber-800 text-sm">
                 Lo anterior describe la situación jurídica general de un imputado. Sin embargo, el desarrollo concreto de una investigación depende de múltiples factores que la Fiscalía evalúa caso a caso: el tipo de delito, las pruebas disponibles, los antecedentes personales y las decisiones procesales que se adopten durante el procedimiento.
@@ -178,6 +177,9 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Penal" title="¿Te investigan o formalizaron por un delito?" message="Un abogado penal puede revisar los antecedentes de la Fiscalía, cuestionar pruebas y definir tu estrategia de defensa." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo funciona el proceso penal en Chile?</h2>

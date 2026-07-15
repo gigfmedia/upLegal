@@ -150,7 +150,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-medium">Su objetivo es cubrir:</p>
 
-            <InArticleCTA category="Derecho Civil" />
 
             <div className="space-y-3 mb-6">
               {[
@@ -165,6 +164,9 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil"  title="¿Tu arrendador no te devuelve la garantía?" message="Un abogado especializado puede revisar el contrato, evaluar las deducciones y demandar el reintegro de tu garantía." />
+
 
           {/* Cluster link 1 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

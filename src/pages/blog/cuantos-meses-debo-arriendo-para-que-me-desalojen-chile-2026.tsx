@@ -169,7 +169,6 @@ const BlogArticle = () => {
                 No existe una regla como “3 meses” o “6 meses”. Eso es un mito.
               </p>
 
-              <InArticleCTA category="Derecho Civil" />
 
             </div>
             <p className="text-gray-600 leading-relaxed">
@@ -186,6 +185,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Debes meses de arriendo y temes un desalojo?" message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué pasa desde el primer mes que no pagas</h2>

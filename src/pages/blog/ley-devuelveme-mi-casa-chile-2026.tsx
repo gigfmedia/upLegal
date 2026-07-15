@@ -155,7 +155,6 @@ const BlogArticle = () => {
               Antes de esta ley, los juicios de arriendo podían tardar varios meses o incluso años. Con esta nueva normativa, se establecen procedimientos más rápidos para:
             </p>
 
-            <InArticleCTA category="Derecho Civil" />
 
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {["Recuperar la propiedad por no pago", "Terminar contratos de arriendo", "Obtener el desalojo del arrendatario"].map((item, i) => (
@@ -170,6 +169,9 @@ const BlogArticle = () => {
               En simple: le da más herramientas al propietario para recuperar su inmueble en menos tiempo.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho Civil"  title="¿Necesitas asesoría legal?" message="Un abogado especializado puede revisar tu caso y orientarte." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se puede aplicar esta ley?</h2>

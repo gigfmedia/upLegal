@@ -161,7 +161,6 @@ const BlogArticle = () => {
                   <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
                   <p className="text-gray-600">{item.desc}</p>
 
-                  <InArticleCTA category="Derecho Laboral" />
 
                 </div>
               ))}
@@ -173,6 +172,9 @@ const BlogArticle = () => {
               Entonces, ¿por qué dicen que sí se puede despedir “sin motivo”? Porque existe una causal clave: <strong>Necesidades de la empresa</strong>. Esta causal permite despedir aunque no hiciste nada malo, no cometiste faltas y tu desempeño era correcto.
             </p>
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Te despidieron sin explicación clara?" message="Un abogado laboral puede revisar la carta de despido, verificar si la causal es válida y calcular tus indemnizaciones." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Necesidades de la empresa o despido injustificado?</h2>

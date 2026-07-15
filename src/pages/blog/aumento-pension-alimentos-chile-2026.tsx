@@ -257,9 +257,11 @@ const BlogArticle = () => {
               El aumento de pensión se funda en el principio de proporcionalidad y en la obligación legal de adecuar el monto a las necesidades reales y actuales del alimentario. La doctrina de los tribunales de familia chilenos exige que el cambio de circunstancias sea relevante y permanente, no meramente transitorio. Un aumento temporal de ingresos o un gasto extraordinario aislado no constituyen causal suficiente para modificar la pensión.
             </p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Necesitas aumentar la pensión de alimentos de tus hijos?" message="Un abogado de familia puede evaluar si corresponde el aumento, reunir los antecedentes y presentar la demanda judicial." />
+
 
           {/* Cuándo se puede pedir */}
           <div className="mb-12">

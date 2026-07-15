@@ -295,7 +295,6 @@ const BlogArticle = () => {
               La persona que tiene el cuidado personal es quien vive habitualmente con el menor y se encarga de aspectos esenciales como:
             </p>
 
-            <InArticleCTA category="Derecho de Familia" />
 
             <ul className="grid sm:grid-cols-2 gap-3 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
@@ -321,6 +320,9 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mt-4 leading-relaxed">El cuidado personal no implica una facultad absoluta de decisión sobre todos los aspectos de la vida del hijo. Ciertas decisiones relevantes —como las relativas a la educación, la salud o el cambio de residencia— requieren el consentimiento de ambos padres o, en su defecto, autorización judicial. Esta distinción entre cuidado personal y patria potestad (que sigue siendo compartida salvo excepción judicial) es frecuentemente malentendida y genera conflictos cuando el padre no custodio pretende participar en decisiones importantes.</p>
           </div>
+
+          <InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el cuidado personal de tus hijos?" message="Un abogado de familia puede evaluar tu situación, proteger el interés superior del niño y definir la mejor estrategia legal." />
+
 
           {/* ¿La tuición y el cuidado personal son lo mismo? */}
           <div className="mb-12">

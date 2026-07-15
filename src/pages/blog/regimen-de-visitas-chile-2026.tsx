@@ -236,7 +236,6 @@ const BlogArticle = () => {
                             Actualmente, la legislación chilena utiliza el concepto de “relación directa y regular”, porque no se trata solamente de “visitar” al hijo, sino de mantener una relación activa, estable y permanente.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
 
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
@@ -246,6 +245,9 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el régimen de visitas?" message="Un abogado de familia puede negociar el régimen, modificarlo judicialmente y proteger el derecho de relación con tus hijos." />
+
 
                     {/* QUE PUEDE INCLUIR */}
                     <div className="mb-12">

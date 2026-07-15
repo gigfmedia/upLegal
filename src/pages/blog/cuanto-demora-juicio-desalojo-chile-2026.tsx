@@ -158,7 +158,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Marco legal del desalojo</p>
 
-              <InArticleCTA category="Derecho Civil" />
 
               <p className="text-gray-700 leading-relaxed font-medium">
                 <strong>IMPORTANTE:</strong> En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal. La autotutela es ilegal.
@@ -175,6 +174,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil"  title="¿Estás evaluando iniciar un juicio de desalojo?" message="Un abogado especializado puede estimar los plazos reales según tu caso y definir la estrategia más conveniente." />
+
 
           <div className="mb-4 py-2">
             <h2 className="text-2xl font-bold mb-4">¿Cuánto demora un juicio de desalojo realmente?</h2>

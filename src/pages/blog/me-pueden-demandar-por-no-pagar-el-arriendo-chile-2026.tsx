@@ -148,7 +148,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto permite al arrendador:</p>
 
-            <InArticleCTA category="Derecho Civil" />
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
@@ -176,6 +175,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Tu arrendador te demandó por no pagar el arriendo?" message="Un abogado especializado puede revisar la demanda, evaluar tus defensas y buscar alternativas para evitar el desalojo." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-8 text-gray-900 border-b pb-4">Qué pasa mes a mes cuando no pagas</h2>

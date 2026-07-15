@@ -158,12 +158,14 @@ const BlogArticle = () => {
                         <div className="bg-red-50 p-5 rounded-xl">
                             <p className="font-bold text-red-800">Advertencia</p>
 
-                            <InArticleCTA category="Derecho de Familia" />
 
                             <p className="text-red-700">Dejar de pagar únicamente porque el hijo cumplió 18 años puede transformarse en un problema importante y generar deuda de alimentos.</p>
                         </div>
                         <p className="text-gray-600 mt-4">Para que proceda la extensión de la pensión más allá de los 18 años, el hijo debe carecer de medios para subsistir por sí mismo. Este concepto es más amplio que el simple desempleo: un hijo que trabaja puede seguir necesitando alimentos si sus ingresos son insuficientes para cubrir todas sus necesidades. La jurisprudencia ha interpretado que debe tratarse de una autosuficiencia real, no meramente formal, valorando cada caso según las circunstancias.</p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia"  title="¿Tu hijo cumplió 18 años y debes seguir pagando pensión?" message="Un abogado de familia puede evaluar si corresponde la extensión, revisar la situación del hijo y determinar tus obligaciones." />
+
 
                     {/* HASTA QUÉ EDAD */}
                     <div className="mb-12">

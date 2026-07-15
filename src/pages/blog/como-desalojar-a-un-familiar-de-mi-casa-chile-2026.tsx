@@ -152,7 +152,6 @@ const BlogArticle = () => {
                   El único camino legal es a través de un tribunal. Sin orden judicial, no hay desalojo posible.
                 </p>
 
-                <InArticleCTA category="Derecho Civil" />
 
               </div>
             </div>
@@ -167,6 +166,9 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Necesitas recuperar tu propiedad de un familiar?" message="Un abogado especializado puede evaluar la relación, determinar la acción legal correcta y guiar el proceso de desalojo." />
+
 
           {/* Qué tipo de relación tienes */}
           <div className="mb-12">

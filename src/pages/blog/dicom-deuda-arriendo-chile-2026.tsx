@@ -150,7 +150,6 @@ const BlogArticle = () => {
               Aparecer en DICOM puede afectar:
             </p>
 
-            <InArticleCTA category="Derecho Civil" />
 
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
@@ -176,6 +175,9 @@ const BlogArticle = () => {
               </p>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Una deuda de arriendo va automáticamente a DICOM?</h2>
