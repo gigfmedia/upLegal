@@ -7,6 +7,7 @@ import {
     Clock,
     ChevronRight,
     CheckCircle,
+    AlertCircle,
 } from "lucide-react";
 
 import Header from "@/components/Header";
@@ -134,9 +135,6 @@ const BlogArticle = () => {
                         El divorcio unilateral es uno de los procedimientos de familia más consultados en Chile. Muchas personas llevan años separadas de hecho, sin convivencia, sin proyectos en común y sin intención de retomar la relación, pero enfrentan una dificultad importante: su cónyuge simplemente no quiere firmar el divorcio.
                     </p>
 
-                    <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuánto demora un divorcio unilateral en Chile?</h2>
-                    <p className="text-gray-600 mb-4 leading-relaxed">Un divorcio unilateral en Chile puede demorar entre 6 meses y 2 años, dependiendo de la carga del tribunal, la complejidad de las pruebas y si hay oposición del otro cónyuge. El plazo mínimo legal es de 3 años de cese de convivencia, pero el proceso judicial en sí puede extenderse varios meses más. Con un abogado especializado y todos los antecedentes preparados, algunos casos se resuelven en aproximadamente 6 a 12 meses desde la presentación de la demanda.</p>
-
                     <div className="flex flex-wrap items-center gap-4 mt-6">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
@@ -169,8 +167,6 @@ const BlogArticle = () => {
                             En esta guía actualizada para 2026 aprenderás: qué es el divorcio unilateral, cuándo procede, cuántos años de separación exige la ley, qué pruebas necesitas, cómo funciona el juicio, qué ocurre con los hijos, qué pasa con las pensiones alimenticias, cuánto demora el procedimiento y cuáles son los errores más comunes.
                         </p>
 
-                        <InArticleCTA category="Derecho de Familia" />
-
                         <p className="text-gray-600 mt-4">
                             Si además tienes conflictos por pensión de alimentos, revisa también nuestra guía sobre{" "}
                             <Link
@@ -188,6 +184,8 @@ const BlogArticle = () => {
                             directamente online.
                         </p>
                     </div>
+
+                    <InArticleCTA category="Derecho de Familia" />
 
                     {/* QUE ES */}
                     <div className="mb-12">

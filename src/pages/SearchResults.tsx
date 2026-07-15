@@ -377,7 +377,7 @@ const SearchResults = () => {
         onClearFilters={clearFilters}
       />
 
-      <div className="bg-muted min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="bg-muted py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div id="filters-section" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="w-full md:flex-1">
