@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "inspeccion-del-trabajo-chile-2026",
+    title: "Inspección del Trabajo en Chile 2026: cuándo denunciar, cómo hacer un reclamo y qué puede hacer por ti",
+    excerpt: "Conoce cuándo puedes denunciar ante la Inspección del Trabajo, cómo presentar un reclamo, qué puede resolver este organismo, cuáles son sus facultades y cuándo conviene acudir a un abogado laboral.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "15 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/inspeccion-del-trabajo-chile-2026.png"
+  },
+  {
     id: "carta-de-despido-chile-2026",
     title: "Carta de despido en Chile 2026: requisitos legales, plazos y qué hacer si recibiste una",
     excerpt: "Conoce qué debe contener una carta de despido en Chile, cuándo es válida, cuáles son los requisitos legales, qué derechos tienes y qué hacer si deseas impugnar el despido.",
