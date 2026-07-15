@@ -495,7 +495,7 @@ const BlogArticle = () => {
               <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron sin motivo claro?</h3>
               <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido en minutos y decirte si tienes un caso sólido. No arriesgues tu indemnización.</p>
               <Link
-                to="/abogado-laboral"
+                to="/abogados-laborales"
                 className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
               >
                 Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -513,7 +513,7 @@ const BlogArticle = () => {
               En Chile, el despido sin motivo aparente existe bajo la causal de necesidades de la empresa, pero no es un cheque en blanco: el empleador debe pagar indemnización y, si no puede justificar realmente la causal, el despido puede ser declarado injustificado. La clave está en saber leer la carta de despido, no firmar el finiquito sin entenderlo y actuar dentro de los 60 días hábiles.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Sin embargo, comprender tus derechos solo es el primer paso. La diferencia entre recibir una indemnización justa y quedarte con menos de lo que te corresponde está en la asesoría legal oportuna. Si tienes dudas sobre tu caso particular, lo mejor es consultar con un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> antes de que los plazos se venzan.
+              Sin embargo, comprender tus derechos solo es el primer paso. La diferencia entre recibir una indemnización justa y quedarte con menos de lo que te corresponde está en la asesoría legal oportuna. Si tienes dudas sobre tu caso particular, lo mejor es consultar con un <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> antes de que los plazos se venzan.
             </p>
           </div>
 

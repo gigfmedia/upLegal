@@ -156,7 +156,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             Si necesitas evaluar tu situación después de un despido, puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">
                                 abogado laboral en Chile
                             </Link>{" "}
                             directamente online.
@@ -479,7 +479,7 @@ const BlogArticle = () => {
                             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Recibiste una carta de despido por necesidades de la empresa?</h3>
                             <p className="text-white mb-6">Si tu empleador invocó esta causal y tienes dudas sobre la legalidad del despido, es recomendable revisar el caso antes de firmar documentos o dejar transcurrir los plazos legales. Un abogado laboral puede analizar la carta de despido, calcular correctamente las indemnizaciones y evaluar si existen fundamentos para demandar.</p>
                             <Link
-                                to="/abogado-laboral"
+                                to="/abogados-laborales"
                                 className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
                             >
                                 Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -499,7 +499,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Sin embargo, comprender cómo funciona esta causal en términos generales no permite determinar si tu despido fue legal o si tienes derecho a mayores indemnizaciones. Esa respuesta depende de antecedentes específicos como la carta de despido, la documentación de la empresa, la existencia de una verdadera reorganización y las pruebas disponibles en tu caso. Si tienes dudas sobre la legalidad del despido, puedes revisar tu situación con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

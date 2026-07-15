@@ -157,7 +157,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             Si necesitas evaluar tu situación después de una denuncia bajo la Ley Karin, puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">
                                 abogado laboral en Chile
                             </Link>{" "}
                             directamente online.
@@ -419,7 +419,7 @@ const BlogArticle = () => {
                             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas orientación sobre un caso de Ley Karin?</h3>
                             <p className="text-white mb-6">Si ya presentaste una denuncia, recibiste una citación, consideras que la investigación no está siendo imparcial o estás evaluando demandar a tu empleador, obtener asesoría jurídica antes de tomar decisiones importantes puede marcar una diferencia relevante. Un abogado laboral puede revisar los antecedentes específicos de tu caso, explicar las alternativas disponibles y ayudarte a definir la estrategia más adecuada desde el inicio.</p>
                             <Link
-                                to="/abogado-laboral"
+                                to="/abogados-laborales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
                             >
                                 Consulta con un abogado laboral
@@ -439,7 +439,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si estás enfrentando una situación de este tipo, es recomendable analizar tu caso antes de declarar, firmar documentos o adoptar decisiones que puedan afectar tus derechos. En LegalUp puedes revisar tu situación con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral online</Link>
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral online</Link>
                             , quien podrá evaluar los antecedentes específicos de tu caso y orientarte sobre las alternativas legales disponibles.
                         </p>
                     </div>

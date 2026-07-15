@@ -562,7 +562,7 @@ const BlogArticle = () => {
             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y no sabes cuánto te corresponde por años de servicio?</h3>
             <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y calcular exactamente lo que te deben pagar.</p>
             <Link
-              to="/abogado-laboral"
+              to="/abogados-laborales"
               className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
             >
               Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -580,7 +580,7 @@ const BlogArticle = () => {
                 La indemnización por años de servicio es uno de los derechos más importantes para los trabajadores en Chile. Saber cómo se calcula y cuándo corresponde puede marcar una gran diferencia económica al momento de terminar una relación laboral.
               </p>
               <p>
-                Sin embargo, comprender la ley es solo el primer paso. Si tienes dudas sobre el cálculo de tu indemnización o crees que tu empleador no te pagó lo correcto, lo mejor es consultar con un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que revise tu caso antes de que los plazos legales se agoten.
+                Sin embargo, comprender la ley es solo el primer paso. Si tienes dudas sobre el cálculo de tu indemnización o crees que tu empleador no te pagó lo correcto, lo mejor es consultar con un <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que revise tu caso antes de que los plazos legales se agoten.
               </p>
             </div>
           </div>

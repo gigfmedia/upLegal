@@ -285,7 +285,7 @@ const BlogArticle = () => {
               <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te finiquitaron y crees que los montos no son correctos?</h3>
               <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y decirte si vale la pena demandar. La reserva de derechos solo funciona si actúas a tiempo.</p>
               <Link
-                to="/abogado-laboral"
+                to="/abogados-laborales"
                 className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
               >
                 Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -303,7 +303,7 @@ const BlogArticle = () => {
               Firmar un finiquito es el punto final de tu contrato, pero no tiene por qué ser el final de tus derechos. La reserva de derechos es una herramienta legal perfectamente válida en Chile que protege tu dinero y te da la libertad de buscar justicia laboral.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Sin embargo, comprender cómo funciona la reserva de derechos y redactarla correctamente es solo el primer paso. Para maximizar tus posibilidades de éxito en una eventual demanda, lo más recomendable es buscar asesoría de un <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que evalúe los detalles de tu caso y te represente en tribunales si corresponde.
+              Sin embargo, comprender cómo funciona la reserva de derechos y redactarla correctamente es solo el primer paso. Para maximizar tus posibilidades de éxito en una eventual demanda, lo más recomendable es buscar asesoría de un <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral</Link> que evalúe los detalles de tu caso y te represente en tribunales si corresponde.
             </p>
           </div>
 

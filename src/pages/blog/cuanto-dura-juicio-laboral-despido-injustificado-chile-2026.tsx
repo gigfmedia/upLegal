@@ -465,7 +465,7 @@ const BlogArticle = () => {
             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Sabes cuánto tiempo podría durar tu juicio laboral?</h3>
             <p className="text-white mb-6">Un abogado laboral puede analizar tu caso y darte una estimación realista de plazos y resultados según tu situación específica.</p>
             <Link
-              to="/abogado-laboral"
+              to="/abogados-laborales"
               className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
             >
               Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -482,7 +482,7 @@ const BlogArticle = () => {
               Un juicio laboral por despido injustificado en Chile no es inmediato, pero tampoco tiene que ser interminable. Con el procedimiento correcto, documentación en orden y asesoría legal adecuada, la mayoría de los casos se resuelve entre 3 y 8 meses — y muchos antes si hay disposición a negociar.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
-              Sin embargo, comprender los plazos del juicio es solo el primer paso. La diferencia entre un caso que se resuelve en semanas y uno que se extiende por más de un año suele ser la calidad de la asesoría legal. Si estás evaluando demandar por despido injustificado, <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">agendar una consulta con un abogado laboral</Link> es la mejor inversión de tiempo que puedes hacer.
+              Sin embargo, comprender los plazos del juicio es solo el primer paso. La diferencia entre un caso que se resuelve en semanas y uno que se extiende por más de un año suele ser la calidad de la asesoría legal. Si estás evaluando demandar por despido injustificado, <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">agendar una consulta con un abogado laboral</Link> es la mejor inversión de tiempo que puedes hacer.
             </p>
           </div>
 

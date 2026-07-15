@@ -844,7 +844,7 @@ const BlogArticle = () => {
                 Un abogado laboral puede revisar tu liquidación, verificar que todos los conceptos estén incluidos y negociar por ti si falta algún pago.
               </p>
               <Link
-                to="/abogado-laboral"
+                to="/abogados-laborales"
                 className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -862,7 +862,7 @@ const BlogArticle = () => {
               El finiquito laboral en Chile es un documento clave al momento de terminar una relación laboral, ya que establece todos los pagos e indemnizaciones que corresponden al trabajador. Entender cómo se calcula permite revisar correctamente los montos incluidos y asegurarse de que se respeten los derechos laborales. La calculadora de finiquito que incluimos en esta guía te entrega una estimación referencial, pero siempre es recomendable verificar los números con un profesional.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Sin embargo, comprender el cálculo no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el monto final: desde cláusulas del contrato hasta acuerdos verbales o pagos informales. Si tienes dudas sobre tu finiquito, lo más seguro es <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento.
+              Sin embargo, comprender el cálculo no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el monto final: desde cláusulas del contrato hasta acuerdos verbales o pagos informales. Si tienes dudas sobre tu finiquito, lo más seguro es <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento.
             </p>
           </div>
 

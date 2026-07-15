@@ -406,7 +406,7 @@ const BlogArticle = () => {
               <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron durante una licencia médica y no sabes si fue legal?</h3>
               <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido, verificar si las fechas son correctas y decirte si tienes opciones reales de recuperar indemnización.</p>
               <Link
-                to="/abogado-laboral"
+                to="/abogados-laborales"
                 className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -424,7 +424,7 @@ const BlogArticle = () => {
               El despido durante licencia médica en Chile no es automáticamente ilegal, pero el empleador enfrenta restricciones importantes que muchos desconocen. La diferencia entre notificar y ejecutar el despido, la causal utilizada y el tipo de licencia son factores que determinan si el término del contrato fue válido o si puedes reclamar una indemnización. Conocer estos detalles marca la diferencia entre perder tus derechos o recibir lo que te corresponde.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Sin embargo, comprender la teoría no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el resultado: desde la redacción de la carta de despido hasta el momento exacto en que se comunicó la decisión. Si te despidieron mientras estabas con licencia médica, lo más seguro es <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento o tomar una decisión que pueda cerrar tus opciones legales.
+              Sin embargo, comprender la teoría no siempre es suficiente. Cada caso laboral tiene particularidades que pueden afectar el resultado: desde la redacción de la carta de despido hasta el momento exacto en que se comunicó la decisión. Si te despidieron mientras estabas con licencia médica, lo más seguro es <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">consultar con un abogado laboral</Link> antes de firmar cualquier documento o tomar una decisión que pueda cerrar tus opciones legales.
             </p>
           </div>
 

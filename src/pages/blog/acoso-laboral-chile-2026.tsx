@@ -155,7 +155,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             Si necesitas evaluar tu situación después de una denuncia de acoso, puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">
                                 abogado laboral en Chile
                             </Link>{" "}
                             directamente online.
@@ -479,7 +479,7 @@ const BlogArticle = () => {
                             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿El acoso laboral continúa o ya existe una investigación en tu empresa?</h3>
                             <p className="text-white mb-6">Si los hechos siguen ocurriendo o la empresa ya inició una investigación interna, el momento más importante para revisar tu situación suele ser antes de presentar nuevos antecedentes, firmar documentos o tomar decisiones que puedan afectar una futura acción judicial. Analizar oportunamente el caso permite definir la estrategia más adecuada según los hechos y las pruebas disponibles.</p>
                             <Link
-                                to="/abogado-laboral"
+                                to="/abogados-laborales"
                                 className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
                             >
                                 Hablar con un abogado laboral
@@ -499,7 +499,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Sin embargo, determinar si existe realmente acoso laboral, si corresponde una tutela laboral, un autodespido u otra acción judicial depende de circunstancias muy específicas que no pueden resolverse únicamente con información general. Los antecedentes, las pruebas y la forma en que ocurrieron los hechos pueden cambiar completamente la evaluación jurídica de un caso concreto. Si estás enfrentando una situación de este tipo, puedes revisar tu caso con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

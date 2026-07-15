@@ -151,7 +151,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             Si necesitas evaluar tu situación después de un despido o una vulneración de derechos, puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">
                                 abogado laboral en Chile
                             </Link>{" "}
                             directamente online.
@@ -501,7 +501,7 @@ const BlogArticle = () => {
                             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Crees que tus derechos fundamentales fueron vulnerados?</h3>
                             <p className="text-white mb-6">Si ya sufriste un despido, represalias, discriminación o acoso laboral, el momento más importante para revisar tu caso suele ser antes de firmar documentos, aceptar acuerdos o dejar transcurrir los plazos legales. Una evaluación temprana permite identificar si corresponde una acción de tutela laboral u otra vía de protección de tus derechos.</p>
                             <Link
-                                to="/abogado-laboral"
+                                to="/abogados-laborales"
                                 className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
                             >
                                 Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -521,7 +521,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Sin embargo, la viabilidad de una demanda no depende únicamente de la existencia de un conflicto laboral. Los documentos, comunicaciones, testigos y circunstancias específicas pueden cambiar completamente la evaluación jurídica de un caso concreto. Si consideras que tus derechos fueron vulnerados, puedes revisar tu situación con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

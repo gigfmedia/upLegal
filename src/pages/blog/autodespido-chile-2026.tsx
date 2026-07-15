@@ -447,7 +447,7 @@ const BlogArticle = () => {
               <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Tu empleador incumple sus obligaciones y estás pensando en hacer un autodespido?</h3>
               <p className="text-white mb-6">Si tu empleador no paga cotizaciones, atrasa sueldos o modificó tus condiciones sin acuerdo, un autodespido bien ejecutado puede permitirte recibir las mismas indemnizaciones que en un despido injustificado. Antes de renunciar o enviar cualquier carta, es recomendable evaluar las pruebas disponibles con un abogado laboral.</p>
               <Link
-                to="/abogado-laboral"
+                to="/abogados-laborales"
                 className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
               >
                 Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -467,7 +467,7 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 leading-relaxed">
               Sin embargo, comprender cómo funciona el autodespido en términos generales no permite determinar si tu caso es viable o si tienes pruebas suficientes para ganar. Esa respuesta depende de antecedentes específicos como las cotizaciones impagas, los correos electrónicos, las liquidaciones de sueldo y los testigos disponibles. Si estás pensando en hacer un autodespido, puedes revisar tu situación con un{" "}
-              <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+              <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
               a través de LegalUp.
             </p>
           </div>

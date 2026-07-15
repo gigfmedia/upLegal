@@ -6,13 +6,16 @@ import { useInView } from 'react-intersection-observer';
 
 interface InArticleCTAProps {
   category?: string;
-  message?: string; // Keep for backward compatibility with old posts passing this
+  message?: string;
   buttonText?: string;
+  title?: string;
 }
 
 const InArticleCTA: React.FC<InArticleCTAProps> = ({
   category = "Derecho Laboral",
-  buttonText
+  message,
+  buttonText,
+  title,
 }) => {
   const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
 
@@ -49,9 +52,9 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
 
   return (
     <div ref={ref} className="my-10 p-8 border border-gray-200 bg-gray-50 rounded-2xl text-center shadow-sm">
-      <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">¿Necesitas ayuda con este caso?</h3>
+      <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">{title || "¿Necesitas ayuda con este caso?"}</h3>
       <p className="text-gray-700 mb-4 font-medium">
-        Habla con un abogado especialista en {category}.
+        {message || `Habla con un abogado especialista en ${category}.`}
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-5 justify-center">

@@ -639,7 +639,7 @@ const BlogArticle = () => {
             <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿No firmaste el finiquito y el empleador te presiona o te debe dinero?</h3>
             <p className="text-white mb-6">Consulta con un abogado laboral especializado antes de que venzan los plazos. Revisaremos tu caso y te diremos qué opciones tienes.</p>
             <Link
-              to="/abogado-laboral"
+              to="/abogados-laborales"
               className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
             >
               Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -656,7 +656,7 @@ const BlogArticle = () => {
               No firmar el finiquito no te protege del despido ni revive el contrato laboral, pero sí te da un margen para revisar los montos, consultar con un abogado y decidir la estrategia más conveniente. La clave está en entender que el finiquito es un documento con efectos legales importantes y que cada alternativa —firmar, no firmar, firmar con reserva— tiene consecuencias distintas según el caso.
             </p>
             <p className="text-gray-600 leading-relaxed">
-              Sin embargo, comprender tus derechos es solo el primer paso. Si estás en medio de un despido o término de contrato y tienes dudas sobre tu finiquito, lo más inteligente es actuar rápido. <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> para que revise tu caso y te indique el mejor camino a seguir antes de que los plazos legales se cierren.
+              Sin embargo, comprender tus derechos es solo el primer paso. Si estás en medio de un despido o término de contrato y tienes dudas sobre tu finiquito, lo más inteligente es actuar rápido. <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> para que revise tu caso y te indique el mejor camino a seguir antes de que los plazos legales se cierren.
             </p>
           </div>
 

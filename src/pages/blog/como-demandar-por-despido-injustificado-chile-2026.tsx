@@ -564,7 +564,7 @@ const BlogArticle = () => {
                 <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y crees que fue injusto?</h3>
                 <p className="text-white mb-6">Un abogado laboral puede evaluar tu caso en minutos y decirte si tienes opciones reales de recuperar dinero. No esperes a que venza el plazo de 60 días.</p>
                 <Link
-                  to="/abogado-laboral"
+                  to="/abogados-laborales"
                   className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
                 >
                   Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -582,7 +582,7 @@ const BlogArticle = () => {
                   Demandar por despido injustificado en Chile no es solo una opción legal: es una herramienta real para recuperar dinero que puedes estar perdiendo sin darte cuenta. La mayoría de las personas comete el mismo error: espera demasiado, firma sin entender o simplemente no actúa por miedo o desconocimiento. Y eso tiene un costo directo, porque un despido mal aplicado puede significar millones en indemnización… pero solo si reclamas correctamente.
                 </p>
                 <p>
-                  Sin embargo, comprender tus derechos es solo el primer paso. El sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto. <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> y asegúrate de recibir lo que te corresponde.
+                  Sin embargo, comprender tus derechos es solo el primer paso. El sistema laboral chileno está diseñado para proteger al trabajador, pero esa protección no funciona sola. Depende de que tomes acción dentro de plazo, con una estrategia clara y con los argumentos correctos. Si estás en esta situación, lo peor que puedes hacer es quedarte quieto. <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">Consulta con un abogado laboral</Link> y asegúrate de recibir lo que te corresponde.
                 </p>
               </div>
             </div>
