@@ -37,6 +37,13 @@ export function SearchBar({
     }
   };
 
+  const handleSearchClick = () => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'search_started');
+    }
+    onSearch();
+  };
+
   return (
     <div className="relative group w-full bg-white shadow-2xl rounded-2xl overflow-hidden shadow-sm border border-gray-300 transition-colors duration-200 focus-within:border-green-900 focus-within:ring-1 focus-within:ring-green-900" onSubmit={(e) => e.preventDefault()}>
       {/* Contenedor relativo del textarea y boton */}
@@ -51,7 +58,7 @@ export function SearchBar({
         
         <button 
           type="button"
-          onClick={onSearch}
+          onClick={handleSearchClick}
           disabled={isLoading}
           className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 md:hover:w-[190px] transition-all duration-300 ease-in-out overflow-hidden shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
           title="Hablar con abogado"

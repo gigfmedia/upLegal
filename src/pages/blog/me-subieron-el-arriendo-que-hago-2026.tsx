@@ -128,7 +128,7 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed">
               Sin embargo, no todos los aumentos de arriendo son legales. En Chile existen normas claras que regulan cómo y cuándo puede subir el precio de un arriendo. Por eso es fundamental entender qué dice tu contrato y cuáles son tus derechos como arrendatario.
             </p>
-            <p className="text-lg text-gray-600 leading-relaxed text-balance">
+            <p className="text-lg text-gray-600 leading-relaxed">
               En esta guía te explicamos cuándo el aumento del arriendo es legal, cuándo no corresponde, qué hacer si el dueño quiere subir el precio y cómo negociar correctamente para evitar conflictos.
             </p>
           </div>

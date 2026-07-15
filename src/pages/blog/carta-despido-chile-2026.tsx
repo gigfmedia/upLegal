@@ -178,6 +178,14 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* CTA IN-ARTICLE */}
+                    <InArticleCTA
+                        title="¿Recibiste una carta de despido y no sabes si es válida?"
+                        message="Un abogado laboral puede revisar tu carta de despido antes de que venzan los plazos para reclamar."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
+
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué debe contener una carta de despido?</h2>
@@ -212,14 +220,6 @@ const BlogArticle = () => {
                             <p className="text-red-700 mt-2">La carta debe contener hechos concretos que posteriormente puedan acreditarse.</p>
                         </div>
                     </div>
-
-                    {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        title="¿Recibiste una carta de despido y no sabes si es válida?"
-                        message="Un abogado laboral puede revisar tu carta de despido antes de que venzan los plazos para reclamar."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
 
                     {/* CAUSALES */}
                     <div className="mb-12">
