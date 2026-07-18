@@ -21,15 +21,27 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 dotenv.config();
 
-// Get environment variables
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-const appUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+// Get environment variables — backend uses clean names only.
+// Frontend VITE_* vars in .env.local are NOT consumed by this server.
+// Keeping a single VITE_SUPABASE_URL fallback for convenience since it is
+// not a secret (identical to the anon key URL the frontend already exposes).
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const appUrl = process.env.APP_URL || 'https://legalup.cl';
 const mercadoPagoWebhookUrl =
-  process.env.MERCADOPAGO_WEBHOOK_URL ||
-  process.env.VITE_MERCADOPAGO_WEBHOOK_URL ||
-  '';
-const resendApiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+  process.env.MERCADOPAGO_WEBHOOK_URL || '';
+const resendApiKey = process.env.RESEND_API_KEY || '';
+
+if (!supabaseUrl) {
+  console.error('❌ SUPABASE_URL is required but not set.');
+  process.exit(1);
+}
+
+if (!serviceRoleKey) {
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY is required but not set.');
+  process.exit(1);
+}
+
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const resolveWebhookUrl = (req) => {
@@ -132,20 +144,23 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 });
 
-// DEBUG: Check if Service Role Key is actually a service role key
+// DEBUG: Check if Service Role Key looks like a JWT (legacy format)
 try {
-  const [, payload] = serviceRoleKey.split('.');
-  const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
-  if (decoded.role !== 'service_role') {
-    console.error('❌ CRITICAL: The key provided as VITE_SUPABASE_SERVICE_ROLE_KEY is NOT a service_role key! It is:', decoded.role);
+  if (serviceRoleKey && serviceRoleKey.includes('.')) {
+    const [, payload] = serviceRoleKey.split('.');
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString());
+    if (decoded.role !== 'service_role') {
+      console.error('❌ CRITICAL: The key provided as SUPABASE_SERVICE_ROLE_KEY is not a valid backend secret. Role:', decoded.role);
+    }
   }
 } catch (e) {
   console.error('⚠️ Could not parse Supabase Key:', e.message);
 }
 
 // Configure MercadoPago
+const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
 const mpClient = new MercadoPagoConfig({
-  accessToken: process.env.VITE_MERCADOPAGO_ACCESS_TOKEN,
+  accessToken: mercadopagoAccessToken,
   options: { timeout: 5000 }
 });
 
@@ -863,7 +878,7 @@ app.post('/create-payment', async (req, res) => {
     };
 
     // Create preference using raw fetch to bypass any SDK potential issues
-    const mpAccessToken = process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+    const mpAccessToken = mercadopagoAccessToken || '';
 
     // DEBUG: Check if token looks like Supabase (JWT starts with eyJ)
     const isJwt = mpAccessToken.startsWith('eyJ');
@@ -1217,7 +1232,7 @@ app.post('/api/bookings/create', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
       },
       body: JSON.stringify(preferenceData),
     });
@@ -1365,9 +1380,9 @@ app.get('/api/mercadopago/auth-url', async (req, res) => {
     const challenge = generateCodeChallenge(verifier);
     const state = crypto.randomUUID(); // Generate secure state
 
-    const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+    const backendUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
-    const clientId = process.env.VITE_MERCADOPAGO_CLIENT_ID;
+    const clientId = process.env.MERCADOPAGO_CLIENT_ID;
 
     // Store verifier in DB (Cookies fail on Render due to cross-site issues)
     const { error: dbError } = await supabase
@@ -1405,12 +1420,12 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
     // Handle OAuth errors
     if (oauthError) {
-      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      const frontendUrl = appUrl || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=${oauthError}`);
     }
 
     if (!code) {
-      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      const frontendUrl = appUrl || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=no_code`);
     }
 
@@ -1438,14 +1453,14 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     }
 
     // Build redirect_uri - MUST match exactly what was used in the authorization request
-    const backendUrl = process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
+    const backendUrl = process.env.API_BASE_URL || process.env.VITE_API_BASE_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001';
     const redirectUri = `${backendUrl}/api/mercadopago/oauth/callback`;
 
     // Exchange code for access token
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: process.env.VITE_MERCADOPAGO_CLIENT_ID,
-      client_secret: process.env.VITE_MERCADOPAGO_CLIENT_SECRET,
+      client_id: process.env.MERCADOPAGO_CLIENT_ID,
+      client_secret: process.env.MERCADOPAGO_CLIENT_SECRET,
       code: code,
       redirect_uri: redirectUri,
     });
@@ -1481,7 +1496,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
         errorDetail = errorText.substring(0, 100);
       }
 
-      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      const frontendUrl = appUrl || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=token_exchange_failed&details=${encodeURIComponent(errorDetail)}`);
     }
 
@@ -1495,7 +1510,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     });
 
     if (!userResponse.ok) {
-      const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+      const frontendUrl = appUrl || 'https://legalup.cl';
       return res.redirect(`${frontendUrl}/lawyer/earnings?mp_error=user_fetch_failed`);
     }
 
@@ -1512,7 +1527,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
     // For security, we'll still redirect with the data but also try to save it server-side if possible
 
     // Redirect to frontend with OAuth data
-    const frontendUrl = process.env.VITE_APP_URL || 'https://legalup.cl';
+    const frontendUrl = appUrl || 'https://legalup.cl';
     const redirectUrl = new URL(`${frontendUrl}/lawyer/earnings`);
     redirectUrl.searchParams.append('mp_success', 'true');
     redirectUrl.searchParams.append('mp_user_id', tokenData.user_id);
@@ -1530,7 +1545,7 @@ app.get('/api/mercadopago/oauth/callback', async (req, res) => {
 
   } catch (error) {
     console.error('OAuth callback error:', error);
-    res.redirect(`${process.env.VITE_APP_URL}/lawyer/earnings?mp_error=server_error`);
+    res.redirect(`${appUrl}/lawyer/earnings?mp_error=server_error`);
   }
 });
 
@@ -1761,8 +1776,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     console.log('Extracted Payment ID:', paymentId);
     console.log('Payment ID source:', source);
     console.log('Final topic:', topic);
-    console.log('access token exists:', !!process.env.VITE_MERCADOPAGO_ACCESS_TOKEN);
-    console.log('access token start:', process.env.VITE_MERCADOPAGO_ACCESS_TOKEN?.substring(0, 20));
+    console.log('access token exists:', !!mercadopagoAccessToken);
+    console.log('access token start:', mercadopagoAccessToken?.substring(0, 20));
 
     // validación estricta
     if (!paymentId && (topic === 'payment' || topic === 'payment.created')) {
@@ -2472,7 +2487,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         `https://api.mercadopago.com/v1/payments/${paymentId}`,
         {
           headers: {
-            Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`
+            Authorization: `Bearer ${mercadopagoAccessToken}`
           }
         }
       );
@@ -3101,7 +3116,7 @@ app.post('/api/empresas/subscription/create', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
       },
       body: JSON.stringify(preapprovalData),
     });
@@ -3181,7 +3196,7 @@ app.post('/api/empresas/subscription/:subscriptionId/cancel', async (req, res) =
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
+            Authorization: `Bearer ${mercadopagoAccessToken}`,
           },
           body: JSON.stringify({ status: 'cancelled' }),
         }
@@ -3454,7 +3469,7 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
     `https://api.mercadopago.com/preapproval/${preapprovalId}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
       },
     }
   );
@@ -3613,7 +3628,7 @@ const handleAuthorizedPayment = async (paymentId) => {
     `https://api.mercadopago.com/v1/payments/${paymentId}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.VITE_MERCADOPAGO_ACCESS_TOKEN}`,
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
       },
     }
   );
