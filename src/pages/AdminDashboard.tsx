@@ -214,7 +214,12 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/payments');
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/payments', {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+      });
       if (!response.ok) throw new Error('Error al obtener pagos');
       return response.json();
     },
@@ -530,7 +535,13 @@ function TransferStatusCard() {
   const handleManualTrigger = async () => {
     try {
       setIsTriggering(true);
-      const response = await fetch('/api/admin/trigger-payout', { method: 'POST' });
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/trigger-payout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+      });
       const data = await response.json();
 
       if (data.success) {

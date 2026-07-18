@@ -40,10 +40,12 @@ export default function RequestsAssignment() {
 
   const loadRequests = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = { 'Authorization': `Bearer ${session?.access_token || ''}` }
       const url = statusFilter
         ? `/api/admin/empresas/requests?status=${statusFilter}`
         : '/api/admin/empresas/requests'
-      const res = await fetch(url)
+      const res = await fetch(url, { headers })
       const data = await res.json()
       setRequests(data.requests || [])
     } catch (error) {
@@ -72,9 +74,14 @@ export default function RequestsAssignment() {
     if (!selectedLawyer || !assignDialog.requestId) return
 
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+      }
       const res = await fetch(`/api/admin/empresas/requests/${assignDialog.requestId}/assign`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ lawyerId: selectedLawyer, assignedBy: user?.id }),
       })
       const data = await res.json()
@@ -93,9 +100,14 @@ export default function RequestsAssignment() {
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+      }
       await fetch(`/api/admin/empresas/requests/${requestId}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: newStatus, userId: user?.id }),
       })
       toast.success('Estado actualizado')

@@ -43,7 +43,12 @@ export function CAELeadsTab() {
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/cae-leads');
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch('/api/admin/cae-leads', {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+      });
       if (!response.ok) throw new Error('Error al cargar leads');
       const data = await response.json();
       setLeads(data || []);

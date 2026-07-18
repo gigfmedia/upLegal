@@ -3667,7 +3667,7 @@ const handleAuthorizedPayment = async (paymentId) => {
 // We add a new check before the main webhook processing
 
 // ---- ADMIN: GET ALL COMPANIES ----
-app.get('/api/admin/empresas', async (req, res) => {
+app.get('/api/admin/empresas', requireAdmin, async (req, res) => {
   try {
     const { status, search } = req.query;
 
@@ -3691,7 +3691,7 @@ app.get('/api/admin/empresas', async (req, res) => {
 });
 
 // ---- ADMIN: GET COMPANY DETAILS ----
-app.get('/api/admin/empresas/:id', async (req, res) => {
+app.get('/api/admin/empresas/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -3746,7 +3746,7 @@ app.get('/api/admin/empresas/:id', async (req, res) => {
 });
 
 // ---- ADMIN: UPDATE COMPANY STATUS ----
-app.put('/api/admin/empresas/:id/status', async (req, res) => {
+app.put('/api/admin/empresas/:id/status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -3775,7 +3775,7 @@ app.put('/api/admin/empresas/:id/status', async (req, res) => {
 });
 
 // ---- ADMIN: ADD NOTE TO COMPANY ----
-app.post('/api/admin/empresas/:id/notes', async (req, res) => {
+app.post('/api/admin/empresas/:id/notes', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { content, userId } = req.body;
@@ -3798,7 +3798,7 @@ app.post('/api/admin/empresas/:id/notes', async (req, res) => {
 });
 
 // ---- ADMIN: GET COMPANY METRICS ----
-app.get('/api/admin/empresas/metrics', async (req, res) => {
+app.get('/api/admin/empresas/metrics', requireAdmin, async (req, res) => {
   try {
     const { data: metrics } = await supabase.rpc('get_company_metrics');
 
@@ -3810,7 +3810,7 @@ app.get('/api/admin/empresas/metrics', async (req, res) => {
 });
 
 // ---- ADMIN: GET ALL REQUESTS (for assignment dashboard) ----
-app.get('/api/admin/empresas/requests', async (req, res) => {
+app.get('/api/admin/empresas/requests', requireAdmin, async (req, res) => {
   try {
     const { status } = req.query;
 
@@ -3832,7 +3832,7 @@ app.get('/api/admin/empresas/requests', async (req, res) => {
 });
 
 // ---- ADMIN: ASSIGN LAWYER TO REQUEST ----
-app.post('/api/admin/empresas/requests/:id/assign', async (req, res) => {
+app.post('/api/admin/empresas/requests/:id/assign', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { lawyerId, assignedBy } = req.body;
@@ -3878,7 +3878,7 @@ app.post('/api/admin/empresas/requests/:id/assign', async (req, res) => {
 });
 
 // ---- ADMIN: UPDATE REQUEST STATUS ----
-app.put('/api/admin/empresas/requests/:id/status', async (req, res) => {
+app.put('/api/admin/empresas/requests/:id/status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, userId } = req.body;
@@ -5458,7 +5458,48 @@ app.get('/api/empresas/lawyers', async (req, res) => {
 
 // ---- Admin API Routes (use service_role from server, never expose to client) ----
 
-app.get('/api/admin/payments', async (req, res) => {
+const requireAdmin = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No autorizado', details: 'Token de acceso requerido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role, email')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return res.status(403).json({ error: 'Perfil no encontrado' });
+    }
+
+    const isAdmin = profile.role === 'admin' ||
+                    user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
+                    user.user_metadata?.is_admin === true;
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Se requieren permisos de administrador' });
+    }
+
+    req.adminUser = user;
+    req.adminProfile = profile;
+    next();
+  } catch (error) {
+    console.error('[requireAdmin] Error:', error);
+    return res.status(500).json({ error: 'Error de autenticación' });
+  }
+};
+
+app.get('/api/admin/payments', requireAdmin, async (req, res) => {
   try {
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false }
@@ -5561,7 +5602,7 @@ app.get('/api/admin/payments', async (req, res) => {
   }
 });
 
-app.get('/api/admin/cae-leads', async (req, res) => {
+app.get('/api/admin/cae-leads', requireAdmin, async (req, res) => {
   try {
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false }
@@ -5579,7 +5620,7 @@ app.get('/api/admin/cae-leads', async (req, res) => {
   }
 });
 
-app.post('/api/admin/trigger-payout', async (req, res) => {
+app.post('/api/admin/trigger-payout', requireAdmin, async (req, res) => {
   try {
     const response = await fetch(`${supabaseUrl}/functions/v1/process-weekly-payouts`, {
       method: 'POST',

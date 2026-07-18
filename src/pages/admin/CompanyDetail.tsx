@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
+import { supabase } from '@/lib/supabaseClient'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +41,10 @@ export default function CompanyDetail() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`/api/admin/empresas/${id}`)
+        const { data: { session } } = await supabase.auth.getSession()
+        const res = await fetch(`/api/admin/empresas/${id}`, {
+          headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
+        })
         const data = await res.json()
         setDetail(data)
       } catch (error) {
@@ -55,15 +59,20 @@ export default function CompanyDetail() {
   const handleAddNote = async () => {
     if (!newNote.trim()) return
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+      }
       await fetch(`/api/admin/empresas/${id}/notes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newNote, userId: (await import('@/lib/supabaseClient')).supabase.auth.getSession() }),
+        headers,
+        body: JSON.stringify({ content: newNote, userId: session?.user?.id }),
       })
       setNewNote('')
       toast.success('Nota agregada')
       // Reload
-      const res = await fetch(`/api/admin/empresas/${id}`)
+      const res = await fetch(`/api/admin/empresas/${id}`, { headers })
       const data = await res.json()
       setDetail(data)
     } catch (error) {
@@ -73,13 +82,18 @@ export default function CompanyDetail() {
 
   const handleStatusChange = async (status: string) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+      }
       await fetch(`/api/admin/empresas/${id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status }),
       })
       toast.success('Estado actualizado')
-      const res = await fetch(`/api/admin/empresas/${id}`)
+      const res = await fetch(`/api/admin/empresas/${id}`, { headers })
       const data = await res.json()
       setDetail(data)
     } catch (error) {
