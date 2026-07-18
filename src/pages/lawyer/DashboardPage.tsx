@@ -5,7 +5,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { User, Calendar, Briefcase, MessageSquare, Clock, CheckCircle, AlertCircle, Sparkles, ArrowRight, Star } from 'lucide-react';
 import { ProfileCompletion } from '@/components/dashboard/ProfileCompletion';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -70,6 +70,65 @@ export default function LawyerDashboardPage() {
       navigate('/lawyer/dashboard', { replace: true });
     }
   }, [searchParams, toast, navigate]);
+
+  // ---- EMPRESA MODULE ----
+  const [empresaRequests, setEmpresaRequests] = useState<any[]>([])
+  const [empresaLoading, setEmpresaLoading] = useState(true)
+  const [empresaRatingStats, setEmpresaRatingStats] = useState<{ average: number; count: number } | null>(null)
+
+  const activeStatuses = ['nueva', 'asignada', 'en_revision', 'esperando_documentos', 'esperando_cliente', 'presupuesto_enviado', 'presupuesto_aprobado', 'en_ejecucion']
+
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return
+      try {
+        const [reqRes, ratingRes] = await Promise.all([
+          fetch(`/api/lawyer/empresas/requests?userId=${user.id}`),
+          fetch(`/api/empresas/ratings/lawyer/${user.id}/stats`),
+        ])
+        const reqData = await reqRes.json()
+        setEmpresaRequests(reqData.requests || [])
+        const ratingData = await ratingRes.json()
+        setEmpresaRatingStats(ratingData.stats || null)
+      } catch (err) {
+        console.error('[Empresa] Error fetching:', err)
+      } finally {
+        setEmpresaLoading(false)
+      }
+    }
+    load()
+  }, [user])
+
+  const activeEmpresaRequests = empresaRequests.filter(r => activeStatuses.includes(r.status))
+  const slaBreached = activeEmpresaRequests.filter(r =>
+    r.sla_deadline && !r.first_response_at && new Date(r.sla_deadline) < new Date()
+  )
+  const pendingFirstResponse = activeEmpresaRequests.filter(r =>
+    r.sla_deadline && !r.first_response_at
+  )
+  const slaCompliant = activeEmpresaRequests.filter(r =>
+    r.first_response_at && r.sla_deadline && new Date(r.first_response_at) <= new Date(r.sla_deadline)
+  )
+  const slaTotal = activeEmpresaRequests.filter(r => r.sla_deadline).length
+  const slaRate = slaTotal > 0 ? Math.round((slaCompliant.length / slaTotal) * 100) : null
+
+  const handleMarkFirstResponse = async (requestId: string) => {
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token
+      if (!token) return
+      await fetch(`/api/empresas/requests/${requestId}/first-response`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setEmpresaRequests(prev =>
+        prev.map(r => r.id === requestId ? { ...r, first_response_at: new Date().toISOString() } : r)
+      )
+      toast({ title: 'Primera respuesta registrada', description: 'SLA actualizado correctamente.' })
+    } catch (err) {
+      console.error(err)
+      toast({ title: 'Error', description: 'No se pudo registrar la respuesta', variant: 'destructive' })
+    }
+  }
 
   const fetchActivities = useCallback(async () => {
     if (!user?.id) return;
@@ -422,6 +481,131 @@ export default function LawyerDashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* ---- EMPRESAS SECTION ---- */}
+        {!empresaLoading && (
+          <>
+            <div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Solicitudes de empresas</h3>
+                  <p className="text-sm text-gray-500">Seguimiento SLA y casos activos</p>
+                </div>
+                <Link
+                  to="/lawyer/empresas"
+                  className="text-sm text-green-900 hover:text-green-800 font-medium flex items-center gap-1"
+                >
+                  Ver todas <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mt-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">Casos activos</CardTitle>
+                    <Briefcase className="h-4 w-4 text-gray-400" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{activeEmpresaRequests.length}</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">SLA cumplido</CardTitle>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {slaRate !== null ? `${slaRate}%` : '—'}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className={pendingFirstResponse.length > 0 ? 'border-amber-300' : ''}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">Pendientes respuesta</CardTitle>
+                    <Clock className="h-4 w-4 text-amber-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${pendingFirstResponse.length > 0 ? 'text-amber-600' : ''}`}>
+                      {pendingFirstResponse.length}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className={slaBreached.length > 0 ? 'border-red-300' : ''}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">SLA vencido</CardTitle>
+                    <AlertCircle className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${slaBreached.length > 0 ? 'text-red-600' : ''}`}>
+                      {slaBreached.length}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-gray-600">Calificación</CardTitle>
+                    <Star className="h-4 w-4 text-yellow-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {empresaRatingStats ? `${empresaRatingStats.average}` : '—'}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{empresaRatingStats ? `${empresaRatingStats.count} reseñas` : 'Sin reseñas'}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {activeEmpresaRequests.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {activeEmpresaRequests.slice(0, 3).map((r) => {
+                    const slaStatus = r.sla_deadline
+                      ? (!r.first_response_at && new Date(r.sla_deadline) < new Date() ? 'breached'
+                        : !r.first_response_at ? 'pending'
+                        : new Date(r.first_response_at) <= new Date(r.sla_deadline) ? 'compliant'
+                        : 'breached')
+                      : null
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
+                        onClick={() => navigate(`/lawyer/empresas/solicitudes/${r.id}`)}
+                      >
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${
+                          slaStatus === 'breached' ? 'bg-red-500' :
+                          slaStatus === 'pending' ? 'bg-amber-400' :
+                          slaStatus === 'compliant' ? 'bg-green-500' :
+                          'bg-gray-300'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{r.title}</p>
+                          <p className="text-xs text-gray-500 truncate">{r.company?.name} · {r.category}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {slaStatus === 'pending' && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleMarkFirstResponse(r.id) }}
+                              className="text-xs bg-green-900 text-white px-2.5 py-1 rounded-md hover:bg-green-800 transition-colors whitespace-nowrap"
+                            >
+                              Marcar respuesta
+                            </button>
+                          )}
+                          {slaStatus === 'breached' && (
+                            <span className="text-xs text-red-600 font-medium whitespace-nowrap">SLA vencido</span>
+                          )}
+                          {slaStatus === 'compliant' && (
+                            <span className="text-xs text-green-600 font-medium whitespace-nowrap">SLA ok</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <hr className="border-gray-200" />
+          </>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-6">

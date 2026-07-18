@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuthState';
+import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/components/ui/use-toast';
 
 interface NotificationPreference {
@@ -65,41 +66,29 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const fetchNotifications = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/notifications');
-      // const data = await response.json();
-      // setNotifications(data);
-      
-      // Mock data for now
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          title: 'Nueva cita programada',
-          message: 'Tienes una nueva cita programada para el 15 de septiembre a las 15:00',
-          type: 'appointment',
-          read: false,
-          createdAt: new Date(),
-          link: '/dashboard/appointments'
-        },
-        {
-          id: '2',
-          title: 'Nuevo mensaje',
-          message: 'Has recibido un nuevo mensaje de tu abogado',
-          type: 'message',
-          read: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
-          link: '/dashboard/messages'
-        }
-      ];
-      
-      setNotifications(mockNotifications);
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      if (!token) return;
+
+      const response = await fetch('/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await response.json();
+
+      if (data.notifications) {
+        setNotifications(
+          data.notifications.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            message: n.body || '',
+            type: n.type === 'case_assigned' ? 'message' : 'system',
+            read: n.is_read,
+            createdAt: new Date(n.created_at),
+            link: n.entity_type === 'request' ? `/empresa/solicitudes/${n.entity_id}` : undefined,
+          }))
+        );
+      }
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron cargar las notificaciones',
-        variant: 'destructive',
-      });
     } finally {
       setIsLoading(false);
     }
@@ -121,24 +110,34 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
     setNotifications(prev =>
       prev.map(notification =>
         notification.id === id ? { ...notification, read: true } : notification
       )
     );
-    
-    // TODO: Call API to mark as read
-    // await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    if (token) {
+      await fetch(`/api/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications(prev =>
       prev.map(notification => ({ ...notification, read: true }))
     );
-    
-    // TODO: Call API to mark all as read
-    // await fetch('/api/notifications/read-all', { method: 'POST' });
+
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    if (token) {
+      await fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
   };
 
   const updateSettings = async (newSettings: Partial<NotificationSettings>) => {

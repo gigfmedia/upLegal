@@ -68,6 +68,9 @@ export default {
 				},
 				green: {
 					900: '#06392F'
+				},
+				cream: {
+					900: '#FAFAF6'
 				}
 			},
 			borderRadius: {

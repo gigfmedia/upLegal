@@ -27,6 +27,26 @@ import Footer from '@/components/Footer';
 
 // Pages
 import Index from './pages/Index';
+
+// LegalUp Empresas pages
+const LegalUpEmpresas = lazy(() => import('./pages/LegalUpEmpresas'));
+const CompanyRegister = lazy(() => import('./pages/empresa/CompanyRegister'));
+const EmpresaLayout = lazy(() => import('./pages/empresa/EmpresaLayout'));
+const DashboardHome = lazy(() => import('./pages/empresa/DashboardHome'));
+const RequestsList = lazy(() => import('./pages/empresa/RequestsList'));
+const NewRequest = lazy(() => import('./pages/empresa/NewRequest'));
+const RequestDetail = lazy(() => import('./pages/empresa/RequestDetail'));
+const Billing = lazy(() => import('./pages/empresa/Billing'));
+const Settings = lazy(() => import('./pages/empresa/Settings'));
+const LegalCenter = lazy(() => import('./pages/empresa/LegalCenter'));
+const Budgets = lazy(() => import('./pages/empresa/Budgets'));
+const Lawyers = lazy(() => import('./pages/empresa/Lawyers'));
+const Services = lazy(() => import('./pages/empresa/Services'));
+const ActivityLog = lazy(() => import('./pages/empresa/ActivityLog'));
+const AdminEmpresasPage = lazy(() => import('./pages/admin/EmpresasPage'));
+const AdminCompanyDetail = lazy(() => import('./pages/admin/CompanyDetail'));
+const AdminRequestsAssignment = lazy(() => import('./pages/admin/RequestsAssignment'));
+const LawyerEmpresasRequests = lazy(() => import('./pages/lawyer/EmpresasRequestsPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const LawyerDashboard = lazy(() => import('./pages/LawyerDashboard'));
 const LawyerDashboardPage = lazy(() => import('./pages/lawyer/DashboardPage'));
@@ -373,6 +393,8 @@ const AppContent = () => {
 
               <Route path="/cae" element={<CAELanding />} />
               <Route path="/legalup-ai" element={<LegalUpAI />} />
+              <Route path="/legalup-empresas" element={<LegalUpEmpresas />} />
+              <Route path="/empresa/registro" element={<CompanyRegister />} />
               <Route path="/abogado-divorcio-unilateral" element={<DivorcioUnilateralLanding />} />
               <Route path="/abogado-pension-alimentos" element={<PensionAlimentosLanding />} />
               <Route path="/abogado-finiquito" element={<FiniquitoLanding />} />
@@ -400,6 +422,7 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="jobs" element={<JobsPage />} />
+                <Route path="empresas" element={<LawyerEmpresasRequests />} />
               </Route>
 
               {/* Lawyer onboarding wizard — standalone, no sidebar */}
@@ -491,6 +514,29 @@ const AppContent = () => {
                   <PublicProfile />
                 </RequireLawyer>
               } />
+              {/* Company Dashboard Routes */}
+              <Route path="/empresa" element={
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+                  </div>
+                }>
+                  <EmpresaLayout />
+                </Suspense>
+              }>
+                <Route index element={<DashboardHome />} />
+                <Route path="solicitudes" element={<RequestsList />} />
+                <Route path="solicitudes/nueva" element={<NewRequest />} />
+                <Route path="solicitudes/:id" element={<RequestDetail />} />
+                <Route path="centro-legal" element={<LegalCenter />} />
+                <Route path="presupuestos" element={<Budgets />} />
+                <Route path="abogados" element={<Lawyers />} />
+                <Route path="servicios" element={<Services />} />
+                <Route path="auditoria" element={<ActivityLog />} />
+                <Route path="facturacion" element={<Billing />} />
+                <Route path="configuracion" element={<Settings />} />
+              </Route>
+
               {/* Dashboard and Protected Routes wrapped in Suspense and Providers */}
               <Route path="/dashboard" element={
                 <Suspense fallback={
@@ -543,6 +589,7 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
+                <Route path="empresas" element={<LawyerEmpresasRequests />} />
               </Route>
 
               <Route path="/admin" element={
@@ -565,6 +612,9 @@ const AppContent = () => {
                 <Route path="notifications" element={<AdminNotifications />} />
                 <Route path="reviews" element={<AdminReviewsPage />} />
                 <Route path="lawyer-profiles" element={<LawyerProfilesPage />} />
+                <Route path="empresas" element={<AdminEmpresasPage />} />
+                <Route path="empresas/:id" element={<AdminCompanyDetail />} />
+                <Route path="solicitudes" element={<AdminRequestsAssignment />} />
               </Route>
 
               <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -581,7 +631,7 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </main>
-        <Footer />
+        {!location.pathname.startsWith('/empresa') && <Footer />}
       </TooltipProvider>
     </div>
   );

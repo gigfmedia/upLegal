@@ -59,30 +59,3 @@ export const fetchPayoutLogs = async (limit = 20): Promise<PayoutLog[]> => {
     }
   }));
 };
-
-export const triggerManualPayout = async (): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-weekly-payouts`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-cron-secret': import.meta.env.VITE_PAYOUT_CRON_SECRET,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ manual_trigger: true }),
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error);
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error triggering manual payout:', error);
-    return { success: false, error: error.message };
-  }
-};

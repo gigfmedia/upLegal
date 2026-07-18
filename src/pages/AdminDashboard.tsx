@@ -16,8 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { usePlatformSettings } from '@/hooks/usePlatformSettings';
-import { fetchPayoutLogs, triggerManualPayout } from '@/services/payoutLogs';
-import { getAllPaymentsAndAppointments } from '@/services/paymentService';
+import { fetchPayoutLogs } from '@/services/payoutLogs';
 import Header from '@/components/Header';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import { UserManagement } from '@/components/admin/UserManagement';
@@ -215,8 +214,9 @@ export default function AdminDashboard() {
   } = useQuery({
     queryKey: ['admin-payments'],
     queryFn: async () => {
-      const data = await getAllPaymentsAndAppointments();
-      return data;
+      const response = await fetch('/api/admin/payments');
+      if (!response.ok) throw new Error('Error al obtener pagos');
+      return response.json();
     },
     enabled: activeTab === TABS.PAYMENTS,
     staleTime: 0,
@@ -530,14 +530,14 @@ function TransferStatusCard() {
   const handleManualTrigger = async () => {
     try {
       setIsTriggering(true);
-      const { success, error } = await triggerManualPayout();
+      const response = await fetch('/api/admin/trigger-payout', { method: 'POST' });
+      const data = await response.json();
 
-      if (success) {
+      if (data.success) {
         toast.success('Proceso de pago iniciado correctamente');
-        // Recargar logs después de un pequeño retraso
         setTimeout(loadLogs, 2000);
       } else {
-        throw new Error(error || 'Error desconocido al iniciar el pago');
+        throw new Error(data.error || 'Error desconocido al iniciar el pago');
       }
     } catch (error: any) {
       console.error('Error triggering payout:', error);

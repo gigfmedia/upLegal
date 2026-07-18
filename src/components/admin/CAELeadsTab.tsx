@@ -43,29 +43,9 @@ export function CAELeadsTab() {
   const fetchLeads = async () => {
     setIsLoading(true);
     try {
-      // Create admin client using service role key to bypass RLS
-      const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-      if (!serviceRoleKey || !supabaseUrl) {
-        throw new Error('Missing admin credentials');
-      }
-
-      const { createClient } = await import('@supabase/supabase-js');
-      const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        }
-      });
-
-      const { data, error } = await adminClient
-        .from('contact_messages')
-        .select('*')
-        .ilike('subject', '%CAE%')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const response = await fetch('/api/admin/cae-leads');
+      if (!response.ok) throw new Error('Error al cargar leads');
+      const data = await response.json();
       setLeads(data || []);
     } catch (error) {
       console.error('Error fetching CAE leads:', error);

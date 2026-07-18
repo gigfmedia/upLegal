@@ -15,7 +15,8 @@ import {
   X,
   TrendingUp,
   LogOut,
-  Heart
+  Heart,
+  Building2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -153,6 +154,19 @@ function DashboardLayout() {
   const getNavItems = (): NavItem[] => {
 
     if (userRole === 'lawyer') {
+      // Check if we're in admin context
+      if (currentPath.startsWith('/admin')) {
+        return [
+          { href: '/admin/dashboard', icon: Activity, label: 'Dashboard' },
+          { href: '/admin/analytics', icon: TrendingUp, label: 'Analíticas' },
+          { href: '/admin/empresas', icon: Briefcase, label: 'Empresas' },
+          { href: '/admin/solicitudes', icon: FileText, label: 'Solicitudes' },
+          { href: '/admin/lawyer-profiles', icon: User, label: 'Abogados' },
+          { href: '/admin/reviews', icon: MessageSquare, label: 'Reseñas' },
+          { href: '/admin/notifications', icon: Activity, label: 'Notificaciones' },
+        ];
+      }
+
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
@@ -160,6 +174,7 @@ function DashboardLayout() {
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
+        { href: '/lawyer/empresas', icon: Building2, label: 'Empresas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems

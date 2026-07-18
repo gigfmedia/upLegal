@@ -10,7 +10,7 @@ import { handleAuthError } from '@/lib/authErrorHandler';
 import { useAuth } from '@/hooks/useAuthState';
 import { supabase } from '@/lib/supabaseClient';
 
-export type UserRole = 'client' | 'lawyer';
+export type UserRole = 'client' | 'lawyer' | 'company';
 
 export interface UserData {
   firstName: string;
