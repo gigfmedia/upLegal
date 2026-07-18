@@ -187,24 +187,40 @@ const requireAdmin = async (req, res, next) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
+      console.error('[requireAdmin] getUser failed:', userError?.message);
       return res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
     }
 
-    const { data: profile, error: profileError } = await supabase
+    // Try id first, then user_id as fallback (profiles has both columns)
+    let profile = null;
+    const { data: profileById } = await supabase
       .from('profiles')
       .select('role, email')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
+    profile = profileById;
 
-    if (profileError || !profile) {
-      return res.status(403).json({ error: 'Perfil no encontrado' });
+    if (!profile) {
+      const { data: profileByUserId } = await supabase
+        .from('profiles')
+        .select('role, email')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      profile = profileByUserId;
+    }
+
+    if (!profile) {
+      return res.status(403).json({ error: 'Perfil no encontrado', details: 'No se encontró el perfil del usuario' });
     }
 
     const isAdmin = profile.role === 'admin' ||
+                    profile.role === 'superadmin' ||
                     user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-                    user.user_metadata?.is_admin === true;
+                    user.user_metadata?.is_admin === true ||
+                    user.user_metadata?.role === 'admin';
 
     if (!isAdmin) {
+      console.error('[requireAdmin] Access denied for user', user.id, 'email:', user.email, 'profile.role:', profile.role);
       return res.status(403).json({ error: 'Se requieren permisos de administrador' });
     }
 
