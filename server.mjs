@@ -175,6 +175,48 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// Middleware: Verifies the user is authenticated and has admin role before proceeding
+const requireAdmin = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No autorizado', details: 'Token de acceso requerido' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role, email')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      return res.status(403).json({ error: 'Perfil no encontrado' });
+    }
+
+    const isAdmin = profile.role === 'admin' ||
+                    user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
+                    user.user_metadata?.is_admin === true;
+
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Se requieren permisos de administrador' });
+    }
+
+    req.adminUser = user;
+    req.adminProfile = profile;
+    next();
+  } catch (error) {
+    console.error('[requireAdmin] Error:', error);
+    return res.status(500).json({ error: 'Error de autenticación' });
+  }
+};
+
 // Health check para mantener Render despierto
 app.get('/health', (req, res) => {
   res.json({ ok: true, timestamp: Date.now() });
@@ -5457,47 +5499,6 @@ app.get('/api/empresas/lawyers', async (req, res) => {
 });
 
 // ---- Admin API Routes (use service_role from server, never expose to client) ----
-
-const requireAdmin = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No autorizado', details: 'Token de acceso requerido' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
-      return res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role, email')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile) {
-      return res.status(403).json({ error: 'Perfil no encontrado' });
-    }
-
-    const isAdmin = profile.role === 'admin' ||
-                    user.email?.toLowerCase() === 'gigfmedia@icloud.com' ||
-                    user.user_metadata?.is_admin === true;
-
-    if (!isAdmin) {
-      return res.status(403).json({ error: 'Se requieren permisos de administrador' });
-    }
-
-    req.adminUser = user;
-    req.adminProfile = profile;
-    next();
-  } catch (error) {
-    console.error('[requireAdmin] Error:', error);
-    return res.status(500).json({ error: 'Error de autenticación' });
-  }
-};
 
 app.get('/api/admin/payments', requireAdmin, async (req, res) => {
   try {
