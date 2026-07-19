@@ -26,7 +26,7 @@ dotenv.config();
 // Keeping a single VITE_SUPABASE_URL fallback for convenience since it is
 // not a secret (identical to the anon key URL the frontend already exposes).
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 const appUrl = process.env.APP_URL || 'https://legalup.cl';
 const mercadoPagoWebhookUrl =
   process.env.MERCADOPAGO_WEBHOOK_URL || '';
@@ -38,7 +38,7 @@ if (!supabaseUrl) {
 }
 
 if (!serviceRoleKey) {
-  console.error('❌ SUPABASE_SERVICE_ROLE_KEY is required but not set.');
+  console.error('❌ SUPABASE_SERVICE_ROLE_KEY (o SERVICE_ROLE_KEY) is required but not set.');
   process.exit(1);
 }
 
