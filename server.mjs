@@ -29,7 +29,8 @@ const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SERVICE_ROLE_KEY;
 const appUrl = process.env.APP_URL || 'https://legalup.cl';
 const mercadoPagoWebhookUrl =
-  process.env.MERCADOPAGO_WEBHOOK_URL || '';
+  process.env.MERCADOPAGO_WEBHOOK_URL ||
+  process.env.VITE_MERCADOPAGO_WEBHOOK_URL || '';
 const resendApiKey = process.env.RESEND_API_KEY || '';
 
 if (!supabaseUrl) {
@@ -3997,15 +3998,13 @@ app.get('/api/lawyer/empresas/requests', async (req, res) => {
 
 // Helper: verify JWT and extract user ID via Supabase Auth REST API
 async function getUserIdFromToken(token) {
-  const res = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data?.id || null;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return null;
+    return user.id;
+  } catch {
+    return null;
+  }
 }
 
 // ---- NOTIFICATIONS ----
@@ -4080,7 +4079,7 @@ app.get('/api/empresas/sla-metrics', async (req, res) => {
 
     let query = supabase
       .from('company_requests')
-      .select('id, status, sla_deadline, first_response_at, created_at, category');
+      .select('id, status, sla_deadline, first_response_at, created_at, updated_at, assigned_at, category');
 
     if (companyId) query = query.eq('company_id', companyId);
 
@@ -4094,8 +4093,11 @@ app.get('/api/empresas/sla-metrics', async (req, res) => {
 
     if (requests) {
       for (const r of requests) {
-        const responded = r.first_response_at;
         const deadline = r.sla_deadline;
+        // Use first_response_at; fall back to updated_at if the request has activity
+        const responded = r.first_response_at ||
+          ((r.status === 'finalizada' || r.status === 'en_proceso' || r.status === 'respondida') ? r.updated_at : null);
+        const responseTimeReference = r.first_response_at || r.assigned_at || r.created_at;
 
         if (responded && deadline) {
           if (new Date(responded) <= new Date(deadline)) {
@@ -4103,7 +4105,7 @@ app.get('/api/empresas/sla-metrics', async (req, res) => {
           } else {
             incumplidos++;
           }
-          totalResponseTime += new Date(responded).getTime() - new Date(r.created_at).getTime();
+          totalResponseTime += new Date(responseTimeReference).getTime() - new Date(r.created_at).getTime();
           responseCount++;
         } else if (deadline && new Date(deadline) < new Date()) {
           incumplidos++;
@@ -4120,7 +4122,7 @@ app.get('/api/empresas/sla-metrics', async (req, res) => {
       cumplidos,
       incumplidos,
       cumplimientoPct: total > 0 ? Math.round((cumplidos / total) * 100) : 100,
-      tiempoPromedioRespuesta: `${hours}h ${mins}m`,
+      tiempoPromedioRespuesta: responseCount > 0 ? `${hours}h ${mins}m` : '—',
     });
   } catch (error) {
     console.error('[SLA] Error computing metrics:', error);
