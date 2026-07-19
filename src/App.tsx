@@ -54,6 +54,7 @@ const AttorneyDashboard = lazy(() => import('./pages/AttorneyDashboard'));
 const PublicProfile = lazy(() => import('./pages/PublicProfile'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentFailure = lazy(() => import('./pages/PaymentFailure'));
+const PaymentPending = lazy(() => import('./pages/PaymentPending'));
 const PaymentCanceled = lazy(() => import('./pages/PaymentCanceled'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -377,8 +378,10 @@ const AppContent = () => {
               <Route path="/privacidad" element={<PrivacyPolicy />} />
 
               {/* Booking Routes */}
-              <Route path="/booking/:lawyerId" element={<BookingPage />} />
+              <Route path="/booking/failure" element={<PaymentFailure />} />
+              <Route path="/booking/pending" element={<PaymentPending />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
+              <Route path="/booking/:lawyerId" element={<BookingPage />} />
               <Route path="/checkout/:bookingId" element={<CheckoutResume />} />
 
 

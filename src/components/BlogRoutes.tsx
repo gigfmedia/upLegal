@@ -68,6 +68,7 @@ const AcosoLaboralArticle = lazy(() => import('../pages/blog/acoso-laboral-chile
 const LeyKarinArticle = lazy(() => import('../pages/blog/ley-karin-chile-2026'));
 const CartaDespidoArticle = lazy(() => import('../pages/blog/carta-despido-chile-2026'));
 const InspeccionTrabajoArticle = lazy(() => import('../pages/blog/inspeccion-del-trabajo-chile-2026'));
+const DemandaLaboralArticle = lazy(() => import('../pages/blog/demanda-laboral-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
 
 
@@ -146,6 +147,7 @@ export const BlogRoutes = () => (
       <Route path="ley-karin-chile-2026" element={<LeyKarinArticle />} />
       <Route path="carta-de-despido-chile-2026" element={<CartaDespidoArticle />} />
       <Route path="inspeccion-del-trabajo-chile-2026" element={<InspeccionTrabajoArticle />} />
+      <Route path="demanda-laboral-chile-2026" element={<DemandaLaboralArticle />} />
       {/* <Route path="ley-del-consumidor-chile-2026" element={<LeyConsumidorArticle />} /> */}
 
     </Routes>

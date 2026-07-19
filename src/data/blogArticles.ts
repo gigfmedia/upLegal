@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "demanda-laboral-chile-2026",
+    title: "Demanda laboral en Chile 2026: cuándo conviene demandar, plazos, costos y cómo funciona el juicio",
+    excerpt: "Conoce cuándo conviene presentar una demanda laboral en Chile, cuáles son los plazos, qué pruebas sirven, cuánto demora un juicio y qué hacer para proteger tus derechos frente al empleador.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "17 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/demanda-laboral-chile-2026.png"
+  },
+  {
     id: "inspeccion-del-trabajo-chile-2026",
     title: "Inspección del Trabajo en Chile 2026: cuándo denunciar, cómo hacer un reclamo y qué puede hacer por ti",
     excerpt: "Conoce cuándo puedes denunciar ante la Inspección del Trabajo, cómo presentar un reclamo, qué puede resolver este organismo, cuáles son sus facultades y cuándo conviene acudir a un abogado laboral.",
