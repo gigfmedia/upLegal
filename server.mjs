@@ -39,6 +39,11 @@ if (!supabaseUrl) {
 
 if (!serviceRoleKey) {
   console.error('❌ SUPABASE_SERVICE_ROLE_KEY (o SERVICE_ROLE_KEY) is required but not set.');
+  console.error('   Available env vars (names only):',
+    Object.keys(process.env)
+      .filter(k => k.includes('SERVICE_ROLE') || k.includes('SUPABASE'))
+      .join(', ') || '(none found with those keywords)'
+  );
   process.exit(1);
 }
 
