@@ -17,7 +17,6 @@ export interface AppointmentCheckoutData {
   scheduled_time: string;
   duration: number;
   price: number;
-  lawyerFee?: number;
 }
 
 export interface ServiceCheckoutData {
@@ -207,7 +206,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Error al crear la reserva');
+        throw new Error(data.message || data.error || 'Error al crear la reserva');
       }
 
       window.gtag?.('event', 'lead_created', {
@@ -245,6 +244,19 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             quantity: 1,
           }],
         });
+
+        // Save booking context so PaymentFailure can redirect back to pre-filled form
+        const nameSlug = checkoutData.lawyer_name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        const bookingUrl = checkoutData.type === 'appointment'
+          ? `/booking/${nameSlug}-${checkoutData.lawyer_id}?date=${checkoutData.scheduled_date}&time=${checkoutData.scheduled_time}&duration=${checkoutData.duration}`
+          : `/abogado/${nameSlug}-${checkoutData.lawyer_id}`;
+        sessionStorage.setItem('mp_booking_redirect', bookingUrl);
+        sessionStorage.setItem('mp_booking_price', String(checkoutData.price));
 
         window.location.href = data.payment_link;
       } else {
@@ -369,12 +381,6 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
                   <p>• Fecha: {checkoutData.scheduled_date}</p>
                   <p>• Hora: {checkoutData.scheduled_time}</p>
                   <p>• Duración: {checkoutData.duration} minutos</p>
-                  {checkoutData.lawyerFee ? (
-                    <>
-                      <p>• Honorarios abogado: ${checkoutData.lawyerFee.toLocaleString('es-CL')}</p>
-                      <p>• Tarifa de servicio (10%): ${(checkoutData.price - checkoutData.lawyerFee).toLocaleString('es-CL')}</p>
-                    </>
-                  ) : null}
                   <p>• Total: ${checkoutData.price.toLocaleString('es-CL')}</p>
                 </>
               )}

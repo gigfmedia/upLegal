@@ -529,7 +529,7 @@ export default function BookingPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la reserva');
+        throw new Error(data.message || data.error || 'Error al crear la reserva');
       }
 
       // lead_created: Se dispara SOLO después de que la reserva fue creada exitosamente en el servidor.
@@ -568,6 +568,17 @@ export default function BookingPage() {
             quantity: 1
           }]
         });
+
+        // Save booking context so PaymentFailure can redirect back to pre-filled form
+        const fullName = `${lawyer.first_name} ${lawyer.last_name}`;
+        const nameSlug = fullName
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        sessionStorage.setItem('mp_booking_redirect', `/booking/${nameSlug}-${lawyer.user_id}?date=${format(selectedDate, 'yyyy-MM-dd')}&time=${selectedTime}&duration=${duration}`);
+        sessionStorage.setItem('mp_booking_price', String(totalPrice));
 
         window.location.href = data.payment_link;
       } else {
@@ -1047,14 +1058,6 @@ export default function BookingPage() {
                       <span className="text-gray-600">Duración:</span>
                       <span className="font-medium">{duration} minutos</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Honorarios abogado:</span>
-                      <span className="font-medium">${calculateLawyerFee().toLocaleString('es-CL')}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Tarifa de servicio (10%):</span>
-                      <span className="font-medium">${(totalPrice - calculateLawyerFee()).toLocaleString('es-CL')}</span>
-                    </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                       <span>Total a pagar:</span>
                       <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
@@ -1128,7 +1131,6 @@ export default function BookingPage() {
               scheduled_time: selectedTime,
               duration,
               price: totalPrice,
-              lawyerFee: calculateLawyerFee(),
             }}
           />
         )}
