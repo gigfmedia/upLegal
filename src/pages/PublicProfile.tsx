@@ -198,17 +198,18 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { toast } = useToast();
 
   // Handle booking a service
-  const handleBookService = useCallback(async (service: ServiceType) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleBookService = useCallback(async (_service: ServiceType) => {
     if (!currentUser) {
       setAuthMode('login');
       setIsAuthModalOpen(true);
       return;
     }
 
-    // Implement booking logic here
+    // Legacy — booking is handled by ServicesSection + PreCheckoutModal flow
     toast({
       title: 'Servicio reservado',
-      description: `Has reservado el servicio: ${service.title}`,
+      description: `Has reservado el servicio: ${_service.title}`,
     });
   }, [currentUser, toast, setAuthMode, setIsAuthModalOpen]);
 
@@ -1206,22 +1207,13 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id && lawyer) {
-                              // Helper to generate slug
-                              const createSlug = (name: string) => {
-                                return name
-                                  .toLowerCase()
-                                  .normalize('NFD')
-                                  .replace(/[\u0300-\u036f]/g, '')
-                                  .replace(/[^a-z0-9]+/g, '-')
-                                  .replace(/(^-|-$)/g, '');
-                              };
-
                               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
                               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
                               navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
                             }
                           }}
                           disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
+                          title={!lawyer?.hourly_rate_clp ? 'El abogado aún no ha configurado su tarifa' : ''}
                         >
                           <Calendar className="h-4 w-4 mr-2" />
                           Agenda consulta
@@ -1241,6 +1233,11 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                       {currentUser?.id === lawyer?.user_id && (
                         <p className="text-xs text-gray-500 text-center mt-1">
                           No puedes contactar ni agendar contigo mismo
+                        </p>
+                      )}
+                      {!lawyer?.hourly_rate_clp && currentUser?.id !== lawyer?.user_id && (
+                        <p className="text-xs text-gray-500 text-center mt-1">
+                          El abogado aún no ha configurado su tarifa
                         </p>
                       )}
                       {/* <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small> */}

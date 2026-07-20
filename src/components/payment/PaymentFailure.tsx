@@ -78,7 +78,7 @@ export function PaymentFailure({
 
         <div className="space-y-2 pt-4">
           {onRetry && (
-            <Button className="w-full" onClick={onRetry} disabled={isRetrying}>
+            <Button className="w-full bg-gray-900 hover:bg-green-900" onClick={onRetry} disabled={isRetrying}>
               {isRetrying ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -102,7 +102,10 @@ export function PaymentFailure({
         </div>
 
         <p className="text-xs text-center text-muted-foreground">
-          Si el problema persiste, por favor contacta a nuestro soporte.
+          Si el problema persiste, por favor{' '}
+          <a href="mailto:soporte@legalup.cl" className="text-blue-600 hover:underline">
+            contacta a nuestro soporte
+          </a>.
         </p>
       </CardContent>
     </Card>

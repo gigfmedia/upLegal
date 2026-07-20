@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, Video, Check, Clock, ExternalLink, X, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
+import { Check, Clock, ExternalLink, X, ChevronDown, Calendar as CalendarIcon } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ValidatedInput } from "@/components/ValidatedInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1250,55 +1250,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
               </>
             )}
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Método de contacto *</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <input
-                      type="radio"
-                      id="videollamada"
-                      name="contactMethod"
-                      value="videollamada"
-                      checked={formData.contactMethod === 'videollamada'}
-                      onChange={() => setFormData({ ...formData, contactMethod: 'videollamada' })}
-                      className="hidden peer"
-                    />
-                    <label
-                      htmlFor="videollamada"
-                      className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${formData.contactMethod === 'videollamada'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-300 hover:bg-gray-50 text-gray-600'
-                        }`}
-                    >
-                      <Video className="h-6 w-6 mb-2 text-gray-700" />
-                      <span className="text-sm font-medium">Videollamada</span>
-                    </label>
-                  </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="llamada"
-                      name="contactMethod"
-                      value="llamada"
-                      checked={formData.contactMethod === 'llamada'}
-                      onChange={() => setFormData({ ...formData, contactMethod: 'llamada' })}
-                      className="hidden peer"
-                    />
-                    <label
-                      htmlFor="llamada"
-                      className={`flex flex-col items-center justify-center p-4 border rounded-lg cursor-pointer transition-colors ${formData.contactMethod === 'llamada'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:bg-gray-50'
-                        }`}
-                    >
-                      <Phone className="h-6 w-6 mb-2 text-gray-700" />
-                      <span className="text-sm font-medium">Llamada</span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Contact method defaults to videollamada — no selector needed */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <CalendarField
@@ -1504,7 +1456,7 @@ export function ScheduleModal({ isOpen, onClose, lawyerName, hourlyRate, lawyerI
 
                 <div className="flex justify-between items-center font-semibold text-lg">
                   <span className="text-base font-bold">Total a pagar</span>
-                  <span className="text-xl font-bold text-blue-600">{formatCurrency(clientAmount)}</span>
+                  <span className="text-xl font-bold text-green-900">{formatCurrency(clientAmount)}</span>
                 </div>
               </div>
 

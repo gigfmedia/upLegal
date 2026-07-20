@@ -5,11 +5,13 @@ import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import Header from '@/components/Header';
 import { logPaymentEvent } from '@/utils/paymentLogger';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PaymentFailure() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isRetrying, setIsRetrying] = useState(false);
 
   const appointmentId = searchParams.get('appointmentId') || searchParams.get('booking_id');
@@ -50,8 +52,12 @@ export default function PaymentFailure() {
     }
 
     if (!user) {
-      console.error('User not authenticated');
-      navigate('/login');
+      toast({
+        title: 'Inicia sesión para reintentar',
+        description: 'Debes iniciar sesión para reintentar el pago.',
+        variant: 'destructive',
+      });
+      navigate(`/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
       return;
     }
 
@@ -131,7 +137,11 @@ export default function PaymentFailure() {
 
       // Si no se encuentra en ninguna tabla, redirigir con mensaje
       console.error('Appointment/Consultation not found');
-      alert('No se pudo encontrar la cita. Por favor, intenta nuevamente desde el inicio.');
+      toast({
+        title: 'Cita no encontrada',
+        description: 'No se pudo encontrar la cita. Por favor, intenta nuevamente desde el inicio.',
+        variant: 'destructive',
+      });
       navigate('/');
     } catch (error) {
       console.error('Error retrying payment:', {
@@ -152,7 +162,11 @@ export default function PaymentFailure() {
         errorMessage = 'No se pudo generar el enlace de pago. Por favor, inténtalo de nuevo más tarde.';
       }
       
-      alert(errorMessage);
+      toast({
+        title: 'Error al reintentar',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setIsRetrying(false);
     }
@@ -169,7 +183,11 @@ export default function PaymentFailure() {
 
       if (error || !quoteRequest) {
         console.error('Quote request not found:', error);
-        alert('No se encontró la solicitud de presupuesto.');
+        toast({
+          title: 'Solicitud no encontrada',
+          description: 'No se encontró la solicitud de presupuesto.',
+          variant: 'destructive',
+        });
         navigate('/');
         return;
       }
@@ -177,12 +195,20 @@ export default function PaymentFailure() {
       if (quoteRequest.payment_link) {
         window.location.href = quoteRequest.payment_link;
       } else {
-        alert('No hay un enlace de pago disponible. Contacta al abogado para recibir un nuevo presupuesto.');
+        toast({
+          title: 'Sin enlace de pago',
+          description: 'No hay un enlace de pago disponible. Contacta al abogado para recibir un nuevo presupuesto.',
+          variant: 'destructive',
+        });
         navigate('/');
       }
     } catch (error) {
       console.error('Error retrying quote payment:', error);
-      alert('Ocurrió un error al reintentar el pago.');
+      toast({
+        title: 'Error al reintentar',
+        description: 'Ocurrió un error al reintentar el pago.',
+        variant: 'destructive',
+      });
       navigate('/');
     } finally {
       setIsRetrying(false);
@@ -192,7 +218,7 @@ export default function PaymentFailure() {
   const createPaymentForAppointment = async (appointment: any) => {
     try {
 
-      const API_BASE_URL = 'https://legalup.cl';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
       const lawyerName = appointment.profiles?.display_name || 'Abogado';
@@ -257,7 +283,7 @@ export default function PaymentFailure() {
   const createPaymentForConsultation = async (consultation: any) => {
     try {
 
-      const API_BASE_URL = 'https://legalup.cl';
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://legalup.cl';
       const FUNCTION_URL = `${API_BASE_URL}/.netlify/functions/create-payment`;
 
       const lawyerName = consultation.profiles?.display_name || 'Abogado';

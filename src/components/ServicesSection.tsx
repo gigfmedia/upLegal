@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Clock, Calendar, MessageSquare, FileText, Building2, Scale, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +40,7 @@ export function ServicesSection({
 }: ServicesSectionProps) {
   const [checkoutData, setCheckoutData] = useState<ServiceCheckoutData | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const services = useMemo(() => {
@@ -58,10 +60,7 @@ export function ServicesSection({
     }).format(price);
 
   const getDisplayPrice = (service: Service) => {
-    if (isInitialConsultationService(service.title)) {
-      return roundToThousands(applyClientSurcharge(service.price_clp));
-    }
-    return applyClientSurcharge(service.price_clp);
+    return roundToThousands(applyClientSurcharge(service.price_clp));
   };
 
   const handleServiceSelect = (service: Service) => {
@@ -76,7 +75,7 @@ export function ServicesSection({
         });
         return;
       }
-      window.location.assign(`/booking/${lawyerIdProp}`);
+      navigate(`/booking/${lawyerIdProp}`);
       return;
     }
 

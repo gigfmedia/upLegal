@@ -692,17 +692,11 @@ export default function BookingPage() {
     });
 
     if (isAuthenticated && user) {
-      if (!user.email) {
-        toast({
-          title: 'Cuenta sin email',
-          description: 'Tu cuenta no tiene un email válido. Completa tus datos para continuar con el pago.',
-          variant: 'destructive'
-        });
+      if (user.email) {
+        await handleAuthenticatedCheckout(getAuthenticatedUserName(), user.email);
+      } else {
         setShowPreCheckout(true);
-        return;
       }
-
-      await handleAuthenticatedCheckout(getAuthenticatedUserName(), user.email);
     } else {
       setShowPreCheckout(true);
     }
@@ -1054,8 +1048,12 @@ export default function BookingPage() {
                       <span className="font-medium">{duration} minutos</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Precio abogado:</span>
-                      <span className="font-medium">${totalPrice.toLocaleString('es-CL')}</span>
+                      <span className="text-gray-600">Honorarios abogado:</span>
+                      <span className="font-medium">${calculateLawyerFee().toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Tarifa de servicio (10%):</span>
+                      <span className="font-medium">${(totalPrice - calculateLawyerFee()).toLocaleString('es-CL')}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
                       <span>Total a pagar:</span>
@@ -1130,6 +1128,7 @@ export default function BookingPage() {
               scheduled_time: selectedTime,
               duration,
               price: totalPrice,
+              lawyerFee: calculateLawyerFee(),
             }}
           />
         )}

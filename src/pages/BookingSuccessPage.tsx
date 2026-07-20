@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Calendar, Clock, User, Mail, ArrowRight, FileText } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, User, Mail, ArrowRight, FileText, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -115,7 +115,23 @@ export default function BookingSuccessPage() {
   }
 
   if (!booking) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error al cargar detalles</h1>
+          <p className="text-gray-600 mb-6">
+            No pudimos cargar los detalles de tu reserva. Contacta a{' '}
+            <a href="mailto:soporte@legalup.cl" className="text-blue-600 hover:underline">soporte@legalup.cl</a>
+          </p>
+          <Button onClick={() => navigate('/')} className="bg-gray-900 hover:bg-green-900">
+            Volver al inicio
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const isService = booking.booking_type === 'service';
@@ -244,10 +260,54 @@ export default function BookingSuccessPage() {
           </CardContent>
         </Card>
 
+        {!isService && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-3">Próximos pasos</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
+                  <span className="text-xs font-bold text-green-700">1</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Pago confirmado</p>
+                  <p className="text-xs text-gray-500">Recibirás un comprobante por email</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <span className="text-xs font-bold text-blue-700">2</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Enlace de videollamada</p>
+                  <p className="text-xs text-gray-500">Te llegará el enlace de Google Meet antes de la consulta</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <span className="text-xs font-bold text-blue-700">3</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Día de la consulta</p>
+                  <p className="text-xs text-gray-500">Conéctate 5 min antes desde cualquier dispositivo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-blue-800 text-center">
             <strong>Revisa tu correo</strong> para confirmar tu cuenta y acceder a todas las funciones de la plataforma
           </p>
+          <div className="mt-3 text-center">
+            <Button
+              onClick={() => navigate('/login')}
+              variant="outline"
+              className="text-sm"
+            >
+              Crear cuenta
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-3">
