@@ -150,7 +150,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Este contrato regula aspectos clave como:</p>
 
-
             <div className="space-y-4 mb-8">
               {[
                 "Uso del inmueble",
@@ -174,8 +173,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Tienes conflictos con tu arrendador o arrendatario?" message="Un abogado especializado puede revisar el contrato, identificar derechos vulnerados y definir la mejor estrategia legal." />
-
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Derechos del arrendatario en Chile: qué puedes exigir legalmente</h2>
@@ -269,8 +267,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Derechos del arrendador en Chile</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
@@ -285,9 +281,10 @@ const BlogArticle = () => {
               {["Exigir el pago retroactivo", "Iniciar acciones legales", "Solicitar el término y desalojo"].map((item, i) => (
                 <div key={i} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                   {item}
-                </div>
-              ))}
+                </div>              ))}
             </div>
+
+            
 
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Nota para el arrendador</p>
@@ -314,6 +311,8 @@ const BlogArticle = () => {
               Si existen cuentas de luz, agua o gastos comunes pendientes al momento de la entrega, el dueño tiene derecho legal a utilizar el mes de garantía para saldar esas deudas antes de devolver el saldo restante. Los descuentos deben estar siempre respaldados por facturas o presupuestos reales.
             </p>
           </div>
+<InArticleCTA category="Derecho Civil" title="¿Tienes conflictos con tu arrendador o arrendatario?" message="Un abogado especializado puede revisar el contrato, identificar derechos vulnerados y definir la mejor estrategia legal." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Contrato de arriendo en Chile: qué debe incluir y por qué es clave</h2>
@@ -532,8 +531,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Subida de arriendo: ¿cuándo es legal y cómo se aplica el IPC?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -633,8 +630,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Deudas de arriendo y DICOM: ¿te pueden boletear?</h2>
@@ -741,6 +736,13 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <InArticleCTA
+            title="¿Tu caso civil necesita asesoría?"
+            message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho Civil"
+          />
+
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-8 text-gray-900">Artículos relacionados que te pueden ayudar</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -801,11 +803,7 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          </div>          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
               No todos los conflictos de arriendo requieren abogado, pero algunos escenarios ameritan asesoría urgente:
@@ -822,16 +820,8 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás en medio de un conflicto de arriendo sin saber bien cuáles son tus derechos?</h3>
-              <p className="text-white mb-6">Los arrendatarios y arrendadores tienen derechos claros en Chile, pero aplicarlos a tu caso concreto requiere analizar el contrato, las pruebas y el comportamiento de las partes. Un abogado inmobiliario puede orientarte y evitar que el conflicto escale a un juicio innecesario.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
+            
           </div>
-
-
 
           <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -858,8 +848,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

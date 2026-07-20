@@ -145,7 +145,8 @@ const BlogArticle = () => {
               Para que un desalojo sea legal en Chile, el dueño de la propiedad debe seguir ciertos pasos establecidos por la ley.
             </p>
 
-            <InArticleCTA category="Arrendamiento"  title="¿Te quieren desalojar de tu vivienda?" message="Un abogado inmobiliario puede revisar la notificación, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+          <RelatedLawyers category="Arrendamiento" />
+
 
             <div className="space-y-6">
               <div>
@@ -194,6 +195,9 @@ const BlogArticle = () => {
               </p>
             </div>
 
+            
+
+
             <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
               Cambiar cerraduras, cortar servicios básicos o sacar pertenencias a la calle son conductas que pueden ser denunciadas.
             </p>
@@ -213,6 +217,8 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+<InArticleCTA category="Arrendamiento"  title="¿Te quieren desalojar de tu vivienda?" message="Un abogado inmobiliario puede revisar la notificación, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Qué hacer si intentan desalojarte ilegalmente</h2>
@@ -237,8 +243,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cuándo SÍ pueden desalojarte legalmente</h2>
@@ -351,15 +355,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Improved CTA */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te están presionando para que salgas de la propiedad?</h3>
-              <p className="text-white mb-6">Sin orden judicial no pueden desalojarte. Un abogado puede ayudarte a frenar un desalojo ilegal y proteger tus derechos.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
@@ -372,11 +368,7 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <RelatedLawyers category="Arrendamiento" />
-
-          <div className="mb-12 border-t pt-8">
+          </div>          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -403,8 +395,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

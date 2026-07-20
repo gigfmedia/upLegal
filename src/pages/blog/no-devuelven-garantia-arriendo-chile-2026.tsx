@@ -150,7 +150,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-medium">Su objetivo es cubrir:</p>
 
-
             <div className="space-y-3 mb-6">
               {[
                 "Daños a la propiedad",
@@ -165,8 +164,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil"  title="¿Tu arrendador no te devuelve la garantía?" message="Un abogado especializado puede revisar el contrato, evaluar las deducciones y demandar el reintegro de tu garantía." />
-
+          <RelatedLawyers category="Derecho Civil" />
 
           {/* Cluster link 1 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -268,11 +266,12 @@ const BlogArticle = () => {
                   <div key={i} className="flex items-center gap-3 text-gray-700">
                     <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
                     <span className="text-base">{item}</span>
-                  </div>
-                ))}
+                  </div>                ))}
               </div>
             </div>
           </div>
+
+            <InArticleCTA category="Derecho Civil"  title="¿Tu arrendador no te devuelve la garantía?" message="Un abogado especializado puede revisar el contrato, evaluar las deducciones y demandar el reintegro de tu garantía." />
 
           {/* Cluster link 2 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -285,8 +284,6 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-
-
 
           {/* Qué hacer */}
           <div className="mb-12">
@@ -531,13 +528,7 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿El arrendador retiene tu garantía sin justificación?</h3>
-              <p className="text-white mb-6">Un abogado inmobiliario puede evaluar si la retención es legal y ayudarte a recuperar tu dinero sin necesidad de llegar a juicio.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
+            
           </div>
 
           {/* CTA before Conclusion */}
@@ -560,10 +551,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -601,8 +589,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

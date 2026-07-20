@@ -164,7 +164,6 @@ const BlogArticle = () => {
               En Chile, estas normas buscan proteger los vínculos familiares, especialmente cuando existen hijos o personas en situación de vulnerabilidad.
             </p>
 
-
             <p className="text-gray-600 mb-4">
               El derecho de familia regula aspectos como:
             </p>
@@ -209,7 +208,8 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Tienes un problema de derecho de familia?" message="Un abogado de familia puede analizar tu caso, identificar la vía correcta y proteger tus derechos y los de tu familia." />
+          <RelatedLawyers category="Derecho de Familia" />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">¿Cuáles son los temas más importantes del Derecho de Familia en Chile?</h2>
@@ -459,6 +459,10 @@ const BlogArticle = () => {
                   <div className={`bg-gray-900 p-2 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0`}>
                     {idx + 1}
                   </div>
+
+            
+
+
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">{step.title}</h4>
                     <p className="text-gray-600">{step.desc}</p>
@@ -483,6 +487,8 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Tienes un problema de derecho de familia?" message="Un abogado de familia puede analizar tu caso, identificar la vía correcta y proteger tus derechos y los de tu familia." />
+
 
           <div className="mb-12 bg-gray-50 p-8 rounded-2xl border border-gray-100">
             <h2 className="text-2xl font-bold mb-6">Documentos frecuentes en causas de familia</h2>
@@ -517,10 +523,14 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho de Familia" />
+                              <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -569,8 +579,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}

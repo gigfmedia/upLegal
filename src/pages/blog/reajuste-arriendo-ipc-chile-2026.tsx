@@ -159,10 +159,9 @@ const BlogArticle = () => {
               Cuando un contrato de arriendo incluye una cláusula de reajuste por IPC, significa que el valor mensual se ajusta periódicamente según la inflación acumulada del período. Esto protege al arrendador de que el valor real del arriendo se erosione con el tiempo, y al arrendatario le da certeza de que el aumento no es arbitrario — está anclado a un índice oficial.
             </p>
 
-
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -225,6 +224,10 @@ const BlogArticle = () => {
                   <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="font-bold text-gray-900 text-lg">Anual:</span>
                 </div>
+
+            
+
+
                 <span className="text-gray-700 text-base">La más habitual. El arriendo se reajusta una vez al año según el IPC acumulado de los últimos 12 meses</span>
               </div>
               <div className="flex flex-col gap-2 p-5 bg-gray-50 rounded-xl border border-gray-100 h-full">
@@ -239,6 +242,8 @@ const BlogArticle = () => {
               El contrato debe indicar claramente dos cosas: la periodicidad del reajuste y el período exacto del IPC a usar. Si alguna de estas no está definida, hay margen para interpretación y potencial conflicto.
             </p>
           </div>
+<InArticleCTA category="Derecho Civil" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula el reajuste por IPC paso a paso?</h2>
@@ -613,19 +618,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿El reajuste de tu arriendo está bien calculado?</h3>
-              <p className="text-white mb-6">Un error en la aplicación del IPC puede significar que estás pagando más de lo que corresponde cada mes. Un abogado inmobiliario puede revisar tu contrato y verificar si el aumento es legal.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+                    <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">

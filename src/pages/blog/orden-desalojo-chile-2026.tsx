@@ -156,7 +156,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esta orden:</p>
 
-
             <div className="space-y-3 mb-6">
               {[
                 { text: "No es inmediata", icon: <XCircle className="h-5 w-5 text-red-500" /> },
@@ -187,7 +186,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+          <RelatedLawyers category="Arrendamiento" />
 
 
           <div className="mb-12">
@@ -229,6 +228,10 @@ const BlogArticle = () => {
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
                   <div className="bg-gray-900 p-2 rounded-lg text-white text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
+
+            
+
+
                   <div>
                     <span className="font-bold text-gray-900">{step.title}</span>
                     <p className="text-base text-gray-600 mt-1">{step.desc}</p>
@@ -247,6 +250,8 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+<InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto demora una orden de desalojo?</h2>
@@ -308,8 +313,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Diferencia entre orden de desalojo y lanzamiento</h2>
@@ -534,20 +537,16 @@ const BlogArticle = () => {
           </div>
 
           {/* Improved CTA */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Recibiste una orden de desalojo y no sabes qué hacer?</h3>
-              <p className="text-white mb-6">El tiempo corre en tu contra. Un abogado puede evaluar si quedan opciones para detener o retrasar el lanzamiento.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Arrendamiento" />
+                              <InArticleCTA
+                        title="¿Tienes problemas con un arriendo?"
+                        message="Un abogado especializado puede ayudarte a resolver tu conflicto de arrendamiento antes de que escale."
+                        buttonText="Habla con un abogado ahora"
+                        category="Arrendamiento"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -585,8 +584,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

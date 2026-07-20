@@ -192,12 +192,9 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        title="¿Tienes un problema con tu empleador y no sabes si denunciar o demandar?"
-                        message="Un abogado laboral puede ayudarte a elegir la mejor estrategia antes de que venzan los plazos."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
 
                     {/* CUANDO DENUNCIAR */}
                     <div className="mb-12">
@@ -242,6 +239,14 @@ const BlogArticle = () => {
                         </ul>
                         <p className="text-gray-600 mt-4">Dependiendo del tipo de conflicto, la autoridad podrá realizar una inspección presencial en la empresa o citar a ambas partes para intentar una conciliación.</p>
                     </div>
+
+                        <InArticleCTA
+                                                                                title="¿Tienes un problema con tu empleador y no sabes si denunciar o demandar?"
+                                                                                message="Un abogado laboral puede ayudarte a elegir la mejor estrategia antes de que venzan los plazos."
+                                                                                buttonText="Habla con un abogado ahora"
+                                                                                category="Derecho Laboral"
+                                                                            />
+
 
                     {/* DOCUMENTOS */}
                     <div className="mb-12">
@@ -444,25 +449,15 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Una asesoría temprana permite definir la mejor estrategia antes de que expiren los plazos legales.</p>
+                    <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
+
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿No sabes si tu problema debe resolverse en la Inspección del Trabajo o mediante una demanda?</h3>
-                            <p className="text-white mb-6">Cada conflicto laboral requiere una estrategia distinta. Un abogado laboral puede analizar tus antecedentes, explicarte las alternativas disponibles y ayudarte a proteger tus derechos antes de que venzan los plazos legales.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Hablar con un abogado laboral
-                            </Link>
-                        </div>
-                    </div>
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">

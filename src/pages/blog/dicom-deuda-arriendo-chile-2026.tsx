@@ -150,7 +150,6 @@ const BlogArticle = () => {
               Aparecer en DICOM puede afectar:
             </p>
 
-
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { title: "Acceso a créditos", desc: "Dificultad para obtener préstamos bancarios o refinanciamiento." },
@@ -176,7 +175,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -222,6 +221,10 @@ const BlogArticle = () => {
                   <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0 mt-0.5">
                     {i + 1}
                   </div>
+
+            
+
+
                   <div>
                     <p className="text-lg font-bold text-gray-900 mb-1">{item.title}</p>
                     <p className="text-base text-gray-600">{item.desc}</p>
@@ -241,6 +244,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+<InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Puedo entrar a DICOM por no pago de arriendo?</h2>
@@ -584,22 +589,16 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te amenazaron con reportarte a DICOM por una deuda de arriendo?</h3>
-              <p className="text-white mb-6">No todas las amenazas de DICOM tienen respaldo legal. Un abogado inmobiliario puede evaluar si el reporte es procedente y defender tus derechos antes de que tu historial crediticio se vea afectado.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
-          {/* Conclusion */}
+                              <InArticleCTA
+                        title="¿Tu caso civil necesita asesoría?"
+                        message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Civil"
+                    />
 
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               Tener una deuda de arriendo en Chile no significa automáticamente aparecer en DICOM. Para que eso ocurra, normalmente debe existir una deuda exigible, respaldada legalmente y, en muchos casos, un proceso judicial o documento que permita su cobranza formal.
@@ -624,8 +623,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

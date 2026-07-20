@@ -168,7 +168,6 @@ const BlogArticle = () => {
                             Su finalidad no es únicamente obtener una indemnización económica, sino también restablecer los derechos afectados y reparar las consecuencias de la vulneración.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -182,7 +181,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Laboral" title="¿Vulneraron tus derechos fundamentales en el trabajo?" message="Un abogado laboral puede evaluar si corresponde una tutela laboral y buscar reparación por el daño sufrido." />
+                    <RelatedLawyers category="Derecho Laboral" />
 
 
                     {/* DERECHOS QUE PROTEGE */}
@@ -231,7 +230,13 @@ const BlogArticle = () => {
                                 Dos trabajadores pueden experimentar situaciones aparentemente similares y obtener resultados completamente distintos en tribunales. Lo que determina la viabilidad de una acción de tutela no es solo lo ocurrido, sino también la capacidad de demostrar la vulneración mediante documentos, testigos, comunicaciones internas y otros antecedentes.
                             </p>
                         </div>
+
+                        
+
+
                     </div>
+<InArticleCTA category="Derecho Laboral" title="¿Vulneraron tus derechos fundamentales en el trabajo?" message="Un abogado laboral puede evaluar si corresponde una tutela laboral y buscar reparación por el daño sufrido." />
+
 
                     {/* DIFERENCIA CON DESPIDO INJUSTIFICADO */}
                     <div className="mb-12">
@@ -320,7 +325,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* PLAZOS */}
                     <div className="mb-12">
@@ -497,25 +501,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En estas situaciones resulta especialmente importante revisar la estrategia antes de tomar decisiones que puedan afectar posteriormente una eventual demanda.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Crees que tus derechos fundamentales fueron vulnerados?</h3>
-                            <p className="text-white mb-6">Si ya sufriste un despido, represalias, discriminación o acoso laboral, el momento más importante para revisar tu caso suele ser antes de firmar documentos, aceptar acuerdos o dejar transcurrir los plazos legales. Una evaluación temprana permite identificar si corresponde una acción de tutela laboral u otra vía de protección de tus derechos.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-                            >
-                                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -545,8 +538,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

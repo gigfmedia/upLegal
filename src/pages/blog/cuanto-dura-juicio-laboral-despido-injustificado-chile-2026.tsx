@@ -127,7 +127,6 @@ const BlogArticle = () => {
                 <h3 className="font-bold text-green-800 text-lg mb-2">Conciliar en Inspección del Trabajo</h3>
                 <p className="text-green-700">Si hay disposición a negociar, puedes resolver en 2 a 6 semanas sin costo judicial. Además, el plazo para demandar se extiende hasta 90 días hábiles si no hay acuerdo.</p>
 
-
               </div>
               <div className="bg-red-50 p-5 rounded-xl">
                 <h3 className="font-bold text-red-800 text-lg mb-2">Demandar sin intentar conciliación</h3>
@@ -136,7 +135,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Estás evaluando demandar por despido injustificado?" message="Un abogado laboral puede estimar los plazos reales de tu juicio y definir la estrategia más conveniente para tu caso." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           <div className="mb-12">
@@ -188,7 +187,13 @@ const BlogArticle = () => {
                 ))}
               </ul>
             </div>
+
+            
+
+
           </div>
+<InArticleCTA category="Derecho Laboral" title="¿Estás evaluando demandar por despido injustificado?" message="Un abogado laboral puede estimar los plazos reales de tu juicio y definir la estrategia más conveniente para tu caso." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Tu empleador está dispuesto a negociar o se niega al diálogo?</h2>
@@ -245,7 +250,6 @@ const BlogArticle = () => {
               La audiencia preparatoria generalmente dura entre 30 minutos y 2 horas dependiendo de la complejidad del caso. La fecha de la audiencia de juicio se fija en ese mismo momento, normalmente para <strong>4 a 8 semanas después</strong>.
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed font-bold">Si las partes llegan a acuerdo en esta etapa, el caso termina aquí.</p>
-
 
           </div>
 
@@ -431,8 +435,6 @@ const BlogArticle = () => {
             </p>
           </div>
 
-
-
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Relacionado</p>
             <Link
@@ -463,21 +465,15 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA - cuándo consultar */}
-          <div className="mb-12 bg-green-900 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Sabes cuánto tiempo podría durar tu juicio laboral?</h3>
-            <p className="text-white mb-6">Un abogado laboral puede analizar tu caso y darte una estimación realista de plazos y resultados según tu situación específica.</p>
-            <Link
-              to="/abogados-laborales"
-              className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-            >
-              Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+                              <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -504,8 +500,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

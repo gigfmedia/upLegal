@@ -185,7 +185,8 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                        <InArticleCTA category="Derecho de Familia" title="¿Tu cónyuge no quiere divorciarse y tú sí?" message="Un abogado de familia puede evaluar si cumples los requisitos, preparar la demanda y guiar el proceso de divorcio unilateral." />
+                    <RelatedLawyers category="Derecho de Familia" />
+
 
                     {/* QUE ES */}
                     <div className="mb-12">
@@ -242,8 +243,14 @@ const BlogArticle = () => {
                                 ))}
                             </ul>
                         </div>
+
+                        
+
+
                         <p className="text-gray-600 mt-4">Acreditar el cese de convivencia por tres años no siempre es sencillo. El tribunal exige pruebas robustas y no se conforma con la mera declaración del demandante. Si el otro cónyuge niega la separación o sostiene una fecha distinta, el juez puede requerir prueba testimonial, documental e incluso informes sociales. Por eso, contar con un acta de cese de convivencia ante el Registro Civil o una escritura pública suele simplificar significativamente la acreditación de este requisito.</p>
                     </div>
+<InArticleCTA category="Derecho de Familia" title="¿Tu cónyuge no quiere divorciarse y tú sí?" message="Un abogado de familia puede evaluar si cumples los requisitos, preparar la demanda y guiar el proceso de divorcio unilateral." />
+
 
                     {/* PLAZO LEGAL */}
                     <div className="mb-12">
@@ -493,11 +500,14 @@ const BlogArticle = () => {
                         buttonText="Comparar abogados especializados"
                     />
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -535,8 +545,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

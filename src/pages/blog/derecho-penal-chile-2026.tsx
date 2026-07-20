@@ -178,7 +178,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Penal" title="¿Te investigan o formalizaron por un delito?" message="Un abogado penal puede revisar los antecedentes de la Fiscalía, cuestionar pruebas y definir tu estrategia de defensa." />
+          <RelatedLawyers category="Derecho Penal" />
 
 
           <div className="mb-12">
@@ -221,6 +221,10 @@ const BlogArticle = () => {
                   <div className="bg-green-900 p-2 rounded-lg text-green-600 font-bold text-base w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
+
+            
+
+
                   <div>
                     <span className="font-bold text-gray-900">{item.title}</span>
                     <p className="text-base text-gray-600 mt-1">{item.desc}</p>
@@ -229,6 +233,8 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+<InArticleCTA category="Derecho Penal" title="¿Te investigan o formalizaron por un delito?" message="Un abogado penal puede revisar los antecedentes de la Fiscalía, cuestionar pruebas y definir tu estrategia de defensa." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si eres víctima de un delito?</h2>
@@ -398,11 +404,7 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
-          </div>
-
-          <RelatedLawyers category="Derecho Penal" />
-
-          <div className="mb-12 border-t pt-8">
+          </div>          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -439,8 +441,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

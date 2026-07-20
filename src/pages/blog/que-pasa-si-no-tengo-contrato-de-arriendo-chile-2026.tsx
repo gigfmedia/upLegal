@@ -161,7 +161,6 @@ const BlogArticle = () => {
               En Chile, un arriendo no necesita estar por escrito para ser válido. Esto significa que un acuerdo verbal entre arrendador y arrendatario sí tiene valor legal. Este tipo de acuerdo se conoce como:
             </p>
 
-
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">
               <h3 className="text-xl font-bold text-gray-900 mb-2">Contrato verbal o tácito</h3>
               <p className="text-gray-700 leading-relaxed font-medium">Aunque legalmente tiene validez, recuerda que en caso de conflicto es mucho más difícil de probar ante un tribunal.</p>
@@ -203,7 +202,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Arrendamiento"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
+          <RelatedLawyers category="Arrendamiento" />
 
 
           <div className="mb-12">
@@ -237,6 +236,9 @@ const BlogArticle = () => {
                   <p className="text-gray-900 font-bold italic">Todo esto constituye una acción ilegal y puede ser denunciado.</p>
                 </div>
               </div>
+
+            
+
 
               <div>
                 <h3 className="text-xl font-bold mb-3 text-gray-900">2. Derecho a un proceso judicial</h3>
@@ -276,7 +278,6 @@ const BlogArticle = () => {
               </div>
             </div>
 
-
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
                 <h3 className="font-bold text-green-800 text-lg mb-2">Desalojo judicial</h3>
@@ -288,8 +289,9 @@ const BlogArticle = () => {
               </div>
             </div>
 
-
           </div>
+<InArticleCTA category="Arrendamiento"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puede hacer el arrendador si no hay contrato?</h2>
@@ -530,19 +532,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás arrendando sin contrato y tienes dudas sobre tus derechos?</h3>
-              <p className="text-white mb-6">Sin contrato escrito, tus derechos dependen de lo que puedas probar. Un abogado inmobiliario puede evaluar tu situación y decirte exactamente cómo proceder antes de que surja un conflicto.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
-
-          <RelatedLawyers category="Arrendamiento" />
-
-          <div className="mb-12 border-t pt-8">
+                    <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed text-base">
@@ -575,8 +565,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

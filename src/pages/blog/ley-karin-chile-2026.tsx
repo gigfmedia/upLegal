@@ -174,7 +174,6 @@ const BlogArticle = () => {
                             Su objetivo principal es prevenir: el acoso laboral, el acoso sexual y la violencia ejercida en el contexto laboral. Además, establece obligaciones concretas para los empleadores respecto de la recepción de denuncias, investigación de los hechos y adopción de medidas preventivas.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -188,7 +187,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral, acoso sexual o violencia en el trabajo?" message="Un abogado laboral puede evaluar tu caso bajo la Ley Karin, preparar la denuncia y buscar medidas de protección." />
+                    <RelatedLawyers category="Derecho Laboral" />
 
 
                     {/* CONDUCTAS QUE PROTEGE */}
@@ -225,6 +224,9 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600">Cada organización debe informar claramente cómo presentar estas denuncias y cuál será el procedimiento que seguirá posteriormente.</p>
                     </div>
+
+                        <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral, acoso sexual o violencia en el trabajo?" message="Un abogado laboral puede evaluar tu caso bajo la Ley Karin, preparar la denuncia y buscar medidas de protección." />
+
 
                     {/* DONDE SE PRESENTA */}
                     <div className="mb-12">
@@ -301,7 +303,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* MEDIDAS DE PROTECCION */}
                     <div className="mb-12">
@@ -415,25 +416,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En todos estos casos, conocer la regla general de la Ley Karin no basta para saber cuál es la mejor decisión. La estrategia dependerá de los antecedentes específicos, las pruebas disponibles y la etapa en que se encuentre el procedimiento.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Necesitas orientación sobre un caso de Ley Karin?</h3>
-                            <p className="text-white mb-6">Si ya presentaste una denuncia, recibiste una citación, consideras que la investigación no está siendo imparcial o estás evaluando demandar a tu empleador, obtener asesoría jurídica antes de tomar decisiones importantes puede marcar una diferencia relevante. Un abogado laboral puede revisar los antecedentes específicos de tu caso, explicar las alternativas disponibles y ayudarte a definir la estrategia más adecuada desde el inicio.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Consulta con un abogado laboral
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -463,8 +453,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

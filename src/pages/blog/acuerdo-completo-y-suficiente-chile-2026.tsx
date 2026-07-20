@@ -196,7 +196,6 @@ const BlogArticle = () => {
                             Su objetivo principal es evitar conflictos futuros y garantizar que los derechos de ambos cónyuges y de los hijos queden adecuadamente protegidos.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -206,7 +205,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Desde una perspectiva jurídica, el ACS no es un simple contrato entre privados: una vez aprobado por el tribunal, adquiere fuerza de cosa juzgada y solo puede modificarse mediante un nuevo procedimiento judicial si cambian las circunstancias que lo fundamentaron. Esto significa que los términos acordados no pueden alterarse unilateralmente ni por acuerdo extrajudicial posterior, lo que exige especial cuidado al negociar cada cláusula.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia" title="¿Necesitas redactar o revisar un Acuerdo Completo y Suficiente?" message="Un abogado de familia puede diseñar el ACS, proteger tus intereses y asegurar que cumpla todos los requisitos legales para tu divorcio." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* CUANDO SE EXIGE */}
@@ -241,6 +240,10 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-green-800 text-lg mb-2">Completo</h3>
                                 <p className="text-green-700">Debe abordar todas las materias relevantes derivadas del divorcio. No basta con regular solamente la pensión de alimentos o únicamente las visitas. El acuerdo debe resolver integralmente la situación familiar.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-blue-50 p-5 rounded-xl">
                                 <h3 className="font-bold text-blue-800 text-lg mb-2">Suficiente</h3>
                                 <p className="text-blue-700">Las soluciones acordadas deben proteger adecuadamente los derechos de todos los involucrados, especialmente niños, cónyuge económicamente vulnerable, obligaciones alimenticias y relación directa y regular.</p>
@@ -252,6 +255,8 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">El tribunal no se limita a verificar que el ACS contenga todas las materias: evalúa si cada una de ellas está resuelta de manera que proteja adecuadamente los derechos de los hijos y del cónyuge más vulnerable. Esto implica que un acuerdo que formalmente cubre alimentos, visitas y cuidado personal puede ser considerado insuficiente si, por ejemplo, el monto de pensión es irrisorio o el régimen de visitas es tan ambiguo que genera conflictos futuros.</p>
                     </div>
+<InArticleCTA category="Derecho de Familia" title="¿Necesitas redactar o revisar un Acuerdo Completo y Suficiente?" message="Un abogado de familia puede diseñar el ACS, proteger tus intereses y asegurar que cumpla todos los requisitos legales para tu divorcio." />
+
 
                     {/* QUE DEBE INCLUIR */}
                     <div className="mb-12">
@@ -366,8 +371,6 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-
-
                     {/* QUE REVISA EL JUEZ */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué revisa exactamente el juez antes de aprobar el ACS?</h2>
@@ -452,24 +455,16 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA FINAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Tienes un borrador de acuerdo y no sabes si cumple los requisitos?</h3>
-                            <p className="text-white mb-6">Un ACS mal redactado puede ser rechazado por el tribunal, retrasando tu divorcio y generando costos adicionales. Un abogado de familia puede revisar el borrador, corregir las cláusulas deficientes y asegurar que el acuerdo sea aprobado a la primera.</p>
-                            <Link
-                                to="/abogado-divorcio-unilateral"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados especializados en familia
-                            </Link>
-                        </div>
-                    </div>
+                    
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -510,8 +505,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

@@ -208,7 +208,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de lesiones leves o estás siendo investigado?" message="Un abogado penal puede revisar las pruebas, evaluar la gravedad imputada y definir la mejor estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
 
                     {/* CUANDO ES DELITO */}
                     <div className="mb-12">
@@ -245,8 +245,7 @@ const BlogArticle = () => {
                                 <div key={i} className="bg-gray-50 p-4 rounded-xl">
                                     <h3 className="font-bold text-gray-900">{item.title}</h3>
                                     <p className="text-gray-600 mt-1">{item.desc}</p>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
@@ -254,6 +253,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                        <InArticleCTA category="Derecho Penal"  title="¿Te acusan de lesiones leves o estás siendo investigado?" message="Un abogado penal puede revisar las pruebas, evaluar la gravedad imputada y definir la mejor estrategia de defensa." />
 
                     {/* QUE HACER INMEDIATAMENTE */}
                     <div className="mb-12">
@@ -359,8 +360,6 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">En estos casos pueden intervenir normas especiales de protección y medidas cautelares destinadas a resguardar a la víctima.</p>
                     </div>
-
-
 
                     {/* NEGACION */}
                     <div className="mb-12">
@@ -520,25 +519,19 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Ya te citaron a declarar por lesiones?</h3>
-                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación o recibiste una citación como imputado, el momento para contar con defensa penal es antes de prestar declaración — no después de haber entregado tu versión.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -574,8 +567,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

@@ -182,7 +182,6 @@ const BlogArticle = () => {
                             No basta con una discusión o una separación temporal. Debe existir una decisión real de terminar la convivencia matrimonial.
                         </p>
 
-
                         <p className="text-gray-600 mb-4">
                             Desde el punto de vista jurídico, el cese de convivencia permite demostrar que la relación se encuentra terminada y constituye uno de los requisitos esenciales para solicitar determinados tipos de divorcio.
                         </p>
@@ -195,7 +194,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">La fecha de cese de convivencia tiene efectos que van más allá del divorcio: determina el momento a partir del cual los cónyuges dejan de generar bienes en la sociedad conyugal, influye en el cálculo de la compensación económica y puede afectar derechos sucesorios si uno de los cónyuges fallece antes de formalizar el divorcio. Por eso, fijar una fecha precisa no es un mero formalismo, sino una decisión con consecuencias patrimoniales relevantes.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas acreditar el cese de convivencia para divorciarte?" message="Un abogado de familia puede ayudarte a reunir pruebas, fijar la fecha correcta y proteger tus derechos patrimoniales." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* POR QUE EXISTE */}
@@ -238,10 +237,16 @@ const BlogArticle = () => {
                                 El cese de convivencia, en cambio, requiere demostrar que la vida matrimonial terminó de manera efectiva y que no existe intención de reanudarla.
                             </p>
                         </div>
+
+                        
+
+
                         <p className="text-gray-600 mt-4">
                             Por esta razón, muchas personas llevan años viviendo separadas pero enfrentan dificultades al momento de divorciarse porque nunca formalizaron ni documentaron adecuadamente dicha situación. Comprender esta diferencia puede evitar problemas importantes en el futuro.
                         </p>
                     </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Necesitas acreditar el cese de convivencia para divorciarte?" message="Un abogado de familia puede ayudarte a reunir pruebas, fijar la fecha correcta y proteger tus derechos patrimoniales." />
+
 
                     {/* COMO REALIZAR CESE EN REGISTRO CIVIL */}
                     <div className="mb-12">
@@ -572,11 +577,14 @@ const BlogArticle = () => {
                         buttonText="Comparar abogados especializados"
                     />
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">

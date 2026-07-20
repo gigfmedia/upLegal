@@ -200,7 +200,8 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal" title="¿Te detuvieron o te citaron a control de detención?" message="Un abogado penal puede asistirte en la audiencia y definir tu estrategia de defensa desde el inicio." />
+                    <RelatedLawyers category="Derecho Penal" />
+
 
                     {/* CUANDO SE REALIZA */}
                     <div className="mb-12">
@@ -222,6 +223,10 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-gray-900">1. Revisión de la legalidad de la detención</h3>
                                 <p className="text-gray-600">El juez escucha a la Fiscalía y a la defensa. Posteriormente determina si la detención cumplió los requisitos legales. Si concluye que fue ilegal, ello puede producir importantes consecuencias procesales.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                 <h3 className="font-bold text-gray-900">2. Formalización de la investigación</h3>
                                 <p className="text-gray-600">Si existen antecedentes suficientes, la Fiscalía comunica oficialmente cuáles son los hechos investigados y qué delito atribuye al imputado. La formalización no constituye una condena, sino que informa el inicio formal de la investigación penal.</p>
@@ -241,6 +246,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Penal" title="¿Te detuvieron o te citaron a control de detención?" message="Un abogado penal puede asistirte en la audiencia y definir tu estrategia de defensa desde el inicio." />
+
 
                     {/* DERECHOS */}
                     <div className="mb-12">
@@ -267,8 +274,6 @@ const BlogArticle = () => {
                             <p className="text-amber-800">En muchos casos una declaración precipitada puede generar contradicciones que luego sean utilizadas durante el proceso penal.</p>
                         </div>
                     </div>
-
-
 
                     {/* DESORDENES PUBLICOS */}
                     <div className="mb-12">
@@ -412,25 +417,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Mientras antes exista asesoría jurídica, mayores son las posibilidades de tomar decisiones informadas desde el inicio de la investigación.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Detuvieron a un familiar o a ti?</h3>
-                            <p className="text-white mb-6">Las primeras horas antes de la audiencia de control de detención son el único momento para preparar una estrategia de defensa. Después de la formalización, las decisiones del tribunal ya están tomadas sobre la base de los antecedentes presentados.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -466,8 +460,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

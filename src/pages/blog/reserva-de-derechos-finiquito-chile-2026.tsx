@@ -123,13 +123,12 @@ const BlogArticle = () => {
               Si firmas un finiquito de manera pura y simple (es decir, sin escribir nada y solo poniendo tu firma), la ley chilena asume que estás 100% de acuerdo con lo que te pagaron. Esto genera un "poder liberatorio", lo que significa que el empleador queda libre de cualquier obligación futura contigo y tú pierdes automáticamente tu derecho a presentar una demanda laboral.
             </p>
 
-
             <p className="text-gray-600 mb-6 leading-relaxed font-semibold">
               En resumen: La reserva de derechos es tu salvavidas legal para poder cobrar tu dinero hoy y demandar mañana.
             </p>
           </div>
 
-          <InArticleCTA category="Derecho Laboral"  title="¿Te entregaron el finiquito y no estás seguro si firmar con reserva?" message="Un abogado laboral puede revisar el documento, evaluar si corresponde reserva de derechos y proteger tu derecho a demandar." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           <div className="mb-12">
@@ -162,6 +161,10 @@ const BlogArticle = () => {
               ].map((item, i) => (
                 <div key={i} className="flex gap-4 p-5 bg-gray-50 border border-gray-100 rounded-xl">
                   <div className="text-green-600 flex-shrink-0 mt-1"><CheckCircle className="h-5 w-5" /></div>
+
+            
+
+
                   <div>
                     <h4 className="font-bold text-gray-900 mb-1">{item.title}</h4>
                     <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{item.desc}</p>
@@ -170,6 +173,8 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+<InArticleCTA category="Derecho Laboral"  title="¿Te entregaron el finiquito y no estás seguro si firmar con reserva?" message="Un abogado laboral puede revisar el documento, evaluar si corresponde reserva de derechos y proteger tu derecho a demandar." />
+
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -234,8 +239,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">El momento clave: La Notaría</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -283,22 +286,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Incluso si ya firmaste con reserva de derechos, un abogado evaluará si tu caso tiene mérito y te guiará en los pasos para presentar la demanda dentro del plazo de 60 días hábiles.
             </p>
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te finiquitaron y crees que los montos no son correctos?</h3>
-              <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y decirte si vale la pena demandar. La reserva de derechos solo funciona si actúas a tiempo.</p>
-              <Link
-                to="/abogados-laborales"
-                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-              >
-                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
+            
           </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+                              <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -326,8 +324,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

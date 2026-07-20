@@ -100,7 +100,6 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-
           <p className="text-xl max-w-3xl">
             Cuando una persona es despedida en Chile, una de las primeras dudas que surgen es cuánto dinero le corresponde recibir. Dentro del finiquito, uno de los conceptos más importantes es la indemnización por años de servicio.
           </p>
@@ -165,7 +164,6 @@ const BlogArticle = () => {
               Este monto busca compensar el tiempo que trabajaste en la empresa.
             </p>
 
-
             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 font-bold">
               <p className="text-gray-900 flex items-center gap-2 font-bold">
                 Regla general: Se paga 1 sueldo por cada año trabajado, con un tope.
@@ -173,7 +171,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Te despidieron y no sabes cuánto te corresponde?" message="Un abogado laboral puede calcular tu indemnización por años de servicio y verificar que te paguen lo correcto." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           {/* Section 2 */}
@@ -237,7 +235,6 @@ const BlogArticle = () => {
               </div>
             </div>
 
-
           </div>
 
           {/* Section 3 */}
@@ -257,6 +254,9 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
+
+            <InArticleCTA category="Derecho Laboral" title="¿Te despidieron y no sabes cuánto te corresponde?" message="Un abogado laboral puede calcular tu indemnización por años de servicio y verificar que te paguen lo correcto." />
+
 
           {/* Complexity Block 1 */}
           <div className="mb-12">
@@ -376,8 +376,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           {/* Additional Info */}
           <div className="mb-12">
@@ -560,21 +558,16 @@ const BlogArticle = () => {
           </div>
 
           {/* Scenario CTA */}
-          <div className="bg-green-900 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y no sabes cuánto te corresponde por años de servicio?</h3>
-            <p className="text-white mb-6">Un abogado laboral puede revisar tu caso y calcular exactamente lo que te deben pagar.</p>
-            <Link
-              to="/abogados-laborales"
-              className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-            >
-              Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
+          
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+                              <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <div className="prose prose-lg text-gray-600 space-y-4">
@@ -604,8 +597,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}

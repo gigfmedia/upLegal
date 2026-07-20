@@ -14,31 +14,31 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
       title: '¿Necesitas ayuda con un tema laboral?',
       description: 'Un abogado laboral puede revisar tu caso, calcular indemnizaciones y ayudarte a demandar dentro del plazo legal.',
       link: '/search?specialty=Derecho%20Laboral',
-      linkText: 'Ver abogados laborales disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     arriendo: {
       title: '¿Tienes problemas con un arriendo o desalojo?',
       description: 'Protege tu propiedad o tus derechos como arrendatario con la ayuda de un experto en juicios de arrendamiento.',
       link: '/search?specialty=Derecho%20Civil',
-      linkText: 'Ver abogados de arriendo disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     familia: {
       title: '¿Necesitas ayuda con tu caso familiar?',
       description: 'Compara abogados especializados en derecho de familia y agenda una consulta online.',
       link: '/search?specialty=Derecho%20de%20Familia',
-      linkText: 'Ver abogados de familia disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     penal: {
       title: '¿Enfrentas una situación penal?',
       description: 'Cada minuto cuenta. Obtén una defensa técnica sólida o recibe asesoría para interponer querellas criminales.',
       link: '/search?specialty=Derecho%20Penal',
-      linkText: 'Ver abogados penales disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     consumidor: {
       title: '¿Tienes un problema como consumidor?',
       description: 'Un abogado especializado en derecho del consumidor puede ayudarte a presentar reclamos, exigir garantías y defender tus derechos.',
       link: '/search?specialty=Derecho%20del%20Consumidor',
-      linkText: 'Ver abogados disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
   };
 
@@ -46,12 +46,12 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     divorcio: {
       description: 'Compara abogados especializados en divorcio unilateral y mutuo acuerdo, y agenda una consulta online.',
       link: '/abogado-divorcio-unilateral',
-      linkText: 'Comparar abogados especializados',
+      linkText: 'Revisar mi caso con un abogado',
     },
     pension: {
       description: 'Un abogado de familia puede ayudarte a demandar, aumentar, rebajar o cobrar pensiones de alimentos.',
       link: '/abogado-pension-alimentos',
-      linkText: 'Ver abogados de pensión de alimentos',
+      linkText: 'Revisar mi caso con un abogado',
     },
     finiquito: {
       description: 'Revisa tu finiquito con un abogado laboral antes de firmar y asegúrate de cobrar todo lo que te corresponde.',
@@ -61,22 +61,22 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     despido: {
       description: 'Evalúa si tu despido fue legal y qué indemnizaciones te corresponden con un abogado laboral verificado.',
       link: '/abogado-despido-injustificado',
-      linkText: 'Ver abogados laborales disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     arriendo: {
       description: 'Encuentra abogados especializados en contratos, desalojos, cobro de rentas y la ley Devuélveme mi Casa.',
       link: '/abogado-arriendo',
-      linkText: 'Ver abogados de arriendo disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     penal: {
       description: 'Encuentra abogados penalistas verificados para defensa o querella criminal.',
       link: '/search?specialty=Derecho%20Penal',
-      linkText: 'Ver abogados penales disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
     familia: {
       description: 'Compara abogados especializados en cuidado personal, visitas, mediación y conflictos familiares.',
       link: '/search?specialty=Derecho%20de%20Familia',
-      linkText: 'Ver abogados de familia disponibles',
+      linkText: 'Revisar mi caso con un abogado',
     },
   };
 

@@ -155,7 +155,6 @@ const BlogArticle = () => {
               Antes de esta ley, los juicios de arriendo podían tardar varios meses o incluso años. Con esta nueva normativa, se establecen procedimientos más rápidos para:
             </p>
 
-
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               {["Recuperar la propiedad por no pago", "Terminar contratos de arriendo", "Obtener el desalojo del arrendatario"].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 h-full min-h-[3rem]">
@@ -170,8 +169,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho Civil"  title="¿Necesitas asesoría legal?" message="Un abogado especializado puede revisar tu caso y orientarte." />
-
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se puede aplicar esta ley?</h2>
@@ -230,8 +228,7 @@ const BlogArticle = () => {
                 <div key={i} className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100 h-full min-h-[3rem]">
                   <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                   <span className="text-base text-gray-700">{item}</span>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto podría ser ilegal y perjudicarte judicialmente, siempre necesitas un proceso judicial.</p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres profundizar en esto, revisa:</p>
@@ -267,6 +264,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+            <InArticleCTA category="Derecho Civil"  title="¿Necesitas asesoría legal?" message="Un abogado especializado puede revisar tu caso y orientarte." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué cambia con la Ley 21.461?</h2>
@@ -582,13 +581,7 @@ const BlogArticle = () => {
             </div>
           </div>
           <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Quieres recuperar tu propiedad con la Ley Devuélveme Mi Casa?</h3>
-              <p className="text-white mb-6">Cada caso tiene requisitos específicos. Un abogado especializado puede evaluar si tu situación califica para el procedimiento monitorio y acelerar la recuperación de tu inmueble.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
+            
           </div>
 
           <div className="mb-12">
@@ -602,11 +595,7 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          </div>          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -634,8 +623,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

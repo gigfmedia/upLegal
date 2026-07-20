@@ -212,7 +212,8 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de receptación o estás siendo investigado?" message="Un abogado penal puede revisar si conocías el origen de los bienes, evaluar las pruebas y definir tu estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
+
 
                     {/* QUE BIENES */}
                     <div className="mb-12">
@@ -244,7 +245,13 @@ const BlogArticle = () => {
                                 La definición legal sugiere que la receptación es sencilla de acreditar. En la práctica, la Fiscalía debe reunir evidencia suficiente para cada elemento, y esa valoración probatoria varía según el caso. No es igual contar con un peritaje que confirme la procedencia ilícita que enfrentar declaraciones contradictorias del vendedor o ausencia de documentación que respalde la compra.
                             </p>
                         </div>
+
+                        
+
+
                     </div>
+<InArticleCTA category="Derecho Penal"  title="¿Te acusan de receptación o estás siendo investigado?" message="Un abogado penal puede revisar si conocías el origen de los bienes, evaluar las pruebas y definir tu estrategia de defensa." />
+
 
                     {/* COMPRAR OBJETO ROBADO */}
                     <div className="mb-12">
@@ -336,7 +343,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* PENAS */}
                     <div className="mb-12">
@@ -504,25 +510,14 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya existe una investigación formal en tu contra?</h3>
-                            <p className="text-white mb-6">Si la Fiscalía ya te citó a declarar o formalizó la investigación, el momento más importante para contar con asesoría jurídica es antes de presentarte a declarar — no después de haber prestado declaración.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -556,8 +551,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

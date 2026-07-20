@@ -174,7 +174,6 @@ const BlogArticle = () => {
                             Su finalidad es equilibrar una relación donde normalmente la empresa posee mayor información, recursos y capacidad de negociación que el consumidor.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -193,7 +192,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho del Consumidor"  title="¿Tienes un problema con un producto o servicio?" message="Un abogado especialista en consumo puede revisar tu caso, identificar tus derechos y buscar la reparación que corresponde." />
+                    <RelatedLawyers category="Derecho del Consumidor" />
 
 
                     {/* DERECHOS */}
@@ -243,6 +242,9 @@ const BlogArticle = () => {
                         </ul>
                         <p className="text-gray-600 mt-4">Cuando estas obligaciones no se cumplen, pueden surgir responsabilidades administrativas y civiles.</p>
                     </div>
+
+                        <InArticleCTA category="Derecho del Consumidor"  title="¿Tienes un problema con un producto o servicio?" message="Un abogado especialista en consumo puede revisar tu caso, identificar tus derechos y buscar la reparación que corresponde." />
+
 
                     {/* QUE HACER */}
                     <div className="mb-12">
@@ -310,7 +312,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* CUANDO DEMANDAR */}
                     <div className="mb-12">
@@ -415,25 +416,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En estos casos, un abogado puede evaluar la documentación, identificar las acciones disponibles y definir la estrategia más adecuada según los antecedentes concretos.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿La empresa rechazó tu reclamo o el SERNAC no resolvió el problema?</h3>
-                            <p className="text-white mb-6">Cada conflicto de consumo tiene particularidades propias. El contrato, la documentación disponible, las comunicaciones con la empresa y el tipo de incumplimiento pueden modificar completamente las alternativas legales disponibles. Si necesitas evaluar tu situación antes de iniciar una demanda o responder frente a una empresa, un abogado especialista en derecho del consumidor puede ayudarte a analizar tu caso y definir la mejor estrategia.</p>
-                            <Link
-                                to="/abogado-consumidor"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Consulta con un especialista
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Te están vulnerando tus derechos como consumidor?"
+                        message="No dejes pasar los plazos para reclamar. Un abogado del consumidor puede revisar tu caso y orientarte."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho del Consumidor"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho del Consumidor" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -463,8 +453,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

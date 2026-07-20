@@ -179,12 +179,9 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        title="¿Recibiste una carta de despido y no sabes si es válida?"
-                        message="Un abogado laboral puede revisar tu carta de despido antes de que venzan los plazos para reclamar."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
 
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
@@ -234,6 +231,10 @@ const BlogArticle = () => {
                                     <Link to="/blog/despido-necesidades-empresa-chile-2026" className="text-green-700 underline">Despido por necesidades de la empresa en Chile</Link>.
                                 </p>
                             </div>
+
+                        
+
+
                             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                 <h3 className="font-bold text-gray-900">Incumplimiento grave de las obligaciones</h3>
                                 <p className="text-gray-600">Se utiliza cuando el empleador considera que el trabajador cometió una infracción suficientemente seria para justificar el despido.</p>
@@ -257,6 +258,14 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA
+                                                    title="¿Recibiste una carta de despido y no sabes si es válida?"
+                                                    message="Un abogado laboral puede revisar tu carta de despido antes de que venzan los plazos para reclamar."
+                                                    buttonText="Habla con un abogado ahora"
+                                                    category="Derecho Laboral"
+                                                />
+
+
 
                     {/* PLAZOS EMPLEADOR */}
                     <div className="mb-12">
@@ -436,25 +445,15 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Mientras antes se revise el caso, mayores serán las posibilidades de adoptar una estrategia adecuada dentro de los plazos legales.</p>
+                    <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
+
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Recibiste una carta de despido y no sabes si es legal?</h3>
-                            <p className="text-white mb-6">Antes de firmar un finiquito o dejar pasar los plazos para reclamar, un abogado laboral puede revisar la carta de despido, analizar la causal utilizada y orientarte sobre las acciones disponibles según los antecedentes de tu caso.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Hablar con un abogado laboral
-                            </Link>
-                        </div>
-                    </div>
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -481,7 +480,6 @@ const BlogArticle = () => {
                             ))}
                         </div>
                     </div>
-
 
                 </div>
             </div>

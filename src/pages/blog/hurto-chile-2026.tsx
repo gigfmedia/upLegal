@@ -188,7 +188,6 @@ const BlogArticle = () => {
                             En otras palabras, la persona toma un bien que pertenece a otro con la intención de hacerlo suyo, pero lo hace aprovechando un descuido, una distracción o una oportunidad, sin agredir físicamente a la víctima.
                         </p>
 
-
                         <div className="bg-gray-50 p-5 rounded-xl">
                             <p className="font-bold mb-2">Ejemplos frecuentes:</p>
                             <ul className="space-y-1 text-gray-700">
@@ -207,7 +206,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal" title="¿Te acusan de hurto o estás siendo investigado?" message="Un abogado penal puede revisar los antecedentes de tu caso y definir la mejor estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
 
 
                     {/* ELEMENTOS */}
@@ -266,6 +265,10 @@ const BlogArticle = () => {
                                 </tbody>
                             </table>
                         </div>
+
+                        
+
+
                         <div className="bg-blue-50 p-5 rounded-xl mt-4">
                             <p className="text-blue-800">
                                 <span className="font-bold">Ejemplo:</span> Una persona deja su mochila en una cafetería y otra se la lleva cuando nadie observa. Eso normalmente constituye hurto. Distinto sería si alguien amenaza con un arma para obligar a entregar esa mochila. En ese caso hablamos de robo con intimidación.
@@ -278,6 +281,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Penal" title="¿Te acusan de hurto o estás siendo investigado?" message="Un abogado penal puede revisar los antecedentes de tu caso y definir la mejor estrategia de defensa." />
+
 
                     {/* PENAS */}
                     <div className="mb-12">
@@ -371,8 +376,6 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
-
-
 
                     {/* FLAGRANCIA */}
                     <div className="mb-12">
@@ -488,25 +491,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Cada procedimiento penal presenta particularidades, por lo que una evaluación individual suele ser la mejor forma de proteger los derechos de quien interviene en el proceso.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una investigación abierta en tu contra?</h3>
-                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación por hurto o fuiste citado a declarar, el momento clave para tener defensa penal es antes de la audiencia — no después de haber entregado tu versión.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-800 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -542,8 +534,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

@@ -187,7 +187,6 @@ const BlogArticle = () => {
                             No se trata de una indemnización por sufrimiento emocional. Tampoco es un castigo para quien solicita el divorcio. Su finalidad es equilibrar el impacto económico que pudo generar la distribución de roles dentro del matrimonio.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -197,7 +196,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Es relevante distinguir la compensación económica de figuras afines como la pensión de alimentos o la liquidación de sociedad conyugal. Mientras los alimentos cubren necesidades futuras y la liquidación reparte bienes existentes, la compensación mira hacia atrás: busca reparar un perjuicio causado durante el matrimonio por la dedicación preferente al hogar o a los hijos. Esta distinción es relevante porque una persona puede tener derecho a compensación económica incluso si ya recibió su parte de la sociedad conyugal o si no tiene hijos menores.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y crees que corresponde compensación económica?" message="Un abogado de familia puede evaluar si cumples los requisitos, calcular el monto y demandar la compensación que te corresponde." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* QUIEN PUEDE PEDIR */}
@@ -238,9 +237,12 @@ const BlogArticle = () => {
                                 <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                                     <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                                     <p className="text-gray-600">{item.desc}</p>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
+
+
+
+                        
 
                         {/* INTERLINK 2 */}
                         <div className="mb-6 space-y-3">
@@ -257,6 +259,8 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y crees que corresponde compensación económica?" message="Un abogado de familia puede evaluar si cumples los requisitos, calcular el monto y demandar la compensación que te corresponde." />
+
 
                     {/* PERJUICIO ECONOMICO */}
                     <div className="mb-12">
@@ -475,11 +479,14 @@ const BlogArticle = () => {
                         buttonText="Comparar abogados especializados"
                     />
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -520,8 +527,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

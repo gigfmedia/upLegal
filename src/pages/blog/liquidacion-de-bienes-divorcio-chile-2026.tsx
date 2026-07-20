@@ -166,7 +166,6 @@ const BlogArticle = () => {
                             Su objetivo es: identificar los bienes existentes, determinar quién es propietario de cada uno, valorar económicamente el patrimonio y distribuir los bienes o su valor entre las partes.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -176,7 +175,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">La liquidación de bienes involucra dos etapas que a menudo se confunden: primero, la disolución del régimen patrimonial (que determina el momento desde el cual los cónyuges dejan de generar bienes comunes), y segundo, la partición o división de los bienes existentes a esa fecha. Los efectos jurídicos de cada etapa son distintos y los plazos para impugnar o solicitar la nulidad de ciertos actos pueden variar según cuál de ellas se trate.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y necesitas liquidar los bienes?" message="Un abogado de familia puede inventariar los activos, calcular las participaciones y asegurar una partición justa." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* TODOS LOS DIVORCIOS REQUIEREN LIQUIDACION */}
@@ -210,6 +209,9 @@ const BlogArticle = () => {
                             <Link to="/blog/liquidacion-sociedad-conyugal-chile-2026" className="text-green-700 underline">Liquidación de Sociedad Conyugal en Chile</Link>.
                         </p>
                     </div>
+
+                        <InArticleCTA category="Derecho de Familia"  title="¿Te divorciaste y necesitas liquidar los bienes?" message="Un abogado de familia puede inventariar los activos, calcular las participaciones y asegurar una partición justa." />
+
 
                     {/* QUE BIENES ENTRAN */}
                     <div className="mb-12">
@@ -381,8 +383,6 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Los principales factores que influyen son: cantidad de bienes, existencia de inmuebles, empresas familiares, discrepancias sobre valorización y complejidad de las deudas.</p>
                     </div>
 
-
-
                     {/* ACUERDO SIN JUICIO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Se puede acordar la distribución de bienes sin juicio?</h2>
@@ -444,25 +444,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En materia patrimonial, los plazos para impugnar ciertos actos pueden ser cortos y la demora puede significar la pérdida de derechos.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3 sm:px-24">El divorcio está en curso y los bienes no se han dividido</h3>
-                            <p className="text-white mb-6">Si el divorcio avanza y los bienes comunes siguen sin repartirse, cada día que pasa aumenta el riesgo de que se pierdan activos o se consoliden situaciones patrimoniales desfavorables. Un abogado de familia puede iniciar las gestiones para asegurar tu parte del patrimonio.</p>
-                            <Link
-                                to="/abogado-divorcio-unilateral"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Compara abogados y agenda
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -500,8 +489,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

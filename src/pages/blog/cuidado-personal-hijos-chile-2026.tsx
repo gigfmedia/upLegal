@@ -295,7 +295,6 @@ const BlogArticle = () => {
               La persona que tiene el cuidado personal es quien vive habitualmente con el menor y se encarga de aspectos esenciales como:
             </p>
 
-
             <ul className="grid sm:grid-cols-2 gap-3 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
                 "Alimentación",
@@ -321,7 +320,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-4 leading-relaxed">El cuidado personal no implica una facultad absoluta de decisión sobre todos los aspectos de la vida del hijo. Ciertas decisiones relevantes —como las relativas a la educación, la salud o el cambio de residencia— requieren el consentimiento de ambos padres o, en su defecto, autorización judicial. Esta distinción entre cuidado personal y patria potestad (que sigue siendo compartida salvo excepción judicial) es frecuentemente malentendida y genera conflictos cuando el padre no custodio pretende participar en decisiones importantes.</p>
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el cuidado personal de tus hijos?" message="Un abogado de familia puede evaluar tu situación, proteger el interés superior del niño y definir la mejor estrategia legal." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           {/* ¿La tuición y el cuidado personal son lo mismo? */}
@@ -408,6 +407,9 @@ const BlogArticle = () => {
                 </p>
               </div>
 
+            
+
+
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-2">El padre también puede obtenerlo</h4>
                 <p className="text-gray-600 leading-relaxed mb-4">
@@ -442,6 +444,8 @@ const BlogArticle = () => {
             </div>
             <p className="text-gray-600 mt-4 leading-relaxed">Cuando el cuidado personal se otorga a un tercero (abuelos, tíos u otros familiares), el tribunal debe verificar que ninguno de los padres está en condiciones de ejercerlo adecuadamente. Esta situación suele requerir informes psicosociales y peritajes que acrediten la idoneidad del tercero y la inconveniencia de que el menor permanezca con sus padres. Además, el tercero que obtiene el cuidado personal asume las mismas responsabilidades legales que un padre, incluyendo la toma de decisiones sobre educación y salud del menor.</p>
           </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el cuidado personal de tus hijos?" message="Un abogado de familia puede evaluar tu situación, proteger el interés superior del niño y definir la mejor estrategia legal." />
+
 
           <div className="my-8">
 
@@ -732,10 +736,7 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho de Familia" />
-
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -782,8 +783,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

@@ -134,7 +134,6 @@ const BlogArticle = () => {
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
                 <p className="font-bold text-blue-900 mb-2">Ejemplo real:</p>
 
-
                 <p className="text-blue-800 leading-relaxed">
                   Te despiden por “necesidades de la empresa”, pero la empresa sigue contratando, no hay reducción real y no pueden justificar la decisión. En ese caso, el despido puede ser declarado injustificado.
                 </p>
@@ -160,7 +159,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <InArticleCTA category="Derecho Laboral" title="¿Te despidieron y crees que fue injusto?" message="Un abogado laboral puede revisar tu carta de despido, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+            <RelatedLawyers category="Derecho Laboral" />
 
 
             <div className="mb-12">
@@ -171,12 +170,18 @@ const BlogArticle = () => {
                   <h3 className="font-bold text-green-800 text-lg mb-2">El empleador no puede probar la causal</h3>
                   <p className="text-green-700">El juez declarará el despido injustificado automáticamente y deberá pagar indemnización con recargo de hasta 80%. Tienes una posición negociadora muy fuerte.</p>
                 </div>
+
+              
+
+
                 <div className="bg-red-50 p-5 rounded-xl">
                   <h3 className="font-bold text-red-800 text-lg mb-2">El empleador tiene pruebas sólidas</h3>
                   <p className="text-red-700">Si presentan documentos, testigos o registros que respaldan la causal, el caso se vuelve más complejo y puede requerir una estrategia legal diferente para minimizar pérdidas.</p>
                 </div>
               </div>
             </div>
+<InArticleCTA category="Derecho Laboral" title="¿Te despidieron y crees que fue injusto?" message="Un abogado laboral puede revisar tu carta de despido, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+
 
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué puedes ganar al demandar?</h2>
@@ -562,22 +567,16 @@ const BlogArticle = () => {
               <p className="text-gray-600 mb-4 leading-relaxed">
                 Si te despidieron y tienes dudas sobre si fue justo o no, hay señales claras que indican que debes buscar asesoría legal inmediatamente. El tiempo corre y cada día que pasa reduce tus opciones legales.
               </p>
-              <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
-                <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron y crees que fue injusto?</h3>
-                <p className="text-white mb-6">Un abogado laboral puede evaluar tu caso en minutos y decirte si tienes opciones reales de recuperar dinero. No esperes a que venza el plazo de 60 días.</p>
-                <Link
-                  to="/abogados-laborales"
-                  className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-                >
-                  Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
             </div>
 
-            <RelatedLawyers category="Derecho Laboral" />
+            <InArticleCTA
+              title="¿Los plazos para demandar están por vencer?"
+              message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+              buttonText="Habla con un abogado ahora"
+              category="Derecho Laboral"
+            />
 
-            <div className="mb-12 border-t border-gray-100 pt-12">
-
+            <div className="mb-12 border-t pt-8">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
               <div className="prose prose-lg text-gray-600 leading-relaxed space-y-6">
                 <p>

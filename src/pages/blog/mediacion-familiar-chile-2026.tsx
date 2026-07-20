@@ -238,7 +238,6 @@ const BlogArticle = () => {
               Su principal objetivo es evitar litigios innecesarios y fomentar acuerdos voluntarios que beneficien a todas las partes involucradas, especialmente a los hijos.
             </p>
 
-
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 my-4">
               <p className="text-blue-900 leading-relaxed">
                 A diferencia de un juez, el mediador no impone soluciones ni decide quién tiene razón. Su función consiste en facilitar la comunicación, identificar intereses comunes y ayudar a construir acuerdos que puedan ser aceptados por ambas partes.
@@ -250,7 +249,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-4 leading-relaxed">Es importante entender que la mediación no suspende los plazos de prescripción de las acciones judiciales. Si existe un plazo próximo a vencer para ejercer un derecho (como el cese de convivencia para el divorcio), la mediación no lo detendrá. Además, los acuerdos alcanzados en mediación, una vez homologados judicialmente, tienen fuerza ejecutiva y pueden ser exigibles como una sentencia, lo que los diferencia de los simples acuerdos privados entre las partes.</p>
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Estás considerando mediación familiar para resolver un conflicto?" message="Un abogado de familia puede asesorarte en el proceso, preparar los temas a negociar y asegurar que los acuerdos sean legalmente válidos." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           {/* ¿La mediación familiar es obligatoria en Chile? */}
@@ -360,6 +359,9 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mt-4 leading-relaxed">Aunque las exclusiones legales parezcan claras, en la práctica surgen disputas sobre si la mediación era exigible en un caso concreto. Por ejemplo, si una parte alega violencia intrafamiliar para evitar la mediación, el tribunal puede requerir antecedentes que acrediten dicha situación. Del mismo modo, si la mediación se inicia y una de las partes no asiste, se genera un certificado de mediación frustrada que permite acceder al tribunal, pero la consecuencia procesal puede variar según si la inasistencia fue justificada o no.</p>
           </div>
+
+            <InArticleCTA category="Derecho de Familia"  title="¿Estás considerando mediación familiar para resolver un conflicto?" message="Un abogado de familia puede asesorarte en el proceso, preparar los temas a negociar y asegurar que los acuerdos sean legalmente válidos." />
+
 
           {/* ¿Cuáles son los objetivos de la mediación familiar? */}
           <div className="mb-12">
@@ -727,10 +729,7 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho de Familia" />
-
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -775,8 +774,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

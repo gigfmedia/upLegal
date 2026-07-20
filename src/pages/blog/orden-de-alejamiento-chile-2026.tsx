@@ -199,7 +199,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te impusieron o te solicitan una orden de alejamiento?" message="Un abogado penal puede revisar los antecedentes, evaluar si la medida es procedente y definir tu estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
 
                     {/* OBJETIVO */}
                     <div className="mb-12">
@@ -232,8 +232,7 @@ const BlogArticle = () => {
                                 <div key={i} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                     <h3 className="font-bold text-gray-900">{item.title}</h3>
                                     <p className="text-gray-600">{item.desc}</p>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mt-4">
                             <p className="text-amber-800 text-sm">
@@ -241,6 +240,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+
+                        <InArticleCTA category="Derecho Penal"  title="¿Te impusieron o te solicitan una orden de alejamiento?" message="Un abogado penal puede revisar los antecedentes, evaluar si la medida es procedente y definir tu estrategia de defensa." />
 
                     {/* QUIEN PUEDE SOLICITAR */}
                     <div className="mb-12">
@@ -324,8 +325,6 @@ const BlogArticle = () => {
                             Una vez notificada la resolución judicial, el imputado debe respetar estrictamente las restricciones impuestas. Carabineros suele desempeñar un papel importante en la fiscalización cuando la víctima denuncia incumplimientos. Además, cualquier nuevo acercamiento puede ser informado inmediatamente al tribunal y a la Fiscalía.
                         </p>
                     </div>
-
-
 
                     {/* INCUMPLIMIENTO */}
                     <div className="mb-12">
@@ -499,25 +498,19 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te notificaron una orden de alejamiento?</h3>
-                            <p className="text-white mb-6">Si el tribunal ya decretó una orden en tu contra, el momento de preparar tu defensa es antes de la audiencia donde se evalúan las medidas cautelares — no después de haber infringido la restricción.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -551,8 +544,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

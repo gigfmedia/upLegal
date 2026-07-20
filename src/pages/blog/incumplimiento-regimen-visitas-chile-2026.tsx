@@ -159,7 +159,6 @@ const BlogArticle = () => {
                             La relación directa y regular puede establecerse por acuerdo entre los padres, mediante mediación familiar o por resolución judicial. El tribunal siempre priorizará el interés superior del niño al momento de definir este régimen.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">Si todavía no conoces el funcionamiento general de esta institución, revisa nuestra guía sobre <Link to="/blog/regimen-visitas-chile-2026" className="underline">Régimen de visitas en Chile 2026</Link>.</p>
@@ -167,7 +166,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">La relación directa y regular no se limita a la entrega y devolución del niño en fechas determinadas. Comprende también el derecho a mantener comunicaciones regulares, a recibir información sobre la educación y salud del hijo, y a participar en decisiones relevantes de su vida. El incumplimiento de cualquiera de estas facetas puede ser igualmente reclamable ante el tribunal, aunque muchas personas se concentran únicamente en el régimen presencial.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Incumplen el régimen de visitas de tus hijos?" message="Un abogado de familia puede evaluar el incumplimiento, solicitar modificaciones y buscar medidas para proteger el derecho de relación." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* QUE SE CONSIDERA INCUMPLIMIENTO */}
@@ -194,7 +193,13 @@ const BlogArticle = () => {
                             <p className="font-bold text-red-800">La vía correcta:</p>
                             <p className="text-red-700">Solicitar judicialmente el cumplimiento del régimen a través del Tribunal de Familia.</p>
                         </div>
+
+                        
+
+
                     </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Incumplen el régimen de visitas de tus hijos?" message="Un abogado de familia puede evaluar el incumplimiento, solicitar modificaciones y buscar medidas para proteger el derecho de relación." />
+
 
                     {/* INDEPENDENCIA ENTRE ALIMENTOS Y VISITAS */}
                     <div className="mb-12">
@@ -368,8 +373,6 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-
-
                     {/* ERRORES FRECUENTES */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Errores frecuentes</h2>
@@ -407,25 +410,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">La evidencia temprana es clave para acreditar la conducta ante el tribunal y obtener las medidas más efectivas.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3 sm:px-10">Llevas semanas sin ver a tu hijo y no sabes qué hacer</h3>
-                            <p className="text-white mb-6">No intentes resolverlo reteniendo alimentos o enfrentando al otro progenitor. Un abogado de familia puede solicitar al Tribunal de Familia medidas de cumplimiento inmediato, incluyendo la compensación del tiempo perdido y la imposición de multas si el incumplimiento se acredita.</p>
-                            <Link
-                                to="/abogado-pension-alimentos"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados especializados en familia
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -466,8 +458,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

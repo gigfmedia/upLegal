@@ -199,7 +199,8 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de apropiación indebida?" message="Un abogado penal puede revisar si hubo ánimo de lucro, evaluar las pruebas y definir tu estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
+
 
                     {/* CUANDO EXISTE */}
                     <div className="mb-12">
@@ -236,6 +237,10 @@ const BlogArticle = () => {
                                 <p className="text-red-700">El engaño existe desde el comienzo. La víctima entrega voluntariamente su dinero porque fue engañada.</p>
                                 <p className="text-red-600 text-sm mt-2">Ejemplo: una persona vende un automóvil inexistente.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-blue-50 p-5 rounded-xl border border-blue-200">
                                 <h3 className="font-bold text-blue-800 text-lg mb-2">Apropiación indebida</h3>
                                 <p className="text-blue-700">No existe un engaño inicial. La entrega de bienes es completamente legítima. El problema aparece cuando posteriormente quien recibió esos bienes decide quedarse con ellos.</p>
@@ -249,6 +254,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Penal"  title="¿Te acusan de apropiación indebida?" message="Un abogado penal puede revisar si hubo ánimo de lucro, evaluar las pruebas y definir tu estrategia de defensa." />
+
 
                     {/* EJEMPLOS FRECUENTES */}
                     <div className="mb-12">
@@ -335,8 +342,6 @@ const BlogArticle = () => {
                             Sí. La existencia de vínculos familiares no impide necesariamente que se investigue este delito. Por ejemplo: administración de herencias, manejo de cuentas bancarias, bienes entregados para custodia o mandatos familiares. Sin embargo, cada caso debe analizarse individualmente considerando las circunstancias específicas y la evidencia disponible.
                         </p>
                     </div>
-
-
 
                     {/* PENAS */}
                     <div className="mb-12">
@@ -504,25 +509,14 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una denuncia en tu contra?</h3>
-                            <p className="text-white mb-6">Si ya existe una denuncia en Fiscalía o fuiste formalizado por apropiación indebida, el momento para definir tu estrategia de defensa es antes de la audiencia — no después de haber declarado. Un abogado penalista puede revisar los antecedentes y evaluar las salidas alternativas disponibles.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -558,8 +552,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

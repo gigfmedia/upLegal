@@ -179,7 +179,6 @@ const BlogArticle = () => {
                             No es necesario que la agresión se repita en el tiempo; un solo episodio grave puede ser suficiente para solicitar medidas de protección. Tampoco se requiere que exista una relación de parentesco directo: las parejas en convivencia, incluso si no están casadas, también están protegidas.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Personas protegidas por la ley</p>
                             <p className="text-blue-800">Cónyuges, ex cónyuges, convivientes, ex convivientes, padres e hijos, hermanos, abuelos y nietos, y personas que comparten un hogar. No es necesario estar casado para que exista violencia intrafamiliar.</p>
@@ -191,7 +190,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Sufres o presencias violencia intrafamiliar?" message="Un abogado de familia puede ayudarte a denunciar, solicitar medidas de protección y buscar reparación por el daño sufrido." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* TIPOS DE VIF - Más detalles */}
@@ -224,6 +223,9 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">La denuncia puede ser presentada por la propia víctima. Además, dependiendo del caso, también pueden denunciar familiares, vecinos, profesionales de salud, profesores o funcionarios públicos. Cuando existen niños, niñas o adolescentes involucrados, la obligación de protección adquiere especial relevancia.</p>
                         <p className="text-gray-600">Incluso cualquier persona que tenga conocimiento de hechos de violencia intrafamiliar puede ponerlos en conocimiento de las autoridades, especialmente si la víctima se encuentra en una situación de vulnerabilidad o no puede hacerlo por sí misma.</p>
                     </div>
+
+                        <InArticleCTA category="Derecho de Familia"  title="¿Sufres o presencias violencia intrafamiliar?" message="Un abogado de familia puede ayudarte a denunciar, solicitar medidas de protección y buscar reparación por el daño sufrido." />
+
 
                     {/* DONDE DENUNCIAR */}
                     <div className="mb-12">
@@ -352,8 +354,6 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Es recomendable conservar todos estos antecedentes ordenados cronológicamente y presentarlos ante el tribunal lo antes posible.</p>
                     </div>
 
-
-
                     {/* CASO PRACTICO - Más detallado */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -441,25 +441,14 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-serif font-bold mb-3">¿Sufriste una agresión en contexto familiar?</h3>
-                            <p className="text-white mb-6">Si hubo una agresión física o psicológica, el momento de pedir medidas de protección es antes de que los hechos se repitan — no después. Un abogado especializado puede orientarte sobre los pasos inmediatos para proteger tu integridad.</p>
-                            <Link
-                                to="/abogados-divorcio"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados especializados en VIF
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION - Expandida */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION - Expandida */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -490,8 +479,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

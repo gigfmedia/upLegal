@@ -200,7 +200,8 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de robo o fuiste víctima de uno?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
+                    <RelatedLawyers category="Derecho Penal" />
+
 
                     {/* DIFERENCIA ROBO Y HURTO */}
                     <div className="mb-12">
@@ -250,6 +251,10 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-gray-900">Robo con violencia</h3>
                                 <p className="text-gray-600">Se produce cuando el autor utiliza fuerza física contra la víctima para obtener o mantener la posesión del bien. Ejemplos: golpear a una persona para quitarle su teléfono, empujar a la víctima para arrebatarle una cartera.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                 <h3 className="font-bold text-gray-900">Robo con intimidación</h3>
                                 <p className="text-gray-600">No necesariamente existe agresión física. Basta que la víctima entregue el bien debido a amenazas o intimidaciones, como amenazar con un arma, simular portar un arma o amenazar con causar lesiones graves.</p>
@@ -273,6 +278,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Penal"  title="¿Te acusan de robo o fuiste víctima de uno?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
+
 
                     {/* PENAS */}
                     <div className="mb-12">
@@ -364,8 +371,6 @@ const BlogArticle = () => {
                             </div>
                         </div>
                     </div>
-
-
 
                     {/* DETENCION */}
                     <div className="mb-12">
@@ -490,25 +495,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En materia penal, actuar oportunamente suele ser determinante para proteger los derechos de todas las personas involucradas.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya existe una investigación o denuncia en tu contra?</h3>
-                            <p className="text-white mb-6">Si la Fiscalía ya formalizó la investigación o te citaron a declarar por un delito de robo, el momento más importante para contar con defensa penal es antes de presentarte a la audiencia — no después de haber declarado.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -547,8 +541,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

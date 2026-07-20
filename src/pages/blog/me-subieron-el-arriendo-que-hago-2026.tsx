@@ -144,7 +144,8 @@ const BlogArticle = () => {
               La respuesta corta es no.
             </p>
 
-            <InArticleCTA category="Derecho Civil"  title="¿Te subieron el arriendo sin justificación?" message="Un abogado especializado puede revisar tu contrato, verificar si el aumento es legal y defender tus derechos como arrendatario." />
+          <RelatedLawyers category="Derecho Civil" />
+
 
             <p className="text-gray-600 mb-6 leading-relaxed">
               En Chile, el valor del arriendo no puede modificarse arbitrariamente durante la vigencia del contrato. El precio solo puede aumentar si existe una cláusula específica en el contrato que indique cómo se realizará el reajuste.
@@ -196,12 +197,18 @@ const BlogArticle = () => {
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-100">
                   <div className="bg-gray-900 w-7 h-7 rounded-full flex items-center justify-center text-white mb-4">{i + 1}</div>
+
+            
+
+
                   <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                   <p className="text-base text-gray-600">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
+<InArticleCTA category="Derecho Civil"  title="¿Te subieron el arriendo sin justificación?" message="Un abogado especializado puede revisar tu contrato, verificar si el aumento es legal y defender tus derechos como arrendatario." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo es legal subir el arriendo en Chile?</h2>
@@ -234,8 +241,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo NO es legal subir el arriendo?</h2>
@@ -377,20 +382,16 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te subieron el arriendo y no sabes si es legal?</h3>
-              <p className="text-white mb-6">No todos los aumentos son válidos. Si tu contrato no contempla el reajuste que te están cobrando, puedes rechazarlo. Un abogado puede revisar tu caso en 24 horas.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Civil" />
+                              <InArticleCTA
+                        title="¿Tu caso civil necesita asesoría?"
+                        message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Civil"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -425,8 +426,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

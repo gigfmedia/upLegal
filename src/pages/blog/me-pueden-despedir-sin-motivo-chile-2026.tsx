@@ -161,7 +161,6 @@ const BlogArticle = () => {
                   <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
                   <p className="text-gray-600">{item.desc}</p>
 
-
                 </div>
               ))}
             </div>
@@ -173,7 +172,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Te despidieron sin explicación clara?" message="Un abogado laboral puede revisar la carta de despido, verificar si la causal es válida y calcular tus indemnizaciones." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           <div className="mb-12">
@@ -191,8 +190,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué significa “necesidades de la empresa”?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">Es una causal amplia que incluye:</p>
@@ -206,8 +203,7 @@ const BlogArticle = () => {
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
                   <Shield className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="text-gray-700 font-medium text-sm sm:text-base">{item}</span>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-2xl mb-8">
               <p className="font-bold text-amber-900 mb-2 flex items-center gap-2">
@@ -218,6 +214,11 @@ const BlogArticle = () => {
               </p>
             </div>
           </div>
+
+
+
+
+            <InArticleCTA category="Derecho Laboral" title="¿Te despidieron sin explicación clara?" message="Un abogado laboral puede revisar la carta de despido, verificar si la causal es válida y calcular tus indemnizaciones." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Causales de despido en Chile (explicadas fácil)</h2>
@@ -363,8 +364,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-8 text-gray-900">¿Qué hacer si te despiden?</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">Aquí es donde la mayoría se equivoca. Sigue estos 5 pasos críticos:</p>
@@ -492,21 +491,14 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">
               Si te despidieron invocando "necesidades de la empresa" pero sospechas que no es real, si no estás seguro de que el monto del finiquito sea correcto o si ya pasaron varias semanas desde el despido, el tiempo juega en tu contra. En estos casos, una consulta temprana con un abogado laboral puede marcar la diferencia entre recibir lo justo o perder miles de pesos.
             </p>
-
-            <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron sin motivo claro?</h3>
-              <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido en minutos y decirte si tienes un caso sólido. No arriesgues tu indemnización.</p>
-              <Link
-                to="/abogados-laborales"
-                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-              >
-                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
           </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+          <InArticleCTA
+            title="¿Los plazos para demandar están por vencer?"
+            message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho Laboral"
+          />
 
           <div className="mb-12 border-t pt-8">
 
@@ -535,8 +527,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

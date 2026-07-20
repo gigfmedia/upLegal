@@ -236,7 +236,6 @@ const BlogArticle = () => {
                             Actualmente, la legislación chilena utiliza el concepto de “relación directa y regular”, porque no se trata solamente de “visitar” al hijo, sino de mantener una relación activa, estable y permanente.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
 
@@ -246,7 +245,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el régimen de visitas?" message="Un abogado de familia puede negociar el régimen, modificarlo judicialmente y proteger el derecho de relación con tus hijos." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* QUE PUEDE INCLUIR */}
@@ -334,7 +333,13 @@ const BlogArticle = () => {
                                 </div>
                             ))}
                         </div>
+
+                        
+
+
                     </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Tienes un conflicto por el régimen de visitas?" message="Un abogado de familia puede negociar el régimen, modificarlo judicialmente y proteger el derecho de relación con tus hijos." />
+
 
                     {/* FACTORES */}
                     <div className="mb-12">
@@ -366,8 +371,6 @@ const BlogArticle = () => {
                             La jurisprudencia chilena ha reiterado que el listado de factores que considera el juez no es taxativo, sino enunciativo. El tribunal puede valorar circunstancias no previstas expresamente en la ley, siempre que resulten relevantes para el interés superior del niño. Por ejemplo, la opinión del adolescente manifestada en audiencia reservada tiene un peso creciente en la jurisprudencia actual, especialmente cuando existe madurez suficiente para formarse un juicio propio.
                         </p>
                     </div>
-
-
 
                     {/* INCUMPLIMIENTO */}
                     <div className="mb-12">
@@ -529,8 +532,6 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-
-
                     {/* DOCUMENTOS */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">
@@ -662,11 +663,14 @@ const BlogArticle = () => {
                         buttonText="Comparar abogados especializados"
                     />
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
 
@@ -724,8 +728,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
 

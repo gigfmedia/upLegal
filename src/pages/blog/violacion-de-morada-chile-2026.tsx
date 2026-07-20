@@ -209,7 +209,9 @@ const BlogArticle = () => {
                         </div>
                     </div>
                     
-                     <InArticleCTA category="Derecho Penal"  title="¿Te acusan de violación de morada?" message="Un abogado penal puede revisar si hubo consentimiento de acceso, evaluar las pruebas y definir tu estrategia de defensa." />
+
+                    <RelatedLawyers category="Derecho Penal" />
+
 
                     {/* QUE SE ENTIENDE POR MORADA */}
                     <div className="mb-12">
@@ -237,6 +239,10 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-gray-900">1. Debe tratarse de un domicilio protegido</h3>
                                 <p className="text-gray-600">El inmueble debe constituir un lugar destinado a la habitación o vida privada: viviendas particulares, departamentos, habitaciones de hoteles ocupadas, segundas viviendas mientras están siendo utilizadas. En cambio, normalmente no constituyen morada: terrenos baldíos, sitios eriazos, bodegas abandonadas o inmuebles completamente desocupados.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                 <h3 className="font-bold text-gray-900">2. No debe existir autorización</h3>
                                 <p className="text-gray-600">El ingreso debe producirse sin consentimiento de quien tiene derecho a controlar el acceso. Si existe autorización válida, en principio no hay delito. Sin embargo, la autorización puede revocarse. Por ejemplo, si una persona fue invitada inicialmente pero luego el ocupante le exige retirarse y esta se niega, la situación puede adquirir relevancia penal.</p>
@@ -252,6 +258,8 @@ const BlogArticle = () => {
                             </p>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Penal"  title="¿Te acusan de violación de morada?" message="Un abogado penal puede revisar si hubo consentimiento de acceso, evaluar las pruebas y definir tu estrategia de defensa." />
+
 
                     {/* PUERTA ABIERTA */}
                     <div className="mb-12">
@@ -339,7 +347,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* COMO DENUNCIAR */}
                     <div className="mb-12">
@@ -509,25 +516,14 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Ya hay una denuncia por ingreso no autorizado?</h3>
-                            <p className="text-white mb-6">Si la otra persona ya denunció un ingreso no autorizado a su domicilio, el momento clave es antes de que la Fiscalía formalice la investigación — después de la formalización, las opciones de defensa se reducen significativamente.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -561,8 +557,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

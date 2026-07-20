@@ -152,7 +152,6 @@ const BlogArticle = () => {
                   El único camino legal es a través de un tribunal. Sin orden judicial, no hay desalojo posible.
                 </p>
 
-
               </div>
             </div>
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
@@ -167,7 +166,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Necesitas recuperar tu propiedad de un familiar?" message="Un abogado especializado puede evaluar la relación, determinar la acción legal correcta y guiar el proceso de desalojo." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           {/* Qué tipo de relación tienes */}
@@ -253,6 +252,10 @@ const BlogArticle = () => {
               {/* Paso 1 */}
               <div className="border border-gray-100 bg-white p-5 rounded-xl flex items-start gap-4 shadow-sm">
                 <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 mt-0.5">1</div>
+
+            
+
+
                 <div>
                   <p className="text-lg font-bold text-gray-900 mb-1">Intenta el acuerdo directo primero</p>
                   <p className="text-gray-700 leading-relaxed">
@@ -300,7 +303,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
+<InArticleCTA category="Derecho Civil" title="¿Necesitas recuperar tu propiedad de un familiar?" message="Un abogado especializado puede evaluar la relación, determinar la acción legal correcta y guiar el proceso de desalojo." />
 
 
           <div className="space-y-4 mt-12 mb-12">
@@ -477,20 +480,9 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Necesitas recuperar tu propiedad de un familiar?</h3>
-              <p className="text-white mb-6">Desalojar a un familiar requiere el procedimiento legal correcto. Un abogado especializado puede evaluar tu situación y determinar la acción judicial que corresponde según tu caso.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -500,7 +492,6 @@ const BlogArticle = () => {
               Aprender las reglas generales es el primer paso, pero la pregunta que queda abierta es cómo se aplican esas reglas a los hechos específicos de cada caso. Esa respuesta depende de los antecedentes concretos y de las circunstancias particulares de cada situación. Si quieres revisar una situación particular, puedes consultar con un <Link to="/abogados-arriendo" className="text-green-700 underline hover:text-green-500">abogado inmobiliario en Chile</Link>.
             </p>
           </div>
-
 
           <CategoryCTA category="arriendo" topic="arriendo" />
 
@@ -522,8 +513,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">

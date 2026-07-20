@@ -143,7 +143,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-6 leading-relaxed">Cambiar la cerradura sin autorización puede:</p>
 
-
             <div className="space-y-3 mb-6">
               {[
                 "Impedir el acceso a la vivienda",
@@ -161,7 +160,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Arrendamiento" title="¿Tu arrendador cambió la cerradura sin autorización?" message="Un abogado inmobiliario puede ayudarte a recuperar el acceso y denunciar esta acción ilegal." />
+          <RelatedLawyers category="Arrendamiento" />
 
 
           <div className="mb-12">
@@ -208,6 +207,10 @@ const BlogArticle = () => {
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-4 p-4 border rounded-xl hover:bg-blue-50/30 transition-colors">
                   <div className="bg-gray-900 p-2 rounded-lg text-white font-bold text-sm w-7 h-7 flex items-center justify-center flex-shrink-0">{i + 1}</div>
+
+            
+
+
                   <div>
                     <span className="font-bold text-gray-900">{item.title}</span>
                     <p className="text-base text-gray-600 mt-1">{item.desc}</p>
@@ -226,6 +229,8 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
+<InArticleCTA category="Arrendamiento" title="¿Tu arrendador cambió la cerradura sin autorización?" message="Un abogado inmobiliario puede ayudarte a recuperar el acceso y denunciar esta acción ilegal." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa si el arrendador cambia la cerradura?</h2>
@@ -439,20 +444,16 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Te cambiaron la cerradura sin aviso?</h3>
-              <p className="text-white mb-6">Cambiar la cerradura sin orden judicial es ilegal en Chile. Si estás en esta situación, necesitas asesoría urgente para recuperar el acceso a tu vivienda.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Arrendamiento" />
+                              <InArticleCTA
+                        title="¿Tienes problemas con un arriendo?"
+                        message="Un abogado especializado puede ayudarte a resolver tu conflicto de arrendamiento antes de que escale."
+                        buttonText="Habla con un abogado ahora"
+                        category="Arrendamiento"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">

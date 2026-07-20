@@ -219,7 +219,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te investigan por violencia contra Carabineros o desórdenes públicos?" message="Un abogado penal puede revisar los antecedentes, cuestionar la participación y definir tu estrategia de defensa." />
+                    <RelatedLawyers category="Derecho Penal" />
 
                     {/* VIOLENCIA CONTRA CARABINEROS */}
                     <div className="mb-12">
@@ -249,11 +249,12 @@ const BlogArticle = () => {
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
                                     <span className="text-gray-500">•</span>
                                     <span>{item}</span>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                         <p className="text-gray-600 mt-4">Posteriormente será el juez quien revisará la legalidad de esa actuación mediante la audiencia correspondiente.</p>
                     </div>
+
+                        <InArticleCTA category="Derecho Penal"  title="¿Te investigan por violencia contra Carabineros o desórdenes públicos?" message="Un abogado penal puede revisar los antecedentes, cuestionar la participación y definir tu estrategia de defensa." />
 
                     {/* QUE PASA DESPUES */}
                     <div className="mb-12">
@@ -331,7 +332,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* MEDIDAS CAUTELARES */}
                     <div className="mb-12">
@@ -478,25 +478,19 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL (antes de la conclusión) */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold mb-3 text-green-600 font-serif">¿Detuvieron a un familiar o a ti en una manifestación?</h3>
-                            <p className="text-white mb-6">Las primeras horas antes de la audiencia de control de detención son el único momento para preparar una defensa efectiva. Después de la formalización, las decisiones del tribunal ya se adoptan sobre la base de los antecedentes presentados.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -530,8 +524,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

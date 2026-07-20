@@ -158,14 +158,12 @@ const BlogArticle = () => {
                         <div className="bg-red-50 p-5 rounded-xl">
                             <p className="font-bold text-red-800">Advertencia</p>
 
-
                             <p className="text-red-700">Dejar de pagar únicamente porque el hijo cumplió 18 años puede transformarse en un problema importante y generar deuda de alimentos.</p>
                         </div>
                         <p className="text-gray-600 mt-4">Para que proceda la extensión de la pensión más allá de los 18 años, el hijo debe carecer de medios para subsistir por sí mismo. Este concepto es más amplio que el simple desempleo: un hijo que trabaja puede seguir necesitando alimentos si sus ingresos son insuficientes para cubrir todas sus necesidades. La jurisprudencia ha interpretado que debe tratarse de una autosuficiencia real, no meramente formal, valorando cada caso según las circunstancias.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Tu hijo cumplió 18 años y debes seguir pagando pensión?" message="Un abogado de familia puede evaluar si corresponde la extensión, revisar la situación del hijo y determinar tus obligaciones." />
-
+                    <RelatedLawyers category="Derecho de Familia" />
 
                     {/* HASTA QUÉ EDAD */}
                     <div className="mb-12">
@@ -195,10 +193,11 @@ const BlogArticle = () => {
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
                                     <span className="text-green-600 font-bold">✓</span>
                                     <span>{item}</span>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                     </div>
+
+                        <InArticleCTA category="Derecho de Familia"  title="¿Tu hijo cumplió 18 años y debes seguir pagando pensión?" message="Un abogado de familia puede evaluar si corresponde la extensión, revisar la situación del hijo y determinar tus obligaciones." />
 
                     {/* HIJO ESTUDIA UNIVERSIDAD */}
                     <div className="mb-12">
@@ -250,8 +249,6 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Cuando el hijo cambia de carrera o se demora más del tiempo habitual de titulación, el tribunal no aplica una regla automática. Se evalúa si existe un plan de estudios coherente, si ha habido cambios injustificados o si la demora responde a circunstancias objetivas como problemas de salud o falta de cupos. En casos de abandono reiterado, puede proceder el cese, pero cada periodo debe analizarse por separado, no siendo válido suspender pagos por un cambio que aisladamente podría considerarse razonable.</p>
                     </div>
-
-
 
                     {/* PENSIÓN TERMINA AUTOMÁTICAMENTE? */}
                     <div className="mb-12">
@@ -392,25 +389,19 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En cada caso, el análisis de los plazos y las pruebas disponibles determina la viabilidad de la acción.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Crees que la pensión debería terminar o necesitas mantenerla?</h3>
-                            <p className="text-white mb-6">Si tu hijo cumplió 18 años y no sabes si la obligación continúa, o si eres el hijo mayor de edad que necesita seguir recibiendo alimentos, el momento de consultar es antes de que surja un conflicto. Un abogado de familia puede revisar tu situación y determinar si corresponde solicitar el cese, la rebaja o la continuación de la pensión.</p>
-                            <Link
-                                to="/abogado-pension-alimentos"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados en Familia
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -448,8 +439,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

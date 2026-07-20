@@ -146,7 +146,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg leading-relaxed mb-4">Base legal del arriendo</p>
 
-
               <p className="text-gray-700 leading-relaxed font-medium">
                 En Chile, un contrato de arriendo debe incluir monto, duración, forma de pago, condiciones de uso y término del contrato. Este documento es la base de cualquier acción legal en caso de conflicto.
               </p>
@@ -169,8 +168,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Estás por firmar un contrato de arriendo?" message="Un abogado especializado puede revisar las cláusulas, detectar abusos y proteger tus derechos antes de que firmes." />
-
+          <RelatedLawyers category="Derecho Civil" />
 
           {/* Link pilar */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -245,8 +243,7 @@ const BlogArticle = () => {
                   <CheckCircle className="h-5 w-5 text-green-600 mb-3" />
                   <h3 className="font-bold text-gray-900 mb-1">{item.title}</h3>
                   <p className="text-base text-gray-600">{item.desc}</p>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Recomendación práctica</h3>
@@ -272,6 +269,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+            <InArticleCTA category="Derecho Civil" title="¿Estás por firmar un contrato de arriendo?" message="Un abogado especializado puede revisar las cláusulas, detectar abusos y proteger tus derechos antes de que firmes." />
 
           {/* Tipos de contrato */}
           <div className="mb-12">
@@ -299,8 +298,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-
 
           {/* Qué debe incluir */}
           <div className="mb-12">
@@ -440,8 +437,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-
 
           {/* Cláusulas abusivas */}
           <div className="mb-12">
@@ -663,19 +658,10 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Revisaste tu contrato y encontraste cláusulas que no entiendes?</h3>
-              <p className="text-white mb-6">Una cláusula mal redactada o abusiva puede costarte meses de conflicto y la pérdida de tu garantía. Un abogado inmobiliario puede revisar tu contrato antes de que firmes y evitar problemas que después son difíciles de resolver.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
+            
           </div>
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -702,8 +688,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

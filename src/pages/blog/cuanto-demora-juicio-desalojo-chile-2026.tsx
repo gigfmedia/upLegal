@@ -158,7 +158,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8 my-8">
               <p className="text-gray-900 font-bold text-lg mb-4 leading-tight">Marco legal del desalojo</p>
 
-
               <p className="text-gray-700 leading-relaxed font-medium">
                 <strong>IMPORTANTE:</strong> En Chile, el arrendador no puede desalojar por su cuenta. Debe iniciar un procedimiento judicial oficial para recuperar la propiedad de forma legal. La autotutela es ilegal.
               </p>
@@ -175,8 +174,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil"  title="¿Estás evaluando iniciar un juicio de desalojo?" message="Un abogado especializado puede estimar los plazos reales según tu caso y definir la estrategia más conveniente." />
-
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-4 py-2">
             <h2 className="text-2xl font-bold mb-4">¿Cuánto demora un juicio de desalojo realmente?</h2>
@@ -255,6 +253,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <InArticleCTA category="Derecho Civil" title="¿Estás evaluando iniciar un juicio de desalojo?" message="Un abogado especializado puede estimar los plazos reales según tu caso y definir la estrategia más conveniente." />
+
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>
             <Link
@@ -301,8 +301,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           <div className="mb-12 py-2">
             <h2 className="text-2xl font-bold mb-6">¿Qué hacer si enfrentas un juicio de desalojo?</h2>
@@ -361,16 +359,13 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          {/* Improved CTA */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿No sabes cuánto puede demorar tu caso de desalojo?</h3>
-              <p className="text-white mb-6">Cada caso es diferente. Un abogado especializado puede revisar tu situación y darte un plazo realista en minutos.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          <InArticleCTA
+            title="¿Tu caso de arriendo necesita asesoría?"
+            message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho Civil"
+          />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
@@ -383,11 +378,7 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+          </div>          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -413,8 +404,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

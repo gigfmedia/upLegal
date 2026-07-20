@@ -190,7 +190,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Laboral" title="¿Te despidieron por necesidades de la empresa?" message="Un abogado laboral puede verificar si la causal es real, calcular tus indemnizaciones y evaluar si puedes demandar por más." />
+                    <RelatedLawyers category="Derecho Laboral" />
 
 
                     {/* CUANDO PUEDE UTILIZARSE */}
@@ -214,12 +214,18 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-green-800 text-lg mb-2">Despido válido: la empresa acredita las necesidades</h3>
                                 <p className="text-green-700">La empresa demuestra que existió una reestructuración real, cierre de un área, cambios tecnológicos o disminución de actividad. El tribunal verifica que los antecedentes respaldan la decisión. Solo corresponde indemnización legal.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-red-50 p-5 rounded-xl">
                                 <h3 className="font-bold text-red-800 text-lg mb-2">Despido injustificado: la causal no se prueba</h3>
                                 <p className="text-red-700">La empresa invocó necesidades de la empresa sin cambios reales, contrató a otra persona para el mismo cargo o no pudo acreditar los hechos. El trabajador puede obtener indemnización con recargos de hasta 100%.</p>
                             </div>
                         </div>
                     </div>
+<InArticleCTA category="Derecho Laboral" title="¿Te despidieron por necesidades de la empresa?" message="Un abogado laboral puede verificar si la causal es real, calcular tus indemnizaciones y evaluar si puedes demandar por más." />
+
 
                     {/* CARTA DE DESPIDO */}
                     <div className="mb-12">
@@ -296,7 +302,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* INJUSTIFICADO */}
                     <div className="mb-12">
@@ -475,25 +480,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Mientras antes se revise la documentación, mayores serán las posibilidades de preparar una estrategia adecuada.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Recibiste una carta de despido por necesidades de la empresa?</h3>
-                            <p className="text-white mb-6">Si tu empleador invocó esta causal y tienes dudas sobre la legalidad del despido, es recomendable revisar el caso antes de firmar documentos o dejar transcurrir los plazos legales. Un abogado laboral puede analizar la carta de despido, calcular correctamente las indemnizaciones y evaluar si existen fundamentos para demandar.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-                            >
-                                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -523,8 +517,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

@@ -257,10 +257,9 @@ const BlogArticle = () => {
               El aumento de pensión se funda en el principio de proporcionalidad y en la obligación legal de adecuar el monto a las necesidades reales y actuales del alimentario. La doctrina de los tribunales de familia chilenos exige que el cambio de circunstancias sea relevante y permanente, no meramente transitorio. Un aumento temporal de ingresos o un gasto extraordinario aislado no constituyen causal suficiente para modificar la pensión.
             </p>
 
-
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Necesitas aumentar la pensión de alimentos de tus hijos?" message="Un abogado de familia puede evaluar si corresponde el aumento, reunir los antecedentes y presentar la demanda judicial." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           {/* Cuándo se puede pedir */}
@@ -345,13 +344,16 @@ const BlogArticle = () => {
                 <div key={i} className="bg-gray-50 p-5 rounded-xl border border-gray-100">
                   <h4 className="font-bold text-gray-900 mb-2">{item.title}</h4>
                   <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <p className="text-gray-800 leading-relaxed text-sm border-l-4 border-green-500 bg-green-50 p-4">
               El tribunal evalúa la capacidad contributiva del alimentante considerando no solo sus ingresos formales, sino también su patrimonio y nivel de vida. La jurisprudencia ha establecido que el ocultamiento de rentas o la subdeclaración pueden ser inferidos a partir de indicios como la tenencia de vehículos de alta gama, viajes frecuentes o inversiones inmobiliarias. Este análisis integral busca evitar que el alimentante eluda su obligación mediante estructuras patrimoniales complejas.
             </p>
           </div>
+
+
+
+            <InArticleCTA category="Derecho de Familia"  title="¿Necesitas aumentar la pensión de alimentos de tus hijos?" message="Un abogado de familia puede evaluar si corresponde el aumento, reunir los antecedentes y presentar la demanda judicial." />
 
           {/* Qué pruebas sirven */}
           <div className="mb-12">
@@ -570,7 +572,6 @@ const BlogArticle = () => {
 
           {/* InArticle CTA */}
 
-
           {/* Preguntas frecuentes adicionales */}
           <div className="mb-8 mt-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Preguntas frecuentes sobre el proceso</h2>
@@ -646,10 +647,7 @@ const BlogArticle = () => {
             buttonText="Ver abogados de pensión de alimentos"
           />
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho de Familia" />
-
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -696,8 +694,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

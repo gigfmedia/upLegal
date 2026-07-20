@@ -191,12 +191,9 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-                    <InArticleCTA
-                        title="¿No sabes si tu caso realmente justifica una demanda laboral?"
-                        message="Un abogado laboral puede analizar tus antecedentes y ayudarte a decidir cuál es la mejor estrategia antes de que venzan los plazos legales."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Laboral"
-                    />
+
+                    <RelatedLawyers category="Derecho Laboral" />
+
 
                     {/* CUANDO CONVIENE */}
                     <div className="mb-12">
@@ -242,6 +239,14 @@ const BlogArticle = () => {
                         </ul>
                         <p className="text-gray-600 mt-4">Cada procedimiento posee requisitos y plazos específicos.</p>
                     </div>
+
+                        <InArticleCTA
+                                                                                title="¿No sabes si tu caso realmente justifica una demanda laboral?"
+                                                                                message="Un abogado laboral puede analizar tus antecedentes y ayudarte a decidir cuál es la mejor estrategia antes de que venzan los plazos legales."
+                                                                                buttonText="Habla con un abogado ahora"
+                                                                                category="Derecho Laboral"
+                                                                            />
+
 
                     {/* PRUEBAS */}
                     <div className="mb-12">
@@ -476,25 +481,15 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">En estos casos, una revisión temprana puede evitar errores que luego resulten difíciles de corregir.</p>
+                    <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
+
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Estás evaluando demandar a tu empleador?</h3>
-                            <p className="text-white mb-6">Antes de presentar una demanda laboral conviene revisar la estrategia, las pruebas disponibles y los plazos legales. Un abogado laboral puede analizar tu caso y ayudarte a definir el mejor camino.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Hablar con un abogado laboral
-                            </Link>
-                        </div>
-                    </div>
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">

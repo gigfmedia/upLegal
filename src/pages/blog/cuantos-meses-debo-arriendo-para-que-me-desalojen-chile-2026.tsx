@@ -169,7 +169,6 @@ const BlogArticle = () => {
                 No existe una regla como “3 meses” o “6 meses”. Eso es un mito.
               </p>
 
-
             </div>
             <p className="text-gray-600 leading-relaxed">
               La confusión viene porque en la práctica muchos arrendadores esperan, se intenta negociar antes y el proceso judicial demora, pero eso no es una obligación legal.
@@ -186,7 +185,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Debes meses de arriendo y temes un desalojo?" message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -219,8 +218,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Proceso real de desalojo en Chile (paso a paso)</h2>
             <div className="space-y-4 mb-8">
@@ -235,6 +232,10 @@ const BlogArticle = () => {
                   <div className="bg-green-900 p-2 rounded-lg text-green-600 w-9 h-9 flex items-center justify-center flex-shrink-0">
                     {item.icon}
                   </div>
+
+            
+
+
                   <div>
                     <span className="font-bold text-gray-900 text-lg">{item.title}</span>
                     <p className="text-base text-gray-600 mt-1 leading-relaxed">{item.desc}</p>
@@ -253,6 +254,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+<InArticleCTA category="Derecho Civil" title="¿Debes meses de arriendo y temes un desalojo?" message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo tienes antes de ser desalojado?</h2>
@@ -481,15 +484,6 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
-            <div className="bg-green-900 text-white rounded-2xl p-8">
-              <p className="text-lg font-bold mb-2 flex items-center gap-2">
-                <Shield className="h-5 w-5 text-green-400" />
-                Dato clave
-              </p>
-              <p className="text-green-200 leading-relaxed">
-                Muchos desalojos se aceleran no por la deuda, sino por la falta de respuesta del arrendatario. Responder a tiempo puede cambiar completamente el resultado del juicio y darte el tiempo necesario para regularizar tu situación.
-              </p>
-            </div>
           </div>
 
           <div className="mb-12">
@@ -510,7 +504,6 @@ const BlogArticle = () => {
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-
 
           </div>
 
@@ -659,19 +652,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Estás en riesgo de desalojo y no sabes qué hacer?</h3>
-              <p className="text-white mb-6">La deuda de arriendo puede escalar rápidamente a un juicio. Un abogado especializado puede evaluar tu caso y ayudarte a definir la mejor estrategia para evitar el desalojo.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
-
-          <div className="mb-12 border-t pt-8">
+                    <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -697,8 +678,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

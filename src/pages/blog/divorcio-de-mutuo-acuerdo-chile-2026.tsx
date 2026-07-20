@@ -137,10 +137,9 @@ const BlogArticle = () => {
               Está regulado en el artículo 55 de la Ley de Matrimonio Civil y requiere que ambas partes cumplan ciertos requisitos y presenten un acuerdo completo sobre las materias que el tribunal debe resolver.
             </p>
 
-
           </div>
 
-          <InArticleCTA category="Derecho de Familia" title="¿Quieres divorciarte de mutuo acuerdo y no sabes por dónde empezar?" message="Un abogado de familia puede redactar el acuerdo, preparar los documentos y guiar todo el trámite judicial." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           <div className="mb-12">
@@ -261,12 +260,13 @@ const BlogArticle = () => {
                     <h3 className="font-bold text-lg text-gray-900 mb-2">{item.title}</h3>
                     <p className="text-gray-600 leading-relaxed">{item.desc}</p>
                   </div>
-                </div>
-              ))}
+                </div>              ))}
             </div>
           </div>
 
 
+
+            <InArticleCTA category="Derecho de Familia" title="¿Quieres divorciarte de mutuo acuerdo y no sabes por dónde empezar?" message="Un abogado de familia puede redactar el acuerdo, preparar los documentos y guiar todo el trámite judicial." />
 
           <div className="mb-12">
             <div className="space-y-6 mt-8">
@@ -506,10 +506,14 @@ const BlogArticle = () => {
             buttonText="Comparar abogados especializados"
           />
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho de Familia" />
+                              <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-          <div className="mb-12 border-t border-gray-100 pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t border-gray-100 pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <div className="space-y-4 text-gray-600 leading-relaxed">
@@ -565,8 +569,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

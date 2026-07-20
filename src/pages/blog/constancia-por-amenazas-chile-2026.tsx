@@ -172,7 +172,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Recibes amenazas y necesitas una constancia?" message="Un abogado penal puede ayudarte a denunciar, obtener la constancia de Carabineros y evaluar medidas de protección." />
+                    <RelatedLawyers category="Derecho Penal" />
 
                     {/* QUE SE CONSIDERA UNA AMENAZA */}
                     <div className="mb-12">
@@ -207,10 +207,11 @@ const BlogArticle = () => {
                                         <h3 className="font-bold text-gray-900">{item.title}</h3>
                                         <p className="text-gray-600">{item.desc}</p>
                                     </div>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                     </div>
+
+                        <InArticleCTA category="Derecho Penal"  title="¿Recibes amenazas y necesitas una constancia?" message="Un abogado penal puede ayudarte a denunciar, obtener la constancia de Carabineros y evaluar medidas de protección." />
 
                     {/* CUANDO CORRESPONDE UNA DENUNCIA */}
                     <div className="mb-12">
@@ -395,8 +396,6 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-
-
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -554,25 +553,19 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te están amenazando y no sabes qué hacer?</h3>
-                            <p className="text-white mb-6">Si las amenazas son graves o reiteradas, el momento de actuar es antes de que los hechos escalen — no después. Un abogado penalista puede orientarte sobre si corresponde una constancia o una denuncia y qué pruebas reunir.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -606,8 +599,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

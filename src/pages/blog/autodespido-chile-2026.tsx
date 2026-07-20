@@ -133,7 +133,6 @@ const BlogArticle = () => {
               En vez de renunciar, el trabajador comunica que el empleador incumplió sus obligaciones legales o contractuales y luego demanda para exigir indemnizaciones. En términos simples:
             </p>
 
-
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
               <p className="font-bold text-blue-900 flex items-center gap-2">
                 El trabajador “despide” al empleador.
@@ -144,7 +143,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Tu empleador no paga cotizaciones o atrasa sueldos?" message="Un abogado laboral puede evaluar si tu caso califica para autodespido y calcular las indemnizaciones que puedes obtener." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           <div className="mb-12">
@@ -186,13 +185,17 @@ const BlogArticle = () => {
                 <h3 className="font-bold text-green-800 text-lg mb-2">Autodespido acogido: pruebas sólidas</h3>
                 <p className="text-green-700">El trabajador acredita incumplimientos graves con documentos (cotizaciones impagas, liquidaciones, correos, testigos). El tribunal declara el autodespido válido y ordena pagar todas las indemnizaciones más recargos de hasta 80%.</p>
               </div>
+
+            
+
+
               <div className="bg-red-50 p-5 rounded-xl">
                 <h3 className="font-bold text-red-800 text-lg mb-2">Autodespido rechazado: pruebas insuficientes</h3>
                 <p className="text-red-700">El trabajador no logra demostrar los incumplimientos o la causal invocada no es lo suficientemente grave. El tribunal rechaza la demanda y el caso se trata como renuncia voluntaria, perdiendo toda posibilidad de indemnización.</p>
               </div>
             </div>
           </div>
-
+<InArticleCTA category="Derecho Laboral" title="¿Tu empleador no paga cotizaciones o atrasa sueldos?" message="Un abogado laboral puede evaluar si tu caso califica para autodespido y calcular las indemnizaciones que puedes obtener." />
 
 
           <div className="mb-12">
@@ -298,15 +301,6 @@ const BlogArticle = () => {
             </div>
 
             {/* Ejemplo Real Block */}
-            <div className="bg-green-900 text-white p-8 rounded-2xl mt-8">
-              <h3 className="font-bold text-xl mb-4 text-white">Ejemplo real simple</h3>
-              <p className="mb-4 text-white">Supongamos que el sueldo es de $1.000.000, la antigüedad es de 5 años y hay cotizaciones impagas. El tribunal acepta el autodespido.</p>
-
-              <div className="space-y-3 p-6 rounded-xl border border-gray-700 font-mono text-sm">
-                <div className="flex justify-between items-center border-b border-gray-700 pb-2">
-                  <span className="text-white">Años de servicio (5)</span>
-                  <span className="font-bold">$5.000.000</span>
-                </div>
                 <div className="flex justify-between items-center border-b border-gray-700 pb-2">
                   <span className="text-white">Mes de aviso previo</span>
                   <span className="font-bold">$1.000.000</span>
@@ -319,9 +313,7 @@ const BlogArticle = () => {
                   <span className="font-bold">Total estimado</span>
                   <span className="font-bold text-green-400">&gt; $8.500.000</span>
                 </div>
-              </div>
               <p className="mt-4 text-white italic">Más vacaciones pendientes y otras remuneraciones adeudadas.</p>
-            </div>
           </div>
 
           {/* COMPLEJIDAD 2: CALCULO CORRECTO VS INCORRECTO */}
@@ -443,25 +435,14 @@ const BlogArticle = () => {
             <p className="text-gray-600 mt-4">Mientras antes se revise la documentación, mayores serán las posibilidades de preparar una estrategia adecuada.</p>
           </div>
 
-          {/* CTA PRINCIPAL */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Tu empleador incumple sus obligaciones y estás pensando en hacer un autodespido?</h3>
-              <p className="text-white mb-6">Si tu empleador no paga cotizaciones, atrasa sueldos o modificó tus condiciones sin acuerdo, un autodespido bien ejecutado puede permitirte recibir las mismas indemnizaciones que en un despido injustificado. Antes de renunciar o enviar cualquier carta, es recomendable evaluar las pruebas disponibles con un abogado laboral.</p>
-              <Link
-                to="/abogados-laborales"
-                className="inline-flex items-center gap-2 bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors group"
-              >
-                Hablar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
-          </div>
+                              <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-          {/* CONCLUSION */}
-
-          <RelatedLawyers category="Derecho Laboral" />
-
-          <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -504,8 +485,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

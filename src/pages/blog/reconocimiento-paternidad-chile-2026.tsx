@@ -180,7 +180,8 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Un punto que suele pasar inadvertido es que no todos los reconocimientos producen los mismos efectos jurídicos. La filiación derivada de un reconocimiento voluntario puede ser cuestionada judicialmente si se acredita que no se ajusta a la realidad biológica, mientras que la filiación establecida por sentencia firme tiene un régimen de impugnación más restringido. Esta diferencia es relevante al evaluar la estabilidad del vínculo filiativo en el tiempo.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas reconocer la paternidad de tu hijo?" message="Un abogado de familia puede guiar el reconocimiento voluntario o judicial, preparar los documentos y asegurar los derechos del niño." />
+                    <RelatedLawyers category="Derecho de Familia" />
+
 
                     {/* POR QUE ES IMPORTANTE */}
                     <div className="mb-12">
@@ -216,6 +217,10 @@ const BlogArticle = () => {
                                 <h3 className="font-bold text-gray-900">Reconocimiento al momento de la inscripción de nacimiento</h3>
                                 <p className="text-gray-600">Es la situación más común. Cuando el padre comparece al momento de la inscripción, puede reconocer inmediatamente al hijo. Este reconocimiento produce efectos legales desde ese momento.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                                 <h3 className="font-bold text-gray-900">Reconocimiento posterior</h3>
                                 <p className="text-gray-600">También es posible reconocer al hijo con posterioridad: años después del nacimiento, durante la infancia, la adolescencia, o incluso cuando el hijo ya es adulto.</p>
@@ -231,6 +236,8 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">Sin embargo, no todo reconocimiento formal es definitivo. Si se otorga mediante escritura pública o por acta ante el Registro Civil sin que el hijo haya prestado consentimiento (tratándose de un mayor de edad), la validez del acto puede ser discutida. Además, cuando el reconocimiento se realiza bajo error, dolo o violencia, podría eventualmente impugnarse, aunque las causales y plazos difieren de los aplicables a la impugnación de paternidad propiamente tal.</p>
                     </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Necesitas reconocer la paternidad de tu hijo?" message="Un abogado de familia puede guiar el reconocimiento voluntario o judicial, preparar los documentos y asegurar los derechos del niño." />
+
 
                     {/* QUE OCURRE SI EL PADRE NO QUIERE RECONOCER */}
                     <div className="mb-12">
@@ -327,8 +334,6 @@ const BlogArticle = () => {
                         </div>
                         <p className="text-gray-600 mt-4">La extensión de estos derechos puede generar conflictos prácticos relevantes. Por ejemplo, si el padre tiene otros hijos previamente reconocidos, la irrupción de un nuevo hijo puede alterar las cuotas hereditarias o la distribución de la pensión de alimentos. La determinación de la filiación no solo afecta la relación entre padre e hijo, sino que puede repercutir en derechos de terceros que ya tenían un vínculo jurídico consolidado.</p>
                     </div>
-
-
 
                     {/* RECLAMACIÓN DE PATERNIDAD SI EL HIJO ES ADULTO */}
                     <div className="mb-12">
@@ -436,25 +441,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En cada uno de estos escenarios, la asesoría jurídica especializada permite tomar decisiones informadas y evitar riesgos procesales.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Recibiste una negativa o tienes dudas sobre cómo reconocer a tu hijo?</h3>
-                            <p className="text-white mb-6">El momento de consultar a un abogado es antes de presentar cualquier solicitud o demanda. Un especialista en derecho de familia puede evaluar los antecedentes, determinar la vía más adecuada (voluntaria o judicial) y preparar la estrategia probatoria incluyendo la prueba de ADN si fuera necesaria.</p>
-                            <Link
-                                to="/abogado-pension-alimentos"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados especializados en familia
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -492,8 +486,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

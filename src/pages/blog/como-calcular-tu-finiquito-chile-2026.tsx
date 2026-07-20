@@ -441,7 +441,6 @@ const BlogArticle = () => {
             <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6">
               <p className="text-gray-700 font-semibold mb-4">En el finiquito normalmente se incluyen:</p>
 
-
               <ul className="grid sm:grid-cols-2 gap-3 list-none p-0">
                 {[
                   "Remuneraciones pendientes",
@@ -462,7 +461,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Te entregaron el finiquito y no estás seguro de los montos?" message="Un abogado laboral puede revisar tu finiquito, detectar errores y negociar mejoras antes de que lo firmes." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           {/* Complexity Block 1 */}
@@ -516,8 +515,9 @@ const BlogArticle = () => {
               </Link>
             </div>
 
-
           </div>
+
+          <InArticleCTA category="Derecho Laboral" title="¿Te entregaron el finiquito y no estás seguro de los montos?" message="Un abogado laboral puede revisar tu finiquito, detectar errores y negociar mejoras antes de que lo firmes." />
 
           {/* Elements Included */}
           <div className="mb-12">
@@ -685,7 +685,6 @@ const BlogArticle = () => {
 
           <div className="mb-12">
 
-
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Cómo calcular tu finiquito en Chile 2026</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
               Ahora que ya conoces qué pagos puede incluir un finiquito laboral, puedes estimar cuánto te corresponde según tu sueldo, años trabajados y causal de término del contrato.<br />
@@ -840,22 +839,14 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               Calcular el finiquito puede parecer sencillo, pero hay situaciones donde una revisión profesional marca la diferencia entre recibir lo justo o perder miles de pesos.
             </p>
-            <div className="mt-12 bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te ofrecieron un finiquito y no sabes si el monto es correcto?</h3>
-              <p className="text-white mb-6">
-                Un abogado laboral puede revisar tu liquidación, verificar que todos los conceptos estén incluidos y negociar por ti si falta algún pago.
-              </p>
-              <Link
-                to="/abogados-laborales"
-                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
           </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+          <InArticleCTA
+            title="¿Los plazos para demandar están por vencer?"
+            message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+            buttonText="Habla con un abogado ahora"
+            category="Derecho Laboral"
+          />
 
           <div className="mb-12 border-t pt-8">
 
@@ -888,8 +879,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         {/* Compartir - Growth Hack */}

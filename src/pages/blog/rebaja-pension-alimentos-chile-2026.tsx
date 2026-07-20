@@ -235,7 +235,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4">La idea es ajustar el aporte cuando:</p>
 
-
             <ul className="space-y-2 bg-gray-50 p-6 rounded-xl border border-gray-100 shadow-sm text-gray-600 mb-4">
               {[
                 "Cambió sustancialmente la situación económica de quien paga.",
@@ -253,7 +252,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Tu situación económica cambió y necesitas rebajar la pensión?" message="Un abogado de familia puede evaluar si corresponde la rebaja, reunir los antecedentes y presentar la demanda judicial." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           {/* ¿Se puede bajar porque quiero? */}
@@ -340,6 +339,10 @@ const BlogArticle = () => {
               ].map((err, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="text-red-500 font-bold text-lg mt-0.5 flex-shrink-0">✕</div>
+
+            
+
+
                   <div>
                     <h4 className="font-bold text-red-950">{err.title}</h4>
                     <p className="text-red-800 leading-relaxed">{err.desc}</p>
@@ -348,6 +351,8 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
+<InArticleCTA category="Derecho de Familia"  title="¿Tu situación económica cambió y necesitas rebajar la pensión?" message="Un abogado de familia puede evaluar si corresponde la rebaja, reunir los antecedentes y presentar la demanda judicial." />
+
 
           {/* No bajar por su cuenta */}
           <div className="mb-12">
@@ -427,8 +432,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           {/* Cuánto puede rebajarse */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">¿Cuánto puede rebajarse la pensión?</h2>
@@ -464,7 +467,6 @@ const BlogArticle = () => {
               El monto de la rebaja no está predeterminado legalmente, pero los tribunales suelen aplicar un criterio de proporcionalidad inversa: a mayor disminución de ingresos, mayor posibilidad de rebaja, siempre que el nuevo monto no desatienda las necesidades básicas del alimentario. En la práctica, rebajas superiores al 40% del monto original solo prosperan cuando el alimentante acredita una disminución drástica y permanente de su capacidad económica.
             </p>
           </div>
-
 
           {/* Enlaces relacionados */}
           <div className="mb-6 space-y-3">
@@ -536,10 +538,7 @@ const BlogArticle = () => {
             buttonText="Ver abogados de pensión de alimentos"
           />
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho de Familia" />
-
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -588,8 +587,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

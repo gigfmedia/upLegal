@@ -147,7 +147,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed font-bold">Es decir:</p>
 
-
             <div className="grid sm:grid-cols-2 gap-3 mb-6">
               {[
                 "El arrendatario sigue ocupando la propiedad",
@@ -174,8 +173,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <InArticleCTA category="Arrendamiento" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
-
+          <RelatedLawyers category="Arrendamiento" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa cuando hay tácita reconducción?</h2>
@@ -193,8 +191,7 @@ const BlogArticle = () => {
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 min-h-[3rem]">
                   <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
                   <span className="text-base text-gray-700">{item}</span>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <div className="grid sm:grid-cols-2 gap-6 mt-6">
               <div className="bg-green-50 p-5 rounded-xl">
@@ -207,6 +204,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+            <InArticleCTA category="Arrendamiento" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se mantiene el mismo contrato?</h2>
@@ -554,7 +553,6 @@ const BlogArticle = () => {
               ))}
             </div>
 
-
           </div>
 
           {/* ¿Cuándo consultar abogado? */}
@@ -575,18 +573,8 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Tu contrato de arriendo terminó pero sigues viviendo ahí sin contrato nuevo?</h3>
-              <p className="text-white mb-6">La tácita reconducción es más común de lo que crees, pero puede generar incertidumbre jurídica. Un abogado inmobiliario puede ayudarte a regularizar tu situación o entender qué riesgos corres si el arrendador decide terminar la relación.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
-
-          <RelatedLawyers category="Arrendamiento" />
-
-          <div className="mb-12 border-t pt-8">
+            
+          </div>          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -613,8 +601,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

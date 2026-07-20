@@ -172,7 +172,6 @@ const BlogArticle = () => {
                             Estas conductas pueden provocar consecuencias psicológicas, emocionales e incluso económicas para la persona afectada.
                         </p>
 
-
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Importante</p>
                             <p className="text-blue-800">
@@ -186,7 +185,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral en tu trabajo?" message="Un abogado laboral puede evaluar tu caso, reunir pruebas y determinar si corresponde una tutela laboral o demanda." />
+                    <RelatedLawyers category="Derecho Laboral" />
 
 
                     {/* CONDUCTAS */}
@@ -237,7 +236,13 @@ const BlogArticle = () => {
                                 Dos trabajadores pueden vivir situaciones similares y obtener resultados completamente distintos en un juicio. La diferencia suele estar en la continuidad de las conductas, la intención de afectar la dignidad del trabajador y los antecedentes concretos que puedan acreditarse durante el proceso.
                             </p>
                         </div>
+
+                        
+
+
                     </div>
+<InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral en tu trabajo?" message="Un abogado laboral puede evaluar tu caso, reunir pruebas y determinar si corresponde una tutela laboral o demanda." />
+
 
                     {/* QUIEN PUEDE COMETER */}
                     <div className="mb-12">
@@ -337,7 +342,6 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE */}
-
 
                     {/* TUTELA LABORAL */}
                     <div className="mb-12">
@@ -475,25 +479,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">En estos escenarios suele ser importante revisar la estrategia antes de declarar, firmar documentos o dejar transcurrir los plazos legales.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿El acoso laboral continúa o ya existe una investigación en tu empresa?</h3>
-                            <p className="text-white mb-6">Si los hechos siguen ocurriendo o la empresa ya inició una investigación interna, el momento más importante para revisar tu situación suele ser antes de presentar nuevos antecedentes, firmar documentos o tomar decisiones que puedan afectar una futura acción judicial. Analizar oportunamente el caso permite definir la estrategia más adecuada según los hechos y las pruebas disponibles.</p>
-                            <Link
-                                to="/abogados-laborales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-md hover:bg-gray-100 transition-colors"
-                            >
-                                Hablar con un abogado laboral
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho Laboral" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -523,8 +516,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

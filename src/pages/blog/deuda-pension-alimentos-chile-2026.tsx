@@ -208,7 +208,7 @@ const BlogArticle = () => {
 
           </div>
 
-          <InArticleCTA category="Derecho de Familia"  title="¿Tienes deuda de pensión de alimentos?" message="Un abogado de familia puede evaluar tu situación, negociar el pago y buscar alternativas para evitar consecuencias graves." />
+          <RelatedLawyers category="Derecho de Familia" />
 
 
           {/* Cómo calcula el juez */}
@@ -259,8 +259,7 @@ const BlogArticle = () => {
                 <div key={i} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                   <span className="text-xl">{m.icon}</span>
                   <span className="text-gray-700 font-medium">{m.item}</span>
-                </div>
-              ))}
+                </div>              ))}
             </div>
             <p className="text-gray-600 mb-4">
               Si necesitas activar estos mecanismos, un{" "}
@@ -270,6 +269,11 @@ const BlogArticle = () => {
               puede guiarte desde la liquidación hasta las medidas de apremio.
             </p>
           </div>
+
+
+
+
+            <InArticleCTA category="Derecho de Familia" title="¿Tienes deuda de pensión de alimentos?" message="Un abogado de familia puede evaluar tu situación, negociar el pago y buscar alternativas para evitar consecuencias graves." />
 
           <p className="text-gray-600 leading-relaxed text-sm border-l-4 border-green-500 pl-4 italic">
             El cobro judicial de la deuda de pensión de alimentos se rige por el procedimiento especial del artículo 14 de la Ley de Pensiones de Alimentos. Este procedimiento permite que el tribunal decrete medidas de apremio sin necesidad de un juicio declarativo previo, lo que acelera significativamente la recuperación. La liquidación de la deuda puede solicitarse en cualquier momento mientras la obligación alimenticia esté vigente, sin perjuicio de las cuotas futuras.
@@ -325,8 +329,6 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-
-
 
           {/* Preguntas frecuentes de situaciones */}
           <div className="mb-12">
@@ -623,10 +625,7 @@ const BlogArticle = () => {
             buttonText="Compara abogados especializados"
           />
 
-          {/* Conclusión */}
-          <RelatedLawyers category="Derecho de Familia" />
-
-          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
+          {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -675,8 +674,6 @@ const BlogArticle = () => {
         </div>
 
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

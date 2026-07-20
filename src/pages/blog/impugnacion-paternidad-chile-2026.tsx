@@ -167,7 +167,8 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Conviene precisar que esta acción no persigue simplemente un resultado biológico, sino que ataca la presunción legal de paternidad. Dependiendo de si la filiación proviene de un reconocimiento voluntario o de una sentencia judicial, las reglas procesales y los plazos para impugnar pueden variar significativamente, lo que marca una diferencia sustancial en la estrategia jurídica que corresponda adoptar.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia" title="¿Dudas de la paternidad de un hijo?" message="Un abogado de familia puede evaluar los plazos, preparar la demanda de impugnación y proteger tus derechos patrimoniales." />
+                    <RelatedLawyers category="Derecho de Familia" />
+
 
                     {/* CUANDO PUEDE EXISTIR UNA IMPUGNACION */}
                     <div className="mb-12">
@@ -202,12 +203,18 @@ const BlogArticle = () => {
                                 <p className="text-green-700">Busca establecer una filiación. Por ejemplo, cuando un padre no ha reconocido a un hijo y se pretende determinar legalmente dicho vínculo.</p>
                                 <p className="text-green-600 mt-2">Revisa nuestra guía sobre <Link to="/blog/reconocimiento-paternidad-chile-2026" className="underline">Reconocimiento de paternidad en Chile</Link>.</p>
                             </div>
+
+                        
+
+
                             <div className="bg-red-50 p-5 rounded-xl">
                                 <h3 className="font-bold text-red-800 text-lg mb-2">Impugnación de paternidad</h3>
                                 <p className="text-red-700">Busca eliminar una filiación ya existente. En este caso la relación jurídica ya está establecida y lo que se pretende es dejarla sin efecto.</p>
                             </div>
                         </div>
                     </div>
+<InArticleCTA category="Derecho de Familia" title="¿Dudas de la paternidad de un hijo?" message="Un abogado de familia puede evaluar los plazos, preparar la demanda de impugnación y proteger tus derechos patrimoniales." />
+
 
                     {/* QUIEN PUEDE SOLICITAR LA IMPUGNACION */}
                     <div className="mb-12">
@@ -361,8 +368,6 @@ const BlogArticle = () => {
                         <p className="text-gray-600">La filiación produce efectos hereditarios relevantes. Por ello las acciones relacionadas con paternidad suelen tener consecuencias patrimoniales importantes. Dependiendo del caso, una sentencia puede afectar la calidad de heredero, la participación sucesoria y los derechos hereditarios futuros.</p>
                     </div>
 
-
-
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -442,25 +447,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Por ello resulta frecuente que varias materias deban abordarse simultáneamente.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">Revisa tu caso con un abogado de familia antes de iniciar cualquier gestión</h3>
-                            <p className="text-white mb-6">Si estás pensando en impugnar una paternidad o recibiste una notificación que cuestiona la filiación actual, el momento de consultar es antes de presentar cualquier escrito o responder ante el tribunal. Un abogado especializado puede evaluar los antecedentes, verificar los plazos aplicables y definir si la acción tiene viabilidad procesal.</p>
-                            <Link
-                                to="/abogado-pension-alimentos"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados especializados en familia
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -501,8 +495,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

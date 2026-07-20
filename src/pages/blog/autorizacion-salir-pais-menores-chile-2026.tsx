@@ -162,13 +162,12 @@ const BlogArticle = () => {
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl">
                             <p className="font-bold text-blue-900">Finalidad</p>
 
-
                             <p className="text-blue-800">Proteger los derechos del niño, niña o adolescente y evitar situaciones de sustracción internacional o traslados no autorizados.</p>
                         </div>
                         <p className="text-gray-600 mt-4">La regla de autorización no aplica solo a viajes turísticos. También cubre viajes por estudios, tratamientos médicos en el extranjero, visitas a familiares o cualquier otra salida del territorio nacional. Además, el nivel de exigencia puede variar según el país de destino: algunos destinos requieren documentación adicional o trámites consulares que deben coordinarse con suficiente antelación.</p>
                     </div>
 
-                    <InArticleCTA category="Derecho de Familia"  title="¿Necesitas autorización para que tu hijo salga del país?" message="Un abogado de familia puede tramitar la autorización judicial, preparar los documentos y agilizar el proceso de viaje." />
+                    <RelatedLawyers category="Derecho de Familia" />
 
 
                     {/* QUÉ SE CONSIDERA MENOR DE EDAD */}
@@ -182,6 +181,9 @@ const BlogArticle = () => {
                         <h2 className="text-2xl font-bold mb-4">Salida del país cuando viaja con ambos padres</h2>
                         <p className="text-gray-600 mb-4">Esta es la situación más sencilla. Cuando el niño, niña o adolescente viaja acompañado por ambos padres, normalmente basta con presentar cédula de identidad o pasaporte del niño, niña o adolescente, documentación de viaje y documentos de identificación de los padres. En este escenario no suele requerirse autorización adicional.</p>
                     </div>
+
+                        <InArticleCTA category="Derecho de Familia"  title="¿Necesitas autorización para que tu hijo salga del país?" message="Un abogado de familia puede tramitar la autorización judicial, preparar los documentos y agilizar el proceso de viaje." />
+
 
                     {/* VIAJE CON UNO DE LOS PADRES */}
                     <div className="mb-12">
@@ -360,8 +362,6 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-
-
                     {/* CASO PRÁCTICO */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Caso práctico</h2>
@@ -409,25 +409,14 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Cada situación tiene plazos y requisitos distintos que un abogado de familia puede evaluar rápidamente para evitar la pérdida del viaje o del derecho a salir del país.</p>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
-                    <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center text-white">
-                            <h3 className="text-2xl text-green-600 font-bold font-serif mb-3">El viaje está planificado pero la autorización no está lista</h3>
-                            <p className="text-white mb-6">Si compraste los pasajes y el otro padre no firma, no esperes al día antes del vuelo. Un abogado de familia puede evaluar si corresponde una autorización judicial urgente y preparar la solicitud ante el Tribunal de Familia para que resuelva antes de la fecha de viaje.</p>
-                            <Link
-                                to="/abogado-pension-alimentos"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados de familia
-                            </Link>
-                        </div>
-                    </div>
+                                        <InArticleCTA
+                        title="¿Necesitas resolver tu situación familiar?"
+                        message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho de Familia"
+                    />
 
-                    {/* CONCLUSION */}
-
-                    <RelatedLawyers category="Derecho de Familia" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -468,8 +457,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

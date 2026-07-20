@@ -148,7 +148,6 @@ const BlogArticle = () => {
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto permite al arrendador:</p>
 
-
             <div className="grid sm:grid-cols-3 gap-4 mb-8">
               {[
                 { text: "Terminar el contrato", icon: <FileText className="h-5 w-5" /> },
@@ -176,7 +175,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Tu arrendador te demandó por no pagar el arriendo?" message="Un abogado especializado puede revisar la demanda, evaluar tus defensas y buscar alternativas para evitar el desalojo." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -259,6 +258,10 @@ const BlogArticle = () => {
             <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-6">
               <p className="text-blue-800 font-bold text-lg">No.</p>
             </div>
+
+            
+
+
             <div className="grid sm:grid-cols-2 gap-8 mb-12">
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full"></div>
@@ -301,8 +304,6 @@ const BlogArticle = () => {
               </div>
             </div>
 
-
-
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres ver cómo funciona realmente:</p>
             <div className="text-center py-4 border-t border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -325,6 +326,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+<InArticleCTA category="Derecho Civil" title="¿Tu arrendador te demandó por no pagar el arriendo?" message="Un abogado especializado puede revisar la demanda, evaluar tus defensas y buscar alternativas para evitar el desalojo." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Proceso real: qué pasa si no pagas</h2>
@@ -641,15 +644,7 @@ const BlogArticle = () => {
 
           </div>
           {/* CTA before Conclusion */}
-          <div className="mb-12">
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Debes una o más cuotas de arriendo y no sabes qué hacer?</h3>
-              <p className="text-white mb-6">Ignorar la deuda no la detiene: al contrario, cada mes que pasa se suman intereses, costas judiciales y aumenta el riesgo de desalojo. Un abogado puede ayudarte a negociar un acuerdo o preparar tu defensa antes de que la demanda llegue.</p>
-              <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                Ver abogados inmobiliarios disponibles
-              </Link>
-            </div>
-          </div>
+          
 
           {/* ¿Cuándo consultar abogado? */}
           <div className="mb-12">
@@ -667,10 +662,14 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Civil" />
+                              <InArticleCTA
+                        title="¿Tu caso civil necesita asesoría?"
+                        message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Civil"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -698,8 +697,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

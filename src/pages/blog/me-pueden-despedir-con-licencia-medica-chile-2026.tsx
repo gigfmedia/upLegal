@@ -127,7 +127,6 @@ const BlogArticle = () => {
               La protección depende principalmente de dos factores:
             </p>
 
-
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2 text-gray-700 text-base">
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -140,7 +139,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <InArticleCTA category="Derecho Laboral"  title="¿Te despidieron estando con licencia médica?" message="Un abogado laboral puede revisar si el despido es legal, calcular las indemnizaciones y evaluar si corresponde una demanda." />
+          <RelatedLawyers category="Derecho Laboral" />
 
 
           <div className="mb-12">
@@ -185,12 +184,18 @@ const BlogArticle = () => {
                 <h3 className="font-bold text-green-800 text-lg mb-2">Necesidades de la empresa</h3>
                 <p className="text-green-700">Causal objetiva que puede notificarse durante licencia, pero el término del contrato debe ser posterior al fin de la licencia. Si el empleador no logra probarla, tienes derecho a indemnización con recargo.</p>
               </div>
+
+            
+
+
               <div className="bg-red-50 p-5 rounded-xl">
                 <h3 className="font-bold text-red-800 text-lg mb-2">Conducta indebida o falta de probidad</h3>
                 <p className="text-red-700">Invocar causales disciplinarias durante una licencia activa es jurídicamente riesgoso. En la práctica, aumenta significativamente la probabilidad de que el despido sea declarado injustificado por un tribunal.</p>
               </div>
             </div>
           </div>
+<InArticleCTA category="Derecho Laboral"  title="¿Te despidieron estando con licencia médica?" message="Un abogado laboral puede revisar si el despido es legal, calcular las indemnizaciones y evaluar si corresponde una demanda." />
+
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">El punto clave: notificación vs. ejecución del despido</h2>
@@ -236,8 +241,6 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa con el sueldo durante la licencia médica?</h2>
@@ -334,8 +337,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto puedes recibir si el despido fue injustificado?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -404,22 +405,17 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4 leading-relaxed">
               Si te despidieron mientras estabas con licencia médica, hay señales claras que indican que debes buscar asesoría legal inmediatamente. El tiempo corre y cada día que pasa reduce tus opciones legales.
             </p>
-            <div className="bg-green-900 rounded-2xl p-8 text-center">
-              <h3 className="text-2xl font-bold font-serif text-green-600 mb-3">¿Te despidieron durante una licencia médica y no sabes si fue legal?</h3>
-              <p className="text-white mb-6">Un abogado laboral puede revisar tu carta de despido, verificar si las fechas son correctas y decirte si tienes opciones reales de recuperar indemnización.</p>
-              <Link
-                to="/abogados-laborales"
-                className="inline-flex items-center gap-2 group bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                Consultar con un abogado laboral <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
+            
           </div>
 
-          {/* Conclusion */}
-          <RelatedLawyers category="Derecho Laboral" />
+                              <InArticleCTA
+                        title="¿Los plazos para demandar están por vencer?"
+                        message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
-          <div className="mb-12 border-t pt-8">
+{/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -446,8 +442,6 @@ const BlogArticle = () => {
           </div>
         </div>
       </div>
-
-
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">

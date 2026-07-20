@@ -142,7 +142,6 @@ const BlogArticle = () => {
                   Acciones Prohibidas (Nunca las realices por tu cuenta)
                 </p>
 
-
                 <div className="grid sm:grid-cols-2 gap-3">
                   {[
                     "Cambiar la cerradura con el ocupante dentro",
@@ -179,7 +178,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Derecho Civil"  title="¿Necesitas desalojar a alguien de tu propiedad?" message="Un abogado especializado puede identificar la acción legal correcta según tu caso y guiar todo el процессo de desalojo." />
+            <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -203,6 +202,10 @@ const BlogArticle = () => {
                     Desde el primer mes de atraso, ya estás facultado para demandar. No necesitas esperar tres meses ni enviar cartas notariales si el contrato no lo exige explícitamente para constituir la mora.
                   </p>
                 </div>
+
+              
+
+
                 <div className="bg-green-50 border rounded-xl p-5 border-green-100 transition-colors shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-base sm:text-lg">
                     <span className="text-green-600 font-bold">✓</span>
@@ -276,6 +279,8 @@ const BlogArticle = () => {
 
               
             </div>
+<InArticleCTA category="Derecho Civil"  title="¿Necesitas desalojar a alguien de tu propiedad?" message="Un abogado especializado puede identificar la acción legal correcta según tu caso y guiar todo el процессo de desalojo." />
+
 
             <div className="mb-12 border-t border-gray-100 pt-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 2 — Cómo desalojar a alguien sin contrato escrito (Arriendo Verbal)</h2>
@@ -497,15 +502,7 @@ const BlogArticle = () => {
               </div>
             </div>
 
-            <div className="mb-12">
-              <div className="bg-green-900 rounded-2xl p-8 text-center">
-                <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Tienes a alguien ocupando tu propiedad y quieres desalojarlo legalmente?</h3>
-                <p className="text-white mb-6">Cada situación requiere un procedimiento legal distinto. Un abogado especializado puede evaluar tu caso y determinar la mejor estrategia para recuperar tu inmueble.</p>
-                <Link to="/abogados-arriendo" className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors">
-                  Ver abogados inmobiliarios disponibles
-                </Link>
-              </div>
-            </div>
+            
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
@@ -518,11 +515,7 @@ const BlogArticle = () => {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <RelatedLawyers category="Derecho Civil" />
-
-            <div className="mb-12 border-t border-gray-100 pt-12">
+            </div>            <div className="mb-12 border-t border-gray-100 pt-12">
 
               <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión: Recuperar tu propiedad es posible</h2>
               <p className="text-gray-600 leading-relaxed mb-6">

@@ -183,7 +183,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Penal"  title="¿Te acusan de estafa o fuiste víctima de una?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
+                    <RelatedLawyers category="Derecho Penal" />
 
                     {/* ELEMENTOS DE UNA ESTAFA */}
                     <div className="mb-12">
@@ -216,10 +216,11 @@ const BlogArticle = () => {
                                 <div key={i} className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
                                     <AlertCircle className="h-4 w-4 text-red-500" />
                                     <span>{item}</span>
-                                </div>
-                            ))}
+                                </div>                            ))}
                         </div>
                     </div>
+
+                        <InArticleCTA category="Derecho Penal"  title="¿Te acusan de estafa o fuiste víctima de una?" message="Un abogado penal puede revisar los elementos del delito, evaluar las pruebas y definir tu estrategia de defensa o denuncia." />
 
                     {/* ME ESTAFARON */}
                     <div className="mb-12">
@@ -408,8 +409,6 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Especialmente cuando los montos involucrados son significativos.</p>
                     </div>
 
-
-
                     {/* ERRORES FRECUENTES */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Errores frecuentes después de una estafa</h2>
@@ -467,25 +466,19 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    {/* CTA PRINCIPAL */}
+                    {}
                     <div className="mb-12">
-                        <div className="bg-green-900 rounded-2xl p-8 text-center">
-                            <h3 className="text-2xl font-serif font-bold text-green-600 mb-3">¿Ya transferiste dinero a un estafador?</h3>
-                            <p className="text-white mb-6">Si acabas de hacer una transferencia y crees que fuiste estafado, las primeras horas son críticas. La Fiscalía puede solicitar el congelamiento de cuentas si actúas rápido y aportas los antecedentes necesarios.</p>
-                            <Link
-                                to="/abogados-penales"
-                                className="inline-block bg-white text-green-900 font-bold px-8 py-3 rounded-xl hover:bg-gray-100 transition-colors"
-                            >
-                                Ver abogados penalistas disponibles
-                            </Link>
-                        </div>
+                        
                     </div>
 
-                    {/* CONCLUSION */}
+                                        <InArticleCTA
+                        title="¿Enfrentas una situación penal urgente?"
+                        message="Cada minuto cuenta. Un abogado penalista puede revisar tu situación y asesorarte sobre los pasos a seguir."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Penal"
+                    />
 
-                    <RelatedLawyers category="Derecho Penal" />
-
-                    <div className="mb-12 border-t pt-8">
+{/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
@@ -521,8 +514,6 @@ const BlogArticle = () => {
                     </div>
                 </div>
             </div>
-
-
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
