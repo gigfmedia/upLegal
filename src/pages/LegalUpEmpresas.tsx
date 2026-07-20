@@ -28,6 +28,8 @@ import {
   ChevronDown,
   LogOut,
   LayoutDashboard,
+  Menu,
+  X,
 } from 'lucide-react'
 
 const plans = [
@@ -296,6 +298,7 @@ export default function LegalUpEmpresas() {
     }
   }
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
 
@@ -311,7 +314,7 @@ export default function LegalUpEmpresas() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    navigate('/')
+    navigate('/legalup-empresas')
   }
 
   const contactName = company?.contact_name || ''
@@ -325,17 +328,40 @@ export default function LegalUpEmpresas() {
       {/* Custom header for Empresas landing */}
       <header className="h-16 flex items-center px-4 sm:px-6 lg:px-8 border-b border-gray-200 bg-white fixed top-0 left-0 right-0 z-50">
         <div className="w-full max-w-7xl mx-auto grid grid-cols-3 items-center">
-          <div className="flex items-center space-x-2 justify-self-start" onClick={() => navigate('/')}>
-            <Scale className="h-8 w-8 text-green-900 cursor-pointer" />
-            <span className="text-xl font-bold text-green-900 cursor-pointer">LegalUp</span>
-            <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+          {/* Left: Hamburger (mobile) + Logo (desktop) */}
+          <div className="flex items-center justify-self-start">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 rounded-md hover:bg-gray-100 transition-colors mr-2"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6 text-gray-700" />
+              ) : (
+                <Menu className="h-6 w-6 text-gray-700" />
+              )}
+            </button>
+            <div className="hidden md:flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/legalup-empresas')}>
+              <Scale className="h-8 w-8 text-green-900" />
+              <span className="text-xl font-bold text-green-900">LegalUp</span>
+              <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+            </div>
           </div>
-          <nav className="hidden md:flex items-center justify-center space-x-6">
-            <button onClick={() => document.getElementById('empresa-benefits')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">Beneficios</button>
-            <button onClick={() => document.getElementById('empresa-how')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">¿Cómo funciona?</button>
-            <button onClick={() => document.getElementById('empresa-plans')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">Planes</button>
-            <button onClick={() => document.getElementById('empresa-faq')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">FAQ</button>
-          </nav>
+          {/* Center: Logo (mobile) + Nav (desktop) */}
+          <div className="flex items-center justify-center">
+            <div className="md:hidden flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/legalup-empresas')}>
+              <Scale className="h-7 w-7 text-green-900" />
+              <span className="text-lg font-bold text-green-900">LegalUp</span>
+              <span className="text-[10px] bg-green-900 text-white px-1 py-0.5 rounded ml-1 align-middle">Business</span>
+            </div>
+            <nav className="hidden md:flex items-center justify-center space-x-6">
+              <button onClick={() => document.getElementById('empresa-benefits')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">Beneficios</button>
+              <button onClick={() => document.getElementById('empresa-how')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">¿Cómo funciona?</button>
+              <button onClick={() => document.getElementById('empresa-plans')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">Planes</button>
+              <button onClick={() => document.getElementById('empresa-faq')?.scrollIntoView({ behavior: 'smooth' })} className="text-sm text-muted-foreground hover:text-green-900 transition-colors">FAQ</button>
+            </nav>
+          </div>
+          {/* Right: Avatar (mobile logged-in) + Auth buttons (desktop) */}
           <div className="flex items-center space-x-3 justify-self-end">
             {user ? (
               <div className="relative" ref={profileRef}>
@@ -380,18 +406,55 @@ export default function LegalUpEmpresas() {
                 )}
               </div>
             ) : (
-              <>
+              <div className="hidden md:flex items-center space-x-3">
                 <Button variant="ghost" className="text-gray-600" onClick={handleLoginClick}>
                   Iniciar Sesión
                 </Button>
                 <Button className="bg-gray-900 hover:bg-green-900 text-white" onClick={() => handleStart()}>
                   Contratar Plan
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed left-0 right-0 top-16 border-b shadow-lg bg-white border-gray-200 z-40">
+          <nav className="flex flex-col p-4 space-y-3">
+            <button
+              onClick={() => { document.getElementById('empresa-benefits')?.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false) }}
+              className="text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >Beneficios</button>
+            <button
+              onClick={() => { document.getElementById('empresa-how')?.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false) }}
+              className="text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >¿Cómo funciona?</button>
+            <button
+              onClick={() => { document.getElementById('empresa-plans')?.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false) }}
+              className="text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >Planes</button>
+            <button
+              onClick={() => { document.getElementById('empresa-faq')?.scrollIntoView({ behavior: 'smooth' }); setIsMobileMenuOpen(false) }}
+              className="text-left px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >FAQ</button>
+            {!user && (
+              <div className="pt-3 border-t border-gray-200 space-y-2">
+                <Button
+                  onClick={() => { handleLoginClick(); setIsMobileMenuOpen(false) }}
+                  variant="outline"
+                  className="w-full"
+                >Iniciar Sesión</Button>
+                <Button
+                  onClick={() => { handleStart(); setIsMobileMenuOpen(false) }}
+                  className="w-full bg-gray-900 hover:bg-green-900 text-white"
+                >Contratar Plan</Button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
 
       {/* Hero */}
 
@@ -405,7 +468,7 @@ export default function LegalUpEmpresas() {
             </Badge>
             <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold tracking-tight text-gray-900 font-serif mb-6">
               Tu departamento {' '}
-              <span className="text-green-900 italic underline underline-offset-8"> legal externo.</span>
+              <span className="text-green-900 italic underline underline-offset-8 block sm:inline"> legal externo.</span>
             </h1>
             <p className="text-lg sm:text-xl text-gray-900 mb-8 max-w-2xl mx-auto">
               Con una sola suscripción, tu empresa cuenta con un equipo de abogados especialistas para resolver sus necesidades legales.
@@ -470,7 +533,7 @@ export default function LegalUpEmpresas() {
             {howItWorks.map((item) => (
               <div key={item.step} className="text-center">
                 <div className="w-14 h-14 bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadown-green-600/20">
-                  <span className="text-green-600 text-xl">{item.step}</span>
+                  <span className="text-green-600 font-bold text-xl">{item.step}</span>
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
                 <p className="text-gray-600">{item.description}</p>
