@@ -569,7 +569,7 @@ export default function BookingPage() {
           }]
         });
 
-        // Save booking context so PaymentFailure can redirect back to pre-filled form
+        // Save booking context for PaymentFailure retry
         const fullName = `${lawyer.first_name} ${lawyer.last_name}`;
         const nameSlug = fullName
           .toLowerCase()
@@ -578,7 +578,14 @@ export default function BookingPage() {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '');
         sessionStorage.setItem('mp_booking_redirect', `/booking/${nameSlug}-${lawyer.user_id}?date=${format(selectedDate, 'yyyy-MM-dd')}&time=${selectedTime}&duration=${duration}`);
-        sessionStorage.setItem('mp_booking_price', String(totalPrice));
+        sessionStorage.setItem('mp_booking_retry', JSON.stringify({
+          bookingId: data.booking_id,
+          price: totalPrice,
+          lawyerId: lawyer.user_id,
+          userEmail: (user.email || '').trim().toLowerCase(),
+          userName: getAuthenticatedUserName().trim(),
+          attempt: 1,
+        }));
 
         window.location.href = data.payment_link;
       } else {

@@ -245,7 +245,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
           }],
         });
 
-        // Save booking context so PaymentFailure can redirect back to pre-filled form
+        // Save booking context for PaymentFailure retry
         const nameSlug = checkoutData.lawyer_name
           .toLowerCase()
           .normalize('NFD')
@@ -256,7 +256,14 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
           ? `/booking/${nameSlug}-${checkoutData.lawyer_id}?date=${checkoutData.scheduled_date}&time=${checkoutData.scheduled_time}&duration=${checkoutData.duration}`
           : `/abogado/${nameSlug}-${checkoutData.lawyer_id}`;
         sessionStorage.setItem('mp_booking_redirect', bookingUrl);
-        sessionStorage.setItem('mp_booking_price', String(checkoutData.price));
+        sessionStorage.setItem('mp_booking_retry', JSON.stringify({
+          bookingId: data.booking_id,
+          price: checkoutData.price,
+          lawyerId: checkoutData.lawyer_id,
+          userEmail: email.trim().toLowerCase(),
+          userName: name.trim(),
+          attempt: 1,
+        }));
 
         window.location.href = data.payment_link;
       } else {

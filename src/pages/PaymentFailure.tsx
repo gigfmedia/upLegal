@@ -44,20 +44,75 @@ export default function PaymentFailure() {
       return;
     }
 
-    const bookingRedirect = sessionStorage.getItem('mp_booking_redirect');
+    // Read retry context — attempt counter + GA4
+    const retryStr = sessionStorage.getItem('mp_booking_retry');
+    let ctx = retryStr ? JSON.parse(retryStr) : null;
+    const attempt = (ctx?.attempt || 0) + 1;
 
-    if (!user) {
-      const targetUrl = bookingRedirect || (lawyerSlug ? `/abogado/${lawyerSlug}` : '/');
-      navigate(`/?login=true&redirectTo=${encodeURIComponent(targetUrl)}`);
+    window.gtag?.('event', 'payment_retry', {
+      booking_id: ctx?.bookingId || searchParams.get('booking_id') || searchParams.get('appointmentId'),
+      attempt,
+      payment_method: 'mercadopago',
+      reason: 'payment_failed',
+    });
+
+    if (user) {
+      const bookingRedirect = sessionStorage.getItem('mp_booking_redirect');
+      if (bookingRedirect) {
+        sessionStorage.setItem('mp_booking_retry', JSON.stringify({ ...ctx, attempt }));
+        navigate(bookingRedirect);
+      } else if (lawyerSlug) {
+        navigate(`/abogado/${lawyerSlug}`);
+      } else {
+        navigate('/search');
+      }
       return;
     }
 
-    if (bookingRedirect) {
-      navigate(bookingRedirect);
-    } else if (lawyerSlug) {
-      navigate(`/abogado/${lawyerSlug}`);
-    } else {
-      navigate('/search');
+    // Guest retry — call /create-payment directly (no auth needed)
+    if (!ctx) {
+      const target = lawyerSlug ? `/abogado/${lawyerSlug}` : '/search';
+      navigate(target);
+      return;
+    }
+
+    setIsRetrying(true);
+    try {
+      ctx.attempt = attempt;
+      sessionStorage.setItem('mp_booking_retry', JSON.stringify(ctx));
+
+      const origin = window.location.origin;
+      const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL || origin}/create-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          appointmentId: ctx.bookingId,
+          amount: ctx.price,
+          lawyerId: ctx.lawyerId,
+          userEmail: ctx.userEmail,
+          userName: ctx.userName,
+          successUrl: `${origin}/booking/success?booking_id=${ctx.bookingId}`,
+          failureUrl: `${origin}/booking/failure?booking_id=${ctx.bookingId}`,
+          pendingUrl: `${origin}/booking/pending?booking_id=${ctx.bookingId}`,
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Error al procesar el pago');
+
+      if (data.payment_link) {
+        window.location.href = data.payment_link;
+      } else {
+        throw new Error('No se recibió el enlace de pago');
+      }
+    } catch (error) {
+      console.error('Error retrying payment as guest:', error);
+      toast({
+        title: 'Error al reintentar',
+        description: error instanceof Error ? error.message : 'No se pudo procesar el pago',
+        variant: 'destructive',
+      });
+      setIsRetrying(false);
     }
   };
 
