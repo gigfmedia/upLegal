@@ -65,7 +65,15 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
         }
       }
     };
-    if (isOpen) loadSession();
+    if (isOpen) {
+      loadSession();
+      // form_start: fires when the guest checkout form first opens — tracks intent to complete booking
+      window.gtag?.('event', 'form_start', {
+        form_name: 'pre_checkout',
+        lawyer_id: checkoutData.lawyer_id,
+        booking_type: checkoutData.type,
+      });
+    }
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {

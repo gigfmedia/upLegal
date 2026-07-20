@@ -135,6 +135,8 @@ export default function BookingPage() {
   const timeSelectionRef = useRef<HTMLDivElement>(null);
   // Guard para disparar booking_page_viewed exactamente una vez cuando la página carga correctamente
   const bookingPageTracked = useRef(false);
+  // Ref to access selectedTime inside fetchAvailability without triggering re-runs
+  const selectedTimeRef = useRef<string | null>(null);
 
   const actualLawyerId = useMemo(() => {
     if (!lawyerId) return '';
@@ -147,6 +149,8 @@ export default function BookingPage() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  // Keep ref in sync so fetchAvailability can read current value without being a dependency
+  useEffect(() => { selectedTimeRef.current = selectedTime; }, [selectedTime]);
   const [duration, setDuration] = useState<60 | 90 | 120>(60);
   const [showPreCheckout, setShowPreCheckout] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -450,7 +454,8 @@ export default function BookingPage() {
 
         const filteredSlots = applySameDayFilter(finalSlots);
 
-        if (selectedTime && !filteredSlots.some(slot => slot.time === selectedTime)) {
+        // Use ref to avoid selectedTime being a dependency (would cause double-fetch loop)
+        if (selectedTimeRef.current && !filteredSlots.some(slot => slot.time === selectedTimeRef.current)) {
           setSelectedTime(null);
         }
 
@@ -459,7 +464,7 @@ export default function BookingPage() {
       } catch (err) {
         console.error('Failed to check availability', err);
         const filtered = applySameDayFilter(baseSlots);
-        if (selectedTime && !filtered.some(slot => slot.time === selectedTime)) {
+        if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
           setSelectedTime(null);
         }
         setAvailableSlots(filtered);
@@ -469,7 +474,10 @@ export default function BookingPage() {
     };
 
     fetchAvailability();
-  }, [selectedDate, duration, actualLawyerId, lawyerAvailability, selectedTime, getDayName, getAvailabilityForDay]);
+  // selectedTime intentionally removed: we use selectedTimeRef to avoid re-running this effect
+  // when selectedTime changes, which would cause a double-fetch loop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, duration, actualLawyerId, lawyerAvailability, getDayName, getAvailabilityForDay]);
 
   // Helper to add minutes to HHMM integer (e.g. 900 + 60 => 1000)
   // This is a bit hacky, cleaner to use Date objects but sufficient for static slots
@@ -567,6 +575,12 @@ export default function BookingPage() {
       }
     } catch (error) {
       console.error('Error creating booking:', error);
+      // Track booking errors so we can diagnose drop-offs between continue_to_checkout and begin_checkout
+      window.gtag?.('event', 'booking_error', {
+        error_message: error instanceof Error ? error.message : 'unknown',
+        lawyer_id: lawyer?.user_id,
+        step: 'create_booking'
+      });
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'No se pudo crear la reserva',
