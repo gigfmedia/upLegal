@@ -78,7 +78,7 @@ function AcceptInviteInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [role, setRole] = useState<'client' | 'lawyer'>('client');
+  const [role, setRole] = useState<'client' | 'lawyer'>('lawyer');
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [passwordRequirements, setPasswordRequirements] = useState({
     length: false,
@@ -161,7 +161,7 @@ function AcceptInviteInner() {
 
         const metadataRole = session.user.user_metadata?.role as 'client' | 'lawyer' | undefined;
         const paramRole = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
-        const finalRole = metadataRole || paramRole || 'client';
+        const finalRole = metadataRole || paramRole || 'lawyer';
         setRole(finalRole);
         console.log('[AcceptInvite] Role resolved:', finalRole, '(metadata:', metadataRole, 'param:', paramRole, ')');
 
