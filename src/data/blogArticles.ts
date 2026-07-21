@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "nulidad-despido-chile-2026",
+    title: "Nulidad del despido en Chile 2026: Ley Bustos, cotizaciones impagas y cómo demandar",
+    excerpt: "Conoce cuándo procede la nulidad del despido en Chile, qué establece la Ley Bustos, qué ocurre si existen cotizaciones previsionales impagas, cuáles son los requisitos y cómo presentar una demanda laboral.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "20 de Julio, 2026",
+    readTime: "11 min",
+    image: "/assets/nulidad-despido-chile-2026.png"
+  },
+  {
     id: "demanda-laboral-chile-2026",
     title: "Demanda laboral en Chile 2026: cuándo conviene demandar, plazos, costos y cómo funciona el juicio",
     excerpt: "Conoce cuándo conviene presentar una demanda laboral en Chile, cuáles son los plazos, qué pruebas sirven, cuánto demora un juicio y qué hacer para proteger tus derechos frente al empleador.",
