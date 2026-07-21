@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Component, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
-import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Check, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Check, XCircle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,61 @@ import Header from '@/components/Header';
 
 type InviteStatus = 'checking' | 'needs_password' | 'success' | 'error';
 
-export default function AcceptInvite() {
+class AcceptInviteErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('[AcceptInvite-ErrorBoundary] Error capturado:', error.message, error.stack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+          <div className="max-w-md w-full bg-white p-8 rounded-lg shadow text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+            <h1 className="text-xl font-bold">Algo salió mal</h1>
+            <p className="text-gray-600">
+              No pudimos procesar tu invitación. Puedes solicitar una nueva invitación al administrador.
+            </p>
+            <Button variant="outline" onClick={() => window.location.href = '/'}>
+              Volver al inicio
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function extractParamsFromAllSources() {
+  const hash = window.location.hash?.startsWith('#') ? window.location.hash.slice(1) : window.location.hash || '';
+  const search = window.location.search?.startsWith('?') ? window.location.search.slice(1) : window.location.search || '';
+
+  const hashParams = new URLSearchParams(hash);
+  const searchParams = new URLSearchParams(search);
+
+  return {
+    type: hashParams.get('type') || searchParams.get('type'),
+    email: hashParams.get('email') || hashParams.get('user_email') || searchParams.get('email') || searchParams.get('user_email'),
+    accessToken: hashParams.get('access_token') || searchParams.get('access_token'),
+    refreshToken: hashParams.get('refresh_token') || searchParams.get('refresh_token'),
+  };
+}
+
+function AcceptInviteInner() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
@@ -31,17 +85,16 @@ export default function AcceptInvite() {
     hasUppercase: false,
     hasLowercase: false,
     hasNumber: false,
-    hasSymbol: false
+    hasSymbol: false,
   });
 
-  // Check password strength and update requirements
-  const checkPasswordStrength = (password: string) => {
+  const checkPasswordStrength = (pw: string) => {
     setPasswordRequirements({
-      length: password.length >= 8 && password.length <= 18,
-      hasUppercase: /[A-Z]/.test(password),
-      hasLowercase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+/.test(password),
+      length: pw.length >= 8 && pw.length <= 18,
+      hasUppercase: /[A-Z]/.test(pw),
+      hasLowercase: /[a-z]/.test(pw),
+      hasNumber: /[0-9]/.test(pw),
+      hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]+/.test(pw),
     });
   };
 
@@ -49,52 +102,109 @@ export default function AcceptInvite() {
 
   const hashParams = useMemo(() => {
     if (typeof window === 'undefined') return new URLSearchParams();
-    const hash = window.location.hash?.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
-    return new URLSearchParams(hash || undefined);
-  }, [typeof window === 'undefined' ? 0 : 1]);
+    const h = window.location.hash?.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+    return new URLSearchParams(h || undefined);
+  }, []);
 
   const inviteType = searchParams.get('type') || hashParams.get('type');
-  const inviteEmail = searchParams.get('email') || hashParams.get('email');
+  const inviteEmail = searchParams.get('email') || hashParams.get('email') || hashParams.get('user_email') || searchParams.get('user_email');
 
   useEffect(() => {
+    console.log('[AcceptInvite] Mounted - URL:', window.location.href);
+    console.log('[AcceptInvite] Search:', window.location.search);
+    console.log('[AcceptInvite] Hash:', window.location.hash);
+    console.log('[AcceptInvite] inviteType:', inviteType, 'inviteEmail:', inviteEmail);
+    console.log('[AcceptInvite] Parsed from all sources:', extractParamsFromAllSources());
+
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('sb-pending-invite');
     }
 
     const initialize = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const all = extractParamsFromAllSources();
+        console.log('[AcceptInvite] All params:', all);
 
-        if (sessionError || !session) {
+        if (all.accessToken && all.refreshToken && !all.type) {
+          console.log('[AcceptInvite] Tokens found in URL (Android hash-to-query fallback), setting session');
+          const { error: setSessionErr } = await supabase.auth.setSession({
+            access_token: all.accessToken,
+            refresh_token: all.refreshToken,
+          });
+          if (setSessionErr) {
+            console.error('[AcceptInvite] Error setting session from query params:', setSessionErr);
+          } else {
+            console.log('[AcceptInvite] Session set from query params successfully');
+          }
+        }
+
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('[AcceptInvite] getSession result:', { hasSession: !!session, sessionEmail: session?.user?.email, sessionRole: session?.user?.user_metadata?.role, error: sessionError });
+
+        if (sessionError) {
+          console.error('[AcceptInvite] Session error:', sessionError);
           setStatus('error');
           setError('Tu enlace de invitación no es válido o ha expirado. Solicita que te envíen uno nuevo.');
           return;
         }
 
-        setEmail(session.user.email || inviteEmail || '');
-        const metadataRole = (session.user.user_metadata?.role as 'client' | 'lawyer' | undefined) || undefined;
-        const inviteRoleParam = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
-        // Priorizar el rol del user_metadata (viene de la invitación)
-        // Si no hay rol en metadata, usar el parámetro o default a client
-        const finalRole = metadataRole || inviteRoleParam || 'client';
-        setRole(finalRole as 'client' | 'lawyer');
+        if (!session) {
+          console.log('[AcceptInvite] No session found');
+          setStatus('error');
+          setError('No pudimos verificar tu identidad. Asegúrate de haber abierto el enlace correcto desde el correo de invitación.');
+          return;
+        }
 
-        if (inviteType !== 'invite') {
+        const resolvedEmail = session.user.email || inviteEmail || all.email || '';
+        console.log('[AcceptInvite] Resolved email:', resolvedEmail);
+        setEmail(resolvedEmail);
+
+        const metadataRole = session.user.user_metadata?.role as 'client' | 'lawyer' | undefined;
+        const paramRole = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
+        const finalRole = metadataRole || paramRole || 'client';
+        setRole(finalRole);
+        console.log('[AcceptInvite] Role resolved:', finalRole, '(metadata:', metadataRole, 'param:', paramRole, ')');
+
+        const inviteParam = searchParams.get('type') || hashParams.get('type') || all.type || session.user.user_metadata?.invite_type;
+        console.log('[AcceptInvite] inviteParam:', inviteParam);
+
+        if (inviteParam !== 'invite') {
+          console.log('[AcceptInvite] NOT an invite (type=', inviteParam, '). Checking session metadata for invite clue.');
+          const createdAt = session.user.created_at ? new Date(session.user.created_at).getTime() : 0;
+          const hasNoPassword = !session.user.identities?.some(i => i.provider === 'email');
+          const isRecent = Date.now() - createdAt < 24 * 60 * 60 * 1000;
+
+          console.log('[AcceptInvite] Session diagnostics:', {
+            createdAt: session.user.created_at,
+            hasIdentities: !!session.user.identities,
+            identities: session.user.identities?.map(i => i.provider),
+            isRecent,
+            hasNoPassword,
+            userMetadata: session.user.user_metadata,
+          });
+
+          if (isRecent && hasNoPassword) {
+            console.log('[AcceptInvite] User is recent and has no password, treating as invite');
+            setStatus('needs_password');
+            return;
+          }
+
           setStatus('error');
           setError('Esta página solo puede usarse con invitaciones válidas.');
           return;
         }
 
+        console.log('[AcceptInvite] Invite confirmed, showing password form');
         setStatus('needs_password');
       } catch (err) {
-        console.error('Error verificando la invitación:', err);
+        console.error('[AcceptInvite] Error in initialize:', err);
         setStatus('error');
         setError('No pudimos validar tu invitación. Inténtalo de nuevo o solicita una nueva.');
       }
     };
 
     initialize();
-  }, [inviteEmail, inviteType]);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -124,9 +234,7 @@ export default function AcceptInvite() {
 
       const { error: updateError } = await supabase.auth.updateUser({
         password,
-        data: {
-          role,
-        },
+        data: { role },
       });
 
       if (updateError) throw updateError;
@@ -153,7 +261,7 @@ export default function AcceptInvite() {
         }
       }, 1500);
     } catch (err) {
-      console.error('Error actualizando la contraseña:', err);
+      console.error('[AcceptInvite] Error actualizando contraseña:', err);
       setError('No pudimos guardar tu contraseña. Inténtalo nuevamente.');
     } finally {
       setIsSubmitting(false);
@@ -195,7 +303,8 @@ export default function AcceptInvite() {
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold text-gray-900">Configura tu contraseña</h1>
           <p className="text-gray-600">
-            Hemos verificado tu invitación para <span className="font-semibold">{email || inviteEmail || 'tu correo'}</span>.
+            Hemos verificado tu invitación para{' '}
+            <span className="font-semibold">{email || inviteEmail || 'tu correo'}</span>.
             Define una contraseña segura para comenzar a usar LegalUp.
           </p>
         </div>
@@ -206,6 +315,24 @@ export default function AcceptInvite() {
             <div>
               <p className="font-semibold">No pudimos validar tu invitación</p>
               <p>{error}</p>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setStatus('checking'); setError(null); window.location.reload(); }}
+                >
+                  <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                  Reintentar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.href = '/'}
+                >
+                  <Home className="h-3.5 w-3.5 mr-1" />
+                  Volver al inicio
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -215,26 +342,6 @@ export default function AcceptInvite() {
             <div className="space-y-3">
               <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
               <div className="space-y-3">
-                <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
-                  role === 'client'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}>
-                  <div className="flex items-center h-5">
-                    <input
-                      type="radio"
-                      name="accountType"
-                      value="client"
-                      checked={role === 'client'}
-                      onChange={() => setRole('client')}
-                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="ml-3 text-sm">
-                    <span className="font-medium text-gray-900">Soy Cliente - Busco servicios legales</span>
-                  </div>
-                </label>
-
                 <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
                   role === 'lawyer'
                     ? 'border-blue-500 bg-blue-50'
@@ -252,6 +359,26 @@ export default function AcceptInvite() {
                   </div>
                   <div className="ml-3 text-sm">
                     <span className="font-medium text-gray-900">Soy Abogado - Ofrezco servicios legales</span>
+                  </div>
+                </label>
+
+                <label className={`flex items-center p-4 rounded-lg border cursor-pointer transition-colors ${
+                  role === 'client'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                  <div className="flex items-center h-5">
+                    <input
+                      type="radio"
+                      name="accountType"
+                      value="client"
+                      checked={role === 'client'}
+                      onChange={() => setRole('client')}
+                      className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="ml-3 text-sm">
+                    <span className="font-medium text-gray-900">Soy Cliente - Busco servicios legales</span>
                   </div>
                 </label>
               </div>
@@ -372,7 +499,7 @@ export default function AcceptInvite() {
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2 text-gray-900" />
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Guardando...
                 </>
               ) : (
@@ -382,8 +509,18 @@ export default function AcceptInvite() {
           </form>
         )}
 
-        <Button variant="ghost" className="w-full" onClick={() => navigate('/')}>Volver al inicio</Button>
+        <Button variant="ghost" className="w-full" onClick={() => navigate('/')}>
+          Volver al inicio
+        </Button>
       </div>
     </div>
+  );
+}
+
+export default function AcceptInvite() {
+  return (
+    <AcceptInviteErrorBoundary>
+      <AcceptInviteInner />
+    </AcceptInviteErrorBoundary>
   );
 }

@@ -304,46 +304,76 @@ const AppContent = () => {
       if (hashHandledRef.current) return;
       if (typeof window === 'undefined') return;
 
+      console.log('[AuthHash] Current URL:', window.location.href);
+      console.log('[AuthHash] Search:', window.location.search);
+      console.log('[AuthHash] Hash:', window.location.hash);
+
       const rawHash = window.location.hash;
-      if (!rawHash || rawHash.length <= 1 || !rawHash.includes('access_token')) {
+      const rawSearch = window.location.search;
+
+      const hashParams = rawHash?.length > 1 ? new URLSearchParams(rawHash.slice(1)) : new URLSearchParams();
+      const searchParams = rawSearch?.length > 0 ? new URLSearchParams(rawSearch) : new URLSearchParams();
+
+      const accessToken = hashParams.get('access_token') || searchParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+      const type = hashParams.get('type') || searchParams.get('type');
+      const emailParam = hashParams.get('email') || hashParams.get('user_email') || searchParams.get('email') || searchParams.get('user_email');
+
+      console.log('[AuthHash] Parsed - type:', type, 'email:', emailParam, 'hasAccessToken:', !!accessToken, 'hasRefreshToken:', !!refreshToken);
+
+      if (!accessToken && !refreshToken) {
+        console.log('[AuthHash] No tokens found in hash or search params, checking existing session');
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('[AuthHash] Session already exists, user:', session.user.email, 'role:', session.user.user_metadata?.role);
+          if (type === 'invite' || hashParams.get('type') === 'invite' || searchParams.get('type') === 'invite') {
+            const query = new URLSearchParams({ type: 'invite' });
+            if (emailParam) query.set('email', emailParam);
+            navigate(`/auth/accept-invite?${query.toString()}`);
+            return;
+          }
+        }
         return;
       }
-
-      const params = new URLSearchParams(rawHash.slice(1));
-      const type = params.get('type');
-      const emailParam = params.get('email') || params.get('user_email');
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
 
       hashHandledRef.current = true;
 
       try {
         if (accessToken && refreshToken) {
+          console.log('[AuthHash] Setting session from tokens');
           const { error: setSessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
           if (setSessionError) {
-            console.error('Error estableciendo la sesión desde la invitación:', setSessionError);
+            console.error('[AuthHash] Error estableciendo sesión:', setSessionError);
+          } else {
+            console.log('[AuthHash] Session set successfully');
           }
-        } else {
-          await supabase.auth.getSession();
+        } else if (accessToken) {
+          const { data, error } = await supabase.auth.getSession();
+          console.log('[AuthHash] getSession after token:', { session: !!data?.session, error });
         }
       } catch (error) {
-        console.error('Error processing Supabase session from hash:', error);
+        console.error('[AuthHash] Error processing Supabase session:', error);
       }
 
-      const cleanUrl = window.location.pathname + window.location.search;
+      const cleanUrl = window.location.pathname + (type || emailParam ? '' : window.location.search);
       window.history.replaceState(null, '', cleanUrl);
 
       if (type === 'invite') {
+        console.log('[AuthHash] Invite detected, navigating to accept-invite');
         const query = new URLSearchParams({ type: 'invite' });
         if (emailParam) {
           query.set('email', emailParam);
         }
         navigate(`/auth/accept-invite?${query.toString()}`);
+      } else if (type) {
+        console.log('[AuthHash] Auth type detected:', type, 'navigating to callback');
+        navigate('/auth/callback');
       } else {
+        console.log('[AuthHash] No auth type, navigating to callback');
         navigate('/auth/callback');
       }
     };

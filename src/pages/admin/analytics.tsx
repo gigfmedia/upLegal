@@ -9,6 +9,8 @@ import { es } from 'date-fns/locale';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
+import ProfileViewsChart from '@/components/admin/ProfileViewsChart';
+import LawyerProfileCards from '@/components/admin/LawyerProfileCards';
 import FunnelDashboard from './FunnelDashboard';
 
 // Types
@@ -62,7 +64,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const StatCard = ({ title, value, icon: Icon, trend, trendText, className = '' }) => (
   <Card className={className}>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <CardTitle className="text-xs font-mono text-gray-500 font-medium">{title}</CardTitle>
       <div className="h-4 w-4 text-muted-foreground">
         <Icon className="h-4 w-4" />
       </div>
@@ -820,6 +822,7 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="payments">Pagos (MP)</TabsTrigger>
           <TabsTrigger value="funnel">Funnel</TabsTrigger>
           <TabsTrigger value="errors">Errores</TabsTrigger>
+          <TabsTrigger value="profile-views">Vistas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -1135,6 +1138,10 @@ export default function AnalyticsDashboard() {
               <ErrorTable errors={errorLogs} isLoading={isLoadingErrors} />
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="profile-views" className="space-y-6">
+          <ProfileViewsChart />
+          <LawyerProfileCards />
         </TabsContent>
       </Tabs>
     </div>
