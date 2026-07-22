@@ -25,6 +25,7 @@ interface LawyerProfile {
   hourly_rate_clp: number;
   bio: string;
   pjud_verified: boolean;
+  review_count?: number;
   availability?: Record<string, boolean[]> | string | null;
 }
 
@@ -83,7 +84,7 @@ const TESTIMONIALS: Record<string, { quote: string; author: string; extra: strin
 };
 
 // Minimalist testimonial component for booking page
-function BookingTestimonial({ specialties }: { specialties: string[] }) {
+function BookingTestimonial({ specialties, reviewCount }: { specialties: string[]; reviewCount?: number }) {
   // Find matching testimonial or fallback to default
   const testimonial = useMemo(() => {
     for (const specialty of specialties) {
@@ -94,6 +95,9 @@ function BookingTestimonial({ specialties }: { specialties: string[] }) {
     }
     return TESTIMONIALS['Default'];
   }, [specialties]);
+
+  // Don't show generic testimonial for lawyers without real reviews
+  if (!reviewCount || reviewCount === 0) return null;
 
   return (
     <div className="bg-white border border-gray-100 rounded-lg p-4 mb-4">
@@ -144,7 +148,8 @@ export default function BookingPage() {
   }, [lawyerId]);
 
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
-  const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null>(null);
+  const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null | undefined>(undefined);
+  const availabilityInitialized = useRef(false);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -164,7 +169,7 @@ export default function BookingPage() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified, availability')
+        .select('user_id, first_name, last_name, specialties, avatar_url, hourly_rate_clp, bio, pjud_verified, review_count, availability')
         .eq('user_id', actualId)
         .eq('role', 'lawyer')
         .single();
@@ -201,7 +206,9 @@ export default function BookingPage() {
 
       setLawyer({ ...data, availability: parsedAvailability ?? data.availability ?? null });
       setLawyerAvailability(parsedAvailability);
+      availabilityInitialized.current = true;
       setLoading(false);
+      console.log('[BookingPage] Availability loaded:', parsedAvailability ? `keys=${Object.keys(parsedAvailability).join(',')}` : 'null');
     }
 
     fetchLawyer();
@@ -358,9 +365,9 @@ export default function BookingPage() {
       };
 
       try {
-        setIsLoadingSlots(true); // Only show loading in slots area
+        console.log('[BookingPage] Fetching availability for date:', format(selectedDate, 'yyyy-MM-dd'), 'lawyerAvailability:', lawyerAvailability ? `keys=${Object.keys(lawyerAvailability).join(',')}` : lawyerAvailability === null ? 'null' : 'undefined');
+        setIsLoadingSlots(true);
 
-        // Call RPC
         const { data: busySlots, error } = await supabase
           .rpc('get_lawyer_busy_slots', {
             query_lawyer_id: actualLawyerId,
@@ -368,20 +375,28 @@ export default function BookingPage() {
           });
 
         if (error) {
-          console.error('Error fetching availability:', error);
-          const filtered = applySameDayFilter(baseSlots);
-          if (selectedTime && !filtered.some(slot => slot.time === selectedTime)) {
-            setSelectedTime(null);
+          console.error('[BookingPage] RPC error:', error);
+          if (availabilityInitialized.current && lawyerAvailability) {
+            const dayName = getDayName(selectedDate);
+            const dayAvail = getAvailabilityForDay(lawyerAvailability, dayName);
+            const daySlots = baseSlots.filter(slot => {
+              const hourIdx = parseInt(slot.time.split(':')[0]) - AVAILABILITY_START_HOUR;
+              return Array.isArray(dayAvail) ? dayAvail[hourIdx] === true : false;
+            });
+            const filtered = applySameDayFilter(daySlots);
+            if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
+              setSelectedTime(null);
+            }
+            setAvailableSlots(filtered);
+          } else {
+            const filtered = applySameDayFilter(baseSlots);
+            if (selectedTimeRef.current && !filtered.some(slot => slot.time === selectedTimeRef.current)) {
+              setSelectedTime(null);
+            }
+            setAvailableSlots(filtered);
           }
-          setAvailableSlots(filtered);
           return;
         }
-
-        // 2. Fetch lawyer availability settings (JSON)
-        // We already fetched lawyer profile in the other effect, but we didn't store the availability JSON.
-        // It's better to fetch it here to ensure we have the latest or refactor to store it in 'lawyer' state.
-        // For simplicity and to avoid race conditions with state updates, let's fetch it or use the 'lawyer' state if we add the field to it.
-        // Let's assume we update the initial fetch to include 'availability'.
 
         let availabilityConfig: Record<string, boolean[]> | null = lawyerAvailability;
 
@@ -399,34 +414,39 @@ export default function BookingPage() {
                   ? JSON.parse(profileData.availability)
                   : profileData.availability;
 
-              if (rawAvail && typeof rawAvail === 'object') {
+              if (rawAvail && typeof rawAvail === 'object' && Object.keys(rawAvail).length > 0) {
                 availabilityConfig = rawAvail as Record<string, boolean[]>;
                 setLawyerAvailability(availabilityConfig);
+                console.log('[BookingPage] Availability fetched from DB:', Object.keys(availabilityConfig).join(','));
               }
             } catch (parseError) {
-              console.warn('Error parsing lawyer availability config, defaulting to open or closed defaults based on logic:', parseError);
+              console.warn('[BookingPage] Error parsing availability config:', parseError);
             }
           }
         }
 
         const dayName = getDayName(selectedDate);
+        console.log('[BookingPage] Selected date dayName:', dayName, 'selectedDate:', format(selectedDate, 'yyyy-MM-dd'));
         const dayAvailability = getAvailabilityForDay(availabilityConfig, dayName);
+        console.log('[BookingPage] dayAvailability for', dayName, ':', Array.isArray(dayAvailability) ? `[${dayAvailability.map(b => b ? 'T' : 'F').join(',')}]` : 'null');
         const hasCustomAvailability = availabilityConfig && Object.keys(availabilityConfig).length > 0;
 
-        // 3. Filter base slots based on Lawyer Config
         const configFilteredSlots = baseSlots.filter(slot => {
           const hour = parseInt(slot.time.split(':')[0]);
           const hourIndex = hour - AVAILABILITY_START_HOUR;
 
           if (dayAvailability && Array.isArray(dayAvailability)) {
-            return dayAvailability[hourIndex] === true;
+            const result = dayAvailability[hourIndex] === true;
+            if (!result) console.log('[BookingPage] Slot filtered out by config:', slot.time, 'hourIndex:', hourIndex);
+            return result;
           }
 
           if (hasCustomAvailability) {
+            console.log('[BookingPage] hasCustomAvailability but no dayAvailability match, blocking all slots');
             return false;
           }
 
-          // Default to OPEN only if NO configuration exists at all (legacy support)
+          console.log('[BookingPage] No availability config, legacy open for slot:', slot.time);
           return true;
         });
 
@@ -615,38 +635,31 @@ export default function BookingPage() {
 
     const dates = Array.from({ length: 30 }, (_, i) => addDays(startOfDay(now), i));
 
+    if (!availabilityInitialized.current) return [];
+
     return dates
-      .filter(date => date.getDay() !== 0) // Hide Sundays
+      .filter(date => date.getDay() !== 0)
       .filter(date => {
-        const isToday = format(date, 'yyyy-MM-dd') === todayStr;
+        const isTodayDate = format(date, 'yyyy-MM-dd') === todayStr;
 
-        // If it's today, check if there's any time left
-        if (isToday) {
-          // If no config, default to 18:00 cutoff
-          if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
-            return currentHour < 18;
-          }
-
-          // If has config, check if there are any slots left today
-          const dayName = getDayName(date);
-          const dayAvailability = getAvailabilityForDay(lawyerAvailability, dayName);
-
-          if (Array.isArray(dayAvailability)) {
-            return dayAvailability.some((slot, index) => {
-              const slotHour = 9 + index;
-              return slot && slotHour > currentHour;
-            });
-          }
-          return false;
-        }
-
-        // For future days, just check if they have any availability configured
         if (!lawyerAvailability || Object.keys(lawyerAvailability).length === 0) {
+          if (isTodayDate) return currentHour < 18;
           return true;
         }
 
-        const dayAvailability = getAvailabilityForDay(lawyerAvailability, getDayName(date));
-        return Array.isArray(dayAvailability) ? dayAvailability.some(Boolean) : false;
+        const dayName = getDayName(date);
+        const dayAvailability = getAvailabilityForDay(lawyerAvailability, dayName);
+
+        if (!Array.isArray(dayAvailability)) return false;
+
+        if (isTodayDate) {
+          return dayAvailability.some((slot, index) => {
+            const slotHour = 9 + index;
+            return slot && slotHour > currentHour;
+          });
+        }
+
+        return dayAvailability.some(Boolean);
       })
       .filter(date => !isChileanHoliday(date));
   }, [lawyerAvailability, getDayName, getAvailabilityForDay]);
@@ -903,7 +916,7 @@ export default function BookingPage() {
                     <p className="text-gray-600 mb-4 line-clamp-2">{lawyer.bio}</p>
                   )}
                   {/* Testimonial social proof */}
-                  <BookingTestimonial specialties={lawyer.specialties} />
+                  <BookingTestimonial specialties={lawyer.specialties} reviewCount={lawyer.review_count} />
 
                 </div>
               </div>

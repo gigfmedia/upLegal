@@ -75,11 +75,11 @@ const BlogArticle = () => {
                         </p>
                         <ul className="space-y-2">
                             {[
-                                "La nulidad del despido es una sanción por cotizaciones previsionales impagas al momento del despido.",
-                                "Conocida como Ley Bustos, busca asegurar que los empleadores cumplan con sus obligaciones previsionales.",
-                                "Mientras las cotizaciones no sean pagadas, el empleador debe seguir pagando remuneraciones y prestaciones.",
-                                "Puede demandarse junto con otras acciones como despido injustificado.",
-                                "Actuar rápidamente es clave para no perder los plazos legales.",
+                                "La nulidad del despido es una sanción por cotizaciones previsionales impagas al momento del despido",
+                                "Conocida como Ley Bustos, busca asegurar que los empleadores cumplan con sus obligaciones previsionales",
+                                "Mientras las cotizaciones no sean pagadas, el empleador debe seguir pagando remuneraciones y prestaciones",
+                                "Puede demandarse junto con otras acciones como despido injustificado",
+                                "Actuar rápidamente es clave para no perder los plazos legales",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>

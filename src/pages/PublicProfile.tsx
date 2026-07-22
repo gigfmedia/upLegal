@@ -1148,7 +1148,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                                 {lawyer?.created_at && (
                                   <div className="flex items-center">
                                     <UserCheck className="h-4 w-4 mr-1 flex-shrink-0" />
-                                    <span>Miembro desde {new Date(lawyer.created_at).getFullYear()}</span>
+                                    <span>Miembro desde {(() => { const d = new Date(lawyer.created_at).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }); return d.charAt(0).toUpperCase() + d.slice(1); })()}</span>
                                   </div>
                                 )}
                               </>
