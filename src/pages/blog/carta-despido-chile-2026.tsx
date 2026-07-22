@@ -152,6 +152,13 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 acoso laboral
+                            </Link>
+                            ,{" "}
+                            <Link
+                                to="/blog/autodespido-chile-2026"
+                                className="text-green-700 underline hover:text-green-500"
+                            >
+                                autodespido (despido indirecto)
                             </Link>.
                         </p>
                     </div>
@@ -436,7 +443,7 @@ const BlogArticle = () => {
                                 "Consideras que existió discriminación",
                                 "Te despidieron estando con licencia médica",
                                 "Deseas demandar al empleador",
-                                "Tienes dudas antes de firmar el finiquito",
+                                <span key="finiquito">Tienes dudas antes de firmar el <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link></span>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-start gap-2">
                                     <span className="text-green-600 flex-shrink-0">•</span>

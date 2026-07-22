@@ -327,8 +327,8 @@ export default function LawyerOnboardingWizard() {
         )}
 
         {currentStep === 3 && (
-          <Button onClick={handleFinish} className="gap-2">
-            {availabilitySaved ? 'Ir al dashboard' : 'Ir al dashboard'}
+          <Button onClick={handleFinish} disabled={!availabilitySaved} className="gap-2">
+            {availabilitySaved ? 'Ir al dashboard' : 'Guarda primero tu disponibilidad'}
           </Button>
         )}
       </div>

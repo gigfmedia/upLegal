@@ -52,8 +52,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso"
-        description="Aprende cómo recuperar legalmente tu propiedad de un familiar en Chile 2026. Qué acción legal corresponde, cuánto demora y qué hacer si el familiar no quiere irse."
+        title="¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso"
+        description="¿Necesitas echar a un familiar de tu casa en Chile? Aprende cómo desalojarlo legalmente, qué acción presentar, cuánto demora y qué hacer si no quiere irse."
         image="/assets/desalojar-familiar-chile-2026.png"
         url="https://legalup.cl/blog/como-desalojar-a-un-familiar-de-mi-casa-chile-2026"
         datePublished="2026-05-25"
@@ -75,7 +75,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
-            ¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso
+            ¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso
           </h1>
 
           {/* Quick Summary Card */}
@@ -99,7 +99,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl leading-relaxed">
-            Desalojar a un familiar es una de las situaciones legales más incómodas que existe. No es solo un problema jurídico — es una decisión que afecta relaciones personales y que muchas personas evitan hasta que ya no tienen opción.
+            Si estás buscando cómo echar a un familiar de tu casa, sabes que no es una decisión fácil. Desalojar a un familiar es una de las situaciones legales más incómodas que existe. Ya sea que quieras saber cómo echar a una persona de tu propiedad o necesites entender el proceso legal para recuperar tu casa, esta guía te explica todo lo que necesitas saber.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
@@ -123,7 +123,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
-            title="¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso"
+            title="¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso"
             url="https://legalup.cl/blog/como-desalojar-a-un-familiar-de-mi-casa-chile-2026"
             showBorder={false}
           />
@@ -136,6 +136,25 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed mb-6">
               Esta guía te explica cómo funciona el proceso en Chile según tu situación específica.
             </p>
+          </div>
+
+          {/* Echar de la casa */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo echar a una persona de mi casa legalmente en Chile?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Esta es una de las preguntas más frecuentes, y la respuesta corta es: no puedes echar a alguien de tu casa por la fuerza, aunque seas el dueño. Muchas personas buscan cómo echar a un familiar de su propiedad sin saber que en Chile la única vía legal es a través de un tribunal. No importa si la persona es familiar o no — el proceso es el mismo: demanda, notificación, audiencia y, si corresponde, lanzamiento con orden judicial.
+            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Si necesitas saber cómo echar a una persona de tu casa sin tener que pasar años en tribunales, la opción más rápida siempre será el acuerdo directo. Pero si el familiar se niega a irse, la ley chilena ofrece mecanismos como la acción de precario o la demanda de restitución que explicamos en detalle a continuación.
+            </p>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-amber-900 font-bold text-base">
+                  Lo más importante: cambiar la cerradura, cortar servicios o usar la fuerza para echar a alguien de tu casa puede ser constitutivo de delito. Siempre debe mediar orden judicial.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Lo primero que debes entender */}
@@ -517,7 +536,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8 mb-8">
           <BlogShare
-            title="¿Cómo desalojar a un familiar de mi casa en Chile 2026? Guía legal paso a paso"
+            title="¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso"
             url="https://legalup.cl/blog/como-desalojar-a-un-familiar-de-mi-casa-chile-2026"
           />
         </div>

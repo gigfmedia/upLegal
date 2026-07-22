@@ -55,8 +55,8 @@ const BlogArticle = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <BlogGrowthHacks
-                title="Orden de alejamiento en Chile 2026: cómo solicitarla y cuándo procede (Guía Completa)"
-                description="Aprende qué es una orden de alejamiento en Chile, cuándo procede, cómo solicitarla, cuánto dura y qué ocurre si la persona incumple la medida."
+                title="¿Cómo pedir una orden de alejamiento en Chile? Requisitos y procedimiento (2026)"
+                description="¿Necesitas pedir una orden de alejamiento en Chile? Conoce los requisitos, quién puede solicitarla, cuánto dura y qué hacer si la persona incumple la medida cautelar."
                 image="/assets/orden-de-alejamiento-chile-2026.png"
                 url="https://legalup.cl/blog/orden-de-alejamiento-chile-2026"
                 datePublished="2026-06-26"
@@ -79,7 +79,7 @@ const BlogArticle = () => {
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
-                        Orden de alejamiento en Chile 2026: cómo solicitarla y cuándo procede (Guía Completa)
+                        ¿Cómo pedir una orden de alejamiento en Chile? Requisitos y procedimiento (2026)
                     </h1>
 
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
@@ -127,7 +127,7 @@ const BlogArticle = () => {
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
-                        title="Orden de alejamiento en Chile 2026"
+                        title="¿Cómo pedir una orden de alejamiento en Chile? Requisitos y procedimiento (2026)"
                         url="https://legalup.cl/blog/orden-de-alejamiento-chile-2026"
                         showBorder={false}
                     />
@@ -548,7 +548,7 @@ const BlogArticle = () => {
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
                     <BlogShare
-                        title="Orden de alejamiento en Chile 2026"
+                        title="¿Cómo pedir una orden de alejamiento en Chile? Requisitos y procedimiento (2026)"
                         url="https://legalup.cl/blog/orden-de-alejamiento-chile-2026"
                     />
                 </div>

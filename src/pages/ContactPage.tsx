@@ -223,7 +223,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-medium">Dirección</h3>
                   <p className="text-sm text-gray-600">
-                    Pichilemu, Chile
+                    Chile
                   </p>
                 </div>
               </div>

@@ -84,11 +84,11 @@ const BlogArticle = () => {
                         </p>
                         <ul className="space-y-2">
                             {[
-                                "La Inspección del Trabajo fiscaliza el cumplimiento de la legislación laboral en Chile.",
-                                "Puedes denunciar incumplimientos como no pago de remuneraciones, jornada laboral o cotizaciones impagas.",
-                                "La Inspección puede aplicar multas administrativas y facilitar acuerdos entre las partes.",
-                                "No puede obligar al empleador a pagar indemnizaciones; eso solo puede ordenarlo un tribunal.",
-                                "En casos de despido, discriminación o tutela laboral, puede ser necesario acudir a un abogado y demandar judicialmente.",
+                                "La Inspección del Trabajo fiscaliza el cumplimiento de la legislación laboral en Chile",
+                                "Puedes denunciar incumplimientos como no pago de remuneraciones, jornada laboral o cotizaciones impagas",
+                                "La Inspección puede aplicar multas administrativas y facilitar acuerdos entre las partes",
+                                "No puede obligar al empleador a pagar indemnizaciones; eso solo puede ordenarlo un tribunal",
+                                "En casos de despido, discriminación o tutela laboral, puede ser necesario acudir a un abogado y demandar judicialmente",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>
@@ -240,13 +240,12 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Dependiendo del tipo de conflicto, la autoridad podrá realizar una inspección presencial en la empresa o citar a ambas partes para intentar una conciliación.</p>
                     </div>
 
-                        <InArticleCTA
-                                                                                title="¿Tienes un problema con tu empleador y no sabes si denunciar o demandar?"
-                                                                                message="Un abogado laboral puede ayudarte a elegir la mejor estrategia antes de que venzan los plazos."
-                                                                                buttonText="Habla con un abogado ahora"
-                                                                                category="Derecho Laboral"
-                                                                            />
-
+                    <InArticleCTA
+                        title="¿Tienes un problema con tu empleador y no sabes si denunciar o demandar?"
+                        message="Un abogado laboral puede ayudarte a elegir la mejor estrategia antes de que venzan los plazos."
+                        buttonText="Habla con un abogado ahora"
+                        category="Derecho Laboral"
+                    />
 
                     {/* DOCUMENTOS */}
                     <div className="mb-12">
@@ -298,7 +297,7 @@ const BlogArticle = () => {
                             {[
                                 "Despido injustificado",
                                 "Tutela laboral",
-                                "Indemnizaciones",
+                                <><Link to='/blog/como-calcular-tu-finiquito-chile-2026' className='text-green-700 underline hover:text-green-500'>Indemnizaciones</Link></>,
                                 "Daño moral",
                                 "Discriminación",
                                 "Nulidad del despido",
@@ -449,14 +448,14 @@ const BlogArticle = () => {
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Una asesoría temprana permite definir la mejor estrategia antes de que expiren los plazos legales.</p>
+                    </div>
+
                     <InArticleCTA
                         title="¿Los plazos para demandar están por vencer?"
                         message="No dejes pasar los días hábiles para reclamar. Un abogado laboral puede revisar tu caso y ayudarte a decidir antes de que sea demasiado tarde."
                         buttonText="Habla con un abogado ahora"
                         category="Derecho Laboral"
                     />
-
-                    </div>
 
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>

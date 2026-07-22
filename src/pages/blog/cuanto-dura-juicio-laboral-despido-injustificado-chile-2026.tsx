@@ -452,7 +452,7 @@ const BlogArticle = () => {
             <div className="space-y-3 mb-6">
               {[
                 "Si te despidieron hace menos de 60 días hábiles y no has iniciado acciones legales",
-                "Si el empleador no te ha pagado el finiquito o las indemnizaciones que corresponden",
+                <><span>Si el empleador no te ha pagado el <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> o las indemnizaciones que corresponden</span></>,
                 "Si tienes dudas sobre si el despido fue realmente justificado o no",
                 "Si quieres saber cuánto podrías recuperar antes de decidir si demandar o negociar"
               ].map((item, i) => (

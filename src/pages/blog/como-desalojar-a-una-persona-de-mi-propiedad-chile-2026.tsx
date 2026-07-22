@@ -47,14 +47,14 @@ const BlogArticle = () => {
     },
   ];
 
-  const title = "Cómo sacar a un arrendatario sin contrato en Chile (desalojarlo legalmente)";
+  const title = "¿Cómo sacar a una persona de mi propiedad en Chile? Guía legal 2026";
   const url = "https://legalup.cl/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026";
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
         title={title}
-        description="Aprende cómo desalojar legalmente a un arrendatario, familiar u ocupante en Chile 2026. Pasos, plazos, costos y qué hacer según tu situación."
+        description="¿Necesitas desalojar a una persona de tu propiedad en Chile? Guía legal paso a paso: cómo sacar a un arrendatario, familiar u ocupante, plazos, costos y qué hacer según tu caso."
         image="/assets/como-desalojar-chile-2026.png"
         url={url}
         datePublished="2026-05-02"

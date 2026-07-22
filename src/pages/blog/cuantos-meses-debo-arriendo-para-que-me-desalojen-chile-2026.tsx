@@ -62,8 +62,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)"
-        description="¿Con cuántos meses de deuda te pueden desalojar en Chile? Descubre cuándo pueden demandarte, cuánto demora el proceso y cómo evitarlo."
+        title="¿Cuántos meses debes de arriendo para que te desalojen en Chile? Lo que nadie te dice (2026)"
+        description="¿Sabías que con 1 mes de deuda de arriendo ya pueden iniciar un desalojo? Descubre cuánto tiempo tienes realmente, cómo funciona el juicio y qué hacer para protegerte."
         image="/assets/desalojo-3-chile-2026.png"
         url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
         datePublished="2026-04-20"
@@ -84,7 +84,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)
+            ¿Cuántos meses debo de arriendo para que me desalojen en Chile? La verdad sobre los plazos (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -110,7 +110,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl leading-relaxed">
-            Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse cuántos meses debes para que te desalojen. En esta guía te explicamos qué pasa desde el primer mes impago, cómo funciona el juicio y qué hacer para evitar errores.
+            Hay un mito muy extendido: que necesitas 3 o 6 meses de deuda de arriendo para que te desalojen. La realidad es distinta y puede costarte cara si no la conoces. Con solo 1 mes de deuda el arrendador ya puede iniciar la demanda de desalojo. En esta guía te explicamos exactamente cuántos meses debes para que te desalojen, cómo funciona el juicio y qué puedes hacer para evitar llegar a ese punto.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
@@ -133,7 +133,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
-            title="¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)"
+            title="¿Cuántos meses debes de arriendo para que te desalojen en Chile? Lo que nadie te dice (2026)"
             url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
             showBorder={false}
           />
@@ -254,8 +254,12 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-<InArticleCTA category="Derecho Civil" title="¿Debes meses de arriendo y temes un desalojo?" message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento." />
-
+          
+          <InArticleCTA 
+            category="Derecho Civil"
+            title="¿Debes meses de arriendo y temes un desalojo?"
+            message="Un abogado especializado puede evaluar tu situación, negociar con el arrendador y buscar alternativas para evitar el lanzamiento."
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo tienes antes de ser desalojado?</h2>
@@ -682,7 +686,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
-            title="¿Cuántos meses debo de arriendo para que me desalojen en Chile? (Guía 2026 real)"
+            title="¿Cuántos meses debes de arriendo para que te desalojen en Chile? Lo que nadie te dice (2026)"
             url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
           />
         </div>

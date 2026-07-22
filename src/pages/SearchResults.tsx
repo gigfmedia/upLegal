@@ -36,7 +36,8 @@ const normalizeSpecialty = (s: string | null): string => {
   if (lower.includes('familia')) return 'Derecho de Familia';
   if (lower.includes('laboral')) return 'Derecho Laboral';
   if (lower.includes('penal')) return 'Derecho Penal';
-  if (lower.includes('inmobiliario') || lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Civil';
+  if (lower.includes('inmobiliario')) return 'Derecho Inmobiliario';
+  if (lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Civil';
   if (lower.includes('comercial')) return 'Derecho Comercial';
   if (lower.includes('tributario')) return 'Derecho Tributario';
   if (lower.includes('civil')) return 'Derecho Civil';
@@ -191,7 +192,7 @@ const SearchResults = () => {
     if (urlCategory) {
       newSpecialties = [normalizeSpecialty(urlCategory)];
     } else if (urlSpecialties.length > 0) {
-      newSpecialties = urlSpecialties.map(normalizeSpecialty);
+      newSpecialties = [...new Set(urlSpecialties.map(normalizeSpecialty))];
     } else if (urlQuery) {
       const detected = detectEspecialidad(urlQuery);
       newSpecialties = detected ? [normalizeSpecialty(detected)] : ['all'];
@@ -314,10 +315,11 @@ const SearchResults = () => {
   }, [searchParams, setSearchParams]);
 
   const handleSpecialtyChange = useCallback((specialties: string[]) => {
+    const unique = [...new Set(specialties)];
     const params = new URLSearchParams(searchParams);
     params.delete('specialty');
     params.delete('category');
-    specialties.forEach(s => { if (s !== 'all') params.append('specialty', s); });
+    unique.forEach(s => { if (s !== 'all') params.append('specialty', s); });
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
 

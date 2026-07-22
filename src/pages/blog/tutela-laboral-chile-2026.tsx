@@ -362,7 +362,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Si la demanda es acogida, el tribunal puede adoptar distintas medidas dependiendo de las circunstancias del caso.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {[
-                                "Indemnizaciones legales",
+                                <><Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">Indemnizaciones</Link> legales</>,
                                 "Indemnizaciones adicionales contempladas para la tutela laboral",
                                 "Pago de remuneraciones adeudadas cuando corresponda",
                                 "Declaración de vulneración de derechos fundamentales",

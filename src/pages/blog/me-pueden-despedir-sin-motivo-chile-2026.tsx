@@ -44,8 +44,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026"
-        description="En Chile el empleador puede despedirte sin justificar una falta, pero debe pagarte indemnización. Conoce cuándo es legal, qué te corresponde cobrar y cómo actuar si crees que fue injustificado."
+        title="¿Me pueden despedir sin motivo en Chile? Qué dice realmente la ley (2026)"
+        description="¿Te preguntas si te pueden despedir sin motivo en Chile? La respuesta es sí, pero con indemnización. Descubre cuánto te corresponde según tus años de servicio y qué hacer si el despido fue injustificado."
         image="/assets/despido-sin-motivo-chile-2026.png"
         url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
         datePublished="2026-03-23"
@@ -65,7 +65,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Te pueden despedir sin dar explicaciones en Chile? Lo que dice la ley 2026
+            ¿Me pueden despedir sin motivo en Chile? Qué dice realmente la ley (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -113,7 +113,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
-            title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos y qué hacer)"
+            title="¿Me pueden despedir sin motivo en Chile? Qué dice realmente la ley (2026)"
             url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
             showBorder={false}
           />
@@ -301,7 +301,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto te deben pagar si te despiden?</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">Depende directamente de la causal invocada:</p>
+                <p className="text-gray-600 mb-6 leading-relaxed">Depende directamente de la causal invocada y del <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">cálculo de tu finiquito</Link>:</p>
             <div className="grid sm:grid-cols-2 gap-6 mb-10">
               <div className="p-6 bg-white border rounded-2xl shadow-sm">
                 <h4 className="font-bold text-gray-900 mb-4 text-base">Si es "Necesidades de la empresa"</h4>
@@ -531,7 +531,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
-            title="¿Me pueden despedir sin motivo en Chile? (Guía 2026: derechos, causales y qué hacer)"
+            title="¿Me pueden despedir sin motivo en Chile? Qué dice realmente la ley (2026)"
             url="https://legalup.cl/blog/me-pueden-despedir-sin-motivo-chile-2026"
           />
         </div>

@@ -55,8 +55,8 @@ const BlogArticle = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <BlogGrowthHacks
-                title="Apropiación indebida en Chile 2026: qué es, cuándo existe delito y cómo denunciar (Guía Completa)"
-                description="Aprende qué es la apropiación indebida en Chile, cuándo constituye delito, cuáles son las penas, cómo denunciar y qué hacer si eres víctima o estás siendo investigado."
+                title="Apropiación indebida en Chile: penas, ejemplos y cómo denunciar (2026)"
+                description="¿Te apropiaron dinero o bienes en Chile? Descubre qué es la apropiación indebida, ejemplos comunes, las penas asociadas y cómo presentar una denuncia penal paso a paso."
                 image="/assets/apropiacion-indebida-chile-2026.png"
                 url="https://legalup.cl/blog/apropiacion-indebida-chile-2026"
                 datePublished="2026-06-25"
@@ -79,7 +79,7 @@ const BlogArticle = () => {
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
-                        Apropiación indebida en Chile 2026: qué es, cuándo existe delito y cómo denunciar (Guía Completa)
+                        Apropiación indebida en Chile: penas, ejemplos y cómo denunciar (2026)
                     </h1>
 
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
@@ -127,7 +127,7 @@ const BlogArticle = () => {
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
                 <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
-                        title="Apropiación indebida en Chile 2026"
+                        title="Apropiación indebida en Chile: penas, ejemplos y cómo denunciar (2026)"
                         url="https://legalup.cl/blog/apropiacion-indebida-chile-2026"
                         showBorder={false}
                     />
@@ -556,7 +556,7 @@ const BlogArticle = () => {
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">
                     <BlogShare
-                        title="Apropiación indebida en Chile 2026"
+                        title="Apropiación indebida en Chile: penas, ejemplos y cómo denunciar (2026)"
                         url="https://legalup.cl/blog/apropiacion-indebida-chile-2026"
                     />
                 </div>

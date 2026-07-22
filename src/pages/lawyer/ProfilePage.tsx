@@ -613,7 +613,8 @@ export default function LawyerProfilePage() {
         bar_association_number: safeTrim(formData.bar_association_number) || null,
         rut: safeTrim(formData.rut) || null,
         pjud_verified: formData.pjud_verified || false,
-        avatar_url: formData.avatar_url || null
+        avatar_url: formData.avatar_url || null,
+        meet_link: safeTrim(formData.meet_link) || null
       };
       
       const updatedUser = await updateProfile(updateData);

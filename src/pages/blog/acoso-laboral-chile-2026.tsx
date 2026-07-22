@@ -89,7 +89,7 @@ const BlogArticle = () => {
                                 "Puede provenir de jefaturas o de otros trabajadores",
                                 "No toda discusión o conflicto laboral constituye acoso",
                                 "Las pruebas suelen ser determinantes para acreditar los hechos",
-                                "En algunos casos puede dar lugar a tutela laboral u otras acciones judiciales",
+                                <><span>En algunos casos puede dar lugar a tutela laboral, <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> u otras acciones judiciales</span></>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>

@@ -238,7 +238,7 @@ const BlogArticle = () => {
                         <div className="grid sm:grid-cols-2 gap-6">
                             <div className="bg-green-50 p-5 rounded-xl">
                                 <h3 className="font-bold text-green-800 text-lg mb-2">Completo</h3>
-                                <p className="text-green-700">Debe abordar todas las materias relevantes derivadas del divorcio. No basta con regular solamente la pensión de alimentos o únicamente las visitas. El acuerdo debe resolver integralmente la situación familiar.</p>
+                                <p className="text-green-700">Al igual que un <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito laboral</Link>, debe abordar todas las materias relevantes derivadas del divorcio. No basta con regular solamente la pensión de alimentos o únicamente las visitas. El acuerdo debe resolver integralmente la situación familiar.</p>
                             </div>
 
                         

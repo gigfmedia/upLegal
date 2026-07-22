@@ -101,7 +101,7 @@ const BlogArticle = () => {
           </div>
 
           <p className="text-xl max-w-3xl">
-            Cuando una persona es despedida en Chile, una de las primeras dudas que surgen es cuánto dinero le corresponde recibir. Dentro del finiquito, uno de los conceptos más importantes es la indemnización por años de servicio.
+            Cuando una persona es despedida en Chile, una de las primeras dudas que surgen es cuánto dinero le corresponde recibir. Dentro del <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link>, uno de los conceptos más importantes es la indemnización por años de servicio.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 mt-6">

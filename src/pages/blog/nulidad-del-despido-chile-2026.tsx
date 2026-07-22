@@ -433,7 +433,7 @@ const BlogArticle = () => {
                             <div className="space-y-6">
                                 {[
                                     { title: "No revisar las cotizaciones previsionales después del despido", desc: "Muchos trabajadores nunca revisan si sus cotizaciones fueron pagadas." },
-                                    { title: "Firmar documentos sin comprender su contenido", desc: "Un finiquito mal firmado puede limitar las posibilidades de reclamar." },
+                                    { title: "Firmar documentos sin comprender su contenido", desc: <span>Un <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> mal firmado puede limitar las posibilidades de reclamar.</span> },
                                     { title: "Dejar pasar los plazos legales", desc: "Los plazos para demandar son breves y su vencimiento puede impedir cualquier reclamación." },
                                     { title: "No conservar liquidaciones de sueldo", desc: "Las liquidaciones son clave para acreditar la remuneración y calcular indemnizaciones." },
                                     { title: "Asumir que todas las cotizaciones fueron pagadas solo porque aparecían descontadas en la liquidación", desc: "El descuento no significa que el empleador haya enterado efectivamente las cotizaciones." },
@@ -579,7 +579,7 @@ const BlogArticle = () => {
                             </Link>
                             <span className="text-gray-300">|</span>
                             <Link
-                                to="/blog/finiquito-chile-2026"
+                                to="/blog/como-calcular-tu-finiquito-chile-2026"
                                 className="text-green-700 underline hover:text-green-500 text-sm"
                             >
                                 Finiquito en Chile 2026
@@ -591,7 +591,13 @@ const BlogArticle = () => {
                             >
                                 Tutela laboral en Chile
                             </Link>
-                        </div>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                to="/blog/autodespido-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                Autodespido en Chile 2026
+                            </Link>
                     </div>
                 </div>
             </div>

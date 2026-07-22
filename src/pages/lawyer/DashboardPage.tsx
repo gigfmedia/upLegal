@@ -401,7 +401,7 @@ export default function LawyerDashboardPage() {
       </div>
 
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* ... existing counter cards ... */}
           <Card 
             className="hover:bg-accent/50 transition-colors cursor-pointer" 
@@ -447,7 +447,7 @@ export default function LawyerDashboardPage() {
             </CardContent>
           </Card>
           
-          <Card 
+          {/* <Card 
             className="hover:bg-accent/50 transition-colors cursor-pointer" 
             onClick={() => handleNavigateToTab('messages')}
           >
@@ -465,7 +465,7 @@ export default function LawyerDashboardPage() {
               )}
               <p className="text-xs text-muted-foreground">Últimos 7 días</p>
             </CardContent>
-          </Card>
+          </Card> */}
           
           <Card 
             className="hover:bg-accent/50 transition-colors cursor-pointer" 
@@ -501,27 +501,33 @@ export default function LawyerDashboardPage() {
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mt-4">
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">Casos activos</CardTitle>
-                    <Briefcase className="h-4 w-4 text-gray-400" />
+                    <CardTitle className="text-sm font-medium">Casos activos</CardTitle>
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">{activeEmpresaRequests.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {format(counters.lastUpdated, 'HH:mm', { locale: es })} hrs
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">SLA cumplido</CardTitle>
+                    <CardTitle className="text-sm font-medium">SLA cumplido</CardTitle>
                     <CheckCircle className="h-4 w-4 text-green-500" />
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
                       {slaRate !== null ? `${slaRate}%` : '—'}
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      {format(counters.lastUpdated, 'HH:mm', { locale: es })} hrs
+                    </p>
                   </CardContent>
                 </Card>
                 <Card className={pendingFirstResponse.length > 0 ? 'border-amber-300' : ''}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">Pendientes respuesta</CardTitle>
+                    <CardTitle className="text-sm font-medium">Pendientes respuesta</CardTitle>
                     <Clock className="h-4 w-4 text-amber-500" />
                   </CardHeader>
                   <CardContent>
@@ -532,7 +538,7 @@ export default function LawyerDashboardPage() {
                 </Card>
                 <Card className={slaBreached.length > 0 ? 'border-red-300' : ''}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">SLA vencido</CardTitle>
+                    <CardTitle className="text-sm font-medium">SLA vencido</CardTitle>
                     <AlertCircle className="h-4 w-4 text-red-500" />
                   </CardHeader>
                   <CardContent>
@@ -543,7 +549,7 @@ export default function LawyerDashboardPage() {
                 </Card>
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-gray-600">Calificación</CardTitle>
+                    <CardTitle className="text-sm font-medium">Calificación</CardTitle>
                     <Star className="h-4 w-4 text-yellow-500" />
                   </CardHeader>
                   <CardContent>

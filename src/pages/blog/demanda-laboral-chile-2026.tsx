@@ -465,11 +465,11 @@ const BlogArticle = () => {
                             {[
                                 "Recibiste una carta de despido",
                                 "Consideras que el despido fue injustificado",
-                                "No pagaron tu finiquito correctamente",
+                                <span key="finiquito">No pagaron tu <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> correctamente</span>,
                                 "Existen cotizaciones previsionales impagas",
                                 "Sufriste acoso laboral o sexual",
                                 "Fueron vulnerados tus derechos fundamentales",
-                                "Estás evaluando un autodespido",
+                                <span key="autodespido">Estás evaluando un <Link to="/blog/autodespido-chile-2026" className="text-green-700 underline hover:text-green-500">autodespido</Link></span>,
                                 "Deseas presentar una demanda pero no sabes cuál corresponde",
                                 "Tienes dudas sobre los plazos para demandar",
                                 "El empleador ya cuenta con representación jurídica",

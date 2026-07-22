@@ -247,7 +247,7 @@ const BlogArticle = () => {
                         <h2 className="text-2xl font-bold mb-4">¿Siempre corresponde indemnización?</h2>
                         <p className="text-gray-600 mb-4">En la mayoría de los casos sí. Dependiendo de las circunstancias, el trabajador puede tener derecho a:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
-                            {["Indemnización por años de servicio", "Indemnización sustitutiva del aviso previo", "Feriado proporcional", "Remuneraciones pendientes", "Otras prestaciones que correspondan"].map((item, i) => (
+                            {[(<><Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">Indemnización por años de servicio</Link></>), "Indemnización sustitutiva del aviso previo", "Feriado proporcional", "Remuneraciones pendientes", "Otras prestaciones que correspondan"].map((item, i) => (
                                 <li key={i} className="flex items-center gap-2">
                                     <span className="text-green-600">✓</span>
                                     <span>{item}</span>
@@ -491,7 +491,8 @@ const BlogArticle = () => {
 
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">
-                            La causal de necesidades de la empresa busca permitir que los empleadores enfrenten cambios reales en su organización, pero no puede utilizarse de forma arbitraria ni como una justificación automática para despedir trabajadores. Si recibiste una carta de despido, es importante conservar toda la documentación relacionada, revisar correctamente el cálculo de las indemnizaciones y conocer los plazos para ejercer tus derechos.
+                            La causal de necesidades de la empresa busca permitir que los empleadores enfrenten cambios reales en su organización, pero no puede utilizarse de forma arbitraria ni como una justificación automática para despedir trabajadores. Si recibiste una carta de despido, es importante conservar toda la documentación relacionada, revisar correctamente el cálculo de las indemnizaciones y conocer los plazos para ejercer tus derechos. Y si es el trabajador quien quiere terminar la relación por incumplimiento del empleador (cotizaciones impagas, sueldos atrasados, etc.), existe el{" "}
+                            <Link to="/blog/autodespido-chile-2026" className="text-green-700 underline hover:text-green-500">autodespido o despido indirecto (artículo 171)</Link>.
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Sin embargo, comprender cómo funciona esta causal en términos generales no permite determinar si tu despido fue legal o si tienes derecho a mayores indemnizaciones. Esa respuesta depende de antecedentes específicos como la carta de despido, la documentación de la empresa, la existencia de una verdadera reorganización y las pruebas disponibles en tu caso. Si tienes dudas sobre la legalidad del despido, puedes revisar tu situación con un{" "}

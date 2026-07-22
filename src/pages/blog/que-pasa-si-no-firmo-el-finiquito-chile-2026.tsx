@@ -43,8 +43,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)"
-        description="Descubre qué ocurre si no firmas tu finiquito, los riesgos legales, cuándo hacer una reserva de derechos y cómo proteger tus indemnizaciones."
+        title="¿Qué pasa si no firmo el finiquito? Guía Chile 2026"
+        description="¿No firmaste el finiquito y no sabes qué hacer? Conoce los riesgos legales, la reserva de derechos y cómo reclamar lo que te corresponde según la ley chilena."
         image="/assets/que-pasa-si-no-firmo-finiquito-chile-2026.png"
         url="https://legalup.cl/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026"
         datePublished="2026-05-20"
@@ -64,7 +64,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Qué pasa si no firmo el finiquito? Guía completa Chile 2026
+            ¿Qué pasa si no firmo el finiquito? Guía Chile 2026
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -112,11 +112,11 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
-            title="¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)"
-            url="https://legalup.cl/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026"
-            showBorder={false}
-          />
-
+        title="¿Qué pasa si no firmo el finiquito? Guía Chile 2026"
+        url="https://legalup.cl/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026"
+        showBorder={false}
+      />
+    
           <div className="prose max-w-none mb-12">
             <p className="text-base text-gray-600 leading-relaxed mb-6">
               Después de un despido o término de contrato, muchas personas sienten presión para firmar el finiquito rápidamente. A veces el empleador dice frases como:
@@ -677,7 +677,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
         <div className="mt-8">
           <BlogShare
-            title="¿Qué pasa si no firmo el finiquito en Chile? Derechos, riesgos y qué hacer (Guía 2026)"
+            title="¿Qué pasa si no firmo el finiquito? Guía Chile 2026"
             url="https://legalup.cl/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026"
           />
         </div>

@@ -344,7 +344,7 @@ const BlogArticle = () => {
             </p>
             <ul className="space-y-3 mb-6">
               {[
-                "Indemnización por años de servicio — un mes de remuneración por año trabajado",
+                <><Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">Indemnización por años de servicio</Link> — un mes de remuneración por año trabajado</>,
                 "Indemnización sustitutiva del aviso previo — si no avisaron con 30 días de anticipación",
                 "Recargo sobre la indemnización — entre 30% y 100% según la causal invocada",
                 "Pagos pendientes — cualquier remuneración, bono o beneficio adeudado"

@@ -192,6 +192,7 @@ export default function ProfessionalInfoStep({
             <option value="Universidad Alberto Hurtado">Universidad Alberto Hurtado</option>
             <option value="Universidad de Los Lagos">Universidad de Los Lagos</option>
             <option value="Universidad de Antofagasta">Universidad de Antofagasta</option>
+            <option value="Universidad de Las Américas">Universidad de Las Américas</option>
             <option value="Otra universidad">Otra universidad (especificar en la biografía)</option>
           </select>
         </div>

@@ -84,7 +84,7 @@ const BlogArticle = () => {
                                 "Toda empresa debe contar con procedimientos internos para recibir denuncias.",
                                 "La investigación debe respetar principios de imparcialidad, confidencialidad y protección de las personas involucradas.",
                                 "La ley protege tanto a trabajadores del sector privado como, en determinados casos, del sector público conforme a su normativa.",
-                                "Dependiendo del caso, pueden existir acciones adicionales como tutela laboral, autodespido o indemnizaciones.",
+                                <><span>Dependiendo del caso, pueden existir acciones adicionales como tutela laboral, autodespido o <Link to='/blog/como-calcular-tu-finiquito-chile-2026' className='text-green-500 underline hover:text-green-400'>indemnizaciones</Link>.</span></>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>

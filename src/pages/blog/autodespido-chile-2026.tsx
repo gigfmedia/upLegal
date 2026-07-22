@@ -278,7 +278,7 @@ const BlogArticle = () => {
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 mt-12">¿Cuánto puedes recibir por autodespido?</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">Si el tribunal acepta el autodespido, puedes obtener las mismas indemnizaciones que en un despido injustificado (¡y más!).</p>
+            <p className="text-gray-600 mb-6 leading-relaxed">Si el tribunal acepta el autodespido, puedes obtener las mismas indemnizaciones que en un despido injustificado (¡y más!). Revisa cómo se compone el <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">cálculo del finiquito</Link> para saber qué esperar.</p>
 
             <div className="grid gap-4 mb-8">
               <div className="bg-gray-50 border rounded-xl p-5 border-gray-200">
@@ -335,7 +335,7 @@ const BlogArticle = () => {
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
             <Link
-              to="/blog/que-revisar-finiquito-chile"
+              to="/blog/como-calcular-tu-finiquito-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 sm:px-8 py-4 rounded-xl transition-all hover:bg-blue-100 w-full sm:w-auto text-left sm:text-center text-sm sm:text-base"
             >
               👉 Finiquito en Chile 2026: qué revisar antes de firmar
@@ -373,7 +373,7 @@ const BlogArticle = () => {
           <div className="text-center py-6 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Artículo recomendado</p>
             <Link
-              to="/blog/reserva-derechos-finiquito-chile"
+              to="/blog/reserva-de-derechos-finiquito-chile-2026"
               className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-6 sm:px-8 py-4 rounded-xl transition-all hover:bg-blue-100 w-full sm:w-auto text-left sm:text-center text-sm sm:text-base"
             >
               👉 Reserva de derechos en el finiquito: cómo funciona

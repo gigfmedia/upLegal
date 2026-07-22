@@ -303,7 +303,7 @@ const BlogArticle = () => {
           {/* Section 4: Cuánto puedes ganar */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto dinero puedes ganar?</h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">Depende de tu sueldo y antigüedad.</p>
+            <p className="text-gray-600 mb-6 leading-relaxed">Depende de tu sueldo y antigüedad, y del <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">cálculo de tu finiquito</Link>.</p>
 
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Ejemplo real</h3>
@@ -608,7 +608,8 @@ const BlogArticle = () => {
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
-              El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse. Muchos empleadores invocan causales sin respaldo suficiente o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales, incluyendo recargos de hasta 100%.
+              El despido injustificado es una de las situaciones laborales más comunes en Chile, pero también una de las que más herramientas legales entrega al trabajador para defenderse. Muchos empleadores invocan causales sin respaldo suficiente o no cumplen el procedimiento exigido por la ley. Cuando eso ocurre, el trabajador tiene derecho a reclamar y exigir indemnizaciones adicionales, incluyendo recargos de hasta 100%. Y si es el trabajador quien quiere terminar la relación por incumplimiento del empleador (cotizaciones impagas, sueldos atrasados, etc.), existe el{" "}
+              <Link to="/blog/autodespido-chile-2026" className="text-green-700 underline hover:text-green-500">autodespido o despido indirecto (artículo 171)</Link>.
             </p>
             <p className="text-gray-600 leading-relaxed">
               Sin embargo, comprender las reglas generales no permite determinar si tu despido fue injustificado o si tienes derecho a mayores indemnizaciones. Esa respuesta depende de antecedentes específicos como la carta de despido, la causal invocada, la documentación de la empresa y las pruebas disponibles. Si tienes dudas sobre la legalidad de tu despido, puedes revisar tu situación con un{" "}

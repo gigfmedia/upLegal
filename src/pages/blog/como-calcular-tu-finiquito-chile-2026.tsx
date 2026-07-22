@@ -321,8 +321,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar"
-        description="Calcula tu finiquito en Chile 2026 gratis: indemnización, vacaciones proporcionales y mes de aviso. Si tienes dudas, un abogado laboral de LegalUp responde en 24 horas."
+        title="Finiquito en Chile 2026: calcula cuánto te corresponde antes de firmar"
+        description="Calcula cuánto te corresponde de finiquito en Chile 2026: indemnización por años de servicio, vacaciones proporcionales y mes de aviso. Revisa los montos antes de firmar y evita perder dinero."
         image="/assets/finiquito-chile-2026.png"
         url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
         datePublished="2026-02-18"
@@ -344,7 +344,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
-            Finiquito Chile 2026: qué te deben pagar y cómo verificarlo antes de firmar
+            Finiquito en Chile 2026: calcula cuánto te corresponde antes de firmar
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -393,7 +393,7 @@ const BlogArticle = () => {
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
         <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
-            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
+            title="Finiquito en Chile 2026: calcula cuánto te corresponde antes de firmar"
             url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
             showBorder={false}
           />
@@ -492,7 +492,8 @@ const BlogArticle = () => {
                 "Despido por necesidades de la empresa",
                 "Término de contrato a plazo fijo",
                 "Mutuo acuerdo entre las partes",
-                "Despido por incumplimiento grave"
+                "Despido por incumplimiento grave",
+                "Autodespido (despido indirecto)"
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -501,7 +502,8 @@ const BlogArticle = () => {
               ))}
             </div>
             <p className="text-gray-600 leading-relaxed font-medium mb-4">
-              Dependiendo de la causal de término, el trabajador puede tener derecho a indemnizaciones adicionales. Por ejemplo, el despido por necesidades de la empresa (artículo 161 del Código del Trabajo) suele generar el pago de indemnización por años de servicio.
+              Dependiendo de la causal de término, el trabajador puede tener derecho a indemnizaciones adicionales. Por ejemplo, el despido por necesidades de la empresa (artículo 161 del Código del Trabajo) suele generar el pago de indemnización por años de servicio. Si es el trabajador quien pone término por incumplimiento del empleador, revisa nuestra guía sobre{" "}
+              <Link to="/blog/autodespido-chile-2026" className="text-green-700 underline hover:text-green-500">autodespido (despido indirecto)</Link>.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si tienes dudas sobre la legalidad de tu término de contrato, lee esto:</p>
             <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -884,7 +886,7 @@ const BlogArticle = () => {
         {/* Compartir - Growth Hack */}
         <div className="mt-8">
           <BlogShare
-            title="¿Cómo calcular tu finiquito en Chile? Guía 2026 paso a paso"
+            title="Finiquito en Chile 2026: calcula cuánto te corresponde antes de firmar"
             url="https://legalup.cl/blog/como-calcular-tu-finiquito-chile-2026"
           />
         </div>
