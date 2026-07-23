@@ -432,21 +432,49 @@ const BlogArticle = () => {
                         <div className="bg-red-50 rounded-2xl p-6 sm:p-8">
                             <div className="space-y-6">
                                 {[
-                                    { title: "No revisar las cotizaciones previsionales después del despido", desc: "Muchos trabajadores nunca revisan si sus cotizaciones fueron pagadas." },
-                                    { title: "Firmar documentos sin comprender su contenido", desc: <span>Un <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> mal firmado puede limitar las posibilidades de reclamar.</span> },
-                                    { title: "Dejar pasar los plazos legales", desc: "Los plazos para demandar son breves y su vencimiento puede impedir cualquier reclamación." },
-                                    { title: "No conservar liquidaciones de sueldo", desc: "Las liquidaciones son clave para acreditar la remuneración y calcular indemnizaciones." },
-                                    { title: "Asumir que todas las cotizaciones fueron pagadas solo porque aparecían descontadas en la liquidación", desc: "El descuento no significa que el empleador haya enterado efectivamente las cotizaciones." },
-                                    { title: "Esperar varios meses antes de consultar a un abogado", desc: "Detectar oportunamente una deuda previsional puede cambiar completamente el resultado del proceso." },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex gap-4">
+                                    <div key={0} className="flex gap-4">
                                         <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
                                         <div>
-                                            <h4 className="font-bold text-red-900">{item.title}</h4>
-                                            <p className="text-red-800 opacity-90">{item.desc}</p>
+                                            <h4 className="font-bold text-red-900">No revisar las cotizaciones previsionales después del despido</h4>
+                                            <p className="text-red-800 opacity-90">Muchos trabajadores nunca revisan si sus cotizaciones fueron pagadas.</p>
                                         </div>
-                                    </div>
-                                ))}
+                                    </div>,
+                                    <div key={1} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">Firmar documentos sin comprender su contenido</h4>
+                                            <p className="text-red-800 opacity-90">Un <Link to="/blog/como-calcular-tu-finiquito-chile-2026" className="text-green-700 underline hover:text-green-500">finiquito</Link> mal firmado puede limitar las posibilidades de reclamar.</p>
+                                        </div>
+                                    </div>,
+                                    <div key={2} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">Dejar pasar los plazos legales</h4>
+                                            <p className="text-red-800 opacity-90">Los plazos para demandar son breves y su vencimiento puede impedir cualquier reclamación.</p>
+                                        </div>
+                                    </div>,
+                                    <div key={3} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">No conservar liquidaciones de sueldo</h4>
+                                            <p className="text-red-800 opacity-90">Las liquidaciones son clave para acreditar la remuneración y calcular indemnizaciones.</p>
+                                        </div>
+                                    </div>,
+                                    <div key={4} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">Asumir que todas las cotizaciones fueron pagadas solo porque aparecían descontadas en la liquidación</h4>
+                                            <p className="text-red-800 opacity-90">El descuento no significa que el empleador haya enterado efectivamente las cotizaciones.</p>
+                                        </div>
+                                    </div>,
+                                    <div key={5} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">Esperar varios meses antes de consultar a un abogado</h4>
+                                            <p className="text-red-800 opacity-90">Detectar oportunamente una deuda previsional puede cambiar completamente el resultado del proceso.</p>
+                                        </div>
+                                    </div>,
+                                ]}
                             </div>
                         </div>
                     </div>
@@ -624,6 +652,7 @@ const BlogArticle = () => {
             </div>
 
             <BlogConversionPopup category="Derecho Laboral" topic="nulidad-despido" />
+        </div>
         </div>
     );
 };
