@@ -91,7 +91,7 @@ const BlogPage = () => {
             </div>
 
             <div className="w-full md:w-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-              <h2 className="text-xl font-bold font-serif text-green-600 mb-3">¿Necesitas ayuda legal?</h2>
+              <h2 className="text-xl font-bold font-serif text-white mb-3">¿Necesitas ayuda legal?</h2>
               <p className="text-sm text-white mb-4 leading-relaxed">
                 Compara abogados verificados, revisa precios y agenda una consulta online según tu caso.
               </p>

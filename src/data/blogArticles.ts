@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "articulo-160-codigo-trabajo-chile-2026",
+    title: "Artículo 160 del Código del Trabajo en Chile 2026: causales, requisitos y cómo defenderte",
+    excerpt: "Conoce qué establece el artículo 160 del Código del Trabajo, cuáles son las causales de despido, cuándo procede un despido por incumplimiento grave, qué derechos conserva el trabajador y cómo impugnar la decisión ante los tribunales.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "21 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/articulo-160-codigo-trabajo-chile-2026.png"
+  },
+  {
     id: "nulidad-despido-chile-2026",
     title: "Nulidad del despido en Chile 2026: Ley Bustos, cotizaciones impagas y cómo demandar",
     excerpt: "Conoce cuándo procede la nulidad del despido en Chile, qué establece la Ley Bustos, qué ocurre si existen cotizaciones previsionales impagas, cuáles son los requisitos y cómo presentar una demanda laboral.",
