@@ -46,7 +46,7 @@ const ActivityLog = lazy(() => import('./pages/empresa/ActivityLog'));
 const AdminEmpresasPage = lazy(() => import('./pages/admin/EmpresasPage'));
 const AdminCompanyDetail = lazy(() => import('./pages/admin/CompanyDetail'));
 const AdminRequestsAssignment = lazy(() => import('./pages/admin/RequestsAssignment'));
-const LawyerEmpresasRequests = lazy(() => import('./pages/lawyer/EmpresasRequestsPage'));
+// const LawyerEmpresasRequests = lazy(() => import('./pages/lawyer/EmpresasRequestsPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const LawyerDashboard = lazy(() => import('./pages/LawyerDashboard'));
 const LawyerDashboardPage = lazy(() => import('./pages/lawyer/DashboardPage'));
@@ -455,7 +455,7 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="jobs" element={<JobsPage />} />
-                <Route path="empresas" element={<LawyerEmpresasRequests />} />
+                {/* <Route path="empresas" element={<LawyerEmpresasRequests />} /> */}
               </Route>
 
               {/* Lawyer onboarding wizard — standalone, no sidebar */}
@@ -622,7 +622,7 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
-                <Route path="empresas" element={<LawyerEmpresasRequests />} />
+                {/* <Route path="empresas" element={<LawyerEmpresasRequests />} /> */}
               </Route>
 
               <Route path="/admin" element={

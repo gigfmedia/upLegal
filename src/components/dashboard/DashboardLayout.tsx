@@ -16,7 +16,6 @@ import {
   TrendingUp,
   LogOut,
   Heart,
-  Building2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -174,7 +173,7 @@ function DashboardLayout() {
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
         { href: '/lawyer/citas', icon: Calendar, label: 'Citas' },
         { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
-        { href: '/lawyer/empresas', icon: Building2, label: 'Empresas' },
+        // { href: '/lawyer/empresas', icon: Building2, label: 'Empresas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems

@@ -72,63 +72,64 @@ export default function LawyerDashboardPage() {
   }, [searchParams, toast, navigate]);
 
   // ---- EMPRESA MODULE ----
-  const [empresaRequests, setEmpresaRequests] = useState<any[]>([])
-  const [empresaLoading, setEmpresaLoading] = useState(true)
-  const [empresaRatingStats, setEmpresaRatingStats] = useState<{ average: number; count: number } | null>(null)
+  // Comentado: módulo de empresas aún no listo para abogados
+  // const [empresaRequests, setEmpresaRequests] = useState<any[]>([])
+  // const [empresaLoading, setEmpresaLoading] = useState(true)
+  // const [empresaRatingStats, setEmpresaRatingStats] = useState<{ average: number; count: number } | null>(null)
 
-  const activeStatuses = ['nueva', 'asignada', 'en_revision', 'esperando_documentos', 'esperando_cliente', 'presupuesto_enviado', 'presupuesto_aprobado', 'en_ejecucion']
+  // const activeStatuses = ['nueva', 'asignada', 'en_revision', 'esperando_documentos', 'esperando_cliente', 'presupuesto_enviado', 'presupuesto_aprobado', 'en_ejecucion']
 
-  useEffect(() => {
-    const load = async () => {
-      if (!user) return
-      try {
-        const [reqRes, ratingRes] = await Promise.all([
-          fetch(`/api/lawyer/empresas/requests?userId=${user.id}`),
-          fetch(`/api/empresas/ratings/lawyer/${user.id}/stats`),
-        ])
-        const reqData = await reqRes.json()
-        setEmpresaRequests(reqData.requests || [])
-        const ratingData = await ratingRes.json()
-        setEmpresaRatingStats(ratingData.stats || null)
-      } catch (err) {
-        console.error('[Empresa] Error fetching:', err)
-      } finally {
-        setEmpresaLoading(false)
-      }
-    }
-    load()
-  }, [user])
+  // useEffect(() => {
+  //   const load = async () => {
+  //     if (!user) return
+  //     try {
+  //       const [reqRes, ratingRes] = await Promise.all([
+  //         fetch(`/api/lawyer/empresas/requests?userId=${user.id}`),
+  //         fetch(`/api/empresas/ratings/lawyer/${user.id}/stats`),
+  //       ])
+  //       const reqData = await reqRes.json()
+  //       setEmpresaRequests(reqData.requests || [])
+  //       const ratingData = await ratingRes.json()
+  //       setEmpresaRatingStats(ratingData.stats || null)
+  //     } catch (err) {
+  //       console.error('[Empresa] Error fetching:', err)
+  //     } finally {
+  //       setEmpresaLoading(false)
+  //     }
+  //   }
+  //   load()
+  // }, [user])
 
-  const activeEmpresaRequests = empresaRequests.filter(r => activeStatuses.includes(r.status))
-  const slaBreached = activeEmpresaRequests.filter(r =>
-    r.sla_deadline && !r.first_response_at && new Date(r.sla_deadline) < new Date()
-  )
-  const pendingFirstResponse = activeEmpresaRequests.filter(r =>
-    r.sla_deadline && !r.first_response_at
-  )
-  const slaCompliant = activeEmpresaRequests.filter(r =>
-    r.first_response_at && r.sla_deadline && new Date(r.first_response_at) <= new Date(r.sla_deadline)
-  )
-  const slaTotal = activeEmpresaRequests.filter(r => r.sla_deadline).length
-  const slaRate = slaTotal > 0 ? Math.round((slaCompliant.length / slaTotal) * 100) : null
+  // const activeEmpresaRequests = empresaRequests.filter(r => activeStatuses.includes(r.status))
+  // const slaBreached = activeEmpresaRequests.filter(r =>
+  //   r.sla_deadline && !r.first_response_at && new Date(r.sla_deadline) < new Date()
+  // )
+  // const pendingFirstResponse = activeEmpresaRequests.filter(r =>
+  //   r.sla_deadline && !r.first_response_at
+  // )
+  // const slaCompliant = activeEmpresaRequests.filter(r =>
+  //   r.first_response_at && r.sla_deadline && new Date(r.first_response_at) <= new Date(r.sla_deadline)
+  // )
+  // const slaTotal = activeEmpresaRequests.filter(r => r.sla_deadline).length
+  // const slaRate = slaTotal > 0 ? Math.round((slaCompliant.length / slaTotal) * 100) : null
 
-  const handleMarkFirstResponse = async (requestId: string) => {
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token
-      if (!token) return
-      await fetch(`/api/empresas/requests/${requestId}/first-response`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setEmpresaRequests(prev =>
-        prev.map(r => r.id === requestId ? { ...r, first_response_at: new Date().toISOString() } : r)
-      )
-      toast({ title: 'Primera respuesta registrada', description: 'SLA actualizado correctamente.' })
-    } catch (err) {
-      console.error(err)
-      toast({ title: 'Error', description: 'No se pudo registrar la respuesta', variant: 'destructive' })
-    }
-  }
+  // const handleMarkFirstResponse = async (requestId: string) => {
+  //   try {
+  //     const token = (await supabase.auth.getSession()).data.session?.access_token
+  //     if (!token) return
+  //     await fetch(`/api/empresas/requests/${requestId}/first-response`, {
+  //       method: 'POST',
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     })
+  //     setEmpresaRequests(prev =>
+  //       prev.map(r => r.id === requestId ? { ...r, first_response_at: new Date().toISOString() } : r)
+  //     )
+  //     toast({ title: 'Primera respuesta registrada', description: 'SLA actualizado correctamente.' })
+  //   } catch (err) {
+  //     console.error(err)
+  //     toast({ title: 'Error', description: 'No se pudo registrar la respuesta', variant: 'destructive' })
+  //   }
+  // }
 
   const fetchActivities = useCallback(async () => {
     if (!user?.id) return;
@@ -482,7 +483,9 @@ export default function LawyerDashboardPage() {
           </Card>
         </div>
 
-        {/* ---- EMPRESAS SECTION ---- */}
+{/* ---- EMPRESAS SECTION ---- */}
+        {/* Comentado: módulo de empresas aún no listo para abogados */}
+        {/*
         {!empresaLoading && (
           <>
             <div>
@@ -612,6 +615,7 @@ export default function LawyerDashboardPage() {
             <hr className="border-gray-200" />
           </>
         )}
+        */}
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="space-y-6">
