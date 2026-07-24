@@ -556,7 +556,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si recibiste un despido por artículo 160, es recomendable revisar cuanto antes la carta de despido, reunir toda la documentación disponible y consultar con un abogado laboral para evaluar si corresponde impugnar la decisión. Puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

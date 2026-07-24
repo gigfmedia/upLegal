@@ -21,6 +21,16 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "abandono-del-trabajo-chile-2026",
+    title: "Abandono del trabajo en Chile 2026: cuándo es causal de despido y qué consecuencias tiene",
+    excerpt: "Conoce cuándo existe abandono del trabajo según el Código del Trabajo, cuándo puede ser causal de despido, qué diferencia hay con las inasistencias injustificadas, cuáles son las consecuencias y cómo defender tus derechos si fuiste despedido.",
+    category: "Derecho Laboral",
+    author: "LegalUp",
+    date: "22 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/abandono-del-trabajo-chile-2026.png"
+  },
+  {
     id: "articulo-160-codigo-trabajo-chile-2026",
     title: "Artículo 160 del Código del Trabajo en Chile 2026: causales, requisitos y cómo defenderte",
     excerpt: "Conoce qué establece el artículo 160 del Código del Trabajo, cuáles son las causales de despido, cuándo procede un despido por incumplimiento grave, qué derechos conserva el trabajador y cómo impugnar la decisión ante los tribunales.",

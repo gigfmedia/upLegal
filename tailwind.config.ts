@@ -71,6 +71,9 @@ export default {
 				},
 				cream: {
 					900: '#FAFAF6'
+				},
+				sand: {
+					900: '#F5F0E8'
 				}
 			},
 			borderRadius: {

@@ -554,7 +554,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Actuar rápidamente, reunir la documentación necesaria y recibir asesoría jurídica especializada puede marcar una diferencia importante en el resultado del juicio. Si necesitas orientación, puedes consultar con un{" "}
-                            <Link to="/abogado-laboral" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
+                            <Link to="/abogados-laborales" className="text-green-700 underline hover:text-green-500">abogado laboral en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

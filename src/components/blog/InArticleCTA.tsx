@@ -51,7 +51,7 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   };
 
   return (
-    <div ref={ref} className="my-10 p-8 border border-gray-200 bg-gray-50 rounded-2xl text-center shadow-sm">
+    <div ref={ref} className="my-10 p-8 border border-gray-200 bg-sand-900 rounded-2xl text-center shadow-sm">
       <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">{title || "¿Necesitas ayuda con este caso?"}</h3>
       <p className="text-gray-700 mb-4 font-medium">
         {message || `Habla con un abogado especialista en ${category}.`}
