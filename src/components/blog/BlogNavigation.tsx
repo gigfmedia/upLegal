@@ -10,24 +10,41 @@ interface BlogNavigationProps {
 export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
   const currentArticle = articles.find(a => a.id === currentArticleId);
   const category = currentArticle?.category;
+  const cluster = currentArticle?.cluster;
 
-  // Filter articles to stay within the same category for navigation
-  const categoryArticles = category
-    ? articles.filter(a => a.category === category)
-    : articles;
+  // Priority 1: Same cluster
+  let relatedArticles = cluster
+    ? articles.filter(a => a.cluster === cluster && a.id !== currentArticleId)
+    : [];
 
-  const currentIndex = categoryArticles.findIndex(a => a.id === currentArticleId);
+  // Only use category fallback if cluster has at least 2 articles
+  // Otherwise, don't show navigation until cluster has more content
+  if (relatedArticles.length >= 2 && category) {
+    const categoryArticles = articles.filter(a => a.category === category && a.id !== currentArticleId);
+    relatedArticles = [...relatedArticles, ...categoryArticles];
+  }
+
+  // Remove duplicates
+  relatedArticles = Array.from(new Set(relatedArticles.map(a => a.id)))
+    .map(id => articles.find(a => a.id === id)!);
+
+  // If not enough related articles, don't show navigation
+  if (relatedArticles.length < 2) {
+    return null;
+  }
+
+  const currentIndex = relatedArticles.findIndex(a => a.id === currentArticleId);
   
   // Articles are ordered from newest to oldest in the array
   // If at the beginning (newest), "Next" (newer) loops to the end (oldest)
-  let nextArticle = categoryArticles.length > 1
-    ? (currentIndex > 0 ? categoryArticles[currentIndex - 1] : categoryArticles[categoryArticles.length - 1])
+  let nextArticle = relatedArticles.length > 1
+    ? (currentIndex > 0 ? relatedArticles[currentIndex - 1] : relatedArticles[relatedArticles.length - 1])
     : undefined;
 
     
   // If at the end (oldest), "Prev" (older) loops to the beginning (newest)
-  let prevArticle = categoryArticles.length > 1
-    ? (currentIndex < categoryArticles.length - 1 ? categoryArticles[currentIndex + 1] : categoryArticles[0])
+  let prevArticle = relatedArticles.length > 1
+    ? (currentIndex < relatedArticles.length - 1 ? relatedArticles[currentIndex + 1] : relatedArticles[0])
     : undefined;
 
   // If next and prev are the same (happens with only 2 articles), hide prev to avoid redundancy

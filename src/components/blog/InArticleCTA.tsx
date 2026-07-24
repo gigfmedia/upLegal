@@ -58,13 +58,13 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-5 justify-center">
-        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
           <span className="text-green-600">✓</span> Videollamada online
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
           <span className="text-green-600">✓</span> Precio transparente
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-600 justify-center">
+        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
           <span className="text-green-600">✓</span> Agenda inmediata
         </div>
       </div>

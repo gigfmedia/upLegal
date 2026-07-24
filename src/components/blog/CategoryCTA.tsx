@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import type { BlogTopic } from './blogConversionConfig';
 
 interface CategoryCTAProps {
-  category: 'laboral' | 'arriendo' | 'familia' | 'penal' | 'consumidor';
+  category: 'laboral' | 'arriendo' | 'familia' | 'penal' | 'consumidor' | 'civil';
   topic?: BlogTopic;
 }
 
@@ -38,6 +38,12 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
       title: '¿Tienes un problema como consumidor?',
       description: 'Un abogado especializado en derecho del consumidor puede ayudarte a presentar reclamos, exigir garantías y defender tus derechos.',
       link: '/search?specialty=Derecho%20del%20Consumidor',
+      linkText: 'Revisar mi caso con un abogado',
+    },
+    civil: {
+      title: '¿Tienes un pagaré, una deuda o un juicio ejecutivo?',
+      description: 'Un abogado civil puede revisar tu caso, explicar tus opciones legales y ayudarte a defender tus derechos o recuperar lo que te deben.',
+      link: '/search?specialty=Derecho%20Civil',
       linkText: 'Revisar mi caso con un abogado',
     },
   };

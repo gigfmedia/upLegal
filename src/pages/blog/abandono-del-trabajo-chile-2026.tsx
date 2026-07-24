@@ -547,7 +547,7 @@ const BlogArticle = () => {
                             </Link>
                             <span className="text-gray-300">|</span>
                             <Link
-                                to="/blog/nulidad-del-despido-chile-2026"
+                                to="/blog/nulidad-despido-chile-2026"
                                 className="text-green-700 underline hover:text-green-500 text-sm"
                             >
                                 Nulidad del despido (Ley Bustos)

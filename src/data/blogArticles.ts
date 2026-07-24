@@ -3,6 +3,7 @@ export interface Article {
   title: string;
   excerpt: string;
   category: string;
+  cluster?: string;
   author: string;
   date: string;
   readTime: string;
@@ -20,6 +21,17 @@ export const articles: Article[] = [
   //   readTime: "11 min",
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
+  {
+    id: "pagare-chile-2026",
+    title: "Pagaré en Chile 2026: qué es, cómo funciona y qué hacer si firmaste uno",
+    excerpt: "Conoce qué es un pagaré en Chile, cuándo puede cobrarse judicialmente, qué ocurre si no pagas, cuáles son tus derechos frente a una demanda ejecutiva y cómo defenderte si firmaste uno.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "23 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/pagare-chile-2026.png"
+  },
   {
     id: "abandono-del-trabajo-chile-2026",
     title: "Abandono del trabajo en Chile 2026: cuándo es causal de despido y qué consecuencias tiene",
@@ -487,6 +499,7 @@ export const articles: Article[] = [
     title: "¿Cómo desalojar a una persona de mi propiedad en Chile 2026? Guía completa para propietarios",
     excerpt: "Guía completa 2026 para desalojar legalmente a un arrendatario, familiar u ocupante en Chile: pasos, plazos, costos y qué hacer según tu situación.",
     category: "Derecho Civil",
+    cluster: "inmuebles",
     author: "LegalUp",
     date: "2 de Mayo, 2026",
     readTime: "15 min",
@@ -617,6 +630,7 @@ export const articles: Article[] = [
     title: "Ley \"Devuélveme Mi Casa\" en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026",
     excerpt: "La Ley 21.461 agiliza el desalojo y la recuperación del inmueble ante incumplimiento: procedimiento monitorio, plazos, pasos y errores comunes. Guía 2026 para propietarios en Chile.",
     category: "Derecho Civil",
+    cluster: "inmuebles",
     author: "LegalUp",
     date: "24 de Marzo, 2026",
     readTime: "15 min",
@@ -657,6 +671,7 @@ export const articles: Article[] = [
     title: "¿Cuánto demora un juicio de desalojo en Chile? Guía 2026",
     excerpt: "Descubre cuánto tarda realmente un juicio de desalojo en Chile en 2026. Etapas legales, plazos judiciales y consejos para arrendadores y arrendatarios bajo la ley actual.",
     category: "Derecho Civil",
+    cluster: "inmuebles",
     author: "LegalUp",
     date: "16 de Marzo, 2026",
     readTime: "16 min",
@@ -667,6 +682,7 @@ export const articles: Article[] = [
     title: "¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)",
     excerpt: "Si arriendas una propiedad en Chile, es posible que en algún momento tengas problemas con el dueño del inmueble. Conoce tus derechos legales y el proceso correcto bajo la ley 'Devuélveme mi Casa'.",
     category: "Derecho Civil",
+    cluster: "inmuebles",
     author: "LegalUp",
     date: "13 de Marzo, 2026",
     readTime: "16 min",
