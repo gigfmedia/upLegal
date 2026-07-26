@@ -33,6 +33,8 @@ const mercadoPagoWebhookUrl =
   process.env.VITE_MERCADOPAGO_WEBHOOK_URL || '';
 const resendApiKey = process.env.RESEND_API_KEY || '';
 
+const isLocal = appUrl.includes('localhost') || appUrl.includes('127.0.0.1');
+
 if (!supabaseUrl) {
   console.error('❌ SUPABASE_URL is required but not set.');
   process.exit(1);
@@ -1721,6 +1723,167 @@ app.delete('/api/mercadopago/disconnect/:userId', async (req, res) => {
   }
 });
 
+// ============================================
+// LEGALUP DOCUMENTS ENDPOINTS
+// ============================================
+
+// Create document + MercadoPago preference
+app.post('/api/documents/create', async (req, res) => {
+  try {
+    const { type, user_email, user_name, payload, total_paid, amount, template_version } = req.body;
+
+    if (!type || !user_email || !payload || !total_paid) {
+      return res.status(400).json({
+        error: 'Faltan campos obligatorios',
+        required: ['type', 'user_email', 'payload', 'total_paid'],
+      });
+    }
+
+    // Insert document as pending_payment
+    const { data: doc, error: docError } = await supabase
+      .from('generated_documents')
+      .insert({
+        type,
+        status: 'pending_payment',
+        user_email,
+        user_name: user_name || null,
+        payload,
+        total_paid,
+        amount: amount || null,
+        template_version: template_version || 1,
+      })
+      .select()
+      .single();
+
+    if (docError) {
+      console.error('[documents] Error creating document:', docError);
+      return res.status(500).json({ error: 'Error al crear el documento' });
+    }
+
+    // Create MercadoPago preference
+    const webhookUrl = resolveWebhookUrl(req);
+    const externalReference = `DOCUMENT_${doc.id}`;
+
+    const preferenceData = {
+      items: [{
+        id: doc.id,
+        title: `Mandato Pagaré — LegalUp`,
+        description: 'Generación de documento legal',
+        quantity: 1,
+        currency_id: 'CLP',
+        unit_price: total_paid,
+      }],
+      payer: {
+        email: user_email,
+        name: user_name || 'Usuario',
+      },
+      back_urls: {
+        success: `${appUrl}/documentos/${type}?status=approved&document_id=${doc.id}`,
+        failure: `${appUrl}/documentos/${type}?status=failure`,
+        pending: `${appUrl}/documentos/${type}?status=pending`,
+      },
+      ...(appUrl.startsWith('https') ? { auto_return: 'approved' } : {}),
+      binary_mode: true,
+      external_reference: externalReference,
+      statement_descriptor: 'LEGALUP',
+      ...(webhookUrl ? { notification_url: webhookUrl } : {}),
+    };
+
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
+      },
+      body: JSON.stringify(preferenceData),
+    });
+
+    if (!mpResponse.ok) {
+      const errorData = await mpResponse.json();
+      console.error('[documents] MP error:', errorData);
+      return res.status(500).json({ error: 'Error al crear preferencia de pago' });
+    }
+
+    const mpData = await mpResponse.json();
+
+    // Save preference ID
+    await supabase
+      .from('generated_documents')
+      .update({ mercadopago_preference_id: mpData.id })
+      .eq('id', doc.id);
+
+    res.json({
+      documentId: doc.id,
+      preferenceId: mpData.id,
+      initPoint: isLocal
+        ? (mpData.sandbox_init_point || mpData.init_point)
+        : (mpData.init_point || mpData.sandbox_init_point),
+    });
+  } catch (error) {
+    console.error('[documents] Error in create:', error);
+    res.status(500).json({ error: 'Error interno al crear documento' });
+  }
+});
+
+// Get document by ID
+app.get('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: doc, error } = await supabase
+      .from('generated_documents')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !doc) {
+      return res.status(404).json({ error: 'Documento no encontrado' });
+    }
+
+    res.json(doc);
+  } catch (error) {
+    console.error('[documents] Error fetching:', error);
+    res.status(500).json({ error: 'Error al obtener documento' });
+  }
+});
+
+// Payment confirmation endpoint (called after MP redirect success)
+app.post('/api/documents/payment-confirmation', async (req, res) => {
+  try {
+    const { document_id } = req.body;
+    if (!document_id) {
+      return res.status(400).json({ error: 'document_id requerido' });
+    }
+
+    const { data: doc, error } = await supabase
+      .from('generated_documents')
+      .select('*')
+      .eq('id', document_id)
+      .maybeSingle();
+
+    if (error || !doc) {
+      return res.status(404).json({ error: 'Documento no encontrado' });
+    }
+
+    if (doc.status === 'completed') {
+      return res.json({ status: 'completed', pdf_url: doc.pdf_url });
+    }
+
+    if (doc.status === 'paid' || doc.status === 'processing') {
+      return res.json({ status: doc.status, message: 'Documento en proceso' });
+    }
+
+    if (doc.status === 'failed' || doc.status === 'delivery_failed') {
+      return res.json({ status: 'failed', error_message: doc.error_message || 'Error en la generación' });
+    }
+
+    return res.json({ status: doc.status });
+  } catch (error) {
+    console.error('[documents] Error confirming payment:', error);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 // MercadoPago Webhook
 app.post('/api/mercadopago/webhook', async (req, res) => {
   try {
@@ -1792,8 +1955,27 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
     }
 
     const handleApprovedPayment = async (payment) => {
-      const bookingId = payment.external_reference;
+      const externalRef = payment.external_reference || '';
       const paymentId = payment.id.toString();
+
+      // Route by external_reference type
+      if (externalRef.startsWith('DOCUMENT_')) {
+        const documentId = externalRef.replace('DOCUMENT_', '');
+        console.log('[webhook] step=document_payment document_id=' + documentId + ' payment_id=' + paymentId);
+
+        const { handleDocumentPayment } = await import('./server/documents.mjs');
+        await handleDocumentPayment({
+          supabase,
+          documentId,
+          paymentId,
+          resend,
+        });
+
+        console.log('[webhook] step=document_payment status=ok document_id=' + documentId);
+        return;
+      }
+
+      const bookingId = externalRef;
 
       console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
 
@@ -5702,6 +5884,6 @@ app.use((error, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0');
+app.listen(PORT, '::');
 
 export default app;

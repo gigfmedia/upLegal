@@ -55,8 +55,8 @@ const BlogArticle = () => {
                 description="Conoce qué dice el artículo 160 del Código del Trabajo, cuáles son sus causales, qué derechos conservas y cómo impugnar un despido por esta causal."
                 image="/assets/articulo-160-codigo-trabajo-chile-2026.png"
                 url="https://legalup.cl/blog/articulo-160-codigo-trabajo-chile-2026"
-                datePublished="2026-07-22"
-                dateModified="2026-07-22"
+                datePublished="2026-07-21"
+                dateModified="2026-07-21"
                 faqs={faqs}
             />
 

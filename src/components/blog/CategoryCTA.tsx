@@ -87,6 +87,8 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
   };
 
   const base = content[category];
+  if (!base) return null;
+
   const override = topic ? topicOverrides[topic] : undefined;
   const activeContent = override ? { ...base, ...override } : base;
 

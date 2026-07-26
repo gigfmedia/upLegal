@@ -108,6 +108,7 @@ const DespidoInjustificadoLanding = lazy(() => import('./pages/DespidoInjustific
 const ArriendoLanding = lazy(() => import('./pages/ArriendoLanding'));
 const PenalLanding = lazy(() => import('./pages/PenalLanding'));
 const FamiliaLanding = lazy(() => import('./pages/FamiliaLanding'));
+const DocumentPage = lazy(() => import('./documents/pages/DocumentPage'));
 
 // Blog routes
 const BlogRoutes = lazy(() => import('@/components/BlogRoutes'));
@@ -423,6 +424,7 @@ const AppContent = () => {
               <Route path="/abogado-penal" element={<PenalLanding />} />
               <Route path="/abogado-familia" element={<FamiliaLanding />} />
               <Route path="/review" element={<ReviewPage />} />
+              <Route path="/documentos/:slug" element={<DocumentPage />} />
 
 
               {/* New lawyer dashboard routes */}

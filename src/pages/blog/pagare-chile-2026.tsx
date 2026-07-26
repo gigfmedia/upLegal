@@ -505,18 +505,37 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="civil" />
-
-                    {/* FAQS */}
-                    <div className="mb-6" data-faq-section>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
-                        <div className="space-y-4">
-                            {faqs.map((faq, i) => (
-                                <div key={i} className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">{faq.question}</h3>
-                                    <p className="text-gray-700">{faq.answer}</p>
-                                </div>
-                            ))}
+                    {/* ARTICULOS RELACIONADOS */}
+                    <div className="mt-8 border-t pt-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">También te puede interesar</h3>
+                        <div className="flex flex-wrap gap-3">
+                            <Link
+                                to="/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                Cómo desalojar a una persona de mi propiedad en Chile 2026
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                to="/blog/ley-devuelveme-mi-casa-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                Ley Devuélveme mi Casa en Chile
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                ¿Cuánto demora un juicio de desalojo en Chile?
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                to="/blog/me-quieren-desalojar-que-hago-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                Me quieren desalojar, ¿qué hago?
+                            </Link>
                         </div>
                     </div>
 

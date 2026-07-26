@@ -27,6 +27,8 @@ import { getCompletedCasesCount } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
 
+import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge';
+
 const AuthModal = lazy(() => import("@/components/AuthModal").then(m => ({ default: m.AuthModal })));
 const ScheduleModal = lazy(() => import("@/components/ScheduleModal").then(m => ({ default: m.ScheduleModal })));
 const TestimonialsSection = lazy(() => import("@/components/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
@@ -534,6 +536,7 @@ const Index = () => {
               <div className="text-gray-900 mb-1">No enfrentes tu problema legal solo</div>
               <p className="text-sm text-gray-800">Recibe orientación legal clara y encuentra al abogado indicado para tu caso.</p>
             </div>
+            
           </div>
           <div className="mt-12">
             <p className="text-gray-900 font-bold mb-4">Búsqueda rápida por especialidad:</p>
@@ -636,8 +639,8 @@ const Index = () => {
                 <li>• Sin sorpresas después</li>
               </ul>
             </div>
-
           </div>
+          <MPbadge />
         </div>
       </section>
 

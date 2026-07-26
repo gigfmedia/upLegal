@@ -161,9 +161,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Laboral" />
-
-
           {/* Section 2: Cuándo */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se considera injustificado?</h2>
@@ -225,6 +222,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+          
+          <RelatedLawyers category="Derecho Laboral" />
 
           {/* COMPLEJIDAD 1: CAUSAL VALIDA VS INJUSTIFICADA */}
           <div className="mb-12">
@@ -245,7 +244,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-<InArticleCTA category="Derecho Laboral"  title="¿Crees que te despidieron injustificadamente?" message="Un abogado laboral puede revisar la causal, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+
 
 
           {/* Section 3: Derechos */}
@@ -299,6 +298,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Laboral"  title="¿Crees que te despidieron injustificadamente?" message="Un abogado laboral puede revisar la causal, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
 
           {/* Section 4: Cuánto puedes ganar */}
           <div className="mb-12">

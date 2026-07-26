@@ -24,6 +24,11 @@ export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
     relatedArticles = [...relatedArticles, ...categoryArticles];
   }
 
+  // No cluster assigned: fall back to same-category articles
+  if (!cluster && category) {
+    relatedArticles = articles.filter(a => a.category === category && a.id !== currentArticleId);
+  }
+
   // Remove duplicates
   relatedArticles = Array.from(new Set(relatedArticles.map(a => a.id)))
     .map(id => articles.find(a => a.id === id)!);

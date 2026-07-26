@@ -50,8 +50,8 @@ const BlogArticle = () => {
                 description="Conoce cuándo conviene presentar una demanda laboral en Chile, cuáles son los plazos, cuánto demora un juicio, qué pruebas sirven y qué hacer para proteger tus derechos."
                 image="/assets/demanda-laboral-chile-2026.png"
                 url="https://legalup.cl/blog/demanda-laboral-chile-2026"
-                datePublished="2026-07-18"
-                dateModified="2026-07-18"
+                datePublished="2026-07-17"
+                dateModified="2026-07-17"
                 faqs={faqs}
             />
 
