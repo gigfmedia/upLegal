@@ -110,8 +110,8 @@ export default function ProfileViewsChart() {
                 <AreaChart data={viewsData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                   <defs>
                     <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -142,7 +142,7 @@ export default function ProfileViewsChart() {
                   <Area
                     type="monotone"
                     dataKey="views"
-                    stroke="#16a34a"
+                    stroke="#3b82f6"
                     strokeWidth={2}
                     fill="url(#viewsGradient)"
                     animationDuration={600}

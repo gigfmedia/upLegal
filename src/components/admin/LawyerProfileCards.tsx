@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  AreaChart, Area, ResponsiveContainer,
+  AreaChart, Area, ResponsiveContainer, Tooltip,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, Users } from 'lucide-react';
@@ -16,8 +16,6 @@ export default function LawyerProfileCards() {
   const sorted = [...lawyers].sort((a, b) =>
     sortBy === 'views' ? b.totalViews - a.totalViews : a.lawyerName.localeCompare(b.lawyerName)
   );
-
-  const maxViews = sorted[0]?.totalViews || 1;
 
   const RANGES = [
     { label: '7 días', value: '7d' as const },
@@ -79,16 +77,14 @@ export default function LawyerProfileCards() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sorted.slice(0, 15).map((lawyer) => (
-          <LawyerCard key={lawyer.lawyerId} lawyer={lawyer} maxViews={maxViews} />
+          <LawyerCard key={lawyer.lawyerId} lawyer={lawyer} />
         ))}
       </div>
     </div>
   );
 }
 
-function LawyerCard({ lawyer, maxViews }: { lawyer: LawyerViewStats; maxViews: number }) {
-  const pct = maxViews > 0 ? (lawyer.totalViews / maxViews) * 100 : 0;
-
+function LawyerCard({ lawyer }: { lawyer: LawyerViewStats }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
@@ -103,29 +99,32 @@ function LawyerCard({ lawyer, maxViews }: { lawyer: LawyerViewStats; maxViews: n
       <CardContent>
         <div className="h-16">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={lawyer.dailyData}>
+              <AreaChart data={lawyer.dailyData}>
               <defs>
                 <linearGradient id={`grad-${lawyer.lawyerId}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#16a34a" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
+              <Tooltip
+                formatter={(value: number) => [value, 'Visitas']}
+                contentStyle={{
+                  borderRadius: '8px',
+                  border: '1px solid #e2e8f0',
+                  boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                  fontSize: '12px',
+                }}
+              />
               <Area
                 type="monotone"
                 dataKey="views"
-                stroke="#16a34a"
+                stroke="#3b82f6"
                 strokeWidth={1.5}
                 fill={`url(#grad-${lawyer.lawyerId})`}
                 isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-        <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-green-500 rounded-full transition-all duration-500"
-            style={{ width: `${pct}%` }}
-          />
         </div>
       </CardContent>
     </Card>

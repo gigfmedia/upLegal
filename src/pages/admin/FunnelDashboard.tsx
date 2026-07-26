@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Users, MessageSquare, Calendar, DollarSign, TrendingUp, ArrowRight, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 type TimeRange = 'today' | '7d' | '30d' | '90d' | 'custom';
 
@@ -650,62 +651,66 @@ function FunnelChart({ stages }: { stages: FunnelStage[] }) {
 }
 
 function DailyEvolutionChart({ data }: { data: DailyMetrics[] }) {
-  const maxValue = Math.max(
-    ...data.map(d => Math.max(d.visitors, d.leads, d.bookings, d.payments)),
-    1
-  );
-
   return (
     <div className="space-y-4">
       <div className="h-64">
-        <svg className="w-full h-full" viewBox={`0 0 ${data.length * 40} 200`} preserveAspectRatio="none">
-          {/* Visitors line */}
-          <polyline
-            fill="none"
-            stroke="#3b82f6"
-            strokeWidth="2"
-            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.visitors / maxValue) * 180}`).join(' ')}
-          />
-          {/* Leads line */}
-          <polyline
-            fill="none"
-            stroke="#10b981"
-            strokeWidth="2"
-            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.leads / maxValue) * 180}`).join(' ')}
-          />
-          {/* Bookings line */}
-          <polyline
-            fill="none"
-            stroke="#f59e0b"
-            strokeWidth="2"
-            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.bookings / maxValue) * 180}`).join(' ')}
-          />
-          {/* Payments line */}
-          <polyline
-            fill="none"
-            stroke="#ef4444"
-            strokeWidth="2"
-            points={data.map((d, i) => `${i * 40 + 20},${200 - (d.payments / maxValue) * 180}`).join(' ')}
-          />
-        </svg>
-      </div>
-      <div className="flex gap-4 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-blue-500 rounded" />
-          <span>Visitantes</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-green-500 rounded" />
-          <span>Leads</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-yellow-500 rounded" />
-          <span>Bookings</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 bg-red-500 rounded" />
-          <span>Pagos</span>
-        </div>
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+            <defs>
+              <linearGradient id="visitorsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="leadsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="bookingsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="paymentsGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis
+              dataKey="date"
+              tickFormatter={(val) => format(new Date(val), 'dd/MM', { locale: es })}
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fontSize: 11, fill: '#94a3b8' }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              labelFormatter={(val) => format(new Date(val), "PPP", { locale: es })}
+              contentStyle={{
+                borderRadius: '8px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+                fontSize: '13px',
+              }}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}
+              formatter={(value) => {
+                const labels: Record<string, string> = { visitors: 'Visitantes', leads: 'Leads', bookings: 'Bookings', payments: 'Pagos' };
+                return labels[value] || value;
+              }}
+            />
+            <Area type="monotone" dataKey="visitors" stroke="#3b82f6" strokeWidth={2} fill="url(#visitorsGradient)" animationDuration={600} />
+            <Area type="monotone" dataKey="leads" stroke="#10b981" strokeWidth={2} fill="url(#leadsGradient)" animationDuration={600} />
+            <Area type="monotone" dataKey="bookings" stroke="#f59e0b" strokeWidth={2} fill="url(#bookingsGradient)" animationDuration={600} />
+            <Area type="monotone" dataKey="payments" stroke="#ef4444" strokeWidth={2} fill="url(#paymentsGradient)" animationDuration={600} />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
       <div className="max-h-48 overflow-y-auto">
         <table className="w-full text-sm">

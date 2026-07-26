@@ -15,6 +15,7 @@ import { useInView } from 'react-intersection-observer';
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectEspecialidad } from "@/utils/askLLM";
 import SpecialtiesSlider from '@/components/search/SpecialtiesSlider';
+import { PaymentMethods } from '@/components/MercadoPagoBadge';
 
 const specialties = [
   "Derecho Civil",
@@ -335,8 +336,15 @@ const SearchResults = () => {
 
       <div className="bg-white py-8 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold font-serif text-gray-900">Elige tu abogado y agenda hoy</h1>
-          <p className="text-gray-600">Consulta online de 60 minutos · Abogados verificados en PJUD</p>
+          <div className="flex items-center gap-8">
+            <div className="w-1/2">
+              <h1 className="text-3xl font-bold font-serif text-gray-900">Elige tu abogado y agenda hoy</h1>
+              <p className="text-gray-600">Consulta online de 60 minutos · Abogados verificados en PJUD</p>
+            </div>
+            <div className="w-1/2">
+              <PaymentMethods className="mt-0" />
+            </div>
+          </div>
           {/* <small className="text-xs text-gray-500">Abogados verificados en PJUD · Precios claros · Sin llamadas incómodas ni intermediarios</small> */}
 
           <div className="mt-6">
