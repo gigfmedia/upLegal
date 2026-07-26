@@ -93,7 +93,7 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
   const activeContent = override ? { ...base, ...override } : base;
 
   return (
-    <div className="bg-green-50 border border-green-200 rounded-2xl p-8 my-12 shadow-sm">
+    <div className="bg-green-50 border border-green-200 rounded-2xl p-8 mt-12 mb-4 shadow-sm">
       <div className="flex flex-col gap-6">
         <div className="flex-1 text-center md:text-left">
           <h3 className="text-xl font-bold text-green-900 mb-2">{activeContent.title}</h3>

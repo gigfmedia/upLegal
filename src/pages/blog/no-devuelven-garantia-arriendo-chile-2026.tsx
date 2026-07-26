@@ -8,7 +8,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -140,7 +140,9 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed text-balance mt-2">
               En esta guía 2026 te explicamos cuáles son tus derechos, cuándo corresponde la devolución de la garantía de arriendo y cómo recuperar tu dinero paso a paso.
             </p>
-          </div>
+            </div>
+
+            <InArticleCTA category="Derecho Civil" />
 
           {/* ¿Qué es la garantía? */}
           <div className="mb-6 py-2">
@@ -271,8 +273,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Derecho Civil"  title="¿Tu arrendador no te devuelve la garantía?" message="Un abogado especializado puede revisar el contrato, evaluar las deducciones y demandar el reintegro de tu garantía." />
-
           {/* Cluster link 2 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -399,6 +399,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede presentar una demanda por no devolución de mes de garantía?</h2>
@@ -532,11 +534,13 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="Retener la garantía sin fundamento puede ser ilegal. Compara abogados especializados y recupera lo que te corresponde."
             link="/abogado-arriendo"
             buttonText="Comparar abogados especializados"
           />
+          */}
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
@@ -573,7 +577,7 @@ const BlogArticle = () => {
             </Link>
           </div>
 
-          <CategoryCTA category="arriendo" topic="arriendo" />
+          <RelatedLawyers category="Derecho Civil" />
           {/* FAQ */}
 
           <div className="mb-6" data-faq-section>
@@ -586,6 +590,8 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+
+            <CategoryCTA category="arriendo" topic="arriendo" />
           </div>
         </div>
       </div>

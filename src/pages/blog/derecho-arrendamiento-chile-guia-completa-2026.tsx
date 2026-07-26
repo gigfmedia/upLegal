@@ -143,6 +143,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+            <InArticleCTA category="Derecho Civil" />
+
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué es el derecho de arrendamiento en Chile?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -311,7 +313,6 @@ const BlogArticle = () => {
               Si existen cuentas de luz, agua o gastos comunes pendientes al momento de la entrega, el dueño tiene derecho legal a utilizar el mes de garantía para saldar esas deudas antes de devolver el saldo restante. Los descuentos deben estar siempre respaldados por facturas o presupuestos reales.
             </p>
           </div>
-<InArticleCTA category="Derecho Civil" title="¿Tienes conflictos con tu arrendador o arrendatario?" message="Un abogado especializado puede revisar el contrato, identificar derechos vulnerados y definir la mejor estrategia legal." />
 
 
           <div className="mb-12">
@@ -530,6 +531,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900 border-t pt-8">Subida de arriendo: ¿cuándo es legal y cómo se aplica el IPC?</h2>
@@ -833,7 +836,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <CategoryCTA category="arriendo" topic="arriendo" />
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-6 pt-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pt-2">Preguntas frecuentes</h2>
@@ -845,6 +848,8 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+
+            <CategoryCTA category="arriendo" topic="arriendo" />
           </div>
         </div>
       </div>

@@ -15,9 +15,10 @@ import {
 interface RelatedLawyersProps {
   category: string;
   title?: string;
+  articleId?: string;
 }
 
-export const RelatedLawyers = ({ category, title = "Habla con un abogado experto en tu caso" }: RelatedLawyersProps) => {
+export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este problema hoy?", articleId }: RelatedLawyersProps) => {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [slidesToScroll, setSlidesToScroll] = useState(1);
@@ -42,10 +43,16 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado experto
     }
   }, [inView, lawyers.length, category]);
 
-  const handleLawyerClick = (lawyerId: string) => {
+  const handleLawyerClick = (lawyerId: string, position: number) => {
     sessionStorage.setItem('has_commercial_intent', 'true');
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category });
+      window.gtag('event', 'related_lawyer_card_clicked', {
+        lawyer_id: lawyerId,
+        article_slug: articleId || '',
+        position,
+        category,
+      });
     }
   };
 
@@ -120,6 +127,12 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado experto
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3">
+            <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Respuesta hoy</span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Consulta online</span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> 60 minutos</span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Precio fijo</span>
+          </div>
         </div>
 
         {showCarousel ? (
@@ -132,9 +145,9 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado experto
             className="w-full"
           >
             <CarouselContent className="-ml-4">
-              {lawyers.map(lawyer => (
+              {lawyers.map((lawyer, idx) => (
                 <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
-                  <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id)}>
+                  <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
                     <RelatedLawyerCard lawyer={lawyer} category={category} />
                   </div>
                 </CarouselItem>
@@ -152,8 +165,8 @@ export const RelatedLawyers = ({ category, title = "Habla con un abogado experto
           </Carousel>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lawyers.map(lawyer => (
-              <div key={lawyer.id} onClickCapture={() => handleLawyerClick(lawyer.id)}>
+              {lawyers.map((lawyer, idx) => (
+              <div key={lawyer.id} onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
                 <RelatedLawyerCard lawyer={lawyer} category={category} />
               </div>
             ))}

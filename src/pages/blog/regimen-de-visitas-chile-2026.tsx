@@ -17,7 +17,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -657,11 +657,13 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA before Conclusion */}
+                    {/*
                     <PreConclusionCTA
                         description="Si no te permiten ver a tu hijo o el régimen actual ya no funciona, un abogado de familia puede solicitar medidas de cumplimiento o modificar el acuerdo ante el tribunal."
                         link="/abogado-pension-alimentos"
                         buttonText="Comparar abogados especializados"
                     />
+                    */}
 
                                         <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"

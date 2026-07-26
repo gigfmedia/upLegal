@@ -9,7 +9,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -517,11 +517,13 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="Si enfrentas un conflicto de pensión de alimentos, divorcio, cuidado personal o régimen de visitas, un abogado de familia puede orientarte sobre tus derechos y el mejor camino a seguir."
             link="/search?specialty=Derecho%20de%20Familia"
             buttonText="Comparar abogados especializados"
           />
+          */}
 
                               <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"

@@ -8,7 +8,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { Button } from "@/components/ui/button";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -500,11 +500,13 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="Si ambos están de acuerdo en divorciarse pero necesitan orientación sobre cómo estructurar el acuerdo sobre hijos, bienes y compensación económica, un abogado de familia puede preparar todo el expediente."
             link="/abogados-divorcio"
             buttonText="Comparar abogados especializados"
           />
+          */}
 
                               <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"

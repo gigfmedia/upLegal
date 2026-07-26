@@ -153,7 +153,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
             className="w-full bg-gray-900 hover:bg-green-900 text-white text-base py-6 rounded-xl transition-all active:scale-[0.99]"
             onClick={handleSchedule}
           >
-            Revisar mi caso
+            Hablar con un abogado
           </Button>
 
           <p className="text-center text-xs text-gray-700 mt-3">

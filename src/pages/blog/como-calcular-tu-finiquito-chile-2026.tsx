@@ -430,7 +430,9 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed font-semibold">
               Entender cómo funciona el cálculo del finiquito puede ayudarte a evitar errores y asegurarte de que recibas todos los pagos que te corresponden por ley.
             </p>
-          </div>
+            </div>
+
+            <InArticleCTA category="Derecho Laboral" />
 
           {/* What is Finiquito */}
           <div className="mb-12">
@@ -519,9 +521,7 @@ const BlogArticle = () => {
 
           </div>
 
-          <InArticleCTA category="Derecho Laboral" title="¿Te entregaron el finiquito y no estás seguro de los montos?" message="Un abogado laboral puede revisar tu finiquito, detectar errores y negociar mejoras antes de que lo firmes." />
-
-          {/* Elements Included */}
+          {/* Complexity Block 3 */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Elementos que se incluyen en un finiquito en Chile (2026)</h2>
             <p className="text-gray-600 mb-8 leading-relaxed">
@@ -750,6 +750,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <RelatedLawyers category="Derecho Laboral" />
+
           {/* Complexity Block 3 */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿Firmarías el finiquito tal como está?</h2>
@@ -862,7 +864,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA Section - Specific Category */}
-          <CategoryCTA category="laboral" topic="despido" />
+          <RelatedLawyers category="Derecho Laboral" />
 
           {/* FAQ (SEO structured) */}
 
@@ -877,6 +879,8 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+
+            <CategoryCTA category="laboral" topic="despido" />
           </div>
         </div>
 

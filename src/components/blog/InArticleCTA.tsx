@@ -41,32 +41,21 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
 
   const getButtonText = () => {
     if (buttonText) return buttonText;
-    const cat = category.toLowerCase();
-    if (cat.includes('penal')) return 'Habla hoy con un abogado penal';
-    if (cat.includes('laboral')) return 'Consulta tu caso con un abogado laboral';
-    if (cat.includes('familia')) return 'Habla con un abogado de familia';
-    if (cat.includes('arrendamiento') || cat.includes('arriendo')) return 'Revisa tu caso con un abogado especialista en arriendos';
-    if (cat.includes('consumidor')) return 'Consulta con un abogado especialista';
-    return 'Ver abogados disponibles';
+    return 'Hablar con un abogado';
   };
 
   return (
     <div ref={ref} className="my-10 p-8 border border-gray-200 bg-sand-900 rounded-2xl text-center shadow-sm">
-      <h3 className="text-2xl font-bold font-serif text-gray-900 mb-2">{title || "¿Necesitas ayuda con este caso?"}</h3>
+      <h3 className="text-2xl font-bold font-serif text-green-900 mb-2">{title || "¿Necesitas resolver este problema hoy?"}</h3>
       <p className="text-gray-700 mb-4 font-medium">
-        {message || `Habla con un abogado especialista en ${category}.`}
+        {message || "Un abogado puede revisar tu caso hoy mismo."}
       </p>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-5 justify-center">
-        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
-          <span className="text-green-600">✓</span> Videollamada online
-        </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
-          <span className="text-green-600">✓</span> Precio transparente
-        </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-700 justify-center">
-          <span className="text-green-600">✓</span> Agenda inmediata
-        </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 mb-5 justify-center">
+        <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Respuesta hoy</span>
+        <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Consulta online</span>
+        <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> 60 minutos</span>
+        <span className="flex items-center gap-1.5 text-sm text-gray-700"><span className="text-green-600 font-bold">✓</span> Precio fijo</span>
       </div>
 
       <Link to={targetUrl} onClick={handleCTA} className="inline-block w-full sm:w-auto">

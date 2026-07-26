@@ -17,7 +17,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -494,11 +494,13 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA before Conclusion */}
+                    {/*
                     <PreConclusionCTA
                         description="Si cumples los requisitos para divorciarte pero no sabes cómo iniciar la demanda, puedes comparar abogados especializados en divorcio unilateral y agendar una consulta online."
                         link="/abogado-divorcio-unilateral"
                         buttonText="Comparar abogados especializados"
                     />
+                    */}
 
                                         <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"

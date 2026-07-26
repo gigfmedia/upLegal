@@ -9,7 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 
 import InArticleCTA from "@/components/blog/InArticleCTA";
@@ -619,11 +619,13 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="Si llevas meses sin recibir la pensión y la deuda no deja de crecer, un abogado de familia puede solicitar la liquidación judicial y activar medidas de apremio como retención de sueldo o embargo."
             link="/abogado-pension-alimentos"
             buttonText="Compara abogados especializados"
           />
+          */}
 
           {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 

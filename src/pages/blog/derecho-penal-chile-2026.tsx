@@ -9,7 +9,7 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -258,11 +258,13 @@ const BlogArticle = () => {
             </div>
           </div>
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="En materia penal cada plazo cuenta. Encuentra abogados penalistas verificados y agenda una consulta urgente."
             link="/search?specialty=Derecho%20Penal"
             buttonText="Ver abogados penales disponibles"
           />
+          */}
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué medidas cautelares puede decretar un juez?</h2>

@@ -129,7 +129,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            
+            <InArticleCTA category="Derecho Civil" />
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué dice la ley sobre el desalojo en Chile?</h2>
@@ -279,7 +279,7 @@ const BlogArticle = () => {
 
               
             </div>
-<InArticleCTA category="Derecho Civil"  title="¿Necesitas desalojar a alguien de tu propiedad?" message="Un abogado especializado puede identificar la acción legal correcta según tu caso y guiar todo el процессo de desalojo." />
+<RelatedLawyers category="Derecho Civil" />
 
 
             <div className="mb-12 border-t border-gray-100 pt-12">
@@ -526,7 +526,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <CategoryCTA category="arriendo" topic="arriendo" />
+            <RelatedLawyers category="Derecho Civil" />
 
       <div className="mb-4 border-t border-gray-100 pt-12" data-faq-section>
               <h2 className="text-2xl font-bold mb-8 text-gray-900">Preguntas frecuentes sobre Desalojo</h2>
@@ -539,6 +539,8 @@ const BlogArticle = () => {
                 ))}
               </div>
             </div>
+
+            <CategoryCTA category="arriendo" topic="arriendo" />
           </div>
         </div>
 

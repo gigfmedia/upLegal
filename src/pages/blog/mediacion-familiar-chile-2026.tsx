@@ -9,7 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
+// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -723,11 +723,13 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
+          {/*
           <PreConclusionCTA
             description="La mediación familiar es obligatoria en muchos conflictos. Un abogado especializado puede orientarte antes, durante y después del proceso."
             link="/abogado-pension-alimentos"
             buttonText="Comparar abogados especializados"
           />
+          */}
 
           {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 

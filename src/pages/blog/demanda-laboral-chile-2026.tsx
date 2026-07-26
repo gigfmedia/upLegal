@@ -156,6 +156,10 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
+                    <InArticleCTA
+                        category="Derecho Laboral"
+                    />
+
                     {/* QUE ES */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Qué es una demanda laboral?</h2>
@@ -239,14 +243,6 @@ const BlogArticle = () => {
                         </ul>
                         <p className="text-gray-600 mt-4">Cada procedimiento posee requisitos y plazos específicos.</p>
                     </div>
-
-                        <InArticleCTA
-                                                                                title="¿No sabes si tu caso realmente justifica una demanda laboral?"
-                                                                                message="Un abogado laboral puede analizar tus antecedentes y ayudarte a decidir cuál es la mejor estrategia antes de que venzan los plazos legales."
-                                                                                buttonText="Habla con un abogado ahora"
-                                                                                category="Derecho Laboral"
-                                                                            />
-
 
                     {/* PRUEBAS */}
                     <div className="mb-12">
@@ -351,6 +347,8 @@ const BlogArticle = () => {
                         </ul>
                         <p className="text-gray-600 mt-4">Antes de contratar asesoría es recomendable solicitar un presupuesto claro que indique qué servicios están incluidos y cuáles podrían generar costos adicionales durante el proceso.</p>
                     </div>
+
+                    <RelatedLawyers category="Derecho Laboral" />
 
                     {/* QUE PUEDE ORDENAR */}
                     <div className="mb-12">
@@ -502,7 +500,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <CategoryCTA category="laboral" />
+                    <RelatedLawyers category="Derecho Laboral" />
 
                     {/* FAQS */}
                     <div className="mb-6" data-faq-section>
@@ -516,6 +514,8 @@ const BlogArticle = () => {
                             ))}
                         </div>
                     </div>
+
+                    <CategoryCTA category="laboral" />
 
                     {/* ARTICULOS RELACIONADOS */}
                     <div className="mt-8 border-t pt-6">
