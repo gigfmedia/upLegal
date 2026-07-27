@@ -150,7 +150,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
 
           <p className="text-xs text-green-700 font-medium mb-2 flex items-center gap-1 mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Disponible hoy · Responde en menos de 24 horas
+            Disponible hoy
           </p>
 
           <Button

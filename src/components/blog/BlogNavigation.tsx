@@ -7,44 +7,50 @@ interface BlogNavigationProps {
   currentArticleId: string;
 }
 
+const MONTHS: Record<string, string> = {
+  enero: '01', febrero: '02', marzo: '03', abril: '04', mayo: '05', junio: '06',
+  julio: '07', agosto: '08', septiembre: '09', octubre: '10', noviembre: '11', diciembre: '12',
+};
+
+function parseDate(dateStr: string): Date {
+  const match = dateStr.match(/(\d+)\s+de\s+(\w+)\s*,\s*(\d+)/);
+  if (!match) return new Date(0);
+  const [, day, month, year] = match;
+  return new Date(`${year}-${MONTHS[month.toLowerCase()]}-${day.padStart(2, '0')}`);
+}
+
 export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
   const currentArticle = articles.find(a => a.id === currentArticleId);
   const category = currentArticle?.category;
   const cluster = currentArticle?.cluster;
 
-  // Priority 1: Same cluster
-  let relatedArticles = cluster
-    ? articles.filter(a => a.cluster === cluster && a.id !== currentArticleId)
-    : [];
+  let relatedArticles: typeof currentArticle[] = [];
 
-  // If no cluster or single-article cluster, fall back to same category
-  if (relatedArticles.length < 2 && category) {
-    const categoryArticles = articles.filter(a => a.category === category && a.id !== currentArticleId);
-    relatedArticles = [...relatedArticles, ...categoryArticles];
+  if (cluster) {
+    relatedArticles = articles.filter(a => a.cluster === cluster);
+    if (relatedArticles.length < 2 && category) {
+      relatedArticles = articles.filter(a => a.category === category);
+    }
+  } else if (category) {
+    relatedArticles = articles.filter(a => a.category === category);
   }
 
-  // Remove duplicates
-  relatedArticles = Array.from(new Set(relatedArticles.map(a => a.id)))
-    .map(id => articles.find(a => a.id === id)!);
+  const sorted = [...relatedArticles].sort(
+    (a, b) => parseDate(a.date).getTime() - parseDate(b.date).getTime()
+  );
 
-  // Hide if no related articles at all
-  if (relatedArticles.length < 1) {
-    return null;
+  const currentIndex = sorted.findIndex(a => a.id === currentArticleId);
+
+  let prevArticle: typeof currentArticle | undefined;
+  let nextArticle: typeof currentArticle | undefined;
+
+  if (sorted.length >= 2 && currentIndex >= 0) {
+    const total = sorted.length;
+    prevArticle = sorted[(currentIndex - 1 + total) % total];
+    nextArticle = sorted[(currentIndex + 1) % total];
   }
 
-  const currentIndex = relatedArticles.findIndex(a => a.id === currentArticleId);
-  const showPrev = currentIndex >= 0 && currentIndex < relatedArticles.length - 1;
-  const showNext = relatedArticles.length > 1;
-
-  let nextArticle = showNext
-    ? (currentIndex > 0 ? relatedArticles[currentIndex - 1] : currentIndex === -1 ? relatedArticles[0] : relatedArticles[currentIndex - 1])
-    : undefined;
-
-  let prevArticle = showPrev
-    ? relatedArticles[currentIndex + 1]
-    : undefined;
-
-
+  if (!prevArticle && !nextArticle) return null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">

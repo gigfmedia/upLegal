@@ -24,27 +24,27 @@ const BlogArticle = () => {
         {
             question: "¿Firmar un pagaré significa perder automáticamente un juicio?",
             answer:
-            "No. Aunque el pagaré facilita el cobro judicial porque tiene mérito ejecutivo — es decir, permite iniciar un juicio ejecutivo sin necesidad de probar la deuda previamente — el deudor conserva diversas defensas que puede ejercer ante el tribunal, como la prescripción, el pago anterior o vicios en el documento.",
+                "No. Aunque el pagaré facilita el cobro judicial porque tiene mérito ejecutivo — es decir, permite iniciar un juicio ejecutivo sin necesidad de probar la deuda previamente — el deudor conserva diversas defensas que puede ejercer ante el tribunal, como la prescripción, el pago anterior o vicios en el documento.",
         },
         {
             question: "¿Puedo ir a la cárcel por no pagar un pagaré?",
             answer:
-            "No. En Chile el incumplimiento de una deuda civil no implica penas de cárcel por el solo hecho de no pagar. Lo que puede ocurrir es un embargo de bienes o retención de cuentas bancarias mediante el proceso judicial correspondiente, pero no existe prisión por deudas en el sistema civil chileno.",
+                "No. En Chile el incumplimiento de una deuda civil no implica penas de cárcel por el solo hecho de no pagar. Lo que puede ocurrir es un embargo de bienes o retención de cuentas bancarias mediante el proceso judicial correspondiente, pero no existe prisión por deudas en el sistema civil chileno.",
         },
         {
             question: "¿Me pueden embargar sin avisarme?",
             answer:
-            "No. El embargo requiere un procedimiento judicial completo: demanda ejecutiva, notificación al deudor y resolución del tribunal que lo ordene. El deudor debe ser notificado legalmente antes de que se ejecute cualquier medida de apremio sobre sus bienes. Si no fuiste notificado correctamente, eso puede ser una defensa válida en el juicio.",
+                "No. El embargo requiere un procedimiento judicial completo: demanda ejecutiva, notificación al deudor y resolución del tribunal que lo ordene. El deudor debe ser notificado legalmente antes de que se ejecute cualquier medida de apremio sobre sus bienes. Si no fuiste notificado correctamente, eso puede ser una defensa válida en el juicio.",
         },
         {
             question: "¿Qué pasa si el pagaré fue firmado hace muchos años?",
             answer:
-            "Si transcurrió suficiente tiempo desde que la deuda se hizo exigible, puede existir la excepción de prescripción — un mecanismo legal que impide cobrar deudas antiguas. En Chile las acciones ejecutivas prescriben en plazos establecidos por la ley. Si crees que tu pagaré podría estar prescrito, es importante que un abogado revise las fechas antes de que el juicio avance.",
+                "Si transcurrió suficiente tiempo desde que la deuda se hizo exigible, puede existir la excepción de prescripción — un mecanismo legal que impide cobrar deudas antiguas. En Chile las acciones ejecutivas prescriben en plazos establecidos por la ley. Si crees que tu pagaré podría estar prescrito, es importante que un abogado revise las fechas antes de que el juicio avance.",
         },
         {
             question: "¿Conviene ignorar una demanda ejecutiva por pagaré?",
             answer:
-            "No. Si recibes una notificación judicial de demanda ejecutiva, ignorarla es el peor error posible — el juicio avanza sin tu defensa y el tribunal puede ordenar embargo de bienes o retención de cuentas sin que hayas podido oponer ninguna excepción. Lo recomendable es revisar inmediatamente la documentación con un abogado para evaluar las defensas disponibles dentro del plazo legal.",
+                "No. Si recibes una notificación judicial de demanda ejecutiva, ignorarla es el peor error posible — el juicio avanza sin tu defensa y el tribunal puede ordenar embargo de bienes o retención de cuentas sin que hayas podido oponer ninguna excepción. Lo recomendable es revisar inmediatamente la documentación con un abogado para evaluar las defensas disponibles dentro del plazo legal.",
         },
     ];
 
@@ -60,7 +60,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -242,61 +242,61 @@ const BlogArticle = () => {
 
                     {/* DOCUMENT GENERATOR CTA */}
                     <div className="my-10 p-6 sm:p-8 border border-gray-200 bg-cream-900 rounded-2xl text-left shadow-sm">
-                      <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mb-4">
-                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                      <h3 className="text-2xl font-bold font-serif text-green-900 mb-3">
-                        Genera tu Mandato Pagaré listo para firmar
-                      </h3>
-                      <p className="text-green-900 mb-4 text-left">
-                        ¿Necesitas formalizar una deuda de forma rápida y segura?
-                        Completa un formulario guiado y obtén un <strong>Mandato Pagaré profesional</strong>,
-                        listo para imprimir o enviar digitalmente.
-                        El documento incluye todos los datos necesarios para ser utilizado como base
-                        para la suscripción del pagaré.
-                      </p>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Ideal para: préstamos entre personas · ventas en cuotas · reconocimiento de deudas · acuerdos comerciales
-                      </p>
-                      <div className="flex flex-col gap-2 mb-5 items-left">
-                        {[
-                          'Documento generado automáticamente',
-                          'Basado en formato utilizado por abogados',
-                          'Disponible inmediatamente después del pago',
-                          'Enviado también a tu correo electrónico',
-                          'Incluye código único de verificación LegalUp',
-                        ].map((item, i) => (
-                          <span key={i} className="flex items-center gap-1.5 text-sm text-green-900">
-                            <span className="text-green-600 font-bold">✓</span>
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="text-3xl font-bold text-green-900 mb-4">
-                        $9.990
-                      </div>
-                      <Link
-                        to="/documentos/pagare"
-                        onClick={() => {
-                          window.gtag?.('event', 'document_cta_clicked', {
-                            document_type: 'pagare',
-                            location: 'blog_inarticle',
-                            article: 'pagare-chile-2026',
-                          })
-                        }}
-                        className="inline-block w-full sm:w-auto"
-                      >
-                        <button className="bg-gray-900 hover:bg-green-900 text-white px-8 h-12 rounded-lg transition-all active:scale-95 w-full sm:w-auto text-base shadow-sm">
-                          Generar Mandato Pagaré →
-                        </button>
-                      </Link>
-                      <p className="text-xs text-gray-500 mt-4 text-left">
-                        ¿Necesitas asesoría antes de firmar?
-                        Tu Mandato Pagaré ya fue generado y está listo para ser utilizado. Si quieres mayor tranquilidad antes de firmarlo, agenda una consulta con un abogado especialista, quien revisará el documento, responderá tus dudas y te entregará recomendaciones según tu caso.
-                        {" "} Consulta legal (60 minutos) + revisión del pagaré: <strong className="text-gray-500">$59.990</strong>.
-                      </p>
+                        <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mb-4">
+                            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-2xl font-bold font-serif text-green-900 mb-3">
+                            Genera tu Mandato Pagaré listo para firmar
+                        </h3>
+                        <p className="text-green-900 mb-4 text-left">
+                            ¿Necesitas formalizar una deuda de forma rápida y segura?
+                            Completa un formulario guiado y obtén un <strong>Mandato Pagaré profesional</strong>,
+                            listo para imprimir o enviar digitalmente.
+                            El documento incluye todos los datos necesarios para ser utilizado como base
+                            para la suscripción del pagaré.
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                            Ideal para: préstamos entre personas · ventas en cuotas · reconocimiento de deudas · acuerdos comerciales
+                        </p>
+                        <div className="flex flex-col gap-2 mb-5 items-left">
+                            {[
+                                'Documento generado automáticamente',
+                                'Basado en formato utilizado por abogados',
+                                'Disponible inmediatamente después del pago',
+                                'Enviado también a tu correo electrónico',
+                                'Incluye código único de verificación LegalUp',
+                            ].map((item, i) => (
+                                <span key={i} className="flex items-center gap-1.5 text-sm text-green-900">
+                                    <span className="text-green-600 font-bold">✓</span>
+                                    {item}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="text-3xl font-bold text-green-900 mb-4">
+                            $9.990
+                        </div>
+                        <Link
+                            to="/documentos/pagare"
+                            onClick={() => {
+                                window.gtag?.('event', 'document_cta_clicked', {
+                                    document_type: 'pagare',
+                                    location: 'blog_inarticle',
+                                    article: 'pagare-chile-2026',
+                                })
+                            }}
+                            className="inline-block w-full sm:w-auto"
+                        >
+                            <button className="bg-gray-900 hover:bg-green-900 text-white px-8 h-12 rounded-lg transition-all active:scale-95 w-full sm:w-auto text-base shadow-sm">
+                                Generar Mandato Pagaré →
+                            </button>
+                        </Link>
+                        <p className="text-xs text-gray-500 mt-4 text-left">
+                            ¿Necesitas asesoría antes de firmar?
+                            Tu Mandato Pagaré ya fue generado y está listo para ser utilizado. Si quieres mayor tranquilidad antes de firmarlo, agenda una consulta con un abogado especialista, quien revisará el documento, responderá tus dudas y te entregará recomendaciones según tu caso.
+                            {" "} Consulta legal (60 minutos) + revisión del pagaré: <strong className="text-gray-500">$59.990</strong>.
+                        </p>
                     </div>
 
                     {/* CTA IN-ARTICLE 1 */}
@@ -547,23 +547,23 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                      title="¿Recibiste una demanda por un pagaré o una cobranza judicial?"
-                      message="No todas las demandas ejecutivas proceden automáticamente. Un abogado civil puede revisar el pagaré, verificar si existen defensas como la prescripción o defectos del documento y ayudarte a proteger tus derechos."
-                      buttonText="Hablar con un abogado civil"
-                      category="Derecho Civil"
+                        title="¿Recibiste una demanda por un pagaré o una cobranza judicial?"
+                        message="No todas las demandas ejecutivas proceden automáticamente. Un abogado civil puede revisar el pagaré, verificar si existen defensas como la prescripción o defectos del documento y ayudarte a proteger tus derechos."
+                        buttonText="Hablar con un abogado civil"
+                        category="Derecho Civil"
                     />
 
                     {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
-                      <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
-                      <p className="text-gray-600 leading-relaxed mb-4">
-                        El pagaré es uno de los documentos más importantes en materia de cobro de deudas en Chile. Firmarlo implica asumir una obligación que, en caso de incumplimiento, puede dar lugar a un juicio ejecutivo y eventualmente a medidas como el embargo de bienes.
-                      </p>
-                      <p className="text-gray-600 leading-relaxed">
-                        Sin embargo, ello no significa que toda demanda sea válida ni que el acreedor tenga automáticamente la razón. Existen requisitos legales, plazos de prescripción y diversas defensas que pueden resultar aplicables según cada caso. Si firmaste un pagaré, recibiste una demanda ejecutiva o necesitas cobrar una deuda respaldada por este documento, es recomendable consultar con un abogado para analizar la mejor estrategia jurídica. Puedes consultar con un{" "}
-                        <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
-                        a través de LegalUp.
-                      </p>
+                        <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+                        <p className="text-gray-600 leading-relaxed mb-4">
+                            El pagaré es uno de los documentos más importantes en materia de cobro de deudas en Chile. Firmarlo implica asumir una obligación que, en caso de incumplimiento, puede dar lugar a un juicio ejecutivo y eventualmente a medidas como el embargo de bienes.
+                        </p>
+                        <p className="text-gray-600 leading-relaxed">
+                            Sin embargo, ello no significa que toda demanda sea válida ni que el acreedor tenga automáticamente la razón. Existen requisitos legales, plazos de prescripción y diversas defensas que pueden resultar aplicables según cada caso. Si firmaste un pagaré, recibiste una demanda ejecutiva o necesitas cobrar una deuda respaldada por este documento, es recomendable consultar con un abogado para analizar la mejor estrategia jurídica. Puedes consultar con un{" "}
+                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            a través de LegalUp.
+                        </p>
                     </div>
 
                     {/* ARTICULOS RELACIONADOS */}
@@ -571,31 +571,17 @@ const BlogArticle = () => {
                         <h3 className="text-lg font-bold text-gray-900 mb-4">También te puede interesar</h3>
                         <div className="flex flex-wrap gap-3">
                             <Link
-                                to="/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026"
+                                to="/blog/prescripcion-de-deudas-chile-2026"
                                 className="text-green-700 underline hover:text-green-500 text-sm"
                             >
-                                Cómo desalojar a una persona de mi propiedad en Chile 2026
+                                Prescripción de deudas en Chile 2026
                             </Link>
                             <span className="text-gray-300">|</span>
                             <Link
-                                to="/blog/ley-devuelveme-mi-casa-chile-2026"
+                                to="/blog/reconocimiento-de-deuda-chile-2026"
                                 className="text-green-700 underline hover:text-green-500 text-sm"
                             >
-                                Ley Devuélveme mi Casa en Chile
-                            </Link>
-                            <span className="text-gray-300">|</span>
-                            <Link
-                                to="/blog/cuanto-demora-juicio-desalojo-chile-2026"
-                                className="text-green-700 underline hover:text-green-500 text-sm"
-                            >
-                                ¿Cuánto demora un juicio de desalojo en Chile?
-                            </Link>
-                            <span className="text-gray-300">|</span>
-                            <Link
-                                to="/blog/me-quieren-desalojar-que-hago-chile-2026"
-                                className="text-green-700 underline hover:text-green-500 text-sm"
-                            >
-                                Me quieren desalojar, ¿qué hago?
+                                Reconocimiento de deuda en Chile 2026
                             </Link>
                         </div>
                     </div>
@@ -617,7 +603,7 @@ const BlogArticle = () => {
                 </div>
             </div>
 
-            
+
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pb-12">
                 <div className="mt-8">

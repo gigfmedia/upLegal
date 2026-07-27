@@ -59,7 +59,7 @@ const BlogArticle = () => {
                 faqs={faqs}
             />
 
-            <Header onAuthClick={() => {}} />
+            <Header onAuthClick={() => { }} />
             <ReadingProgressBar />
 
             {/* HERO */}
@@ -560,6 +560,13 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500 text-sm"
                             >
                                 Pagaré en Chile 2026
+                            </Link>
+                            <span className="text-gray-300">|</span>
+                            <Link
+                                to="/blog/reconocimiento-de-deuda-chile-2026"
+                                className="text-green-700 underline hover:text-green-500 text-sm"
+                            >
+                                Reconocimiento de deuda en Chile 2026
                             </Link>
                             {/* <span className="text-gray-300">|</span>
                             <Link

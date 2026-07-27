@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "reconocimiento-de-deuda-chile-2026",
+    title: "Reconocimiento de deuda en Chile 2026: qué es, cómo hacerlo y cuándo conviene firmarlo",
+    excerpt: "Aprende qué es un reconocimiento de deuda en Chile, qué información debe contener, cuándo conviene utilizarlo, cuáles son sus diferencias con un pagaré y qué hacer si el deudor no cumple con el pago.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "27 de Julio, 2026",
+    readTime: "13 min",
+    image: "/assets/reconocimiento-de-deuda-chile-2026.png"
+  },
+  {
     id: "prescripcion-de-deudas-chile-2026",
     title: "Prescripción de deudas en Chile 2026: cuándo prescribe una deuda y qué ocurre después",
     excerpt: "Descubre cuándo prescribe una deuda en Chile, qué ocurre con las deudas bancarias, los pagarés y los juicios ejecutivos, cuándo puede alegarse la prescripción y cómo proteger tus derechos frente a un cobro judicial.",
