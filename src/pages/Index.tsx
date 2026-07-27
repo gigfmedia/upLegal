@@ -660,8 +660,8 @@ const Index = () => {
           </p>
 
           <div className="flex lg:grid lg:grid-cols-5 gap-4 mt-8 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 lg:overflow-visible lg:pb-0" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-            <div className="flex-shrink-0 w-[260px] lg:w-auto snap-start">
-              <div className="bg-white rounded-2xl p-5 text-left shadow-md border border-green-300 relative h-full">
+            <Link to="/documentos/pagare" onClick={() => window.gtag?.('event', 'document_cta_clicked', { location: 'home_documents_section', document_type: 'pagare' })} className="flex-shrink-0 w-[260px] lg:w-auto snap-start block">
+              <div className="bg-white rounded-2xl p-5 text-left shadow-md border border-green-300 relative h-full group hover:shadow-lg hover:-translate-y-0.5 transition-all">
                 <span className="inline-block bg-green-700 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
                   Nuevo
                 </span>
@@ -675,15 +675,11 @@ const Index = () => {
                   ))}
                 </div>
                 <p className="text-lg font-bold text-gray-900 mb-3">Desde $9.990</p>
-                <Link
-                  to="/documentos/pagare"
-                  onClick={() => window.gtag?.('event', 'document_cta_clicked', { location: 'home_documents_section', document_type: 'pagare' })}
-                  className="block w-full text-center bg-green-900 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
-                >
+                <span className="block w-full text-center bg-green-900 group-hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">
                   Generar ahora
-                </Link>
+                </span>
               </div>
-            </div>
+            </Link>
 
             {[
               { title: 'Reconocimiento de deuda', items: ['Formaliza deudas', 'Reconocimiento voluntario', 'Acuerdo entre partes'], badge: 'Próximo' },
