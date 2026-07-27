@@ -240,11 +240,70 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    {/* DOCUMENT GENERATOR CTA */}
+                    <div className="my-10 p-6 sm:p-8 border border-gray-200 bg-cream-900 rounded-2xl text-left shadow-sm">
+                      <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mb-4">
+                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-2xl font-bold font-serif text-green-900 mb-3">
+                        Genera tu Mandato Pagaré listo para firmar
+                      </h3>
+                      <p className="text-green-900 mb-4 text-left">
+                        ¿Necesitas formalizar una deuda de forma rápida y segura?
+                        Completa un formulario guiado y obtén un <strong>Mandato Pagaré profesional</strong>,
+                        listo para imprimir o enviar digitalmente.
+                        El documento incluye todos los datos necesarios para ser utilizado como base
+                        para la suscripción del pagaré.
+                      </p>
+                      <p className="text-sm text-gray-500 mb-4">
+                        Ideal para: préstamos entre personas · ventas en cuotas · reconocimiento de deudas · acuerdos comerciales
+                      </p>
+                      <div className="flex flex-col gap-2 mb-5 items-left">
+                        {[
+                          'Documento generado automáticamente',
+                          'Basado en formato utilizado por abogados',
+                          'Disponible inmediatamente después del pago',
+                          'Enviado también a tu correo electrónico',
+                          'Incluye código único de verificación LegalUp',
+                        ].map((item, i) => (
+                          <span key={i} className="flex items-center gap-1.5 text-sm text-green-900">
+                            <span className="text-green-600 font-bold">✓</span>
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="text-3xl font-bold text-green-900 mb-4">
+                        $9.990
+                      </div>
+                      <Link
+                        to="/documentos/pagare"
+                        onClick={() => {
+                          window.gtag?.('event', 'document_cta_clicked', {
+                            document_type: 'pagare',
+                            location: 'blog_inarticle',
+                            article: 'pagare-chile-2026',
+                          })
+                        }}
+                        className="inline-block w-full sm:w-auto"
+                      >
+                        <button className="bg-gray-900 hover:bg-green-900 text-white px-8 h-12 rounded-lg transition-all active:scale-95 w-full sm:w-auto text-base shadow-sm">
+                          Generar Mandato Pagaré →
+                        </button>
+                      </Link>
+                      <p className="text-xs text-gray-500 mt-4 text-left">
+                        ¿Necesitas asesoría antes de firmar?
+                        Tu Mandato Pagaré ya fue generado y está listo para ser utilizado. Si quieres mayor tranquilidad antes de firmarlo, agenda una consulta con un abogado especialista, quien revisará el documento, responderá tus dudas y te entregará recomendaciones según tu caso.
+                        {" "} Consulta legal (60 minutos) + revisión del pagaré: <strong className="text-gray-500">$59.990</strong>.
+                      </p>
+                    </div>
+
                     {/* CTA IN-ARTICLE 1 */}
                     <InArticleCTA
                         title="¿Te demandaron por un pagaré?"
                         message="Un abogado civil puede revisar la demanda, analizar el pagaré y evaluar las defensas disponibles antes de que avance el juicio ejecutivo."
-                        buttonText="Revisar mi caso"
+                        buttonText="Ver abogados"
                         category="Derecho Civil"
                     />
 
@@ -486,23 +545,23 @@ const BlogArticle = () => {
                     </div>
 
                     <InArticleCTA
-                        title="¿Recibiste una demanda por un pagaré o una cobranza judicial?"
-                        message="No todas las demandas ejecutivas proceden automáticamente. Un abogado civil puede revisar el pagaré, verificar si existen defensas como la prescripción o defectos del documento y ayudarte a proteger tus derechos."
-                        buttonText="Hablar con un abogado civil"
-                        category="Derecho Civil"
+                      title="¿Recibiste una demanda por un pagaré o una cobranza judicial?"
+                      message="No todas las demandas ejecutivas proceden automáticamente. Un abogado civil puede revisar el pagaré, verificar si existen defensas como la prescripción o defectos del documento y ayudarte a proteger tus derechos."
+                      buttonText="Hablar con un abogado civil"
+                      category="Derecho Civil"
                     />
 
                     {/* CONCLUSION */}
                     <div className="mb-12 border-t pt-8">
-                        <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
-                        <p className="text-gray-600 leading-relaxed mb-4">
-                            El pagaré es uno de los documentos más importantes en materia de cobro de deudas en Chile. Firmarlo implica asumir una obligación que, en caso de incumplimiento, puede dar lugar a un juicio ejecutivo y eventualmente a medidas como el embargo de bienes.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed">
-                            Sin embargo, ello no significa que toda demanda sea válida ni que el acreedor tenga automáticamente la razón. Existen requisitos legales, plazos de prescripción y diversas defensas que pueden resultar aplicables según cada caso. Si firmaste un pagaré, recibiste una demanda ejecutiva o necesitas cobrar una deuda respaldada por este documento, es recomendable consultar con un abogado para analizar la mejor estrategia jurídica. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
-                            a través de LegalUp.
-                        </p>
+                      <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
+                      <p className="text-gray-600 leading-relaxed mb-4">
+                        El pagaré es uno de los documentos más importantes en materia de cobro de deudas en Chile. Firmarlo implica asumir una obligación que, en caso de incumplimiento, puede dar lugar a un juicio ejecutivo y eventualmente a medidas como el embargo de bienes.
+                      </p>
+                      <p className="text-gray-600 leading-relaxed">
+                        Sin embargo, ello no significa que toda demanda sea válida ni que el acreedor tenga automáticamente la razón. Existen requisitos legales, plazos de prescripción y diversas defensas que pueden resultar aplicables según cada caso. Si firmaste un pagaré, recibiste una demanda ejecutiva o necesitas cobrar una deuda respaldada por este documento, es recomendable consultar con un abogado para analizar la mejor estrategia jurídica. Puedes consultar con un{" "}
+                        <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                        a través de LegalUp.
+                      </p>
                     </div>
 
                     {/* ARTICULOS RELACIONADOS */}
@@ -542,7 +601,7 @@ const BlogArticle = () => {
                     <CategoryCTA category="civil" />
 
                     {/* FAQS */}
-                    <div className="mb-6" data-faq-section>
+                    <div className="mb-6 mt-12" data-faq-section>
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Preguntas frecuentes</h2>
                         <div className="space-y-4">
                             {faqs.map((faq, i) => (

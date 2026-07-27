@@ -104,10 +104,10 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
               )}
             </div> */}
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 border-none text-[11px] px-2 py-0">
+              {/* <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 border-none text-[11px] px-2 py-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse mr-1" />
                 Responde hoy
-              </Badge>
+              </Badge> */}
               {isVerified && (
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none text-[11px] px-2 py-0">
                   <ShieldCheck className="h-3 w-3 mr-0.5" />
@@ -142,18 +142,23 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
             <span className="text-sm text-gray-500">/ consulta 60 min</span>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 text-xs text-gray-700">
+          <div className="flex items-center gap-2 mb-2 text-xs text-gray-700">
             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Agenda online</span>
             <span className="text-gray-700">|</span>
             <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />Consulta por videollamada</span>
           </div>
+
+          <p className="text-xs text-green-700 font-medium mb-2 flex items-center gap-1 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            Disponible hoy · Responde en menos de 24 horas
+          </p>
 
           <Button
             size="lg"
             className="w-full bg-gray-900 hover:bg-green-900 text-white text-base py-6 rounded-xl transition-all active:scale-[0.99]"
             onClick={handleSchedule}
           >
-            Hablar con un abogado
+            Agendar consulta →
           </Button>
 
           <p className="text-center text-xs text-gray-700 mt-3">

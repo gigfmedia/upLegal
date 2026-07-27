@@ -1884,6 +1884,78 @@ app.post('/api/documents/payment-confirmation', async (req, res) => {
   }
 });
 
+// Create a payment preference for document review service
+app.post('/api/documents/create-review-preference', async (req, res) => {
+  try {
+    const { document_id } = req.body;
+    if (!document_id) {
+      return res.status(400).json({ error: 'document_id requerido' });
+    }
+
+    const { data: doc, error } = await supabase
+      .from('generated_documents')
+      .select('*')
+      .eq('id', document_id)
+      .maybeSingle();
+
+    if (error || !doc) {
+      return res.status(404).json({ error: 'Documento no encontrado' });
+    }
+
+    const reviewAmount = 59990;
+    const externalReference = `DOCREVIEW_${document_id}`;
+
+    const preferenceData = {
+      items: [{
+        id: `review_${document_id}`,
+        title: `Consulta legal sobre tu pagaré — LegalUp`,
+        description: '60 minutos de consulta con abogado, incluye revisión del pagaré generado',
+        quantity: 1,
+        currency_id: 'CLP',
+        unit_price: reviewAmount,
+      }],
+      payer: {
+        email: doc.user_email,
+        name: doc.user_name || 'Usuario',
+      },
+      back_urls: {
+        success: `${appUrl}/documentos/${doc.type}?review_status=approved&document_id=${document_id}`,
+        failure: `${appUrl}/documentos/${doc.type}?review_status=failure`,
+        pending: `${appUrl}/documentos/${doc.type}?review_status=pending`,
+      },
+      ...(appUrl.startsWith('https') ? { auto_return: 'approved' } : {}),
+      binary_mode: true,
+      external_reference: externalReference,
+      statement_descriptor: 'LEGALUP',
+    };
+
+    const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
+      },
+      body: JSON.stringify(preferenceData),
+    });
+
+    if (!mpResponse.ok) {
+      const errorData = await mpResponse.json();
+      console.error('[documents-review] MP error:', errorData);
+      return res.status(500).json({ error: 'Error al crear preferencia de pago' });
+    }
+
+    const mpData = await mpResponse.json();
+
+    res.json({
+      preferenceId: mpData.id,
+      initPoint: mpData.init_point || mpData.sandbox_init_point,
+    });
+  } catch (error) {
+    console.error('[documents-review] Error:', error);
+    res.status(500).json({ error: error.message || 'Error interno' });
+  }
+});
+
 // MercadoPago Webhook
 app.post('/api/mercadopago/webhook', async (req, res) => {
   try {
@@ -1959,6 +2031,24 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       const paymentId = payment.id.toString();
 
       // Route by external_reference type
+      if (externalRef.startsWith('DOCREVIEW_')) {
+        const documentId = externalRef.replace('DOCREVIEW_', '');
+        console.log('[webhook] step=review_payment document_id=' + documentId + ' payment_id=' + paymentId);
+
+        await supabase
+          .from('generated_documents')
+          .update({
+            review_paid: true,
+            review_payment_id: paymentId,
+            review_paid_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', documentId);
+
+        console.log('[webhook] step=review_payment status=ok document_id=' + documentId);
+        return;
+      }
+
       if (externalRef.startsWith('DOCUMENT_')) {
         const documentId = externalRef.replace('DOCUMENT_', '');
         console.log('[webhook] step=document_payment document_id=' + documentId + ' payment_id=' + paymentId);

@@ -266,7 +266,7 @@ const BlogArticle = () => {
                     <InArticleCTA
                         title="¿Te despidieron por abandono del trabajo?"
                         message="Un abogado laboral puede revisar tu carta de despido y evaluar si la causal fue correctamente aplicada o si corresponde demandar por despido injustificado."
-                        buttonText="Revisar mi caso"
+                        buttonText="Ver abogados"
                         category="Derecho Laboral"
                     />
 

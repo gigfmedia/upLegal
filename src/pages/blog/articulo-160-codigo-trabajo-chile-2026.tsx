@@ -544,7 +544,7 @@ const BlogArticle = () => {
                     <InArticleCTA
                         title="¿La carta de despido tiene errores?"
                         message="Si el artículo 160 fue mal aplicado o la carta no describe hechos concretos, podrías tener derecho a demandar. Un abogado laboral puede revisar tu caso."
-                        buttonText="Revisar mi caso"
+                        buttonText="Ver abogados"
                         category="Derecho Laboral"
                     />
 

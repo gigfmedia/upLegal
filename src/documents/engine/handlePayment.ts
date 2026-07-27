@@ -107,7 +107,7 @@ async function sendDocumentEmail(
           <h1 style="color:#1a202c;">Tu documento está listo</h1>
           <p>Hola <strong>${userName}</strong>,</p>
           <p>Tu <strong>${label}</strong> fue generado exitosamente.</p>
-          <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;text-align:center;">
+          <div style="background:#ffffff;padding:20px;border-radius:8px;margin:20px 0;text-align:center;">
             <a href="${pdfUrl}"
                style="display:inline-block;background:#111;color:#fff;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
               Descargar PDF

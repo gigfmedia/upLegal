@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, CheckCircle, Download, FileText, ChevronRight, Scale } from 'lucide-react'
+import { Loader2, CheckCircle, Download, FileText, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -70,6 +70,7 @@ const DocumentPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [documentId, setDocumentId] = useState<string | null>(null)
+  const [docAmount, setDocAmount] = useState<number>(0)
 
   const fields = template?.schema || []
   const metadata = template?.metadata
@@ -140,6 +141,7 @@ const DocumentPage = () => {
     try {
       const doc = await pollDocumentStatus(documentId)
       setPdfUrl(doc.pdf_url)
+      setDocAmount(Number(doc.payload?.amount) || doc.total_paid || 0)
       setStep('completed')
       window.gtag?.('event', 'document_generated', {
         document_id: documentId,
@@ -184,7 +186,7 @@ const DocumentPage = () => {
       <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-center px-4">
         <div className="flex items-center gap-2">
           <Scale className="h-6 w-6 text-green-900" />
-          <span className="text-lg font-bold text-green-900">LegalUp</span>
+          <span className="text-lg font-bold text-green-900">LegalUp</span><span className="text-xs text-green-800">Documents</span>
         </div>
       </div>
       <div className="max-w-3xl mx-auto px-4 py-8">
@@ -219,8 +221,10 @@ const DocumentPage = () => {
           <Card>
             <CardContent className="p-6 sm:p-8">
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <FileText className="w-8 h-8 text-green-600" />
+                <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{metadata.hero.title}</h1>
                 <p className="text-gray-600 max-w-xl mx-auto">{metadata.hero.description}</p>
@@ -340,7 +344,7 @@ const DocumentPage = () => {
                   <Button
                     type="submit"
                     disabled={!isValid}
-                    className="w-full h-12 text-base font-semibold bg-green-900 hover:bg-green-800 text-white"
+                    className="w-full h-12 text-base font-semibold bg-gray-900 hover:bg-green-900 text-white"
                   >
                     {metadata.button.text}
                   </Button>
@@ -352,8 +356,6 @@ const DocumentPage = () => {
             </CardContent>
           </Card>
         )}
-
-        <MPbadge />
 
         {step === 'paying' && (
           <Card>
@@ -393,51 +395,81 @@ const DocumentPage = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => window.gtag?.('event', 'document_downloaded', { document_id: documentId })}
-                  className="inline-flex items-center gap-2 bg-green-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors mb-8"
+                  className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-900 transition-colors mb-8"
                 >
                   <Download className="w-5 h-5" />
                   Descargar PDF
                 </a>
               )}
 
-              <div className="border-t border-gray-200 pt-6 mt-4">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-left">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <ChevronRight className="w-5 h-5 text-amber-700" />
-                    </div>
+              <div className="border-t border-gray-200 pt-8 mt-6 text-left">
+                <div className="bg-gray-50 rounded-xl p-5 mb-5 border border-gray-200">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{metadata.upsell.title}</h3>
-                      <ul className="text-sm text-gray-600 space-y-1 mb-3">
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                          Revisión jurídica personalizada
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                          Observaciones y correcciones
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                          Entrega en menos de 24 horas
-                        </li>
-                      </ul>
-                      <Button
-                        className="w-full h-12 text-base font-semibold bg-amber-600 hover:bg-amber-700 text-white"
-                        onClick={() => {
-                          window.gtag?.('event', 'document_review_clicked', { document_id: documentId, document_type: slug })
-                          window.open(`/?login=true&redirectTo=${encodeURIComponent('/abogados-civil')}`, '_self')
-                        }}
-                      >
-                        {metadata.upsell.buttonText} — ${upsellPrice.toLocaleString('es-CL')}
-                      </Button>
+                      <p className="text-sm text-gray-500 font-medium">Mandato Pagaré</p>
+                      <p className="text-2xl font-bold text-gray-900">${docAmount.toLocaleString('es-CL')}</p>
                     </div>
+                    <CheckCircle className="w-8 h-8 text-green-700" />
                   </div>
                 </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Consulta legal sobre este pagaré</h3>
+                <p className="text-gray-600 mb-5">
+                  Tu documento ya está listo y puede utilizarse. Si quieres asesoría para tu caso específico antes de firmarlo, puedes agendar una consulta con un abogado.
+                </p>
+
+                <p className="text-sm font-semibold text-gray-800 mb-3">60 minutos de consulta que incluye:</p>
+                <div className="space-y-2 mb-6">
+                  {[
+                    'Revisión del Mandato Pagaré generado',
+                    'Análisis de tu caso concreto',
+                    'Respuestas a todas tus dudas',
+                    'Recomendaciones antes de firmar',
+                    'Cláusulas adicionales si fueran necesarias',
+                    'Evaluación de riesgos de la operación',
+                    'Qué hacer si el deudor no paga',
+                    'Estrategia de cobro futuro',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 text-gray-700">
+                      <span className="text-green-600 font-bold">✓</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-sm text-gray-500 mb-4">
+                  La consulta es recomendable cuando el pagaré involucra montos importantes, acuerdos entre particulares o cuando existen dudas antes de firmarlo.
+                </p>
+
+                <Button
+                  className="w-full h-12 text-base font-semibold bg-gray-900 hover:bg-green-900 text-white"
+                  onClick={async () => {
+                    window.gtag?.('event', 'document_review_clicked', { document_id: documentId, document_type: slug })
+                    try {
+                      const resp = await fetch('/api/documents/create-review-preference', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ document_id: documentId }),
+                      })
+                      const data = await resp.json()
+                      if (data.initPoint) {
+                        window.location.href = data.initPoint
+                      }
+                    } catch (e) {
+                      console.error('Error creating review preference', e)
+                    }
+                  }}
+                >
+                  Consultar con un abogado
+                </Button>
+                <p className="text-sm text-gray-500 text-center mt-2">
+                  $59.990 &mdash; 60 minutos de consulta online
+                </p>
               </div>
             </CardContent>
           </Card>
         )}
+        <MPbadge />
       </div>
     </div>
   )
