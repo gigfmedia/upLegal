@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { getTemplate } from '../templates'
 import { createDocument, pollDocumentStatus } from '../engine/createDocument'
 import { PRICING } from '../pricing'
+import DocumentPreview from '../components/DocumentPreview'
 import type { DocumentField } from '../types'
 import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge'
 
@@ -197,48 +198,50 @@ const DocumentPage = () => {
           <span className="text-lg font-bold text-green-900">LegalUp</span><span className="text-xs text-green-800">Documents</span>
         </div>
       </div>
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center gap-2 mb-8 text-sm">
-          {['Formulario', 'Pago', 'Documento'].map((label, i) => {
-            const stepIndex = ['form', 'paying', 'completed'].indexOf(step)
-            const isActive = i <= stepIndex
-            const isCurrent = i === stepIndex
-            return (
-              <div key={label} className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  isActive ? 'bg-green-900 text-white' : 'bg-gray-200 text-gray-500'
-                } ${isCurrent ? 'ring-2 ring-green-900' : ''}`}>
-                  {i + 1}
-                </div>
-                <span className={`${isActive ? 'text-green-900 font-medium' : 'text-gray-500'}`}>
-                  {label}
-                </span>
-                {i < 2 && <div className={`w-8 h-0.5 ${i < stepIndex ? 'bg-green-900' : 'bg-gray-200'}`} />}
-              </div>
-            )
-          })}
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {step === 'form' && (
-          <Card>
-            <CardContent className="p-6 sm:p-8">
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{metadata.hero.title}</h1>
-                <p className="text-gray-600 max-w-xl mx-auto">{metadata.hero.description}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3">
+              <div className="flex items-center justify-center gap-2 mb-6 text-sm">
+                {['Formulario', 'Pago', 'Documento'].map((label, i) => {
+                  const stepIndex = ['form', 'paying', 'completed'].indexOf(step)
+                  const isActive = i <= stepIndex
+                  const isCurrent = i === stepIndex
+                  return (
+                    <div key={label} className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                        isActive ? 'bg-green-900 text-white' : 'bg-gray-200 text-gray-500'
+                      } ${isCurrent ? 'ring-2 ring-green-900' : ''}`}>
+                        {i + 1}
+                      </div>
+                      <span className={`${isActive ? 'text-green-900 font-medium' : 'text-gray-500'}`}>
+                        {label}
+                      </span>
+                      {i < 2 && <div className={`w-8 h-0.5 ${i < stepIndex ? 'bg-green-900' : 'bg-gray-200'}`} />}
+                    </div>
+                  )
+                })}
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)}>
+              {error && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <Card>
+                <CardContent className="p-6 sm:p-8">
+                  <div className="text-center mb-8">
+                    <div className="w-14 h-14 bg-green-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{metadata.hero.title}</h1>
+                    <p className="text-gray-600 max-w-xl mx-auto">{metadata.hero.description}</p>
+                  </div>
+
+                  <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-gray-200">
                   <div>
                     <Label htmlFor="user_email" className="text-sm font-medium text-gray-700 mb-1 block">
@@ -378,6 +381,11 @@ const DocumentPage = () => {
               </form>
             </CardContent>
           </Card>
+            </div>
+            <div className="lg:col-span-2">
+              <DocumentPreview slug={slug || ''} formValues={formValues as Record<string, any>} />
+            </div>
+          </div>
         )}
 
         {step === 'paying' && (

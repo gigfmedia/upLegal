@@ -652,6 +652,9 @@ const Index = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div> */}
+          <span className="inline-block bg-green-600 text-white p-1 text-sm px-3 py-1 rounded-full mb-4 uppercase">
+            Nuevo
+          </span>
           <h2 className="text-3xl font-bold font-serif text-green-600 mb-3">
             Documentos Legales
           </h2>
@@ -710,7 +713,7 @@ const Index = () => {
             ))}
           </div>
 
-          <p className="text-sm text-white/50 mt-8 max-w-xl mx-auto leading-relaxed">
+          <p className="text-sm text-white/70 mt-8 max-w-xl mx-auto leading-relaxed">
             Resuelve trámites legales sin esperar una consulta. Genera documentos profesionales en minutos y, si lo necesitas, un abogado puede revisarlos antes de utilizarlos.
           </p>
         </div>
