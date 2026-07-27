@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "prescripcion-de-deudas-chile-2026",
+    title: "Prescripción de deudas en Chile 2026: cuándo prescribe una deuda y qué ocurre después",
+    excerpt: "Descubre cuándo prescribe una deuda en Chile, qué ocurre con las deudas bancarias, los pagarés y los juicios ejecutivos, cuándo puede alegarse la prescripción y cómo proteger tus derechos frente a un cobro judicial.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "24 de Julio, 2026",
+    readTime: "13 min",
+    image: "/assets/prescripcion-deudas-chile-2026.png"
+  },
+  {
     id: "pagare-chile-2026",
     title: "Pagaré en Chile 2026: qué es, cómo funciona y qué hacer si firmaste uno",
     excerpt: "Conoce qué es un pagaré en Chile, cuándo puede cobrarse judicialmente, qué ocurre si no pagas, cuáles son tus derechos frente a una demanda ejecutiva y cómo defenderte si firmaste uno.",

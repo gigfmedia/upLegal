@@ -147,7 +147,7 @@ const BlogArticle = () => {
                             >
                                 prescripción de deudas en Chile
                             </Link>
-                            ,{" "}
+                            {/* ,{" "}
                             <Link
                                 to="/blog/juicio-ejecutivo-chile-2026"
                                 className="text-green-700 underline hover:text-green-500"
@@ -160,7 +160,7 @@ const BlogArticle = () => {
                                 className="text-green-700 underline hover:text-green-500"
                             >
                                 embargo de bienes
-                            </Link>.
+                            </Link> */}.
                         </p>
                     </div>
 
@@ -483,7 +483,9 @@ const BlogArticle = () => {
                             La posibilidad de cobrar judicialmente un pagaré no es indefinida. La legislación contempla plazos de prescripción para ejercer determinadas acciones derivadas de estos documentos.
                         </p>
                         <p className="text-gray-600">
-                            Una vez transcurridos esos plazos, el deudor podría invocar la prescripción como defensa dentro del juicio correspondiente. Precisamente por tratarse de un tema complejo, dedicamos una guía completa a la prescripción de deudas en Chile, donde explicamos cómo funcionan estos plazos según cada tipo de obligación.
+                            Una vez transcurridos esos plazos, el deudor podría invocar la prescripción como defensa dentro del juicio correspondiente. Precisamente por tratarse de un tema complejo, dedicamos una{" "}
+                            <Link to="/blog/prescripcion-de-deudas-chile-2026" className="text-green-700 underline hover:text-green-500">guía completa a la prescripción de deudas en Chile</Link>
+                            , donde explicamos cómo funcionan estos plazos según cada tipo de obligación.
                         </p>
                     </div>
 

@@ -581,4 +581,18 @@
     <changefreq>monthly</changefreq>
   </url>
 
+  <url>
+    <loc>https://legalup.cl/blog/pagare-chile-2026</loc>
+    <lastmod>2026-07-23</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/blog/prescripcion-de-deudas-chile-2026</loc>
+    <lastmod>2026-07-24</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
 </urlset>

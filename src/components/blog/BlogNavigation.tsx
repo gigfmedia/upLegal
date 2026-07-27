@@ -17,46 +17,32 @@ export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
     ? articles.filter(a => a.cluster === cluster && a.id !== currentArticleId)
     : [];
 
-  // Only use category fallback if cluster has at least 2 articles
-  // Otherwise, don't show navigation until cluster has more content
-  if (relatedArticles.length >= 2 && category) {
+  // If no cluster or single-article cluster, fall back to same category
+  if (relatedArticles.length < 2 && category) {
     const categoryArticles = articles.filter(a => a.category === category && a.id !== currentArticleId);
     relatedArticles = [...relatedArticles, ...categoryArticles];
-  }
-
-  // No cluster assigned: fall back to same-category articles
-  if (!cluster && category) {
-    relatedArticles = articles.filter(a => a.category === category && a.id !== currentArticleId);
   }
 
   // Remove duplicates
   relatedArticles = Array.from(new Set(relatedArticles.map(a => a.id)))
     .map(id => articles.find(a => a.id === id)!);
 
-  // If not enough related articles, don't show navigation
-  if (relatedArticles.length < 2) {
+  // Hide if no related articles at all
+  if (relatedArticles.length < 1) {
     return null;
   }
 
   const currentIndex = relatedArticles.findIndex(a => a.id === currentArticleId);
-  
-  // Articles are ordered from newest to oldest in the array
-  // If at the beginning (newest), "Next" (newer) loops to the end (oldest)
-  let nextArticle = relatedArticles.length > 1
-    ? (currentIndex > 0 ? relatedArticles[currentIndex - 1] : relatedArticles[relatedArticles.length - 1])
+  const showPrev = currentIndex >= 0 && currentIndex < relatedArticles.length - 1;
+  const showNext = relatedArticles.length > 1;
+
+  let nextArticle = showNext
+    ? (currentIndex > 0 ? relatedArticles[currentIndex - 1] : currentIndex === -1 ? relatedArticles[0] : relatedArticles[currentIndex - 1])
     : undefined;
 
-    
-  // If at the end (oldest), "Prev" (older) loops to the beginning (newest)
-  let prevArticle = relatedArticles.length > 1
-    ? (currentIndex < relatedArticles.length - 1 ? relatedArticles[currentIndex + 1] : relatedArticles[0])
+  let prevArticle = showPrev
+    ? relatedArticles[currentIndex + 1]
     : undefined;
-
-  // If next and prev are the same (happens with only 2 articles), hide prev to avoid redundancy
-  // We keep "Next" to encourage forward navigation
-  if (nextArticle && prevArticle && nextArticle.id === prevArticle.id) {
-    prevArticle = undefined;
-  }
 
 
 
