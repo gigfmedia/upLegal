@@ -91,6 +91,25 @@ const DocumentPage = () => {
     window.gtag?.('event', 'document_started', { document_type: slug })
   }, [slug])
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (
+        e.key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key)) ||
+        (e.ctrlKey && e.key === 'U')
+      ) {
+        e.preventDefault()
+      }
+    }
+    const ctx = (e: MouseEvent) => e.preventDefault()
+    document.addEventListener('keydown', handler)
+    document.addEventListener('contextmenu', ctx)
+    return () => {
+      document.removeEventListener('keydown', handler)
+      document.removeEventListener('contextmenu', ctx)
+    }
+  }, [])
+
   const zodSchema = buildZodSchema(fields).extend({
     user_email: z.string().email('Email inválido'),
     user_name: z.string().optional().or(z.literal('')),
