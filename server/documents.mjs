@@ -63,12 +63,20 @@ function renderPagareHtml(payload, templateVersion, documentId, qrDataUrl) {
 
   return `
     <div style="padding:50px 70px 30px;max-width:800px;margin:0 auto;background:#fff;font-size:11.5pt;line-height:1.8;color:#1a1a1a;">
-      <div style="text-align:right;border-bottom:2px solid #1a3a2a;padding-bottom:10px;margin-bottom:28px;">
-        <span style="font-size:15pt;font-weight:700;color:#1a3a2a;">LegalUp</span>
-        <span style="font-size:8.5pt;color:#6b7280;display:block;">legalup.cl</span>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:10px;margin-bottom:28px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a3a2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-scale-icon lucide-scale"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg>
+          <span style="font-size:18px;font-weight:700;color:#1a3a2a;">LegalUp</span>
+          <span style="font-size:8.5pt;color:#6b7280;">Documents - legalup.cl</span>
+        </div>
+        ${qrDataUrl ? `
+        <div style="display:flex;flex-direction:column;align-items:center;">
+          <img src="${qrDataUrl}" width="56" height="56" style="display:block;" alt="QR LegalUp" />
+          <span style="font-size:6pt;color:#9ca3af;margin-top:2px;">Verificar</span>
+        </div>` : ''}
       </div>
 
-      <h1 style="text-align:center;font-size:16pt;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Pagaré</h1>
+      <h1 style="text-align:center;font-size:16pt;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;color: #1a3a2a;">Mandato Pagaré</h1>
       <p style="text-align:center;font-size:9pt;color:#6b7280;margin-bottom:24px;font-family:monospace;">${pagareNumber}</p>
 
       <div style="text-align:justify;margin-bottom:28px;">
@@ -124,17 +132,6 @@ function renderPagareHtml(payload, templateVersion, documentId, qrDataUrl) {
         <p style="font-size:8.5pt;color:#6b7280;margin:4px 0 0;font-style:italic;">Firma</p>
       </div>
 
-      ${qrDataUrl ? `
-      <div style="text-align:center;padding:12px 0 4px;">
-        <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px;">
-          <span style="font-size:9pt;font-weight:700;color:#1a3a2a;">LegalUp</span>
-          <span style="font-size:7pt;color:#9ca3af;">legalup.cl</span>
-        </div>
-        <p style="font-size:7pt;color:#9ca3af;margin:0 0 6px;">Documento generado por LegalUp.cl</p>
-        <img src="${qrDataUrl}" width="64" height="64" style="display:inline-block;" alt="QR LegalUp" />
-        <p style="font-size:6.5pt;color:#9ca3af;margin:3px 0 0;">Verificar documento en legalup.cl/verificar</p>
-      </div>` : ''}
-
       <div style="border-top:1.5px solid #1a3a2a;padding-top:8px;margin-top:6px;font-size:7.5pt;color:#9ca3af;text-align:center;line-height:1.6;">
         <p style="margin:0;">Documento generado automáticamente por LegalUp. Antes de utilizarlo o firmarlo, se recomienda la revisión de un abogado cuando existan dudas sobre su aplicación al caso concreto.</p>
         <p style="margin:4px 0 0;">ID: ${documentId ? documentId.slice(0, 8) + '…' : '—'} &mdash; Versión ${templateVersion || 1} &mdash; ${new Date().toLocaleDateString('es-CL')}</p>
@@ -151,7 +148,7 @@ function wrapHtml(bodyHtml) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #fff; font-family: 'Times New Roman', Georgia, serif; }
+    body { background: #fff; font-family: 'Arial', Helvetica, sans-serif; }
     @page { margin: 0; size: letter; }
   </style>
 </head>
@@ -193,7 +190,7 @@ function sendDocumentEmail({ resend, doc, pdfUrl }) {
           <h1 style="color:#1a202c;">Tu documento est&aacute; listo</h1>
           <p>Hola <strong>${userName}</strong>,</p>
           <p>Tu <strong>${label}</strong> fue generado exitosamente.</p>
-          <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;text-align:center;">
+          <div style="padding:20px;border-radius:8px;margin:20px 0;text-align:center;">
             <a href="${pdfUrl}"
                style="display:inline-block;background:#111;color:#fff;padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;font-size:16px;">
               Descargar PDF

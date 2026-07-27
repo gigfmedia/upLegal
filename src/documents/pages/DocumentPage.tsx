@@ -57,6 +57,14 @@ const formatRut = (value: string) => {
   return `${formattedBody}-${dv}`
 }
 
+const formatCLP = (value: string) => {
+  const cleaned = value.replace(/[^0-9]/g, '')
+  if (!cleaned) return ''
+  return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
+const unformatCLP = (value: string) => value.replace(/\./g, '')
+
 function shouldShowField(field: DocumentField, values: Record<string, any>): boolean {
   if (!field.conditional) return true
   return String(values[field.conditional.field]) === field.conditional.value
@@ -305,19 +313,34 @@ const DocumentPage = () => {
                               {field.required && <span className="text-red-500 ml-1">*</span>}
                             </Label>
                             
-                            <Input
-                              id={field.id}
-                              type={field.type || 'text'}
-                              placeholder={field.placeholder}
-                              {...register(field.id as any, {
-                                setValueAs: (v: string) => {
-                                  if (field.validation === 'rut') return formatRut(v)
-                                  if (field.validation === 'number') return v.replace(/[^0-9.]/g, '')
-                                  return v
-                                },
-                              })}
-                              className={errors[field.id as keyof FormValues] ? 'border-red-500' : ''}
-                            />
+                            {field.formatter === 'clp' ? (
+                              <Input
+                                id={field.id}
+                                type="text"
+                                inputMode="numeric"
+                                placeholder={field.placeholder}
+                                value={formValues[field.id] ? formatCLP(String(formValues[field.id])) : ''}
+                                onChange={(e) => {
+                                  const raw = e.target.value.replace(/[^0-9]/g, '')
+                                  setValue(field.id as any, raw, { shouldValidate: true })
+                                }}
+                                className={errors[field.id as keyof FormValues] ? 'border-red-500' : ''}
+                              />
+                            ) : (
+                              <Input
+                                id={field.id}
+                                type={field.type || 'text'}
+                                placeholder={field.placeholder}
+                                {...register(field.id as any, {
+                                  setValueAs: (v: string) => {
+                                    if (field.validation === 'rut') return formatRut(v)
+                                    if (field.validation === 'number') return v.replace(/[^0-9.]/g, '')
+                                    return v
+                                  },
+                                })}
+                                className={errors[field.id as keyof FormValues] ? 'border-red-500' : ''}
+                              />
+                            )}
                             {field.helpText && (
                               <p className="text-xs text-gray-500 mt-1">{field.helpText}</p>
                             )}
