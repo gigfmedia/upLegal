@@ -659,28 +659,30 @@ const Index = () => {
             Genera documentos legales profesionales en pocos minutos, completamente en línea.
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
-            <div className="bg-white rounded-2xl p-5 text-left shadow-md border border-green-300 relative">
-              <span className="inline-block bg-green-700 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
-                Nuevo
-              </span>
-              <h3 className="text-base font-bold text-green-900 mb-2">Mandato Pagaré</h3>
-              <div className="space-y-1 mb-3">
-                {['Profesional', 'Listo para firmar', 'Enviado por correo'].map((item, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <span className="text-green-600 font-bold">✓</span>
-                    {item}
-                  </div>
-                ))}
+          <div className="flex lg:grid lg:grid-cols-5 gap-4 mt-8 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-2 lg:overflow-visible lg:pb-0" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-shrink-0 w-[260px] lg:w-auto snap-start">
+              <div className="bg-white rounded-2xl p-5 text-left shadow-md border border-green-300 relative h-full">
+                <span className="inline-block bg-green-700 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
+                  Nuevo
+                </span>
+                <h3 className="text-base font-bold text-green-900 mb-2">Mandato Pagaré</h3>
+                <div className="space-y-1 mb-3">
+                  {['Profesional', 'Listo para firmar', 'Enviado por correo'].map((item, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span className="text-green-600 font-bold">✓</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-lg font-bold text-gray-900 mb-3">Desde $9.990</p>
+                <Link
+                  to="/documentos/pagare"
+                  onClick={() => window.gtag?.('event', 'document_cta_clicked', { location: 'home_documents_section', document_type: 'pagare' })}
+                  className="block w-full text-center bg-green-900 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
+                >
+                  Generar ahora
+                </Link>
               </div>
-              <p className="text-lg font-bold text-gray-900 mb-3">Desde $9.990</p>
-              <Link
-                to="/documentos/pagare"
-                onClick={() => window.gtag?.('event', 'document_cta_clicked', { location: 'home_documents_section', document_type: 'pagare' })}
-                className="block w-full text-center bg-green-900 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
-              >
-                Generar ahora
-              </Link>
             </div>
 
             {[
@@ -689,22 +691,24 @@ const Index = () => {
               { title: 'Poder simple', items: ['Autoriza a terceros', 'Trámites simples', 'Sin plazo fijo'], badge: 'Próximo' },
               { title: 'Carta de cobranza', items: ['Respaldar pagos', 'Cobro judicial', 'Formato profesional'], badge: 'Próximo' },
             ].map((doc, i) => (
-              <div key={i} className="bg-white/10 rounded-2xl p-5 text-left border border-white/10 relative opacity-60 cursor-not-allowed">
-                <span className="inline-block bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
-                  {doc.badge}
-                </span>
-                <h3 className="text-base font-bold text-white mb-2">{doc.title}</h3>
-                <div className="space-y-1 mb-3">
-                  {doc.items.map((item, j) => (
-                    <div key={j} className="flex items-center gap-1.5 text-xs text-white/60">
-                      <span className="text-green-600 font-bold">○</span>
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-lg font-bold text-white/50 mb-3">—</p>
-                <div className="block w-full text-center bg-white/10 text-white/50 font-semibold py-2.5 rounded-lg text-sm cursor-not-allowed">
-                  Próximamente
+              <div key={i} className="flex-shrink-0 w-[260px] lg:w-auto snap-start">
+                <div className="bg-white/10 rounded-2xl p-5 text-left border border-white/10 relative opacity-60 cursor-not-allowed h-full">
+                  <span className="inline-block bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
+                    {doc.badge}
+                  </span>
+                  <h3 className="text-base font-bold text-white mb-2">{doc.title}</h3>
+                  <div className="space-y-1 mb-3">
+                    {doc.items.map((item, j) => (
+                      <div key={j} className="flex items-center gap-1.5 text-xs text-white/60">
+                        <span className="text-green-600 font-bold">○</span>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-lg font-bold text-white/50 mb-3">—</p>
+                  <div className="block w-full text-center bg-white/10 text-white/50 font-semibold py-2.5 rounded-lg text-sm cursor-not-allowed">
+                    Próximamente
+                  </div>
                 </div>
               </div>
             ))}
