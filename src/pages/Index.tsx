@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -646,36 +646,73 @@ const Index = () => {
 
       {/* Emotional Block */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-green-900 overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center relative">
-          {/* <div className="absolute -top-10 -left-10 w-32 h-32 bg-green-600 rounded-full blur-3xl opacity-60" />
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-green-600 rounded-full blur-3xl opacity-60" /> */}
-          
-          <h2 className="text-3xl font-bold font-serif text-green-600 mb-6 leading-tight relative">
-            Resolver un problema legal no debería ser complicado.
+        <div className="max-w-7xl mx-auto text-center">
+          {/* <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div> */}
+          <h2 className="text-3xl font-bold font-serif text-green-600 mb-3">
+            Documentos Legales
           </h2>
-          <p className="text-lg sm:text-xl text-white mb-10 max-w-2xl mx-auto leading-relaxed relative">
-            Explica tu caso y encuentra orientación legal clara y rápida. Conecta con abogados expertos listos para brindarte la seguridad que necesitas.
+          <p className="text-lg text-white mb-10 max-w-3xl mx-auto">
+            Genera documentos legales profesionales en pocos minutos, completamente en línea.
           </p>
-          <div className="relative">
-            <Button  
-              onClick={() => {
-                window.gtag?.('event', 'click_cuentanos_caso', {
-                  location: 'hero_emotional_block',
-                });
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                // Small delay to allow scroll to start before focusing
-                setTimeout(() => {
-                  const searchInput = document.querySelector('input[placeholder*="Ej: me quieren desalojar"]');
-                  if (searchInput instanceof HTMLInputElement) {
-                    searchInput.focus();
-                  }
-                }, 500);
-              }}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-11 rounded-md px-8 bg-white text-gray-900 hover:bg-gray-100 w-full sm:w-auto"
-            >
-              Cuéntanos tu caso →
-            </Button>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-8">
+            <div className="bg-white rounded-2xl p-5 text-left shadow-md border border-green-300 relative">
+              <span className="inline-block bg-green-700 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
+                Nuevo
+              </span>
+              <h3 className="text-base font-bold text-green-900 mb-2">Mandato Pagaré</h3>
+              <div className="space-y-1 mb-3">
+                {['Profesional', 'Listo para firmar', 'Enviado por correo'].map((item, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <span className="text-green-600 font-bold">✓</span>
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <p className="text-lg font-bold text-gray-900 mb-3">Desde $9.990</p>
+              <Link
+                to="/documentos/pagare"
+                onClick={() => window.gtag?.('event', 'document_cta_clicked', { location: 'home_documents_section', document_type: 'pagare' })}
+                className="block w-full text-center bg-green-900 hover:bg-green-800 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
+              >
+                Generar ahora
+              </Link>
+            </div>
+
+            {[
+              { title: 'Reconocimiento de deuda', items: ['Formaliza deudas', 'Reconocimiento voluntario', 'Acuerdo entre partes'], badge: 'Próximo' },
+              { title: 'Contrato de arriendo', items: ['Acuerdo entre partes', 'Plazos y condiciones', 'Garantía incluida'], badge: 'Próximo' },
+              { title: 'Poder simple', items: ['Autoriza a terceros', 'Trámites simples', 'Sin plazo fijo'], badge: 'Próximo' },
+              { title: 'Carta de cobranza', items: ['Respaldar pagos', 'Cobro judicial', 'Formato profesional'], badge: 'Próximo' },
+            ].map((doc, i) => (
+              <div key={i} className="bg-white/10 rounded-2xl p-5 text-left border border-white/10 relative opacity-60 cursor-not-allowed">
+                <span className="inline-block bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full mb-3">
+                  {doc.badge}
+                </span>
+                <h3 className="text-base font-bold text-white mb-2">{doc.title}</h3>
+                <div className="space-y-1 mb-3">
+                  {doc.items.map((item, j) => (
+                    <div key={j} className="flex items-center gap-1.5 text-xs text-white/60">
+                      <span className="text-green-600 font-bold">○</span>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-lg font-bold text-white/50 mb-3">—</p>
+                <div className="block w-full text-center bg-white/10 text-white/50 font-semibold py-2.5 rounded-lg text-sm cursor-not-allowed">
+                  Próximamente
+                </div>
+              </div>
+            ))}
           </div>
+
+          <p className="text-sm text-white/50 mt-8 max-w-xl mx-auto leading-relaxed">
+            Resuelve trámites legales sin esperar una consulta. Genera documentos profesionales en minutos y, si lo necesitas, un abogado puede revisarlos antes de utilizarlos.
+          </p>
         </div>
       </section>
 
