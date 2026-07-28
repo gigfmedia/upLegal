@@ -2,14 +2,32 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
+import { readFileSync, existsSync } from 'fs';
+
+function loadBuildEnv() {
+  const buildFile = path.resolve(__dirname, '.env.build');
+  if (!existsSync(buildFile)) return {};
+  const content = readFileSync(buildFile, 'utf-8');
+  const vars: Record<string, string> = {};
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    vars[trimmed.slice(0, eqIdx)] = trimmed.slice(eqIdx + 1);
+  }
+  return vars;
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load all env variables
   const env = loadEnv(mode, process.cwd(), '');
-  
-  // Filter only VITE_* variables
-  const viteEnv = Object.entries(env).reduce((acc, [key, val]) => {
+  const buildEnv = loadBuildEnv();
+
+  // Merge build env into loaded env (build env takes precedence)
+  const merged = { ...env, ...buildEnv };
+
+  const viteEnv = Object.entries(merged).reduce((acc, [key, val]) => {
     if (key.startsWith('VITE_')) {
       acc[`import.meta.env.${key}`] = JSON.stringify(val);
     }
@@ -40,7 +58,6 @@ export default defineConfig(({ mode }) => {
           '.js': 'jsx',
           '.ts': 'tsx',
         },
-        // Node.js global to browser globalThis
         define: {
           global: 'globalThis',
         },
@@ -49,7 +66,7 @@ export default defineConfig(({ mode }) => {
     define: {
       ...viteEnv,
       'import.meta.env.MODE': JSON.stringify(mode),
-      'process.env': Object.entries(env).reduce((prev, [key, val]) => {
+      'process.env': Object.entries(merged).reduce((prev, [key, val]) => {
         if (key.startsWith('VITE_')) {
           return {
             ...prev,
@@ -74,7 +91,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
         },
       },
-      // Allow ngrok host
       allowedHosts: [
         '4b8d111bae68.ngrok-free.app',
         '834703e13045.ngrok-free.app',

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useLayoutEffect, useState } from 'react'
+import { useMemo, useRef, useLayoutEffect, useEffect, useState } from 'react'
 import PagareTemplate from '../templates/pagare/PagareTemplate'
 
 interface DocumentPreviewProps {

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { getClientEnv } from './clientEnv';
 
 export interface ErrorLog {
   id?: string;
@@ -9,6 +10,12 @@ export interface ErrorLog {
   path?: string;
   created_at?: string;
   is_database_error?: boolean;
+  build_version?: string;
+  commit_hash?: string;
+  browser?: string;
+  os?: string;
+  viewport?: string;
+  anonymous_id?: string;
 }
 
 interface DatabaseErrorDetails {
@@ -24,28 +31,52 @@ interface DatabaseErrorDetails {
   parameters?: any[];
 }
 
+function enrichWithClientEnv(log: Partial<ErrorLog>): Partial<ErrorLog> {
+  if (typeof window === 'undefined') return log;
+  try {
+    const env = getClientEnv();
+    return {
+      ...log,
+      browser: log.browser || env.browser,
+      os: log.os || env.os,
+      viewport: log.viewport || env.viewport,
+      build_version: log.build_version || env.buildVersion,
+      commit_hash: log.commit_hash || env.commitHash,
+      anonymous_id: log.anonymous_id || env.anonymousId,
+    };
+  } catch {
+    return log;
+  }
+}
+
 export async function logError(errorLog: ErrorLog) {
   try {
-    // Check if this is a database error
-    const isDbError = errorLog.type.includes('database') || 
+    const isDbError = errorLog.type.includes('database') ||
                      errorLog.type.includes('supabase') ||
                      (errorLog.details?.error?.code && errorLog.details.error.code.startsWith('2'));
+
+    const enriched = enrichWithClientEnv(errorLog);
 
     const { error } = await supabase
       .from('error_logs')
       .insert([{
-        type: errorLog.type,
-        message: errorLog.message,
-        details: errorLog.details || {},
-        user_id: errorLog.user_id,
-        path: errorLog.path || (typeof window !== 'undefined' ? window.location.pathname : ''),
+        type: enriched.type,
+        message: enriched.message,
+        details: enriched.details || {},
+        user_id: enriched.user_id,
+        path: enriched.path || (typeof window !== 'undefined' ? window.location.pathname : ''),
         created_at: new Date().toISOString(),
-        is_database_error: isDbError
+        is_database_error: isDbError,
+        build_version: enriched.build_version,
+        commit_hash: enriched.commit_hash,
+        browser: enriched.browser,
+        os: enriched.os,
+        viewport: enriched.viewport,
+        anonymous_id: enriched.anonymous_id,
       }]);
 
     if (error) {
       console.error('Error logging error:', error);
-      // Try to log to console as fallback
       console.error('Original error:', errorLog);
     }
   } catch (e) {
@@ -96,6 +127,6 @@ export async function logCheckoutError(error: any, context: Record<string, any> 
       }
     },
     user_id: context.userId,
-    path: context.path || window.location.pathname
+    path: context.path || (typeof window !== 'undefined' ? window.location.pathname : ''),
   });
 }

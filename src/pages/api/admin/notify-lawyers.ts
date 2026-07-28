@@ -234,14 +234,4 @@ export const post: APIRoute = async ({ request }) => {
         error instanceof Error ? error : String(error)
       );
     }
-  } catch (error) {
-    const errorMessage = 'Error en la API notify-lawyers';
-    console.error(errorMessage, error);
-    
-    return createErrorResponse(
-      errorMessage,
-      500,
-      error instanceof Error ? error : String(error)
-    );
-  }
 };

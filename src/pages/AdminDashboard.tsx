@@ -35,6 +35,12 @@ interface ErrorData {
   path?: string;
   created_at: string;
   is_database_error?: boolean;
+  build_version?: string;
+  commit_hash?: string;
+  browser?: string;
+  os?: string;
+  viewport?: string;
+  anonymous_id?: string;
 }
 
 interface ErrorTableProps {
@@ -81,6 +87,8 @@ const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTab
         <TableRow>
           <TableHead className="w-[120px]">Tipo</TableHead>
           <TableHead>Mensaje</TableHead>
+          <TableHead className="w-[140px]">Navegador/OS</TableHead>
+          <TableHead className="w-[120px]">Build</TableHead>
           {!showDatabaseDetails && <TableHead>Usuario</TableHead>}
           <TableHead className="text-right">Fecha</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
@@ -89,14 +97,14 @@ const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTab
       <TableBody>
         {isLoading ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-4">
+            <TableCell colSpan={7} className="text-center py-4">
               <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
               <p className="mt-2 text-sm text-muted-foreground">Cargando errores...</p>
             </TableCell>
           </TableRow>
         ) : errors.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+            <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
               No hay errores para mostrar
             </TableCell>
           </TableRow>
@@ -126,6 +134,36 @@ const ErrorTable = ({ errors, isLoading, showDatabaseDetails = false }: ErrorTab
                   </div>
                 )}
                 {renderErrorDetails(error)}
+              </TableCell>
+              <TableCell className="align-top">
+                <div className="flex flex-col gap-1">
+                  {error.browser && (
+                    <Badge variant="outline" className="text-xs w-fit font-normal lowercase">
+                      {error.browser}
+                    </Badge>
+                  )}
+                  {error.os && (
+                    <Badge variant="secondary" className="text-xs w-fit font-normal lowercase">
+                      {error.os}
+                    </Badge>
+                  )}
+                  {error.viewport && (
+                    <span className="text-xs text-muted-foreground">{error.viewport}</span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="align-top">
+                <div className="flex flex-col gap-1">
+                  {error.build_version ? (
+                    <span className="text-xs font-mono text-muted-foreground" title={`Commit: ${error.commit_hash || '-'}`}>
+                      {error.build_version.length > 14
+                        ? error.build_version.slice(0, 14) + '…'
+                        : error.build_version}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </div>
               </TableCell>
               {!showDatabaseDetails && (
                 <TableCell>

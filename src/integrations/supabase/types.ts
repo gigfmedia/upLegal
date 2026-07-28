@@ -457,11 +457,11 @@ export const Constants = {
     Functions: {
       mark_free_consultation_used: {
         Args: {
-          user_id: string
-        }
-        Returns: void
-      }
-    }
+          user_id: 'string',
+        },
+        Returns: 'void',
+      },
+    },
     Tables: {},
   },
 } as const

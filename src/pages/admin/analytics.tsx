@@ -57,6 +57,12 @@ type ErrorLog = {
   path?: string;
   created_at: string;
   is_database_error?: boolean;
+  build_version?: string;
+  commit_hash?: string;
+  browser?: string;
+  os?: string;
+  viewport?: string;
+  anonymous_id?: string;
 };
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -137,14 +143,17 @@ const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: bool
           <tr>
             <th className="px-4 py-2">Tipo</th>
             <th className="px-4 py-2">Mensaje</th>
+            <th className="px-4 py-2">Navegador</th>
+            <th className="px-4 py-2">OS</th>
+            <th className="px-4 py-2">Build</th>
             <th className="px-4 py-2">Fecha</th>
           </tr>
         </thead>
         <tbody>
           {isLoading ? (
-            <tr><td colSpan={3} className="text-center py-4"><Loader2 className="animate-spin inline mr-2" /></td></tr>
+            <tr><td colSpan={6} className="text-center py-4"><Loader2 className="animate-spin inline mr-2" /></td></tr>
           ) : errors.length === 0 ? (
-            <tr><td colSpan={3} className="text-center py-4 text-muted-foreground">No hay errores</td></tr>
+            <tr><td colSpan={6} className="text-center py-4 text-muted-foreground">No hay errores</td></tr>
           ) : (
             errors.map(error => (
               <tr key={error.id} className="border-b">
@@ -152,6 +161,9 @@ const ErrorTable = ({ errors, isLoading }: { errors: ErrorLog[]; isLoading: bool
                   <Badge variant={error.is_database_error ? "destructive" : "outline"}>{error.type}</Badge>
                 </td>
                 <td className="px-4 py-2 max-w-md truncate">{error.message}</td>
+                <td className="px-4 py-2">{error.browser || '—'}</td>
+                <td className="px-4 py-2">{error.os || '—'}</td>
+                <td className="px-4 py-2 text-xs font-mono">{error.build_version || '—'}</td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   {formatDistanceToNow(new Date(error.created_at), { addSuffix: true, locale: es })}
                 </td>
