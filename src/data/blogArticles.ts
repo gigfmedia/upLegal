@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "juicio-ejecutivo-chile-2026",
+    title: "Juicio ejecutivo en Chile 2026: qué es, cómo funciona y qué hacer si te demandan",
+    excerpt: "Descubre qué es un juicio ejecutivo en Chile, cuándo puede iniciarse, qué documentos permiten demandar, cómo funciona el embargo, qué defensas tiene el deudor y qué hacer si recibes una demanda ejecutiva.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "28 de Julio, 2026",
+    readTime: "13 min",
+    image: "/assets/juicio-ejecutivo-chile-2026.png"
+  },
+  {
     id: "reconocimiento-de-deuda-chile-2026",
     title: "Reconocimiento de deuda en Chile 2026: qué es, cómo hacerlo y cuándo conviene firmarlo",
     excerpt: "Aprende qué es un reconocimiento de deuda en Chile, qué información debe contener, cuándo conviene utilizarlo, cuáles son sus diferencias con un pagaré y qué hacer si el deudor no cumple con el pago.",

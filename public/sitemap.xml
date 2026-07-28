@@ -597,7 +597,14 @@
 
   <url>
     <loc>https://legalup.cl/blog/reconocimiento-de-deuda-chile-2026</loc>
-    <lastmod>2026-07-24</lastmod>
+    <lastmod>2026-07-27</lastmod>
+    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://legalup.cl/blog/juicio-ejecutivo-chile-2026</loc>
+    <lastmod>2026-07-28</lastmod>
     <priority>0.8</priority>
     <changefreq>monthly</changefreq>
   </url>
