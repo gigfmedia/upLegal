@@ -279,13 +279,13 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             <div className="flex items-center gap-3">
               <Avatar className="h-14 w-14 border-2 border-white shadow-sm">
                 <AvatarImage src={pp.lawyer_photo} />
-                <AvatarFallback className="bg-gray-100 text-gray-700 text-lg">
+                <AvatarFallback className="bg-green-900 text-green-600 text-lg">
                   {pp.lawyer_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 leading-tight">{pp.lawyer_name}</h3>
-                {pp.specialties && pp.specialties.length > 0 && (
+                {pp.specialties && pp.specialties.length > 1 && (
                   <p className="text-sm text-gray-600">{pp.specialties[0]}</p>
                 )}
               </div>
@@ -293,7 +293,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-sm">
               <span className="text-yellow-500 tracking-wider">{'★'.repeat(5)}</span>
               {pp.pjud_verified && (
-                <span className="inline-flex items-center gap-1 text-green-700 bg-green-50 px-2 py-0.5 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full text-xs font-medium">
                   <ShieldCheck className="h-3 w-3" />
                   Verificado por el Poder Judicial
                 </span>

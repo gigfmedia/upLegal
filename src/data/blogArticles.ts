@@ -29,7 +29,7 @@ export const articles: Article[] = [
     cluster: "obligaciones",
     author: "LegalUp",
     date: "29 de Julio, 2026",
-    readTime: "14 min",
+    readTime: "11 min",
     image: "/assets/embargo-chile-2026.png"
   },
   {

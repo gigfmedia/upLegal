@@ -83,11 +83,11 @@ const BlogArticle = () => {
                         </p>
                         <ul className="space-y-2">
                             {[
-                                "El embargo es una medida judicial para asegurar el cumplimiento de una obligación económica.",
-                                "No todos los bienes pueden embargarse; la ley protege bienes indispensables para la subsistencia.",
-                                "El embargo del sueldo tiene reglas especiales que protegen parte de los ingresos del trabajador.",
-                                "El procedimiento tiene etapas y plazos; el remate no ocurre inmediatamente después del embargo.",
-                                "Existen defensas como prescripción, pago o vicios del título que pueden detener un embargo.",
+                                "El embargo es una medida judicial para asegurar el cumplimiento de una obligación económica",
+                                "No todos los bienes pueden embargarse; la ley protege bienes indispensables para la subsistencia",
+                                "El embargo del sueldo tiene reglas especiales que protegen parte de los ingresos del trabajador",
+                                "El procedimiento tiene etapas y plazos; el remate no ocurre inmediatamente después del embargo",
+                                "Existen defensas como prescripción, pago o vicios del título que pueden detener un embargo",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 font-bold">✓</span>
@@ -240,12 +240,12 @@ const BlogArticle = () => {
 
                     {/* Primer InArticleCTA */}
                     <div className="mb-12">
-                        <div className="bg-green-50 rounded-2xl p-6 border border-green-200 text-center">
-                            <h3 className="text-xl font-bold text-green-800 mb-2">¿Necesitas respaldar una deuda antes de llegar a un juicio?</h3>
-                            <p className="text-green-700 mb-4">Evita problemas futuros generando un Mandato Pagaré profesional, listo para utilizar y enviado inmediatamente a tu correo.</p>
+                        <div className="bg-cream-900 rounded-2xl p-8 border border-gray-200 text-center">
+                            <h3 className="text-2xl font-bold font-serif text-green-900 mb-2">¿Necesitas respaldar una deuda antes de llegar a un juicio?</h3>
+                            <p className="text-green-900 mb-4">Evita problemas futuros generando un Mandato Pagaré profesional, listo para utilizar y enviado inmediatamente a tu correo.</p>
                             <Link
                                 to="/documentos/pagare"
-                                className="inline-block bg-green-700 text-white font-bold px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                                className="inline-block bg-gray-900 text-white font-bold px-6 py-3 rounded-lg hover:bg-green-900 transition-colors"
                             >
                                 Generar Mandato Pagaré →
                             </Link>
