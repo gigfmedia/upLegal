@@ -15,6 +15,7 @@ import Header from '@/components/Header';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { logPaymentEvent } from '@/utils/paymentLogger';
+import { PaymentMethods } from '@/components/MercadoPagoBadge';
 
 interface LawyerProfile {
   user_id: string;
@@ -452,9 +453,30 @@ export default function BookingPage() {
 
         // 4. Fetch busy slots from DB (Bookings) - defined above, now map them
         const bookedTimes = (busySlots as BusySlot[] | null)?.map((slot) => ({
-          time: slot.scheduled_time.slice(0, 5), // "09:00:00" -> "09:00"
+          time: slot.scheduled_time.slice(0, 5),
           duration: slot.duration
         })) || [];
+
+        // Remove expired pending bookings (>15 min without payment) from busy set
+        const { data: expiredPending } = await supabase
+          .from('bookings')
+          .select('scheduled_time, duration')
+          .eq('lawyer_id', actualLawyerId)
+          .eq('scheduled_date', format(selectedDate, 'yyyy-MM-dd'))
+          .eq('status', 'pending')
+          .lt('created_at', new Date(Date.now() - 15 * 60 * 1000).toISOString());
+
+        if (expiredPending) {
+          const expiredSet = new Set(
+            (expiredPending as { scheduled_time: string }[]).map(b => b.scheduled_time.slice(0, 5))
+          );
+          // Remove expired entries from bookedTimes
+          for (let i = bookedTimes.length - 1; i >= 0; i--) {
+            if (expiredSet.has(bookedTimes[i].time)) {
+              bookedTimes.splice(i, 1);
+            }
+          }
+        }
 
         // 5. Collision detection with Bookings
         const finalSlots = configFilteredSlots.map(slot => {
@@ -710,27 +732,15 @@ export default function BookingPage() {
   };
 
   const handleContinue = async () => {
-    if (!selectedDate || !selectedTime) return;
     if (isProcessingPayment) return;
 
-    // continue_to_checkout: Se dispara cuando el usuario hace clic en "Continuar al pago".
-    // Se registra ANTES de cualquier validación o apertura de modal, porque representa la
-    // intención real del usuario de avanzar al checkout, independientemente del resultado.
     window.gtag?.('event', 'continue_to_checkout', {
       lawyer_id: lawyer?.user_id,
       duration,
       price: totalPrice
     });
 
-    if (isAuthenticated && user) {
-      if (user.email) {
-        await handleAuthenticatedCheckout(getAuthenticatedUserName(), user.email);
-      } else {
-        setShowPreCheckout(true);
-      }
-    } else {
-      setShowPreCheckout(true);
-    }
+    setShowPreCheckout(true);
   };
 
   const calculateLawyerFee = () => {
@@ -791,20 +801,6 @@ export default function BookingPage() {
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-3/4" />
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Duration Selection Skeleton */}
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-lg" />
-            ))}
           </div>
         </CardContent>
       </Card>
@@ -1049,7 +1045,7 @@ export default function BookingPage() {
                           ))}
                         </div>
                       )}
-                      <p className="text-sm font-medium text-gray-700 mt-4">Este horario se libera automáticamente si no se confirma el pago</p>
+                      <p className="text-sm font-medium text-gray-700 mt-4">La reserva se mantendrá 15 minutos mientras completas el pago</p>
                     </>
                   ) : (
                     <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm bg-gray-50">
@@ -1083,63 +1079,65 @@ export default function BookingPage() {
                       <span className="text-green-900">${totalPrice.toLocaleString('es-CL')}</span>
                     </div>
                   </div>
-
-                  {/* Testimonial social proof */}
-                  {/* <BookingTestimonial specialties={lawyer.specialties} /> */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                      <h3 className="font-medium text-blue-900 mb-3">
-                        ¿Qué incluye esta consulta?
-                      </h3>
-
-                      <ul className="space-y-2 text-sm text-blue-700">
-                        <li>✓ El abogado analizará tu situación</li>
-                        <li>✓ Resolverá tus dudas legales</li>
-                        <li>✓ Te explicará las alternativas disponibles</li>
-                        <li>✓ Recibirás orientación para los próximos pasos</li>
-                      </ul>
-                    </div>
-                    <div className="border border-gray-100 rounded-lg p-4">
-                      <ul className="flex flex-col space-y-2 items-start">
-                        <li>
-                          <span className="text-green-600 mr-1">✓</span>
-                          <span className="text-sm font-bold text-gray-700">Consulta privada por Google Meet</span>
-                        </li>
-                        <li>
-                          <span className="text-green-600 mr-1">✓</span>
-                          <span className="text-sm font-bold text-gray-700">Pago seguro con Mercado Pago</span>
-                        </li>
-                        <li>
-                          <span className="text-green-600 mr-1">✓</span>
-                          <span className="text-sm font-bold text-gray-700">Confirmación inmediata</span>
-                        </li>
-                      </ul>
-                      <span className="text-sm text-gray-600 mt-2 block">Recibirás los datos de acceso a tu consulta una vez confirmado el pago.</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleContinue}
-                    className="w-full bg-gray-900 hover:bg-green-900 text-sm py-6"
-                    disabled={isProcessingPayment}
-                  >
-                    {isProcessingPayment ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Redirigiendo...
-                      </>
-                    ) : (
-                      'Confirmar reserva'
-                    )}
-                  </Button>
                 </div>
               )}
+
+              {/* Testimonial social proof */}
+              {/* <BookingTestimonial specialties={lawyer.specialties} /> */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                  <h3 className="font-medium text-blue-900 mb-3">
+                    ¿Qué incluye esta consulta?
+                  </h3>
+
+                  <ul className="space-y-2 text-sm text-blue-700">
+                    <li>✓ El abogado analizará tu situación</li>
+                    <li>✓ Resolverá tus dudas legales</li>
+                    <li>✓ Te explicará las alternativas disponibles</li>
+                    <li>✓ Recibirás orientación para los próximos pasos</li>
+                  </ul>
+                </div>
+                <div className="border border-gray-100 rounded-lg p-4">
+                  <ul className="flex flex-col space-y-2 items-start">
+                    <li>
+                      <span className="text-green-600 mr-1">✓</span>
+                      <span className="text-sm font-bold text-gray-700">Consulta privada por Google Meet</span>
+                    </li>
+                    <li>
+                      <span className="text-green-600 mr-1">✓</span>
+                      <span className="text-sm font-bold text-gray-700">Pago seguro con Mercado Pago</span>
+                    </li>
+                    <li>
+                      <span className="text-green-600 mr-1">✓</span>
+                      <span className="text-sm font-bold text-gray-700">Confirmación inmediata</span>
+                    </li>
+                  </ul>
+                  <span className="text-sm text-gray-600 mt-2 block">Recibirás los datos de acceso a tu consulta una vez confirmado el pago.</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleContinue}
+                className="w-full bg-gray-900 hover:bg-green-900 text-sm h-11 py-5"
+                disabled={isProcessingPayment}
+              >
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Redirigiendo...
+                  </>
+                ) : (
+                  'Agendar y pagar'
+                )}
+              </Button>
             </CardContent>
           </Card>
+          <PaymentMethods className="mt-0" />
         </div>
+        
 
         {/* Pre-checkout Modal */}
-        {showPreCheckout && selectedDate && selectedTime && (
+        {showPreCheckout && (
           <PreCheckoutModal
             isOpen={showPreCheckout}
             onClose={() => setShowPreCheckout(false)}
@@ -1147,8 +1145,8 @@ export default function BookingPage() {
               type: 'appointment',
               lawyer_id: lawyer.user_id,
               lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
-              scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-              scheduled_time: selectedTime,
+              scheduled_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
+              scheduled_time: selectedTime || undefined,
               duration,
               price: totalPrice,
             }}
