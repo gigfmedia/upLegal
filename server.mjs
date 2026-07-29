@@ -997,6 +997,7 @@ app.post('/api/bookings/create', async (req, res) => {
       service_delivery_time,
       requires_meeting,
       experiment_variant,
+      posthog_distinct_id,
     } = req.body;
 
     const isServiceBooking = booking_type === 'service';
@@ -1128,6 +1129,7 @@ app.post('/api/bookings/create', async (req, res) => {
       service_delivery_time: isServiceBooking ? (service_delivery_time || null) : null,
       requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
       experiment_variant: experiment_variant || null,
+      posthog_distinct_id: posthog_distinct_id || null,
     };
 
     console.log('BOOKING INSERT', bookingInsert);
@@ -2101,7 +2103,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
             body: JSON.stringify({
               api_key: posthogKey,
               event: 'booking_paid',
-              distinct_id: booking.user_id || booking.user_email,
+              distinct_id: booking.posthog_distinct_id || booking.user_id || booking.user_email,
               properties: {
                 booking_id: bookingId,
                 payment_id: paymentId,

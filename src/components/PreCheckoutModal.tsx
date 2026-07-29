@@ -11,6 +11,7 @@ import { Loader2, ShieldCheck, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
+import posthog from 'posthog-js';
 
 export interface AppointmentCheckoutData {
   type: 'appointment';
@@ -25,6 +26,7 @@ export interface AppointmentCheckoutData {
   pjud_verified?: boolean;
   review_count?: number;
   experiment_variant?: string | null;
+  posthog_distinct_id?: string | null;
 }
 
 export interface ServiceCheckoutData {
@@ -150,6 +152,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
       }
 
       const isAppointment = checkoutData.type === 'appointment';
+      const distinctId = posthog.get_distinct_id();
       const payload = isAppointment
         ? {
             lawyer_id: checkoutData.lawyer_id,
@@ -163,6 +166,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             price: checkoutData.price,
             booking_type: 'appointment',
             experiment_variant: checkoutData.experiment_variant || null,
+            posthog_distinct_id: distinctId || null,
           }
         : {
             lawyer_id: checkoutData.lawyer_id,
