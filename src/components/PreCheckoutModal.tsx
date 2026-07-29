@@ -24,6 +24,7 @@ export interface AppointmentCheckoutData {
   specialties?: string[];
   pjud_verified?: boolean;
   review_count?: number;
+  experiment_variant?: string | null;
 }
 
 export interface ServiceCheckoutData {
@@ -161,6 +162,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             duration: (checkoutData as AppointmentCheckoutData).duration,
             price: checkoutData.price,
             booking_type: 'appointment',
+            experiment_variant: checkoutData.experiment_variant || null,
           }
         : {
             lawyer_id: checkoutData.lawyer_id,

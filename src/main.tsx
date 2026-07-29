@@ -6,6 +6,17 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
 import './index.css';
 
+import posthog from "posthog-js";
+import { PostHogProvider } from "@posthog/react";
+
+console.log("PostHog loaded", posthog);
+console.log("Key:", import.meta.env.VITE_POSTHOG_KEY);
+console.log("Host:", import.meta.env.VITE_POSTHOG_HOST);
+
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_POSTHOG_HOST,
+});
+
 
 // Theme context
 type ThemeContextType = {
@@ -21,6 +32,10 @@ const ThemeContext = React.createContext<ThemeContextType>({
 // Theme provider
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState('light');
+  
+  useEffect(() => {
+    posthog.capture("test_event");
+  }, []);
   
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -103,17 +118,19 @@ sessionStorage.removeItem('asset_reload_count');
 // Renderizar la aplicación
 root.render(
   <StrictMode>
-    <HelmetProvider>
-      <ThemeProvider>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <AppWrapper />
-        </BrowserRouter>
-      </ThemeProvider>
-    </HelmetProvider>
+    <PostHogProvider client={posthog}>
+      <HelmetProvider>
+        <ThemeProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <AppWrapper />
+          </BrowserRouter>
+        </ThemeProvider>
+      </HelmetProvider>
+    </PostHogProvider>
   </StrictMode>
 );

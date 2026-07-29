@@ -16,6 +16,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { PaymentMethods } from '@/components/MercadoPagoBadge';
+import { useFeatureFlagVariantKey } from '@posthog/react';
+import posthog from 'posthog-js';
 
 interface LawyerProfile {
   user_id: string;
@@ -133,6 +135,11 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const variant = useFeatureFlagVariantKey('booking_button_text');
+  useEffect(() => {
+    console.log("Variant:", variant);
+  }, [variant]);
+  const buttonText = variant === 'reserve' ? 'Reserva tu consulta' : 'Agendar y pagar';
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [searchParams] = useSearchParams();
   const prefillRef = useRef<{ date?: string; time?: string; duration?: number; applied: boolean }>({ applied: false });
@@ -737,7 +744,14 @@ export default function BookingPage() {
     window.gtag?.('event', 'continue_to_checkout', {
       lawyer_id: lawyer?.user_id,
       duration,
-      price: totalPrice
+      price: totalPrice,
+    });
+
+    posthog.capture('booking_continue_clicked', {
+      variant,
+      lawyer_id: lawyer?.user_id,
+      duration,
+      price: totalPrice,
     });
 
     setShowPreCheckout(true);
@@ -1135,7 +1149,7 @@ export default function BookingPage() {
                     Redirigiendo...
                   </>
                 ) : (
-                  'Agendar y pagar'
+                  buttonText
                 )}
               </Button>
             </CardContent>
@@ -1161,6 +1175,7 @@ export default function BookingPage() {
               specialties: lawyer.specialties,
               pjud_verified: lawyer.pjud_verified,
               review_count: lawyer.review_count || 0,
+              experiment_variant: variant,
             }}
           />
         )}

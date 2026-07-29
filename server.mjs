@@ -996,6 +996,7 @@ app.post('/api/bookings/create', async (req, res) => {
       service_description,
       service_delivery_time,
       requires_meeting,
+      experiment_variant,
     } = req.body;
 
     const isServiceBooking = booking_type === 'service';
@@ -1126,6 +1127,7 @@ app.post('/api/bookings/create', async (req, res) => {
       service_description: isServiceBooking ? (service_description || null) : null,
       service_delivery_time: isServiceBooking ? (service_delivery_time || null) : null,
       requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
+      experiment_variant: experiment_variant || null,
     };
 
     console.log('BOOKING INSERT', bookingInsert);
@@ -2088,6 +2090,31 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       }
 
       console.log('[webhook] step=payment_ingestion status=ok booking_id=' + bookingId);
+
+      // Send PostHog booking_paid event
+      try {
+        const posthogKey = process.env.POSTHOG_PROJECT_API_KEY || process.env.VITE_POSTHOG_KEY;
+        if (posthogKey) {
+          await fetch('https://us.i.posthog.com/capture/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              api_key: posthogKey,
+              event: 'booking_paid',
+              distinct_id: booking.user_id || booking.user_email,
+              properties: {
+                booking_id: bookingId,
+                payment_id: paymentId,
+                lawyer_id: booking.lawyer_id,
+                amount: payment.transaction_amount,
+                variant: booking.experiment_variant,
+              },
+            }),
+          });
+        }
+      } catch (e) {
+        console.error('[webhook] step=posthog_capture failed', e);
+      }
 
       // STEP 2: Lawyer resolution (STRICT VALIDATION)
       console.log('[webhook] step=lawyer_resolution lawyer_id=' + booking.lawyer_id);
