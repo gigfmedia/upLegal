@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "embargo-chile-2026",
+    title: "Embargo en Chile 2026: qué bienes pueden embargar, cuándo ocurre y cómo defenderte",
+    excerpt: "Conoce cómo funciona un embargo en Chile, qué bienes pueden embargarse, cuándo procede un embargo judicial, qué ocurre con el sueldo, las cuentas bancarias y los vehículos, y qué derechos tiene el deudor durante el proceso.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "29 de Julio, 2026",
+    readTime: "14 min",
+    image: "/assets/embargo-chile-2026.png"
+  },
+  {
     id: "juicio-ejecutivo-chile-2026",
     title: "Juicio ejecutivo en Chile 2026: qué es, cómo funciona y qué hacer si te demandan",
     excerpt: "Descubre qué es un juicio ejecutivo en Chile, cuándo puede iniciarse, qué documentos permiten demandar, cómo funciona el embargo, qué defensas tiene el deudor y qué hacer si recibes una demanda ejecutiva.",

@@ -336,12 +336,12 @@ const SearchResults = () => {
 
       <div className="bg-white py-8 pt-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-8">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row items-center gap-2">
+            <div className="w-full md:w-1/2">
               <h1 className="text-3xl font-bold font-serif text-gray-900">Elige tu abogado y agenda hoy</h1>
               <p className="text-gray-600">Consulta online de 60 minutos · Abogados verificados en PJUD</p>
             </div>
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <PaymentMethods className="mt-0" />
             </div>
           </div>

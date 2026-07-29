@@ -942,9 +942,10 @@ export default function BookingPage() {
                       <Clock className="h-5 w-5" />
                       <span className="font-medium">60 minutos</span>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="font-bold text-green-900 mt-1">
                       ${getClientPriceForDuration(60).toLocaleString('es-CL')}
                     </div>
+                    <span className="text-green-900 text-xs">Ideal para resolver una duda puntual</span>
                   </button>
                   <button
                     onClick={() => setDuration(90)}
@@ -957,9 +958,10 @@ export default function BookingPage() {
                       <Clock className="h-5 w-5" />
                       <span className="font-medium">90 minutos</span>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="font-bold text-green-900 mt-1">
                       ${getClientPriceForDuration(90).toLocaleString('es-CL')}
                     </div>
+                    <span className="text-green-900 text-xs">Ideal si necesitas revisar documentos</span>
                   </button>
                   <button
                     onClick={() => setDuration(120)}
@@ -972,9 +974,10 @@ export default function BookingPage() {
                       <Clock className="h-5 w-5" />
                       <span className="font-medium">120 minutos</span>
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="font-bold text-green-900 mt-1">
                       ${getClientPriceForDuration(120).toLocaleString('es-CL')}
                     </div>
+                    <span className="text-green-900 text-xs">Ideal para casos complejos</span>
                   </button>
                 </div>
               </div>
@@ -1045,7 +1048,7 @@ export default function BookingPage() {
                           ))}
                         </div>
                       )}
-                      <p className="text-sm font-medium text-gray-700 mt-4">La reserva se mantendrá 15 minutos mientras completas el pago</p>
+                      <p className="text-sm font-medium text-gray-700 mt-4">Reservaremos este horario durante los próximos 15 minutos mientras completas el pago</p>
                     </>
                   ) : (
                     <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-lg text-gray-400 text-sm bg-gray-50">
@@ -1101,25 +1104,30 @@ export default function BookingPage() {
                   <ul className="flex flex-col space-y-2 items-start">
                     <li>
                       <span className="text-green-600 mr-1">✓</span>
-                      <span className="text-sm font-bold text-gray-700">Consulta privada por Google Meet</span>
+                      <span className="text-sm font-bold text-gray-700">Reserva confirmada inmediatamente</span>
                     </li>
                     <li>
                       <span className="text-green-600 mr-1">✓</span>
-                      <span className="text-sm font-bold text-gray-700">Pago seguro con Mercado Pago</span>
+                      <span className="text-sm font-bold text-gray-700">Videollamada privada</span>
                     </li>
                     <li>
                       <span className="text-green-600 mr-1">✓</span>
-                      <span className="text-sm font-bold text-gray-700">Confirmación inmediata</span>
+                      <span className="text-sm font-bold text-gray-700">Abogado verificado por el Poder Judicial</span>
                     </li>
+                    <li>
+                      <span className="text-green-600 mr-1">✓</span>
+                      <span className="text-sm font-bold text-gray-700">Recibirás el enlace apenas se confirme el pago</span>
+                    </li>
+                    
                   </ul>
-                  <span className="text-sm text-gray-600 mt-2 block">Recibirás los datos de acceso a tu consulta una vez confirmado el pago.</span>
+                  <span className="text-xs text-gray-600 mt-2 block">Recibirás los datos de acceso a tu consulta una vez confirmado el pago.</span>
                 </div>
               </div>
 
               <Button
                 onClick={handleContinue}
                 className="w-full bg-gray-900 hover:bg-green-900 text-sm h-11 py-5"
-                disabled={isProcessingPayment}
+                disabled={isProcessingPayment || !selectedDate || !selectedTime}
               >
                 {isProcessingPayment ? (
                   <>
@@ -1137,7 +1145,7 @@ export default function BookingPage() {
         
 
         {/* Pre-checkout Modal */}
-        {showPreCheckout && (
+        {showPreCheckout && selectedDate && selectedTime && (
           <PreCheckoutModal
             isOpen={showPreCheckout}
             onClose={() => setShowPreCheckout(false)}
@@ -1145,10 +1153,14 @@ export default function BookingPage() {
               type: 'appointment',
               lawyer_id: lawyer.user_id,
               lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
-              scheduled_date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
-              scheduled_time: selectedTime || undefined,
+              scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
+              scheduled_time: selectedTime,
               duration,
               price: totalPrice,
+              lawyer_photo: lawyer.avatar_url || undefined,
+              specialties: lawyer.specialties,
+              pjud_verified: lawyer.pjud_verified,
+              review_count: lawyer.review_count || 0,
             }}
           />
         )}
