@@ -11,8 +11,6 @@ interface HandleDocumentPaymentInput {
 export async function handleDocumentPayment(input: HandleDocumentPaymentInput) {
   const { supabase, documentId, paymentId, resend, appUrl } = input
 
-  console.log(`[handleDocumentPayment] documentId=${documentId} paymentId=${paymentId}`)
-
   // 1. Update document to paid
   const { data: doc, error: docError } = await supabase
     .from('generated_documents')
@@ -39,8 +37,6 @@ export async function handleDocumentPayment(input: HandleDocumentPaymentInput) {
       payload: doc.payload,
       templateVersion: doc.template_version || 1,
     })
-
-    console.log(`[handleDocumentPayment] PDF generated: ${pdfUrl}`)
 
     // 3. Send email via Resend
     if (resend && doc.user_email) {
@@ -125,6 +121,4 @@ async function sendDocumentEmail(
       </body>
     `,
   })
-
-  console.log(`[sendDocumentEmail] Sent to ${to}`)
 }

@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "cobranza-judicial-chile-2026",
+    title: "Cobranza judicial en Chile 2026: qué es, cómo funciona y qué hacer si te demandan",
+    excerpt: "Conoce qué es la cobranza judicial en Chile, cuándo pueden demandarte por una deuda, qué diferencia existe con la cobranza extrajudicial, cómo funciona el cobro judicial, cuándo puede producirse un embargo y qué hacer si recibes una demanda.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "30 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/cobranza-judicial-chile-2026.png"
+  },
+  {
     id: "embargo-chile-2026",
     title: "Embargo en Chile 2026: qué bienes pueden embargar, cuándo ocurre y cómo defenderte",
     excerpt: "Conoce cómo funciona un embargo en Chile, qué bienes pueden embargarse, cuándo procede un embargo judicial, qué ocurre con el sueldo, las cuentas bancarias y los vehículos, y qué derechos tiene el deudor durante el proceso.",

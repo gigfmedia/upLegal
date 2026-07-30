@@ -77,6 +77,7 @@ const PrescripcionDeudasArticle = lazy(() => import('../pages/blog/prescripcion-
 const ReconocimientoDeudaArticle = lazy(() => import('../pages/blog/reconocimiento-de-deuda-chile-2026'));
 const JuicioEjecutivoArticle = lazy(() => import('../pages/blog/juicio-ejecutivo-chile-2026'));
 const EmbargoArticle = lazy(() => import('../pages/blog/embargo-chile-2026'));
+const CobranzaJudicialArticle = lazy(() => import('../pages/blog/cobranza-judicial-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
 
 
@@ -162,6 +163,7 @@ export const BlogRoutes = () => (
       <Route path="reconocimiento-de-deuda-chile-2026" element={<ReconocimientoDeudaArticle />} />
       <Route path="juicio-ejecutivo-chile-2026" element={<JuicioEjecutivoArticle />} />
       <Route path="embargo-chile-2026" element={<EmbargoArticle />} />
+      <Route path="cobranza-judicial-chile-2026" element={<CobranzaJudicialArticle />} />
       {/* <Route path="ley-del-consumidor-chile-2026" element={<LeyConsumidorArticle />} /> */}
 
     </Routes>

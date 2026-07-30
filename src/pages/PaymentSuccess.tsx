@@ -69,8 +69,6 @@ export default function PaymentSuccess() {
         // Check if payment is approved
         if (data.status === 'approved' && appointmentData) {
           // Email sending is now handled in server.mjs webhook (Mercado Pago)
-          // This avoids duplicate emails being sent to both user and lawyer
-          console.log('[PaymentSuccess] Payment approved - emails handled by webhook');
         }
 
         // Log payment outcome

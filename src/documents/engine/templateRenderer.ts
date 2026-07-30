@@ -20,7 +20,6 @@ export async function loadAllTemplates() {
     try {
       const mod = await import(t.path)
       registerTemplate(t.type, mod.default)
-      console.log(`[templateRenderer] Registered: ${t.type}`)
     } catch (err) {
       console.error(`[templateRenderer] Failed to load ${t.type}:`, err)
     }

@@ -136,9 +136,6 @@ export default function BookingPage() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const variant = useFeatureFlagVariantKey('booking_button_text');
-  useEffect(() => {
-    console.log("Variant:", variant);
-  }, [variant]);
   const buttonText = variant === 'reserve' ? 'Reserva tu consulta' : 'Agendar y pagar';
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [searchParams] = useSearchParams();
@@ -216,7 +213,6 @@ export default function BookingPage() {
       setLawyerAvailability(parsedAvailability);
       availabilityInitialized.current = true;
       setLoading(false);
-      console.log('[BookingPage] Availability loaded:', parsedAvailability ? `keys=${Object.keys(parsedAvailability).join(',')}` : 'null');
     }
 
     fetchLawyer();
@@ -373,7 +369,6 @@ export default function BookingPage() {
       };
 
       try {
-        console.log('[BookingPage] Fetching availability for date:', format(selectedDate, 'yyyy-MM-dd'), 'lawyerAvailability:', lawyerAvailability ? `keys=${Object.keys(lawyerAvailability).join(',')}` : lawyerAvailability === null ? 'null' : 'undefined');
         setIsLoadingSlots(true);
 
         const { data: busySlots, error } = await supabase
@@ -425,7 +420,6 @@ export default function BookingPage() {
               if (rawAvail && typeof rawAvail === 'object' && Object.keys(rawAvail).length > 0) {
                 availabilityConfig = rawAvail as Record<string, boolean[]>;
                 setLawyerAvailability(availabilityConfig);
-                console.log('[BookingPage] Availability fetched from DB:', Object.keys(availabilityConfig).join(','));
               }
             } catch (parseError) {
               console.warn('[BookingPage] Error parsing availability config:', parseError);
@@ -434,9 +428,9 @@ export default function BookingPage() {
         }
 
         const dayName = getDayName(selectedDate);
-        console.log('[BookingPage] Selected date dayName:', dayName, 'selectedDate:', format(selectedDate, 'yyyy-MM-dd'));
+        
         const dayAvailability = getAvailabilityForDay(availabilityConfig, dayName);
-        console.log('[BookingPage] dayAvailability for', dayName, ':', Array.isArray(dayAvailability) ? `[${dayAvailability.map(b => b ? 'T' : 'F').join(',')}]` : 'null');
+        
         const hasCustomAvailability = availabilityConfig && Object.keys(availabilityConfig).length > 0;
 
         const configFilteredSlots = baseSlots.filter(slot => {
@@ -450,11 +444,9 @@ export default function BookingPage() {
           }
 
           if (hasCustomAvailability) {
-            console.log('[BookingPage] hasCustomAvailability but no dayAvailability match, blocking all slots');
             return false;
           }
 
-          console.log('[BookingPage] No availability config, legacy open for slot:', slot.time);
           return true;
         });
 

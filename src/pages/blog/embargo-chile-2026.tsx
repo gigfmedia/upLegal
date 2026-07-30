@@ -23,27 +23,27 @@ const BlogArticle = () => {
     const faqs = [
         {
             question: "¿Un embargo significa que perderé mi casa?",
-            answer: "No necesariamente. Cada caso depende del tipo de deuda, los bienes disponibles y el procedimiento judicial correspondiente.",
+            answer: "No necesariamente. El embargo es una medida cautelar que afecta bienes específicos, pero que un bien esté embargado no significa que automáticamente se pierda. Depende del tipo de deuda, el monto adeudado, si la propiedad es el único bien embargado y cómo avanza el procedimiento judicial. En muchos casos es posible negociar, pagar la deuda o ejercer defensas antes de que se llegue a un remate.",
         },
         {
             question: "¿Pueden embargar todos mis bienes?",
-            answer: "No. La ley contempla bienes que son inembargables y protege determinados derechos del deudor.",
+            answer: "No. La ley chilena contempla bienes que son inembargables y que no pueden ser objeto de embargo bajo ninguna circunstancia. Entre ellos se encuentran los bienes necesarios para el trabajo del deudor, los alimentos y vestuario básico, y determinados bienes del hogar. Además, la vivienda familiar tiene protecciones especiales en ciertos contextos. No todo lo que tienes puede ser embargado.",
         },
         {
             question: "¿Pueden embargar el sueldo completo?",
-            answer: "No. Las remuneraciones tienen protección legal y el embargo de sueldo se encuentra sujeto a reglas especiales.",
+            answer: "No. Las remuneraciones tienen protección legal especial en Chile. Solo puede embargarse una parte del sueldo y existen límites establecidos por la ley según el monto de la remuneración. El sueldo mínimo, por regla general, es inembargable. Por encima de ese mínimo, solo puede retenerse una fracción según las reglas aplicables al caso.",
         },
         {
             question: "¿El receptor judicial puede entrar a mi casa cuando quiera?",
-            answer: "No. Las actuaciones del receptor judicial deben ajustarse a lo ordenado por el tribunal y a las normas legales aplicables.",
+            answer: "No. Las actuaciones del receptor judicial deben ajustarse estrictamente a lo ordenado por el tribunal y a las normas procesales vigentes. El receptor no puede actuar sin una orden judicial que lo autorice, ni puede ingresar a tu domicilio en horarios o condiciones distintas a las permitidas por la ley. Si un receptor actúa fuera de esos límites, corresponde reclamar ante el tribunal.",
         },
         {
             question: "¿Qué ocurre si la deuda ya prescribió?",
-            answer: "La prescripción puede constituir una defensa importante dentro del juicio, pero debe ser alegada oportunamente por el deudor.",
+            answer: "La prescripción puede ser una defensa muy relevante dentro del juicio, pero debe ser alegada oportunamente por el deudor — el tribunal no la aplica de oficio. Si crees que la deuda podría estar prescrita, es importante actuar rápido: una vez que vence el plazo para oponer excepciones dentro del juicio ejecutivo, puede ser tarde para alegarla.",
         },
         {
-            question: "¿Conviene consultar con un abogado?",
-            answer: "Sí. Muchas veces una revisión temprana permite detectar defensas que podrían modificar completamente el desarrollo del juicio.",
+            question: "¿Conviene consultar con un abogado ante un embargo?",
+            answer: "Sí, y mientras antes mejor. Una revisión temprana del juicio permite detectar defensas — prescripción, nulidad de la notificación, bienes inembargables, errores en el documento — que podrían modificar completamente el resultado. Muchas personas esperan demasiado y pierden la oportunidad de oponer excepciones dentro del plazo legal.",
         },
     ];
 

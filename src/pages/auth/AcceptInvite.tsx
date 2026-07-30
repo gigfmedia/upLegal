@@ -110,11 +110,6 @@ function AcceptInviteInner() {
   const inviteEmail = searchParams.get('email') || hashParams.get('email') || hashParams.get('user_email') || searchParams.get('user_email');
 
   useEffect(() => {
-    console.log('[AcceptInvite] Mounted - URL:', window.location.href);
-    console.log('[AcceptInvite] Search:', window.location.search);
-    console.log('[AcceptInvite] Hash:', window.location.hash);
-    console.log('[AcceptInvite] inviteType:', inviteType, 'inviteEmail:', inviteEmail);
-    console.log('[AcceptInvite] Parsed from all sources:', extractParamsFromAllSources());
 
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('sb-pending-invite');
@@ -123,10 +118,9 @@ function AcceptInviteInner() {
     const initialize = async () => {
       try {
         const all = extractParamsFromAllSources();
-        console.log('[AcceptInvite] All params:', all);
-
+        
         if (all.accessToken && all.refreshToken && !all.type) {
-          console.log('[AcceptInvite] Tokens found in URL (Android hash-to-query fallback), setting session');
+         
           const { error: setSessionErr } = await supabase.auth.setSession({
             access_token: all.accessToken,
             refresh_token: all.refreshToken,
@@ -134,12 +128,12 @@ function AcceptInviteInner() {
           if (setSessionErr) {
             console.error('[AcceptInvite] Error setting session from query params:', setSessionErr);
           } else {
-            console.log('[AcceptInvite] Session set from query params successfully');
+        
           }
         }
 
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        console.log('[AcceptInvite] getSession result:', { hasSession: !!session, sessionEmail: session?.user?.email, sessionRole: session?.user?.user_metadata?.role, error: sessionError });
+        
 
         if (sessionError) {
           console.error('[AcceptInvite] Session error:', sessionError);
@@ -149,42 +143,31 @@ function AcceptInviteInner() {
         }
 
         if (!session) {
-          console.log('[AcceptInvite] No session found');
+          
           setStatus('error');
           setError('No pudimos verificar tu identidad. Asegúrate de haber abierto el enlace correcto desde el correo de invitación.');
           return;
         }
 
         const resolvedEmail = session.user.email || inviteEmail || all.email || '';
-        console.log('[AcceptInvite] Resolved email:', resolvedEmail);
+        
         setEmail(resolvedEmail);
 
         const metadataRole = session.user.user_metadata?.role as 'client' | 'lawyer' | undefined;
         const paramRole = (searchParams.get('role') || hashParams.get('role')) as 'client' | 'lawyer' | null;
         const finalRole = metadataRole || paramRole || 'lawyer';
         setRole(finalRole);
-        console.log('[AcceptInvite] Role resolved:', finalRole, '(metadata:', metadataRole, 'param:', paramRole, ')');
+        
 
         const inviteParam = searchParams.get('type') || hashParams.get('type') || all.type || session.user.user_metadata?.invite_type;
-        console.log('[AcceptInvite] inviteParam:', inviteParam);
+        
 
         if (inviteParam !== 'invite') {
-          console.log('[AcceptInvite] NOT an invite (type=', inviteParam, '). Checking session metadata for invite clue.');
           const createdAt = session.user.created_at ? new Date(session.user.created_at).getTime() : 0;
           const hasNoPassword = !session.user.identities?.some(i => i.provider === 'email');
           const isRecent = Date.now() - createdAt < 24 * 60 * 60 * 1000;
 
-          console.log('[AcceptInvite] Session diagnostics:', {
-            createdAt: session.user.created_at,
-            hasIdentities: !!session.user.identities,
-            identities: session.user.identities?.map(i => i.provider),
-            isRecent,
-            hasNoPassword,
-            userMetadata: session.user.user_metadata,
-          });
-
           if (isRecent && hasNoPassword) {
-            console.log('[AcceptInvite] User is recent and has no password, treating as invite');
             setStatus('needs_password');
             return;
           }
@@ -193,8 +176,6 @@ function AcceptInviteInner() {
           setError('Esta página solo puede usarse con invitaciones válidas.');
           return;
         }
-
-        console.log('[AcceptInvite] Invite confirmed, showing password form');
         setStatus('needs_password');
       } catch (err) {
         console.error('[AcceptInvite] Error in initialize:', err);

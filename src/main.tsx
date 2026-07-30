@@ -9,10 +9,6 @@ import './index.css';
 import posthog from "posthog-js";
 import { PostHogProvider } from "@posthog/react";
 
-console.log("PostHog loaded", posthog);
-console.log("Key:", import.meta.env.VITE_POSTHOG_KEY);
-console.log("Host:", import.meta.env.VITE_POSTHOG_HOST);
-
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
 });

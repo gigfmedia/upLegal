@@ -295,13 +295,6 @@ const Index = () => {
             return normalized.includes('maria') && normalized.includes('fernanda');
           });
 
-          // Debug: Log the found lawyers
-          console.log('Hans-Christian:', hansChristian?.name);
-          console.log('Angel Cristopher:', angelCristopher?.name);
-          console.log('Maria Fernanda:', mariaFernanda?.name);
-          console.log('All lawyers with maria:', formattedLawyers.filter(l => l.name.toLowerCase().includes('maria')).map(l => l.name));
-          console.log('All lawyer names in pool:', formattedLawyers.map(l => l.name));
-
           // 2. Set the featured lawyers to these three specific lawyers
           const topFeatured = [hansChristian, angelCristopher, mariaFernanda].filter(lawyer => lawyer !== undefined);
           
