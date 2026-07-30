@@ -505,6 +505,11 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Una revisión preventiva suele ser mucho más económica que enfrentar posteriormente un juicio por un documento mal redactado.</p>
                     </div>
 
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">No esperes a que surja un problema</p>
+                        <p className="text-amber-800">Un documento mal redactado puede generar más conflictos de los que resuelve. Antes de firmar un reconocimiento de deuda — o si ya te lo hicieron firmar y tienes dudas — un abogado puede revisarlo y evitar que un acuerdo simple se convierta en un problema judicial.</p>
+                    </div>
+
                     {/* InArticleCTA #2 */}
                     <InArticleCTA
                         title="¿Quieres dejar una deuda correctamente documentada?"

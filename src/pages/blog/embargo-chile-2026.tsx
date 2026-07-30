@@ -519,6 +519,11 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">El tiempo juega en tu contra</p>
+                        <p className="text-amber-800">Si ya existe un embargo o una demanda en tu contra, cada día sin actuar puede significar perder la oportunidad de oponer defensas como la prescripción o la nulidad de la notificación. No esperes a que el remate esté cerca para buscar ayuda.</p>
+                    </div>
+
                     {/* Segundo InArticleCTA */}
                     <InArticleCTA
                         title="¿Recibiste una notificación de embargo o una demanda ejecutiva?"

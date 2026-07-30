@@ -546,6 +546,11 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">No dejes pasar los plazos</p>
+                        <p className="text-amber-800">Si ya recibiste una notificación judicial, los días cuentan. En un juicio ejecutivo los plazos para oponer defensas son cortos y su vencimiento puede ser decisivo. Cada día sin actuar reduce tus opciones de defender tus bienes.</p>
+                    </div>
+
                     {/* Segundo InArticleCTA */}
                     <InArticleCTA
                         title="¿Recibiste una demanda por una deuda?"

@@ -579,6 +579,11 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">Los plazos no se detienen</p>
+                        <p className="text-amber-800">Si fuiste notificado de una demanda ejecutiva, el reloj corre. Los plazos para presentar excepciones son limitados y una vez vencidos, el tribunal puede ordenar el embargo sin que hayas podido defenderte. Actuar hoy puede marcar la diferencia.</p>
+                    </div>
+
                     {/* Segundo InArticleCTA */}
                     <InArticleCTA
                         title="¿Recibiste una demanda ejecutiva o una notificación de embargo?"
