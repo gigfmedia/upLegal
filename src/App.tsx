@@ -653,7 +653,7 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </main>
-        {!location.pathname.startsWith('/empresa') && <Footer />}
+        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/legalup-ai') && <Footer />}
       </TooltipProvider>
     </div>
   );

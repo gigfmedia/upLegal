@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Users, Calendar, Eye, BarChart2, Clock, Landmark, AlertCircle, CheckCircle2, Timer, Database } from 'lucide-react';
+import { Loader2, Users, Calendar, Eye, BarChart2, Clock, Landmark, AlertCircle, CheckCircle2, Timer, Database, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
@@ -243,6 +243,28 @@ export default function AnalyticsDashboard() {
     },
     retry: 1
   });
+
+  // Fetch generated documents (sales)
+  const { data: documentSales = [], isLoading: isLoadingDocs } = useQuery({
+    queryKey: ['document-sales', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('generated_documents')
+        .select('total_paid, amount, status, created_at, type')
+        .in('status', ['completed', 'paid'])
+        .order('created_at', { ascending: false })
+      if (error) {
+        console.error('Error fetching document sales:', error)
+        throw error
+      }
+      return (data || []) as Array<{ total_paid: number | null; amount: number | null; status: string; created_at: string; type: string }>
+    },
+    retry: 1
+  })
+
+  const completedDocs = documentSales.filter(d => d.status === 'completed')
+  const totalDocumentRevenue = completedDocs.reduce((sum, d) => sum + (d.total_paid || d.amount || 0), 0)
+  const pagareViews = pageViews.filter(v => v.page_path?.includes('/documentos/pagare')).length
 
   // Fetch recent appointments for lists
   const { data: recentAppointments = [], error: appointmentsError } = useQuery({
@@ -823,6 +845,20 @@ export default function AnalyticsDashboard() {
           icon={BarChart2}
           trend={0}
           trendText=""
+        />
+      </div>
+
+      {/* Document Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard
+          title="Visitas a /documentos/pagare"
+          value={pagareViews}
+          icon={Eye}
+        />
+        <StatCard
+          title="Documentos Vendidos"
+          value={`${completedDocs.length} · ${formatCLP(totalDocumentRevenue)}`}
+          icon={FileText}
         />
       </div>
 

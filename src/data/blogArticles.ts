@@ -22,6 +22,17 @@ export const articles: Article[] = [
   //   image: "/assets/ley-del-consumidor-chile-2026.png"
   // },
   {
+    id: "cesion-de-derechos-chile-2026",
+    title: "Cesión de derechos en Chile 2026: qué es, cómo funciona y qué debes saber antes de firmar",
+    excerpt: "Conoce qué es una cesión de derechos en Chile, cómo funciona, qué tipos existen, qué debe contener un contrato de cesión y qué revisar antes de transferir o adquirir un derecho.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "31 de Julio, 2026",
+    readTime: "12 min",
+    image: "/assets/cesion-de-derechos-chile-2026.png"
+  },
+  {
     id: "cobranza-judicial-chile-2026",
     title: "Cobranza judicial en Chile 2026: qué es, cómo funciona y qué hacer si te demandan",
     excerpt: "Conoce qué es la cobranza judicial en Chile, cuándo pueden demandarte por una deuda, qué diferencia existe con la cobranza extrajudicial, cómo funciona el cobro judicial, cuándo puede producirse un embargo y qué hacer si recibes una demanda.",
