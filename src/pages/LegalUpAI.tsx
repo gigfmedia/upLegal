@@ -2049,7 +2049,7 @@ function LegalUpAI() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 text-[2.6rem] font-[var(--font-display)] leading-[0.98] tracking-[-0.035em] lg:text-[6rem]"
+              className="mt-8 text-[3rem] font-[var(--font-display)] leading-[0.98] tracking-[-0.035em] sm:text-8xl"
             >
               <span className="block">Inteligencia Jurídica</span>
               <span className="mt-2 block text-[var(--ink-dim)]">
