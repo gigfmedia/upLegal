@@ -1367,7 +1367,7 @@ function TimeSaved() {
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-[var(--primary)]" />
+              {/* <Clock className="h-3.5 w-3.5 text-[var(--primary)]" /> */}
               <span className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
                 Impacto real
               </span>
@@ -2030,9 +2030,9 @@ function LegalUpAI() {
 
       {/* HERO */}
       <section className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">
-        <AnimatedBackground />
+        {/* <AnimatedBackground /> */}
         <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto max-w-5xl text-center">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
@@ -2049,20 +2049,19 @@ function LegalUpAI() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 font-serif text-[2.6rem] font-bold leading-[0.98] tracking-[-0.035em] sm:text-6xl lg:text-[5.2rem]"
+              className="mt-8 text-[2.6rem] font-[var(--font-display)] leading-[0.98] tracking-[-0.035em] lg:text-[6rem]"
             >
-              <span className="block italic">Inteligencia jurídica,</span>
-              <span className="mt-2 block text-[0.62em] font-semibold normal-case tracking-tight text-[var(--ink-dim)] sm:mt-3">
-                a una nueva{" "}
+              <span className="block">Inteligencia Jurídica</span>
+              <span className="mt-2 block text-[var(--ink-dim)]">
+                A una nueva {" "}
                 <span
-                  className="font-semibold"
+                  className=" "
                   style={{
                     backgroundImage: "var(--gradient-headline)",
                     backgroundClip: "text",
                     color: "transparent",
                   }}
-                >
-                  velocidad.
+                > velocidad
                 </span>
               </span>
             </motion.h1>
@@ -2071,11 +2070,10 @@ function LegalUpAI() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="mx-auto mt-8 max-w-xl text-base leading-relaxed sm:text-lg"
+              className="mx-auto mt-8 text-base leading-relaxed sm:text-lg"
               style={{ color: "var(--muted-foreground)" }}
             >
-              Analiza documentos, entiende causas, investiga y redacta con IA
-              diseñada{" "} para el derecho chileno.
+              Analiza documentos, entiende causas, investiga y redacta con IA diseñada para el derecho chileno
             </motion.p>
 
             <motion.div
