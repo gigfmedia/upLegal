@@ -223,7 +223,7 @@ const BlogArticle = () => {
             </div>
           </div>
           
-          <RelatedLawyers category="Derecho Laboral" />
+          <InArticleCTA category="Derecho Laboral" title="¿Crees que te despidieron injustificadamente?" message="Un abogado laboral puede revisar la causal, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
 
           {/* COMPLEJIDAD 1: CAUSAL VALIDA VS INJUSTIFICADA */}
           <div className="mb-12">
@@ -299,7 +299,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Laboral"  title="¿Crees que te despidieron injustificadamente?" message="Un abogado laboral puede revisar la causal, evaluar las pruebas y decirte si tienes un caso fuerte para demandar." />
+          <RelatedLawyers category="Derecho Laboral" />
 
           {/* Section 4: Cuánto puedes ganar */}
           <div className="mb-12">

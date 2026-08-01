@@ -214,8 +214,13 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Formalizar la deuda mediante un documento reduce la incertidumbre y facilita acreditar posteriormente el acuerdo alcanzado.</p>
                     </div>
 
-                    {/* RelatedLawyers */}
-                    <RelatedLawyers category="Derecho Civil" />
+                    {/* InArticleCTA #1 */}
+                    <InArticleCTA
+                        title="¿Estás por reconocer una deuda?"
+                        message="Antes de firmar, un abogado puede revisar el documento y advertirte sobre posibles riesgos."
+                        buttonText="Consultar con un abogado"
+                        category="Derecho Civil"
+                    />
 
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
@@ -275,13 +280,8 @@ const BlogArticle = () => {
                         </p> */}
                     </div>
 
-                    {/* InArticleCTA #1 */}
-                    <InArticleCTA
-                        title="¿Necesitas formalizar una deuda?"
-                        message="Un abogado puede ayudarte a preparar un reconocimiento de deuda adaptado a tu caso y revisar que el documento proteja adecuadamente tus derechos."
-                        buttonText="Hablar con un abogado civil"
-                        category="Derecho Civil"
-                    />
+                    {/* RelatedLawyers */}
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* VALIDEZ LEGAL */}
                     <div className="mb-12">

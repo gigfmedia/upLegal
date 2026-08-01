@@ -205,8 +205,18 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    {/* RelatedLawyers */}
-                    <RelatedLawyers category="Derecho Civil" />
+                    {/* InArticleCTA #1 */}
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">La prescripción no se aplica sola</p>
+                        <p className="text-amber-800">Aunque hayan pasado años, el tribunal no declarará la prescripción automáticamente — debes alegarla dentro del juicio. Si te están cobrando una deuda antigua, cada día que pasa sin actuar puede ser la diferencia entre extinguir la obligación o terminar con un embargo.</p>
+                    </div>
+
+                    <InArticleCTA
+                        title="¿No sabes si tu deuda todavía puede cobrarse?"
+                        message="Un abogado puede revisar las fechas, documentos y antecedentes de tu caso y orientarte sobre si podría existir prescripción."
+                        buttonText="Consultar con un abogado"
+                        category="Derecho Civil"
+                    />
 
                     {/* H2: ¿Todas las deudas prescriben? */}
                     <div className="mb-12">
@@ -270,18 +280,8 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
-                        <p className="font-bold text-amber-900">La prescripción no se aplica sola</p>
-                        <p className="text-amber-800">Aunque hayan pasado años, el tribunal no declarará la prescripción automáticamente — debes alegarla dentro del juicio. Si te están cobrando una deuda antigua, cada día que pasa sin actuar puede ser la diferencia entre extinguir la obligación o terminar con un embargo.</p>
-                    </div>
-
-                    {/* InArticleCTA #1 */}
-                    <InArticleCTA
-                        title="¿No sabes si una deuda realmente prescribió?"
-                        message="Un abogado puede revisar las fechas, documentos y actuaciones judiciales para determinar si todavía pueden cobrarte o si corresponde alegar la prescripción."
-                        buttonText="Hablar con un abogado civil"
-                        category="Derecho Civil"
-                    />
+                    {/* RelatedLawyers */}
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* H2: ¿Qué ocurre si la deuda ya prescribió? */}
                     <div className="mb-12">

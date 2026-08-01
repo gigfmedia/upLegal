@@ -192,7 +192,18 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <RelatedLawyers category="Derecho Civil" />
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">No ignores la notificación</p>
+                        <p className="text-amber-800">Si recibiste una demanda por un pagaré, el juicio avanza aunque no respondas. Los plazos para presentar defensas como la prescripción o los vicios del documento son cortos y una vez vencidos, el tribunal puede ordenar el embargo sin que hayas tenido oportunidad de defenderte.</p>
+                    </div>
+
+                    {/* CTA IN-ARTICLE 1 */}
+                    <InArticleCTA
+                        title="¿Te demandaron por un pagaré?"
+                        message="Un abogado puede revisar el pagaré y la demanda y explicarte qué alternativas tienes."
+                        buttonText="Revisar mi caso"
+                        category="Derecho Civil"
+                    />
 
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
@@ -299,18 +310,8 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
-                        <p className="font-bold text-amber-900">No ignores la notificación</p>
-                        <p className="text-amber-800">Si recibiste una demanda por un pagaré, el juicio avanza aunque no respondas. Los plazos para presentar defensas como la prescripción o los vicios del documento son cortos y una vez vencidos, el tribunal puede ordenar el embargo sin que hayas tenido oportunidad de defenderte.</p>
-                    </div>
-
-                    {/* CTA IN-ARTICLE 1 */}
-                    <InArticleCTA
-                        title="¿Te demandaron por un pagaré?"
-                        message="Un abogado civil puede revisar la demanda, analizar el pagaré y evaluar las defensas disponibles antes de que avance el juicio ejecutivo."
-                        buttonText="Ver abogados"
-                        category="Derecho Civil"
-                    />
+                    {/* RelatedLawyers */}
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* QUE OCURRE CUANDO FIRMO */}
                     <div className="mb-12">

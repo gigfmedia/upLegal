@@ -169,7 +169,12 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+            <p className="font-bold text-amber-900">Cada mes sin actuar cuesta más</p>
+            <p className="text-amber-800">Mientras el arrendatario no paga y no desocupa, la deuda, los intereses y las costas siguen creciendo. Si llevas más de un mes sin recibir renta o el arrendatario se niega a salir, cada día de espera encarece la recuperación de tu propiedad.</p>
+          </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Te deben arriendos y no sabes cómo recuperar tu casa?" message="Un abogado inmobiliario puede verificar si calificas al procedimiento monitorio de la Ley 21.461, revisar tu contrato y orientarte sobre cómo recuperar la propiedad." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se puede aplicar esta ley?</h2>
@@ -265,7 +270,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Derecho Civil"  title="¿Necesitas asesoría legal?" message="Un abogado especializado puede revisar tu caso y orientarte." />
+            <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué cambia con la Ley 21.461?</h2>
@@ -595,7 +600,16 @@ const BlogArticle = () => {
                 </li>
               ))}
             </ul>
-          </div>          <div className="mb-12 border-t pt-8">
+          </div>
+
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+            <p className="font-bold text-amber-900">Cada mes sin actuar cuesta más</p>
+            <p className="text-amber-800">Mientras el arrendatario no paga y no desocupa, la deuda, los intereses y las costas siguen creciendo. Si llevas más de un mes sin recibir renta o el arrendatario se niega a salir, no esperes: cada día de espera encarece la recuperación de tu propiedad.</p>
+          </div>
+
+          <InArticleCTA category="Derecho Civil" title="¿Necesitas recuperar tu propiedad?" message="Un abogado puede revisar tu caso, verificar si calificas al procedimiento monitorio de la Ley 21.461 y orientarte sobre cómo actuar hoy." />
+
+          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -609,7 +623,7 @@ const BlogArticle = () => {
           {/* CTA Section - Specific Category */}
           <CategoryCTA category="arriendo" topic="arriendo" />
 
-          <div className="mb-6" data-faq-section>
+          <div className="mt-12 mb-6" data-faq-section>
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Preguntas frecuentes sobre la Ley 21.461</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

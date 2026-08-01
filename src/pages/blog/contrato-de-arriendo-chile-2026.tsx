@@ -658,10 +658,15 @@ const BlogArticle = () => {
 
           {/* CTA before Conclusion */}
           <div className="mb-12">
-            
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+              <p className="font-bold text-amber-900">Firmar sin revisar puede costarte caro</p>
+              <p className="text-amber-800">Una cláusula abusiva, un reajuste mal redactado o una garantía mal documentada pueden significar miles de pesos al mes y conflictos difíciles de revertir. Antes de firmar, vale la pena que un abogado revise el contrato.</p>
+            </div>
+            <InArticleCTA category="Derecho Civil" title="¿Ya firmaste un contrato y tienes dudas?" message="Un abogado inmobiliario puede revisar tu contrato de arriendo, detectar cláusulas abusivas y orientarte sobre cómo actuar." />
           </div>
 
-          {/* Conclusión */}          <div className="mb-12 border-t pt-8">
+          {/* Conclusión */}
+          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -673,9 +678,9 @@ const BlogArticle = () => {
           </div>
 
           <CategoryCTA category="arriendo" topic="arriendo" />
+          
           {/* FAQ */}
-
-          <div className="mb-6" data-faq-section>
+          <div className="mt-12 mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre el contrato de arriendo en Chile</h2>
             <div className="space-y-4">
               {faqs.map((faq, i) => (

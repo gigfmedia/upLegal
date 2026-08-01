@@ -175,7 +175,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
 
 
           <div className="mb-12">
@@ -244,7 +244,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-<InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">

@@ -17,6 +17,9 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   buttonText,
   title,
 }) => {
+  const DEFAULT_TITLE = "¿Necesitas resolver tu situación?";
+  const DEFAULT_MESSAGE = "Un abogado puede analizar tu caso y orientarte sobre las alternativas disponibles.";
+  const DEFAULT_BUTTON = "Consultar con un abogado";
   const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
 
   const { ref, inView } = useInView({
@@ -41,14 +44,14 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
 
   const getButtonText = () => {
     if (buttonText) return buttonText;
-    return 'Hablar con un abogado';
+    return DEFAULT_BUTTON;
   };
 
   return (
     <div ref={ref} className="my-10 p-8 border border-gray-200 bg-cream-900 rounded-2xl text-center shadow-sm">
-      <h3 className="text-2xl font-bold font-serif text-green-900 mb-2">{title || "¿Necesitas resolver este problema hoy?"}</h3>
+      <h3 className="text-2xl font-bold font-serif text-green-900 mb-2">{title || DEFAULT_TITLE}</h3>
       <p className="text-green-900 mb-4">
-        {message || "Un abogado puede revisar tu caso hoy mismo."}
+        {message || DEFAULT_MESSAGE}
       </p>
 
       <div className="flex flex-wrap gap-x-6 gap-y-2 mb-5 justify-center">
@@ -60,7 +63,7 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
 
       <Link to={targetUrl} onClick={handleCTA} className="inline-block w-full sm:w-auto">
         <Button
-          className="bg-gray-900 hover:bg-green-900 text-white px-6 h-11 rounded-lg transition-all shadow-sm active:scale-95 w-full sm:w-auto font-bold"
+          className="bg-green-900 hover:bg-green-700 text-white px-8 h-12 rounded-lg transition-all shadow-md active:scale-95 w-full sm:w-auto font-bold text-base"
         >
           {getButtonText()} →
         </Button>

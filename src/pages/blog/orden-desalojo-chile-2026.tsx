@@ -186,7 +186,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Arrendamiento" />
+          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
 
 
           <div className="mb-12">
@@ -250,7 +250,7 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-<InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+          <RelatedLawyers category="Arrendamiento" />
 
 
           <div className="mb-12">
