@@ -382,8 +382,11 @@ const AppContent = () => {
             <LegalAgent />
           </Suspense>
           <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-900" />
+            <div
+              className="flex items-center justify-center min-h-screen"
+              style={{ backgroundColor: location.pathname.startsWith('/ai') ? '#0a0d12' : undefined }}
+            >
+              <Loader2 className={`h-8 w-8 animate-spin ${location.pathname.startsWith('/ai') ? 'text-[var(--primary)]' : 'text-gray-900'}`} />
             </div>
           }>
             <Routes>
@@ -413,7 +416,7 @@ const AppContent = () => {
               <Route path="/abogados-penales" element={<CategoryLanding category="penal" />} />
 
               <Route path="/cae" element={<CAELanding />} />
-              <Route path="/legalup-ai" element={<LegalUpAI />} />
+              <Route path="/ai" element={<LegalUpAI />} />
               <Route path="/legalup-empresas" element={<LegalUpEmpresas />} />
               <Route path="/empresa/registro" element={<CompanyRegister />} />
               <Route path="/abogado-divorcio-unilateral" element={<DivorcioUnilateralLanding />} />
@@ -653,7 +656,7 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </main>
-        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/legalup-ai') && <Footer />}
+        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/ai') && <Footer />}
       </TooltipProvider>
     </div>
   );

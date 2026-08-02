@@ -1858,11 +1858,12 @@ function WaitlistForm({
               size="xl"
               disabled={loading || !form.email || !form.area}
               className="flex-1"
+              style={loading ? { opacity: 1 } : undefined}
             >
               {loading ? (
-                <>
+                <span className="inline-flex items-center justify-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin" /> Enviando...
-                </>
+                </span>
               ) : (
                 <>
                   <Send className="h-4 w-4" /> Solicitar acceso
@@ -1937,6 +1938,17 @@ function LegalUpAI() {
       setForm((prev) => ({ ...prev, email: user.email as string }));
     }
   }, [user?.email]);
+
+  useEffect(() => {
+    const rootEl = document.documentElement;
+    const dark = "#0a0d12";
+    rootEl.style.backgroundColor = dark;
+    document.body.style.backgroundColor = dark;
+    return () => {
+      rootEl.style.backgroundColor = "";
+      document.body.style.backgroundColor = "";
+    };
+  }, []);
 
   useEffect(() => {
     let lastScrollY = 0;

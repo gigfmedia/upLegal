@@ -361,7 +361,7 @@ export default function LawyerDashboardPage() {
     console.log('LegalUp AI badge clicked - tracking CTR');
     // Here you could add analytics tracking like:
     // analytics.track('legalup_ai_badge_clicked', { user_id: user?.id });
-    navigate('/legalup-ai');
+    navigate('/ai');
   };
 
   return (
