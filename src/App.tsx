@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 // Layouts (lazy load these as they're not needed for home page)
 const DashboardLayout = lazy(() => import('@/components/dashboard/DashboardLayout'));
+const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
 const RequireLawyer = lazy(() => import('@/components/auth/RequireLawyer'));
 const RequireAdmin = lazy(() => import('@/components/auth/RequireAdmin'));
 import Footer from '@/components/Footer';
@@ -66,6 +67,7 @@ const DashboardAppointments = lazy(() => import('./pages/DashboardAppointments')
 const DashboardPayments = lazy(() => import('./pages/DashboardPayments'));
 const DashboardMessages = lazy(() => import('./pages/DashboardMessages'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminNotifications = lazy(() => import('./pages/admin/notifications'));
@@ -95,6 +97,8 @@ const BookingPage = lazy(() => import('./pages/BookingPage'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
+const LegalUpAIWorkspace = lazy(() => import('./pages/lawyer/LegalUpAIWorkspace'));
+const AICaseDetail = lazy(() => import('./pages/lawyer/AICaseDetail'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
@@ -430,79 +434,9 @@ const AppContent = () => {
               <Route path="/documentos/:slug" element={<DocumentPage />} />
 
 
-              {/* New lawyer dashboard routes */}
-              <Route path="/lawyer" element={
-                <div data-role="lawyer">
-                  <DashboardLayout />
-                </div>
-              }>
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<LawyerDashboardPage />} />
-                <Route path="services" element={<ServicesPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-                {/* <Route path="consultas" element={<ConsultasPage />} /> */}
-                <Route path="citas" element={<CitasPage />} />
-                {/* <Route path="consultations" element={<Navigate to="/lawyer/consultas" replace />} /> */}
-                <Route path="appointments" element={<Navigate to="/lawyer/citas" replace />} />
-                <Route path="earnings" element={<EarningsPage />} />
-                <Route path="favorites" element={<DashboardFavorites />} />
-                <Route path="jobs" element={<JobsPage />} />
-                {/* <Route path="empresas" element={<LawyerEmpresasRequests />} /> */}
-              </Route>
-
               {/* Lawyer onboarding wizard — standalone, no sidebar */}
               <Route path="/lawyer/onboarding" element={<LawyerOnboardingPage />} />
 
-              <Route path="/admin">
-                <Route
-                  index
-                  element={
-                    <RequireAdmin>
-                      <AdminDashboard />
-                    </RequireAdmin>
-                  }
-                />
-                <Route
-                  path="dashboard"
-                  element={
-                    <RequireAdmin>
-                      <Navigate to="/admin" replace />
-                    </RequireAdmin>
-                  }
-                />
-                <Route
-                  path="notifications"
-                  element={
-                    <RequireAdmin>
-                      <AdminNotifications />
-                    </RequireAdmin>
-                  }
-                />
-                <Route
-                  path="reviews"
-                  element={
-                    <RequireAdmin>
-                      <AdminReviewsPage />
-                    </RequireAdmin>
-                  }
-                />
-                <Route
-                  path="analytics"
-                  element={
-                    <RequireAdmin>
-                      <AdminAnalyticsPage />
-                    </RequireAdmin>
-                  }
-                />
-                <Route
-                  path="lawyer-profiles"
-                  element={
-                    <RequireAdmin>
-                      <LawyerProfilesPage />
-                    </RequireAdmin>
-                  }
-                />
-              </Route>
               <Route path="/test-analytics" element={
                 <TestAnalytics />
               } />
@@ -587,6 +521,7 @@ const AppContent = () => {
                 <Route path="messages" element={<DashboardMessages />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="notifications" element={<NotificationSettingsPage />} />
+                <Route path="notificaciones" element={<NotificationsPage />} />
                 <Route path="payment-settings" element={<PaymentSettings />} />
               </Route>
 
@@ -605,6 +540,7 @@ const AppContent = () => {
                   </NotificationProvider>
                 </Suspense>
               }>
+                <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<LawyerDashboardPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="services" element={<ServicesPage />} />
@@ -614,6 +550,9 @@ const AppContent = () => {
                 <Route path="earnings" element={<EarningsPage />} />
                 <Route path="favorites" element={<DashboardFavorites />} />
                 <Route path="quotes/:quoteRequestId" element={<QuoteRequestsPage />} />
+                <Route path="ai" element={<LegalUpAIWorkspace />} />
+                <Route path="ai/cases/:caseId" element={<AICaseDetail />} />
+                <Route path="notificaciones" element={<NotificationsPage />} />
                 {/* <Route path="empresas" element={<LawyerEmpresasRequests />} /> */}
               </Route>
 
@@ -626,12 +565,17 @@ const AppContent = () => {
                   <NotificationProvider>
                     <MessageProvider>
                       <RequireAdmin>
-                        <DashboardLayout />
+                        <AdminLayout />
                       </RequireAdmin>
                     </MessageProvider>
                   </NotificationProvider>
                 </Suspense>
               }>
+                <Route index element={
+                  <RequireAdmin>
+                    <AdminDashboard />
+                  </RequireAdmin>
+                } />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="notifications" element={<AdminNotifications />} />

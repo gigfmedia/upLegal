@@ -361,7 +361,7 @@ export default function ServicesPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-8 py-6">
+      <div className="mx-auto px-8 py-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-2"></div>
@@ -417,7 +417,7 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="container mx-auto px-8 py-6">
+    <div className="mx-auto px-8 py-6">
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

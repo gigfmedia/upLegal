@@ -4,7 +4,28 @@ import { useEffect, useRef, useState } from 'react';
 const Footer = () => {
   const location = useLocation();
   const [isFeaturedSectionVisible, setIsFeaturedSectionVisible] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
   const featuredSectionRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
+
+  const isPanel = location.pathname.startsWith('/dashboard')
+    || location.pathname.startsWith('/lawyer')
+    || location.pathname.startsWith('/admin');
+
+  // Oculta el botón de WhatsApp cuando el footer entra en pantalla (solo en el panel).
+  useEffect(() => {
+    if (!isPanel) return;
+    const footer = footerRef.current;
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsFooterVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    observer.observe(footer);
+
+    return () => observer.disconnect();
+  }, [isPanel]);
   
   // Set up intersection observer for the featured lawyers section
   useEffect(() => {
@@ -99,7 +120,7 @@ const Footer = () => {
   return (
     <div className="relative">
       {/* WhatsApp Button - Fixed at bottom right */}
-      <div className={`fixed bottom-6 right-6 z-50 group ${location.pathname === '/cae' ? 'hidden md:block' : ''} ${location.pathname === '/ai' ? 'hidden' : ''} ${location.pathname === '/legalup-empresas' ? 'hidden' : ''}`}>
+      <div className={`fixed bottom-6 right-6 z-50 group transition-all duration-300 ${isPanel && isFooterVisible ? 'pointer-events-none opacity-0 translate-y-4' : ''} ${location.pathname === '/cae' ? 'hidden md:block' : ''} ${location.pathname === '/ai' ? 'hidden' : ''} ${location.pathname === '/legalup-empresas' ? 'hidden' : ''}`}>
         {/* Tooltip */}
         <div className="hidden md:block absolute bottom-full right-0 mb-3 w-max max-w-[200px] bg-[#101820] text-white text-xs py-2 px-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none translate-y-2 group-hover:translate-y-0">
           <h3>¿No sabes qué abogado elegir? Te ayudamos</h3>
@@ -118,8 +139,8 @@ const Footer = () => {
         </a>
       </div>
     
-      <footer className="bg-muted border-t border-border relative z-10">
-        <div className="w-full max-w-7xl mx-auto px-4 py-6">
+      <footer ref={footerRef} className="bg-muted border-t border-border relative z-10">
+        <div className={`w-full ${isPanel ? '' : 'max-w-7xl'} mx-auto px-4 py-6`}>
           <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
 
             {/* Copy */}

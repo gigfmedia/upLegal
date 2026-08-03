@@ -11,7 +11,6 @@ import { EditReviewModal } from '@/components/admin/EditReviewModal';
 import { IncompleteProfileEmail } from '@/components/admin/IncompleteProfileEmail';
 import { CustomerMarketingEmail } from '@/components/admin/CustomerMarketingEmail';
 import type { Review } from '@/types/review';
-import Header from '@/components/Header';
 
 export default function AdminReviewsPage() {
   const { user } = useAuth();
@@ -242,8 +241,7 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="w-full">
-      <Header />
-      <div className="min-h-screen bg-slate-50 pt-32 pb-10">
+      <div className="min-h-screen bg-slate-50 pt-12 pb-10">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <div className="flex justify-between items-start">

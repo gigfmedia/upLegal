@@ -1,0 +1,195 @@
+import { useState } from 'react';
+import { Check, Copy, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
+import type { AIChatMessage as ChatMessage } from '@/hooks/useAIChat';
+
+type Block =
+  | { type: 'p'; text: string }
+  | { type: 'heading'; level: number; text: string }
+  | { type: 'ul'; items: string[] }
+  | { type: 'ol'; items: string[] };
+
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** Renderiza inline safe: **negrita**, *cursiva* y `código`, sin HTML arbitrario. */
+function renderInline(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={index}>{escapeHtml(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return (
+        <code
+          key={index}
+          className="rounded bg-gray-100 px-1 py-0.5 text-[0.85em] text-gray-900"
+        >
+          {escapeHtml(part.slice(1, -1))}
+        </code>
+      );
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <em key={index}>{escapeHtml(part.slice(1, -1))}</em>;
+    }
+    return <span key={index}>{escapeHtml(part)}</span>;
+  });
+}
+
+/** Parsea Markdown básico (listas, negrita, encabezados) en bloques seguros. */
+function parseMarkdown(content: string): Block[] {
+  const blocks: Block[] = [];
+  let list: { type: 'ul' | 'ol'; items: string[] } | null = null;
+
+  const flush = () => {
+    if (list) {
+      blocks.push({ type: list.type, items: list.items });
+      list = null;
+    }
+  };
+
+  for (const rawLine of content.split('\n')) {
+    const line = rawLine.trimEnd();
+    const heading = line.match(/^(#{1,3})\s+(.*)$/);
+    const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+
+    if (heading) {
+      flush();
+      blocks.push({ type: 'heading', level: heading[1].length, text: heading[2] });
+    } else if (bullet || numbered) {
+      if (!list || list.type !== (numbered ? 'ol' : 'ul')) {
+        flush();
+        list = { type: numbered ? 'ol' : 'ul', items: [] };
+      }
+      list.items.push((bullet || numbered)![1]);
+    } else if (line.trim() === '') {
+      flush();
+    } else {
+      flush();
+      blocks.push({ type: 'p', text: line });
+    }
+  }
+  flush();
+  return blocks;
+}
+
+function MarkdownText({ content }: { content: string }) {
+  const blocks = parseMarkdown(content);
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, index) => {
+        if (block.type === 'heading') {
+          const headingClass =
+            block.level === 1 ? 'text-base font-semibold' : 'text-sm font-semibold';
+          return (
+            <p key={index} className={headingClass}>
+              {renderInline(block.text)}
+            </p>
+          );
+        }
+        if (block.type === 'ul' || block.type === 'ol') {
+          const ListTag = block.type === 'ul' ? 'ul' : 'ol';
+          return (
+            <ListTag key={index} className="ml-4 list-disc space-y-1">
+              {block.items.map((item, itemIndex) => (
+                <li key={itemIndex} className="leading-relaxed">
+                  {renderInline(item)}
+                </li>
+              ))}
+            </ListTag>
+          );
+        }
+        return (
+          <p key={index} className="leading-relaxed">
+            {renderInline(block.text)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+type AIChatMessageProps = {
+  message: Pick<ChatMessage, 'role' | 'content' | 'metadata' | 'created_at'>;
+};
+
+export function AIChatMessage({ message }: AIChatMessageProps) {
+  const [copied, setCopied] = useState(false);
+  const isAssistant = message.role === 'assistant';
+  const sources = message.metadata?.sources ?? [];
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* sin permisos de portapapeles: se ignora */
+    }
+  };
+
+  if (isAssistant) {
+    return (
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <Sparkles className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
+            <MarkdownText content={message.content} />
+          </div>
+
+          {sources.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs font-medium text-gray-500">Fuentes utilizadas:</p>
+              <ul className="mt-1 space-y-0.5">
+                {sources.map((source, index) => (
+                  <li key={index} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-green-600" />
+                    {source.file_name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="mt-1.5 h-7 gap-1 px-2 text-xs text-gray-500 hover:text-gray-900"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-green-600" aria-hidden="true" />
+                Copiado
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" aria-hidden="true" />
+                Copiar
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start justify-end gap-3">
+      <div className="min-w-0 max-w-[85%]">
+        <div className="whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-green-900 px-4 py-3 text-sm text-white shadow-sm">
+          {message.content}
+        </div>
+      </div>
+      <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+        <User className="h-4 w-4" aria-hidden="true" />
+      </span>
+    </div>
+  );
+}

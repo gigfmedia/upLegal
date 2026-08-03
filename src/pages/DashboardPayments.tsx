@@ -236,7 +236,7 @@ export default function DashboardPayments() {
     <DashboardContainer
       title="Pagos"
       description="Revisa el historial de tus pagos y facturas"
-      className="bg-white"
+      className=" "
       headerAction={
         <Button className="hidden sm:flex">
           <Download className="h-4 w-4 mr-2" />
@@ -244,7 +244,7 @@ export default function DashboardPayments() {
         </Button>
       }
     >
-      <div className="space-y-4 sm:space-y-6 bg-white">
+      <div className="space-y-4 sm:space-y-6">
         {/* Filtros */}
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <div className="relative w-full">

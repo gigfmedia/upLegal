@@ -16,6 +16,8 @@ import {
   TrendingUp,
   LogOut,
   Heart,
+  Sparkles,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -27,6 +29,8 @@ type NavItem = {
   label: string;
   exact?: boolean;
   badge?: boolean;
+  highlightIcon?: boolean;
+  aiBadge?: boolean;
 };
 
 type UserRole = 'lawyer' | 'client' | undefined;
@@ -132,6 +136,7 @@ function DashboardLayout() {
     { href: '/dashboard', icon: Activity, label: 'Resumen' },
     // { href: '/dashboard/consultations', icon: MessageSquare, label: 'Consultas' },
     { href: '/dashboard/appointments', icon: Calendar, label: 'Citas' },
+    { href: '/dashboard/notificaciones', icon: Bell, label: 'Notificaciones' },
     { href: '/dashboard/services', icon: FileText, label: 'Servicios' },
     { href: '/dashboard/favorites', icon: Heart, label: 'Favoritos' },
     { href: '/dashboard/payments', icon: CreditCard, label: 'Pagos' },
@@ -168,6 +173,7 @@ function DashboardLayout() {
 
       return [
         { href: '/lawyer/dashboard', icon: Activity, label: 'Inicio' },
+        { href: '/lawyer/ai', icon: Sparkles, label: 'LegalUp', highlightIcon: true, aiBadge: true },
         { href: '/lawyer/profile', icon: User, label: 'Perfil' },
         { href: '/lawyer/services', icon: FileText, label: 'Servicios', badge: showServicesBadge },
         // { href: '/lawyer/consultas', icon: MessageSquare, label: 'Consultas' },
@@ -175,6 +181,7 @@ function DashboardLayout() {
         { href: '/lawyer/jobs', icon: Briefcase, label: 'Trabajos' },
         // { href: '/lawyer/empresas', icon: Building2, label: 'Empresas' },
         { href: '/lawyer/favorites', icon: Heart, label: 'Favoritos' },
+        { href: '/lawyer/notificaciones', icon: Bell, label: 'Notificaciones' },
         { href: '/lawyer/earnings', icon: TrendingUp, label: 'Ingresos' },
         ...commonItems
       ];
@@ -227,6 +234,9 @@ function DashboardLayout() {
       <Header
         onAuthClick={() => {}}
         centerLogoOnMobile
+        noContainer
+        hideTopBar
+        hideNav
         mobileMenuButton={
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -242,19 +252,19 @@ function DashboardLayout() {
         }
       />
       
-      <div className="flex-1 pt-28">
-        <div className="max-w-7xl mx-auto">
+      <div className="flex-1 pt-16">
+        <div className="bg-cream-900 mx-auto">
           <div className="flex">
             {/* Sidebar */}
             <aside
-              className={`fixed lg:sticky top-28 h-[calc(100vh-112px)] z-40 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
+              className={`fixed lg:sticky top-16 h-[calc(100vh-64px)] z-40 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
               } lg:translate-x-0 transition-transform duration-200 ease-in-out`}
             >
               <div className="flex-1 overflow-y-auto py-4">
                 <nav>
                   <ul className="space-y-1 px-3">
-                    {navItems.map(({ href, icon: Icon, label, exact, badge }) => (
+                    {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
                       <li key={href}>
                         <Link
                           to={href}
@@ -267,13 +277,22 @@ function DashboardLayout() {
                         >
                           <Icon
                             className={`mr-3 h-5 w-5 ${
-                              isActive(href, exact)
-                                ? 'text-green-500'
-                                : 'text-gray-400 group-hover:text-gray-500'
+                              highlightIcon
+                                ? 'text-green-400'
+                                : isActive(href, exact)
+                                  ? 'text-green-400'
+                                  : 'text-gray-400 group-hover:text-gray-500'
                             }`}
                             aria-hidden="true"
                           />
-                          <span className="flex-1">{label}</span>
+                          <span className="flex flex-1 items-center gap-1.5">
+                            <span>{label}</span>
+                            {aiBadge && (
+                              <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                                AI
+                              </span>
+                            )}
+                          </span>
                           {badge && (
                             <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
                           )}

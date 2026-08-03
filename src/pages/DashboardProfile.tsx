@@ -461,7 +461,7 @@ export default function DashboardProfile({ setupMode = false }: DashboardProfile
   };
 
   return (
-    <div className="container mx-auto px-8 py-6 space-y-6">
+    <div className="mx-auto px-8 py-6 space-y-6">
       {renderProfileHeader()}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         {renderProfilePicture()}

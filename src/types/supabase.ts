@@ -14,6 +14,354 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          lawyer_id: string
+          metadata: Json | null
+          role: string
+          workspace_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          metadata?: Json | null
+          role: string
+          workspace_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          metadata?: Json | null
+          role?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_messages_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_chat_messages_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          lawyer_id: string
+          title: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          title?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          title?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_conversations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_document_analyses: {
+        Row: {
+          created_at: string
+          deadlines: Json
+          document_id: string
+          document_type: string
+          id: string
+          key_points: Json
+          lawyer_id: string
+          model: string | null
+          obligations: Json
+          parties: Json
+          recommendations: Json
+          risks: Json
+          summary: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadlines?: Json
+          document_id: string
+          document_type: string
+          id?: string
+          key_points?: Json
+          lawyer_id: string
+          model?: string | null
+          obligations?: Json
+          parties?: Json
+          recommendations?: Json
+          risks?: Json
+          summary: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          deadlines?: Json
+          document_id?: string
+          document_type?: string
+          id?: string
+          key_points?: Json
+          lawyer_id?: string
+          model?: string | null
+          obligations?: Json
+          parties?: Json
+          recommendations?: Json
+          risks?: Json
+          summary?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_document_analyses_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: true
+            referencedRelation: "ai_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_document_analyses_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_document_analyses_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_documents: {
+        Row: {
+          analysis_error: string | null
+          analysis_status: string
+          created_at: string
+          extracted_text: string | null
+          file_path: string
+          file_size_bytes: number
+          id: string
+          lawyer_id: string
+          mime_type: string
+          model: string | null
+          original_filename: string
+          page_count: number | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          analysis_error?: string | null
+          analysis_status?: string
+          created_at?: string
+          extracted_text?: string | null
+          file_path: string
+          file_size_bytes: number
+          id?: string
+          lawyer_id: string
+          mime_type?: string
+          model?: string | null
+          original_filename: string
+          page_count?: number | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          analysis_error?: string | null
+          analysis_status?: string
+          created_at?: string
+          extracted_text?: string | null
+          file_path?: string
+          file_size_bytes?: number
+          id?: string
+          lawyer_id?: string
+          mime_type?: string
+          model?: string | null
+          original_filename?: string
+          page_count?: number | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_documents_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_documents_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          cancelled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          expires_at: string | null
+          id: string
+          lawyer_id: string
+          plan: string
+          provider: string | null
+          provider_subscription_id: string | null
+          started_at: string
+          status: string
+          trial_ends_at: string | null
+          trial_reminder_day: number | null
+          trial_started_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          expires_at?: string | null
+          id?: string
+          lawyer_id: string
+          plan?: string
+          provider?: string | null
+          provider_subscription_id?: string | null
+          started_at?: string
+          status?: string
+          trial_ends_at?: string | null
+          trial_reminder_day?: number | null
+          trial_started_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          expires_at?: string | null
+          id?: string
+          lawyer_id?: string
+          plan?: string
+          provider?: string | null
+          provider_subscription_id?: string | null
+          started_at?: string
+          status?: string
+          trial_ends_at?: string | null
+          trial_reminder_day?: number | null
+          trial_started_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_subscriptions_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_workspaces: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          lawyer_id: string
+          name: string
+          practice_area: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lawyer_id: string
+          name: string
+          practice_area?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          lawyer_id?: string
+          name?: string
+          practice_area?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_workspaces_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           address: string | null
@@ -555,7 +903,10 @@ export type Database = {
           id: string
           message: string
           metadata: Json | null
-          read: boolean | null
+          is_read: boolean
+          entity_type: string | null
+          entity_id: string | null
+          event_id: string | null
           title: string
           type: string
           user_id: string
@@ -565,7 +916,10 @@ export type Database = {
           id?: string
           message: string
           metadata?: Json | null
-          read?: boolean | null
+          is_read?: boolean
+          entity_type?: string | null
+          entity_id?: string | null
+          event_id?: string | null
           title: string
           type: string
           user_id: string
@@ -575,7 +929,10 @@ export type Database = {
           id?: string
           message?: string
           metadata?: Json | null
-          read?: boolean | null
+          is_read?: boolean
+          entity_type?: string | null
+          entity_id?: string | null
+          event_id?: string | null
           title?: string
           type?: string
           user_id?: string

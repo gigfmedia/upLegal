@@ -26,6 +26,9 @@ interface AuthModalProps {
   onLoginSuccess?: () => void;
   mode: 'login' | 'signup';
   onModeChange: (mode: 'login' | 'signup') => void;
+  /** Variante de la landing de LegalUp AI: oculta el selector de rol, fuerza
+   *  el registro como abogado y muestra el badge "AI" junto al logo. */
+  aiLanding?: boolean;
 }
 
 const resolveApiBaseUrl = () => {
@@ -45,7 +48,7 @@ const resolveApiBaseUrl = () => {
   return '';
 };
 
-export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess, aiLanding = false }: AuthModalProps) {
   const { login, signup, user } = useAuth();
   const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [showResendButton, setShowResendButton] = useState(false);
@@ -82,6 +85,55 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
 
   const isPasswordValid = Object.values(passwordRequirements).every(Boolean);
   const navigate = useNavigate();
+
+  // En la variante de la landing, el registro es siempre de abogado.
+  useEffect(() => {
+    if (aiLanding && isOpen && mode === 'signup') {
+      setFormData((prev) => (prev.role === 'lawyer' ? prev : { ...prev, role: 'lawyer' }));
+    }
+  }, [aiLanding, isOpen, mode]);
+
+  // Tema de la landing (oscuro, acento esmeralda). Las cadenas vacías cuando
+  // aiLanding=false mantienen intacto el tema claro del resto de la app.
+  const L = {
+    content: aiLanding
+      ? "border-white/10 bg-[var(--surface)] text-slate-100 [&>button.absolute]:text-slate-400 [&>button.absolute[data-state=open]]:bg-white/5"
+      : "",
+    logo: aiLanding ? "text-white" : "text-green-900",
+    logoText: aiLanding ? "text-white" : "text-gray-900",
+    badge: aiLanding
+      ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+      : "border-green-900/30 bg-green-900/10 text-green-900",
+    title: aiLanding ? "text-white" : "",
+    sub: aiLanding ? "text-slate-400" : "text-gray-500",
+    heading: aiLanding ? "text-white" : "text-gray-900",
+    text: aiLanding ? "text-slate-400" : "text-gray-500",
+    textStrong: aiLanding ? "text-white" : "text-gray-900",
+    label: aiLanding ? "text-slate-300" : "",
+    input: aiLanding
+      ? "bg-white/[0.04] border-white/10 text-white placeholder:text-slate-500 caret-white focus-visible:border-emerald-400 focus-visible:ring-emerald-400/25 focus-visible:ring-offset-0 [&:-webkit-autofill]:[-webkit-box-shadow:inset_0_0_0_1000px_#0b0f17] [&:-webkit-autofill]:[box-shadow:inset_0_0_0_1000px_#0b0f17] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff] [&:-webkit-autofill]:transition-[background-color_9999999s_ease-in-out_0s]"
+      : "",
+    inputIcon: aiLanding ? "text-slate-400 hover:text-slate-200" : "text-gray-400 hover:text-gray-500",
+    submit: aiLanding
+      ? "bg-emerald-400 hover:bg-emerald-300 text-emerald-950"
+      : "bg-gray-900 hover:bg-green-900 text-white",
+    link: aiLanding ? "text-emerald-400 hover:text-emerald-300" : "text-green-900 hover:text-green-600",
+    successBox: aiLanding ? "bg-emerald-400/15" : "bg-green-100",
+    successIcon: aiLanding ? "text-emerald-300" : "text-green-600",
+    resendBox: aiLanding ? "bg-blue-500/10 border-blue-500/30" : "bg-blue-50 border-blue-200",
+    resendText: aiLanding ? "text-blue-300" : "text-blue-800",
+    resendBtn: aiLanding ? "border-blue-500/30 text-blue-300 hover:bg-blue-500/10" : "border-blue-300 text-blue-700 hover:bg-blue-100",
+    meterOff: aiLanding ? "bg-white/10" : "bg-gray-200",
+    dotMet: aiLanding ? "bg-emerald-400" : "bg-green-500",
+    dotOff: aiLanding ? "bg-white/15" : "bg-gray-200",
+    iconMet: aiLanding ? "text-emerald-400" : "text-green-500",
+    iconNot: aiLanding ? "text-slate-600" : "text-gray-300",
+    reqMet: aiLanding ? "text-slate-300" : "text-gray-600",
+    reqNot: aiLanding ? "text-slate-500" : "text-gray-400",
+    amberText: aiLanding ? "text-amber-300" : "text-amber-600",
+    blueLink: aiLanding ? "text-sky-400 hover:underline" : "text-blue-600 hover:underline",
+    tooltip: aiLanding ? "border-white/10 bg-[#161c26] text-slate-200" : "",
+  };
 
   // Format RUT as user types (XX.XXX.XXX-X)
   const formatRut = (rut: string): string => {
@@ -387,8 +439,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       throw new Error('La contraseña no cumple con todos los requisitos de seguridad');
     }
 
-    // If lawyer registration, verify RUT first
-    if (formData.role === 'lawyer') {
+    // If lawyer registration (except landing), verify RUT first
+    if (formData.role === 'lawyer' && !aiLanding) {
       if (!formData.rut) {
         throw new Error('El RUT es obligatorio para abogados');
       }
@@ -430,8 +482,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         role: formData.role,
-        rut: formData.role === 'lawyer' ? formData.rut : undefined,
-        pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false
+        rut: formData.role === 'lawyer' && !aiLanding ? formData.rut : undefined,
+        pjudVerified: formData.role === 'lawyer' && !aiLanding ? rutVerificationStatus === 'verified' : false
       }
     );
     
@@ -460,8 +512,8 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       firstName: formData.firstName,
       lastName: formData.lastName,
       role: formData.role,
-      rut: formData.role === 'lawyer' ? formData.rut : undefined,
-      pjudVerified: formData.role === 'lawyer' ? rutVerificationStatus === 'verified' : false,
+      rut: formData.role === 'lawyer' && !aiLanding ? formData.rut : undefined,
+      pjudVerified: formData.role === 'lawyer' && !aiLanding ? rutVerificationStatus === 'verified' : false,
       displayName: `${formData.firstName} ${formData.lastName}`.trim() || undefined
     };
 
@@ -519,7 +571,13 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       });
       onClose();
     } else {
-      if (formData.role === 'lawyer') {
+      if (formData.role === 'lawyer' && aiLanding) {
+        toast({
+          title: '¡Bienvenido a LegalUp AI!',
+          description: 'Tu cuenta de abogado está lista. Vamos a preparar tu prueba gratuita.',
+          variant: 'default',
+        });
+      } else if (formData.role === 'lawyer') {
         // Redirect lawyer to profile setup
         navigate('/dashboard/profile/setup');
         toast({
@@ -635,10 +693,42 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
   // Password requirement component
   const PasswordRequirement = ({ met, children }: { met: boolean; children: React.ReactNode }) => (
     <div className="flex items-center">
-      <div className={`w-2 h-2 rounded-full mr-2 ${met ? 'bg-green-500' : 'bg-gray-200'}`}></div>
-      <span className={`text-sm ${met ? 'text-gray-600' : 'text-gray-400'}`}>
+      <div className={`w-2 h-2 rounded-full mr-2 ${met ? L.dotMet : L.dotOff}`}></div>
+      <span className={`text-sm ${met ? L.reqMet : L.reqNot}`}>
         {children}
       </span>
+    </div>
+  );
+
+  // Nombre y apellido (común a cliente y abogado; sin RUT en la landing).
+  const nameFields = (
+    <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label htmlFor="firstName" className={L.label}>Nombre</Label>
+        <Input
+          id="firstName"
+          type="text"
+          value={formData.firstName}
+          onChange={(e) => handleInputChange('firstName', e.target.value)}
+          required
+          placeholder="Juan"
+          autoComplete="given-name"
+          className={L.input}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="lastName" className={L.label}>Apellido</Label>
+        <Input
+          id="lastName"
+          type="text"
+          value={formData.lastName}
+          onChange={(e) => handleInputChange('lastName', e.target.value)}
+          required
+          placeholder="Pérez"
+          autoComplete="family-name"
+          className={L.input}
+        />
+      </div>
     </div>
   );
 
@@ -647,25 +737,33 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
       <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) onClose();
       }}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent
+          className={`sm:max-w-[425px] ${L.content}`}
+          style={aiLanding ? ({ "--surface": "oklch(0.14 0.012 264)" } as React.CSSProperties) : undefined}
+        >
           <DialogHeader className="text-center">
-            <div className="flex justify-center mb-8">
-              <Scale className="h-8 w-8 text-green-900" />
-              <span className="text-xl font-bold text-gray-900 mt-1 ml-2">LegalUp</span>
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <Scale className={`h-8 w-8 ${L.logo}`} />
+              <span className={`text-xl font-bold ${L.logoText}`}>LegalUp</span>
+              {aiLanding && (
+                <span className={`rounded-[5px] border px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] ${L.badge}`}>
+                  AI
+                </span>
+              )}
             </div>
-            <DialogTitle className="text-2xl">
+            <DialogTitle className={`text-2xl ${L.title}`}>
               Recuperar contraseña
             </DialogTitle>
           </DialogHeader>
 
           {resetEmailSent ? (
             <div className="space-y-4 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <Check className="h-6 w-6 text-green-600" />
+              <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full ${L.successBox}`}>
+                <Check className={`h-6 w-6 ${L.successIcon}`} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900">¡Correo enviado!</h3>
-              <p className="text-sm text-gray-500">
-                Hemos enviado un enlace para restablecer tu contraseña a <span className="font-medium text-gray-900">{formData.email}</span>.
+              <h3 className={`text-lg font-medium ${L.heading}`}>¡Correo enviado!</h3>
+              <p className={`text-sm ${L.text}`}>
+                Hemos enviado un enlace para restablecer tu contraseña a <span className={`font-medium ${L.textStrong}`}>{formData.email}</span>.
                 Por favor revisa tu bandeja de entrada y sigue las instrucciones.
               </p>
               <Button 
@@ -673,7 +771,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   setForgotPassword(false);
                   setResetEmailSent(false);
                 }}
-                className="w-full mt-4"
+                className={`w-full mt-4 ${L.submit}`}
               >
                 Volver al inicio de sesión
               </Button>
@@ -685,11 +783,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <p className="text-sm font-normal text-gray-500 mt-1">
+              <p className={`text-sm font-normal mt-1 ${L.text}`}>
                 Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
               </p>
               <div className="space-y-2">
-                <Label htmlFor="reset-email">Email</Label>
+                <Label htmlFor="reset-email" className={L.label}>Email</Label>
                 <Input
                   id="reset-email"
                   type="email"
@@ -697,11 +795,12 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   onChange={(e) => handleInputChange('email', e.target.value)}
                   required
                   placeholder="tucorreo@ejemplo.com"
+                  className={L.input}
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full bg-gray-900 hover:bg-green-900 text-white"
+                className={`w-full ${L.submit}`}
                 disabled={submitting}
               >
                 {submitting ? (
@@ -715,7 +814,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 <button
                   type="button"
                   onClick={() => setForgotPassword(false)}
-                  className="text-green-900 hover:text-green-600 font-medium"
+                  className={`${L.link} font-medium`}
                 >
                   ← Volver al inicio de sesión
                 </button>
@@ -731,64 +830,72 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) onClose();
     }}>
-      <DialogContent 
-        className={`sm:max-w-[425px] overflow-y-auto ${
-          mode === 'signup' 
-            ? 'h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-lg' 
-            : 'max-h-[90vh] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90%] rounded-lg border'
-        }`}
-        aria-describedby="auth-dialog-description"
-      >
-        <DialogDescription id="auth-dialog-description" className="sr-only">
-          {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
-        </DialogDescription>
-        <DialogHeader className="text-center">
-          <div className="flex justify-center mb-8">
-            <Scale className="h-8 w-8 text-green-900" />
-            <span className="text-xl font-bold text-gray-900 mt-1 ml-2">LegalUp</span>
-          </div>
-          <DialogTitle className="text-2xl">
-            {mode === 'login' ? 'Ingresa a tu cuenta' : (
-              <>
-                Crea tu cuenta
-                <p className="text-sm font-normal text-gray-500 mt-1">Únete a la plataforma líder de servicios legales</p>
-              </>
-            )}
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {showResendButton && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800 mb-3">
-                ¿No recibiste el correo de confirmación?
-              </p>
-              <Button
-                type="button"
-                onClick={handleResendConfirmation}
-                disabled={isResending}
-                variant="outline"
-                className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
-              >
-                {isResending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Reenviando...
-                  </>
-                ) : (
-                  'Reenviar correo de confirmación'
-                )}
-              </Button>
+        <DialogContent 
+          className={`sm:max-w-[425px] overflow-y-auto ${L.content} ${
+            mode === 'signup' 
+              ? 'h-[100dvh] max-h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-none sm:rounded-lg' 
+              : 'max-h-[90vh] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90%] rounded-lg border'
+          }`}
+          style={aiLanding ? ({ "--surface": "oklch(0.14 0.012 264)" } as React.CSSProperties) : undefined}
+          aria-describedby="auth-dialog-description"
+        >
+          <DialogDescription id="auth-dialog-description" className="sr-only">
+            {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+          </DialogDescription>
+          <DialogHeader className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <Scale className={`h-8 w-8 ${L.logo}`} />
+              <span className={`text-xl font-bold ${L.logoText}`}>LegalUp</span>
+              {aiLanding && (
+                <span className={`rounded-[5px] border px-1.5 py-px text-[0.6rem] font-semibold tracking-[0.14em] ${L.badge}`}>
+                  AI
+                </span>
+              )}
             </div>
-          )}
+            <DialogTitle className={`text-2xl ${L.title}`}>
+              {mode === 'login' ? 'Ingresa a tu cuenta' : (
+                <>
+                  Crea tu cuenta
+                  {!aiLanding && (
+                    <p className={`text-sm font-normal mt-1 ${L.sub}`}>Únete a la plataforma líder de servicios legales</p>
+                  )}
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
 
-          {mode === 'signup' && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {showResendButton && (
+              <div className={`rounded-lg p-4 ${L.resendBox}`}>
+                <p className={`text-sm mb-3 ${L.resendText}`}>
+                  ¿No recibiste el correo de confirmación?
+                </p>
+                <Button
+                  type="button"
+                  onClick={handleResendConfirmation}
+                  disabled={isResending}
+                  variant="outline"
+                  className={`w-full ${L.resendBtn}`}
+                >
+                  {isResending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reenviando...
+                    </>
+                  ) : (
+                    'Reenviar correo de confirmación'
+                  )}
+                </Button>
+              </div>
+            )}
+
+          {mode === 'signup' && !aiLanding && (
             <>
               <div className="space-y-3">
                 <h3 className="text-lg font-medium text-gray-900">¿Cómo planeas usar LegalUp?</h3>
@@ -840,35 +947,10 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
 
 
           {mode === 'signup' && formData.role === 'client' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Nombre</Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  required
-                  placeholder="Juan"
-                  autoComplete="given-name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Apellido</Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  required
-                  placeholder="Pérez"
-                  autoComplete="family-name"
-                />
-              </div>
-            </div>
+            <>{nameFields}</>
           )}
 
-          {mode === 'signup' && formData.role === 'lawyer' && (
+          {mode === 'signup' && formData.role === 'lawyer' && !aiLanding && (
             <>
               {/* RUT Field - First */}
               <div className="space-y-2">
@@ -1044,38 +1126,16 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                 )}
               </div>
 
-              {/* Name and Last Name - Second */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombre</Label>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    required
-                    placeholder="Juan"
-                    autoComplete="given-name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellido</Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
-                    required
-                    placeholder="Pérez"
-                    autoComplete="family-name"
-                  />
-                </div>
-              </div>
+              {nameFields}
             </>
           )}
 
+          {mode === 'signup' && formData.role === 'lawyer' && aiLanding && (
+            <>{nameFields}</>
+          )}
+
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className={L.label}>Email</Label>
             <Input
               id="email"
               type="email"
@@ -1089,7 +1149,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               }}
               required
               placeholder="ejemplo@gmail.com"
-              className={error && error.includes('correo electrónico') ? 'border-red-500' : ''}
+              className={`${L.input} ${error && error.includes('correo electrónico') ? 'border-red-500' : ''}`}
             />
             {error && error.includes('correo electrónico') && (
               <p className="text-xs text-red-500 mt-1">{error}</p>
@@ -1099,15 +1159,15 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password" className={L.label}>Contraseña</Label>
               </div>
               {formData.password && (
                 <div className="flex items-center">
-                  <div className={`h-1.5 rounded-full ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
-                  <div className={`h-1.5 rounded-full ${formData.password.length >= 12 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
-                  <div className={`h-1.5 rounded-full ${formData.password.length >= 16 ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
-                  <div className={`h-1.5 rounded-full ${isPasswordValid ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
-                  <div className={`h-1.5 rounded-full ${isPasswordValid ? 'bg-green-500' : 'bg-gray-200'} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 8 ? L.dotMet : L.meterOff} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 12 ? L.dotMet : L.meterOff} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${formData.password.length >= 16 ? L.dotMet : L.meterOff} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${isPasswordValid ? L.dotMet : L.meterOff} mx-0.5`} style={{ width: '20%' }}></div>
+                  <div className={`h-1.5 rounded-full ${isPasswordValid ? L.dotMet : L.meterOff} mx-0.5`} style={{ width: '20%' }}></div>
                 </div>
               )}
             </div>
@@ -1124,11 +1184,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                     onClick={() => setIsPasswordFocused(true)}
                     required
                     placeholder={mode === 'login' ? 'Ingresa tu contraseña' : 'Crea una contraseña segura'}
-                    className="pr-10"
+                    className={`pr-10 ${L.input}`}
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${L.inputIcon}`}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -1146,27 +1206,27 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   </button>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="w-64 p-4 space-y-2 text-sm" side="bottom" align="start">
-                <p className="font-medium mb-2">La contraseña debe contener:</p>
+              <TooltipContent className={`w-64 p-4 space-y-2 text-sm ${L.tooltip}`} side="bottom" align="start">
+                <p className={`font-medium mb-2 ${L.title}`}>La contraseña debe contener:</p>
                 <ul className="space-y-1">
                   <li className="flex items-start">
-                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.length ? 'text-green-500' : 'text-gray-300'}`} />
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.length ? L.iconMet : L.iconNot}`} />
                     <span>8 a 18 caracteres</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasUppercase ? 'text-green-500' : 'text-gray-300'}`} />
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasUppercase ? L.iconMet : L.iconNot}`} />
                     <span>1 letra mayúscula (A-Z)</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasLowercase ? 'text-green-500' : 'text-gray-300'}`} />
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasLowercase ? L.iconMet : L.iconNot}`} />
                     <span>1 letra minúscula (a-z)</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasNumber ? 'text-green-500' : 'text-gray-300'}`} />
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasNumber ? L.iconMet : L.iconNot}`} />
                     <span>1 número (0-9)</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasSymbol ? 'text-green-500' : 'text-gray-300'}`} />
+                    <CheckCircle2 className={`h-4 w-4 mr-2 mt-0.5 flex-shrink-0 ${passwordRequirements.hasSymbol ? L.iconMet : L.iconNot}`} />
                     <span>1 símbolo (!@#$%^&*)</span>
                   </li>
                 </ul>
@@ -1176,7 +1236,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
 
           {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+              <Label htmlFor="confirmPassword" className={L.label}>Confirmar contraseña</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -1185,11 +1245,11 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                   onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                   required
                   placeholder="Confirma tu contraseña"
-                  className="pr-10"
+                  className={`pr-10 ${L.input}`}
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${L.inputIcon}`}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? (
@@ -1208,7 +1268,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           <div className="space-y-2">
             <Button 
               type="submit" 
-              className="w-full bg-gray-900 hover:bg-green-900 text-white"
+              className={`w-full ${L.submit}`}
               disabled={submitting}
             >
               {submitting ? (
@@ -1221,7 +1281,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
             
             {mode === 'login' && !isEmailVerified && formData.email && (
               <div className="text-center">
-                <p className="text-sm text-amber-600">
+                <p className={`text-sm ${L.amberText}`}>
                   ¿No recibiste el correo de verificación?{' '}
                   <button
                     type="button"
@@ -1251,7 +1311,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
                         });
                       }
                     }}
-                    className="text-blue-600 hover:underline font-medium"
+                    className={`${L.blueLink} font-medium`}
                   >
                     Reenviar correo de verificación
                   </button>
@@ -1265,7 +1325,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               <button
                 type="button"
                 onClick={() => setForgotPassword(true)}
-                className="text-sm text-green-900 hover:text-green-600 hover:underline font-medium"
+                className={`text-sm ${L.link} hover:underline font-medium`}
               >
                 ¿Olvidaste tu contraseña?
               </button>
@@ -1273,14 +1333,14 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
           )}
         </form>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className={`text-center text-sm ${L.text}`}>
           {mode === 'login' ? (
             <>
               ¿No tienes cuenta?{' '}
               <button
                 type="button"
                 onClick={() => onModeChange('signup')}
-                className="text-green-900 hover:text-green-600 hover:underline font-medium"
+                className={`${L.link} hover:underline font-medium`}
               >
                 Registrarse
               </button>
@@ -1291,7 +1351,7 @@ export function AuthModal({ isOpen, onClose, mode, onModeChange, onLoginSuccess 
               <button
                 type="button"
                 onClick={() => onModeChange('login')}
-                className="text-green-900 hover:text-green-600 hover:underline font-medium"
+                className={`${L.link} hover:underline font-medium`}
               >
                 Iniciar sesión
               </button>

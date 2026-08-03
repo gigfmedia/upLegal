@@ -8,6 +8,7 @@ import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 const AuthModal = lazy(() => import("./AuthModal").then(m => ({ default: m.AuthModal })));
 
@@ -20,6 +21,8 @@ interface HeaderProps {
   hasBackground?: boolean;
   visible?: boolean;
   fixed?: boolean;
+  noContainer?: boolean;
+  hideNav?: boolean;
 }
 
 export default function Header({
@@ -30,7 +33,9 @@ export default function Header({
   hideTopBar = false,
   hasBackground = true,
   visible = true,
-  fixed = true
+  fixed = true,
+  noContainer = false,
+  hideNav = false
 }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -132,7 +137,7 @@ export default function Header({
           ? "bg-gray-950 border-b border-white/10"
           : hasBackground && "bg-white/95 border-b border-gray-200"
       )}>
-        <div className="w-full max-w-7xl mx-auto">
+        <div className={cn("w-full mx-auto", !noContainer && "max-w-7xl")}>
           <div className="relative flex items-center justify-between h-full w-full">
             {/* Mobile Menu Button */}
             {mobileMenuButton ? (
@@ -168,7 +173,8 @@ export default function Header({
               <span className={cn("text-xl font-bold", variant === 'dark' ? "text-white" : "text-green-900")}>LegalUp</span>
             </div>
 
-            <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
+            {!hideNav && (
+              <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
               <a href="/search" className={cn(
                 "transition-colors text-sm",
                 variant === 'dark'
@@ -200,9 +206,17 @@ export default function Header({
                   : (isActive('/contacto') ? 'text-green-900 font-medium' : 'text-muted-foreground hover:text-green-900')
               )}>Contáctanos</a>
             </nav>
+            )}
 
             {/* Auth Section */}
             <div className="flex items-center gap-2">
+              {user && (
+                (pathname.startsWith('/dashboard') ||
+                  pathname.startsWith('/lawyer') ||
+                  pathname.startsWith('/admin')) && (
+                  <NotificationDropdown />
+                )
+              )}
               {user ? (
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>

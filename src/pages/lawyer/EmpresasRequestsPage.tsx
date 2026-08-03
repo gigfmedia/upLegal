@@ -43,7 +43,7 @@ export default function EmpresasRequestsPage() {
   }, [user])
 
   return (
-    <div className="container mx-auto px-8 py-6 space-y-6">
+    <div className="mx-auto px-8 py-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Solicitudes de empresas</h1>
         <p className="text-gray-600 mt-1">

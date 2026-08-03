@@ -7,7 +7,15 @@ export default function RequireLawyer({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   if (isLoading) return null;
-  if (!user || user.role !== 'lawyer') {
+
+  // El rol JWT de Supabase (user.role) siempre es "authenticated";
+  // el rol real del usuario vive en user_metadata y/o en el perfil.
+  const isLawyer =
+    user?.role === 'lawyer' ||
+    user?.user_metadata?.role === 'lawyer' ||
+    user?.profile?.role === 'lawyer';
+
+  if (!user || !isLawyer) {
     const redirectTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/?login=true&redirectTo=${redirectTo}`} replace />;
   }

@@ -13,6 +13,7 @@ export const getSupabaseClient = () => supabase;
 export const BUCKETS = {
   AVATARS: 'avatars',
   DOCUMENTS: 'documents',
+  AI_DOCUMENTS: 'ai-documents',
 } as const;
 
 type BucketType = typeof BUCKETS[keyof typeof BUCKETS];

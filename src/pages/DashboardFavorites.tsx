@@ -8,7 +8,7 @@ export default function DashboardFavorites() {
         <title>Favoritos | upLegal</title>
       </Helmet>
       
-      <div className="container mx-auto px-8 py-6 space-y-6">
+      <div className="mx-auto px-8 py-6 space-y-6">
         <div className="">
           <h2 className="text-2xl font-bold tracking-tight">Tus abogados favoritos</h2>
           <p className="text-muted-foreground">

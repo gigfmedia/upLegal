@@ -14,8 +14,7 @@
  * Optional (for Supabase auth): VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY
  * =================================================================== */
 
-import { useState, useEffect, useRef, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Sparkles,
@@ -28,9 +27,7 @@ import {
   Users,
   Check,
   Loader2,
-  Send,
   ShieldCheck,
-  ArrowLeft,
   Brain,
   Zap,
   MessageSquare,
@@ -42,61 +39,40 @@ import {
   Clock,
   ArrowDown,
   ChevronRight,
-  Mail,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import { createClient, type User, type Session } from "@supabase/supabase-js";
-import "../legalup-standalone.css";
+import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import posthog from "posthog-js";
+import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
+import { AuthModal } from "@/components/AuthModal";
+import { AIPricingModal } from "@/components/legalup-ai/AIPricingModal";
+import {
+  useAISubscription,
+  useStartAITrial,
+} from "@/hooks/useAISubscription";
+// Cargado como texto e inyectado en un <style> que se elimina al desmontar la
+// landing. Todo el CSS está aislado bajo `.legalup-landing` (ver comentario en
+// `legalup-standalone.css`), de modo que no pisa las utilidades responsivas del
+// CSS global y los Dialog portaleados (login/pricing) conservan su centrado.
+import standaloneCss from "../legalup-standalone.css?inline";
+
+/* Inyecta/remueve los estilos aislados de la landing. El CSS ya está scoped a
+   `.legalup-landing`, por lo que el contenido portaleado (Dialog) usa el CSS
+   global de Tailwind y conserva el posicionamiento centrado. */
+function pushStandaloneCss() {
+  const style = document.createElement("style");
+  style.dataset.name = "legalup-standalone";
+  style.textContent = standaloneCss;
+  document.head.appendChild(style);
+  return style;
+}
 
 /* ───── cn utility ───── */
 
 function cn(...classes: (string | boolean | undefined | null)[]) {
   return classes.filter(Boolean).join(" ");
-}
-
-/* ───── Supabase ───── */
-
-const _supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const _supabaseKey =
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined);
-const supabase =
-  _supabaseUrl && _supabaseKey
-    ? createClient(_supabaseUrl, _supabaseKey)
-    : null;
-
-/* ───── useAuth ───── */
-
-function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, nextSession) => {
-        setSession(nextSession);
-        setUser(nextSession?.user ?? null);
-        setLoading(false);
-      }
-    );
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
-    return () => listener?.subscription?.unsubscribe();
-  }, []);
-
-  const signOut = () => supabase?.auth.signOut();
-
-  return { user, session, loading, signOut };
 }
 
 /* ───── Button ───── */
@@ -141,253 +117,12 @@ function Button({
   );
 }
 
-/* ───── Dialog (simple portal modal) ───── */
-
-function Dialog({
-  open,
-  onOpenChange,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children: React.ReactNode;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onOpenChange(false);
-    };
-    document.addEventListener("keydown", handler);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handler);
-      document.body.style.overflow = "";
-    };
-  }, [open, onOpenChange]);
-
-  if (!open) return null;
-
-  return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/80"
-        onClick={() => onOpenChange(false)}
-      />
-      <div className="relative z-10 w-full max-w-md">{children}</div>
-    </div>,
-    document.body
-  );
-}
-
-function DialogContent({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border border-[var(--hairline)] bg-[var(--surface)]/90 p-8 shadow-lg backdrop-blur-xl",
-        "bg-[var(--gradient-glass)]",
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function DialogHeader({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={cn("space-y-2 text-left", className)}>{children}</div>
-  );
-}
-
-function DialogTitle({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <h2
-      className={cn(
-        "font-[var(--font-display)] text-2xl tracking-tight",
-        className
-      )}
-    >
-      {children}
-    </h2>
-  );
-}
-
-function DialogDescription({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <p className={cn("text-sm text-[var(--muted-foreground)]", className)}>
-      {children}
-    </p>
-  );
-}
-
-/* ───── AuthModal ───── */
-
-function AuthModal({
-  isOpen,
-  onClose,
-  initialMode = "login",
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  initialMode?: "login" | "signup";
-}) {
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!supabase) return;
-    setLoading(true);
-    try {
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success("Sesión iniciada");
-        onClose();
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        toast.success("Cuenta creada. Revisa tu correo para confirmarla.");
-        onClose();
-      }
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "No pudimos completar la acción"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 cursor-pointer"
-        >
-          <X className="h-4 w-4" />
-          <span className="sr-only">Cerrar</span>
-        </button>
-        <DialogHeader>
-          <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
-            LegalUp AI
-          </p>
-          <DialogTitle>
-            {mode === "login" ? "Ingresa a tu cuenta" : "Crea tu cuenta"}
-          </DialogTitle>
-          <DialogDescription>
-            Accede a tu espacio de inteligencia jurídica.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <label className="block">
-            <span className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
-              Correo
-            </span>
-            <div className="mt-2 flex items-center gap-3 rounded-xl border border-[var(--input)] bg-[var(--background)]/60 px-4 py-3 transition-colors focus-within:border-[var(--primary)]/60">
-              <Mail className="h-4 w-4 text-[var(--muted-foreground)]" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@estudio.cl"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted-foreground)]"
-              />
-            </div>
-          </label>
-
-          <label className="block">
-            <span className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
-              Contraseña
-            </span>
-            <div className="mt-2 flex items-center gap-3 rounded-xl border border-[var(--input)] bg-[var(--background)]/60 px-4 py-3 transition-colors focus-within:border-[var(--primary)]/60">
-              <Lock className="h-4 w-4 text-[var(--muted-foreground)]" />
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--muted-foreground)]"
-              />
-            </div>
-          </label>
-
-          <Button
-            type="submit"
-            variant="glow"
-            size="lg"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                {mode === "login" ? "Ingresar" : "Crear cuenta"}
-                <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </form>
-
-        <button
-          type="button"
-          onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          className="mt-2 w-full text-center text-xs text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] cursor-pointer"
-        >
-          {mode === "login"
-            ? "¿No tienes cuenta? Crear una"
-            : "¿Ya tienes cuenta? Iniciar sesión"}
-        </button>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* ───── Header ───── */
 
 const NAV_ITEMS = [
-  { label: "Producto", href: "#producto" },
   { label: "Cómo funciona", href: "#capacidades" },
+  { label: "Producto", href: "#producto" },
   { label: "Seguridad", href: "#seguridad" },
 ];
 
@@ -397,12 +132,14 @@ function Header({
   fixed = true,
   onAuthClick,
   onCtaClick,
+  ctaLabel = "Probar gratis",
 }: {
   hasBackground?: boolean;
   visible?: boolean;
   fixed?: boolean;
   onAuthClick?: () => void;
-  onCtaClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  onCtaClick?: () => void;
+  ctaLabel?: string;
 }) {
   const scrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -455,19 +192,16 @@ function Header({
         </nav>
 
         <div className="flex items-center gap-2">
-          {/* <button
+          <button
             type="button"
-            onClick={onAuthClick}
-            className="hidden text-[0.8rem] text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)] sm:block cursor-pointer"
+            onClick={onCtaClick}
+            className="cursor-pointer"
           >
-            Ingresar
-          </button> */}
-          <a href="#waitlist" onClick={onCtaClick}>
             <Button variant="quiet" size="sm" className="h-9 rounded-lg px-4">
-              Solicitar acceso
+              {ctaLabel}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
-          </a>
+          </button>
         </div>
       </div>
     </header>
@@ -850,25 +584,25 @@ function AIWorkspace() {
 const CAPABILITIES = [
   {
     id: "01",
-    title: "Analizar",
-    copy: "Documentos, contratos y expedientes.",
+    title: "Analiza documentos",
+    copy: "Sube contratos, demandas, sentencias, bases y otros documentos PDF.",
     detail:
-      "Sube un archivo y obtén estructura, partes, cláusulas críticas y hallazgos en segundos.",
+      "Obtén un análisis estructurado del documento: partes, plazos, obligaciones y puntos clave en segundos.",
   },
   {
     id: "02",
-    title: "Entender",
-    copy: "Causas, argumentos, partes y plazos.",
+    title: "Detecta riesgos",
+    copy: "Identifica riesgos, alertas y puntos que requieren especial atención.",
   },
   {
     id: "03",
-    title: "Investigar",
-    copy: "Jurisprudencia y normativa chilena.",
+    title: "Organiza obligaciones",
+    copy: "Extrae obligaciones, plazos y requisitos relevantes del documento.",
   },
   {
     id: "04",
-    title: "Redactar",
-    copy: "Escritos, informes y documentos jurídicos.",
+    title: "Conversa con tu caso",
+    copy: "Haz preguntas sobre los documentos cargados y recibe respuestas contextualizadas.",
   },
 ];
 
@@ -1135,41 +869,47 @@ const FEATURES = [
     description:
       "Sube contratos, demandas o escrituras y obtén un resumen jurídico estructurado en segundos. Sin leer 80 páginas.",
     visual: "document" as const,
+    available: true,
   },
   {
     icon: Brain,
-    title: "Resumen de Causas",
+    title: "Resumen de Casos",
     description:
-      "Pega el expediente y la IA identifica partes, pretensiones, plazos críticos y próximos pasos procesales.",
+      "Carga los documentos del caso y la IA identifica partes, pretensiones, plazos críticos y próximos pasos procesales.",
     visual: "timeline" as const,
-  },
-  {
-    icon: Zap,
-    title: "Redacción Asistida",
-    description:
-      "Genera borradores de escritos, recursos y cartas en el estilo del derecho chileno. Tú revisas y firmas.",
-    visual: "draft" as const,
+    available: true,
   },
   {
     icon: MessageSquare,
-    title: "Consultas Instantáneas",
+    title: "Chat Contextual",
     description:
-      "Pregunta sobre jurisprudencia, plazos o procedimientos. Respuestas basadas en el ordenamiento jurídico chileno.",
+      "Conversa con tu caso: haz preguntas sobre los documentos cargados y recibe respuestas con el contexto de tu expediente.",
     visual: "chat" as const,
-  },
-  {
-    icon: BarChart3,
-    title: "Dashboard de Causas",
-    description:
-      "Centraliza todos tus expedientes con alertas automáticas de vencimiento y seguimiento del estado procesal.",
-    visual: "alerts" as const,
+    available: true,
   },
   {
     icon: Shield,
-    title: "100% Confidencial",
+    title: "Workspace Privado",
     description:
-      "Tus datos y los de tus clientes nunca se usan para entrenar modelos. Cumplimos con la ley de protección de datos (Ley 21.719).",
+      "Cada caso vive en un espacio privado con sus documentos, análisis y conversaciones, separado del resto de abogados.",
     visual: "secure" as const,
+    available: true,
+  },
+  {
+    icon: Zap,
+    title: "Investigación de Jurisprudencia",
+    description:
+      "Búsqueda de jurisprudencia y normativa chilena. Próximamente.",
+    visual: "draft" as const,
+    available: false,
+  },
+  {
+    icon: BarChart3,
+    title: "Redacción Asistida",
+    description:
+      "Borradores de escritos y documentos jurídicos. Próximamente.",
+    visual: "alerts" as const,
+    available: false,
   },
 ];
 
@@ -1328,7 +1068,19 @@ function FeatureShowcase() {
               className="group relative flex flex-col gap-5 bg-[var(--background)]/60 p-7 transition-colors duration-500 hover:bg-[var(--surface)]/40"
             >
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--primary)]/40 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-              <f.icon className="h-4.5 w-4.5 text-[var(--primary)] transition-transform duration-500 group-hover:-translate-y-0.5" />
+              <div className="flex items-center justify-between">
+                <f.icon className="h-4.5 w-4.5 text-[var(--primary)] transition-transform duration-500 group-hover:-translate-y-0.5" />
+                <span
+                  className={cn(
+                    "rounded-full border px-2 py-0.5 text-[0.58rem] font-medium uppercase tracking-[0.14em]",
+                    f.available
+                      ? "border-[var(--primary)]/30 text-[var(--primary)]"
+                      : "border-[var(--hairline)] text-[var(--ink-faint)]"
+                  )}
+                >
+                  {f.available ? "Disponible" : "Próximamente"}
+                </span>
+              </div>
               <div>
                 <h3 className="font-[var(--font-display)] text-base font-semibold tracking-tight">
                   {f.title}
@@ -1351,8 +1103,16 @@ function FeatureShowcase() {
 /* ───── TimeSaved ───── */
 
 const COMPARISONS = [
-  { label: "Análisis documental", before: "45 min", after: "2 min" },
-  { label: "Primer borrador", before: "2 horas", after: "15 min" },
+  {
+    label: "Análisis documental",
+    before: "Lectura manual",
+    after: "Estructurado",
+  },
+  {
+    label: "Búsqueda de información",
+    before: "Revisión línea por línea",
+    after: "Contexto inmediato",
+  },
 ];
 
 function TimeSaved() {
@@ -1372,8 +1132,9 @@ function TimeSaved() {
                 Impacto real
               </span>
             </div>
-            <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.12] tracking-tight sm:text-4xl">
-              Los abogados dedican hasta{" "}
+            <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.12] tracking-tight sm:text-3xl">
+              Menos tiempo buscando información.
+              <br />
               <span
                 className="font-semibold"
                 style={{
@@ -1382,14 +1143,12 @@ function TimeSaved() {
                   color: "transparent",
                 }}
               >
-                40%
-              </span>{" "}
-              de su tiempo a trabajo administrativo
+                Más tiempo tomando decisiones.
+              </span>
             </h2>
             <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--muted-foreground)]">
-              Leer documentos, redactar escritos repetitivos y resumir
-              expedientes. LegalUp AI automatiza esas tareas para que te
-              concentres en el trabajo de alto valor.
+              LegalUp AI organiza rápidamente la información relevante de tus
+              documentos para ayudarte a concentrarte en el análisis jurídico.
             </p>
           </motion.div>
 
@@ -1417,7 +1176,7 @@ function TimeSaved() {
                   <p className="text-[0.6rem] uppercase tracking-[0.22em] text-[var(--ink-faint)]">
                     Antes
                   </p>
-                  <p className="mt-1 font-[var(--font-display)] text-3xl font-semibold tracking-tight text-[var(--muted-foreground)] line-through decoration-[var(--destructive)]/40 decoration-1">
+                  <p className="mt-1 font-[var(--font-display)] text-xl font-semibold tracking-tight text-[var(--muted-foreground)] line-through decoration-[var(--destructive)]/40 decoration-1">
                     {c.before}
                   </p>
                 </div>
@@ -1438,7 +1197,7 @@ function TimeSaved() {
                     Ahora
                   </p>
                   <p
-                    className="mt-1 font-[var(--font-display)] text-5xl font-bold tracking-tight"
+                    className="mt-1 font-[var(--font-display)] text-2xl font-bold tracking-tight"
                     style={{
                       backgroundImage: "var(--gradient-headline)",
                       backgroundClip: "text",
@@ -1463,12 +1222,12 @@ const PILLARS = [
   {
     icon: EyeOff,
     label: "Confidencialidad",
-    copy: "Tus documentos y los de tus clientes no se usan para entrenar modelos.",
+    copy: "Tus documentos viven en tu workspace y no se comparten entre abogados.",
   },
   {
     icon: Lock,
     label: "Privacidad",
-    copy: "Cada consulta se procesa de forma aislada dentro de tu espacio de trabajo.",
+    copy: "Cada caso y sus documentos se mantienen separados dentro de tu espacio de trabajo.",
   },
   {
     icon: SlidersHorizontal,
@@ -1477,8 +1236,8 @@ const PILLARS = [
   },
   {
     icon: ShieldCheck,
-    label: "Seguridad",
-    copy: "Cumplimos con la ley de protección de datos personales (Ley 21.719).",
+    label: "Control de acceso",
+    copy: "Cada abogado accede únicamente a sus propios casos y documentos.",
   },
 ];
 
@@ -1509,8 +1268,9 @@ function SecuritySection() {
             <span className="text-[var(--ink-dim)]">son tuyos.</span>
           </h2>
           <p className="mt-5 text-base leading-relaxed text-[var(--muted-foreground)]">
-            El secreto profesional no es negociable. LegalUp AI está construido
-            para que la información de tus causas nunca salga de tu control.
+            Tus documentos están asociados a tu workspace y protegidos mediante
+            controles de acceso, para que cada abogado pueda acceder únicamente
+            a sus propios casos y documentos.
           </p>
         </motion.div>
 
@@ -1552,392 +1312,284 @@ function SecuritySection() {
   );
 }
 
-/* ───── WaitlistForm ───── */
+/* ───── PricingSection ───── */
 
-interface WaitlistFormState {
-  area: string;
-  timeOnDocs: string;
-  usesChatGPT: string;
-  biggestTask: string;
-  email: string;
-}
-
-const CHATGPT_OPTIONS = ["Sí, regularmente", "Lo he probado", "No, nunca"];
-
-const STEPS = [
-  {
-    key: "area" as const,
-    question: "¿En qué área del derecho ejerces principalmente?",
-  },
-  {
-    key: "timeOnDocs" as const,
-    question:
-      "¿Cuánto tiempo dedicas a leer/resumir documentos por día?",
-  },
-  {
-    key: "usesChatGPT" as const,
-    question:
-      "¿Usas actualmente ChatGPT u otra IA para tu trabajo legal?",
-  },
-  {
-    key: "biggestTask" as const,
-    question: "¿Qué tarea te consume más tiempo actualmente?",
-  },
-  {
-    key: "email" as const,
-    question: "¿A qué correo enviamos tu acceso?",
-  },
-];
-
-function WaitlistForm({
-  form,
-  setForm,
+function PricingSection({
+  ctaLabel = "Probar gratis 5 días",
+  onStart,
   loading,
-  submitted,
-  onSubmit,
-  areas,
-  timeOptions,
-  tasks,
 }: {
-  form: WaitlistFormState;
-  setForm: React.Dispatch<React.SetStateAction<WaitlistFormState>>;
+  ctaLabel?: string;
+  onStart: () => void;
   loading: boolean;
-  submitted: boolean;
-  onSubmit: (e: React.FormEvent) => void;
-  areas: string[];
-  timeOptions: string[];
-  tasks: string[];
 }) {
-  const [step, setStep] = useState(0);
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
-  const currentValue = form[current.key];
-  const canAdvance =
-    current.key === "email" ? Boolean(form.email) : Boolean(currentValue);
-
-  const optionClass = (active: boolean) =>
-    [
-      "w-full rounded-xl border px-4 py-3.5 text-left text-sm transition-all duration-300",
-      active
-        ? "border-[var(--primary)]/50 text-[var(--foreground)] shadow-[var(--shadow-glow)]"
-        : "border-[var(--hairline)] bg-[var(--surface)]/25 text-[var(--ink-dim)] hover:-translate-y-0.5 hover:border-[var(--primary)]/25 hover:bg-[var(--surface)]/50",
-    ].join(" ");
-
-  if (submitted) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="relative overflow-hidden rounded-2xl p-10 text-center sm:p-14"
-        style={{
-          backgroundImage: "var(--gradient-glass)",
-          backgroundColor: "oklch(0.12 0.012 264 / 70%)",
-          backdropFilter: "blur(18px)",
-          border: "1px solid var(--hairline)",
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 -top-24 h-64"
-          style={{
-            background:
-              "radial-gradient(60% 60% at 50% 0%, oklch(0.78 0.16 163 / 16%) 0%, transparent 70%)",
-          }}
-        />
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--primary)]/30"
-          style={{ backgroundColor: "var(--emerald-soft)" }}
-        >
-          <Check className="h-7 w-7 text-[var(--primary)]" />
-        </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0, letterSpacing: "0.5em" }}
-          animate={{ opacity: 1, letterSpacing: "0.3em" }}
-          transition={{ duration: 1, delay: 0.35 }}
-          className="mt-8 font-[var(--font-display)] text-xl font-bold text-[var(--primary)] sm:text-2xl"
-        >
-          Acceso anticipado confirmado
-        </motion.p>
-
-        <p className="mx-auto mt-5 max-w-md text-base text-[var(--ink-dim)]">
-          Ya estás en la lista de LegalUp AI.
-        </p>
-        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
-          Serás de los primeros abogados en Chile en conocer y probar la nueva generación de inteligencia artificial para el trabajo legal.
-          Te avisaremos cuando abramos el acceso anticipado.
-        </p>
-
-        <div className="mt-9">
-          <Button
-            variant="quiet"
-            size="lg"
-            onClick={() =>
-              document
-                .getElementById("top")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
-          >
-            Volver al inicio
-          </Button>
-        </div>
-      </motion.div>
-    );
-  }
+  const PRICING_FEATURES = [
+    "Workspace privado por caso",
+    "Análisis de documentos con IA",
+    "Análisis de riesgos y obligaciones",
+    "Chat contextual con tus documentos",
+    "Sin permanencia",
+  ];
 
   return (
-    <div
-      className="relative overflow-hidden rounded-2xl p-6 sm:p-10"
-      style={{
-        backgroundImage: "var(--gradient-glass)",
-        backgroundColor: "oklch(0.12 0.012 264 / 70%)",
-        backdropFilter: "blur(18px)",
-        border: "1px solid var(--hairline)",
-      }}
-    >
-      <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[var(--emerald-accent)]/[0.07] blur-[90px]" />
-
-      <div className="mb-9 flex items-center gap-3">
-        <div className="flex flex-1 gap-1.5">
-          {STEPS.map((s, i) => (
-            <div
-              key={s.key}
-              className="h-[3px] flex-1 overflow-hidden rounded-full bg-[var(--foreground)]/10"
-            >
-              <motion.div
-                initial={false}
-                animate={{ scaleX: i <= step ? 1 : 0 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="h-full origin-left bg-[var(--primary)]"
-              />
-            </div>
-          ))}
-        </div>
-        <span className="font-[var(--font-mono)] text-[0.65rem] text-[var(--ink-faint)]">
-          {String(step + 1).padStart(2, "0")}/
-          {String(STEPS.length).padStart(2, "0")}
-        </span>
+    <section className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-10 h-[26rem] w-[40rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-7">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={current.key}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="space-y-5"
-          >
-            <h3 className="font-[var(--font-display)] text-xl leading-snug tracking-tight sm:text-2xl">
-              {current.question}
-            </h3>
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center"
+        >
+          <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
+            Planes
+          </p>
+          <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.1] tracking-tight sm:text-5xl">
+            Un plan simple,
+            <br />
+            <span className="text-[var(--ink-dim)]">pensado para tu práctica.</span>
+          </h2>
+        </motion.div>
 
-            {current.key === "area" && (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {areas.map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({ ...prev, area: a }))
-                    }
-                    className={optionClass(form.area === a)}
-                  >
-                    {a}
-                  </button>
-                ))}
-              </div>
-            )}
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="relative mt-14 overflow-hidden rounded-2xl border border-[var(--primary)]/30 p-8 sm:p-12"
+          style={{
+            backgroundImage: "var(--gradient-glass)",
+            backgroundColor: "oklch(0.12 0.012 264 / 70%)",
+            backdropFilter: "blur(18px)",
+            boxShadow: "var(--shadow-glow)",
+          }}
+        >
+          <div
+            className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[var(--emerald-accent)]/[0.09] blur-[90px]"
+          />
 
-            {current.key === "timeOnDocs" && (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {timeOptions.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({ ...prev, timeOnDocs: t }))
-                    }
-                    className={optionClass(form.timeOnDocs === t)}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {current.key === "usesChatGPT" && (
-              <div className="grid gap-2 sm:grid-cols-3">
-                {CHATGPT_OPTIONS.map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({ ...prev, usesChatGPT: o }))
-                    }
-                    className={optionClass(form.usesChatGPT === o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {current.key === "biggestTask" && (
-              <div className="space-y-2">
-                {tasks.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() =>
-                      setForm((prev) => ({ ...prev, biggestTask: t }))
-                    }
-                    className={`${optionClass(form.biggestTask === t)} flex items-center gap-3`}
-                  >
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${form.biggestTask === t ? "border-[var(--primary)] bg-[var(--primary)]" : "border-[var(--input)]"}`}
-                    >
-                      {form.biggestTask === t && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary-foreground)]" />
-                      )}
-                    </span>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {current.key === "email" && (
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  required
-                  autoFocus
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  placeholder="juan@estudio.cl"
-                  className="w-full rounded-xl border border-[var(--input)] bg-[var(--background)]/50 px-4 py-4 text-base outline-none transition-colors placeholder:text-[var(--ink-faint)] focus:border-[var(--primary)]/50 focus:ring-1 focus:ring-[var(--ring)]"
-                />
-                <p className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[var(--primary)]/70" />
-                  Sin spam. Solo te contactamos cuando estemos listos para darte
-                  acceso.
-                </p>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="flex items-center gap-3 pt-2">
-          {step > 0 && (
-            <Button
-              type="button"
-              variant="quiet"
-              size="lg"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="px-4"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Atrás</span>
-            </Button>
-          )}
-
-          {isLast ? (
-            <Button
-              type="submit"
-              variant="glow"
-              size="xl"
-              disabled={loading || !form.email || !form.area}
-              className="flex-1"
-              style={loading ? { opacity: 1 } : undefined}
-            >
-              {loading ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Enviando...
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3">
+                <h3 className="font-[var(--font-display)] text-2xl font-bold tracking-tight">
+                  LegalUp AI Pro
+                </h3>
+                <span
+                  className="rounded-full border border-[var(--primary)]/40 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]"
+                  style={{ backgroundColor: "var(--emerald-soft)" }}
+                >
+                  5 días gratis
                 </span>
+              </div>
+              <p className="mt-5 flex items-baseline gap-2">
+                <span className="font-[var(--font-display)] text-5xl font-bold tracking-tight">
+                  $49.900
+                </span>
+                <span className="text-[var(--muted-foreground)]">CLP/mes</span>
+              </p>
+            </div>
+
+            <div className="w-full sm:w-auto">
+              <ul className="space-y-3">
+                {PRICING_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-sm text-[var(--ink-dim)]">
+                    <Check className="h-4 w-4 shrink-0 text-[var(--primary)]" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10">
+            <Button variant="glow" size="xl" onClick={onStart} disabled={loading} className="w-full sm:w-auto">
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <Send className="h-4 w-4" /> Solicitar acceso
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="glow"
-              size="xl"
-              disabled={!canAdvance}
-              onClick={() =>
-                setStep((s) => Math.min(STEPS.length - 1, s + 1))
-              }
-              className="flex-1"
-            >
-              Continuar
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </form>
-    </div>
+          </div>
+          <p className="mt-4 text-xs text-[var(--muted-foreground)]">
+            Sin tarjeta · $49.900 CLP/mes después del trial
+          </p>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
 /* ───── Main: LegalUpAI ───── */
 
-const AREAS = [
-  "Derecho Laboral",
-  "Derecho de Familia",
-  "Derecho Civil",
-  "Derecho Penal",
-  "Derecho Comercial",
-  "Otra área",
-];
-
-const TIME_OPTIONS = [
-  "Menos de 1 hora diaria",
-  "1-2 horas diarias",
-  "3-4 horas diarias",
-  "Más de 4 horas diarias",
-];
-
-const TASKS = [
-  "Leer y resumir documentos",
-  "Redactar escritos y recursos",
-  "Investigar jurisprudencia",
-  "Gestionar plazos y causas",
-  "Preparar informes para clientes",
-];
-
 function LegalUpAI() {
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
+  const [showPricingModal, setShowPricingModal] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
   const [headerHasBackground, setHeaderHasBackground] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [headerFixed, setHeaderFixed] = useState(true);
-  const { user } = useAuth();
-  const [form, setForm] = useState<WaitlistFormState>({
-    area: "",
-    timeOnDocs: "",
-    usesChatGPT: "",
-    biggestTask: "",
-    email: "",
-  });
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const aiSub = useAISubscription();
+  const startTrial = useStartAITrial();
 
-  useEffect(() => {
-    if (user?.email && !form.email) {
-      setForm((prev) => ({ ...prev, email: user.email as string }));
+  // Misma regla que usa el guard existente /lawyer/* (RequireLawyer): el rol
+  // real del usuario vive en user_metadata y/o en el perfil.
+  const isLawyer =
+    user?.role === "lawyer" ||
+    user?.user_metadata?.role === "lawyer" ||
+    user?.profile?.role === "lawyer";
+
+  // Usuario autenticado sin perfil de abogado → completar el perfil antes del trial.
+  const needsProfile = !!user && !isLawyer;
+  const canResume = aiSub.status === "cancelled" || aiSub.status === "past_due";
+
+  // El estado real lo decide el backend (useAISubscription); aquí solo se elige copy/CTA.
+  const ctaLabel = needsProfile
+    ? "Completar perfil"
+    : canResume
+      ? "Reanudar LegalUp AI"
+      : aiSub.isActive
+        ? "Abrir LegalUp AI"
+        : aiSub.hasAccess
+          ? "Ir a LegalUp AI"
+          : "Probar gratis 5 días";
+  const headerCtaLabel = needsProfile
+    ? "Completar perfil"
+    : canResume
+      ? "Reanudar"
+      : aiSub.isActive
+        ? "Abrir LegalUp AI"
+        : aiSub.hasAccess
+          ? "Ir a LegalUp AI"
+          : "Probar gratis";
+
+  const trackCta = (location: string) => {
+    try {
+      posthog.capture("ai_landing_cta_clicked", { cta_location: location });
+    } catch {
+      /* noop */
     }
-  }, [user?.email]);
+  };
+
+  const handleCompleteProfile = () => {
+    // Intención para que, al volver de crear el perfil, la landing continúe el trial.
+    try {
+      localStorage.setItem("aiPendingTrial", "1");
+    } catch {
+      /* noop */
+    }
+    navigate("/lawyer/onboarding?from=ai");
+  };
+
+  const startTrialFlow = async () => {
+    setTrialLoading(true);
+    try {
+      await startTrial.mutateAsync();
+      navigate("/lawyer/ai");
+    } catch (err) {
+      const msg =
+        err instanceof Error && err.message ? err.message : "";
+      // TRIAL_ALREADY_USED → no crear otro trial; mostrar el flujo de suscripción.
+      if (msg.includes("Ya utilizaste tu prueba gratuita")) {
+        toast.info(
+          "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI Pro por $49.900 CLP/mes."
+        );
+        setShowPricingModal(true);
+      } else {
+        toast.info(msg || "No se pudo iniciar la prueba gratuita.");
+        navigate("/lawyer/ai");
+      }
+    } finally {
+      setTrialLoading(false);
+    }
+  };
+
+  const handleStartTrial = (location: string) => {
+    trackCta(location);
+    if (!user) {
+      // FLUJO 1: visitante no autenticado → AuthModal existente.
+      setAuthMode("signup");
+      setShowAuthModal(true);
+      return;
+    }
+    if (!isLawyer) {
+      // FLUJO 2: autenticado sin perfil de abogado → crear/completar perfil.
+      handleCompleteProfile();
+      return;
+    }
+    if (canResume) {
+      // FLUJO 7: cancelada/pendiente → reanudar con el checkout real de Mercado Pago.
+      setShowPricingModal(true);
+      return;
+    }
+    // FLUJOS 3/4/5/6: abogado → trial directo o, si ya accede, al workspace.
+    if (aiSub.hasAccess) {
+      navigate("/lawyer/ai");
+      return;
+    }
+    startTrialFlow();
+  };
+
+  // Continuación tras autenticarse desde la landing.
+  const [pendingFlow, setPendingFlow] = useState(false);
+  const handleAuthModalClose = () => {
+    setShowAuthModal(false);
+    setPendingFlow(true);
+  };
+  useEffect(() => {
+    if (!pendingFlow || authLoading || !user) return;
+    setPendingFlow(false);
+    if (!isLawyer) {
+      handleCompleteProfile();
+      return;
+    }
+    if (canResume) {
+      setShowPricingModal(true);
+      return;
+    }
+    if (aiSub.hasAccess) {
+      navigate("/lawyer/ai");
+      return;
+    }
+    startTrialFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingFlow, user, authLoading, isLawyer, canResume, aiSub.hasAccess]);
+
+  // Continuación al volver de crear el perfil de abogado (onboarding ?from=ai).
+  useEffect(() => {
+    if (authLoading || !user || !isLawyer) return;
+    let pending = false;
+    try {
+      pending = localStorage.getItem("aiPendingTrial") === "1";
+    } catch {
+      /* noop */
+    }
+    if (!pending) return;
+    try {
+      localStorage.removeItem("aiPendingTrial");
+    } catch {
+      /* noop */
+    }
+    if (canResume) {
+      setShowPricingModal(true);
+      return;
+    }
+    if (aiSub.hasAccess) {
+      navigate("/lawyer/ai");
+      return;
+    }
+    startTrialFlow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading, isLawyer, canResume, aiSub.hasAccess]);
 
   useEffect(() => {
     const rootEl = document.documentElement;
@@ -1951,67 +1603,32 @@ function LegalUpAI() {
   }, []);
 
   useEffect(() => {
-    let lastScrollY = 0;
+    const style = pushStandaloneCss();
+    return () => {
+      style.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Se dispara una vez al ver la landing.
+    try {
+      posthog.capture("ai_landing_viewed");
+    } catch {
+      /* analytics no debe romper la landing */
+    }
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
       setHeaderHasBackground(scrollY > 8);
-      const isScrollingUp = scrollY < lastScrollY;
-      setHeaderFixed(isScrollingUp || scrollY < 50);
-      setHeaderVisible(!(scrollY > lastScrollY && scrollY > 120));
-      lastScrollY = scrollY;
+      // El header queda siempre fijo y visible en la parte superior.
+      setHeaderFixed(true);
+      setHeaderVisible(true);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.email || !form.area) return;
-    setLoading(true);
-    try {
-      if (supabase) {
-        const { error } = await supabase.from("ai_waitlist").insert([
-          {
-            email: form.email,
-            legal_area: form.area,
-            time_on_docs: form.timeOnDocs,
-            uses_chatgpt: form.usesChatGPT,
-            biggest_task: form.biggestTask,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        if (error) {
-          console.error("Waitlist insert error:", error);
-          console.log("Waitlist Lead Data:", form);
-        }
-      } else {
-        console.log("Supabase not configured. Lead data:", form);
-      }
-      window.gtag?.("event", "legalup_ai_waitlist_signup", {
-        area: form.area,
-        uses_chatgpt: form.usesChatGPT,
-      });
-      setSubmitted(true);
-      toast.success("¡Te has registrado con éxito!");
-    } catch (err) {
-      console.error("Submission error:", err);
-      setSubmitted(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const scrollToWaitlist = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const element = document.getElementById("waitlist");
-    if (element) {
-      const headerOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - headerOffset;
-      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-      window.gtag?.("event", "legalup_ai_hero_cta_click");
-    }
-  };
 
   const scrollToCapabilities = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
@@ -2025,19 +1642,30 @@ function LegalUpAI() {
   return (
     <div
       id="top"
-      className="min-h-screen"
+      className="legalup-landing min-h-screen"
       style={{
         backgroundColor: "var(--background)",
         color: "var(--foreground)",
       }}
     >
       <Toaster />
+      <Helmet>
+        <title>LegalUp AI | Inteligencia artificial para abogados en Chile</title>
+        <meta
+          name="description"
+          content="Analiza documentos jurídicos, identifica riesgos y conversa con tus casos usando LegalUp AI. Prueba gratis durante 5 días."
+        />
+      </Helmet>
       <Header
         hasBackground={headerHasBackground}
         visible={headerVisible}
         fixed={headerFixed}
-        onAuthClick={() => setShowAuthModal(true)}
-        onCtaClick={scrollToWaitlist}
+        onAuthClick={() => {
+          setAuthMode("login");
+          setShowAuthModal(true);
+        }}
+        onCtaClick={() => handleStartTrial("header")}
+        ctaLabel={headerCtaLabel}
       />
 
       {/* HERO */}
@@ -2053,7 +1681,7 @@ function LegalUpAI() {
             >
               <Sparkles className="h-3.5 w-3.5 text-[var(--primary)]" />
               <span className="text-[0.65rem] font-medium uppercase tracking-[0.2em] text-[var(--ink-dim)]">
-                Acceso anticipado · LegalUp AI
+                LegalUp AI · Disponible ahora
               </span>
             </motion.div>
 
@@ -2061,11 +1689,14 @@ function LegalUpAI() {
               initial={{ opacity: 0, y: 22 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-8 text-[3rem] font-[var(--font-display)] leading-[0.98] tracking-[-0.035em] sm:text-8xl"
+              className="mt-8 text-[3rem] font-[var(--font-display)] leading-[0.98] tracking-[-0.035em] sm:text-7xl"
             >
               <span className="block">Inteligencia Jurídica</span>
               <span className="mt-2 block text-[var(--ink-dim)]">
-                A una nueva {" "}
+                para trabajar tus casos
+              </span>
+              <span className="mt-2 block text-[var(--ink-dim)]">
+                a una nueva{" "}
                 <span
                   className=" "
                   style={{
@@ -2085,7 +1716,8 @@ function LegalUpAI() {
               className="mx-auto mt-8 text-base leading-relaxed sm:text-lg"
               style={{ color: "var(--muted-foreground)" }}
             >
-              Analiza documentos, entiende causas, investiga y redacta con IA diseñada para el derecho chileno
+              Analiza documentos jurídicos, identifica riesgos y conversa con
+              una IA sobre tus casos desde un workspace privado.
             </motion.p>
 
             <motion.div
@@ -2094,16 +1726,22 @@ function LegalUpAI() {
               transition={{ duration: 0.9, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
               className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
-              <a
-                href="#waitlist"
-                onClick={scrollToWaitlist}
-                className="w-full sm:w-auto text-md"
+              <Button
+                variant="glow"
+                size="xl"
+                className="w-full sm:w-auto !text-md"
+                onClick={() => handleStartTrial("hero")}
+                disabled={trialLoading}
               >
-                <Button variant="glow" size="xl" className="w-full sm:w-auto !text-md">
-                  Solicitar acceso anticipado
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </a>
+                {trialLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {ctaLabel}
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
               <a
                 href="#capacidades"
                 onClick={scrollToCapabilities}
@@ -2115,6 +1753,15 @@ function LegalUpAI() {
                 </Button>
               </a>
             </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.45 }}
+              className="mt-5 text-xs tracking-wide text-[var(--muted-foreground)]"
+            >
+              5 días gratis · Sin tarjeta · Después $49.900 CLP/mes
+            </motion.p>
           </div>
 
           <div className="mt-16 sm:mt-24">
@@ -2129,91 +1776,62 @@ function LegalUpAI() {
       <TimeSaved />
       <SecuritySection />
 
-      {/* WAITLIST */}
-      <section
-        id="waitlist"
-        className="relative overflow-hidden border-t border-[var(--hairline)] py-24 sm:py-32"
-      >
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div
-            className="absolute inset-0 opacity-40"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px)",
-              backgroundSize: "64px 64px",
-            }}
-          />
-          <div className="absolute left-1/2 top-0 h-[30rem] w-[46rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
-          <div
-            className="absolute inset-0 opacity-[0.03] mix-blend-soft-light"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")",
-            }}
-          />
+      {/* PRICING */}
+      <PricingSection
+        ctaLabel={ctaLabel}
+        onStart={() => {
+          try { posthog.capture("ai_landing_pricing_viewed"); } catch { /* noop */ }
+          handleStartTrial("pricing");
+        }}
+        loading={trialLoading}
+      />
+
+      {/* FINAL CTA */}
+      <section className="relative border-t border-[var(--hairline)] py-24 text-center sm:py-28">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 -z-10 overflow-hidden">
+          <div className="absolute left-1/2 top-1/2 h-[24rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--emerald-accent)]/[0.06] blur-[140px]" />
         </div>
-
-        <div className="mx-auto max-w-3xl px-5 sm:px-8">
-          {!submitted && (
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="mb-12 text-center"
-            >
-              <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
-                Configura tu experiencia LegalUp AI
-              </p>
-              <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.1] tracking-tight sm:text-5xl">
-                Construyamos el futuro
-                <br />
-                <span className="text-[var(--ink-dim)]">
-                  del trabajo legal.
-                </span>
-              </h2>
-              <p className="mx-auto mt-5 max-w-xl text-base text-[var(--muted-foreground)]">
-                Estamos seleccionando a los primeros abogados que probarán
-                LegalUp AI.
-              </p>
-            </motion.div>
-          )}
-
-          <WaitlistForm
-            form={form}
-            setForm={setForm}
-            loading={loading}
-            submitted={submitted}
-            onSubmit={handleSubmit}
-            areas={AREAS}
-            timeOptions={TIME_OPTIONS}
-            tasks={TASKS}
-          />
+        <div className="mx-auto max-w-2xl px-5">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <h2 className="font-[var(--font-display)] text-3xl tracking-tight sm:text-5xl">
+              Tu próximo caso puede empezar aquí.
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-[var(--muted-foreground)]">
+              {needsProfile
+                ? "Antes de comenzar tu prueba gratuita, necesitamos completar tu perfil de abogado."
+                : "Prueba LegalUp AI gratis durante 5 días."}
+            </p>
+            <div className="mt-9">
+              <Button
+                variant="glow"
+                size="xl"
+                onClick={() => {
+                  try { posthog.capture("ai_landing_final_cta_clicked", { cta_location: "final_cta" }); } catch { /* noop */ }
+                  handleStartTrial("final_cta");
+                }}
+                disabled={trialLoading}
+              >
+                {trialLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {ctaLabel}
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="mt-4 text-xs text-[var(--muted-foreground)]">
+              Sin tarjeta · $49.900 CLP/mes después del trial
+            </p>
+          </motion.div>
         </div>
       </section>
-
-      {/* BOTTOM CTA */}
-      {!submitted && (
-        <section className="relative border-t border-[var(--hairline)] py-20 text-center">
-          <div className="mx-auto max-w-2xl px-5">
-            <h2 className="font-[var(--font-display)] text-2xl tracking-tight sm:text-3xl">
-              La nueva era del trabajo legal
-            </h2>
-            <p className="mt-4 text-[var(--muted-foreground)]">
-              Únete a los primeros abogados en usar IA diseñada para el derecho
-              chileno.
-            </p>
-            <div className="mt-8">
-              <a href="#waitlist" onClick={scrollToWaitlist}>
-                <Button variant="glow" size="lg">
-                  Unirme a la lista de espera
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </a>
-            </div>
-          </div>
-        </section>
-      )}
 
       <footer className="border-t border-[var(--hairline)] py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 sm:flex-row sm:px-8">
@@ -2232,10 +1850,14 @@ function LegalUpAI() {
         </div>
       </footer>
 
+      <AIPricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
+
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialMode="login"
+        onClose={handleAuthModalClose}
+        mode={authMode}
+        onModeChange={setAuthMode}
+        aiLanding
       />
     </div>
   );

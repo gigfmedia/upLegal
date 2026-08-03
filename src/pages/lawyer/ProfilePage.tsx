@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { initializeFormData } from '@/utils/initializeFormData';
 import { supabase } from '@/lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { AISubscriptionCard } from '@/components/legalup-ai/AISubscriptionCard';
 import { DocumentUpload } from '@/components/ui/document-upload';
 import { ProfileAvatarUpload } from '@/components/ProfileAvatarUpload';
 import { useProfile } from '@/hooks/useProfile';
@@ -692,7 +693,7 @@ export default function LawyerProfilePage() {
   };
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6 mx-auto">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
           {error}
@@ -1573,6 +1574,8 @@ export default function LawyerProfilePage() {
           )}
         </div>
       </form>
+
+      <AISubscriptionCard />
     </div>
   );
 }

@@ -17,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { usePlatformSettings } from '@/hooks/usePlatformSettings';
 import { fetchPayoutLogs } from '@/services/payoutLogs';
-import Header from '@/components/Header';
 import RequireAdmin from '@/components/auth/RequireAdmin';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { PaymentsTable } from '@/components/admin/PaymentsTable';
@@ -276,9 +275,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="w-full">
-      <Header />
       <RequireAdmin>
-        <div className="min-h-screen bg-slate-50 pt-32 pb-10">
+        <div className="min-h-screen bg-slate-50 pt-12 pb-10">
           <div className="w-full max-w-7xl mx-auto space-y-6">
             <header>
               <Badge variant="outline" className="mb-2">

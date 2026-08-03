@@ -212,8 +212,31 @@ export default function LawyerOnboardingWizard() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     sessionStorage.removeItem('onboardingStep');
+    try {
+      // El flujo "Crear tu perfil de abogado" debe dejar al usuario con rol de
+      // abogado para que LegalUp AI pueda operar en su área protegida.
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          role: 'lawyer',
+          profile_setup_completed: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user!.id);
+      if (error) console.error('Error marcando rol de abogado:', error);
+      await supabase.auth.updateUser({ data: { role: 'lawyer' } });
+    } catch (err) {
+      console.error('Error al completar perfil de abogado:', err);
+    }
+    // Si el abogado venía desde LegalUp AI, volver a la landing para continuar
+    // automáticamente con el trial.
+    const from = new URLSearchParams(window.location.search).get('from');
+    if (from === 'ai') {
+      navigate('/ai', { replace: true });
+      return;
+    }
     navigate('/lawyer/dashboard', { replace: true });
   };
 

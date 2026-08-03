@@ -470,7 +470,7 @@ function ClientDashboardContent() {
   };
 
   return (
-    <div className="container mx-auto px-8 py-6 space-y-6">
+    <div className="mx-auto px-8 py-6 space-y-6">
       <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Hola, {displayName}</h1>

@@ -9,7 +9,6 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Header from '@/components/Header';
 import { calculateProfileCompletion } from '@/utils/profileCompletion';
 
 interface LawyerProfile {
@@ -242,7 +241,6 @@ export default function LawyerProfilesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="max-w-7xl mx-auto space-y-6 pt-2">
         <div className="flex justify-between items-start mb-8">
           <div>

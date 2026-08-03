@@ -1,7 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import posthog from 'posthog-js';
 import { useAuth } from '@/hooks/useAuthState';
-import { supabase } from '@/lib/supabaseClient';
 import { toast } from '@/components/ui/use-toast';
+import {
+  getAuthToken,
+  fetchNotifications as fetchNotificationsFromApi,
+  fetchUnreadCount as fetchUnreadCountFromApi,
+  markNotificationRead as markNotificationReadFromApi,
+  markAllNotificationsRead as markAllNotificationsReadFromApi,
+  type Notification,
+  type NotificationListData,
+  type NotificationRole,
+} from '@/lib/notifications/api';
 
 interface NotificationPreference {
   email: boolean;
@@ -16,25 +27,18 @@ interface NotificationSettings {
   marketing: NotificationPreference;
 }
 
-export interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'appointment' | 'message' | 'payment' | 'system';
-  read: boolean;
-  createdAt: Date;
-  link?: string;
-}
+export type { Notification };
 
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   settings: NotificationSettings;
   isLoading: boolean;
+  isError: boolean;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   updateSettings: (settings: Partial<NotificationSettings>) => Promise<void>;
-  fetchNotifications: () => Promise<void>;
+  fetchNotifications: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => void;
 }
 
@@ -50,142 +54,138 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<NotificationSettings>(defaultSettings);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const enabled = !!user && isAuthenticated;
 
-  // Load notifications and settings from API
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchNotifications();
-      fetchSettings();
-    }
-  }, [user]);
+  const role: NotificationRole =
+    user?.user_metadata?.role === 'lawyer' || user?.profile?.role === 'lawyer'
+      ? 'lawyer'
+      : 'client';
 
-  const fetchNotifications = async () => {
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
+  const listQuery = useQuery({
+    queryKey: ['notifications', 'list', user?.id],
+    queryFn: async () => {
+      const token = await getAuthToken();
+      if (!token) return { rows: [], total: 0 };
+      return fetchNotificationsFromApi(token, role, { limit: 50 });
+    },
+    enabled,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  const unreadQuery = useQuery({
+    queryKey: ['notifications', 'unread', user?.id],
+    queryFn: async () => {
+      const token = await getAuthToken();
+      if (!token) return 0;
+      return fetchUnreadCountFromApi(token);
+    },
+    enabled,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [queryClient]);
+
+  const markAsReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = await getAuthToken();
       if (!token) return;
-
-      const response = await fetch('/api/notifications', {
-        headers: { Authorization: `Bearer ${token}` },
+      await markNotificationReadFromApi(token, id);
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications', 'list'] });
+      queryClient.setQueryData(['notifications', 'list', user?.id], (old: NotificationListData | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          rows: old.rows.map((n: Notification) => (n.id === id ? { ...n, read: true } : n)),
+        };
       });
-      const data = await response.json();
+      queryClient.setQueryData(['notifications', 'unread', user?.id], (old: number | undefined) =>
+        Math.max(0, (old ?? 0) - 1)
+      );
+    },
+    onSettled: () => invalidate(),
+  });
 
-      if (data.notifications) {
-        setNotifications(
-          data.notifications.map((n: any) => ({
-            id: n.id,
-            title: n.title,
-            message: n.body || '',
-            type: n.type === 'case_assigned' ? 'message' : 'system',
-            read: n.is_read,
-            createdAt: new Date(n.created_at),
-            link: n.entity_type === 'request' ? `/empresa/solicitudes/${n.entity_id}` : undefined,
-          }))
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/notification-settings');
-      // const data = await response.json();
-      // setSettings(data);
-      
-      // Use default settings for now
-      setSettings(defaultSettings);
-    } catch (error) {
-      console.error('Error fetching notification settings:', error);
-      // Fallback to default settings
-      setSettings(defaultSettings);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
-
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-    if (token) {
-      await fetch(`/api/notifications/${id}/read`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getAuthToken();
+      if (!token) return;
+      await markAllNotificationsReadFromApi(token);
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      queryClient.setQueryData(['notifications', 'list', user?.id], (old: NotificationListData | undefined) => {
+        if (!old) return old;
+        return { ...old, rows: old.rows.map((n: Notification) => ({ ...n, read: true })) };
       });
-    }
-  };
+      queryClient.setQueryData(['notifications', 'unread', user?.id], () => 0);
+    },
+    onSettled: () => invalidate(),
+  });
 
-  const markAllAsRead = async () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-    if (token) {
-      await fetch('/api/notifications/read-all', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+  const markAsRead = useCallback(
+    (id: string) => {
+      const target = listQuery.data?.rows.find((n) => n.id === id);
+      posthog.capture('notification_marked_read', {
+        notification_type: target?.type,
+        entity_type: target?.entityType,
       });
-    }
-  };
+      markAsReadMutation.mutate(id);
+    },
+    [listQuery.data, markAsReadMutation]
+  );
 
-  const updateSettings = async (newSettings: Partial<NotificationSettings>) => {
-    try {
-      const updatedSettings = { ...settings, ...newSettings };
-      setSettings(updatedSettings);
-      
-      // TODO: Call API to update settings
-      // await fetch('/api/notification-settings', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(updatedSettings)
-      // });
-      
-      toast({
-        title: 'Configuración guardada',
-        description: 'Tus preferencias de notificación han sido actualizadas',
-      });
-    } catch (error) {
-      console.error('Error updating notification settings:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudieron guardar las preferencias de notificación',
-        variant: 'destructive',
-      });
-    }
-  };
+  const markAllAsRead = useCallback(() => {
+    posthog.capture('notification_marked_all_read');
+    markAllReadMutation.mutate();
+  }, [markAllReadMutation]);
 
-  const addNotification = (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Math.random().toString(36).substr(2, 9),
-      read: false,
-      createdAt: new Date(),
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
-    
-    // TODO: Call API to save notification
-  };
+  const fetchNotifications = useCallback(() => {
+    invalidate();
+  }, [invalidate]);
+
+  const updateSettings = useCallback(async (newSettings: Partial<NotificationSettings>) => {
+    const updated = { ...settings, ...newSettings };
+    setSettings(updated);
+    toast({
+      title: 'Configuración guardada',
+      description: 'Tus preferencias de notificación han sido actualizadas',
+    });
+  }, [settings]);
+
+  const addNotification = useCallback(
+    (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => {
+      const newNotification: Notification = {
+        ...notification,
+        id: Math.random().toString(36).substr(2, 9),
+        read: false,
+        createdAt: new Date(),
+      };
+      queryClient.setQueryData(['notifications', 'list', user?.id], (old: NotificationListData | undefined) => {
+        if (!old) return { rows: [newNotification], total: 1 };
+        return { ...old, rows: [newNotification, ...old.rows] };
+      });
+      queryClient.setQueryData(['notifications', 'unread', user?.id], (old: number | undefined) => (old ?? 0) + 1);
+    },
+    [queryClient, user?.id]
+  );
 
   return (
     <NotificationContext.Provider
       value={{
-        notifications,
-        unreadCount,
+        notifications: listQuery.data?.rows ?? [],
+        unreadCount: unreadQuery.data ?? 0,
         settings,
-        isLoading,
+        isLoading: listQuery.isLoading || unreadQuery.isLoading,
+        isError: listQuery.isError,
         markAsRead,
         markAllAsRead,
         updateSettings,

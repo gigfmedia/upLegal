@@ -12,6 +12,17 @@ import axios from 'axios';
 import { Resend } from 'resend';
 import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
+import { z } from 'zod';
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { chatCompletion, isAIProviderConfigured } from './server/ai/provider.mjs';
+import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
+import {
+  buildChatSystemPrompt,
+  buildChatContext,
+  buildChatUserPrompt,
+  CHAT_LIMITS,
+} from './server/ai/legalChatPrompt.mjs';
+import { createNotificationService } from './server/notifications/service.mjs';
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -63,6 +74,10 @@ const resolveWebhookUrl = (req) => {
 
 if (!resend) {
   console.warn('⚠️ RESEND_API_KEY is not configured. Emails will NOT be sent.');
+}
+
+if (!isAIProviderConfigured()) {
+  console.warn('⚠️ AI_PROVIDER_API_KEY is not configured. LegalUp AI document analysis will FAIL.');
 }
 
 if (!mercadoPagoWebhookUrl) {
@@ -151,6 +166,9 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
     persistSession: false
   }
 });
+
+// Notification Service central — único punto de creación de notificaciones in-app.
+const notificationsService = createNotificationService(supabase);
 
 // DEBUG: Check if Service Role Key looks like a JWT (legacy format)
 try {
@@ -274,6 +292,41 @@ const DEFAULT_PLATFORM_FEE_PERCENT = 0.2;
 const DEFAULT_CURRENCY = 'CLP';
 
 const normalizeRut = (rut = '') => rut.replace(/\./g, '').replace(/-/g, '').toUpperCase();
+
+// ---- LegalUp AI — Fase 2: análisis de documentos ----
+const AI_DOCUMENTS_BUCKET = 'ai-documents';
+const AI_DEFAULT_MODEL = process.env.AI_DEFAULT_MODEL || 'gpt-4o-mini';
+const MAX_EXTRACTED_TEXT_CHARS = 80000;
+
+// ---- LegalUp AI — Fase 3.5: suscripción y trial ----
+const AI_SUBSCRIPTION_PLAN = 'pro';
+const AI_SUBSCRIPTION_PRICE_CLP = 49900;
+const AI_SUBSCRIPTION_TRIAL_DAYS = 5;
+const AI_SUBSCRIPTION_TRIAL_MS = AI_SUBSCRIPTION_TRIAL_DAYS * 24 * 60 * 60 * 1000;
+const AI_EXTERNAL_REF_PREFIX = 'AI_';
+const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Pro activo no limita.
+const AI_TRIAL_MAX_CASES = 3;
+const AI_TRIAL_MAX_DOCUMENTS = 10;
+const AI_MAX_DOCUMENT_SIZE_MB = 20;
+
+// Esquema del análisis estructurado que debe devolver el modelo.
+const AIDocumentAnalysisSchema = z.object({
+  summary: z.string(),
+  document_type: z.string(),
+  parties: z.array(z.string()),
+  key_points: z.array(z.string()),
+  obligations: z.array(z.string()),
+  deadlines: z.array(z.union([z.string(), z.object({ date: z.string(), description: z.string() })])),
+  risks: z.array(z.string()),
+  recommendations: z.array(z.string()),
+}).transform((data) => ({
+  ...data,
+  deadlines: data.deadlines.map((item) =>
+    typeof item === 'string' ? { date: '', description: item } : item
+  ),
+}));
 
 // Profile management endpoint used during signup to ensure profiles are created
 app.post('/api/profiles', async (req, res) => {
@@ -1161,6 +1214,50 @@ app.post('/api/bookings/create', async (req, res) => {
       });
     } catch (trackingError) {
       console.error('Failed to track payment start:', trackingError);
+    }
+
+    // Notificaciones in-app "consulta agendada" (no duplican emails; el email
+    // de confirmación se envía recién tras el pago aprobado en el webhook).
+    try {
+      const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+      await notificationsService.notifyUsers([
+        ...(user_id
+          ? [{
+              userId: user_id,
+              type: 'booking.created',
+              title: isServiceBooking ? 'Servicio solicitado' : 'Consulta agendada',
+              message: isServiceBooking
+                ? `Tu solicitud de "${service_title || 'servicio legal'}" fue registrada correctamente.`
+                : `Tu consulta con ${lawyerName || 'tu abogado'} está programada para el ${scheduled_date} a las ${scheduled_time}.`,
+              entityType: 'booking',
+              entityId: booking.id,
+              metadata: {
+                booking_type: booking.booking_type,
+                scheduled_date: scheduled_date || null,
+                scheduled_time: scheduled_time || null,
+              },
+              eventId: `booking_created:${booking.id}`,
+            }]
+          : []),
+        {
+          userId: lawyer_id,
+          type: 'booking.created',
+          title: 'Nueva consulta agendada',
+          message: isServiceBooking
+            ? `${user_name} solicitó "${service_title || 'un servicio legal'}".`
+            : `${user_name} agendó una consulta contigo para el ${scheduled_date} a las ${scheduled_time}.`,
+          entityType: 'booking',
+          entityId: booking.id,
+          metadata: {
+            booking_type: booking.booking_type,
+            scheduled_date: scheduled_date || null,
+            scheduled_time: scheduled_time || null,
+          },
+          eventId: `booking_created:${booking.id}`,
+        },
+      ]);
+    } catch (notifyError) {
+      console.error('Failed to send booking notifications:', notifyError);
     }
 
     let leadId = null;
@@ -2116,6 +2213,37 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         }
       } catch (e) {
         console.error('[webhook] step=posthog_capture failed', e);
+      }
+
+      // Notificaciones in-app de pago aprobado (in-app únicamente; los emails
+      // de confirmación ya se envían más abajo en este mismo webhook).
+      try {
+        await notificationsService.notifyUsers([
+          ...(booking.user_id
+            ? [{
+                userId: booking.user_id,
+                type: 'payment.approved',
+                title: 'Pago confirmado',
+                message: 'Tu consulta legal ha sido confirmada.',
+                entityType: 'booking',
+                entityId: booking.id,
+                metadata: { booking_id: booking.id, amount: payment.transaction_amount },
+                eventId: `payment_approved:${paymentId}`,
+              }]
+            : []),
+          {
+            userId: booking.lawyer_id,
+            type: 'payment.approved',
+            title: 'Pago confirmado',
+            message: `La consulta de ${booking.user_name || 'tu cliente'} ha sido pagada correctamente.`,
+            entityType: 'booking',
+            entityId: booking.id,
+            metadata: { booking_id: booking.id, amount: payment.transaction_amount },
+            eventId: `payment_approved:${paymentId}`,
+          },
+        ]);
+      } catch (notifyError) {
+        console.error('[webhook] notifications failed:', notifyError);
       }
 
       // STEP 2: Lawyer resolution (STRICT VALIDATION)
@@ -3338,6 +3466,103 @@ const subscriptionEmailTemplates = {
   `,
 };
 
+// ---- LegalUp AI: correos de suscripción ----
+const sendAIEmail = async (to, subject, htmlContent) => {
+  if (!resend) {
+    console.warn('[LegalUpAI] Resend not configured, skipping email');
+    return;
+  }
+  try {
+    await resend.emails.send({
+      from: 'LegalUp AI <hola@mg.legalup.cl>',
+      to,
+      subject,
+      html: htmlContent,
+    });
+    console.log('[LegalUpAI] Email sent:', subject, 'to:', to);
+  } catch (error) {
+    console.error('[LegalUpAI] Email error:', error);
+  }
+};
+
+const aiSubscriptionEmailTemplates = {
+  shell: (contentHtml, badge) => `
+    <body style="margin:0;padding:16px;background:#f9fafb;">
+      <div style="max-width:580px;margin:0 auto;font-family:Inter,Arial,sans-serif;color:#111827;padding:28px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;line-height:1.6;">
+        <div style="text-align:center;margin-bottom:28px;">
+            <img src="https://legalup.cl/apple-touch-icon.png" alt="LegalUp" style="height:40px;width:40px;vertical-align:middle;margin-right:10px;border:0;" />
+            <span style="color:#1a202c;font-size:22px;font-weight:800;vertical-align:middle;">LegalUp</span>
+            <span style="font-size:10px;background:#06392f;color:#fff;padding: 4px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;">${badge}</span>
+        </div>
+        ${contentHtml}
+        <p style="font-size:11px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:16px;margin-top:32px;text-align:center;">
+            © 2026 LegalUp — Asesoría legal online en Chile.<br />
+            Todos los derechos reservados.<br />
+            Este es un correo automático de notificación administrativa.
+        </p>
+      </div>
+    </body>
+  `,
+  trialStarted: () => aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#1a202c;">Tu prueba gratuita ya está activa</h1>
+    <p>Tu prueba de <strong>${AI_SUBSCRIPTION_TRIAL_DAYS} días gratis</strong> de LegalUp AI ya está activa. Disfruta de:</p>
+    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+      <p style="margin:5px 0;">✓ Analiza documentos con IA</p>
+      <p style="margin:5px 0;">✓ Crea casos privados y organízalos</p>
+      <p style="margin:5px 0;">✓ Chatea con tu caso y obtén respuestas con contexto</p>
+    </div>
+    <p>Después de la prueba, la suscripción cuesta <strong>$49.900/mes</strong>.</p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a LegalUp AI</a>
+    </div>
+  `, 'AI'),
+  welcome: () => aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#1a202c;">¡Bienvenido a LegalUp AI Pro!</h1>
+    <p>Tu suscripción <strong>Pro</strong> está activa. Sigue trabajando tus casos con todas las herramientas de LegalUp AI.</p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a mi workspace</a>
+    </div>
+  `, 'AI'),
+  renewal: (periodEnd) => aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#1a202c;">Tu suscripción se renovó</h1>
+    <p>Tu plan <strong>Pro</strong> se renovó exitosamente. Tus beneficios están activos hasta el <strong>${periodEnd}</strong>.</p>
+  `, 'AI'),
+  payment_failed: () => aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#dc2626;">Pago no procesado</h1>
+    <p>No pudimos procesar el pago de tu suscripción de LegalUp AI. Por favor actualiza tu medio de pago para no perder el acceso.</p>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Revisar mi suscripción</a>
+    </div>
+  `, 'AI'),
+  cancelled: (periodEnd) => aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#1a202c;">Suscripción cancelada</h1>
+    <p>Tu suscripción <strong>Pro</strong> fue cancelada. Tus beneficios seguirán activos hasta el <strong>${periodEnd}</strong>.</p>
+    <p>Si cambias de opinión, puedes reactivar tu suscripción en cualquier momento.</p>
+  `, 'AI'),
+  trialReminder: (daysLeft) => {
+    const isLastDay = daysLeft === 1;
+    const heading = isLastDay
+      ? 'Tu prueba de LegalUp AI termina hoy'
+      : '¿Ya probaste LegalUp AI con un caso real?';
+    const intro = isLastDay
+      ? 'Tu prueba gratuita de LegalUp AI <strong>termina hoy</strong>.'
+      : `Te quedan <strong>${daysLeft} días</strong> de prueba gratuita de LegalUp AI. ¿Ya analizaste un documento o chateaste con un caso?`;
+    return aiSubscriptionEmailTemplates.shell(`
+    <h1 style="color:#1a202c;">${heading}</h1>
+    <p>${intro}</p>
+    <p>Suscríbete por <strong>$49.900/mes</strong> para no perder el acceso a tus casos, análisis y chat contextual.</p>
+    <div style="background:#f3f4f6;padding:20px;border-radius:8px;margin:20px 0;">
+      <p style="margin:5px 0;">✓ Analiza documentos con IA</p>
+      <p style="margin:5px 0;">✓ Crea casos privados y organízalos</p>
+      <p style="margin:5px 0;">✓ Chatea con tu caso</p>
+    </div>
+    <div style="text-align:center;margin:30px 0;">
+      <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Suscribirme ahora</a>
+    </div>
+  `, 'AI');
+  },
+};
+
 // ---- CREATE SUBSCRIPTION (Mercado Pago Preapproval) ----
 app.post('/api/empresas/subscription/create', async (req, res) => {
   try {
@@ -3682,24 +3907,24 @@ app.post('/api/empresas/requests', async (req, res) => {
       });
 
       // Notify the lawyer
-      await supabase.rpc('notify_user', {
-        p_user_id: lawyerId,
-        p_type: 'case_assigned',
-        p_title: 'Nuevo caso asignado',
-        p_body: `Se te ha asignado un caso de ${category}`,
-        p_entity_type: 'request',
-        p_entity_id: data.id,
-        p_metadata: JSON.stringify({ company_name: title || `Solicitud ${category}` }),
+      await notificationsService.notifyUser({
+        userId: lawyerId,
+        type: 'case_assigned',
+        title: 'Nuevo caso asignado',
+        message: `Se te ha asignado un caso de ${category}`,
+        entityType: 'request',
+        entityId: data.id,
+        metadata: { company_name: title || `Solicitud ${category}` },
       });
 
       // Notify the company
-      await supabase.rpc('notify_user', {
-        p_user_id: userId,
-        p_type: 'case_assigned',
-        p_title: 'Solicitud asignada',
-        p_body: `Tu solicitud de ${category} ha sido asignada a un abogado.`,
-        p_entity_type: 'request',
-        p_entity_id: data.id,
+      await notificationsService.notifyUser({
+        userId,
+        type: 'case_assigned',
+        title: 'Solicitud asignada',
+        message: `Tu solicitud de ${category} ha sido asignada a un abogado.`,
+        entityType: 'request',
+        entityId: data.id,
       });
 
       data.lawyer_id = lawyerId;
@@ -3766,6 +3991,170 @@ app.get('/api/empresas/subscription/:companyId', async (req, res) => {
 });
 
 // ---- HANDLE PREAPPROVAL WEBHOOK EVENTS ----
+// LegalUp AI: procesa eventos de preapproval (susscripción) para abogados.
+const handleAIPreapprovalWebhook = async (preapproval) => {
+  const preapprovalId = String(preapproval.id);
+  const lawyerId = String(preapproval.external_reference || '').replace(AI_EXTERNAL_REF_PREFIX, '');
+  if (!lawyerId) return;
+
+  const { data: subscription } = await supabase
+    .from('ai_subscriptions')
+    .select('*')
+    .eq('lawyer_id', lawyerId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!subscription) {
+    console.error('[LegalUpAI] No AI subscription for lawyer:', lawyerId);
+    return;
+  }
+
+  const mpStatus = preapproval.status;
+  const now = new Date();
+
+  switch (mpStatus) {
+    case 'authorized':
+    case 'active': {
+      const periodEnd = new Date(Date.now() + AI_MONTH_MS);
+      // Primera activación: el abogado venía de trial/pending y aún no había
+      // sido activado (sin current_period_start). Solo ahí se reporta "started".
+      const wasTrialing =
+        (subscription.status === 'trialing' || subscription.status === 'pending') &&
+        !subscription.current_period_start;
+
+      await supabase
+        .from('ai_subscriptions')
+        .update({
+          status: 'active',
+          provider: 'mercadopago',
+          provider_subscription_id: preapprovalId,
+          current_period_start: now.toISOString(),
+          current_period_end: periodEnd.toISOString(),
+          cancel_at_period_end: false,
+          cancelled_at: null,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', subscription.id);
+
+      await capturePostHog(wasTrialing ? 'ai_subscription_started' : 'ai_subscription_renewed', lawyerId, {
+        price_clp: AI_SUBSCRIPTION_PRICE_CLP,
+        preapproval_id: preapprovalId,
+      });
+
+      const userData = await getAILawyerEmail(lawyerId);
+      if (userData?.email) {
+        await sendAIEmail(
+          userData.email,
+          wasTrialing ? '¡Bienvenido a LegalUp AI Pro!' : 'Tu suscripción de LegalUp AI se renovó',
+          wasTrialing
+            ? aiSubscriptionEmailTemplates.welcome()
+            : aiSubscriptionEmailTemplates.renewal(periodEnd.toLocaleDateString('es-CL'))
+        );
+      }
+      break;
+    }
+    case 'cancelled': {
+      await supabase
+        .from('ai_subscriptions')
+        .update({
+          status: 'cancelled',
+          cancelled_at: now.toISOString(),
+          cancel_at_period_end: true,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', subscription.id);
+
+      await capturePostHog('ai_subscription_cancelled', lawyerId, { preapproval_id: preapprovalId });
+      break;
+    }
+    case 'paused': {
+      await supabase
+        .from('ai_subscriptions')
+        .update({ status: 'past_due', updated_at: now.toISOString() })
+        .eq('id', subscription.id);
+
+      await capturePostHog('ai_subscription_past_due', lawyerId, { preapproval_id: preapprovalId });
+      break;
+    }
+    default:
+      console.log('[LegalUpAI] Unhandled AI preapproval status:', mpStatus);
+  }
+};
+
+// LegalUp AI: procesa cobros autorizados (primera activación / renovaciones / pagos fallidos).
+const handleAIAuthorizedPayment = async (payment, subscription) => {
+  const now = new Date();
+
+  if (payment.status === 'approved') {
+    const periodEnd = new Date(Date.now() + AI_MONTH_MS);
+
+    // La primera activación ocurre cuando el abogado pasaba por trial/pending
+    // y aún no había sido activado (sin current_period_start). Solo entonces
+    // se reporta 'ai_subscription_started'; de lo contrario es una renovación.
+    const isFirstActivation =
+      (subscription.status === 'trialing' || subscription.status === 'pending') &&
+      !subscription.current_period_start;
+
+    await supabase
+      .from('ai_subscriptions')
+      .update({
+        status: 'active',
+        current_period_start: now.toISOString(),
+        current_period_end: periodEnd.toISOString(),
+        cancel_at_period_end: false,
+        cancelled_at: null,
+        updated_at: now.toISOString(),
+      })
+      .eq('id', subscription.id);
+
+    await capturePostHog(
+      isFirstActivation ? 'ai_subscription_started' : 'ai_subscription_renewed',
+      subscription.lawyer_id,
+      {
+        price_clp: payment.transaction_amount || AI_SUBSCRIPTION_PRICE_CLP,
+        payment_id: String(payment.id),
+      }
+    );
+
+    // Ingreso confirmado: se reporta en cada cobro aprobado (primera y renovaciones).
+    await capturePostHog('ai_subscription_paid', subscription.lawyer_id, {
+      price_clp: payment.transaction_amount || AI_SUBSCRIPTION_PRICE_CLP,
+      currency: 'CLP',
+      payment_id: String(payment.id),
+      preapproval_id: subscription.provider_subscription_id || null,
+    });
+
+    const userData = await getAILawyerEmail(subscription.lawyer_id);
+    if (userData?.email) {
+      await sendAIEmail(
+        userData.email,
+        isFirstActivation ? '¡Bienvenido a LegalUp AI Pro!' : 'Tu suscripción de LegalUp AI se renovó',
+        isFirstActivation
+          ? aiSubscriptionEmailTemplates.welcome()
+          : aiSubscriptionEmailTemplates.renewal(periodEnd.toLocaleDateString('es-CL'))
+      );
+    }
+  } else if (payment.status === 'rejected' || payment.status === 'refused') {
+    await supabase
+      .from('ai_subscriptions')
+      .update({ status: 'past_due', updated_at: now.toISOString() })
+      .eq('id', subscription.id);
+
+    await capturePostHog('ai_subscription_payment_failed', subscription.lawyer_id, {
+      payment_id: String(payment.id),
+    });
+
+    const userData = await getAILawyerEmail(subscription.lawyer_id);
+    if (userData?.email) {
+      await sendAIEmail(
+        userData.email,
+        'No pudimos procesar el pago de LegalUp AI',
+        aiSubscriptionEmailTemplates.payment_failed()
+      );
+    }
+  }
+};
+
 const handlePreapprovalWebhook = async (preapprovalId) => {
   console.log('[Empresas] Handling preapproval event:', preapprovalId);
 
@@ -3787,7 +4176,15 @@ const handlePreapprovalWebhook = async (preapprovalId) => {
   }
 
   const preapproval = await mpResponse.json();
-  const companyId = preapproval.external_reference;
+  const externalRef = preapproval.external_reference;
+
+  // LegalUp AI: las suscripciones AI usan external_reference `AI_<lawyerId>`.
+  if (externalRef && String(externalRef).startsWith(AI_EXTERNAL_REF_PREFIX)) {
+    await handleAIPreapprovalWebhook(preapproval);
+    return;
+  }
+
+  const companyId = externalRef;
   const mpStatus = preapproval.status;
 
   if (!companyId) {
@@ -3950,6 +4347,18 @@ const handleAuthorizedPayment = async (paymentId) => {
 
   if (!preapprovalId) {
     console.error('[Empresas] No preapproval_id in payment');
+    return;
+  }
+
+  // LegalUp AI: el pago pertenece a una suscripción AI si el preapproval
+  // está registrado en ai_subscriptions.
+  const { data: aiSubscription } = await supabase
+    .from('ai_subscriptions')
+    .select('*')
+    .eq('provider_subscription_id', String(preapprovalId))
+    .maybeSingle();
+  if (aiSubscription) {
+    await handleAIAuthorizedPayment(payment, aiSubscription);
     return;
   }
 
@@ -4317,17 +4726,57 @@ app.get('/api/notifications', async (req, res) => {
     const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
     if (!userId) return res.status(401).json({ error: 'Token inválido' });
 
-    const { data } = await supabase
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
+
+    const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .range(offset, offset + limit - 1);
 
-    res.json({ notifications: data || [] });
+    if (error) {
+      console.error('[Notifications] Error fetching:', error);
+      return res.status(500).json({ error: 'Error al cargar notificaciones' });
+    }
+
+    const { count } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    res.json({ notifications: data || [], total: count || 0 });
   } catch (error) {
     console.error('[Notifications] Error fetching:', error);
     res.status(500).json({ error: 'Error al cargar notificaciones' });
+  }
+});
+
+// Contador eficiente de no leídas (COUNT, no carga filas).
+app.get('/api/notifications/unread-count', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'No autorizado' });
+
+    const userId = await getUserIdFromToken(authHeader.replace('Bearer ', ''));
+    if (!userId) return res.status(401).json({ error: 'Token inválido' });
+
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('is_read', false);
+
+    if (error) {
+      console.error('[Notifications] Error counting unread:', error);
+      return res.status(500).json({ error: 'Error interno' });
+    }
+
+    res.json({ count: count || 0 });
+  } catch (error) {
+    console.error('[Notifications] Error counting unread:', error);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
@@ -4460,13 +4909,13 @@ app.post('/api/empresas/sla/check-breached', async (req, res) => {
         });
 
         if (r.lawyer_id) {
-          await supabase.rpc('notify_user', {
-            p_user_id: r.lawyer_id,
-            p_type: 'sla_breached',
-            p_title: 'SLA vencido',
-            p_body: 'El plazo de respuesta para un caso asignado ha vencido.',
-            p_entity_type: 'request',
-            p_entity_id: r.id,
+          await notificationsService.notifyUser({
+            userId: r.lawyer_id,
+            type: 'sla_breached',
+            title: 'SLA vencido',
+            message: 'El plazo de respuesta para un caso asignado ha vencido.',
+            entityType: 'request',
+            entityId: r.id,
           });
         }
       }
@@ -4517,13 +4966,13 @@ app.post('/api/empresas/requests/:id/first-response', async (req, res) => {
       });
 
       if (company) {
-        await supabase.rpc('notify_user', {
-          p_user_id: company.user_id,
-          p_type: 'first_response',
-          p_title: 'Primera respuesta recibida',
-          p_body: 'Tu abogado ha respondido a tu solicitud.',
-          p_entity_type: 'request',
-          p_entity_id: id,
+        await notificationsService.notifyUser({
+          userId: company.user_id,
+          type: 'first_response',
+          title: 'Primera respuesta recibida',
+          message: 'Tu abogado ha respondido a tu solicitud.',
+          entityType: 'request',
+          entityId: id,
         });
       }
 
@@ -4768,13 +5217,13 @@ app.post('/api/empresas/requests/:id/messages', async (req, res) => {
     if (reqData) {
       const notifyUserId = userId === reqData.user_id ? reqData.lawyer_id : reqData.user_id;
       if (notifyUserId) {
-        await supabase.rpc('notify_user', {
-          p_user_id: notifyUserId,
-          p_type: 'new_message',
-          p_title: 'Nuevo mensaje en solicitud',
-          p_body: content.slice(0, 100),
-          p_entity_type: 'request',
-          p_entity_id: id,
+        await notificationsService.notifyUser({
+          userId: notifyUserId,
+          type: 'new_message',
+          title: 'Nuevo mensaje en solicitud',
+          message: content.slice(0, 100),
+          entityType: 'request',
+          entityId: id,
         });
       }
     }
@@ -5979,6 +6428,960 @@ app.post('/api/admin/trigger-payout', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('[Admin Trigger Payout] Error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ---- LegalUp AI — Fase 2: Procesamiento y análisis de documentos ----
+// Helper: verifica el Bearer token y devuelve el lawyer_id (o null si 401).
+const requireAILawyer = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'No autorizado', details: 'Token de acceso requerido' });
+    return null;
+  }
+  const userId = await getUserIdFromToken(authHeader.split(' ')[1]);
+  if (!userId) {
+    res.status(401).json({ error: 'No autorizado', details: 'Token inválido o expirado' });
+    return null;
+  }
+  return userId;
+};
+
+const getAIDocumentOwned = async (documentId, userId) => {
+  const { data, error } = await supabase
+    .from('ai_documents')
+    .select('*')
+    .eq('id', documentId)
+    .maybeSingle();
+  if (error || !data || data.lawyer_id !== userId) return null;
+  return data;
+};
+
+// Captura de eventos en PostHog (server-side, sin datos jurídicos sensibles).
+const capturePostHog = async (event, distinctId, properties = {}) => {
+  try {
+    const posthogKey = process.env.POSTHOG_PROJECT_API_KEY || process.env.VITE_POSTHOG_KEY;
+    if (!posthogKey) return;
+    await fetch('https://us.i.posthog.com/capture/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: posthogKey,
+        event,
+        distinct_id: distinctId,
+        properties,
+      }),
+    });
+  } catch (e) {
+    console.error('[LegalUpAI] posthog_capture failed', e);
+  }
+};
+
+const getAILawyerEmail = async (userId) => {
+  const { data: userData } = await supabase.auth.admin.getUserById(userId);
+  return userData?.user ?? null;
+};
+
+// Fila de suscripción AI más reciente del abogado (o null).
+const getAILawyerSubscription = async (userId) => {
+  const { data, error } = await supabase
+    .from('ai_subscriptions')
+    .select('*')
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    console.error('[LegalUpAI] subscription query error:', error);
+    return null;
+  }
+  return data ?? null;
+};
+
+// Decide si el abogado tiene acceso a LegalUp AI (autoridad: base de datos).
+//   trialing → acceso hasta trial_ends_at.
+//   active   → acceso hasta current_period_end.
+//   cancelled→ acceso hasta current_period_end; si el trial sigue vigente
+//              (p. ej. checkout abandonado), se conserva el acceso trial.
+//   past_due → deuda de pago; se conserva solo si el trial sigue vigente.
+//   expired / sin fila → sin acceso.
+const getAILawyerAccess = async (userId) => {
+  const subscription = await getAILawyerSubscription(userId);
+  const now = Date.now();
+  let hasAccess = false;
+  let status = subscription?.status ?? null;
+  let trialDaysRemaining = 0;
+
+  if (subscription) {
+    const periodEndMs = subscription.current_period_end ? Date.parse(subscription.current_period_end) : 0;
+    const trialEndMs = subscription.trial_ends_at ? Date.parse(subscription.trial_ends_at) : 0;
+    const withinTrial = trialEndMs > now;
+
+    switch (subscription.status) {
+      case 'active':
+      case 'cancelled':
+        hasAccess = periodEndMs > now || withinTrial;
+        if (hasAccess && !(periodEndMs > now)) status = withinTrial ? 'trialing' : 'expired';
+        break;
+      case 'trialing':
+        hasAccess = withinTrial;
+        status = withinTrial ? 'trialing' : 'expired';
+        if (!withinTrial) {
+          try {
+            await supabase.from('ai_subscriptions').update({ status: 'expired', updated_at: new Date().toISOString() }).eq('id', subscription.id);
+          } catch { /* no debe romper la lectura */ }
+          // Solo se dispara en la transición trial → expired (la actualización
+          // previa hace idempotente el evento: la siguiente lectura ya ve 'expired').
+          await capturePostHog('ai_subscription_expired', userId, { plan: subscription.plan || null });
+        }
+        break;
+      case 'past_due':
+        hasAccess = withinTrial;
+        break;
+      default:
+        hasAccess = false;
+    }
+
+    if (hasAccess && status === 'trialing') {
+      trialDaysRemaining = Math.max(1, Math.ceil((trialEndMs - now) / (24 * 60 * 60 * 1000)));
+    }
+  }
+
+  return {
+    subscription,
+    hasAccess,
+    status,
+    plan: subscription?.plan ?? null,
+    isTrialing: status === 'trialing',
+    isActive: status === 'active',
+    trialEndsAt: subscription?.trial_ends_at ?? null,
+    trialDaysRemaining,
+    currentPeriodEnd: subscription?.current_period_end ?? null,
+    cancelAtPeriodEnd: !!subscription?.cancel_at_period_end,
+  };
+};
+
+// Retorna el acceso o null (402) cuando el abogado no tiene plan activo/trial.
+const requireAIAccess = async (userId) => {
+  const access = await getAILawyerAccess(userId);
+  return access.hasAccess ? access : null;
+};
+
+// Valida acceso + límites del trial en un endpoint de IA.
+// Devuelve `{ res: null }` si todo bien, o `{ res }` con la respuesta 402/403 ya enviada.
+const requireAIEntitlement = async (req, res, userId) => {
+  const access = await requireAIAccess(userId);
+  if (!access) {
+    return {
+      res: res.status(402).json({
+        error: 'Necesitas un plan activo o una prueba gratuita para usar LegalUp AI.',
+        code: 'AI_PLAN_REQUIRED',
+      }),
+    };
+  }
+  const limitError = await checkAILimits(userId, access);
+  if (limitError) {
+    return { res: res.status(403).json({ error: limitError, code: 'AI_LIMIT_REACHED' }) };
+  }
+  return { res: null };
+};
+
+// Límites de uso del trial (Bloque 22). Retorna un mensaje de error si el
+// abogado en trial superó sus límites, o null si puede continuar.
+// El plan Pro activo no tiene límite de casos/documentos.
+const checkAILimits = async (userId, access) => {
+  if (!access?.isTrialing) return null;
+
+  const [{ count: caseCount, error: casesError }, { count: docCount, error: docsError }] =
+    await Promise.all([
+      supabase.from('ai_workspaces').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId),
+      supabase.from('ai_documents').select('id', { count: 'exact', head: true }).eq('lawyer_id', userId),
+    ]);
+
+  if (casesError || docsError) {
+    console.error('[LegalUpAI] limit check error:', casesError ?? docsError);
+    return null; // No bloquear si falla el conteo.
+  }
+
+  if (docCount >= AI_TRIAL_MAX_DOCUMENTS) {
+    return `Alcanzaste el límite de ${AI_TRIAL_MAX_DOCUMENTS} documentos de la prueba gratuita. Suscríbete a Pro para subir más.`;
+  }
+  if (caseCount >= AI_TRIAL_MAX_CASES) {
+    return `Alcanzaste el límite de ${AI_TRIAL_MAX_CASES} casos de la prueba gratuita. Suscríbete a Pro para crear más.`;
+  }
+  return null;
+};
+
+// POST /api/ai/trial/start — inicia la prueba gratuita (idempotente).
+app.post('/api/ai/trial/start', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const existing = await getAILawyerSubscription(userId);
+
+    // Ya tiene trial o suscripción activa: no duplicar, devolver lo existente.
+    if (existing && ['trialing', 'active'].includes(existing.status)) {
+      return res.json({ success: true, subscription: existing, already_started: true });
+    }
+
+    // Ya utilizó un trial antes (estado terminal con trial_started_at): no permitir otro.
+    if (existing && existing.trial_started_at) {
+      return res.status(409).json({ error: 'Ya utilizaste tu prueba gratuita.', code: 'TRIAL_ALREADY_USED' });
+    }
+
+    const now = new Date();
+    const trialEnd = new Date(Date.now() + AI_SUBSCRIPTION_TRIAL_MS);
+
+    const { data: created, error: insertError } = await supabase
+      .from('ai_subscriptions')
+      .insert({
+        lawyer_id: userId,
+        plan: AI_SUBSCRIPTION_PLAN,
+        status: 'trialing',
+        started_at: now.toISOString(),
+        trial_started_at: now.toISOString(),
+        trial_ends_at: trialEnd.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      // Carrera de doble click: el índice único por trial rechaza el segundo insert.
+      if (insertError.code === '23505') {
+        const retry = await getAILawyerSubscription(userId);
+        if (retry && ['trialing', 'active'].includes(retry.status)) {
+          return res.json({ success: true, subscription: retry, already_started: true });
+        }
+      }
+      console.error('[LegalUpAI] trial start error:', insertError);
+      return res.status(500).json({ error: 'No se pudo iniciar la prueba gratuita.' });
+    }
+
+    await capturePostHog('ai_trial_started', userId, {
+      plan: AI_SUBSCRIPTION_PLAN,
+      trial_days: AI_SUBSCRIPTION_TRIAL_DAYS,
+    });
+
+    const userData = await getAILawyerEmail(userId);
+    if (userData?.email) {
+      await sendAIEmail(
+        userData.email,
+        'Tu prueba de LegalUp AI ya está activa',
+        aiSubscriptionEmailTemplates.trialStarted()
+      );
+    }
+
+    res.json({ success: true, subscription: created, already_started: false });
+  } catch (error) {
+    console.error('[LegalUpAI] trial start error:', error);
+    res.status(500).json({ error: 'No se pudo iniciar la prueba gratuita.' });
+  }
+});
+
+// POST /api/ai/subscribe — crea el preapproval recurrente en Mercado Pago.
+app.post('/api/ai/subscribe', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const subscription = await getAILawyerSubscription(userId);
+    if (!subscription) {
+      return res.status(409).json({ error: 'Primero inicia tu prueba gratuita.', code: 'TRIAL_REQUIRED' });
+    }
+
+    if (subscription.status === 'active' && subscription.provider_subscription_id) {
+      return res.status(409).json({ error: 'Ya tienes una suscripción activa.', code: 'ALREADY_SUBSCRIBED' });
+    }
+
+    const userData = await getAILawyerEmail(userId);
+
+    const preapprovalData = {
+      reason: 'LegalUp AI Pro - Suscripción mensual',
+      external_reference: `${AI_EXTERNAL_REF_PREFIX}${userId}`,
+      payer_email: userData?.email || '',
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: 'months',
+        transaction_amount: AI_SUBSCRIPTION_PRICE_CLP,
+        currency_id: 'CLP',
+        start_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      },
+      back_url: (() => {
+        const base = appUrl || 'https://legalup.cl';
+        if (base.includes('localhost')) return 'https://legalup.cl';
+        return `${base}/lawyer/ai?ai_subscription_success=true`;
+      })(),
+      status: 'pending',
+    };
+
+    const webhookUrl = resolveWebhookUrl(req);
+    if (webhookUrl) preapprovalData.notification_url = webhookUrl;
+
+    const mpResponse = await fetch('https://api.mercadopago.com/preapproval', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${mercadopagoAccessToken}`,
+      },
+      body: JSON.stringify(preapprovalData),
+    });
+
+    const mpResult = await mpResponse.json();
+    if (!mpResponse.ok) {
+      console.error('[LegalUpAI] MP preapproval error:', mpResult);
+      return res.status(500).json({ error: 'No se pudo iniciar el cobro en Mercado Pago.', details: mpResult });
+    }
+
+    // Se conserva el acceso trial hasta que el webhook marque 'active'.
+    await supabase
+      .from('ai_subscriptions')
+      .update({
+        provider: 'mercadopago',
+        provider_subscription_id: String(mpResult.id),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', subscription.id);
+
+    await capturePostHog('ai_subscription_checkout_started', userId, {
+      price_clp: AI_SUBSCRIPTION_PRICE_CLP,
+      preapproval_id: String(mpResult.id),
+    });
+
+    res.json({
+      success: true,
+      subscription_id: subscription.id,
+      preapproval_id: String(mpResult.id),
+      initPoint: mpResult.init_point || mpResult.sandbox_init_point,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] subscribe error:', error);
+    res.status(500).json({ error: 'No se pudo procesar la suscripción.' });
+  }
+});
+
+// POST /api/ai/subscription/cancel — baja a fin de período (conserva acceso).
+app.post('/api/ai/subscription/cancel', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const subscription = await getAILawyerSubscription(userId);
+    if (!subscription || subscription.status !== 'active') {
+      return res.status(409).json({ error: 'No tienes una suscripción activa.', code: 'NOT_ACTIVE' });
+    }
+
+    if (subscription.provider_subscription_id) {
+      const mpResponse = await fetch(
+        `https://api.mercadopago.com/preapproval/${subscription.provider_subscription_id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${mercadopagoAccessToken}`,
+          },
+          body: JSON.stringify({ status: 'cancelled' }),
+        }
+      );
+      if (!mpResponse.ok) {
+        const mpResult = await mpResponse.json().catch(() => ({}));
+        console.error('[LegalUpAI] MP cancel error:', mpResult);
+        // No fallar: se marca igual en BD y el webhook confirmará la baja.
+      }
+    }
+
+    const now = new Date();
+    await supabase
+      .from('ai_subscriptions')
+      .update({
+        status: 'cancelled',
+        cancelled_at: now.toISOString(),
+        cancel_at_period_end: true,
+        updated_at: now.toISOString(),
+      })
+      .eq('id', subscription.id);
+
+    await capturePostHog('ai_subscription_cancelled', userId, {
+      price_clp: AI_SUBSCRIPTION_PRICE_CLP,
+    });
+
+    const userData = await getAILawyerEmail(userId);
+    if (userData?.email) {
+      await sendAIEmail(
+        userData.email,
+        'Tu suscripción de LegalUp AI fue cancelada',
+        aiSubscriptionEmailTemplates.cancelled(
+          subscription.current_period_end
+            ? new Date(subscription.current_period_end).toLocaleDateString('es-CL')
+            : ''
+        )
+      );
+    }
+
+    res.json({ success: true, cancel_at_period_end: true });
+  } catch (error) {
+    console.error('[LegalUpAI] cancel subscription error:', error);
+    res.status(500).json({ error: 'No se pudo cancelar la suscripción.' });
+  }
+});
+
+const extractTextFromStoredPdf = async (doc) => {
+  const { data: file, error: downloadError } = await supabase.storage
+    .from(AI_DOCUMENTS_BUCKET)
+    .download(doc.file_path);
+  if (downloadError || !file) {
+    throw new Error('No se pudo descargar el PDF desde el almacenamiento.');
+  }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const parsed = await pdfParse(buffer);
+  const text = (parsed.text || '').trim();
+  if (text.length < 20) {
+    throw new Error('No se pudo extraer texto del PDF. Asegúrate de que sea un PDF textual (no escaneado).');
+  }
+  return { text: text.slice(0, MAX_EXTRACTED_TEXT_CHARS), pageCount: parsed.numpages || null };
+};
+
+// POST /api/ai/documents/:id/process — extrae el texto del PDF y lo guarda.
+app.post('/api/ai/documents/:id/process', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const doc = await getAIDocumentOwned(req.params.id, userId);
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    if (doc.status === 'ready' && doc.extracted_text) {
+      return res.json({ success: true, page_count: doc.page_count, already_processed: true });
+    }
+
+    await supabase.from('ai_documents').update({ status: 'processing', analysis_error: null }).eq('id', doc.id);
+
+    const { text, pageCount } = await extractTextFromStoredPdf(doc);
+
+    await supabase.from('ai_documents').update({
+      status: 'ready',
+      extracted_text: text,
+      page_count: pageCount,
+      analysis_error: null,
+    }).eq('id', doc.id);
+
+    await notificationsService.notifyUser({
+      userId,
+      type: 'ai.document.ready',
+      title: 'Documento listo',
+      message: `El documento "${doc.original_filename}" ya está disponible para análisis.`,
+      entityType: 'ai_document',
+      entityId: doc.id,
+      metadata: { case_id: doc.workspace_id },
+      eventId: `ai_process:${doc.id}`,
+    });
+
+    res.json({ success: true, page_count: pageCount, text_length: text.length });
+  } catch (err) {
+    console.error('[LegalUpAI] process error:', err);
+    try {
+      await supabase.from('ai_documents').update({ status: 'failed', analysis_error: err.message }).eq('id', req.params.id);
+    } catch { /* el documento pudo haber sido eliminado */ }
+    if (userId) {
+      try {
+        const doc = await getAIDocumentOwned(req.params.id, userId);
+        await notificationsService.notifyUser({
+          userId,
+          type: 'ai.document.failed',
+          title: 'No pudimos procesar tu documento',
+          message: 'Intenta nuevamente desde tu caso en LegalUp AI.',
+          entityType: 'ai_document',
+          entityId: doc?.id || req.params.id,
+          metadata: { case_id: doc?.workspace_id },
+          eventId: `ai_process_failed:${req.params.id}`,
+        });
+      } catch { /* la notificación no debe romper la respuesta */ }
+    }
+    res.status(500).json({ error: 'No se pudo procesar el documento.', details: err.message });
+  }
+});
+
+// POST /api/ai/documents/:id/analyze — genera (o reemplaza) el análisis IA.
+app.post('/api/ai/documents/:id/analyze', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const model = typeof req.body?.model === 'string' && req.body.model.trim()
+      ? req.body.model.trim().slice(0, 100)
+      : AI_DEFAULT_MODEL;
+
+    const doc = await getAIDocumentOwned(req.params.id, userId);
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    if (!isAIProviderConfigured()) {
+      console.error('[LegalUpAI] analyze blocked: AI_PROVIDER_API_KEY not configured.');
+      return res.status(500).json({
+        error: 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.',
+        code: 'AI_NOT_CONFIGURED',
+      });
+    }
+
+    // Asegura el texto extraído (procesa inline si hace falta).
+    let text = doc.extracted_text;
+    if (doc.status !== 'ready' || !text) {
+      const extracted = await extractTextFromStoredPdf(doc);
+      text = extracted.text;
+      await supabase.from('ai_documents').update({
+        status: 'ready',
+        extracted_text: text,
+        page_count: extracted.pageCount,
+        analysis_error: null,
+      }).eq('id', doc.id);
+    }
+
+    await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model }).eq('id', doc.id);
+
+    const raw = await chatCompletion({
+      model,
+      system: buildAnalysisSystemPrompt(),
+      user: buildAnalysisUserPrompt({ filename: doc.original_filename, extractedText: text }),
+    });
+
+    let validated;
+    try {
+      validated = AIDocumentAnalysisSchema.parse(raw);
+    } catch (schemaError) {
+      throw new Error('El modelo devolvió un análisis con formato inválido.');
+    }
+
+    // Reanalizar reemplaza el análisis anterior del documento.
+    await supabase.from('ai_document_analyses').delete().eq('document_id', doc.id);
+
+    const { data: saved, error: insertError } = await supabase
+      .from('ai_document_analyses')
+      .insert({
+        document_id: doc.id,
+        lawyer_id: doc.lawyer_id,
+        workspace_id: doc.workspace_id,
+        summary: validated.summary,
+        document_type: validated.document_type,
+        parties: validated.parties || [],
+        key_points: validated.key_points || [],
+        obligations: validated.obligations || [],
+        deadlines: validated.deadlines || [],
+        risks: validated.risks || [],
+        recommendations: validated.recommendations || [],
+        model,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('[LegalUpAI] Error guardando análisis:', insertError);
+      throw new Error('No se pudo guardar el análisis.');
+    }
+
+    await supabase.from('ai_documents').update({ analysis_status: 'ready', analysis_error: null, model }).eq('id', doc.id);
+
+    // Evento de activación: solo el primer análisis completado del abogado.
+    try {
+      const { count, error: countError } = await supabase
+        .from('ai_document_analyses')
+        .select('id', { count: 'exact', head: true })
+        .eq('lawyer_id', doc.lawyer_id);
+      if (!countError && count === 1) {
+        await capturePostHog('ai_first_analysis_completed', doc.lawyer_id, { model });
+      }
+    } catch (posthogError) {
+      console.error('[LegalUpAI] ai_first_analysis_completed failed', posthogError);
+    }
+
+    await notificationsService.notifyUser({
+      userId,
+      type: 'ai.analysis.completed',
+      title: 'Análisis completado',
+      message: `El análisis de "${doc.original_filename}" está listo.`,
+      entityType: 'ai_document',
+      entityId: doc.id,
+      metadata: { case_id: doc.workspace_id },
+      eventId: `ai_analysis:${doc.id}`,
+    });
+
+    res.json({ success: true, analysis: saved, model });
+  } catch (err) {
+    console.error('[LegalUpAI] analyze error:', err);
+    const message = err?.code === 'AI_NOT_CONFIGURED'
+      ? err.message
+      : (err.message || 'No se pudo analizar el documento.');
+    try {
+      await supabase.from('ai_documents').update({ analysis_status: 'failed', analysis_error: message }).eq('id', req.params.id);
+    } catch { /* el documento pudo haber sido eliminado */ }
+    if (userId) {
+      try {
+        const doc = await getAIDocumentOwned(req.params.id, userId);
+        await notificationsService.notifyUser({
+          userId,
+          type: 'ai.analysis.failed',
+          title: 'El análisis falló',
+          message: `No pudimos analizar "${doc?.original_filename || 'tu documento'}". Intenta nuevamente.`,
+          entityType: 'ai_document',
+          entityId: doc?.id || req.params.id,
+          metadata: { case_id: doc?.workspace_id },
+          eventId: `ai_analysis_failed:${req.params.id}`,
+        });
+      } catch { /* la notificación no debe romper la respuesta */ }
+    }
+    res.status(500).json({ error: message });
+  }
+});
+
+// ---- LegalUp AI — Fase 3: Chat contextual del caso ----
+const getAIWorkspaceOwned = async (workspaceId, userId) => {
+  const { data, error } = await supabase
+    .from('ai_workspaces')
+    .select('*')
+    .eq('id', workspaceId)
+    .maybeSingle();
+  if (error || !data || data.lawyer_id !== userId) return null;
+  return data;
+};
+
+const getAIConversationOwned = async (conversationId, userId) => {
+  const { data, error } = await supabase
+    .from('ai_conversations')
+    .select('*')
+    .eq('id', conversationId)
+    .maybeSingle();
+  if (error || !data || data.lawyer_id !== userId) return null;
+  return data;
+};
+
+// Obtiene la conversación principal del caso, creándola la primera vez.
+// Idempotente ante condiciones de carrera (si el insert choca, relee).
+const getOrCreateAIConversation = async (workspaceId, userId) => {
+  const select = (eqLawyer) =>
+    supabase
+      .from('ai_conversations')
+      .select('*')
+      .eq('workspace_id', workspaceId)
+      .eq('lawyer_id', userId)
+      .maybeSingle();
+
+  const { data: existing } = await select();
+  if (existing) return existing;
+
+  const { data: created, error: insertError } = await supabase
+    .from('ai_conversations')
+    .insert({ workspace_id: workspaceId, lawyer_id: userId, title: 'Conversación del caso' })
+    .select()
+    .single();
+
+  if (insertError) {
+    const { data: retry } = await select();
+    if (retry) return retry;
+    throw insertError;
+  }
+  return created;
+};
+
+// Esquema de la respuesta del modelo para el chat.
+const AIChatResponseSchema = z.object({
+  answer: z.string().min(1),
+  sources: z
+    .array(z.object({ document_id: z.string(), file_name: z.string() }))
+    .default([]),
+});
+
+const AIChatRequestSchema = z.object({
+  conversation_id: z.string().uuid(),
+  message: z.string().trim().min(1).max(CHAT_LIMITS.MAX_CHAT_MESSAGE_LENGTH),
+});
+
+// GET /api/ai/cases/:caseId/chat — conversación principal (get-or-create) + mensajes.
+app.get('/api/ai/cases/:caseId/chat', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    const conversation = await getOrCreateAIConversation(workspace.id, userId);
+
+    const { data: messages, error: messagesError } = await supabase
+      .from('ai_chat_messages')
+      .select('id, conversation_id, workspace_id, lawyer_id, role, content, metadata, created_at')
+      .eq('conversation_id', conversation.id)
+      .eq('lawyer_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (messagesError) throw messagesError;
+
+    res.json({ conversation, messages: (messages || []).reverse() });
+  } catch (error) {
+    console.error('[LegalUpAI] chat load error:', error);
+    res.status(500).json({ error: 'No se pudo cargar la conversación del caso.' });
+  }
+});
+
+// POST /api/ai/cases/:caseId/chat — responde una pregunta usando el contexto del caso.
+app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const parsed = AIChatRequestSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
+    }
+    const { conversation_id, message } = parsed.data;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    const conversation = await getAIConversationOwned(conversation_id, userId);
+    if (!conversation || conversation.workspace_id !== workspace.id) {
+      return res.status(403).json({ error: 'No autorizado.' });
+    }
+
+    if (!isAIProviderConfigured()) {
+      console.error('[LegalUpAI] chat blocked: AI_PROVIDER_API_KEY not configured.');
+      return res.status(500).json({
+        error: 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.',
+        code: 'AI_NOT_CONFIGURED',
+      });
+    }
+
+    // Solo documentos listos del caso del abogado.
+    const { data: readyDocs, error: docsError } = await supabase
+      .from('ai_documents')
+      .select('id, original_filename, extracted_text')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .eq('status', 'ready');
+    if (docsError) throw docsError;
+
+    if (!readyDocs || readyDocs.length === 0) {
+      const { count, error: countError } = await supabase
+        .from('ai_documents')
+        .select('id', { count: 'exact', head: true })
+        .eq('workspace_id', workspace.id)
+        .eq('lawyer_id', userId);
+      if (countError) throw countError;
+      const code = count > 0 ? 'DOCS_PROCESSING' : 'NO_DOCUMENTS';
+      const messageText =
+        count > 0
+          ? 'Tus documentos todavía se están procesando.'
+          : 'Sube un documento para comenzar.';
+      return res.status(422).json({ error: messageText, code });
+    }
+
+    // Análisis disponibles de los documentos listos.
+    const documentIds = readyDocs.map((doc) => doc.id);
+    const { data: analysisRows, error: analysisError } = await supabase
+      .from('ai_document_analyses')
+      .select(
+        'document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations'
+      )
+      .in('document_id', documentIds)
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId);
+    if (analysisError) throw analysisError;
+
+    const analyses = {};
+    for (const row of analysisRows || []) analyses[row.document_id] = row;
+
+    // Construye el contexto. Si el conjunto supera el límite, no truncar ni
+    // descartar documentos: informar al usuario.
+    const { context, tooLarge } = buildChatContext({
+      workspace,
+      documents: readyDocs,
+      analyses,
+    });
+    if (tooLarge) {
+      return res.status(422).json({
+        error:
+          'Este caso contiene demasiada información para procesarla completa en una sola consulta.',
+        code: 'CONTEXT_TOO_LARGE',
+      });
+    }
+
+    // Historial reciente (últimos N) para dar continuidad a la conversación.
+    const { data: historyRows, error: historyError } = await supabase
+      .from('ai_chat_messages')
+      .select('role, content')
+      .eq('conversation_id', conversation.id)
+      .eq('lawyer_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(CHAT_LIMITS.MAX_CHAT_HISTORY_MESSAGES);
+    if (historyError) throw historyError;
+    const history = (historyRows || []).reverse().map((m) => ({ role: m.role, content: m.content }));
+
+    // Retry: si la última pregunta es idéntica a la del intento fallido, no duplicar.
+    const lastMessage = history[history.length - 1];
+    const isRetry = lastMessage && lastMessage.role === 'user' && lastMessage.content === message;
+
+    let userMessage = null;
+    if (!isRetry) {
+      const { data: insertedUser, error: userInsertError } = await supabase
+        .from('ai_chat_messages')
+        .insert({
+          conversation_id: conversation.id,
+          workspace_id: workspace.id,
+          lawyer_id: userId,
+          role: 'user',
+          content: message,
+        })
+        .select()
+        .single();
+      if (userInsertError) throw userInsertError;
+      userMessage = insertedUser;
+    }
+
+    const raw = await chatCompletion({
+      model: AI_DEFAULT_MODEL,
+      system: buildChatSystemPrompt(),
+      messages: [
+        {
+          role: 'user',
+          content: buildChatUserPrompt({ question: message, context, history }),
+        },
+      ],
+      maxTokens: 1200,
+      temperature: 0.2,
+    });
+
+    let validated;
+    try {
+      validated = AIChatResponseSchema.parse(raw);
+    } catch {
+      throw new Error('El modelo devolvió una respuesta con formato inválido.');
+    }
+
+    // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
+    const includedById = new Map(readyDocs.map((doc) => [doc.id, doc.original_filename]));
+    const sources = (validated.sources || [])
+      .filter(
+        (source) =>
+          includedById.has(source.document_id) &&
+          includedById.get(source.document_id) === source.file_name
+      )
+      .map((source) => ({ document_id: source.document_id, file_name: source.file_name }));
+
+    const { data: savedAssistant, error: assistantInsertError } = await supabase
+      .from('ai_chat_messages')
+      .insert({
+        conversation_id: conversation.id,
+        workspace_id: workspace.id,
+        lawyer_id: userId,
+        role: 'assistant',
+        content: validated.answer,
+        metadata: { sources, model: AI_DEFAULT_MODEL },
+      })
+      .select()
+      .single();
+    if (assistantInsertError) throw assistantInsertError;
+
+    // Evento de activación: solo el primer mensaje de chat del abogado.
+    try {
+      const { count, error: countError } = await supabase
+        .from('ai_chat_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('lawyer_id', userId);
+      if (!countError && count === 1) {
+        await capturePostHog('ai_first_chat_message', userId, { case_id: workspace.id });
+      }
+    } catch (posthogError) {
+      console.error('[LegalUpAI] ai_first_chat_message failed', posthogError);
+    }
+
+    res.json({ user_message: userMessage, message: savedAssistant, sources });
+  } catch (error) {
+    console.error('[LegalUpAI] chat error:', error);
+    const code = error?.code === 'AI_NOT_CONFIGURED' ? 'AI_NOT_CONFIGURED' : 'PROVIDER_ERROR';
+    res.status(500).json({ error: error.message || 'No se pudo generar la respuesta.', code });
+  }
+});
+
+// POST /api/ai/trial/reminders — envía recordatorios de fin de prueba (3 y 1
+// días restantes). Pensado para ser llamado por un cron con el header
+// `x-trial-secret`. Es idempotente por abogado (columna trial_reminder_day).
+app.post('/api/ai/trial/reminders', async (req, res) => {
+  const secret = process.env.TRIAL_REMINDER_SECRET;
+  if (!secret || String(req.headers['x-trial-secret'] || '') !== String(secret)) {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
+
+  try {
+    const { data: trialing, error } = await supabase
+      .from('ai_subscriptions')
+      .select('id, lawyer_id, status, trial_ends_at, trial_reminder_day')
+      .eq('status', 'trialing')
+      .not('trial_ends_at', 'is', null);
+
+    if (error) throw error;
+
+    const now = Date.now();
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let sent = 0;
+
+    for (const sub of trialing || []) {
+      const trialEndMs = Date.parse(sub.trial_ends_at);
+      if (!trialEndMs || trialEndMs <= now) {
+        // Trial ya vencido: marcar como expirado.
+        await supabase.from('ai_subscriptions').update({ status: 'expired', updated_at: new Date().toISOString() }).eq('id', sub.id);
+        continue;
+      }
+
+      const daysLeft = Math.max(1, Math.ceil((trialEndMs - now) / DAY_MS));
+
+      // Solo envíos en hitos concretos y sin duplicar.
+      if (daysLeft !== 3 && daysLeft !== 1) continue;
+      if (sub.trial_reminder_day === daysLeft) continue;
+
+      const userData = await getAILawyerEmail(sub.lawyer_id);
+      if (userData?.email) {
+        const subject = daysLeft === 1
+          ? 'Tu prueba de LegalUp AI termina hoy'
+          : '¿Ya probaste LegalUp AI con un caso real?';
+        await sendAIEmail(
+          userData.email,
+          subject,
+          aiSubscriptionEmailTemplates.trialReminder(daysLeft)
+        );
+        await supabase.from('ai_subscriptions').update({ trial_reminder_day: daysLeft }).eq('id', sub.id);
+
+        // Hitos de días de la prueba según días restantes (trial de 5 días).
+        // Día 3 → quedan 3 días; Día 5 / último día → queda 1 día.
+        if (daysLeft === 1) {
+          await capturePostHog('ai_trial_expiring', sub.lawyer_id, { days_left: daysLeft });
+          await capturePostHog('ai_trial_last_day', sub.lawyer_id, { days_left: daysLeft });
+        } else {
+          await capturePostHog('ai_trial_day_3', sub.lawyer_id, { days_left: daysLeft });
+        }
+        sent += 1;
+      }
+    }
+
+    res.json({ success: true, processed: (trialing || []).length, sent });
+  } catch (error) {
+    console.error('[LegalUpAI] trial reminders error:', error);
+    res.status(500).json({ error: 'No se pudieron enviar los recordatorios.' });
   }
 });
 

@@ -247,7 +247,7 @@ export default function DashboardSettings() {
   };
 
   return (
-    <div className="container mx-auto px-8 py-6 space-y-6">
+    <div className="mx-auto max-w-3xl px-8 py-6 space-y-6">
       <Tabs defaultValue="notifications" className="w-full">
         <div className="space-y-4 mb-6">
           <div>

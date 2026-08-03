@@ -12,6 +12,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/lib/supabaseClient';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useAISubscription } from '@/hooks/useAISubscription';
 
 export default function LawyerDashboardPage() {
   const navigate = useNavigate();
@@ -358,14 +359,31 @@ export default function LawyerDashboardPage() {
 
   const handleLegalUpAIClick = () => {
     // Track CTR for LegalUp AI badge
-    console.log('LegalUp AI badge clicked - tracking CTR');
     // Here you could add analytics tracking like:
     // analytics.track('legalup_ai_badge_clicked', { user_id: user?.id });
-    navigate('/ai');
+    navigate('/lawyer/ai');
   };
 
+  const aiSub = useAISubscription();
+
+  let aiBadgeText = 'IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.';
+  let aiCtaText = 'Conocer más';
+  if (aiSub.status === 'none') {
+    aiBadgeText = 'Prueba LegalUp AI gratis durante 5 días. Sin tarjeta.';
+    aiCtaText = 'Empezar prueba gratis';
+  } else if (aiSub.isTrialing) {
+    aiBadgeText = `Tu prueba de LegalUp AI termina pronto. Suscríbete por $49.900/mes para no perder el acceso.`;
+    aiCtaText = 'Suscribirme';
+  } else if (aiSub.isActive) {
+    aiBadgeText = 'Tu plan LegalUp AI Pro está activo. Sigue trabajando tus casos con IA.';
+    aiCtaText = 'Ir a LegalUp AI';
+  } else if (aiSub.status === 'expired' || aiSub.status === 'past_due' || aiSub.status === 'cancelled') {
+    aiBadgeText = 'Reanuda tu acceso a LegalUp AI para seguir usando tus herramientas.';
+    aiCtaText = 'Reanudar suscripción';
+  }
+
   return (
-    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+    <div className="bg-cream-900 space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       {/* ... existing header and counters ... */}
       <div className="flex justify-between items-center">
         <div>
@@ -379,23 +397,30 @@ export default function LawyerDashboardPage() {
       {/* LegalUp AI Badge */}
       <div 
         onClick={handleLegalUpAIClick}
-        className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group"
+        className="rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-white p-6 cursor-pointer hover:shadow-lg hover:shadow-green-500/20 transition-all duration-300 group"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="bg-white/10 rounded-lg p-3">
-              <Sparkles className="h-6 w-6 text-green-400" />
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+              <Sparkles className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-green-400 uppercase tracking-wider">Nuevo</span>
+                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Nuevo</span>
               </div>
-              <h3 className="text-xl font-bold text-white">LegalUp AI</h3>
-              <p className="text-green-100 text-sm">IA diseñada para abogados. Analiza documentos, resume causas y redacta más rápido.</p>
+              <h3 className="text-xl font-bold text-gray-900">
+                <span className="inline-flex items-center gap-1.5">
+                  LegalUp
+                  <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/40 bg-emerald-50 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-700 transition-colors group-hover:bg-emerald-100">
+                    AI
+                  </span>
+                </span>
+              </h3>
+              <p className="text-gray-600 text-sm">{aiBadgeText}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-4 py-2 group-hover:bg-white/20 transition-colors">
-            <span className="text-white font-medium text-sm">Conocer más</span>
+          <div className="flex items-center gap-2 bg-gray-900 rounded-lg px-4 py-2 text-white group-hover:bg-green-900 transition-colors">
+            <span className="text-white font-medium text-sm">{aiCtaText}</span>
             <ArrowRight className="h-4 w-4 text-white group-hover:translate-x-1 transition-transform" />
           </div>
         </div>
