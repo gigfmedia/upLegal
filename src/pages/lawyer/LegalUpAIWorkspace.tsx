@@ -122,7 +122,7 @@ export default function LegalUpAIWorkspace() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('ai_subscription_success') === 'true') {
       toast.success('Suscripción confirmada', {
-        description: 'Tu plan LegalUp AI Pro está activo.',
+        description: 'Tu plan LegalUp AI está activo.',
       });
       const url = new URL(window.location.href);
       url.searchParams.delete('ai_subscription_success');

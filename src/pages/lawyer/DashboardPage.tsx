@@ -375,7 +375,7 @@ export default function LawyerDashboardPage() {
     aiBadgeText = `Tu prueba de LegalUp AI termina pronto. Suscríbete por $49.900/mes para no perder el acceso.`;
     aiCtaText = 'Suscribirme';
   } else if (aiSub.isActive) {
-    aiBadgeText = 'Tu plan LegalUp AI Pro está activo. Sigue trabajando tus casos con IA.';
+    aiBadgeText = 'Tu plan LegalUp AI está activo. Sigue trabajando tus casos con IA.';
     aiCtaText = 'Ir a LegalUp AI';
   } else if (aiSub.status === 'expired' || aiSub.status === 'past_due' || aiSub.status === 'cancelled') {
     aiBadgeText = 'Reanuda tu acceso a LegalUp AI para seguir usando tus herramientas.';

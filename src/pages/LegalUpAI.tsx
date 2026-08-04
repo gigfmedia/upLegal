@@ -121,9 +121,10 @@ function Button({
 /* ───── Header ───── */
 
 const NAV_ITEMS = [
-  { label: "Cómo funciona", href: "#capacidades" },
-  { label: "Producto", href: "#producto" },
-  { label: "Seguridad", href: "#seguridad" },
+  { label: "Cómo funciona", href: "#como-funciona" },
+  { label: "Funcionalidades", href: "#funcionalidades" },
+  { label: "Comparativa", href: "#comparativa" },
+  { label: "Planes", href: "#planes" },
 ];
 
 function Header({
@@ -611,7 +612,7 @@ function AICapabilities() {
 
   return (
     <section
-      id="capacidades"
+      id="como-funciona"
       className="relative border-t border-[var(--hairline)] py-24 sm:py-32"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -1312,6 +1313,376 @@ function SecuritySection() {
   );
 }
 
+/* ───── AI vs IA general (comparativa) ───── */
+
+type VSRow = {
+  feature: string;
+  general: string;
+  ai: string;
+  aiNote?: string;
+  aiSoon?: boolean;
+};
+
+const VS_GENERAL_ROWS: VSRow[] = [
+  {
+    feature: "IA general",
+    general: "✓",
+    ai: "✓",
+  },
+  {
+    feature: "Subir documentos",
+    general: "✓",
+    ai: "✓",
+  },
+  {
+    feature: "Conversar con documentos",
+    general: "✓",
+    ai: "✓",
+  },
+  {
+    feature: "Workspace organizado por caso",
+    general: "Depende de la herramienta y configuración",
+    ai: "✓ Diseñado alrededor del caso",
+  },
+  {
+    feature: "Análisis estructurado del documento",
+    general: "✓",
+    ai: "✓ Análisis estructurado",
+    aiNote: "Riesgos · obligaciones · información faltante",
+  },
+  {
+    feature: "Riesgos y alertas",
+    general: "Depende del prompt y del flujo de trabajo",
+    ai: "✓ Incluido en el análisis",
+  },
+  {
+    feature: "Obligaciones",
+    general: "Depende del prompt",
+    ai: "✓ Identificadas dentro del análisis",
+  },
+  {
+    feature: "Hechos vs inferencias",
+    general: "Depende de cómo se formule la instrucción",
+    ai: "✓ El análisis está diseñado para distinguirlos",
+  },
+  {
+    feature: "Contexto jurídico chileno",
+    general: "IA general",
+    ai: "✓ Orientado al contexto jurídico chileno",
+  },
+  {
+    feature: "Jurisprudencia chilena",
+    general: "Disponible según herramientas y fuentes",
+    ai: "Próximamente",
+    aiSoon: true,
+  },
+  {
+    feature: "Redacción jurídica",
+    general: "✓",
+    ai: "Próximamente",
+    aiSoon: true,
+  },
+];
+
+function VSCheckIcon({ tone }: { tone: "ai" | "general" }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+        tone === "ai"
+          ? "border-[var(--primary)]/40 text-[var(--primary)]"
+          : "border-[var(--border)] text-[var(--ink-faint)]"
+      )}
+      aria-hidden
+    >
+      <Check className="h-3 w-3" />
+    </span>
+  );
+}
+
+function AIGeneralCell({ value }: { value: string }) {
+  if (value === "✓") return <VSCheckIcon tone="general" />;
+  return (
+    <span className="text-[0.85rem] leading-snug text-[var(--muted-foreground)]">
+      {value}
+    </span>
+  );
+}
+
+function AIVsCell({
+  value,
+  note,
+  soon,
+}: {
+  value: string;
+  note?: string;
+  soon?: boolean;
+}) {
+  if (soon) {
+    return (
+      <span className="inline-flex items-center rounded-full border border-[var(--hairline)] px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-[var(--ink-faint)]">
+        Próximamente
+      </span>
+    );
+  }
+  const isCheck = value.startsWith("✓");
+  const text = isCheck ? value.slice(1).trim() : value;
+  return (
+    <span className="flex items-start gap-2.5">
+      {isCheck && <VSCheckIcon tone="ai" />}
+      <span>
+        <span className="text-[0.85rem] leading-snug text-[var(--ink-dim)]">
+          {text}
+        </span>
+        {note && (
+          <span className="mt-1 block text-[0.7rem] text-[var(--ink-faint)]">
+            {note}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}
+
+function AIVsGeneralSection() {
+  return (
+    <section
+      id="comparativa"
+      className="relative border-t border-[var(--hairline)] py-24 sm:py-32"
+    >
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl"
+        >
+          <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
+            ¿Ya usas ChatGPT o Claude?
+          </p>
+          <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.08] tracking-tight sm:text-5xl">
+            No necesitas otra IA.
+            <br />
+            <span className="text-[var(--ink-dim)]">
+              Necesitas una IA para tu práctica jurídica.
+            </span>
+          </h2>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted-foreground)]">
+            ChatGPT y Claude son excelentes herramientas generales de IA.
+            LegalUp AI está diseñado alrededor del trabajo que realmente hace
+            un abogado: casos, documentos, riesgos, obligaciones y contexto
+            jurídico.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-14"
+        >
+          {/* Desktop: tabla */}
+          <div
+            className="overflow-hidden rounded-2xl shadow-[var(--shadow-elevated)]"
+            style={{
+              backgroundImage: "var(--gradient-glass)",
+              backgroundColor: "oklch(0.12 0.012 264 / 70%)",
+              backdropFilter: "blur(18px)",
+              border: "1px solid var(--hairline)",
+            }}
+          >
+            <table className="w-full table-fixed">
+              <colgroup>
+                <col className="w-[38%]" />
+                <col className="w-[30%]" />
+                <col className="w-[32%]" />
+              </colgroup>
+              <thead>
+                <tr className="border-b border-[var(--hairline)] bg-[var(--surface)]/40">
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-[var(--ink-faint)]"
+                  >
+                    Funcionalidad
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-[var(--ink-faint)]"
+                  >
+                    ChatGPT / Claude
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-[0.6875rem] font-medium uppercase tracking-[0.22em] text-[var(--primary)]"
+                  >
+                    LegalUp AI
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {VS_GENERAL_ROWS.map((row) => (
+                  <tr
+                    key={row.feature}
+                    className="align-top transition-colors duration-300 hover:bg-[var(--surface)]/20"
+                  >
+                    <th
+                      scope="row"
+                      className="px-6 py-5 text-left text-sm font-medium text-[var(--foreground)]"
+                    >
+                      {row.feature}
+                    </th>
+                    <td className="px-6 py-5">
+                      <AIGeneralCell value={row.general} />
+                    </td>
+                    <td className="px-6 py-5">
+                      <AIVsCell
+                        value={row.ai}
+                        note={row.aiNote}
+                        soon={row.aiSoon}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ───── Bloque comercial ───── */
+
+function AICommercialSection() {
+  return (
+    <section className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-10 h-[26rem] w-[40rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
+      </div>
+      <div className="mx-auto max-w-5xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="relative overflow-hidden rounded-2xl border border-[var(--primary)]/30 p-8 text-center sm:p-14"
+          style={{
+            backgroundImage: "var(--gradient-glass)",
+            backgroundColor: "oklch(0.12 0.012 264 / 70%)",
+            backdropFilter: "blur(18px)",
+            boxShadow: "var(--shadow-glow)",
+          }}
+        >
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[var(--emerald-accent)]/[0.09] blur-[90px]" />
+          <h2 className="mx-auto max-w-3xl font-[var(--font-display)] text-3xl leading-[1.1] tracking-tight sm:text-5xl">
+            No pagas por otra IA.
+            <br />
+            <span
+              style={{
+                backgroundImage: "var(--gradient-headline)",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              Pagas por trabajar mejor tus casos.
+            </span>
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-[var(--muted-foreground)]">
+            LegalUp AI reúne tus casos, documentos, análisis y conversaciones
+            en un workspace pensado para el trabajo jurídico.
+          </p>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ───── ¿Y si ya uso ChatGPT? ───── */
+
+const WHY_NOT_CHATGPT = [
+  {
+    id: "01",
+    title: "Tu caso",
+    copy: "Cada caso tiene su propio workspace, documentos y conversación.",
+  },
+  {
+    id: "02",
+    title: "Menos prompting",
+    copy: "No necesitas empezar cada análisis desde cero explicándole a la IA qué debe buscar.",
+  },
+  {
+    id: "03",
+    title: "Pensado para abogados",
+    copy: "El flujo está construido alrededor de documentos, riesgos, obligaciones y antecedentes jurídicos.",
+  },
+];
+
+function AIWhyNotChatgptSection() {
+  return (
+    <section className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl"
+        >
+          <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
+            ¿Por qué probar LegalUp AI?
+          </p>
+          <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.08] tracking-tight sm:text-5xl">
+            ¿Y si ya uso ChatGPT?
+          </h2>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted-foreground)]">
+            Puedes seguir usándolo. LegalUp AI no busca reemplazar las
+            herramientas generales de IA. Busca convertir el análisis de tus
+            documentos y casos en un flujo de trabajo jurídico más organizado.
+          </p>
+        </motion.div>
+
+        <div className="mt-14 grid gap-4 sm:grid-cols-3">
+          {WHY_NOT_CHATGPT.map((c, i) => (
+            <motion.div
+              key={c.id}
+              initial={{ opacity: 0, y: 26 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{
+                duration: 0.75,
+                delay: i * 0.14,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--hairline)] bg-[var(--surface)]/25 p-7 transition-all duration-500 hover:-translate-y-1 hover:border-[var(--primary)]/25"
+            >
+              <div className="pointer-events-none absolute -bottom-20 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.09] blur-[70px] opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+              <span className="font-[var(--font-mono)] text-xs tracking-[0.3em] text-[var(--primary)]/70">
+                {c.id}
+              </span>
+              <h3 className="mt-4 font-serif italic text-2xl tracking-tight">
+                {c.title}
+              </h3>
+              <p className="mt-3 text-[0.83rem] leading-relaxed text-[var(--muted-foreground)]">
+                {c.copy}
+              </p>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.1, delay: 0.3 + i * 0.09 }}
+                className="mt-6 h-px origin-left bg-gradient-to-r from-[var(--primary)]/40 to-transparent"
+              />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ───── PricingSection ───── */
 
 function PricingSection({
@@ -1332,7 +1703,7 @@ function PricingSection({
   ];
 
   return (
-    <section className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+    <section id="planes" className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-10 h-[26rem] w-[40rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
       </div>
@@ -1376,7 +1747,7 @@ function PricingSection({
             <div>
               <div className="flex items-center gap-3">
                 <h3 className="font-[var(--font-display)] text-2xl font-bold tracking-tight">
-                  LegalUp AI Pro
+                  LegalUp AI
                 </h3>
                 <span
                   className="rounded-full border border-[var(--primary)]/40 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]"
@@ -1501,7 +1872,7 @@ function LegalUpAI() {
       // TRIAL_ALREADY_USED → no crear otro trial; mostrar el flujo de suscripción.
       if (msg.includes("Ya utilizaste tu prueba gratuita")) {
         toast.info(
-          "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI Pro por $49.900 CLP/mes."
+          "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI por $49.900 CLP/mes."
         );
         setShowPricingModal(true);
       } else {
@@ -1632,7 +2003,7 @@ function LegalUpAI() {
 
   const scrollToCapabilities = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const element = document.getElementById("capacidades");
+    const element = document.getElementById("como-funciona");
     if (!element) return;
     const top =
       element.getBoundingClientRect().top + window.scrollY - 80;
@@ -1775,6 +2146,10 @@ function LegalUpAI() {
       <FeatureShowcase />
       <TimeSaved />
       <SecuritySection />
+
+      <AIVsGeneralSection />
+      <AICommercialSection />
+      <AIWhyNotChatgptSection />
 
       {/* PRICING */}
       <PricingSection

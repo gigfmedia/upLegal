@@ -435,7 +435,11 @@ const AppContent = () => {
 
 
               {/* Lawyer onboarding wizard — standalone, no sidebar */}
-              <Route path="/lawyer/onboarding" element={<LawyerOnboardingPage />} />
+              <Route path="/lawyer/onboarding" element={
+                <NotificationProvider>
+                  <LawyerOnboardingPage />
+                </NotificationProvider>
+              } />
 
               <Route path="/test-analytics" element={
                 <TestAnalytics />

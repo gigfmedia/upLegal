@@ -3517,7 +3517,7 @@ const aiSubscriptionEmailTemplates = {
     </div>
   `, 'AI'),
   welcome: () => aiSubscriptionEmailTemplates.shell(`
-    <h1 style="color:#1a202c;">¡Bienvenido a LegalUp AI Pro!</h1>
+    <h1 style="color:#1a202c;">¡Bienvenido a LegalUp AI!</h1>
     <p>Tu suscripción <strong>Pro</strong> está activa. Sigue trabajando tus casos con todas las herramientas de LegalUp AI.</p>
     <div style="text-align:center;margin:30px 0;">
       <a href="${appUrl}/lawyer/ai" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;">Ir a mi workspace</a>
@@ -4045,7 +4045,7 @@ const handleAIPreapprovalWebhook = async (preapproval) => {
       if (userData?.email) {
         await sendAIEmail(
           userData.email,
-          wasTrialing ? '¡Bienvenido a LegalUp AI Pro!' : 'Tu suscripción de LegalUp AI se renovó',
+          wasTrialing ? '¡Bienvenido a LegalUp AI!' : 'Tu suscripción de LegalUp AI se renovó',
           wasTrialing
             ? aiSubscriptionEmailTemplates.welcome()
             : aiSubscriptionEmailTemplates.renewal(periodEnd.toLocaleDateString('es-CL'))
@@ -4128,7 +4128,7 @@ const handleAIAuthorizedPayment = async (payment, subscription) => {
     if (userData?.email) {
       await sendAIEmail(
         userData.email,
-        isFirstActivation ? '¡Bienvenido a LegalUp AI Pro!' : 'Tu suscripción de LegalUp AI se renovó',
+        isFirstActivation ? '¡Bienvenido a LegalUp AI!' : 'Tu suscripción de LegalUp AI se renovó',
         isFirstActivation
           ? aiSubscriptionEmailTemplates.welcome()
           : aiSubscriptionEmailTemplates.renewal(periodEnd.toLocaleDateString('es-CL'))
@@ -6699,7 +6699,7 @@ app.post('/api/ai/subscribe', async (req, res) => {
     const userData = await getAILawyerEmail(userId);
 
     const preapprovalData = {
-      reason: 'LegalUp AI Pro - Suscripción mensual',
+      reason: 'LegalUp AI - Suscripción mensual',
       external_reference: `${AI_EXTERNAL_REF_PREFIX}${userId}`,
       payer_email: userData?.email || '',
       auto_recurring: {
