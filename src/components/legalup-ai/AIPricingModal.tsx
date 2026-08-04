@@ -108,8 +108,8 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-emerald-500" aria-hidden="true" />
-            LegalUp AI
+            {/* <Sparkles className="h-5 w-5 text-emerald-500" aria-hidden="true" /> */}
+            LegalUp <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">AI</span>
           </DialogTitle>
           <DialogDescription>
             Tu asistente jurídico con inteligencia artificial. Activa tu acceso.
@@ -126,9 +126,9 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
           )}
 
           <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6">
-            <Badge className="absolute right-4 top-4 bg-emerald-100 text-emerald-800">
+            {/* <Badge className="absolute right-4 top-4 bg-emerald-100 text-emerald-800">
               Pro
-            </Badge>
+            </Badge> */}
             <p className="text-3xl font-bold text-gray-900">
               {AI_SUBSCRIPTION_PRICE_LABEL}
               <span className="text-sm font-medium text-muted-foreground">/mes</span>

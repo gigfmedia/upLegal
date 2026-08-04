@@ -67,10 +67,16 @@ function extractJson(text) {
 }
 
 /**
- * Realiza un chat completion y devuelve la respuesta parseada como objeto junto
- * con metadata de uso (tokens y costo estimado) para cost tracking.
+ * Realiza un chat completion y devuelve:
+ *   { data, raw, usage }
+ * - data: el JSON parseado de la respuesta, o null si el proveedor devolvió
+ *   texto que no contiene un objeto JSON válido.
+ * - raw: el contenido crudo devuelto por el modelo (útil como fallback).
+ * - usage: tokens y costo estimado para cost tracking.
  * Intenta primero con `response_format: json_object` y, si el proveedor lo
  * rechaza (HTTP 400/422), reintenta sin ese parámetro (compatibilidad).
+ * No lanza por "JSON inválido": entrega `data: null` y deja que el llamador
+ * decida (p. ej. el chat usa `raw` como respuesta directa).
  */
 export async function chatCompletion({ model, system, user, messages, maxTokens = 4000, temperature = 0.2 }) {
   const apiKey = getApiKey();
@@ -132,8 +138,16 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
     const outputTokens = usage.completion_tokens ?? 0;
     const totalTokens = usage.total_tokens ?? inputTokens + outputTokens;
 
+    let parsed = null;
+    try {
+      parsed = extractJson(content);
+    } catch {
+      parsed = null; // Texto sin JSON válido: el llamador puede usar `raw`.
+    }
+
     return {
-      data: extractJson(content),
+      data: parsed,
+      raw: content,
       usage: {
         provider: detectAIProvider(baseUrl),
         model,

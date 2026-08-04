@@ -7084,7 +7084,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
 
     await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model }).eq('id', doc.id);
 
-    const { data: raw, usage } = await chatCompletion({
+    const { data: raw, raw: rawText, usage } = await chatCompletion({
       model,
       system: buildAnalysisSystemPrompt(),
       user: buildAnalysisUserPrompt({ filename: doc.original_filename, extractedText: text }),
@@ -7092,8 +7092,12 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
 
     let validated;
     try {
+      if (!raw) {
+        throw new Error('El modelo no devolvió un análisis estructurado válido.');
+      }
       validated = AIDocumentAnalysisSchema.parse(raw);
     } catch (schemaError) {
+      console.error('[LegalUpAI] analyze invalid response:', rawText?.slice(0, 200));
       throw new Error('El modelo devolvió un análisis con formato inválido.');
     }
 
@@ -7398,7 +7402,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       userMessage = insertedUser;
     }
 
-    const { data: raw, usage } = await chatCompletion({
+    const { data: raw, raw: rawText, usage } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       system: buildChatSystemPrompt(),
       messages: [
@@ -7412,10 +7416,30 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     });
 
     let validated;
-    try {
-      validated = AIChatResponseSchema.parse(raw);
-    } catch {
-      throw new Error('El modelo devolvió una respuesta con formato inválido.');
+    if (raw) {
+      try {
+        validated = AIChatResponseSchema.parse(raw);
+      } catch {
+        validated = null;
+      }
+    } else {
+      validated = null;
+    }
+
+    // Fallback robusto: si el proveedor no devolvió JSON válido (p. ej. texto
+    // plano), la respuesta cruda se usa directamente como respuesta. Si el JSON
+    // existía pero no cumplía el esquema, se intenta extraer el campo `answer`.
+    if (!validated) {
+      const possibleAnswer =
+        typeof raw?.answer === 'string' && raw.answer.trim() ? raw.answer.trim() : '';
+      const rawAnswer = (rawText || '').trim();
+      const fallbackAnswer =
+        possibleAnswer ||
+        (rawAnswer && !rawAnswer.startsWith('{') && !rawAnswer.startsWith('[') ? rawAnswer : '');
+      if (!fallbackAnswer) {
+        throw new Error('El modelo devolvió una respuesta vacía. Inténtalo nuevamente.');
+      }
+      validated = { answer: fallbackAnswer, sources: [] };
     }
 
     // Fase 3.6: registra el consumo real de este mensaje (no bloquea el flujo).
