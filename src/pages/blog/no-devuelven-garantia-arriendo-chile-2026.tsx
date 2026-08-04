@@ -142,7 +142,12 @@ const BlogArticle = () => {
             </p>
             </div>
 
-            <InArticleCTA category="Derecho Civil" />
+            <InArticleCTA
+              category="Derecho Civil"
+              title="¿No te devolvieron el mes de garantía?"
+              message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
+              buttonText="Revisar mi caso"
+            />
 
           {/* ¿Qué es la garantía? */}
           <div className="mb-6 py-2">

@@ -175,7 +175,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Te amenazan con reportarte a DICOM por deuda de arriendo?" message="Un abogado especializado puede verificar si la deuda es legalmente exigible y evitar que te reporten injustamente." />
+          <InArticleCTA category="Derecho Civil" title="¿Tienes una deuda de arriendo y no sabes qué puede hacer el arrendador?" message="Un abogado puede revisar tu situación, explicarte qué opciones tienes y orientarte sobre los pasos que puedes tomar." buttonText="Consultar con un abogado" />
 
 
           <div className="mb-12">
@@ -589,16 +589,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          
-
-                              <InArticleCTA
-                        title="¿Tu caso civil necesita asesoría?"
-                        message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Civil"
-                    />
-
-{/* Conclusion */}          <div className="mb-12 border-t pt-8">
+          {/* Conclusion */}          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
               Tener una deuda de arriendo en Chile no significa automáticamente aparecer en DICOM. Para que eso ocurra, normalmente debe existir una deuda exigible, respaldada legalmente y, en muchos casos, un proceso judicial o documento que permita su cobranza formal.

@@ -144,7 +144,12 @@ const BlogArticle = () => {
               La respuesta corta es no.
             </p>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA
+            category="Derecho Civil"
+            title="¿Te subieron el arriendo y no sabes si corresponde?"
+            message="Un abogado puede revisar tu contrato y las condiciones del aumento para orientarte sobre tus derechos y alternativas."
+            buttonText="Consultar con un abogado"
+          />
 
 
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -207,7 +212,7 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-<InArticleCTA category="Derecho Civil"  title="¿Te subieron el arriendo sin justificación?" message="Un abogado especializado puede revisar tu contrato, verificar si el aumento es legal y defender tus derechos como arrendatario." />
+<RelatedLawyers category="Derecho Civil" title="¿Te subieron el arriendo sin justificación? Un abogado puede ayudarte hoy" />
 
 
           <div className="mb-12">
@@ -382,16 +387,7 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA */}
-          
-
-                              <InArticleCTA
-                        title="¿Tu caso civil necesita asesoría?"
-                        message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
-                        buttonText="Habla con un abogado ahora"
-                        category="Derecho Civil"
-                    />
-
-{/* Conclusion */}          <div className="mb-12 border-t pt-8">
+          {/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">

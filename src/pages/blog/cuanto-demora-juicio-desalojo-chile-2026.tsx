@@ -9,7 +9,6 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -174,7 +173,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA
+            category="Derecho Civil"
+            title="¿Ya estás enfrentando un juicio de desalojo?"
+            message="Los plazos y alternativas dependen de la etapa del procedimiento. Un abogado puede revisar tu caso y orientarte sobre qué hacer ahora."
+            buttonText="Consultar con un abogado"
+          />
 
           <div className="mb-4 py-2">
             <h2 className="text-2xl font-bold mb-4">¿Cuánto demora un juicio de desalojo realmente?</h2>
@@ -253,7 +257,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Estás evaluando iniciar un juicio de desalojo?" message="Un abogado especializado puede estimar los plazos reales según tu caso y definir la estrategia más conveniente." />
+          <RelatedLawyers category="Derecho Civil" title="¿Estás evaluando iniciar un juicio de desalojo? Abogados disponibles hoy" />
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>
@@ -358,14 +362,6 @@ const BlogArticle = () => {
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
-
-          <InArticleCTA
-            title="¿Tu caso de arriendo necesita asesoría?"
-            message="Un abogado civil puede ayudarte a entender tus opciones legales y los pasos a seguir para resolver tu conflicto."
-            buttonText="Habla con un abogado ahora"
-            category="Derecho Civil"
-          />
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-4">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>

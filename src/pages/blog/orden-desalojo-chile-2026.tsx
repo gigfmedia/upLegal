@@ -186,7 +186,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo o te notificaron una demanda?" message="Un abogado inmobiliario puede revisar la orden, evaluar tus defensas y buscar alternativas para evitar el lanzamiento." />
+          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
 
 
           <div className="mb-12">
@@ -537,16 +537,7 @@ const BlogArticle = () => {
           </div>
 
           {/* Improved CTA */}
-          
-
-                              <InArticleCTA
-                        title="¿Tienes problemas con un arriendo?"
-                        message="Un abogado especializado puede ayudarte a resolver tu conflicto de arrendamiento antes de que escale."
-                        buttonText="Habla con un abogado ahora"
-                        category="Arrendamiento"
-                    />
-
-{/* Conclusion */}          <div className="mb-12 border-t pt-8">
+          {/* Conclusion */}          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
