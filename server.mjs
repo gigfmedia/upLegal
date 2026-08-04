@@ -14,7 +14,7 @@ import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
 import { z } from 'zod';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
-import { chatCompletion, isAIProviderConfigured } from './server/ai/provider.mjs';
+import { chatCompletion, isAIProviderConfigured, estimateAICostUsd } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
 import {
   buildChatSystemPrompt,
@@ -310,6 +310,31 @@ const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const AI_TRIAL_MAX_CASES = 3;
 const AI_TRIAL_MAX_DOCUMENTS = 10;
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
+
+// ---- LegalUp AI — Fase 3.6: AI Usage & Cost Control ----
+// Unidad interna: 1 crédito = 1.000 tokens (credits_used = ceil(tokens/1000)).
+const AI_USAGE_CREDITS_PER_TOKEN = 1000;
+
+// Límites técnicos de protección (NO son límites comerciales visibles):
+// protegen contra abuso/costos inesperados mientras se recopilan datos reales
+// de consumo. Sin "límite comercial explícito" hasta decidir los créditos.
+const AI_PROTECT_MAX_MONTHLY_TOKENS = Number(process.env.AI_PROTECT_MAX_MONTHLY_TOKENS) || 20000000;
+const AI_PROTECT_MAX_MONTHLY_REQUESTS = Number(process.env.AI_PROTECT_MAX_MONTHLY_REQUESTS) || 5000;
+const AI_PROTECT_RATE_LIMIT_PER_MINUTE = Number(process.env.AI_PROTECT_RATE_LIMIT_PER_MINUTE) || 30;
+// Estimación 4 chars ≈ 1 token (aproximación conservadora para el límite técnico).
+const AI_ESTIMATED_CHARS_PER_TOKEN = 4;
+
+// Rate limiter en memoria: Map<userId, Array<timestamp>>.
+const aiRateLimiter = new Map();
+const AI_RATE_WINDOW_MS = 60 * 1000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, stamps] of aiRateLimiter) {
+    const fresh = stamps.filter((t) => now - t < AI_RATE_WINDOW_MS);
+    if (fresh.length === 0) aiRateLimiter.delete(userId);
+    else aiRateLimiter.set(userId, fresh);
+  }
+}, AI_RATE_WINDOW_MS).unref();
 
 // Esquema del análisis estructurado que debe devolver el modelo.
 const AIDocumentAnalysisSchema = z.object({
@@ -6567,8 +6592,70 @@ const requireAIAccess = async (userId) => {
   return access.hasAccess ? access : null;
 };
 
+// Período mensual actual (inicio y fin) en formato ISO para ai_usage_monthly.
+const getAIUsagePeriod = (now = new Date()) => {
+  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return { periodStart, periodEnd };
+};
+
+// Registra el consumo de una llamada IA: inserta en ai_usage y actualiza el
+// resumen mensual (ai_usage_monthly) de forma atómica vía RPC.
+const recordAIUsage = async ({ userId, workspaceId, documentId, conversationId, operation, usage }) => {
+  if (!usage || !userId) return;
+  const totalTokens = Number(usage.total_tokens) || 0;
+  const inputTokens = Number(usage.input_tokens) || 0;
+  const outputTokens = Number(usage.output_tokens) || 0;
+  const creditsUsed = Math.ceil(totalTokens / AI_USAGE_CREDITS_PER_TOKEN);
+  const estimatedCostUsd = Number(usage.estimated_cost_usd) || 0;
+  const { periodStart, periodEnd } = getAIUsagePeriod();
+
+  try {
+    await supabase.from('ai_usage').insert({
+      lawyer_id: userId,
+      workspace_id: workspaceId ?? null,
+      document_id: documentId ?? null,
+      conversation_id: conversationId ?? null,
+      operation,
+      provider: usage.provider ?? null,
+      model: usage.model ?? null,
+      input_tokens: inputTokens,
+      output_tokens: outputTokens,
+      total_tokens: totalTokens,
+      credits_used: creditsUsed,
+      estimated_cost_usd: estimatedCostUsd,
+    });
+
+    await supabase.rpc('increment_ai_usage_monthly', {
+      p_lawyer_id: userId,
+      p_period_start: periodStart.toISOString().slice(0, 10),
+      p_period_end: periodEnd.toISOString().slice(0, 10),
+      p_total_tokens: totalTokens,
+      p_total_credits: creditsUsed,
+      p_document_analysis_count: operation === 'document_analysis' ? 1 : 0,
+      p_chat_message_count: operation === 'case_chat' ? 1 : 0,
+      p_estimated_cost_usd: estimatedCostUsd,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] usage recording error:', error.message);
+  }
+};
+
+// Rate limiter por minuto (memoria). Devuelve true si el abogado debe esperar.
+const isAIOverRateLimit = (userId) => {
+  const now = Date.now();
+  const stamps = aiRateLimiter.get(userId) || [];
+  const fresh = stamps.filter((t) => now - t < AI_RATE_WINDOW_MS);
+  if (fresh.length >= AI_PROTECT_RATE_LIMIT_PER_MINUTE) {
+    aiRateLimiter.set(userId, fresh);
+    return true;
+  }
+  aiRateLimiter.set(userId, [...fresh, now]);
+  return false;
+};
+
 // Valida acceso + límites del trial en un endpoint de IA.
-// Devuelve `{ res: null }` si todo bien, o `{ res }` con la respuesta 402/403 ya enviada.
+// Devuelve `{ res: null }` si todo bien, o `{ res }` con la respuesta 402/403/429 ya enviada.
 const requireAIEntitlement = async (req, res, userId) => {
   const access = await requireAIAccess(userId);
   if (!access) {
@@ -6583,7 +6670,56 @@ const requireAIEntitlement = async (req, res, userId) => {
   if (limitError) {
     return { res: res.status(403).json({ error: limitError, code: 'AI_LIMIT_REACHED' }) };
   }
+
+  // Límites técnicos de protección (Fase 3.6): rate limit y consumo mensual.
+  if (isAIOverRateLimit(userId)) {
+    return {
+      res: res.status(429).json({
+        error: 'Estás haciendo muchas consultas seguidas. Espera un momento e inténtalo de nuevo.',
+        code: 'AI_RATE_LIMITED',
+      }),
+    };
+  }
+  const protectionError = await checkAIProtectionLimits(userId);
+  if (protectionError) {
+    return {
+      res: res.status(429).json({
+        error: protectionError,
+        code: 'AI_PROTECTION_LIMIT',
+      }),
+    };
+  }
+
   return { res: null };
+};
+
+// Límites técnicos de protección por consumo mensual (NO comerciales).
+// Retorna un mensaje si el abogado superó el techo mensual, o null si puede seguir.
+const checkAIProtectionLimits = async (userId) => {
+  const { periodStart } = getAIUsagePeriod();
+  const periodStartIso = periodStart.toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from('ai_usage_monthly')
+    .select('total_tokens, document_analysis_count, chat_message_count')
+    .eq('lawyer_id', userId)
+    .eq('period_start', periodStartIso)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[LegalUpAI] protection check error:', error.message);
+    return null; // No bloquear si falla la consulta de uso.
+  }
+  if (!data) return null;
+
+  const requests = (data.document_analysis_count || 0) + (data.chat_message_count || 0);
+  if ((data.total_tokens || 0) >= AI_PROTECT_MAX_MONTHLY_TOKENS) {
+    return 'Se alcanzó el límite de consumo de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
+  }
+  if (requests >= AI_PROTECT_MAX_MONTHLY_REQUESTS) {
+    return 'Se alcanzó el límite de consultas de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
+  }
+  return null;
 };
 
 // Límites de uso del trial (Bloque 22). Retorna un mensaje de error si el
@@ -6948,7 +7084,7 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
 
     await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model }).eq('id', doc.id);
 
-    const raw = await chatCompletion({
+    const { data: raw, usage } = await chatCompletion({
       model,
       system: buildAnalysisSystemPrompt(),
       user: buildAnalysisUserPrompt({ filename: doc.original_filename, extractedText: text }),
@@ -6960,6 +7096,15 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
     } catch (schemaError) {
       throw new Error('El modelo devolvió un análisis con formato inválido.');
     }
+
+    // Fase 3.6: registra el consumo real de esta operación (no bloquea el flujo).
+    await recordAIUsage({
+      userId: doc.lawyer_id,
+      workspaceId: doc.workspace_id,
+      documentId: doc.id,
+      operation: 'document_analysis',
+      usage,
+    });
 
     // Reanalizar reemplaza el análisis anterior del documento.
     await supabase.from('ai_document_analyses').delete().eq('document_id', doc.id);
@@ -7253,7 +7398,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       userMessage = insertedUser;
     }
 
-    const raw = await chatCompletion({
+    const { data: raw, usage } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       system: buildChatSystemPrompt(),
       messages: [
@@ -7272,6 +7417,15 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     } catch {
       throw new Error('El modelo devolvió una respuesta con formato inválido.');
     }
+
+    // Fase 3.6: registra el consumo real de este mensaje (no bloquea el flujo).
+    await recordAIUsage({
+      userId,
+      workspaceId: workspace.id,
+      conversationId: conversation.id,
+      operation: 'case_chat',
+      usage,
+    });
 
     // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
     const includedById = new Map(readyDocs.map((doc) => [doc.id, doc.original_filename]));
@@ -7315,6 +7469,62 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     console.error('[LegalUpAI] chat error:', error);
     const code = error?.code === 'AI_NOT_CONFIGURED' ? 'AI_NOT_CONFIGURED' : 'PROVIDER_ERROR';
     res.status(500).json({ error: error.message || 'No se pudo generar la respuesta.', code });
+  }
+});
+
+// GET /api/ai/usage — resumen de consumo IA del abogado en el mes en curso.
+// Fase 3.6: expone tokens/créditos/costos para el medidor de la UI. Los límites
+// técnicos de protección se devuelven como referencia, sin ser comerciales.
+app.get('/api/ai/usage', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const { periodStart, periodEnd } = getAIUsagePeriod();
+    const periodStartIso = periodStart.toISOString().slice(0, 10);
+
+    const { data, error } = await supabase
+      .from('ai_usage_monthly')
+      .select('total_tokens, total_credits, document_analysis_count, chat_message_count, estimated_cost_usd')
+      .eq('lawyer_id', userId)
+      .eq('period_start', periodStartIso)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const usage = data || {
+      total_tokens: 0,
+      total_credits: 0,
+      document_analysis_count: 0,
+      chat_message_count: 0,
+      estimated_cost_usd: 0,
+    };
+
+    const requests = (usage.document_analysis_count || 0) + (usage.chat_message_count || 0);
+
+    res.json({
+      success: true,
+      period_start: periodStartIso,
+      period_end: periodEnd.toISOString().slice(0, 10),
+      usage: {
+        total_tokens: usage.total_tokens || 0,
+        total_credits: usage.total_credits || 0,
+        document_analysis_count: usage.document_analysis_count || 0,
+        chat_message_count: usage.chat_message_count || 0,
+        estimated_cost_usd: Number(usage.estimated_cost_usd) || 0,
+      },
+      protection_limits: {
+        monthly_tokens: AI_PROTECT_MAX_MONTHLY_TOKENS,
+        monthly_requests: AI_PROTECT_MAX_MONTHLY_REQUESTS,
+        rate_limit_per_minute: AI_PROTECT_RATE_LIMIT_PER_MINUTE,
+        monthly_tokens_used: usage.total_tokens || 0,
+        monthly_requests_used: requests,
+      },
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] usage error:', error);
+    res.status(500).json({ error: 'No se pudo obtener el consumo de IA.' });
   }
 });
 

@@ -1485,7 +1485,7 @@ function AIVsGeneralSection() {
         >
           {/* Desktop: tabla */}
           <div
-            className="overflow-hidden rounded-2xl shadow-[var(--shadow-elevated)]"
+            className="hidden md:block overflow-hidden rounded-2xl shadow-[var(--shadow-elevated)]"
             style={{
               backgroundImage: "var(--gradient-glass)",
               backgroundColor: "oklch(0.12 0.012 264 / 70%)",
@@ -1547,6 +1547,42 @@ function AIVsGeneralSection() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile: cards apiladas */}
+          <div className="space-y-4 md:hidden">
+            {VS_GENERAL_ROWS.map((row) => (
+              <div
+                key={row.feature}
+                className="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)]/30 p-5"
+              >
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">
+                  {row.feature}
+                </h3>
+                <dl className="mt-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <dt className="pt-1.5 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-[var(--ink-faint)]">
+                      ChatGPT / Claude
+                    </dt>
+                    <dd className="text-right">
+                      <AIGeneralCell value={row.general} />
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-3 border-t border-[var(--hairline)] pt-3">
+                    <dt className="pt-1.5 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-[var(--primary)]">
+                      LegalUp AI
+                    </dt>
+                    <dd className="text-right">
+                      <AIVsCell
+                        value={row.ai}
+                        note={row.aiNote}
+                        soon={row.aiSoon}
+                      />
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>

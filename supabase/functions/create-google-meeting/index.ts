@@ -7,17 +7,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('🔥 FUNCTION ENTERED create-google-meeting');
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    console.log('🔥 AFTER REQUEST ENTRY');
 
     const { appointmentId } = await req.json();
-    console.log('🔥 APPOINTMENT ID:', appointmentId);
 
     if (!appointmentId) throw new Error('Missing appointmentId');
 
@@ -38,17 +35,9 @@ serve(async (req) => {
       throw new Error('Appointment not found');
     }
 
-    console.log('🔥 APPOINTMENT FETCHED:', appointment);
-
     // Idempotency check: Return existing meet_link if already exists
     if (appointment.meet_link) {
       const originalProvider = appointment.meet_provider || 'jitsi';
-      console.log('MEET_LINK_REUSE', {
-        appointmentId,
-        provider: originalProvider,
-        meetLink: appointment.meet_link,
-        action: 'returning_existing_link'
-      });
       
       return new Response(
         JSON.stringify({ 
@@ -73,8 +62,6 @@ serve(async (req) => {
       throw new Error('Lawyer profile not found');
     }
 
-    console.log('🔥 LAWYER PROFILE FOUND:', lawyerProfile);
-
     const lawyerUserId = lawyerProfile.user_id;
 
     // PRIORITY 1: Use lawyer's fixed meet_link if configured
@@ -88,13 +75,6 @@ serve(async (req) => {
       } else if (fixedMeetLink.includes('jitsi')) {
         fixedMeetProvider = 'jitsi';
       }
-
-      console.log('🔥 USING FIXED MEET_LINK:', {
-        appointmentId,
-        meetLink: fixedMeetLink,
-        provider: fixedMeetProvider,
-        source: 'lawyer_profile'
-      });
 
       // Save fixed link to database
       const { error: updateError } = await supabaseClient
@@ -132,20 +112,16 @@ serve(async (req) => {
       .maybeSingle();
 
     const hasGoogleIntegration = !intError && integration;
-    console.log('🚨 CHATGPT_TEST_999');
-    console.log('🔥 GOOGLE INTEGRATION STATUS:', hasGoogleIntegration ? 'FOUND' : 'NOT FOUND');
 
     let meetLink = '';
     let meetSource = '';
 
     // Try Google Calendar only if integration exists
     if (hasGoogleIntegration) {
-      console.log('🔥 ATTEMPTING GOOGLE CALENDAR');
       
       let accessToken = integration.access_token;
 
       if (Date.now() >= integration.expires_at) {
-        console.log('🔥 REFRESHING TOKEN');
 
         const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
@@ -162,12 +138,6 @@ serve(async (req) => {
         accessToken = newTokens.access_token;
       }
 
-      // 🔥 VALIDACIÓN TOTAL DE FECHA
-      console.log('🔥 RAW APPOINTMENT CHECK:', {
-        date: appointment.appointment_date,
-        time: appointment.appointment_time,
-        duration: appointment.duration,
-      });
 
       if (!appointment.appointment_time || !appointment.appointment_date) {
         console.warn('⚠️ Invalid appointment date/time, falling back to Jitsi');
@@ -182,7 +152,6 @@ serve(async (req) => {
         } else {
           const endDate = new Date(startDate.getTime() + (appointment.duration || 60) * 60000);
 
-          console.log('🔥 BEFORE GOOGLE CALL');
 
           const event = {
             summary: `Cita LegalUp: ${appointment.consultation_type}`,
@@ -219,13 +188,8 @@ serve(async (req) => {
 
             const rawText = await calendarResponse.text();
 
-            console.log('🔥 AFTER GOOGLE CALL');
-            console.log('GOOGLE STATUS:', calendarResponse.status);
-            console.log('GOOGLE RAW RESPONSE:', rawText);
-
             if (calendarResponse.ok) {
               const calendarData = JSON.parse(rawText);
-              console.log('🔥 CALENDAR PARSED:', calendarData);
 
               meetLink =
                 calendarData.hangoutLink ||
@@ -233,11 +197,6 @@ serve(async (req) => {
               
               if (meetLink) {
                 meetSource = 'google';
-                console.log('GOOGLE_MEET_SUCCESS', {
-                  appointmentId,
-                  meetLink,
-                  calendarEventId: calendarData.id
-                });
               }
             } else {
               console.error('GOOGLE_MEET_ERROR', {
@@ -253,23 +212,16 @@ serve(async (req) => {
         }
       }
     } else {
-      console.log('🔥 SKIPPING GOOGLE CALENDAR - NO INTEGRATION');
+      //console.log('🔥 SKIPPING GOOGLE CALENDAR - NO INTEGRATION');
     }
 
     // Fallback to Jitsi Meet if Google failed or not available
     if (!meetLink) {
       meetLink = `https://meet.jit.si/legalup-${appointmentId}`;
       meetSource = 'jitsi';
-      console.log('JITSI_LINK_GENERATED:', meetLink);
-      console.log('JITSI_FALLBACK_USED', {
-        appointmentId,
-        meetLink,
-        reason: hasGoogleIntegration ? 'google_failed' : 'no_google_integration'
-      });
     }
 
     // Save meet_link to database
-    console.log('JITSI_LINK_SAVING_TO_DB', { appointmentId, meetLink, meetSource });
     const { error: updateError } = await supabaseClient
       .from('appointments')
       .update({
@@ -285,19 +237,6 @@ serve(async (req) => {
       console.error('JITSI_LINK_DB_UPDATE_ERROR', updateError);
       throw new Error(`Failed to update appointment: ${updateError.message}`);
     }
-
-    console.log('JITSI_LINK_SAVED_TO_DB');
-
-    // Traceability logging
-    console.log('MEETING_GENERATION', {
-      appointmentId,
-      provider: meetSource,
-      hasGoogleIntegration,
-      meetLink,
-      action: 'generated_new'
-    });
-
-    console.log('RETURNING_JITSI_RESPONSE:', { meetLink, source: meetSource });
 
     return new Response(
       JSON.stringify({ 

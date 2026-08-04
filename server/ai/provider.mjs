@@ -16,6 +16,41 @@ export function isAIProviderConfigured() {
   return Boolean(getApiKey());
 }
 
+// Costo estimado por 1.000 tokens (USD) según modelo, usado para cost tracking.
+// Los valores siguen las tarifas públicas de OpenAI; si un modelo no está en el
+// mapa se usa el costo por defecto. Se puede sobrescribir con AI_MODEL_COSTS_JSON.
+const MODEL_COST_USD_PER_1K = {
+  'gpt-4o-mini': { input: 0.00015, output: 0.0006 },
+  'gpt-4o': { input: 0.0025, output: 0.01 },
+  'gpt-4.1-mini': { input: 0.0004, output: 0.0016 },
+  'gpt-4.1': { input: 0.002, output: 0.008 },
+  'gpt-4-turbo': { input: 0.01, output: 0.03 },
+  'gpt-3.5-turbo': { input: 0.0005, output: 0.0015 },
+  default: { input: 0.00015, output: 0.0006 },
+};
+
+/** Costo estimado en USD de una llamada según modelo y tokens usados. */
+export function estimateAICostUsd(model, inputTokens, outputTokens) {
+  const key = String(model || '').toLowerCase();
+  const price = MODEL_COST_USD_PER_1K[key] || MODEL_COST_USD_PER_1K.default;
+  return (inputTokens / 1000) * price.input + (outputTokens / 1000) * price.output;
+}
+
+/** Nombre corto del proveedor a partir de la base URL (openai, openrouter, groq…). */
+export function detectAIProvider(baseUrl) {
+  try {
+    const host = new URL(baseUrl).hostname;
+    if (host.includes('openrouter')) return 'openrouter';
+    if (host.includes('groq')) return 'groq';
+    if (host.includes('deepseek')) return 'deepseek';
+    if (host.includes('anthropic')) return 'anthropic';
+    if (host.includes('openai')) return 'openai';
+    return host;
+  } catch {
+    return 'unknown';
+  }
+}
+
 /** Extrae y parsea el JSON de la respuesta, tolerando bloques markdown. */
 function extractJson(text) {
   const cleaned = String(text)
@@ -32,7 +67,8 @@ function extractJson(text) {
 }
 
 /**
- * Realiza un chat completion y devuelve la respuesta parseada como objeto.
+ * Realiza un chat completion y devuelve la respuesta parseada como objeto junto
+ * con metadata de uso (tokens y costo estimado) para cost tracking.
  * Intenta primero con `response_format: json_object` y, si el proveedor lo
  * rechaza (HTTP 400/422), reintenta sin ese parámetro (compatibilidad).
  */
@@ -90,7 +126,23 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
     if (!content) {
       throw new Error('El proveedor IA no devolvió contenido.');
     }
-    return extractJson(content);
+
+    const usage = data?.usage || {};
+    const inputTokens = usage.prompt_tokens ?? 0;
+    const outputTokens = usage.completion_tokens ?? 0;
+    const totalTokens = usage.total_tokens ?? inputTokens + outputTokens;
+
+    return {
+      data: extractJson(content),
+      usage: {
+        provider: detectAIProvider(baseUrl),
+        model,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: totalTokens,
+        estimated_cost_usd: estimateAICostUsd(model, inputTokens, outputTokens),
+      },
+    };
   };
 
   try {

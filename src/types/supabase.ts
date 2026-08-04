@@ -324,6 +324,112 @@ export type Database = {
           },
         ]
       }
+      ai_usage: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          credits_used: number
+          document_id: string | null
+          estimated_cost_usd: number
+          id: string
+          input_tokens: number
+          lawyer_id: string
+          model: string | null
+          operation: string
+          output_tokens: number
+          provider: string | null
+          total_tokens: number
+          workspace_id: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          credits_used?: number
+          document_id?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          input_tokens?: number
+          lawyer_id: string
+          model?: string | null
+          operation: string
+          output_tokens?: number
+          provider?: string | null
+          total_tokens?: number
+          workspace_id?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          credits_used?: number
+          document_id?: string | null
+          estimated_cost_usd?: number
+          id?: string
+          input_tokens?: number
+          lawyer_id?: string
+          model?: string | null
+          operation?: string
+          output_tokens?: number
+          provider?: string | null
+          total_tokens?: number
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_usage_monthly: {
+        Row: {
+          chat_message_count: number
+          document_analysis_count: number
+          estimated_cost_usd: number
+          id: string
+          lawyer_id: string
+          period_end: string
+          period_start: string
+          total_credits: number
+          total_tokens: number
+          updated_at: string
+        }
+        Insert: {
+          chat_message_count?: number
+          document_analysis_count?: number
+          estimated_cost_usd?: number
+          id?: string
+          lawyer_id: string
+          period_end: string
+          period_start: string
+          total_credits?: number
+          total_tokens?: number
+          updated_at?: string
+        }
+        Update: {
+          chat_message_count?: number
+          document_analysis_count?: number
+          estimated_cost_usd?: number
+          id?: string
+          lawyer_id?: string
+          period_end?: string
+          period_start?: string
+          total_credits?: number
+          total_tokens?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_monthly_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_workspaces: {
         Row: {
           created_at: string

@@ -31,6 +31,7 @@ import {
 import { NewCaseModal } from '@/components/legalup-ai/NewCaseModal';
 import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
+import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
 import { useAISubscription } from '@/hooks/useAISubscription';
 import type { AIFeatureKey } from '@/lib/aiFeatures';
 
@@ -178,19 +179,22 @@ export default function LegalUpAIWorkspace() {
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
-      <header className="">
-        <h2 className="group flex flex-wrap items-center gap-1.5 text-2xl font-bold tracking-tight text-gray-900">
-          <span className="tracking-tight">LegalUp</span>
-          <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
-            AI
-          </span>
-          <span className="text-sm font-medium text-green-900">
-            Tu espacio de trabajo jurídico inteligente.
-          </span>
-        </h2>
-        <p className="text-muted-foreground max-w-2xl">
-          Analiza, investiga y trabaja tus casos desde un solo lugar.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="group flex flex-wrap items-center gap-1.5 text-2xl font-bold tracking-tight text-gray-900">
+            <span className="tracking-tight">LegalUp</span>
+            <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 text-[0.6rem] font-semibold tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+              AI
+            </span>
+            <span className="text-sm font-medium text-green-900">
+              Tu espacio de trabajo jurídico inteligente.
+            </span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl">
+            Analiza, investiga y trabaja tus casos desde un solo lugar.
+          </p>
+        </div>
+        {hasAccess && <AIUsageMeter />}
       </header>
 
       <AISubscriptionBanner />
