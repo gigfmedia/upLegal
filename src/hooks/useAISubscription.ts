@@ -131,6 +131,21 @@ export function useAIFeatureAccess() {
   };
 }
 
+export type AITrialErrorCode =
+  | 'EMAIL_NOT_CONFIRMED'
+  | 'NOT_LAWYER'
+  | 'TRIAL_ALREADY_USED'
+  | 'AI_PLAN_REQUIRED';
+
+export class AITrialError extends Error {
+  code: AITrialErrorCode;
+  constructor(message: string, code: AITrialErrorCode) {
+    super(message);
+    this.name = 'AITrialError';
+    this.code = code;
+  }
+}
+
 /** Inicia la prueba gratuita (idempotente en el backend). */
 export function useStartAITrial() {
   const queryClient = useQueryClient();
@@ -145,7 +160,11 @@ export function useStartAITrial() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || 'No se pudo iniciar la prueba gratuita.');
+      if (!res.ok) {
+        // Mapea códigos conocidos del backend para que la UI pueda reaccionar.
+        const code = body?.code as AITrialErrorCode | undefined;
+        throw new AITrialError(body?.error || 'No se pudo iniciar la prueba gratuita.', code || 'AI_PLAN_REQUIRED');
+      }
       return body;
     },
     onSuccess: (data) => {
@@ -158,6 +177,17 @@ export function useStartAITrial() {
       }
     },
   });
+}
+
+/** Reenvía el correo de confirmación de la cuenta del usuario actual. */
+export async function resendAIEmailConfirmation(): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const email = session?.user?.email;
+  if (!email) throw new Error('No se pudo reenviar el correo: falta tu sesión.');
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
+  if (error) throw error;
 }
 
 export type AISubscribeResult = { success: boolean; initPoint: string };

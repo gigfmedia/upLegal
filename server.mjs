@@ -13,6 +13,11 @@ import { Resend } from 'resend';
 import crypto from 'crypto';
 import cookieParser from 'cookie-parser';
 import { z } from 'zod';
+import {
+  AI_TRIAL_MAX_CASES,
+  AI_TRIAL_MAX_DOCUMENTS,
+  normalizeAIEmail,
+} from './server/ai/trialIdentity.mjs';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { chatCompletion, isAIProviderConfigured, estimateAICostUsd } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
@@ -307,8 +312,7 @@ const AI_EXTERNAL_REF_PREFIX = 'AI_';
 const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Pro activo no limita.
-const AI_TRIAL_MAX_CASES = 3;
-const AI_TRIAL_MAX_DOCUMENTS = 10;
+// Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
 
 // ---- LegalUp AI — Fase 3.6: AI Usage & Cost Control ----
@@ -6749,11 +6753,50 @@ const checkAILimits = async (userId, access) => {
 };
 
 // POST /api/ai/trial/start — inicia la prueba gratuita (idempotente).
+// Autoridad de identidad: backend + BD. NO confía en el frontend.
+//   - Exige email confirmado (403 EMAIL_NOT_CONFIRMED).
+//   - Exige role='lawyer' server-side (403 NOT_LAWYER).
+//   - Un solo trial por lawyer (UNIQUE lawyer_id) y por email (UNIQUE trial_email):
+//     aunque se elimine/recree la cuenta o el perfil, el mismo email NO re-obtiene trial.
+//   - Race condition: dos inserts simultáneos → uno crea, el otro recibe 409
+//     TRIAL_ALREADY_USED (nunca 500 por un conflicto UNIQUE esperado).
 app.post('/api/ai/trial/start', async (req, res) => {
   let userId = null;
   try {
     userId = await requireAILawyer(req, res);
     if (!userId) return;
+
+    // 1) Verificación server-side del usuario auth (email + confirmación).
+    const authUser = await getAILawyerEmail(userId);
+    if (!authUser) {
+      return res.status(401).json({ error: 'No se pudo validar tu sesión.', code: 'AUTH_USER_NOT_FOUND' });
+    }
+    if (!authUser.email_confirmed_at) {
+      return res.status(403).json({
+        error: 'Primero confirma tu correo electrónico para activar tu prueba gratuita.',
+        code: 'EMAIL_NOT_CONFIRMED',
+      });
+    }
+
+    // 2) Verificación server-side del rol (misma fuente que RequireLawyer del
+    //    frontend: el rol real vive en profiles.role). No se crea un sistema nuevo.
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle();
+    if (profileError || !profile) {
+      return res.status(403).json({
+        error: 'Completa tu perfil de abogado antes de iniciar la prueba gratuita.',
+        code: 'NOT_LAWYER',
+      });
+    }
+    if (profile.role !== 'lawyer') {
+      return res.status(403).json({
+        error: 'La prueba gratuita de LegalUp AI es solo para abogados.',
+        code: 'NOT_LAWYER',
+      });
+    }
 
     const existing = await getAILawyerSubscription(userId);
 
@@ -6765,6 +6808,22 @@ app.post('/api/ai/trial/start', async (req, res) => {
     // Ya utilizó un trial antes (estado terminal con trial_started_at): no permitir otro.
     if (existing && existing.trial_started_at) {
       return res.status(409).json({ error: 'Ya utilizaste tu prueba gratuita.', code: 'TRIAL_ALREADY_USED' });
+    }
+
+    const email = normalizeAIEmail(authUser.email);
+
+    // 3) Deduplicación por email: aunque el lawyer_id sea distinto (nueva cuenta),
+    //    si ese email ya inició un trial en cualquier cuenta, se bloquea.
+    const { data: emailHolder, error: emailCheckError } = await supabase
+      .from('ai_subscriptions')
+      .select('lawyer_id, trial_started_at')
+      .eq('trial_email', email)
+      .not('trial_started_at', 'is', null)
+      .maybeSingle();
+    if (emailCheckError) {
+      console.error('[LegalUpAI] trial email dedup check error:', emailCheckError);
+    } else if (emailHolder) {
+      return res.status(409).json({ error: 'Ya utilizaste tu prueba gratuita con este correo.', code: 'TRIAL_ALREADY_USED' });
     }
 
     const now = new Date();
@@ -6779,17 +6838,20 @@ app.post('/api/ai/trial/start', async (req, res) => {
         started_at: now.toISOString(),
         trial_started_at: now.toISOString(),
         trial_ends_at: trialEnd.toISOString(),
+        trial_email: email,
       })
       .select()
       .single();
 
     if (insertError) {
-      // Carrera de doble click: el índice único por trial rechaza el segundo insert.
+      // Race condition o dedup: un conflicto UNIQUE (23505) es esperado cuando
+      // dos requests simultáneos intentan crear el mismo trial. Nunca 500.
       if (insertError.code === '23505') {
         const retry = await getAILawyerSubscription(userId);
         if (retry && ['trialing', 'active'].includes(retry.status)) {
           return res.json({ success: true, subscription: retry, already_started: true });
         }
+        return res.status(409).json({ error: 'Ya utilizaste tu prueba gratuita.', code: 'TRIAL_ALREADY_USED' });
       }
       console.error('[LegalUpAI] trial start error:', insertError);
       return res.status(500).json({ error: 'No se pudo iniciar la prueba gratuita.' });

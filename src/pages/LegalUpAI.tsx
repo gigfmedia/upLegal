@@ -39,6 +39,8 @@ import {
   Clock,
   ArrowDown,
   ChevronRight,
+  MailWarning,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
@@ -51,6 +53,8 @@ import { AIPricingModal } from "@/components/legalup-ai/AIPricingModal";
 import {
   useAISubscription,
   useStartAITrial,
+  AITrialError,
+  resendAIEmailConfirmation,
 } from "@/hooks/useAISubscription";
 // Cargado como texto e inyectado en un <style> que se elimina al desmontar la
 // landing. Todo el CSS está aislado bajo `.legalup-landing` (ver comentario en
@@ -1840,6 +1844,8 @@ function LegalUpAI() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
+  const [resending, setResending] = useState(false);
   const [headerHasBackground, setHeaderHasBackground] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [headerFixed, setHeaderFixed] = useState(true);
@@ -1905,8 +1911,17 @@ function LegalUpAI() {
     } catch (err) {
       const msg =
         err instanceof Error && err.message ? err.message : "";
+      // EMAIL_NOT_CONFIRMED → mostrar estado claro y permitir reenviar confirmación.
+      if (err instanceof AITrialError && err.code === "EMAIL_NOT_CONFIRMED") {
+        setUnconfirmed(true);
+        toast.info("Confirma tu correo electrónico", {
+          description:
+            "Enviamos un enlace de confirmación a tu correo. Revísalo para activar tu prueba gratuita.",
+        });
+        return;
+      }
       // TRIAL_ALREADY_USED → no crear otro trial; mostrar el flujo de suscripción.
-      if (msg.includes("Ya utilizaste tu prueba gratuita")) {
+      if (msg.includes("Ya utilizaste tu prueba gratuita") || (err instanceof AITrialError && err.code === "TRIAL_ALREADY_USED")) {
         toast.info(
           "Tu prueba gratuita ya fue utilizada. Continúa con LegalUp AI por $49.900 CLP/mes."
         );
@@ -1917,6 +1932,20 @@ function LegalUpAI() {
       }
     } finally {
       setTrialLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    setResending(true);
+    try {
+      await resendAIEmailConfirmation();
+      toast.success("Correo reenviado", {
+        description: "Revisa tu bandeja de entrada y confirma tu correo para activar la prueba gratuita.",
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo reenviar el correo.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -2074,6 +2103,35 @@ function LegalUpAI() {
         onCtaClick={() => handleStartTrial("header")}
         ctaLabel={headerCtaLabel}
       />
+
+      {/* Estado: correo sin confirmar */}
+      {unconfirmed && (
+        <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
+          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <MailWarning className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-medium text-[var(--ink)]">
+                  Confirma tu correo electrónico
+                </p>
+                <p className="text-sm text-[var(--ink-dim)]">
+                  También enviamos un enlace de confirmación a tu bandeja de entrada.
+                  Haz clic en él para activar tu prueba gratuita de 5 días.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleResendConfirmation}
+              disabled={resending}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Send className="h-4 w-4" aria-hidden="true" />
+              {resending ? "Enviando…" : "Reenviar correo"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       <section className="relative overflow-hidden pb-24 pt-32 sm:pb-32 sm:pt-40">

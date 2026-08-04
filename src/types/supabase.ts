@@ -271,6 +271,7 @@ export type Database = {
           provider_subscription_id: string | null
           started_at: string
           status: string
+          trial_email: string | null
           trial_ends_at: string | null
           trial_reminder_day: number | null
           trial_started_at: string | null
@@ -290,6 +291,7 @@ export type Database = {
           provider_subscription_id?: string | null
           started_at?: string
           status?: string
+          trial_email?: string | null
           trial_ends_at?: string | null
           trial_reminder_day?: number | null
           trial_started_at?: string | null
@@ -309,6 +311,7 @@ export type Database = {
           provider_subscription_id?: string | null
           started_at?: string
           status?: string
+          trial_email?: string | null
           trial_ends_at?: string | null
           trial_reminder_day?: number | null
           trial_started_at?: string | null
