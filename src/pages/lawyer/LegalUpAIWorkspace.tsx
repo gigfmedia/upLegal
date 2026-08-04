@@ -16,6 +16,7 @@ import {
   ChartPie,
   Plus,
   Trash2,
+  Pencil,
   FolderOpen,
   CalendarDays,
   Clock,
@@ -29,6 +30,7 @@ import {
   type AIWorkspace,
 } from '@/hooks/useAIWorkspaces';
 import { NewCaseModal } from '@/components/legalup-ai/NewCaseModal';
+import { EditCaseModal } from '@/components/legalup-ai/EditCaseModal';
 import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
@@ -111,6 +113,7 @@ export default function LegalUpAIWorkspace() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [caseToDelete, setCaseToDelete] = useState<AIWorkspace | null>(null);
+  const [caseToEdit, setCaseToEdit] = useState<AIWorkspace | null>(null);
   const [pricingOpen, setPricingOpen] = useState(false);
   const casesRef = useRef<HTMLElement | null>(null);
   const { hasAccess } = useAISubscription();
@@ -394,14 +397,24 @@ export default function LegalUpAIWorkspace() {
                           </span>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setCaseToDelete(workspace)}
-                        className="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                        aria-label={`Eliminar caso ${workspace.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setCaseToEdit(workspace)}
+                          className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500"
+                          aria-label={`Editar caso ${workspace.name}`}
+                        >
+                          <Pencil className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCaseToDelete(workspace)}
+                          className="rounded-md p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                          aria-label={`Eliminar caso ${workspace.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
 
                     {workspace.description ? (
@@ -448,6 +461,13 @@ export default function LegalUpAIWorkspace() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={(workspace) => navigate(`/lawyer/ai/cases/${workspace.id}`)}
+      />
+
+      <EditCaseModal
+        caseToEdit={caseToEdit}
+        onOpenChange={(open) => {
+          if (!open) setCaseToEdit(null);
+        }}
       />
 
       <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />
