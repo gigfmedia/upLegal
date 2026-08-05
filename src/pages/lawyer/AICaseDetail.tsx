@@ -16,6 +16,7 @@ import {
   Sparkles,
   FolderOpen,
   Loader2,
+  FileText,
   Lock,
 } from 'lucide-react';
 import { useAIWorkspace } from '@/hooks/useAIWorkspaces';
@@ -33,6 +34,7 @@ import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
 import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
+import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 
 function formatDate(value: string): string {
   try {
@@ -49,6 +51,7 @@ export default function AICaseDetail() {
   const { canUse } = useAIFeatureAccess();
   const canAnalyze = canUse('document_analysis');
   const canChat = canUse('case_chat');
+  const canResearch = canUse('jurisprudence');
 
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
@@ -220,7 +223,7 @@ export default function AICaseDetail() {
                   <Card id="ai-documents-section">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
-                        <Sparkles className="h-4 w-4 text-green-700" aria-hidden="true" />
+                        <FileText className="h-4 w-4 text-green-700" aria-hidden="true" />
                         Documentos del caso
                       </CardTitle>
                     </CardHeader>
@@ -350,6 +353,34 @@ export default function AICaseDetail() {
                   </Card>
                 </section>
               </div>
+            )}
+
+            {!canResearch ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                    <Lock className="h-6 w-6" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Investigación de jurisprudencia no disponible
+                    </p>
+                    <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                      Tu plan actual no incluye la investigación de jurisprudencia
+                      de LegalUp AI.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => setPricingOpen(true)}
+                    className="bg-gray-900 text-white hover:bg-green-900"
+                  >
+                    Ver planes
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <AIResearchPanel workspaceId={workspace.id} />
             )}
           </>
         )}

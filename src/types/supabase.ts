@@ -187,6 +187,54 @@ export type Database = {
           },
         ]
       }
+      ai_research_requests: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          lawyer_id: string
+          model: string | null
+          query: string
+          sources: Json
+          workspace_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          lawyer_id: string
+          model?: string | null
+          query: string
+          sources?: Json
+          workspace_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          lawyer_id?: string
+          model?: string | null
+          query?: string
+          sources?: Json
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_research_requests_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_research_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_documents: {
         Row: {
           analysis_error: string | null
@@ -392,6 +440,7 @@ export type Database = {
           document_analysis_count: number
           estimated_cost_usd: number
           id: string
+          jurisprudence_research_count: number
           lawyer_id: string
           period_end: string
           period_start: string
@@ -404,6 +453,7 @@ export type Database = {
           document_analysis_count?: number
           estimated_cost_usd?: number
           id?: string
+          jurisprudence_research_count?: number
           lawyer_id: string
           period_end: string
           period_start: string
@@ -416,6 +466,7 @@ export type Database = {
           document_analysis_count?: number
           estimated_cost_usd?: number
           id?: string
+          jurisprudence_research_count?: number
           lawyer_id?: string
           period_end?: string
           period_start?: string

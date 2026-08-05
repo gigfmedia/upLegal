@@ -71,8 +71,8 @@ const FEATURES: {
     title: 'Investigar jurisprudencia',
     description:
       'Encuentra jurisprudencia y normativa relevante para tus casos, con fuentes verificables.',
-    status: 'coming_soon',
-    cta: 'Próximamente',
+    status: 'available',
+    cta: 'Investigar jurisprudencia',
   },
   {
     key: 'document_drafting',
@@ -153,6 +153,14 @@ export default function LegalUpAIWorkspace() {
     } else if (feature === 'case_analysis') {
       if (hasCases) {
         casesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        setCreateOpen(true);
+      }
+    } else if (feature === 'jurisprudence') {
+      // La investigación de jurisprudencia vive dentro de un caso.
+      if (hasCases) {
+        // Abre el caso más reciente, donde vive el panel de investigación.
+        navigate(`/lawyer/ai/cases/${workspaces![0].id}`);
       } else {
         setCreateOpen(true);
       }

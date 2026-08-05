@@ -27,6 +27,19 @@ import {
   buildChatUserPrompt,
   CHAT_LIMITS,
 } from './server/ai/legalChatPrompt.mjs';
+import {
+  searchJurisprudence,
+} from './server/ai/jurisprudenceSources.mjs';
+import {
+  buildJurisprudenceSystemPrompt,
+  buildJurisprudenceContext,
+  buildJurisprudenceUserPrompt,
+  buildJurisprudenceCaseContext,
+  buildJurisprudenceAnswer,
+  verifyJurisprudenceClaims,
+  detectExcessiveConclusions,
+  JURISPRUDENCE_LIMITS,
+} from './server/ai/jurisprudencePrompt.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 
 // Get current directory
@@ -6643,6 +6656,7 @@ const recordAIUsage = async ({ userId, workspaceId, documentId, conversationId, 
       p_total_credits: creditsUsed,
       p_document_analysis_count: operation === 'document_analysis' ? 1 : 0,
       p_chat_message_count: operation === 'case_chat' ? 1 : 0,
+      p_jurisprudence_research_count: operation === 'jurisprudence_research' ? 1 : 0,
       p_estimated_cost_usd: estimatedCostUsd,
     });
   } catch (error) {
@@ -6710,7 +6724,7 @@ const checkAIProtectionLimits = async (userId) => {
 
   const { data, error } = await supabase
     .from('ai_usage_monthly')
-    .select('total_tokens, document_analysis_count, chat_message_count')
+    .select('total_tokens, document_analysis_count, chat_message_count, jurisprudence_research_count')
     .eq('lawyer_id', userId)
     .eq('period_start', periodStartIso)
     .maybeSingle();
@@ -6721,7 +6735,10 @@ const checkAIProtectionLimits = async (userId) => {
   }
   if (!data) return null;
 
-  const requests = (data.document_analysis_count || 0) + (data.chat_message_count || 0);
+  const requests =
+    (data.document_analysis_count || 0) +
+    (data.chat_message_count || 0) +
+    (data.jurisprudence_research_count || 0);
   if ((data.total_tokens || 0) >= AI_PROTECT_MAX_MONTHLY_TOKENS) {
     return 'Se alcanzó el límite de consumo de IA de protección de este mes. Contáctanos si necesitas más capacidad.';
   }
@@ -7568,6 +7585,327 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         : 'PROVIDER_ERROR';
     res.status(error?.status && error.status >= 400 && error.status < 500 ? error.status : 500).json({
       error: error.message || 'No se pudo generar la respuesta.',
+      code,
+    });
+  }
+});
+
+// Esquema de respuesta del modelo para la investigación de jurisprudencia.
+const AIResearchResponseSchema = z
+  .object({
+    resumen: z.string().default(''),
+    normativa: z
+      .array(
+        z.object({
+          fuente_id: z.string().min(1),
+          afirmacion: z.string().min(1),
+          fragmento: z.string().optional(),
+        }),
+      )
+      .default([]),
+    jurisprudencia: z
+      .array(
+        z.object({
+          fuente_id: z.string().min(1),
+          afirmacion: z.string().min(1),
+          fragmento: z.string().optional(),
+        }),
+      )
+      .default([]),
+    doctrina: z
+      .array(
+        z.object({
+          fuente_id: z.string().min(1),
+          afirmacion: z.string().min(1),
+          fragmento: z.string().optional(),
+        }),
+      )
+      .default([]),
+    conclusion: z.string().optional(),
+    advertencias: z.array(z.string()).default([]),
+  })
+  .strict();
+
+const AIResearchRequestSchema = z.object({
+  query: z.string().trim().min(1).max(JURISPRUDENCE_LIMITS.MAX_QUERY_LENGTH),
+});
+
+// GET /api/ai/cases/:caseId/jurisprudence — historial de investigaciones del caso.
+// Fase 4.0: expone las investigaciones guardadas por caso, con sus fuentes.
+app.get('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    const { data: research, error } = await supabase
+      .from('ai_research_requests')
+      .select('id, workspace_id, lawyer_id, query, answer, sources, model, created_at')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+
+    res.json({ research: research || [] });
+  } catch (error) {
+    console.error('[LegalUpAI] jurisprudence history error:', error);
+    res.status(500).json({ error: 'No se pudo cargar el historial de investigaciones.' });
+  }
+});
+
+// POST /api/ai/cases/:caseId/jurisprudence — investiga jurisprudencia real del caso.
+// Fase 4.0: busca en fuentes públicas verificables (Tribunal Constitucional,
+// BCN/LeyChile y doctrina académica), entrega al modelo SOLO esas fuentes y
+// guarda la investigación con las fuentes que la sustentan.
+app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const parsed = AIResearchRequestSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
+    }
+    const { query } = parsed.data;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    if (!isAIProviderConfigured()) {
+      console.error('[LegalUpAI] jurisprudence blocked: AI_PROVIDER_API_KEY not configured.');
+      return res.status(500).json({
+        error: 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.',
+        code: 'AI_NOT_CONFIGURED',
+      });
+    }
+
+    // Busca fuentes reales en paralelo (TC + BCN SPARQL + OpenAlex), priorizando
+    // según la intención de la consulta (normativa → jurisprudencia → doctrina).
+    const { sources, warnings, intent } = await searchJurisprudence(query, { limit: 8 });
+
+    if (sources.length === 0) {
+      return res.status(422).json({
+        error:
+          'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.',
+        code: 'NO_SOURCES_FOUND',
+      });
+    }
+
+    const { context, tooLarge } = buildJurisprudenceContext(sources);
+    if (tooLarge) {
+      return res.status(422).json({
+        error:
+          'Hay demasiadas fuentes para procesarlas en una sola consulta. Acota la pregunta.',
+        code: 'CONTEXT_TOO_LARGE',
+      });
+    }
+
+    const caseContext = buildJurisprudenceCaseContext(workspace);
+
+    const { raw, raw: rawText, usage } = await chatCompletion({
+      model: AI_DEFAULT_MODEL,
+      system: buildJurisprudenceSystemPrompt(),
+      messages: [
+        {
+          role: 'user',
+          content: buildJurisprudenceUserPrompt({ question: query, context, caseContext }),
+        },
+      ],
+      maxTokens: AI_CHAT_MAX_TOKENS,
+      temperature: 0.2,
+    });
+
+    let validated;
+    if (raw) {
+      try {
+        validated = AIResearchResponseSchema.parse(raw);
+      } catch {
+        validated = null;
+      }
+    } else {
+      validated = null;
+    }
+
+    // --- Fallback si el modelo no devolvió el JSON estructurado válido ---
+    if (!validated) {
+      const rawTextSafe = (rawText || '').trim();
+      const fallbackAnswer = (() => {
+        const possible = typeof raw?.resumen === 'string' && raw.resumen.trim() ? raw.resumen.trim() : '';
+        if (possible) return possible;
+        const resumenMatch = rawTextSafe.match(/"resumen"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (resumenMatch && resumenMatch[1]) {
+          return resumenMatch[1]
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\n/g, '\n')
+            .trim();
+        }
+        const answerMatch = rawTextSafe.match(/"answer"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (answerMatch && answerMatch[1]) {
+          return answerMatch[1]
+            .replace(/\\"/g, '"')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\n/g, '\n')
+            .trim();
+        }
+        return rawTextSafe && !rawTextSafe.startsWith('{') && !rawTextSafe.startsWith('[')
+          ? rawTextSafe
+          : '';
+      })();
+      if (!fallbackAnswer) {
+        throw new Error('El modelo devolvió una respuesta vacía. Inténtalo nuevamente.');
+      }
+      // Recupera los ids citados por el modelo (JSON truncado o markdown),
+      // buscando cualquier id de fuente real conocido dentro del texto crudo.
+      const includedIdsSet = new Set(sources.map((source) => source.id));
+      const jsonIds = [...rawTextSafe.matchAll(/"id"\s*:\s*"([^"]+)"/g)].map((m) => m[1]);
+      const rawIds = [...includedIdsSet].filter((id) => rawTextSafe.includes(id));
+      const salvagedIds = [...new Set([...jsonIds, ...rawIds])].filter((id) =>
+        includedIdsSet.has(id),
+      );
+      validated = {
+        resumen: fallbackAnswer,
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        conclusion: '',
+        advertencias: [],
+      };
+      // Usa los ids rescatados como jurisprudencia genérica (sin fragmento),
+      // de modo que el usuario siempre pueda verificar la fuente original.
+      const fallbackById = new Map(sources.map((source) => [source.id, source]));
+      validated.jurisprudencia = salvagedIds
+        .filter((id) => fallbackById.get(id)?.kind === 'jurisprudencia')
+        .map((id) => ({
+          fuente_id: id,
+          afirmacion: '',
+          fragmento: '',
+        }));
+      validated.normativa = salvagedIds
+        .filter((id) => fallbackById.get(id)?.kind === 'normativa')
+        .map((id) => ({ fuente_id: id, afirmacion: '', fragmento: '' }));
+      validated.doctrina = salvagedIds
+        .filter((id) => fallbackById.get(id)?.kind === 'doctrina')
+        .map((id) => ({ fuente_id: id, afirmacion: '', fragmento: '' }));
+    }
+
+    // Solo se aceptan fuentes que correspondan a fuentes reales recuperadas.
+    const includedById = new Map(sources.map((source) => [source.id, source]));
+
+    // Verifica que cada afirmación tenga respaldo textual real en su fuente.
+    const verifiedNormativa = verifyJurisprudenceClaims(
+      validated.normativa,
+      includedById,
+      'normativa',
+    );
+    const verifiedJurisprudencia = verifyJurisprudenceClaims(
+      validated.jurisprudencia,
+      includedById,
+      'jurisprudencia',
+    );
+    const verifiedDoctrina = verifyJurisprudenceClaims(validated.doctrina, includedById, 'doctrina');
+
+    const researchWarnings = [
+      ...verifiedNormativa.warnings,
+      ...verifiedJurisprudencia.warnings,
+      ...verifiedDoctrina.warnings,
+    ];
+    if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
+      researchWarnings.push(
+        'No se encontró normativa específica que responda la consulta en las fuentes públicas consultadas (BCN/LeyChile). Verifica la vigencia en el portal oficial.',
+      );
+    }
+    const modelAdvertencias = Array.isArray(validated.advertencias)
+      ? validated.advertencias.filter(Boolean)
+      : [];
+
+    // Fase 4.0.2: suaviza conclusiones categóricas que las fuentes no respaldan
+    // ("la ley establece…", "la jurisprudencia confirma…") y genera avisos.
+    const excessive = detectExcessiveConclusions({
+      resumen: validated.resumen,
+      conclusion: validated.conclusion || '',
+      normativa: verifiedNormativa.kept,
+      jurisprudencia: verifiedJurisprudencia.kept,
+    });
+
+    const answer = buildJurisprudenceAnswer({
+      resumen: excessive.resumen,
+      normativa: verifiedNormativa.kept,
+      jurisprudencia: verifiedJurisprudencia.kept,
+      doctrina: verifiedDoctrina.kept,
+      conclusion: excessive.conclusion,
+      advertencias: [...modelAdvertencias, ...researchWarnings, ...excessive.warnings],
+    });
+
+    // Referencia (para persistir) solo las fuentes que sobrevivieron la verificación.
+    const referenced = [
+      ...verifiedNormativa.kept.map((c) => c.source),
+      ...verifiedJurisprudencia.kept.map((c) => c.source),
+      ...verifiedDoctrina.kept.map((c) => c.source),
+    ];
+    const referencedById = new Map(referenced.map((source) => [source.id, source]));
+    const referencedIds = [...referencedById.values()];
+
+    // Registra el consumo real (no bloquea el flujo).
+    await recordAIUsage({
+      userId,
+      workspaceId: workspace.id,
+      operation: 'jurisprudence_research',
+      usage,
+    });
+
+    const { data: savedResearch, error: insertError } = await supabase
+      .from('ai_research_requests')
+      .insert({
+        workspace_id: workspace.id,
+        lawyer_id: userId,
+        query,
+        answer,
+        sources: referencedIds,
+        model: AI_DEFAULT_MODEL,
+      })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+
+    try {
+      await capturePostHog('ai_jurisprudence_researched', userId, {
+        case_id: workspace.id,
+        source_count: referencedIds.length,
+        total_found: sources.length,
+        intent,
+        claims_kept: referencedIds.length,
+        warnings_count: researchWarnings.length,
+      });
+    } catch (posthogError) {
+      console.error('[LegalUpAI] ai_jurisprudence_researched failed', posthogError);
+    }
+
+    res.json({
+      research: savedResearch,
+      sources: referencedIds,
+      warnings: researchWarnings,
+      intent,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] jurisprudence error:', error);
+    const code =
+      error?.code === 'AI_NOT_CONFIGURED' || error?.code === 'OUTPUT_TOKEN_LIMIT'
+        ? error.code
+        : 'PROVIDER_ERROR';
+    res.status(error?.status && error.status >= 400 && error.status < 500 ? error.status : 500).json({
+      error: error.message || 'No se pudo completar la investigación.',
       code,
     });
   }

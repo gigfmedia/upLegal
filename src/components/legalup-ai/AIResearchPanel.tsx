@@ -1,0 +1,505 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import posthog from 'posthog-js';
+import {
+  AlertTriangle,
+  ExternalLink,
+  FileText,
+  Landmark,
+  Loader2,
+  Scale,
+  Sparkles,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { AIThinkingIndicator } from './AIThinkingIndicator';
+import {
+  useAICaseResearch,
+  useRunAIResearch,
+  type AIResearchError,
+  type AIResearchRequest,
+  type AIResearchSource,
+} from '@/hooks/useAIResearch';
+
+type AIResearchPanelProps = {
+  workspaceId: string;
+};
+
+const escapeHtml = (text: string): string =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function renderInline(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return <strong key={index}>{escapeHtml(part.slice(2, -2))}</strong>;
+    }
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return (
+        <code key={index} className="rounded bg-gray-100 px-1 py-0.5 text-[0.85em] text-gray-900">
+          {escapeHtml(part.slice(1, -1))}
+        </code>
+      );
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <em key={index}>{escapeHtml(part.slice(1, -1))}</em>;
+    }
+    return <span key={index}>{escapeHtml(part)}</span>;
+  });
+}
+
+function MarkdownText({ content }: { content: string }) {
+  const blocks = useMemo(() => {
+    const output: Array<{ type: 'p' | 'ul' | 'ol'; items?: string[]; text?: string }> = [];
+    let list: { type: 'ul' | 'ol'; items: string[] } | null = null;
+    const flush = () => {
+      if (list) {
+        output.push({ type: list.type, items: list.items });
+        list = null;
+      }
+    };
+    for (const rawLine of content.split('\n')) {
+      const line = rawLine.trimEnd();
+      const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+      const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      if (bullet || numbered) {
+        if (!list || list.type !== (numbered ? 'ol' : 'ul')) {
+          flush();
+          list = { type: numbered ? 'ol' : 'ul', items: [] };
+        }
+        list.items.push((bullet || numbered)![1]);
+      } else if (line.trim() === '') {
+        flush();
+      } else {
+        flush();
+        output.push({ type: 'p', text: line });
+      }
+    }
+    flush();
+    return output;
+  }, [content]);
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, index) => {
+        if (block.type === 'ul' || block.type === 'ol') {
+          const ListTag = block.type === 'ul' ? 'ul' : 'ol';
+          return (
+            <ListTag key={index} className="ml-4 list-disc space-y-1">
+              {(block.items ?? []).map((item, itemIndex) => (
+                <li key={itemIndex} className="leading-relaxed">
+                  {renderInline(item)}
+                </li>
+              ))}
+            </ListTag>
+          );
+        }
+        return (
+          <p key={index} className="leading-relaxed">
+            {renderInline(block.text ?? '')}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatDate(value: string): string {
+  try {
+    return format(parseISO(value), "d 'de' MMMM yyyy", { locale: es });
+  } catch {
+    return value;
+  }
+}
+
+function sourceBadgeKind(source: AIResearchSource) {
+  switch (source.kind) {
+    case 'jurisprudencia':
+      return 'bg-purple-100 text-purple-800';
+    case 'normativa':
+      return 'bg-blue-100 text-blue-800';
+    case 'doctrina':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-gray-100 text-gray-600';
+  }
+}
+
+const AUTHORITY_LABELS: Record<string, string> = {
+  vinculante: 'Norma vinculante',
+  persuasiva: 'No vinculante',
+  doctrinal: 'Doctrina · no vinculante',
+  informativa: 'Informativa',
+};
+
+const VIGENCY_LABELS: Record<string, string> = {
+  vigente: 'Vigente',
+  derogada: 'Derogada',
+  modificada: 'Modificada',
+  desconocida: 'Vigencia no determinada',
+  no_aplica: 'No aplica',
+};
+
+const KIND_GROUP_ORDER: Array<AIResearchSource['kind']> = [
+  'normativa',
+  'jurisprudencia',
+  'doctrina',
+];
+
+const KIND_GROUP_META: Record<
+  AIResearchSource['kind'],
+  { label: string; headingClass: string }
+> = {
+  normativa: {
+    label: 'Normativa',
+    headingClass: 'text-blue-800',
+  },
+  jurisprudencia: {
+    label: 'Jurisprudencia',
+    headingClass: 'text-purple-800',
+  },
+  doctrina: {
+    label: 'Doctrina (no vinculante)',
+    headingClass: 'text-amber-800',
+  },
+};
+
+function SourceItem({ source }: { source: AIResearchSource }) {
+  const kindLabel =
+    source.kind === 'jurisprudencia'
+      ? 'Jurisprudencia'
+      : source.kind === 'normativa'
+        ? 'Normativa'
+        : 'Doctrina';
+  const authority =
+    AUTHORITY_LABELS[source.legal_authority ?? ''] ??
+    source.legal_authority ??
+    '';
+  const vigency = VIGENCY_LABELS[source.vigency ?? ''] ?? '';
+  const vigencyClass =
+    source.vigency === 'derogada'
+      ? 'bg-red-100 text-red-800'
+      : source.vigency === 'desconocida'
+        ? 'bg-amber-100 text-amber-800'
+        : 'bg-gray-100 text-gray-600';
+  return (
+    <li className="rounded-lg border border-gray-200 bg-gray-50/60 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-gray-200">
+          {source.kind === 'jurisprudencia' ? (
+            <Landmark className="h-3 w-3 text-emerald-700" aria-hidden="true" />
+          ) : source.kind === 'normativa' ? (
+            <FileText className="h-3 w-3 text-blue-700" aria-hidden="true" />
+          ) : (
+            <Scale className="h-3 w-3 text-amber-700" aria-hidden="true" />
+          )}
+        </span>
+        <Badge variant="secondary" className={sourceBadgeKind(source)}>
+          {kindLabel}
+        </Badge>
+        {authority && (
+          <span className="rounded bg-gray-700 px-1.5 py-0.5 text-[0.65rem] font-medium text-white">
+            {authority}
+          </span>
+        )}
+        {source.vigency && (
+          <span className={`rounded px-1.5 py-0.5 text-[0.65rem] font-medium ${vigencyClass}`}>
+            {vigency}
+          </span>
+        )}
+        {source.date && <span className="text-xs text-gray-500">{source.date}</span>}
+        {source.url && (
+          <a
+            href={source.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-green-900 hover:underline"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            Ver fuente
+          </a>
+        )}
+      </div>
+      <p className="mt-2 text-sm font-medium text-gray-900">{source.citation}</p>
+      {source.excerpt && (
+        <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
+      )}
+    </li>
+  );
+}
+
+function GroupedSources({ sources }: { sources: AIResearchSource[] }) {
+  const groups = useMemo(() => {
+    const result: Array<{ kind: AIResearchSource['kind']; items: AIResearchSource[] }> = [];
+    for (const kind of KIND_GROUP_ORDER) {
+      const items = sources.filter((s) => s.kind === kind);
+      if (items.length > 0) result.push({ kind, items });
+    }
+    return result;
+  }, [sources]);
+
+  return (
+    <div className="space-y-4">
+      {groups.map((group) => (
+        <div key={group.kind}>
+          <h4
+            className={`mb-1.5 text-xs font-semibold uppercase tracking-wide ${KIND_GROUP_META[group.kind].headingClass}`}
+          >
+            {KIND_GROUP_META[group.kind].label}
+          </h4>
+          <ul className="space-y-2">
+            {group.items.map((source) => (
+              <SourceItem key={source.id} source={source} />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function errorToMessage(error: AIResearchError | null): string {
+  switch (error?.code) {
+    case 'NO_SOURCES_FOUND':
+      return 'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.';
+    case 'CONTEXT_TOO_LARGE':
+      return 'Hay demasiadas fuentes para procesarlas en una sola consulta. Acota la pregunta.';
+    case 'AI_NOT_CONFIGURED':
+      return 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.';
+    case 'OUTPUT_TOKEN_LIMIT':
+      return 'La respuesta superó el presupuesto de tokens. Intenta con una consulta más acotada.';
+    default:
+      return error?.message || 'No pudimos completar la investigación. Intenta nuevamente.';
+  }
+}
+
+export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
+  const researchQuery = useAICaseResearch(workspaceId, true);
+  const runMutation = useRunAIResearch(workspaceId);
+
+  const [input, setInput] = useState('');
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+
+  const history = useMemo(() => researchQuery.data ?? [], [researchQuery.data]);
+
+  const handleSubmit = () => {
+    const trimmed = input.trim();
+    if (!trimmed || runMutation.isPending) return;
+    setWarnings([]);
+    posthog.capture('ai_jurisprudence_research_started', {
+      query_length: trimmed.length,
+    });
+    runMutation.mutate(
+      { query: trimmed },
+      {
+        onSuccess: (data) => {
+          setInput('');
+          setWarnings(data.warnings ?? []);
+          if (data.research) setExpanded(data.research.id);
+          posthog.capture('ai_jurisprudence_research_completed', {
+            source_count: data.sources?.length ?? 0,
+          });
+        },
+        onError: (err) => {
+          posthog.capture('ai_jurisprudence_research_failed', {
+            error_code: err.code || 'provider_error',
+          });
+        },
+      }
+    );
+  };
+
+  return (
+    <Card className="mt-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Scale className="h-4 w-4 text-green-700" aria-hidden="true" />
+          Investigar jurisprudencia
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Busca jurisprudencia, normativa y doctrina chilena real en fuentes
+          públicas verificables, vinculadas a este caso.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ej.: ¿Qué dice la jurisprudencia sobre la indemnización por despido injustificado?"
+            disabled={runMutation.isPending}
+            aria-label="Consulta de jurisprudencia"
+            rows={3}
+            className="resize-none"
+          />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Fuentes: Tribunal Constitucional · BCN/LeyChile · Doctrina académica.
+            </p>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={runMutation.isPending || input.trim().length === 0}
+              className="shrink-0 bg-green-900 text-white hover:bg-green-800"
+            >
+              {runMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                  Investigando…
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Investigar
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {runMutation.isPending && (
+            <motion.div
+              key="research-thinking"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <AIThinkingIndicator />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {runMutation.error && (
+            <motion.div
+              key="research-error"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
+              <p className="text-xs text-amber-900">{errorToMessage(runMutation.error)}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {warnings.length > 0 && (
+            <motion.div
+              key="research-warnings"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+            >
+              <ul className="space-y-1">
+                {warnings.map((warning, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-xs text-amber-900"
+                  >
+                    <AlertTriangle
+                      className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+                      aria-hidden="true"
+                    />
+                    <span className="leading-relaxed">{warning}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {researchQuery.isLoading ? (
+          <div className="space-y-2 py-2">
+            <div className="h-20 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-20 animate-pulse rounded-lg bg-gray-100" />
+          </div>
+        ) : history.length === 0 && !runMutation.isPending ? (
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">
+            <Landmark className="h-8 w-8 text-gray-300" aria-hidden="true" />
+            <p className="text-sm font-medium text-gray-600">Sin investigaciones aún</p>
+            <p className="max-w-sm text-xs text-muted-foreground">
+              Usa el buscador para obtener jurisprudencia y normativa con fuentes
+              verificables. Cada investigación queda guardada en este caso.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {history.map((item) => (
+              <ResearchItem
+                key={item.id}
+                item={item}
+                expanded={expanded === item.id}
+                onToggle={() =>
+                  setExpanded((prev) => (prev === item.id ? null : item.id))
+                }
+              />
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ResearchItem({
+  item,
+  expanded,
+  onToggle,
+}: {
+  item: AIResearchRequest;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <li className="rounded-lg border border-gray-200">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-gray-900">{item.query}</p>
+          <p className="text-xs text-gray-500">
+            {formatDate(item.created_at)} · {item.sources.length}{' '}
+            {item.sources.length === 1 ? 'fuente' : 'fuentes'}
+          </p>
+        </div>
+        <span className="text-xs text-gray-400">{expanded ? '−' : '+'}</span>
+      </button>
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 border-t border-gray-200 px-4 py-4">
+              <div className="text-sm text-gray-700">
+                <MarkdownText content={item.answer} />
+              </div>
+              {item.sources.length > 0 && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold text-gray-500">
+                    Fuentes verificables
+                  </p>
+                  <GroupedSources sources={item.sources} />
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </li>
+  );
+}
