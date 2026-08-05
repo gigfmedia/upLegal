@@ -121,18 +121,23 @@ function MarkdownText({ content }: { content: string }) {
 
 type AIChatMessageProps = {
   message: Pick<ChatMessage, 'role' | 'content' | 'metadata' | 'created_at'>;
+  /** true solo para respuestas que llegan en vivo; las del historial se muestran completas. */
+  animate?: boolean;
 };
 
-export function AIChatMessage({ message }: AIChatMessageProps) {
+export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
   const reducedMotion = useReducedMotion();
   const [copied, setCopied] = useState(false);
   const isAssistant = message.role === 'assistant';
   const sources = message.metadata?.sources ?? [];
 
   // Efecto de escritura progresiva: el backend devuelve la respuesta completa y
-  // el frontend la revela poco a poco (como ChatGPT). Con reduced-motion o texto
-  // corto, se muestra de inmediato.
-  const typed = useTypewriter(isAssistant ? message.content : '', { disabled: reducedMotion });
+  // el frontend la revela poco a poco (como ChatGPT). Solo se anima cuando la
+  // burbuja llega en vivo (prop animate), no al recargar la página (historial).
+  // Con reduced-motion, texto corto o historial, se muestra de inmediato.
+  const typed = useTypewriter(isAssistant ? message.content : '', {
+    disabled: reducedMotion || !animate,
+  });
   const secondaryDelay = isAssistant
     ? (reducedMotion ? 0 : typed.durationMs / 1000) + SECONDARY_DELAY_AFTER_MS / 1000
     : 0;

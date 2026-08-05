@@ -16,8 +16,12 @@ const MAX_DOTS = 3;
 /**
  * Indicador de "Pensando…" del chat de LegalUp AI.
  * Sin spinner: rota frases de progreso con una animación de puntos (Framer Motion).
- * Ocupa un espacio estable para no generar saltos de layout y respeta
- * prefers-reduced-motion. Todos los timers se limpian al desmontar.
+ * El icono de sparkles y su círculo tienen una "respiración" lenta y sutil (CSS
+ * keyframes 0%/50%/100% = loop perfecto, sin cortes): los sparkles se aclaran y
+ * escalan suavemente, y el círculo emite un pulso de brillo verde difuso. Sin
+ * partículas, morfamos ni efectos extra. Ocupa un espacio estable para no generar
+ * saltos de layout y respeta prefers-reduced-motion (sin animación).
+ * Todos los timers se limpian al desmontar.
  */
 export function AIThinkingIndicator() {
   const reducedMotion = useReducedMotion();
@@ -46,14 +50,14 @@ export function AIThinkingIndicator() {
       aria-label="LegalUp AI está analizando la pregunta"
     >
       {!reducedMotion && (
-        <motion.span
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"
-          animate={{ opacity: [1, 0.55, 1] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        <span
+          className="ai-thinking-glow inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"
           aria-hidden="true"
         >
-          <Sparkles className="h-4 w-4" aria-hidden="true" />
-        </motion.span>
+          <span className="ai-thinking-sparkle inline-flex" aria-hidden="true">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+          </span>
+        </span>
       )}
       <div className="h-5 overflow-hidden">
         <AnimatePresence mode="wait" initial={false}>

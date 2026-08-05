@@ -66,6 +66,10 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [error, setError] = useState<AIChatError | null>(null);
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
+  // Mensajes de asistente que llegaron en vivo (POST). Solo estos reciben el
+  // efecto de escritura; el historial cargado al recargar la página se muestra
+  // completo, sin re-animar burbujas antiguas.
+  const [liveAssistantIds, setLiveAssistantIds] = useState<Set<string>>(new Set());
 
   const openedTracked = useRef(false);
   useEffect(() => {
@@ -175,6 +179,8 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
         onSuccess: (data) => {
           setSending(false);
           setFailedMessage(null);
+          // Marca la respuesta en vivo para que solo esa burbuja use typewriter.
+          setLiveAssistantIds((prev) => new Set(prev).add(data.message.id));
           posthog.capture('ai_chat_response_completed', {
             document_count: readyCount,
             source_count: data.sources?.length ?? 0,
@@ -272,7 +278,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
             <div
               ref={scrollRef}
               onScroll={onScroll}
-              className="max-h-[420px] space-y-4 overflow-y-auto pr-1"
+              className="-ml-4 max-h-[420px] space-y-4 overflow-y-auto pb-6 pl-4 pr-1"
             >
               {shownMessages.length === 0 && !sending ? (
                 <AIChatSuggestions onSelect={handleSuggestion} />
@@ -282,7 +288,10 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
                     key={message.id}
                     ref={index === shownMessages.length - 1 ? lastMessageRef : undefined}
                   >
-                    <AIChatMessage message={message} />
+                    <AIChatMessage
+                      message={message}
+                      animate={message.role === 'assistant' && liveAssistantIds.has(message.id)}
+                    />
                     {index === failedIndex && (
                       <div className="mt-1 flex items-center gap-2 pl-[3.25rem]">
                         <Button
