@@ -28,8 +28,17 @@ const TC_STOPWORDS = new Set([
 ]);
 
 const NORM_STOPWORDS = new Set([
-  'ley', 'dl', 'dfl', 'dto', 'decreto', 'sobre', 'para', 'con', 'del', 'de',
-  'la', 'las', 'los', 'el', 'una', 'uno', 'y', 'o', 'en', 'por', 'que',
+  'ley', 'leyes', 'dl', 'dfl', 'dto', 'decreto', 'decretos', 'sobre', 'para',
+  'con', 'del', 'de', 'la', 'las', 'los', 'el', 'una', 'uno', 'un', 'unos',
+  'y', 'o', 'en', 'por', 'que', 'qué', 'cual', 'cuál', 'cuáles', 'cuales',
+  'dice', 'dicen', 'digan', 'norma', 'normas', 'normativa', 'chilena',
+  'chileno', 'chilenas', 'chilenos', 'legal', 'legales', 'vigente',
+  'vigentes', 'establece', 'establecen', 'establezca', 'establezcan',
+  'regula', 'regulan', 'regulación', 'regulacion', 'aplica', 'aplican',
+  'aplicable', 'refiere', 'referida', 'referidas', 'segun', 'según',
+  'cuando', 'como', 'cómo', 'pregunta', 'consulta', 'existe', 'existen',
+  'puede', 'pueden', 'es', 'son', 'qué pasa', 'que pasa', 'artículo',
+  'articulo', 'art', 'n°', 'no',
 ]);
 
 // ----------------------- Utilidades compartidas ---------------------------
@@ -320,10 +329,23 @@ function mapBcnBinding(b) {
   const code = b.code?.value;
   const number = b.number?.value;
   const date = b.date?.value?.slice(0, 10);
-  const normType = classifyNormType(title);
+  let normType = classifyNormType(title);
   const normNumber = extractNormNumber(title) || number || null;
+  // Las leyes chilenas suelen empezar por un verbo ("REGULA…", "CONSAGRA…",
+  // "MODIFICA…") y llevan número puramente numérico de 4-7 dígitos. Las
+  // resoluciones/decretos "exenta" no: se mantienen como "otra".
+  if (
+    normType === 'otra' &&
+    normNumber &&
+    /^\d{4,7}$/.test(normNumber)
+  ) {
+    normType = 'ley';
+  }
   const vigency = detectNormVigency(title);
-  const citation = formatNormCitation(title, number, date);
+  const typeLabel = NORM_TYPE_LABELS[normType] || 'Norma';
+  const citation = normNumber
+    ? `${typeLabel} N° ${normNumber}${date ? ` (${date})` : ''}`
+    : `${typeLabel} ${title}`;
   return {
     id: `bcn-${code || title}`,
     kind: 'normativa',
@@ -390,59 +412,59 @@ export async function searchBcnNormas(query, limit = 6) {
     }
   }
 
-  const terms = String(query || '')
-    .toLowerCase()
-    .split(/\s+/)
-    .map((t) => t.replace(/[^\p{L}\p{N}.-]/gu, ''))
-    .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t))
-    .slice(0, 4);
+  const terms = [...new Set(
+    String(query || '')
+      .toLowerCase()
+      .split(/\s+/)
+      .map((t) => t.replace(/[^\p{L}\p{N}.-]/gu, ''))
+      .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t))
+  )].slice(0, 5);
   if (terms.length === 0) return [];
 
-  // Reintenta con menos términos si el AND sobre todos no halla resultados.
-  const attemptTermsList = [
-    terms,
-    terms.slice(0, 2),
-    terms.slice(0, 1),
-  ];
-  for (const attemptTerms of attemptTermsList) {
-    const sparql = buildTitleFilterSparql(attemptTerms, limit);
-    const data = await fetchJson(
-      SPARQL_ENDPOINT,
-      {
-        method: 'POST',
-        headers: {
-          Accept: 'application/sparql-results+json',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({ query: sparql }),
-      },
-      12000,
-    );
+  // Prueba combos de términos de menos a más restrictivos (4→3→2→1) y los
+  // ACUMULA: el AND con muchos términos es frágil y a veces solo un término
+  // encuentra la ley correcta (p. ej. "protección de datos personales").
+  // Luego ordena por cuántos términos coinciden (más = más relevante) y fecha.
+  const attempts = [];
+  for (let k = Math.min(terms.length, 4); k >= 1; k--) {
+    attempts.push(terms.slice(0, k));
+  }
 
+  const merged = new Map(); // id -> { src, count, date }
+  for (const attemptTerms of attempts) {
+    const sparql = buildTitleFilterSparql(attemptTerms, limit);
+    let data;
+    try {
+      data = await fetchJson(
+        SPARQL_ENDPOINT,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/sparql-results+json',
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ query: sparql }),
+        },
+        12000,
+      );
+    } catch {
+      continue;
+    }
     const bindings = data?.results?.bindings ?? [];
-    if (bindings.length > 0) {
-      const seen = new Set();
-      const out = [];
-      for (const b of bindings) {
-        const src = mapBcnBinding(b);
-        if (!src || seen.has(src.citation)) continue;
-        seen.add(src.citation);
-        out.push(src);
-        if (out.length >= limit) break;
-      }
-      if (out.length > 0) return out;
+    for (const b of bindings) {
+      const src = mapBcnBinding(b);
+      if (!src || merged.has(src.id)) continue;
+      merged.set(src.id, { src, count: attemptTerms.length, date: src.date || '' });
     }
   }
-  return [];
-}
 
-/** Unifica la cita chilena de una norma: Tipo N° número (fecha). */
-function formatNormCitation(title, number, date) {
-  const parts = [
-    number ? `Norma N° ${number}` : undefined,
-    date ? `(${date})` : undefined,
-  ].filter(Boolean);
-  return parts.join(' ') || title;
+  if (merged.size === 0) return [];
+  const ranked = [...merged.values()].sort(
+    (a, b) =>
+      b.count - a.count ||
+      (b.date < a.date ? -1 : b.date > a.date ? 1 : 0),
+  );
+  return ranked.slice(0, limit).map((r) => r.src);
 }
 
 // ---------------------------

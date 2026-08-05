@@ -7821,13 +7821,64 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       ...verifiedJurisprudencia.warnings,
       ...verifiedDoctrina.warnings,
     ];
+
+    // Fase 4.0.2 (fix): si la consulta busca normativa, el modelo no citó ninguna
+    // norma y sí recuperamos BCN/LeyChile relevantes, PROMOVEMOS la ley más
+    // relevante en lugar de afirmar que no existe normativa. La afirmación se
+    // deriva del título oficial (rastreable al idNorma), sin inventar texto legal.
+    const autoNormativas = [];
     if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
+      const candidate =
+        sources.find((s) => s.kind === 'normativa' && s.norm_type === 'ley') ||
+        sources.find((s) => s.kind === 'normativa');
+      if (candidate) {
+        const typeLabel =
+          candidate.norm_type === 'ley'
+            ? 'Ley'
+            : candidate.norm_type === 'decreto'
+              ? 'Decreto'
+              : candidate.norm_type === 'dfl'
+                ? 'DFL'
+                : candidate.norm_type === 'codigo'
+                  ? 'Código'
+                  : candidate.norm_type === 'decreto_ley'
+                    ? 'Decreto Ley'
+                    : 'Norma';
+        const numeroPart =
+          candidate.norm_number && /^\d[\d.,]*$/.test(candidate.norm_number)
+            ? ` N° ${candidate.norm_number}`
+            : '';
+        const titleText = String(candidate.title || candidate.citation || '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        autoNormativas.push({
+          source: candidate,
+          afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
+          fragmento: '',
+        });
+        researchWarnings.push(
+          `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,
+        );
+      }
+    }
+    const effectiveNormativa = verifiedNormativa.kept.length > 0
+      ? verifiedNormativa.kept
+      : autoNormativas;
+
+    if (intent === 'normativa' && effectiveNormativa.length === 0) {
       researchWarnings.push(
         'No se encontró normativa específica que responda la consulta en las fuentes públicas consultadas (BCN/LeyChile). Verifica la vigencia en el portal oficial.',
       );
     }
     const modelAdvertencias = Array.isArray(validated.advertencias)
-      ? validated.advertencias.filter(Boolean)
+      ? validated.advertencias
+          .filter(Boolean)
+          .filter(
+            (adv) =>
+              // Cuando promovimos una norma, descartamos avisos del modelo que
+              // afirmen la ausencia de normativa (contradicen la norma promovida).
+              !(autoNormativas.length > 0 && /\bno se encontr[oó]\b.{0,40}\b(normativa|norma|legislaci[oó]n|disposiciones)\b|\bsin (normativa|normas|disposiciones)\b/i.test(adv)),
+          )
       : [];
 
     // Fase 4.0.2: suaviza conclusiones categóricas que las fuentes no respaldan
@@ -7835,13 +7886,23 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     const excessive = detectExcessiveConclusions({
       resumen: validated.resumen,
       conclusion: validated.conclusion || '',
-      normativa: verifiedNormativa.kept,
+      normativa: effectiveNormativa,
       jurisprudencia: verifiedJurisprudencia.kept,
     });
 
+    // Cuando la normativa fue promovida automáticamente (el modelo no la citó),
+    // refuerza la coherencia del resumen con un puntero factual a la norma.
+    if (autoNormativas.length > 0 && effectiveNormativa[0]?.source) {
+      excessive.resumen = (
+        `${(excessive.resumen || '').trim()} Se identificó la normativa aplicable: ${
+          effectiveNormativa[0].source.citation
+        }.`
+      ).trim();
+    }
+
     const answer = buildJurisprudenceAnswer({
       resumen: excessive.resumen,
-      normativa: verifiedNormativa.kept,
+      normativa: effectiveNormativa,
       jurisprudencia: verifiedJurisprudencia.kept,
       doctrina: verifiedDoctrina.kept,
       conclusion: excessive.conclusion,
@@ -7850,7 +7911,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     // Referencia (para persistir) solo las fuentes que sobrevivieron la verificación.
     const referenced = [
-      ...verifiedNormativa.kept.map((c) => c.source),
+      ...effectiveNormativa.map((c) => c.source),
       ...verifiedJurisprudencia.kept.map((c) => c.source),
       ...verifiedDoctrina.kept.map((c) => c.source),
     ];
