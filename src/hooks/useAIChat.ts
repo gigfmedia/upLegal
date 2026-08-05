@@ -109,5 +109,10 @@ export function useSendChatMessage(workspaceId: string | undefined) {
       // Evita duplicados en reintentos y mantiene consistencia.
       queryClient.invalidateQueries({ queryKey: [...AI_CHAT_QUERY_KEY, workspaceId] });
     },
+    onError: () => {
+      // El backend guarda el mensaje del usuario aunque la respuesta del asistente
+      // falle. Refetch para mostrar ese user como mensaje real y poder reintentarlo.
+      queryClient.invalidateQueries({ queryKey: [...AI_CHAT_QUERY_KEY, workspaceId] });
+    },
   });
 }

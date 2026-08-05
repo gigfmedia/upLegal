@@ -93,6 +93,16 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
     return list;
   }, [chatQuery.data, pendingUser, conversationId, workspaceId]);
 
+  // Mensaje de usuario al que le falta la respuesta del asistente (intento fallido
+  // una vez que el refetch trae el user guardado en BD). Sobre él se muestra el retry.
+  const failedIndex = useMemo(() => {
+    if (!failedMessage) return -1;
+    const realMessages = chatQuery.data?.messages ?? [];
+    const last = realMessages[realMessages.length - 1];
+    if (!last || last.role !== 'user') return -1;
+    return shownMessages.findIndex((m) => m.role === 'user' && m.content === last.content);
+  }, [failedMessage, shownMessages, chatQuery.data]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -245,6 +255,24 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
                     ref={index === shownMessages.length - 1 ? lastMessageRef : undefined}
                   >
                     <AIChatMessage message={message} />
+                    {index === failedIndex && (
+                      <div className="mt-1 flex items-center gap-2 pl-[3.25rem]">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRetry}
+                          disabled={sending}
+                          className="h-7 gap-1.5 px-2.5 text-xs"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                          Reintentar
+                        </Button>
+                        <span className="text-xs text-amber-700">
+                          La respuesta no se generó. Intenta de nuevo.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
@@ -261,25 +289,12 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
               )}
 
               {error && (
-                <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle
-                      className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
-                      aria-hidden="true"
-                    />
-                    <p className="text-sm text-amber-900">{errorToMessage(error)}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRetry}
-                    disabled={sending}
-                    className="shrink-0"
-                  >
-                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-                    Reintentar
-                  </Button>
+                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                  <AlertTriangle
+                    className="h-4 w-4 shrink-0 text-amber-600"
+                    aria-hidden="true"
+                  />
+                  <p className="text-xs text-amber-900">{errorToMessage(error)}</p>
                 </div>
               )}
             </div>
