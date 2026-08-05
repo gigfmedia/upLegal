@@ -1250,7 +1250,7 @@ function SecuritySection() {
   return (
     <section
       id="seguridad"
-      className="relative border-t border-[var(--hairline)] py-24 sm:py-32"
+      className="relative overflow-hidden border-t border-[var(--hairline)] py-24 sm:py-32"
     >
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-10 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full bg-[var(--violet-accent)]/[0.06] blur-[140px]" />
@@ -1598,7 +1598,7 @@ function AIVsGeneralSection() {
 
 function AICommercialSection() {
   return (
-    <section className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+    <section className="relative overflow-hidden border-t border-[var(--hairline)] py-24 sm:py-32">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-10 h-[26rem] w-[40rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
       </div>
@@ -1743,7 +1743,10 @@ function PricingSection({
   ];
 
   return (
-    <section id="planes" className="relative border-t border-[var(--hairline)] py-24 sm:py-32">
+    <section
+      id="planes"
+      className="relative overflow-hidden border-t border-[var(--hairline)] py-24 sm:py-32"
+    >
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 top-10 h-[26rem] w-[40rem] -translate-x-1/2 rounded-full bg-[var(--emerald-accent)]/[0.08] blur-[150px]" />
       </div>
