@@ -904,9 +904,9 @@ const FEATURES = [
     icon: Zap,
     title: "Investigación de Jurisprudencia",
     description:
-      "Búsqueda de jurisprudencia y normativa chilena. Próximamente.",
+      "Búsqueda de jurisprudencia y normativa chilena con fuentes verificables.",
     visual: "draft" as const,
-    available: false,
+    available: true,
   },
   {
     icon: BarChart3,
@@ -1377,8 +1377,7 @@ const VS_GENERAL_ROWS: VSRow[] = [
   {
     feature: "Jurisprudencia chilena",
     general: "Disponible según herramientas y fuentes",
-    ai: "Próximamente",
-    aiSoon: true,
+    ai: "✓ Jurisprudencia y normativa con fuentes verificables",
   },
   {
     feature: "Redacción jurídica",
