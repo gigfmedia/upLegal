@@ -315,6 +315,11 @@ const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 // Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
 
+// Presupuesto de tokens para respuestas del chat. El proveedor (p. ej.
+// gpt-oss-20b) genera un campo `reasoning` que consume parte del presupuesto;
+// este margen evita que la respuesta (content) quede vacía con casos extensos.
+const AI_CHAT_MAX_TOKENS = Number(process.env.AI_CHAT_MAX_TOKENS) || 2400;
+
 // ---- LegalUp AI — Fase 3.6: AI Usage & Cost Control ----
 // Unidad interna: 1 crédito = 1.000 tokens (credits_used = ceil(tokens/1000)).
 const AI_USAGE_CREDITS_PER_TOKEN = 1000;
@@ -7423,6 +7428,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       workspace,
       documents: readyDocs,
       analyses,
+      question: message,
     });
     if (tooLarge) {
       return res.status(422).json({
@@ -7473,7 +7479,10 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
           content: buildChatUserPrompt({ question: message, context, history }),
         },
       ],
-      maxTokens: 1200,
+      // gpt-oss genera un campo `reasoning` (cadena de pensamiento) que consume
+      // parte del presupuesto; usamos un margen mayor para que el `content` no
+      // quede vacío con casos/documentos extensos.
+      maxTokens: AI_CHAT_MAX_TOKENS,
       temperature: 0.2,
     });
 
@@ -7553,8 +7562,14 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     res.json({ user_message: userMessage, message: savedAssistant, sources });
   } catch (error) {
     console.error('[LegalUpAI] chat error:', error);
-    const code = error?.code === 'AI_NOT_CONFIGURED' ? 'AI_NOT_CONFIGURED' : 'PROVIDER_ERROR';
-    res.status(500).json({ error: error.message || 'No se pudo generar la respuesta.', code });
+    const code =
+      error?.code === 'AI_NOT_CONFIGURED' || error?.code === 'OUTPUT_TOKEN_LIMIT'
+        ? error.code
+        : 'PROVIDER_ERROR';
+    res.status(error?.status && error.status >= 400 && error.status < 500 ? error.status : 500).json({
+      error: error.message || 'No se pudo generar la respuesta.',
+      code,
+    });
   }
 });
 

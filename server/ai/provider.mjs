@@ -130,6 +130,19 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
     }
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
+      // Con modelos de razonamiento (p. ej. gpt-oss), un presupuesto de tokens
+      // insuficiente agota el `max_tokens` en el campo `reasoning` y deja el
+      // `content` vacío. Distinguimos el caso para dar un mensaje accionable.
+      const finish = data?.choices?.[0]?.finish_reason;
+      const reasoning = data?.choices?.[0]?.message?.reasoning;
+      if (finish === 'length' || (!content && reasoning)) {
+        const err = new Error(
+          'La respuesta superó el presupuesto de tokens del proveedor. Intenta de nuevo con una pregunta más acotada.'
+        );
+        err.status = 507;
+        err.code = 'OUTPUT_TOKEN_LIMIT';
+        throw err;
+      }
       throw new Error('El proveedor IA no devolvió contenido.');
     }
 

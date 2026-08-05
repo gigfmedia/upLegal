@@ -8,15 +8,95 @@
 export const CHAT_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo (caso + docs + análisis).
   MAX_CHAT_CONTEXT_CHARS: 50000,
-  // Caracteres máximos de texto extraído por documento incluido en el contexto.
-  MAX_DOCUMENT_CHARS: 20000,
-  // Caracteres máximos del análisis IA por documento.
+  // Caracteres del análisis IA por documento.
   MAX_ANALYSIS_CHARS: 4000,
   // Últimos N mensajes del historial que se envían al modelo.
   MAX_CHAT_HISTORY_MESSAGES: 20,
   // Longitud máxima permitida de la pregunta del abogado.
   MAX_CHAT_MESSAGE_LENGTH: 2000,
+  // Chunking para documentos extensos: tamaño y solape de cada fragmento.
+  CHUNK_SIZE: 3000,
+  CHUNK_OVERLAP: 300,
+  // Máximo de chunks considerados por documento.
+  MAX_CHUNKS_PER_DOC: 30,
 };
+
+/** Tokeniza un texto a minúsculas (palabras alfanuméricas de ≥3 caracteres). */
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .match(/[a-záéíóúüñ0-9]{3,}/g) || [];
+}
+
+/**
+ * Recuperación por relevancia léxica (similaridad coseno sobre frecuencia de
+ * términos). Permite que, en documentos extensos, solo se incluya el tramo
+ * relevante a la pregunta en lugar de cortar ciegamente desde el inicio.
+ */
+function scoreChunk(chunkText, questionTokens) {
+  const chunkTokens = tokenize(chunkText);
+  if (chunkTokens.length === 0) return 0;
+  const counts = new Map();
+  for (const t of chunkTokens) counts.set(t, (counts.get(t) || 0) + 1);
+  let score = 0;
+  for (const q of questionTokens) {
+    if (counts.has(q)) score += counts.get(q);
+  }
+  // Normaliza por tamaño para no favorecer chunks gigantes sin sentido.
+  return questionTokens.length > 0 ? score / Math.sqrt(chunkTokens.length) : 0;
+}
+
+/** Divide el texto extraído en chunks con solape, limitado a MAX_CHUNKS_PER_DOC. */
+function chunkText(text) {
+  if (!text) return [];
+  const size = CHAT_LIMITS.CHUNK_SIZE;
+  const overlap = CHAT_LIMITS.CHUNK_OVERLAP;
+  const chunks = [];
+  let start = 0;
+  const max = CHAT_LIMITS.MAX_CHUNKS_PER_DOC;
+  while (start < text.length && chunks.length < max) {
+    let end = Math.min(start + size, text.length);
+    chunks.push(text.slice(start, end));
+    if (end >= text.length) break;
+    // Retrocede hasta el último salto de línea o espacio dentro del solape.
+    const next = start + size - overlap;
+    const nl = text.lastIndexOf('\n', next);
+    start = (nl > start ? nl : next) + 1;
+  }
+  return chunks;
+}
+
+/**
+ * Selecciona los chunks más relevantes de un documento para la pregunta,
+ * repartiéndolos dentro del presupuesto de caracteres que le queda al contexto.
+ */
+function selectRelevantChunks(text, questionTokens, budgetChars) {
+  const chunks = chunkText(text);
+  if (chunks.length === 0) return '';
+  if (chunks.length === 1) return chunks[0].slice(0, budgetChars);
+
+  const budget = Math.max(1000, Math.min(budgetChars, CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS));
+  const scored = chunks
+    .map((c, idx) => ({ text: c, idx, score: scoreChunk(c, questionTokens) }))
+    .sort((a, b) => b.score - a.score || a.idx - b.idx);
+
+  const selected = [];
+  let used = 0;
+  // Siempre incluye el inicio (contexto/encabezados) aunque no sume puntos.
+  if (!selected.includes(0) && chunks[0] && chunks[0].length <= budget) {
+    selected.push(0);
+    used += chunks[0].length;
+  }
+  for (const s of scored) {
+    if (s.text.length > budget) continue;
+    if (used >= budget) break;
+    if (selected.includes(s.idx)) continue;
+    selected.push(s.idx);
+    used += s.text.length;
+  }
+  selected.sort((a, b) => a - b);
+  return selected.map((idx) => chunks[idx]).join('\n\n[...]\n\n').slice(0, budget);
+}
 
 export function buildChatSystemPrompt() {
   return `Eres un asistente de análisis jurídico para profesionales del derecho en Chile. Trabajas dentro de un caso concreto de LegalUp AI y tu única fuente de información son los documentos privados y los análisis de ese caso.
@@ -113,26 +193,50 @@ function formatAnalysis(analysis) {
 
 /**
  * Construye el contexto privado del caso.
- * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object> }} params
+ * @param {{ workspace: object, documents: Array<{id, original_filename, extracted_text}>, analyses: Record<string, object>, question?: string }} params
+ *  - question: texto de la pregunta del abogado. Si se provee, en documentos
+ *    extensos se recupera el tramo más relevante (chunking) en lugar de cortar
+ *    el inicio; si no, se usa el inicio del documento.
  * @returns {{ context: string, tooLarge: boolean }}
- *  - context: texto separado por documento (CASO / DOCUMENTO N / CONTENIDO / ANÁLISIS).
- *  - tooLarge: true si el conjunto completo supera MAX_CHAT_CONTEXT_CHARS.
+ *  - context: texto separado por documento (CASO / DOCUMENTO N / CONTENIDO / ANÁLISIS),
+ *    acotado a MAX_CHAT_CONTEXT_CHARS mediante recuperación por relevancia.
+ *  - tooLarge: siempre false (el chunking garantiza contexto que cabe en la consulta).
  */
-export function buildChatContext({ workspace, documents = [], analyses = {} }) {
+export function buildChatContext({ workspace, documents = [], analyses = {}, question = '' }) {
   const caseLines = [`Nombre: ${workspace.name || 'Sin nombre'}`];
   if (workspace.practice_area) caseLines.push(`Área: ${workspace.practice_area}`);
   if (workspace.description) caseLines.push(`Descripción: ${workspace.description}`);
   const caseBlock = caseLines.join('\n');
 
+  const questionTokens = tokenize(question);
+
   const blocks = [caseBlock];
-  let totalChars = caseBlock.length;
 
   for (const doc of documents) {
-    const docText = (doc.extracted_text || '').slice(0, CHAT_LIMITS.MAX_DOCUMENT_CHARS);
+    const rawText = doc.extracted_text || '';
     const analysisText = formatAnalysis(analyses[doc.id] || null).slice(
       0,
       CHAT_LIMITS.MAX_ANALYSIS_CHARS
     );
+
+    // Encabezados del bloque (DOCUMENTO / CONTENIDO / ANÁLISIS) y separadores.
+    const headerChars = 90 + doc.original_filename.length + analysisText.length;
+
+    // Presupuesto de ESTE bloque = reparto proporcional del límite global menos
+    // lo usado por el bloque del caso. Cubre contenido + análisis + encabezados,
+    // de modo que el bloque nunca rebase el límite y no se dispare CONTEXT_TOO_LARGE.
+    const budget = Math.max(
+      2000,
+      Math.floor(
+        (CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS - caseBlock.length) / documents.length
+      ) - headerChars
+    );
+
+    // Recuperación relevante si hay pregunta y el documento es extenso.
+    const docText =
+      questionTokens.length > 0
+        ? selectRelevantChunks(rawText, questionTokens, budget)
+        : rawText.slice(0, budget);
 
     const docBlock = [
       `DOCUMENTO: ${doc.original_filename}`,
@@ -141,12 +245,19 @@ export function buildChatContext({ workspace, documents = [], analyses = {} }) {
     ].join('\n\n');
 
     blocks.push(docBlock);
-    totalChars += docBlock.length;
+  }
+
+  let context = blocks.join('\n\n');
+  // Truncado de seguridad: nunca debe superar el límite.
+  if (context.length > CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS) {
+    context = context.slice(0, CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS);
   }
 
   return {
-    context: blocks.join('\n\n'),
-    tooLarge: totalChars > CHAT_LIMITS.MAX_CHAT_CONTEXT_CHARS,
+    context,
+    // tooLarge siempre false: la recuperación por relevancia garantiza un
+    // contexto acotado que cabe en la consulta.
+    tooLarge: false,
   };
 }
 
