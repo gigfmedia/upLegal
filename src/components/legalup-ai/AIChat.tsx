@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import posthog from 'posthog-js';
 import {
   AlertTriangle,
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AIChatMessage } from './AIChatMessage';
+import { AIThinkingIndicator } from './AIThinkingIndicator';
 import { AIChatSuggestions } from './AIChatSuggestions';
 import {
   useAICaseChat,
@@ -38,6 +40,8 @@ function errorToMessage(error: AIChatError | null): string {
       return 'Sube un documento para comenzar.';
     case 'AI_NOT_CONFIGURED':
       return 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.';
+    case 'OUTPUT_TOKEN_LIMIT':
+      return 'La respuesta superó el presupuesto de tokens. Intenta de nuevo con una pregunta más acotada.';
     default:
       return error?.message || 'No pudimos generar una respuesta. Intenta nuevamente.';
   }
@@ -105,19 +109,42 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const userNearBottomRef = useRef(true);
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // El usuario sigue el hilo si está cerca del fondo (dentro de ~160px).
+    userNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
+  };
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Mientras responde, mostrar el indicador al final.
+    // Mientras responde, mantener el indicador visible al final.
     if (sending) {
+      userNearBottomRef.current = true;
       el.scrollTop = el.scrollHeight;
       return;
     }
-    // Cuando llega una respuesta, dejar visible el INICIO del último mensaje.
+    // Cuando llega una respuesta, hacer scroll solo si el usuario estaba al día;
+    // nunca robar el scroll mientras se leen mensajes antiguos.
     const last = lastMessageRef.current;
-    if (last) {
+    if (last && userNearBottomRef.current) {
       el.scrollTop += last.getBoundingClientRect().top - el.getBoundingClientRect().top;
     }
+  }, [shownMessages.length, sending]);
+
+  // Durante el efecto de escritura del asistente el mensaje crece en altura;
+  // mantenemos el scroll pegado al final mientras el usuario sigue el hilo.
+  useEffect(() => {
+    const el = scrollRef.current;
+    const last = lastMessageRef.current;
+    if (!el || !last) return;
+    const observer = new ResizeObserver(() => {
+      if (userNearBottomRef.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(last);
+    return () => observer.disconnect();
   }, [shownMessages.length, sending]);
 
   // Una vez que el refetch autoritativo trae el mensaje del usuario guardado,
@@ -244,6 +271,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
           <div className="flex flex-col">
             <div
               ref={scrollRef}
+              onScroll={onScroll}
               className="max-h-[420px] space-y-4 overflow-y-auto pr-1"
             >
               {shownMessages.length === 0 && !sending ? (
@@ -278,25 +306,35 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
               )}
 
               {sending && (
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                  </span>
-                  <p className="text-sm text-muted-foreground">
-                    LegalUp AI está analizando el caso…
-                  </p>
-                </div>
+                <motion.div
+                  key="thinking"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                >
+                  <AIThinkingIndicator />
+                </motion.div>
               )}
 
-              {error && (
-                <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                  <AlertTriangle
-                    className="h-4 w-4 shrink-0 text-amber-600"
-                    aria-hidden="true"
-                  />
-                  <p className="text-xs text-amber-900">{errorToMessage(error)}</p>
-                </div>
-              )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    key="chat-error"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+                  >
+                    <AlertTriangle
+                      className="h-4 w-4 shrink-0 text-amber-600"
+                      aria-hidden="true"
+                    />
+                    <p className="text-xs text-amber-900">{errorToMessage(error)}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="mt-4 flex items-center gap-2">

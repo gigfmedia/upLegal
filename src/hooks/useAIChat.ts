@@ -104,10 +104,23 @@ export function useSendChatMessage(workspaceId: string | undefined) {
       }
       return body as SendChatResult;
     },
-    onSuccess: () => {
-      // Refetch de estado autoritativo: el backend guarda user + assistant.
-      // Evita duplicados en reintentos y mantiene consistencia.
-      queryClient.invalidateQueries({ queryKey: [...AI_CHAT_QUERY_KEY, workspaceId] });
+    onSuccess: (data, variables) => {
+      // Inyecta de inmediato la respuesta en el cache para que la burbuja del
+      // asistente aparezca sin esperar el refetch (elimina el hueco entre el
+      // loading y la respuesta). El refetch en background confirma/consolida.
+      const queryKey = [...AI_CHAT_QUERY_KEY, workspaceId];
+      queryClient.setQueryData<AIChatData>(queryKey, (old) => {
+        if (!old) return old;
+        const messages = [...old.messages];
+        // Evita duplicar el mensaje del usuario si ya está presente (p. ej. retry).
+        if (data.user_message && !messages.some((m) => m.id === data.user_message?.id)) {
+          messages.push(data.user_message);
+        }
+        messages.push(data.message);
+        return { ...old, messages };
+      });
+      // Refetch autoritativo en segundo plano: consolida lo que guardó la BD.
+      queryClient.invalidateQueries({ queryKey });
     },
     onError: () => {
       // El backend guarda el mensaje del usuario aunque la respuesta del asistente
