@@ -61,6 +61,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
   const [sending, setSending] = useState(false);
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [error, setError] = useState<AIChatError | null>(null);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
 
   const openedTracked = useRef(false);
   useEffect(() => {
@@ -125,6 +126,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
   const runMutation = (message: string) => {
     setSending(true);
     setError(null);
+    setFailedMessage(message);
     posthog.capture('ai_chat_message_sent', {
       message_length: message.length,
       document_count: readyCount,
@@ -135,6 +137,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
       {
         onSuccess: (data) => {
           setSending(false);
+          setFailedMessage(null);
           posthog.capture('ai_chat_response_completed', {
             document_count: readyCount,
             source_count: data.sources?.length ?? 0,
@@ -156,6 +159,7 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
     if (!trimmed || sending || !conversationId) return;
     setInput('');
     setPendingUser(trimmed);
+    setFailedMessage(null);
     runMutation(trimmed);
   };
 
@@ -163,12 +167,13 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
     if (sending || !conversationId) return;
     setInput('');
     setPendingUser(text);
+    setFailedMessage(null);
     runMutation(text);
   };
 
   const handleRetry = () => {
-    if (!pendingUser || sending || !conversationId) return;
-    runMutation(pendingUser);
+    if (!failedMessage || sending || !conversationId) return;
+    runMutation(failedMessage);
   };
 
   return (
