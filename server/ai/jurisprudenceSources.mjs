@@ -33,6 +33,33 @@ const TC_STOPWORDS = new Set([
   'sus', 'te', 'tras', 'tu', 'un', 'una', 'unos', 'unas', 'y', 'ya',
 ]);
 
+// Queries de hasta este número de términos se envían tal cual (comportamiento
+// actual). Solo las consultas más largas activan el fallback progresivo.
+const TC_MAX_QUERY_TERMS = 4;
+// Cota superior de intentos hacia la API del TC en el fallback (evita retries
+// ciegos o llamadas excesivas cuando el proveedor no devuelve resultados).
+const TC_QUERY_MAX_ATTEMPTS = 8;
+// Tamaños de ventana de los subconjuntos de términos del fallback, de más
+// específicos (3 términos) a más generales (2 términos).
+const TC_FALLBACK_WINDOW_SIZES = [3, 2];
+// Presupuesto máximo de subconjuntos emitidos por tamaño de ventana: asegura
+// que los pares de 2 términos (los más efectivos contra la API del TC) no
+// queden fuera del tope total de intentos.
+const TC_FALLBACK_WINDOW_BUDGET = 4;
+// Términos de bajo valor informativo para la búsqueda en el TC: se ordenan al
+// final para que los subconjuntos prioricen conceptos jurídicos específicos,
+// números de ley y entidades. No se descartan (la selección es determinística).
+const TC_LOW_INFORMATION_TERMS = new Set([
+  'ley', 'tribunal', 'constitucional', 'constitucionalidad', 'derecho',
+  'norma', 'normas', 'sentencia', 'sentencias', 'fallo', 'fallos', 'caso',
+  'causa', 'recurso', 'reclamo', 'reclamacion', 'sancion', 'requerimiento',
+  'expediente', 'resolucion', 'pronunciamiento', 'jurisprudencia', 'tema',
+  'materia', 'principio', 'vulnera', 'vulneracion', 'infringe', 'impugna',
+  'declara', 'declarar', 'establece', 'establecer', 'regula', 'regular',
+  'proteccion', 'proteger', 'normativo', 'normativa', 'legal', 'legales',
+  'pregunta', 'consulta', 'relaciona', 'relacion', 'segun', 'porque', 'como',
+]);
+
 const NORM_STOPWORDS = new Set([
   'ley', 'leyes', 'dl', 'dfl', 'dto', 'decreto', 'decretos', 'sobre', 'para',
   'con', 'del', 'de', 'la', 'las', 'los', 'el', 'una', 'uno', 'un', 'unos',
@@ -307,40 +334,172 @@ function buildTcFilter(search, competencia = null) {
   };
 }
 
-export async function searchTcSentencias(query, limit = 5, competencia = null) {
-  const search = normalizeSearchTerms(query, TC_STOPWORDS);
-  if (!search) return [];
+/** Construye la URL del endpoint de sentencias del TC para un término dado. */
+function buildTcSentenciasUrl(search, competencia = null) {
   const filter = encodeURIComponent(JSON.stringify(buildTcFilter(search, competencia)));
-  const data = await fetchJson(`${TC_API}/sentencias?filter=${filter}`);
-  const rows = data?.data?.results ?? [];
-  return rows.slice(0, limit).map((r) => {
-    const highlights =
-      r.highlightParagraphs
-        ?.map((h) => h.full ?? h.summary)
-        .filter(Boolean) ?? [];
-    const excerpt = highlights.join(' ') || truncate(r.content, 3000);
-    return {
-      id: `tc-${r.id}`,
-      kind: 'jurisprudencia',
-      source_type: 'jurisprudencia',
-      legal_authority: 'persuasiva',
-      vigency: 'no_aplica',
-      title: r.rol ? `Rol ${r.rol}` : `Sentencia TC ${r.id}`,
-      citation: `Tribunal Constitucional — Rol ${r.rol}`,
-      publisher: 'Tribunal Constitucional',
-      url: `${TC_UI}/#/ficha/${r.rol}`,
-      excerpt,
-      metadata: {
-        rol: r.rol,
-        competencia: r.competenciaShortName ?? r.competencia,
-        sentenceId: r.sentence_id ? String(r.sentence_id) : null,
-        provider: 'tc_buscador',
+  return `${TC_API}/sentencias?filter=${filter}`;
+}
+
+/** Dobla un término: minúsculas y sin diacríticos (para comparaciones internas). */
+function foldTerm(term) {
+  return String(term || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '').trim();
+}
+
+/**
+ * Determina si un término es de bajo valor informativo para la búsqueda TC.
+ * Solo usa lists fija/stopwords: es determinístico y no depende del texto crudo.
+ */
+function isTcLowInfoTerm(term) {
+  const folded = foldTerm(term);
+  return folded.length <= 1 || TC_LOW_INFORMATION_TERMS.has(folded);
+}
+
+/**
+ * Genera de forma determinística la lista ordenada de subconjuntos de términos
+ * que se probarán contra la API del TC cuando la query normalizada es larga:
+ *   - conserva números de ley / artículos (lo más específico) al frente,
+ *   - prioriza conceptos jurídicos informativos antes que términos genéricos,
+ *   - va de subconjuntos más específicos (más términos) a más generales.
+ * Devuelve [] si la consulta ya es corta (el llamado inicial la cubre).
+ * @param {string} search - Query normalizada (tokens unidos por espacios).
+ * @returns {string[]} Variantes ordenadas más específicas → más generales.
+ */
+export function buildTcSearchTermVariants(search) {
+  const tokens = (search || '').split(/\s+/).filter(Boolean);
+  if (tokens.length <= TC_MAX_QUERY_TERMS) return [];
+
+  // Anclas (números de ley/artículo) primero: identifican la materia concreta.
+  const anchors = tokens.filter((t) => /\d/.test(t));
+  const content = tokens.filter((t) => !/\d/.test(t));
+  // Términos informativos antes que los genéricos (bajo valor para el TC).
+  const ranked = [
+    ...content.filter((t) => !isTcLowInfoTerm(t)),
+    ...content.filter((t) => isTcLowInfoTerm(t)),
+  ];
+  const base = [...anchors, ...ranked].map(foldTerm);
+
+  const out = [];
+  const seen = new Set();
+  for (const size of TC_FALLBACK_WINDOW_SIZES) {
+    if (size > base.length) continue;
+    let emitted = 0;
+    for (let i = 0; i + size <= base.length; i++) {
+      if (out.length >= TC_QUERY_MAX_ATTEMPTS - 1) break;
+      if (emitted >= TC_FALLBACK_WINDOW_BUDGET) break;
+      const cand = base.slice(i, i + size).join(' ');
+      if (!seen.has(cand)) {
+        seen.add(cand);
+        emitted += 1;
+        out.push(cand);
+      }
+    }
+  }
+  if (out.length === 0) out.push(foldTerm(search));
+  return out.slice(0, TC_QUERY_MAX_ATTEMPTS - 1);
+}
+
+/** Convierte una fila cruda del endpoint TC en una fuente `Source` normalizada. */
+function mapTcRow(r) {
+  const highlights =
+    r.highlightParagraphs?.map((h) => h.full ?? h.summary).filter(Boolean) ?? [];
+  const excerpt = highlights.join(' ') || truncate(r.content, 3000);
+  return {
+    id: `tc-${r.id}`,
+    kind: 'jurisprudencia',
+    source_type: 'jurisprudencia',
+    legal_authority: 'persuasiva',
+    vigency: 'no_aplica',
+    title: r.rol ? `Rol ${r.rol}` : `Sentencia TC ${r.id}`,
+    citation: `Tribunal Constitucional — Rol ${r.rol}`,
+    publisher: 'Tribunal Constitucional',
+    url: `${TC_UI}/#/ficha/${r.rol}`,
+    excerpt,
+    metadata: {
+      rol: r.rol,
+      competencia: r.competenciaShortName ?? r.competencia,
+      sentenceId: r.sentence_id ? String(r.sentence_id) : null,
+      provider: 'tc_buscador',
         integrity: 'verified',
         legal_authority: 'persuasiva',
         vigency: 'no_aplica',
       },
-    };
-  });
+  };
+}
+
+/**
+ * Busca sentencias del TC con fallback progresivo. La API del TC hace matching
+ * estricto multi-término: queries demasiado largas devuelven 0 aunque existan
+ * sentencias relevantes para subconjuntos de sus términos. Para evitar esa
+ * pérdida artificial, se intenta primero la query completa y, si no hay
+ * resultados, se prueban subconjuntos ordenados de términos hasta completar el
+ * `limit` o agotar el número acotado de intentos. Los resultados se deduplican
+ * por id y se respeta el `limit` solicitado.
+ *
+ * @param {string} query - Consulta en lenguaje natural.
+ * @param {number} [limit=5] - Máximo de fuentes a devolver.
+ * @param {string|null} [competencia=null] - Competencia TC opcional.
+ * @returns {Promise<object[]>} Fuentes jurisprudenciales TC.
+ */
+export async function searchTcSentencias(query, limit = 5, competencia = null) {
+  const attempt0 = normalizeSearchTerms(query, TC_STOPWORDS);
+  if (!attempt0) return [];
+
+  const queryHash = hashQuery(query);
+  const fallbacks = buildTcSearchTermVariants(attempt0);
+  const attempts = [attempt0, ...fallbacks];
+
+  const seen = new Set();
+  const collected = [];
+  for (let i = 0; i < attempts.length; i++) {
+    if (collected.length >= limit) break;
+    const search = attempts[i];
+
+    let rows = [];
+    let status = 'empty';
+    const startedAt = Date.now();
+    try {
+      const data = await fetchJson(buildTcSentenciasUrl(search, competencia));
+      rows = data?.data?.results ?? [];
+      status = rows.length ? 'ok' : 'empty';
+    } catch (error) {
+      status = 'error';
+      logDiagnostic('jurisprudence_tc_query', {
+        query_hash: queryHash,
+        term_hash: hashQuery(search),
+        term_count: (search || '').split(/\s+/).filter(Boolean).length,
+        attempt: i + 1,
+        status,
+        error_type: classifyFetchError(error),
+        duration_ms: Date.now() - startedAt,
+      });
+      continue;
+    }
+
+    logDiagnostic('jurisprudence_tc_query', {
+      query_hash: queryHash,
+      term_hash: hashQuery(search),
+      term_count: (search || '').split(/\s+/).filter(Boolean).length,
+      attempt: i + 1,
+      status,
+      source_count: rows.length,
+      duration_ms: Date.now() - startedAt,
+    });
+
+    for (const r of rows) {
+      if (collected.length >= limit) break;
+      const source = mapTcRow(r);
+      if (!seen.has(source.id)) {
+        seen.add(source.id);
+        collected.push(source);
+      }
+    }
+
+    // Si la query completa ya dio resultados, conservar el comportamiento
+    // actual: no ejecutar fallbacks (más específico y evita llamadas extra).
+    if (attempts.length > 1 && i === 0 && collected.length > 0) break;
+  }
+
+  return collected.slice(0, limit);
 }
 
 export async function getTcFicha(folio, timeoutMs = DEFAULT_TIMEOUT_MS) {
