@@ -630,57 +630,126 @@ export function splitLawArticles(text, { maxChars = 4000 } = {}) {
 }
 
 /**
- * Ordena los fragmentos según cuántos términos pertinentes de la consulta
- * aparecen en cada uno (más relevantes primero, sin reordenar los empates).
+ * Términos jurídicos GENÉRICOS que por sí solos NO prueban una afirmación
+ * ("derechos", "titulares", "datos", "tratamiento"...). La presencia de estos
+ * términos en un fragmento no puede respaldar un claim que enumera conceptos
+ * sustantivos concretos; sirven solo como contexto.
  */
-export function rankFragments(query, fragments, { limit = 5 } = {}) {
-  const tokens = String(query || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9ñ\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t));
-  const scored = fragments
-    .map((f, index) => {
-      const norm = `${f.article} ${f.text}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const count = tokens.filter((t) => norm.includes(t)).length;
-      return { fragment: f, count, index };
-    })
-    .filter((s) => s.count > 0 || fragments.length <= limit);
-  const ranked = scored.sort((a, b) => b.count - a.count || a.index - b.index);
-  return ranked.slice(0, limit).map((s) => s.fragment);
-}
+const GENERIC_CONCEPTS = new Set([
+  'derecho', 'derechos', 'titular', 'titulares', 'dato', 'datos',
+  'tratamiento', 'persona', 'personas', 'personal', 'personales',
+  'informacion', 'materia', 'materias', 'norma', 'normas', 'normativa',
+  'regulacion', 'objeto', 'ambito', 'finalidad', 'condicion', 'condiciones',
+  'manera', 'forma', 'ejercicio', 'disposicion', 'disposiciones', 'sujeto',
+  'sujetos', 'sujeta', 'sujetas', 'contenido', 'efecto', 'efectos',
+  'corresponda', 'correspondan', 'correspondiente', 'conformidad', 'conforme',
+  'aplicacion', 'solicitar', 'obtener', 'mantener', 'facilitar', 'poner',
+  'realizar', 'recopilar', 'regular', 'regulan', 'regula', 'proteger',
+  'protege', 'proteccion', 'reconoce', 'reconozca', 'reconozcan',
+  'reconociendo', 'establecer', 'establecida', 'confiere', 'confieren',
+  'otorga', 'otorgan', 'garantiza', 'garantizan', 'asegura', 'aseguran',
+  'permite', 'permiten', 'permitir', 'dispone', 'dispondra', 'contempla',
+  'contemplan', 'consagra', 'incorpora', 'incluye', 'incluyendo', 'debera',
+  'deber', 'deben', 'debe', 'deben', 'goza', 'gozar', 'gozara', 'gozando',
+  'podra', 'podran', 'podria', 'pueda', 'pueden', 'tiene', 'tienen',
+  'adquirido', 'otorgando',
+]);
 
-/**
- * Determina si una afirmación está respaldada por el texto de un fragmento:
- * los términos significativos (≥4 caracteres) de la afirmación deben aparecer
- * en el fragmento con una proporción mínima. Exige al menos dos términos.
- * @param {{ text?: string }|string} fragment - fragmento (objeto o texto plano).
- * @param {string} claimText - afirmación/concepto a verificar.
- * @returns {boolean}
- */
-export function fragmentSupportsClaim(fragment, claimText, { minOverlap = 0.5 } = {}) {
-  const text = String(fragment?.text || fragment || '');
-  const tokens = String(claimText || '')
+/** Normaliza un texto a tokens sin acentos (palabras simples, ≥4 caracteres). */
+function normalizeClaimTokens(text) {
+  return String(text || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9ñ\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= 4 && !NORM_STOPWORDS.has(t));
+}
+
+/** Verifica si un término aparece como PALABRA COMPLETA en texto normalizado. */
+function hasWord(normText, term) {
+  const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9ñ])${escaped}($|[^a-z0-9ñ])`).test(normText);
+}
+
+/**
+ * Ordena los fragmentos según su relevancia a la consulta, priorizando la
+ * coincidencia de CONCEPTOS JURÍDICOS SUSTANTIVOS (los términos genéricos como
+ * "datos", "titulares" o "tratamiento" puntúan menos que conceptos concretos
+ * como "supresión" o "portabilidad"). Los empates conservan el orden original.
+ */
+export function rankFragments(query, fragments, { limit = 5 } = {}) {
+  const tokens = normalizeClaimTokens(query);
+  const scored = fragments
+    .map((f, index) => {
+      const norm = `${f.article} ${f.text}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      let score = 0;
+      for (const t of tokens) {
+        if (!hasWord(norm, t)) continue;
+        score += GENERIC_CONCEPTS.has(t) ? 1 : 2;
+      }
+      return { fragment: f, score, index };
+    })
+    .filter((s) => s.score > 0 || fragments.length <= limit);
+  const ranked = scored.sort((a, b) => b.score - a.score || a.index - b.index);
+  return ranked.slice(0, limit).map((s) => s.fragment);
+}
+
+/**
+ * Determina si una afirmación está respaldada por el TEXTO de un fragmento,
+ * distinguiendo "la fuente contiene el tema" de "el fragmento prueba la
+ * afirmación". Reglas:
+ *   - Las palabras se comparan como términos completos (no por subcadena).
+ *   - Los conceptos sustantivos (acceso, supresión, portabilidad...) son los
+ *     que cuentan; los términos genéricos (derechos, titulares, datos,
+ *     tratamiento) NO pueden respaldar una enumeración concreta.
+ *   - Si el claim contiene una ENUMERACIÓN jurídica (lista de ≥3 conceptos
+ *     separados por comas o "y"/"o"), el fragmento debe contener TODOS los
+ *     elementos enumerados; si falta uno, no es evidencia suficiente.
+ *   - Si no hay conceptos sustantivos, se exige cobertura muy alta de términos.
+ * @param {{ text?: string }|string} fragment - fragmento (objeto o texto plano).
+ * @param {string} claimText - afirmación/concepto a verificar.
+ * @returns {boolean}
+ */
+export function fragmentSupportsClaim(fragment, claimText, { minOverlap = 0.5 } = {}) {
+  const normText = String(fragment?.text || fragment || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const tokens = normalizeClaimTokens(claimText);
   if (tokens.length < 2) return false;
-  const norm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const matched = tokens.filter((t) => norm.includes(t)).length;
-  return matched / tokens.length >= minOverlap;
+
+  const substantive = tokens.filter((t) => !GENERIC_CONCEPTS.has(t));
+
+  // Enumeración jurídica concreta: exige TODOS los elementos en el fragmento.
+  const rawClaim = String(claimText || '');
+  const isEnumeration =
+    substantive.length >= 3 && (/,\s*/.test(rawClaim) || /\s(?:y|o|e)\s/i.test(rawClaim));
+  if (isEnumeration) {
+    const present = substantive.filter((t) => hasWord(normText, t));
+    return present.length === substantive.length;
+  }
+
+  if (substantive.length >= 2) {
+    const present = substantive.filter((t) => hasWord(normText, t));
+    return present.length >= 2 && present.length / substantive.length >= minOverlap;
+  }
+
+  if (substantive.length === 1) {
+    return hasWord(normText, substantive[0]);
+  }
+
+  // Sin conceptos sustantivos: se exige cobertura muy alta de los términos.
+  const matched = tokens.filter((t) => hasWord(normText, t)).length;
+  return matched / tokens.length >= 0.8;
 }
 
 /**
  * Asocia una afirmación al fragmento ESPECÍFICO que la respalda. rankFragments
- * favorece los fragmentos que contienen directamente los términos/conceptos de
- * la afirmación; luego fragmentSupportsClaim exige que el texto del fragmento
- * efectivamente contenga esos conceptos. Devuelve el fragmento respaldante o
- * null si ninguno respalda suficientemente la afirmación.
+ * favorece los fragmentos que contienen directamente los CONCEPTOS SUSTANTIVOS
+ * de la afirmación; luego fragmentSupportsClaim exige que el texto del fragmento
+ * efectivamente contenga esos conceptos (todos, si es una enumeración). Devuelve
+ * el fragmento respaldante o null si ninguno respalda suficientemente.
  * @param {string} claimText - afirmación a respaldar.
  * @param {Array<{ article: string, text: string, id?: string }>} fragments
  * @returns {{ id?: string, article: string, text: string } | null}

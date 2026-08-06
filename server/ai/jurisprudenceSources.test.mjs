@@ -115,14 +115,16 @@ describe('splitLawArticles', () => {
 });
 
 describe('rankFragments', () => {
-  it('ordena primero los fragmentos con más términos pertinentes de la consulta', () => {
+  it('prioriza fragmentos con CONCEPTOS sustantivos sobre los que solo tienen términos genéricos', () => {
     const frags = [
-      { article: 'Artículo 1', text: 'derechos de los titulares sobre datos personales y su tratamiento' },
-      { article: 'Artículo 2', text: 'reglas de protección de datos en el ámbito laboral' },
+      { article: 'Artículo 1', text: 'tratamiento de datos personales de los titulares, con plenas garantías.' },
+      { article: 'Artículo 2', text: 'derechos de supresión y portabilidad de datos personales' },
       { article: 'Artículo 3', text: 'normas sobre consumo y publicidad' },
     ];
-    const ranked = rankFragments('protección de datos personales', frags, { limit: 3 });
-    expect(ranked[0].article).toBe('Artículo 1');
+    const ranked = rankFragments('derecho de supresión y portabilidad sobre datos personales', frags, { limit: 3 });
+    // El Art. 2 contiene los conceptos sustantivos (supresión, portabilidad) y
+    // debe quedar primero, por encima del Art. 1 que solo menciona genéricos.
+    expect(ranked[0].article).toBe('Artículo 2');
   });
 });
 
@@ -164,6 +166,36 @@ describe('fragmentSupportsClaim', () => {
   it('no respalda con menos de dos términos significativos', () => {
     expect(fragmentSupportsClaim(ley21719Fragments[0], 'y pues')).toBe(false);
   });
+
+  // Fase 4.0.4 fix — falso positivo de términos genéricos
+  it('NO respalda una enumeración de derechos con un fragmento que solo habla de "derechos que se reconocen a los titulares"', () => {
+    const claim =
+      'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.';
+    const genericFragment =
+      '...permitan el ejercicio de los derechos que se reconocen a los titulares...';
+    expect(fragmentSupportsClaim(genericFragment, claim)).toBe(false);
+  });
+  it('respaldar la enumeración de derechos con el fragmento del artículo que enumera esos derechos', () => {
+    const claim =
+      'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.';
+    const articulo4 =
+      'Artículo 4. Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.';
+    expect(fragmentSupportsClaim(articulo4, claim)).toBe(true);
+  });
+  it('no respalda un claim de 6 derechos con un fragmento que solo enumera 5 (falta uno)', () => {
+    const claim =
+      'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.';
+    const cincoDeSeis =
+      'En esta ley se reconocen los derechos de acceso, rectificación, supresión, oposición y portabilidad de los datos personales.';
+    expect(fragmentSupportsClaim(cincoDeSeis, claim)).toBe(false);
+  });
+  it('no respalda un claim específico con un fragmento que solo contiene términos genéricos', () => {
+    const claim = 'El titular puede solicitar la portabilidad de sus datos personales.';
+    const generic =
+      'disposiciones sobre el tratamiento de datos de los titulares, incorporadas en la presente ley.';
+    expect(fragmentSupportsClaim(generic, claim)).toBe(false);
+    expect(fragmentSupportsClaim('el titular tiene derecho de portabilidad de sus datos personales', claim)).toBe(true);
+  });
 });
 
 describe('resolveClaimFragment', () => {
@@ -193,5 +225,45 @@ describe('resolveClaimFragment', () => {
   it('devuelve null cuando ningún fragmento respalda la afirmación', () => {
     const af = 'indemnización por despido injustificado del trabajador';
     expect(resolveClaimFragment(af, ley21719Fragments)).toBeNull();
+  });
+  it('con un fragmento genérico de "derechos que se reconocen" y el artículo 4, elige el artículo 4', () => {
+    const fragments = [
+      {
+        id: 'frag:1209272:f5',
+        article: 'Artículo 14 quinquies',
+        text: 'permitan el ejercicio de los derechos que se reconocen a los titulares en la presente ley.',
+      },
+      {
+        id: 'frag:1209272:f4',
+        article: 'Artículo 4',
+        text: 'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+      },
+    ];
+    const claim =
+      'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.';
+    const resolved = resolveClaimFragment(claim, fragments);
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe('frag:1209272:f4');
+    expect(resolved.article).toBe('Artículo 4');
+  });
+  it('obligación concreta: elige el fragmento que contiene la obligación sustantiva, no el genérico', () => {
+    const fragments = [
+      { id: 'F1', article: 'Artículo 14', text: 'El responsable, sin perjuicio de las demás disposiciones, tiene las siguientes obligaciones.' },
+      { id: 'F2', article: 'Artículo 14 a)', text: 'Informar y poner a disposición del titular los antecedentes que acrediten la licitud del tratamiento de datos que realiza.' },
+    ];
+    const claim = 'El responsable debe informar al titular los antecedentes que acrediten la licitud del tratamiento.';
+    const resolved = resolveClaimFragment(claim, fragments);
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe('F2');
+  });
+  it('excepción: un fragmento que solo enumera "excepciones" no respalda el contenido sustantivo de la excepción', () => {
+    const fragments = [
+      { id: 'F1', article: 'Artículo 5', text: 'En los casos que esta ley contempla se reconocen excepciones al tratamiento de datos de los titulares.' },
+      { id: 'F2', article: 'Artículo 5 b)', text: 'No se requerirá el consentimiento del titular cuando el tratamiento tenga por objeto la prevención del fraude.' },
+    ];
+    const claim = 'No se requiere el consentimiento para el tratamiento cuyo objeto sea la prevención del fraude.';
+    const resolved = resolveClaimFragment(claim, fragments);
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe('F2');
   });
 });
