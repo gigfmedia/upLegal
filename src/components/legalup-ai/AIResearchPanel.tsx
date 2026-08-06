@@ -138,6 +138,7 @@ const AUTHORITY_LABELS: Record<string, string> = {
 
 const VIGENCY_LABELS: Record<string, string> = {
   vigente: 'Vigente',
+  diferida: 'Con vigencia diferida por fecha',
   derogada: 'Derogada',
   modificada: 'Modificada',
   desconocida: 'Vigencia no determinada',
@@ -183,9 +184,11 @@ function SourceItem({ source }: { source: AIResearchSource }) {
   const vigencyClass =
     source.vigency === 'derogada'
       ? 'bg-red-100 text-red-800'
-      : source.vigency === 'desconocida'
-        ? 'bg-amber-100 text-amber-800'
-        : 'bg-gray-100 text-gray-600';
+      : source.vigency === 'diferida'
+        ? 'bg-indigo-100 text-indigo-800'
+        : source.vigency === 'desconocida'
+          ? 'bg-amber-100 text-amber-800'
+          : 'bg-gray-100 text-gray-600';
   return (
     <li className="rounded-lg border border-gray-200 bg-gray-50/60 p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -225,6 +228,9 @@ function SourceItem({ source }: { source: AIResearchSource }) {
         )}
       </div>
       <p className="mt-2 text-sm font-medium text-gray-900">{source.citation}</p>
+      {source.vigencia_detail && (
+        <p className="mt-0.5 text-[0.68rem] text-gray-500">{source.vigencia_detail}</p>
+      )}
       {source.excerpt && (
         <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
       )}

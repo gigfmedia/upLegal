@@ -70,6 +70,7 @@ export const LEGAL_AUTHORITY_LABELS = {
 
 export const VIGENCY_LABELS = {
   vigente: 'Vigente',
+  diferida: 'Con vigencia diferida por fecha',
   derogada: 'Derogada',
   modificada: 'Modificada',
   desconocida: 'Vigencia no determinada',

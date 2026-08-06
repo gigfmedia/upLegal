@@ -6,7 +6,7 @@ export type AIResearchSource = {
   kind: 'jurisprudencia' | 'normativa' | 'doctrina';
   source_type?: 'normativa' | 'jurisprudencia' | 'doctrina';
   legal_authority?: 'vinculante' | 'persuasiva' | 'doctrinal' | 'informativa';
-  vigency?: 'vigente' | 'derogada' | 'modificada' | 'desconocida' | 'no_aplica';
+  vigency?: 'vigente' | 'diferida' | 'derogada' | 'modificada' | 'desconocida' | 'no_aplica';
   norm_type?: string | null;
   norm_number?: string | null;
   title?: string;
@@ -15,6 +15,8 @@ export type AIResearchSource = {
   url?: string;
   excerpt?: string;
   date?: string | null;
+  vigencia_detail?: string | null;
+  fragments?: Array<{ article: string; text: string; idNorma?: string; url?: string }> | null;
   metadata?: Record<string, unknown> | null;
 };
 

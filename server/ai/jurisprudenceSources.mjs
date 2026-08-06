@@ -14,6 +14,10 @@ const TC_FICHA_API = 'https://buscador-backend.tcchile.cl/api/buscadorexterno/fi
 const TC_UI = 'https://buscador.tcchile.cl';
 const SPARQL_ENDPOINT = 'https://datos.bcn.cl/sparql';
 const OPENALEX_API = 'https://api.openalex.org/works';
+// API JSON que usa la SPA de LeyChile para recuperar texto y metadatos de una
+// norma (funciona sin credenciales). Devuelve el texto consolidado vía
+// `html` y la vigencia/metadatos vía el campo `metadatos`.
+const LEYCHILE_JSON_API = 'https://nuevo.leychile.cl/servicios/Navegar/get_norma_json';
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.JURISPRUDENCE_TIMEOUT_MS) || 15000;
 
@@ -38,7 +42,8 @@ const NORM_STOPWORDS = new Set([
   'aplicable', 'refiere', 'referida', 'referidas', 'segun', 'según',
   'cuando', 'como', 'cómo', 'pregunta', 'consulta', 'existe', 'existen',
   'puede', 'pueden', 'es', 'son', 'qué pasa', 'que pasa', 'artículo',
-  'articulo', 'art', 'n°', 'no',
+  'articulo', 'art', 'n°', 'no', 'general', 'sin', 'número', 'numero',
+  'saber', 'cual es', 'cuál es', 'explica',
 ]);
 
 // ----------------------- Utilidades compartidas ---------------------------
@@ -109,6 +114,7 @@ export const LEGAL_AUTHORITY_LABELS = {
 
 export const VIGENCY_LABELS = {
   vigente: 'Vigente',
+  diferida: 'Con vigencia diferida por fecha',
   derogada: 'Derogada',
   modificada: 'Modificada',
   desconocida: 'Vigencia no determinada',
@@ -178,10 +184,32 @@ export function extractNormNumber(title) {
 }
 
 /**
- * Infiere el estado de vigencia desde el título de LeyChile. Nunca declara
- * "vigente" sin evidencia: solo cuando el título lo indica explícitamente.
+ * Determina la vigencia de una norma. Prioriza la información EXPLÍCITA que
+ * BCN/LeyChile reporta en sus metadatos (derogado, tipo de versión y fechas de
+ * vigencia). Solo cuando BCN no la aporta se recurre a indicios del título;
+ * y si tampoco hay indicios se devuelve "desconocida": NUNCA se asume vigente
+ * sin que BCN lo declare.
+ * @param {string} title - Título de la norma (indicio de menor confianza).
+ * @param {{ derogado?: boolean, tipoVersionS?: string, inicioVigencia?: string,
+ *           finVigencia?: string }} [info] - Metadatos explícitos de BCN/LeyChile.
  */
-export function detectNormVigency(title) {
+export function detectNormVigency(title, info = {}) {
+  const infoDerogado = String(info?.derogado ?? '');
+  if (
+    info?.derogado === true ||
+    /^(si|true|derogado|es[ ]?derogad[oa])$/i.test(infoDerogado.trim())
+  ) {
+    return 'derogada';
+  }
+  const tipoVersion = String(info?.tipoVersionS || '');
+  const inicio = String(info?.inicioVigencia || '');
+  // BCN declara una vigencia diferida ("Con Vigencia Diferida por Fecha") o
+  // entrega una fecha de entrada en vigencia futura.
+  if (/(diferida|diferido)/i.test(tipoVersion) || /^\d{4}-\d{2}-\d{2}$/.test(inicio)) {
+    return 'diferida';
+  }
+
+  // Pista de menor confianza (solo si BCN no aportó metadatos).
   const t = String(title || '').toLowerCase();
   if (/(derogad|abrogad|deroga)/.test(t)) return 'derogada';
   if (/(modificad|reformad|sustituid|reemplazad)/.test(t)) return 'modificada';
@@ -314,8 +342,7 @@ WHERE {
   OPTIONAL { ?norma bcnnorms:hasNumber ?number }
   OPTIONAL { ?norma bcnnorms:publishDate ?date }
   OPTIONAL { ?norma bcnnorms:leychileCode ?code }
-  FILTER(CONTAINS(STR(?number), "${escapeSparqlString(term)}") || CONTAINS(STR(?code), "${escapeSparqlString(term)}"))
-  FILTER(isNumeric(?number))
+  FILTER(STR(?number) = "${escapeSparqlString(term)}" || STR(?code) = "${escapeSparqlString(term)}")
 }
 ORDER BY DESC(?date)
 LIMIT ${Math.min(Math.max(limit * 2, 10), 25)}
@@ -374,15 +401,19 @@ function mapBcnBinding(b) {
 }
 
 export async function searchBcnNormas(query, limit = 6) {
-  // Si el abogado cita explícitamente un número de ley (Ley 19.628, norma 21.096…),
-  // busca ese número directamente en el catálogo de LeyChile.
-  const numberMatch = String(query || '').match(/\b\d{1,2}(?:[.,]\d{3,6}|\d{3,6})\b/);
-  if (numberMatch) {
-    const rawTerm = numberMatch[0];
-    const variants = [rawTerm.replace('.', '').replace(',', ''), rawTerm.replace(',', '.')];
-    for (const term of variants) {
+  // Si el abogado cita explícitamente un número de ley (Ley 19.628, Ley N° 21.719,
+  // Ley Nº 21.719, ley 21719…), busca ese número directamente en el catálogo de
+  // LeyChile antes de depender de la búsqueda textual.
+  const explicitNumbers = extractLawNumber(query);
+  const byNumber = [];
+  if (explicitNumbers.length > 0) {
+    const seenNumber = new Set();
+    const seenCode = new Set();
+    const byNumberMatch = [];
+    const byCodeMatch = [];
+    for (const digits of explicitNumbers) {
       try {
-        const sparql = buildNumberFilterSparql(term, limit);
+        const sparql = buildNumberFilterSparql(digits, limit);
         const data = await fetchJson(
           SPARQL_ENDPOINT,
           {
@@ -396,20 +427,30 @@ export async function searchBcnNormas(query, limit = 6) {
           12000,
         );
         const bindings = data?.results?.bindings ?? [];
-        const out = [];
-        const seen = new Set();
         for (const b of bindings) {
           const src = mapBcnBinding(b);
-          if (!src || seen.has(src.citation)) continue;
-          seen.add(src.citation);
-          out.push(src);
-          if (out.length >= limit) break;
+          if (!src) continue;
+          // Prioriza el match por Nº de norma sobre el match por idNorma.
+          const numberNorm = String(b.number?.value || '').replace(/[^0-9]/g, '');
+          const isNumberMatch = numberNorm === digits;
+          const target = isNumberMatch ? byNumberMatch : byCodeMatch;
+          const seen = isNumberMatch ? seenNumber : seenCode;
+          if (seen.has(src.id)) continue;
+          seen.add(src.id);
+          target.push(src);
+          if (byNumberMatch.length + byCodeMatch.length >= limit) break;
         }
-        if (out.length > 0) return out;
       } catch {
         // Si la búsqueda numérica falla o no arroja resultados, cae al filtro por título.
       }
     }
+    // Prioriza los match por Nº de norma (respaldados por la ley). Los match
+    // por idNorma se conservan solo si son leyes, para no arrastrar ruido.
+    byNumber.push(
+      ...byNumberMatch,
+      ...byCodeMatch.filter((s) => s.norm_type === 'ley'),
+    );
+    if (byNumber[0]) byNumber[0].metadata = { ...byNumber[0].metadata, directNumberMatch: true };
   }
 
   const terms = [...new Set(
@@ -419,6 +460,9 @@ export async function searchBcnNormas(query, limit = 6) {
       .map((t) => t.replace(/[^\p{L}\p{N}.-]/gu, ''))
       .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t))
   )].slice(0, 5);
+  if (byNumber.length > 0) {
+    return await augmentNormasWithText(byNumber, query);
+  }
   if (terms.length === 0) return [];
 
   // Prueba combos de términos de menos a más restrictivos (4→3→2→1) y los
@@ -459,12 +503,262 @@ export async function searchBcnNormas(query, limit = 6) {
   }
 
   if (merged.size === 0) return [];
+  const normTypeRank = { ley: 0, codigo: 1, dfl: 2, decreto: 3, constitucion: 4, reglamento: 5, resolucion: 6, otra: 7 };
   const ranked = [...merged.values()].sort(
     (a, b) =>
       b.count - a.count ||
+      (normTypeRank[a.src.norm_type] ?? 9) - (normTypeRank[b.src.norm_type] ?? 9) ||
       (b.date < a.date ? -1 : b.date > a.date ? 1 : 0),
   );
-  return ranked.slice(0, limit).map((r) => r.src);
+  const srcs = ranked.slice(0, limit).map((r) => r.src);
+  // En general enriquecemos solo las 1-2 normas con más texto para no saturar.
+  return await augmentNormasWithText(srcs, query);
+}
+
+// ---------------------------
+// Fase 4.0.3: texto verificable de normas BCN/LeyChile
+// ---------------------------
+
+// Mapa de entidades HTML nombradas frecuentes en el texto legal de LeyChile.
+const NAMED_ENTITIES = {
+  amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ', times: '×',
+  ndash: '–', mdash: '—', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”',
+  aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó', uacute: 'ú',
+  Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú',
+  ntilde: 'ñ', Ntilde: 'Ñ', uml: '¨', uuml: 'ü', auml: 'ä', ouml: 'ö',
+  agrave: 'à', egrave: 'è', igrave: 'ì', ograve: 'ò', ugrave: 'ù',
+  nbspx: ' ', brvbar: '¦', sect: '§', para: '¶', middot: '·', ordf: 'ª',
+  ordm: 'º', deg: '°', iexcl: '¡', iquest: '¿', laquo: '«', raquo: '»',
+  micro: 'µ', dagger: '†', sup2: '²', sup3: '³', frac12: '½',
+};
+
+/** Convierte el HTML/entidades de LeyChile en texto plano. */
+export function htmlToPlainText(html) {
+  const out = String(html || '')
+    .replace(/<[a-zA-Z/][^>]*>/g, ' ')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&([a-zA-Z]+);/g, (m, name) =>
+      NAMED_ENTITIES[name] !== undefined ? NAMED_ENTITIES[name] : m,
+    );
+  return out.replace(/\s+/g, ' ').trim();
+}
+
+/** División y ordenamiento de fragmentos por artículo de una norma. */
+
+/**
+ * Detecta si la consulta menciona explícitamente el número de una ley, en sus
+ * variantes ("Ley 21.719", "Ley N° 21.719", "Ley Nº 21.719", "ley 21719"…).
+ * Devuelve un arreglo con los dígitos normalizados (sin puntuación) para la
+ * búsqueda directa en el catálogo BCN/LeyChile. Vacío => consulta general.
+ */
+export function extractLawNumber(query) {
+  const text = String(query || '').normalize('NFC');
+  const found = new Set();
+  const pushDigits = (raw) => {
+    const digits = raw.replace(/[^0-9]/g, '');
+    if (/^\d{4,9}$/.test(digits)) found.add(digits);
+  };
+  // Con la palabra "Ley": Ley N° 21.719 / Ley 21719 / Ley Nº 19.628.
+  const withLey = /\bley(?:es)?\s*(?:n\s*[°º]\.?|n[úu]mero\.?)?\s*(\d{1,2}(?:[.,]\d{3,6})|\d{4,7})\b/gi;
+  for (const m of text.matchAll(withLey)) {
+    pushVariant(m[1]);
+  }
+  // Sin la palabra "ley" pero con formato de número chileno (dígitos separados
+  // por punto, ej. "21.719"). Evita números sueltos de consultas generales.
+  const dotted = /\b(\d{1,2}\.\d{3,6})\b/g;
+  for (const m of text.matchAll(dotted)) pushVariant(m[1]);
+
+  return [...found];
+
+  function pushVariant(raw) {
+    const clean = raw.replace(/[.,]/g, '');
+    if (/^\d{4,7}$/.test(clean)) found.add(clean);
+  }
+}
+
+/**
+ * Divide el texto consolidado de una norma en fragmentos por artículo.
+ * Cada fragmento conserva su etiqueta de artículo y el texto literal.
+ */
+/**
+ * Divide el texto consolidado de una norma en fragmentos por artículo.
+ * Cada fragmento conserva su etiqueta de artículo y el texto literal.
+ */
+export function splitLawArticles(text, { maxChars = 4000 } = {}) {
+  const src = String(text || '').trim();
+  if (!src) return [];
+  // Separación de encabezados: "Artículo primero.-", "Artículo 1°.-",
+  // "Art. 22.-", "Artículo segundo transitorio". Se busca el encabezado al
+  // inicio de la sección para no confundir menciones dentro del cuerpo.
+  const ordinal = '(?:primera|primero|segunda|segundo|tercera|tercero|' +
+    'cuarta|cuarto|quinta|quinto|sexta|sexto|se[eé]ptima|se[eé]ptimo|' +
+    'octava|octavo|novena|noveno|d[eé]cima|d[eé]cimo)';
+  const numero = '(?:\\d{1,3}(?:[\\.\\,0-9]*))';
+  const headingRe = new RegExp(
+    '(?:^|\\s)(Art(?:[\\u00ed]culo|[.]|\\.)?\\s*(?:N[°º]\\s*\\.?)?\\s*(' + numero + '|' + ordinal + '))\\b',
+    'gim',
+  );
+  const boundaries = [];
+  let m;
+  while ((m = headingRe.exec(src)) !== null) boundaries.push(m);
+  if (boundaries.length === 0) {
+    return src.length ? [{ article: 'Preámbulo', text: src }] : [];
+  }
+  const out = [];
+  boundaries.forEach((match, i) => {
+    const start = match.index + (match[0].startsWith(' ') ? 1 : 0);
+    const end = i + 1 < boundaries.length ? boundaries[i + 1].index : src.length;
+    const label = match[1].trim();
+    const body = src.slice(start, end).trim();
+    if (!body) return;
+    const chunk = body.length > maxChars ? `${body.slice(0, maxChars)}…` : body;
+    if (label) out.push({ article: label, text: chunk });
+  });
+  return out.filter((f) => f.text && f.text.length > 0);
+}
+
+/**
+ * Ordena los fragmentos según cuántos términos pertinentes de la consulta
+ * aparecen en cada uno (más relevantes primero, sin reordenar los empates).
+ */
+export function rankFragments(query, fragments, { limit = 5 } = {}) {
+  const tokens = String(query || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9ñ\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t));
+  const scored = fragments
+    .map((f, index) => {
+      const norm = `${f.article} ${f.text}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const count = tokens.filter((t) => norm.includes(t)).length;
+      return { fragment: f, count, index };
+    })
+    .filter((s) => s.count > 0 || fragments.length <= limit);
+  const ranked = scored.sort((a, b) => b.count - a.count || a.index - b.index);
+  return ranked.slice(0, limit).map((s) => s.fragment);
+}
+
+const LEYCHILE_URL = (code) => `https://www.bcn.cl/leychile/navegar?idNorma=${encodeURIComponent(code)}`;
+
+const CHILE_MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+
+/** Convierte una fecha ISO (2026-12-01) al formato usado por LeyChile (01-DIC-2026). */
+export function formatChileanDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+  if (!m) return iso;
+  const [, year, month, day] = m;
+  const label = CHILE_MONTHS[Number(month) - 1] || month;
+  return `${day}-${label}-${year}`;
+}
+
+/** Construye un detalle legible de la vigencia diferenciando publicación de entrada en vigencia. */
+export function buildVigenciaDetail(meta = {}) {
+  const tipo = String(meta.tipo_version_s || '');
+  const inicio = String(meta.vigencia?.inicio_vigencia || meta.inicio_vigencia || '');
+  const publicacion = String(meta.fecha_publicacion || '');
+  const parts = [];
+  if (tipo) parts.push(tipo);
+  if (inicio) parts.push(`entra en vigencia el ${formatChileanDate(inicio)}`);
+  if (publicacion) parts.push(`publicada el ${publicacion}`);
+  return parts.join(' · ');
+}
+
+/**
+ * Recupera el texto consolidado y los metadatos de una norma desde la API JSON
+ * que consume LeyChile. Devuelve null si no se puede acceder (para no romper
+ * la búsqueda: en ese caso la fuente queda solo con metadatos).
+ */
+async function getLeyChileText(code, timeoutMs = 15000) {
+  if (!/^\d+$/.test(String(code || ''))) return null;
+  const url = `${LEYCHILE_JSON_API}?${new URLSearchParams({ idNorma: code, idVersion: '', idLey: '' })}`;
+  const data = await fetchJson(url, {}, timeoutMs);
+  if (!data || !Array.isArray(data.html)) return null;
+  return {
+    meta: data.metadatos || {},
+    html: data.html,
+    plain: htmlToPlainText(data.html.map((b) => (typeof b === 'string' ? b : (b && b.t) || '')).join('\n')),
+  };
+}
+
+/**
+ * Enriquece una fuente de normativa BCN con el texto real de LeyChile
+ * (fragmentos por artículo), la vigencia explícita y las referencias oficiales.
+ * Si la recuperación falla, devuelve la fuente original sin texto.
+ */
+async function augmentNormaWithText(src, query) {
+  const code = src?.metadata?.leychileCode;
+  if (!code || src.metadata?.integrity === 'text_verified') return src;
+  let ley;
+  try {
+    ley = await getLeyChileText(code);
+  } catch {
+    return src;
+  }
+  if (!ley || !ley.plain) return src;
+  const fragments = splitLawArticles(ley.plain);
+  const selected = rankFragments(query, fragments, { limit: 6 });
+  if (selected.length === 0) return src;
+
+  const vigency = detectNormVigency(src.title, {
+    derogado: ley.meta.derogado,
+    tipoVersionS: ley.meta.tipo_version_s,
+    inicioVigencia: ley.meta.vigencia?.inicio_vigencia,
+  });
+  const fechaPublicacion = ley.meta.fecha_publicacion || src.date;
+  const entradaVigencia = ley.meta.vigencia?.inicio_vigencia || null;
+
+  const excerpt = selected
+    .map((f) => `[${f.article}] ${f.text}`)
+    .join('\n\n');
+
+  const baseUrl = LEYCHILE_URL(code);
+  return {
+    ...src,
+    vigency,
+    date: fechaPublicacion,
+    excerpt: excerpt.slice(0, 14000),
+    metadata: {
+      ...src.metadata,
+      integrity: 'text_verified',
+      idNorma: code,
+      leychileCode: code,
+      officialUrl: baseUrl,
+      fechaPublicacion,
+      fechaEntradaVigencia: entradaVigencia,
+      vigenciaTipo: ley.meta.tipo_version_s || null,
+      vigencia_detail: buildVigenciaDetail(ley.meta),
+      fragments: selected.map((f) => ({
+        article: f.article,
+        text: f.text,
+        idNorma: code,
+        url: baseUrl,
+      })),
+    },
+  };
+}
+
+/** Enriquece hasta las 2 normas más relevantes de un listado con su texto real. */
+async function augmentNormasWithText(sources, query) {
+  if (!Array.isArray(sources) || sources.length === 0) return sources;
+  const byRelevance = [...sources];
+  const best = byRelevance.find((s) => s.kind === 'normativa' && s.metadata?.leychileCode);
+  if (!best) return sources;
+  const target = byRelevance
+    .filter((s) => s.kind === 'normativa' && s.metadata?.leychileCode)
+    .slice(0, 2);
+  const results = await Promise.allSettled(
+    target.map((src) => augmentNormaWithText(src, query)),
+  );
+  const enriched = new Map();
+  target.forEach((src, i) => {
+    if (results[i]?.status === 'fulfilled' && results[i].value) {
+      enriched.set(src.id, results[i].value);
+    }
+  });
+  return byRelevance.map((src) => enriched.get(src.id) || src);
 }
 
 // ---------------------------
