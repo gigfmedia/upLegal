@@ -32,6 +32,61 @@ export type AIResearchSource = {
   metadata?: Record<string, unknown> | null;
 };
 
+export type AIResearchSourceFragment = {
+  id?: string;
+  article: string;
+  text: string;
+  idNorma?: string;
+  url?: string;
+};
+
+/** Evidencia primaria de una fuente: UN claim verificado + el artículo que respalda. */
+export type AIResearchPrimaryEvidence = {
+  fragment_id: string | null;
+  article: string | null;
+  afirmacion: string;
+  evidencia: string;
+  vigencia_nota?: string | null;
+};
+
+/** Plan de renderizado de evidencia de una fuente (Fase 4.1.1). */
+export type AIResearchEvidencePlan = {
+  /** Fragmentos usados por claims verificados → evidencia principal. */
+  primary: AIResearchPrimaryEvidence[];
+  /** Fragmentos de la fuente NO usados por ningún claim → contexto secundario. */
+  context: AIResearchSourceFragment[];
+  /** El excerpt crudo (concat de la fuente) se conserva como último recurso. */
+  excerpt: string;
+};
+
+/**
+ * Selecciona la evidencia visible de una fuente: usa SOLO los fragmentos
+ * efectivamente citados por claims verificados como evidencia principal, y deja
+ * el resto como contexto secundario. No modifica el payload (regla 6).
+ */
+export function buildSourceEvidencePlan(source: AIResearchSource): AIResearchEvidencePlan {
+  const claims = (source.claims ?? []).filter((c) => c.verified);
+  const fragments = (source.metadata?.fragments as AIResearchSourceFragment[] | undefined) ?? [];
+  const usedIds = new Set(
+    claims.map((c) => c.fragment_id).filter((id): id is string => Boolean(id)),
+  );
+
+  const primary: AIResearchPrimaryEvidence[] = claims.map((c) => {
+    const frag = fragments.find((f) => f.id === c.fragment_id);
+    return {
+      fragment_id: c.fragment_id,
+      article: frag?.article ?? null,
+      afirmacion: c.afirmacion,
+      evidencia: c.evidencia,
+      vigencia_nota: c.vigencia_nota,
+    };
+  });
+
+  const context = fragments.filter((f) => !(f.id && usedIds.has(f.id)));
+
+  return { primary, context, excerpt: source.excerpt ?? '' };
+}
+
 export type AIResearchMatiz = {
   tipo?: string;
   fuente_ids?: string[];

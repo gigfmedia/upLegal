@@ -20,6 +20,7 @@ import { AIThinkingIndicator } from './AIThinkingIndicator';
 import {
   useAICaseResearch,
   useRunAIResearch,
+  buildSourceEvidencePlan,
   type AIResearchError,
   type AIResearchRequest,
   type AIResearchSource,
@@ -200,13 +201,28 @@ function chileanDate(value?: string | null): string | null {
   return `${day}-${CHILEAN_MONTHS[Number(month) - 1] ?? month}-${year}`;
 }
 
-function SourceClaims({ claims }: { claims: AIResearchSource['claims'] }) {
-  if (!claims || claims.length === 0) return null;
+function hasVerifiedClaims(source: AIResearchSource): boolean {
+  return (source.claims ?? []).some((c) => c.verified);
+}
+
+function SourceClaims({ source }: { source: AIResearchSource }) {
+  const plan = useMemo(() => buildSourceEvidencePlan(source), [source]);
+
+  if (plan.primary.length === 0) return null;
+
   return (
     <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
-      {claims.map((claim, index) => (
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-gray-500">
+        Evidencia
+      </p>
+      {plan.primary.map((claim, index) => (
         <div key={index} className="rounded bg-white/70 p-2">
           <p className="text-xs font-medium text-gray-900">
+            {claim.article && (
+              <span className="mr-1 rounded bg-blue-100 px-1 py-0.5 font-semibold text-blue-800">
+                {claim.article}
+              </span>
+            )}
             {claim.afirmacion}
             {claim.fragment_id && (
               <span className="ml-1 rounded bg-gray-200 px-1 py-0.5 font-mono text-[0.65rem] text-gray-600">
@@ -222,6 +238,21 @@ function SourceClaims({ claims }: { claims: AIResearchSource['claims'] }) {
           )}
         </div>
       ))}
+
+      {plan.context.length > 0 && (
+        <details className="mt-1">
+          <summary className="cursor-pointer text-[0.65rem] font-medium text-gray-500 hover:text-gray-700">
+            Ver contexto de la fuente ({plan.context.length})
+          </summary>
+          <div className="mt-1 space-y-1">
+            {plan.context.map((frag) => (
+              <p key={frag.id ?? frag.article} className="text-[0.68rem] text-gray-500">
+                <span className="font-semibold">{frag.article}</span>: {frag.text}
+              </p>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
@@ -287,10 +318,10 @@ function SourceItem({ source }: { source: AIResearchSource }) {
             {autoridadVigencia.join(' · ')}
           </p>
         )}
-        {source.excerpt && (
+        {source.excerpt && !hasVerifiedClaims(source) && (
           <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
         )}
-        <SourceClaims claims={source.claims} />
+        <SourceClaims source={source} />
       </li>
     );
   }
@@ -345,10 +376,10 @@ function SourceItem({ source }: { source: AIResearchSource }) {
       {source.vigencia_detail && (
         <p className="mt-0.5 text-[0.68rem] text-gray-500">{source.vigencia_detail}</p>
       )}
-      {source.excerpt && (
+      {source.excerpt && !hasVerifiedClaims(source) && (
         <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
       )}
-      <SourceClaims claims={source.claims} />
+      <SourceClaims source={source} />
     </li>
   );
 }

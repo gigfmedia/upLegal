@@ -92,6 +92,15 @@ if (!serviceRoleKey) {
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+/** Emite un log estructurado de diagnóstico de investigación jurídica (sin secretos). */
+function logDiagnostic(event, fields) {
+  try {
+    console.warn(`[LegalUpAI] ${event}`, JSON.stringify(fields));
+  } catch {
+    // Nunca debe romper el flujo por un fallo de logging.
+  }
+}
+
 const resolveWebhookUrl = (req) => {
   if (mercadoPagoWebhookUrl) return mercadoPagoWebhookUrl;
   const forwardedProto = req.get('x-forwarded-proto');
@@ -7706,7 +7715,30 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     // Busca fuentes reales en paralelo (TC + BCN SPARQL + OpenAlex), priorizando
     // según la intención de la consulta (normativa → jurisprudencia → doctrina).
-    const { sources, warnings, intent } = await searchJurisprudence(query, { limit: 8 });
+    const { sources, warnings, intent, queryHash = '' } = await searchJurisprudence(
+      query,
+      { limit: 8 },
+    );
+
+    const normativaCount = sources.filter((s) => s.kind === 'normativa').length;
+    const jurisprudenciaCount = sources.filter((s) => s.kind === 'jurisprudencia').length;
+    const doctrinaCount = sources.filter((s) => s.kind === 'doctrina').length;
+    logDiagnostic('jurisprudence_search_summary', {
+      intent,
+      total_sources: sources.length,
+      normativa_count: normativaCount,
+      jurisprudencia_count: jurisprudenciaCount,
+      doctrina_count: doctrinaCount,
+      query_hash: queryHash,
+    });
+    if (intent === 'normativa' && normativaCount === 0) {
+      logDiagnostic('jurisprudence_normativa_source_missing', {
+        intent,
+        normativa_count: normativaCount,
+        total_sources: sources.length,
+        query_hash: queryHash,
+      });
+    }
 
     if (sources.length === 0) {
       return res.status(422).json({

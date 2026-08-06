@@ -8,6 +8,8 @@
 // verificables de las fuentes públicas anteriores y sus portales oficiales.
 // ---------------------------------------------------------------------------
 
+import { createHash } from 'node:crypto';
+
 // --- Configuración y constantes ---
 const TC_API = 'https://buscador-backend.tcchile.cl/api/extended';
 const TC_FICHA_API = 'https://buscador-backend.tcchile.cl/api/buscadorexterno/ficha';
@@ -93,13 +95,70 @@ function truncate(text, max = 1200) {
   return `${clean.slice(0, max)}…`;
 }
 
-/** Resuelve cada búsqueda con allSettled: si una fuente falla no rompe el resto. */
-async function settleSearch(fn, warnings) {
+/** Hash no reversible de la consulta para correlacionar logs sin exponer el texto. */
+function hashQuery(query) {
   try {
-    return await fn();
+    return createHash('sha256').update(String(query || '')).digest('hex').slice(0, 16);
+  } catch {
+    return '';
+  }
+}
+
+/** Clasifica el error de red para logs estructurados (sin secretos). */
+function classifyFetchError(error) {
+  const msg = error instanceof Error ? error.message : String(error);
+  if (error?.name === 'AbortError' || /aborted|timed? ?out|timeout/i.test(msg)) return 'timeout';
+  if (/^HTTP \d{3}/.test(msg)) return 'http_error';
+  if (/JSON|parse|Unexpected token/i.test(msg)) return 'invalid_response';
+  return 'network_error';
+}
+
+/** Emite un log estructurado de diagnóstico (sin datos sensibles). */
+function logDiagnostic(event, fields) {
+  try {
+    console.warn(`[LegalUpAI] ${event}`, JSON.stringify(fields));
+  } catch {
+    // Nunca debe romper el pipeline por un fallo de logging.
+  }
+}
+
+/**
+ * Limpia un mensaje de error para logs: elimina los query params de cualquier
+ * URL (los términos de búsqueda van como query string) y recorta la longitud.
+ * Previene que términos derivados de la consulta del usuario terminen en logs.
+ */
+function sanitizeLogMessage(msg) {
+  return String(msg || '')
+    .replace(/(https?:\/\/[^\s?]+)\?[^\s]*/gi, '$1')
+    .replace(/[?#][^\s]*$/g, '')
+    .slice(0, 300)
+    .trim();
+}
+
+/** Resuelve cada búsqueda con allSettled: si una fuente falla no rompe el resto. */
+async function settleSearch(provider, fn, warnings, { queryHash = '' } = {}) {
+  const startedAt = Date.now();
+  try {
+    const sources = await fn();
+    logDiagnostic('jurisprudence_search_provider_status', {
+      provider,
+      status: sources.length > 0 ? 'ok' : 'empty',
+      source_count: sources.length,
+      duration_ms: Date.now() - startedAt,
+      query_hash: queryHash,
+    });
+    return sources;
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     warnings.push(msg);
+    logDiagnostic('jurisprudence_search_provider_error', {
+      provider,
+      status: 'error',
+      error_type: classifyFetchError(error),
+      duration_ms: Date.now() - startedAt,
+      query_hash: queryHash,
+      error: sanitizeLogMessage(msg),
+    });
     return [];
   }
 }
@@ -414,7 +473,61 @@ function mapBcnBinding(b) {
   };
 }
 
+/**
+ * Ejecuta una consulta SPARQL a BCN/LeyChile y degrada el error a un resultado
+ * clasificado, dejando un log estructurado (sin exponer la query completa ni
+ * secretos). Devuelve { kind, bindings }:
+ *   kind: 'ok' | 'empty' | 'timeout' | 'http_error' | 'invalid_response' | 'network_error'
+ * Mantiene el contrato anterior: el llamador usa `bindings` igual que antes.
+ */
+async function sparqlSearch({ searchType, termHash = '', sparql, queryHash = '' }) {
+  const startedAt = Date.now();
+  const endpoint = SPARQL_ENDPOINT;
+  try {
+    const data = await fetchJson(
+      endpoint,
+      {
+        method: 'POST',
+        headers: {
+          Accept: 'application/sparql-results+json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ query: sparql }),
+      },
+      12000,
+    );
+    const bindings = data?.results?.bindings ?? [];
+    const kind = bindings.length > 0 ? 'ok' : 'empty';
+    logDiagnostic('jurisprudence_bcn_sparql', {
+      search_type: searchType,
+      term_hash: termHash,
+      endpoint,
+      status: kind,
+      bindings: bindings.length,
+      duration_ms: Date.now() - startedAt,
+      query_hash: queryHash,
+    });
+    return { kind, bindings };
+  } catch (error) {
+    const errorType = classifyFetchError(error);
+    const msg = error instanceof Error ? error.message : String(error);
+    logDiagnostic('jurisprudence_bcn_sparql', {
+      search_type: searchType,
+      term_hash: termHash,
+      endpoint,
+      status: errorType,
+      duration_ms: Date.now() - startedAt,
+      query_hash: queryHash,
+      error: sanitizeLogMessage(msg),
+    });
+    return { kind: errorType, bindings: [] };
+  }
+}
+
 export async function searchBcnNormas(query, limit = 6) {
+  const queryHash = hashQuery(query);
+  let anyResult = false;
+  let anyError = false;
   // Si el abogado cita explícitamente un número de ley (Ley 19.628, Ley N° 21.719,
   // Ley Nº 21.719, ley 21719…), busca ese número directamente en el catálogo de
   // LeyChile antes de depender de la búsqueda textual.
@@ -426,36 +539,30 @@ export async function searchBcnNormas(query, limit = 6) {
     const byNumberMatch = [];
     const byCodeMatch = [];
     for (const digits of explicitNumbers) {
-      try {
-        const sparql = buildNumberFilterSparql(digits, limit);
-        const data = await fetchJson(
-          SPARQL_ENDPOINT,
-          {
-            method: 'POST',
-            headers: {
-              Accept: 'application/sparql-results+json',
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams({ query: sparql }),
-          },
-          12000,
-        );
-        const bindings = data?.results?.bindings ?? [];
-        for (const b of bindings) {
-          const src = mapBcnBinding(b);
-          if (!src) continue;
-          // Prioriza el match por Nº de norma sobre el match por idNorma.
-          const numberNorm = String(b.number?.value || '').replace(/[^0-9]/g, '');
-          const isNumberMatch = numberNorm === digits;
-          const target = isNumberMatch ? byNumberMatch : byCodeMatch;
-          const seen = isNumberMatch ? seenNumber : seenCode;
-          if (seen.has(src.id)) continue;
-          seen.add(src.id);
-          target.push(src);
-          if (byNumberMatch.length + byCodeMatch.length >= limit) break;
-        }
-      } catch {
-        // Si la búsqueda numérica falla o no arroja resultados, cae al filtro por título.
+      const sparql = buildNumberFilterSparql(digits, limit);
+      const { kind, bindings } = await sparqlSearch({
+        searchType: 'byNumber',
+        termHash: hashQuery(digits),
+        sparql,
+        queryHash,
+      });
+      if (kind !== 'ok') {
+        anyError = anyError || kind !== 'empty';
+        continue;
+      }
+      anyResult = true;
+      for (const b of bindings) {
+        const src = mapBcnBinding(b);
+        if (!src) continue;
+        // Prioriza el match por Nº de norma sobre el match por idNorma.
+        const numberNorm = String(b.number?.value || '').replace(/[^0-9]/g, '');
+        const isNumberMatch = numberNorm === digits;
+        const target = isNumberMatch ? byNumberMatch : byCodeMatch;
+        const seen = isNumberMatch ? seenNumber : seenCode;
+        if (seen.has(src.id)) continue;
+        seen.add(src.id);
+        target.push(src);
+        if (byNumberMatch.length + byCodeMatch.length >= limit) break;
       }
     }
     // Prioriza los match por Nº de norma (respaldados por la ley). Los match
@@ -475,9 +582,22 @@ export async function searchBcnNormas(query, limit = 6) {
       .filter((t) => t.length > 2 && !NORM_STOPWORDS.has(t))
   )].slice(0, 5);
   if (byNumber.length > 0) {
+    logDiagnostic('jurisprudence_bcn_result', {
+      query_hash: queryHash,
+      status: 'ok',
+      match_by: 'byNumber',
+      source_count: byNumber.length,
+    });
     return await augmentNormasWithText(byNumber, query);
   }
-  if (terms.length === 0) return [];
+  if (terms.length === 0) {
+    logDiagnostic('jurisprudence_bcn_result', {
+      query_hash: queryHash,
+      status: 'no_terms',
+      source_count: 0,
+    });
+    return [];
+  }
 
   // Prueba combos de términos de menos a más restrictivos (4→3→2→1) y los
   // ACUMULA: el AND con muchos términos es frágil y a veces solo un término
@@ -491,24 +611,17 @@ export async function searchBcnNormas(query, limit = 6) {
   const merged = new Map(); // id -> { src, count, date }
   for (const attemptTerms of attempts) {
     const sparql = buildTitleFilterSparql(attemptTerms, limit);
-    let data;
-    try {
-      data = await fetchJson(
-        SPARQL_ENDPOINT,
-        {
-          method: 'POST',
-          headers: {
-            Accept: 'application/sparql-results+json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: new URLSearchParams({ query: sparql }),
-        },
-        12000,
-      );
-    } catch {
+    const { kind, bindings } = await sparqlSearch({
+      searchType: 'title',
+      termHash: hashQuery(attemptTerms.slice(0, 3).join(' ')),
+      sparql,
+      queryHash,
+    });
+    if (kind !== 'ok') {
+      anyError = anyError || kind !== 'empty';
       continue;
     }
-    const bindings = data?.results?.bindings ?? [];
+    anyResult = true;
     for (const b of bindings) {
       const src = mapBcnBinding(b);
       if (!src || merged.has(src.id)) continue;
@@ -516,7 +629,15 @@ export async function searchBcnNormas(query, limit = 6) {
     }
   }
 
-  if (merged.size === 0) return [];
+  if (merged.size === 0) {
+    logDiagnostic('jurisprudence_bcn_no_normativa', {
+      query_hash: queryHash,
+      had_results: anyResult,
+      had_error: anyError,
+      status: anyError ? 'error_then_empty' : 'no_results',
+    });
+    return [];
+  }
   const normTypeRank = { ley: 0, codigo: 1, dfl: 2, decreto: 3, constitucion: 4, reglamento: 5, resolucion: 6, otra: 7 };
   const ranked = [...merged.values()].sort(
     (a, b) =>
@@ -526,6 +647,12 @@ export async function searchBcnNormas(query, limit = 6) {
   );
   const srcs = ranked.slice(0, limit).map((r) => r.src);
   // En general enriquecemos solo las 1-2 normas con más texto para no saturar.
+  logDiagnostic('jurisprudence_bcn_result', {
+    query_hash: queryHash,
+    status: 'ok',
+    match_by: 'title',
+    source_count: srcs.length,
+  });
   return await augmentNormasWithText(srcs, query);
 }
 
@@ -1059,12 +1186,14 @@ export async function searchJurisprudence(
         ? { tc: 3, bcn: 2, doctrina: Math.max(3, limit) }
         : { tc: Math.round(limit * 0.5), bcn: 3, doctrina: 3 };
 
+  const queryHash = hashQuery(query);
+
   const [tc, bcn, doctrina] = await Promise.all([
-    settleSearch(() => searchTcSentencias(query, allocation.tc, competencia), warnings),
-    settleSearch(() => searchBcnNormas(query, allocation.bcn), warnings),
-    settleSearch(() => searchOpenAlexDoctrina(query, allocation.doctrina), warnings),
+    settleSearch('tc', () => searchTcSentencias(query, allocation.tc, competencia), warnings, { queryHash }),
+    settleSearch('bcn', () => searchBcnNormas(query, allocation.bcn), warnings, { queryHash }),
+    settleSearch('doctrina', () => searchOpenAlexDoctrina(query, allocation.doctrina), warnings, { queryHash }),
   ]);
 
   const sources = prioritizeSources([...tc, ...bcn, ...doctrina], intent);
-  return { sources, warnings, intent };
+  return { sources, warnings, intent, queryHash };
 }
