@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { splitSentences, verifySynthesis, buildSynthesis, verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
+import {
+  splitSentences,
+  verifySynthesis,
+  buildSynthesis,
+  verifyAndBuildSynthesis,
+  constrainOpenEndedEnumerations,
+} from './synthesisVerifier.mjs';
 
 const claim = (id, kind, afirmacion, fragmento, fragment_id = null) => ({
   source_id: id,
@@ -90,5 +96,71 @@ describe('Fase 4.1 · síntesis verificada', () => {
     );
     expect(síntesis).toBe('');
     expect(warnings.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Fase 4.1.3 · enumeraciones cerradas (no ampliar lo que la evidencia cierra)', () => {
+  const rightsClaim = [
+    {
+      source_id: 'bcn-21719',
+      fragment_id: 'frag:1209272:1',
+      afirmacion:
+        'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+      fragmento:
+        'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+      source: { kind: 'normativa' },
+    },
+  ];
+
+  it('elimina "entre otros" cuando la enumeración coincide con la lista cerrada de la evidencia', () => {
+    const { sentences } = constrainOpenEndedEnumerations(
+      [{ text: 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo, entre otros.', dropped: false }],
+      rightsClaim,
+    );
+    expect(sentences[0].text).toContain('portabilidad y bloqueo');
+    expect(sentences[0].text).not.toContain('entre otros');
+    expect(sentences[0].text).toMatch(/bloqueo\.$/);
+  });
+
+  it('no elimina "entre otros" cuando la lista del texto NO coincide con la evidencia (conservadora)', () => {
+    const { sentences } = constrainOpenEndedEnumerations(
+      [{ text: 'La ley reconoce el derecho a conocer, rectificar y eliminar sus datos, entre otros.', dropped: false }],
+      rightsClaim,
+    );
+    expect(sentences[0].text).toContain('entre otros');
+  });
+
+  it('no elimina expresiones de apertura cuando la evidencia NO presenta la lista como cerrada', () => {
+    const openClaim = [
+      {
+        source_id: 'bcn-x',
+        afirmacion: 'La ley reconoce derechos como acceso, rectificación y otros.',
+        fragmento: 'Se reconocen derechos como acceso, rectificación, supresión y otros.',
+        source: { kind: 'normativa' },
+      },
+    ];
+    const { sentences } = constrainOpenEndedEnumerations(
+      [{ text: 'La ley reconoce el derecho de acceso, rectificación y supresión, entre otros.', dropped: false }],
+      openClaim,
+    );
+    expect(sentences[0].text).toContain('entre otros');
+  });
+
+  it('no modifica textos sin expresiones de apertura', () => {
+    const { sentences } = constrainOpenEndedEnumerations(
+      [{ text: 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.', dropped: false }],
+      rightsClaim,
+    );
+    expect(sentences[0].text).toBe('La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.');
+  });
+
+  it('verifyAndBuildSynthesis aplica la regla end-to-end y emite advertencia', () => {
+    const { síntesis, warnings } = verifyAndBuildSynthesis(
+      'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo, entre otros.',
+      rightsClaim,
+    );
+    expect(síntesis).not.toContain('entre otros');
+    expect(síntesis).toContain('portabilidad y bloqueo');
+    expect(warnings.some((w) => w.includes('enumeración'))).toBe(true);
   });
 });

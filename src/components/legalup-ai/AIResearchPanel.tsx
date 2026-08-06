@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { AIThinkingIndicator } from './AIThinkingIndicator';
+import { constrainResumenOverstatement } from './resumenConstraint';
 import {
   useAICaseResearch,
   useRunAIResearch,
@@ -108,6 +109,12 @@ function MarkdownText({ content }: { content: string }) {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.3 · Respuesta breve: se usa constrainResumenOverstatement (módulo
+// resumenConstraint.ts) para no mostrar extensiones de enumeraciones cerradas
+// sin respaldo ("…, y bloqueo, entre otros").
+// ---------------------------------------------------------------------------
 
 function formatDate(value: string): string {
   try {
@@ -224,14 +231,17 @@ function SourceClaims({ source }: { source: AIResearchSource }) {
               </span>
             )}
             {claim.afirmacion}
-            {claim.fragment_id && (
-              <span className="ml-1 rounded bg-gray-200 px-1 py-0.5 font-mono text-[0.65rem] text-gray-600">
-                {claim.fragment_id}
-              </span>
-            )}
           </p>
           {claim.evidencia && (
             <p className="mt-1 text-xs italic text-gray-600">"{claim.evidencia}"</p>
+          )}
+          {claim.fragment_id && (
+            <p className="mt-1 flex items-center gap-1.5 text-[0.6rem] text-gray-400">
+              <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-gray-500">
+                {claim.fragment_id}
+              </span>
+              <span>fragmento de la fuente</span>
+            </p>
           )}
           {claim.vigencia_nota && (
             <p className="mt-1 text-[0.65rem] font-medium text-indigo-700">{claim.vigencia_nota}</p>
@@ -638,7 +648,7 @@ function ResearchItem({
           >
             <div className="space-y-4 border-t border-gray-200 px-4 py-4">
               <div className="text-sm text-gray-700">
-                <MarkdownText content={item.answer} />
+                <MarkdownText content={constrainResumenOverstatement(item.answer, item.sources)} />
               </div>
               {item.sources.length > 0 && (
                 <div>
