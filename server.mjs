@@ -41,6 +41,16 @@ import {
   detectExcessiveConclusions,
   JURISPRUDENCE_LIMITS,
 } from './server/ai/jurisprudencePrompt.mjs';
+import {
+  verifyAndBuildSynthesis,
+} from './server/ai/synthesisVerifier.mjs';
+import {
+  orderNormativaByHierarchy,
+  detectHierarchyMatices,
+} from './server/ai/hierarchy.mjs';
+import {
+  detectContradictions,
+} from './server/ai/contradiction.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 
 // Get current directory
@@ -7599,6 +7609,7 @@ const AIResearchResponseSchema = z
       .array(
         z.object({
           fuente_id: z.string().min(1),
+          fragment_id: z.string().optional(),
           afirmacion: z.string().min(1),
           fragmento: z.string().optional(),
         }),
@@ -7608,6 +7619,7 @@ const AIResearchResponseSchema = z
       .array(
         z.object({
           fuente_id: z.string().min(1),
+          fragment_id: z.string().optional(),
           afirmacion: z.string().min(1),
           fragmento: z.string().optional(),
         }),
@@ -7617,6 +7629,7 @@ const AIResearchResponseSchema = z
       .array(
         z.object({
           fuente_id: z.string().min(1),
+          fragment_id: z.string().optional(),
           afirmacion: z.string().min(1),
           fragmento: z.string().optional(),
         }),
@@ -7907,23 +7920,79 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       ).trim();
     }
 
-    const answer = buildJurisprudenceAnswer({
-      resumen: excessive.resumen,
+    // Fase 4.1 (Etapa 3): jerarquía normativa — solo ordena la presentación;
+    // no decide cuál norma prevalece. Los matices de jerarquía se agregan a la
+    // sección "Matices y contradicciones" (no se resuelven automáticamente).
+    const ordenNormativa = orderNormativaByHierarchy(effectiveNormativa);
+    const { matices: maticesJerarquia } = detectHierarchyMatices(effectiveNormativa);
+
+    // Fase 4.1 (Etapa 4): contradicciones/matices entre fuentes. Conserva ambas
+    // fuentes y NO resuelve el conflicto (regla conservadora).
+    const { contradicciones, warnings: warningsContradicciones } = detectContradictions({
       normativa: effectiveNormativa,
       jurisprudencia: verifiedJurisprudencia.kept,
       doctrina: verifiedDoctrina.kept,
-      conclusion: excessive.conclusion,
-      advertencias: [...modelAdvertencias, ...researchWarnings, ...excessive.warnings],
+    });
+
+    // Fase 4.1 (Etapa 2): síntesis VERIFICADA. Cada oración se vincula a un
+    // claim verificado; las oraciones sin respaldo se eliminan o se marcan como
+    // inferencia del sistema (preferencia: ELIMINAR antes que inventar).
+    const allVerifiedClaims = [
+      ...effectiveNormativa,
+      ...verifiedJurisprudencia.kept,
+      ...verifiedDoctrina.kept,
+    ];
+    const synthesisResult = verifyAndBuildSynthesis(excessive.conclusion, allVerifiedClaims);
+    const síntesisText = synthesisResult.síntesis || '';
+    const maticesFinales = [...maticesJerarquia, ...contradicciones];
+
+    const answer = buildJurisprudenceAnswer({
+      resumen: excessive.resumen,
+      normativa: ordenNormativa,
+      jurisprudencia: verifiedJurisprudencia.kept,
+      doctrina: verifiedDoctrina.kept,
+      sintesis: síntesisText,
+      matices: maticesFinales,
+      advertencias: [
+        ...modelAdvertencias,
+        ...researchWarnings,
+        ...excessive.warnings,
+        ...synthesisResult.warnings,
+        ...warningsContradicciones,
+      ],
     });
 
     // Referencia (para persistir) solo las fuentes que sobrevivieron la verificación.
     const referenced = [
-      ...effectiveNormativa.map((c) => c.source),
+      ...ordenNormativa.map((c) => c.source),
       ...verifiedJurisprudencia.kept.map((c) => c.source),
       ...verifiedDoctrina.kept.map((c) => c.source),
     ];
     const referencedById = new Map(referenced.map((source) => [source.id, source]));
     const referencedIds = [...referencedById.values()];
+
+    // Fase 4.1 (Etapa 7): persistir claims estructurados. Se reutiliza el JSONB
+    // existente "sources": cada fuente conserva sus claims verificados (sin
+    // migración y sin romper la compatibilidad con investigaciones previas).
+    const claimsBySource = new Map();
+    for (const c of allVerifiedClaims) {
+      if (!c.source_id) continue;
+      if (!claimsBySource.has(c.source_id)) claimsBySource.set(c.source_id, []);
+      claimsBySource.get(c.source_id).push({
+        source_id: c.source_id,
+        fragment_id: c.fragment_id || null,
+        category: c.category || c.source?.kind || null,
+        afirmacion: c.afirmacion,
+        evidencia: c.fragmento,
+        verified: true,
+        vigencia: c.vigencia || null,
+        vigencia_nota: c.vigencia_nota || null,
+      });
+    }
+    const persistedSources = referencedIds.map((source) => ({
+      ...source,
+      claims: claimsBySource.get(source.id) || [],
+    }));
 
     // Registra el consumo real (no bloquea el flujo).
     await recordAIUsage({
@@ -7940,7 +8009,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         lawyer_id: userId,
         query,
         answer,
-        sources: referencedIds,
+        sources: persistedSources,
         model: AI_DEFAULT_MODEL,
       })
       .select()
@@ -7953,8 +8022,9 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         source_count: referencedIds.length,
         total_found: sources.length,
         intent,
-        claims_kept: referencedIds.length,
+        claims_kept: allVerifiedClaims.length,
         warnings_count: researchWarnings.length,
+        contradicciones: contradicciones.length,
       });
     } catch (posthogError) {
       console.error('[LegalUpAI] ai_jurisprudence_researched failed', posthogError);
@@ -7962,7 +8032,10 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     res.json({
       research: savedResearch,
-      sources: referencedIds,
+      sources: persistedSources,
+      claims: allVerifiedClaims,
+      matices: maticesFinales,
+      síntesis: síntesisText,
       warnings: researchWarnings,
       intent,
     });

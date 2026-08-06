@@ -620,7 +620,7 @@ const artSource = (id, vigency = 'diferida', excerpt, fragments) => ({
     expect(warnings.some((w) => w.includes('Vigencia'))).toBe(false);
   });
 
-  it('usa texto no fabricado: la fragmento mostrado es el real (supresión + portabilidad)', () => {
+it('usa texto no fabricado: la fragmento mostrado es el real (supresión + portabilidad)', () => {
     const byId = new Map([
       ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
     ]);
@@ -639,5 +639,152 @@ const artSource = (id, vigency = 'diferida', excerpt, fragments) => ({
     expect(kept.length).toBe(1);
     expect(kept[0].fragmento).toContain('supresión');
     expect(kept[0].fragmento).toContain('portabilidad');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fase 4.1 — Trazabilidad (Etapa 1), vigencia por afirmación (Etapa 5) y
+// consulta mixta (test obligatorio D).
+// ---------------------------------------------------------------------------
+
+describe('Fase 4.1 · trazabilidad de fragment_id en verifyJurisprudenceClaims', () => {
+  const artSource = (id, vigency = 'diferida', excerpt, fragments) => ({
+    id,
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency,
+    citation: 'Ley 21.719',
+    excerpt,
+    metadata: { fragments },
+  });
+  const fragments = [
+    { id: 'frag:1209272:1', article: 'Artículo 2', text: 'Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.' },
+    { id: 'frag:1209272:2', article: 'Artículo 14', text: 'El tratamiento de datos personales efectuado por organismos públicos se sujetará a las normas de esta ley.' },
+  ];
+  const excerpt = fragments.map((f) => f.text).join('\n');
+
+  it('G: fragment_id inexistente → se re-ancla al fragmento real que respalda', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          fragment_id: 'frag:999999:9',
+          afirmacion: 'La ley reconoce a los titulares los derechos de acceso, rectificación y supresión.',
+          fragmento: 'cualquier texto',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:1');
+  });
+
+  it('H: fragment_id que no respalda la afirmación → se re-ancla', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          fragment_id: 'frag:1209272:2', // Art. 14 (organismos públicos) NO respalda la lista de derechos.
+          afirmacion: 'La ley reconoce los derechos de acceso, rectificación y supresión.',
+          fragmento: 'cualquier texto',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:1');
+  });
+
+  it('D: consulta mixta — verifica normativa, jurisprudencia y doctrina conservando fragment_id', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+      ['tc-1', { id: 'tc-1', kind: 'jurisprudencia', source_type: 'jurisprudencia', legal_authority: 'persuasiva', vigency: 'no_aplica', citation: 'TC', excerpt: 'se reconoce como derecho fundamental' }],
+      ['doc-1', { id: 'doc-1', kind: 'doctrina', source_type: 'doctrina', legal_authority: 'doctrinal', vigency: 'no_aplica', citation: 'Autor', excerpt: 'sostiene que el equilibrio es importante en datos personales' }],
+    ]);
+    const norm = verifyJurisprudenceClaims(
+      [
+        { fuente_id: 'bcn-21719', fragment_id: 'frag:1209272:1', afirmacion: 'La ley reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.', fragmento: 'x' },
+      ],
+      byId,
+      'normativa',
+    );
+    const jur = verifyJurisprudenceClaims(
+      [{ fuente_id: 'tc-1', afirmacion: 'El tribunal sostuvo en este caso que la protección es un derecho.', fragmento: 'se reconoce como derecho fundamental' }],
+      byId,
+      'jurisprudencia',
+    );
+    const doc = verifyJurisprudenceClaims(
+      [{ fuente_id: 'doc-1', afirmacion: 'La doctrina sostiene que existe un equilibrio en los datos personales.', fragmento: 'sostiene que el equilibrio es importante en datos personales' }],
+      byId,
+      'doctrina',
+    );
+    expect(norm.kept.length).toBe(1);
+    expect(norm.kept[0].fragment_id).toBe('frag:1209272:1');
+    expect(jur.kept.length).toBe(1);
+    expect(doc.kept.length).toBe(1);
+  });
+
+  it('E: norma con vigencia diferida no se presenta como vigente (afirmación marcada)', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          fragment_id: 'frag:1209272:1',
+          afirmacion: 'La ley está vigente y regula los derechos de los titulares.',
+          fragmento: 'x',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].vigencia_nota).toContain('diferida');
+    expect(kept[0].vigencia).toBe('diferida');
+    expect(warnings.some((w) => w.includes('NO es derecho vigente'))).toBe(true);
+  });
+
+  it('K: norma derogada presentada como vigente → se descarta', () => {
+    const byId = new Map([
+      ['bcn-derog', { id: 'bcn-derog', kind: 'normativa', legal_authority: 'vinculante', vigency: 'derogada', citation: 'Ley (Derogada)', excerpt, metadata: { fragments } }],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-derog',
+          fragment_id: 'frag:1209272:1',
+          afirmacion: 'Esta ley está vigente y regula los derechos de acceso, rectificación y supresión de los titulares.',
+          fragmento: 'cualquier texto',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(0);
+    expect(warnings.some((w) => w.includes('derogada'))).toBe(true);
+  });
+
+  it('J: doctrina presentada como normativa → se descarta', () => {
+    const byId = new Map([
+      ['doc-1', { id: 'doc-1', kind: 'doctrina', source_type: 'doctrina', legal_authority: 'doctrinal', vigency: 'no_aplica', citation: 'Autor', excerpt: 'sostiene que X es la regla general' }],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [{ fuente_id: 'doc-1', afirmacion: 'La doctrina establece una norma obligatoria.', fragmento: 'X es la regla general' }],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(0);
+    expect(warnings.some((w) => w.includes('no corresponde a esa sección'))).toBe(true);
   });
 });

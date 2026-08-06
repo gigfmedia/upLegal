@@ -16,13 +16,17 @@
 // afirmaciones sin respaldo textual (no permite "falsa sensación de respaldo").
 // ---------------------------------------------------------------------------
 
-import { resolveClaimFragment } from './jurisprudenceSources.mjs';
+import { resolveClaimFragment, fragmentSupportsClaim } from './jurisprudenceSources.mjs';
 
 export const JURISPRUDENCE_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo.
   MAX_CONTEXT_CHARS: 30000,
   // Caracteres de extracto por fuente.
   MAX_SOURCE_CHARS: 2500,
+  // Caracteres por fragmento de norma en el contexto del modelo.
+  MAX_FRAGMENT_CHARS: 900,
+  // Máximo de fragmentos listados por fuente en el contexto.
+  MAX_FRAGMENTS_PER_SOURCE: 3,
   // Longitud máxima de la pregunta del abogado.
   MAX_QUERY_LENGTH: 2000,
   // Máximo de fuentes enviadas al modelo.
@@ -34,7 +38,7 @@ export function buildJurisprudenceSystemPrompt() {
 
 Reglas de evidencia:
 1. Usa exclusivamente las fuentes proporcionadas en el contexto. No inventes leyes, números de norma, roles, tribunales, fechas, artículos ni autores.
-2. Cada afirmación DEBE estar respaldada por UNA fuente concreta del contexto y por un fragmento textual EXACTO extraído de esa fuente (copiado literalmente de su "Extracto:"). Nunca combines varias fuentes para una sola afirmación.
+2. Cada afirmación DEBE estar respaldada por UNA fuente concreta del contexto y por un fragmento textual EXACTO extraído de esa fuente (copiado literalmente de su "Extracto:" o del "Texto:" de un fragmento). Nunca combines varias fuentes para una sola afirmación.
 3. No atribuyas a una fuente afirmaciones que su extracto no contiene. Si una fuente no respalda el punto, no la cites para ese punto.
 4. Si ninguna fuente responde la pregunta, dilo con claridad y ofrece qué buscar o en qué portal oficial verificar.
 5. La doctrina NO es derecho vigente: preséntala siempre como posición académica no vinculante.
@@ -44,12 +48,13 @@ Reglas de evidencia:
 9. Sé breve y profesional, en español de Chile. El resumen debe tener 2-4 líneas; la conclusión, 3-4 líneas.
 10. Cada fuente del contexto indica su Autoridad y su Vigencia. Solo el texto de una norma es derecho vinculante; la jurisprudencia y la doctrina NO son normas. Nunca presentes una sentencia del Tribunal Constitucional como precedente vinculante general: descríbela como lo decidido EN ESE CASO ("En esta sentencia…", "El Tribunal Constitucional sostuvo en este caso…").
 11. Jerarquía de presentación: primero Normativa, luego Jurisprudencia, luego Doctrina. La doctrina (autoridad doctrinal) siempre va en su sección de doctrina y se marca como no vinculante; nunca la cites en la sección de normativa. Una norma con vigencia "desconocida" o "derogada" no debe presentarse como vigente.
+12. TRAZABILIDAD OBLIGATORIA: cuando una fuente normativa exponga "Fragmentos:" en su bloque, cada claim de "normativa" DEBE incluir el "fragment_id" exacto de UN fragmento que contenga literalmente el texto que respaldas. Nunca inventes un fragment_id: solo usa los listados en el contexto.
 
 Formato de respuesta:
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto fuera:
 {
   "resumen": "Respuesta breve en 2-4 líneas",
-  "normativa": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "normativa": [{ "fuente_id": "id del contexto", "fragment_id": "frag:…", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
   "jurisprudencia": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
   "doctrina": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
   "conclusion": "Síntesis de 3-4 líneas con matices",
@@ -58,6 +63,7 @@ Responde ÚNICAMENTE con un objeto JSON válido, sin texto fuera:
 
 Reglas del formato:
 - Usa EXCLUSIVAMENTE "fuente_id" que aparezcan en el contexto.
+- "fragment_id" solo en claims de normativa y solo si ese fragmento aparece en el bloque "Fragmentos:" de la fuente citada.
 - Si no hay afirmaciones respaldadas para una categoría, deja el arreglo vacío [] y agrega una advertencia.
 - "fragmento" debe ser texto literal del extracto de la fuente, no un resumen.
 - No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
@@ -88,7 +94,10 @@ export function vigencyLabel(vigency) {
 }
 
 /**
- * Formatea una fuente para el contexto del modelo.
+ * Formatea una fuente para el contexto del modelo. Para normativa con
+ * fragmentos reales (Fase 4.1), lista explícitamente hasta MAX_FRAGMENTS_PER_SOURCE
+ * fragmentos con su fragment_id, artículo y texto literal para que el modelo
+ * pueda citar "fragment_id" de forma trazable.
  */
 function formatSource(source, index) {
   const authority = authorityLabel(source.legal_authority);
@@ -101,11 +110,25 @@ function formatSource(source, index) {
     source.citation ? `Cita: ${source.citation}` : null,
     source.date ? `Fecha: ${source.date}` : null,
     source.url ? `URL: ${source.url}` : null,
-    source.excerpt
-      ? `Extracto: ${truncate(source.excerpt, JURISPRUDENCE_LIMITS.MAX_SOURCE_CHARS)}`
-      : null,
   ].filter(Boolean);
-  return lines.join('\n');
+
+  const fragments =
+    source.kind === 'normativa' && Array.isArray(source.metadata?.fragments)
+      ? source.metadata.fragments.slice(0, JURISPRUDENCE_LIMITS.MAX_FRAGMENTS_PER_SOURCE)
+      : [];
+  if (fragments.length > 0) {
+    lines.push('Fragmentos:');
+    fragments.forEach((frag) => {
+      const text = truncate(frag.text, JURISPRUDENCE_LIMITS.MAX_FRAGMENT_CHARS);
+      lines.push(`  - fragment_id: ${frag.id} | Artículo: ${frag.article}`);
+      lines.push(`    Texto: ${text}`);
+    });
+  }
+
+  if (source.excerpt) {
+    lines.push(`Extracto: ${truncate(source.excerpt, JURISPRUDENCE_LIMITS.MAX_SOURCE_CHARS)}`);
+  }
+  return lines.filter(Boolean).join('\n');
 }
 
 function truncate(text, max = 1200) {
@@ -186,6 +209,16 @@ function assertsVigencia(afirmacion, fragmento) {
   );
 }
 
+/**
+ * Detecta si una afirmación PRESENTA la norma como ya en vigor ("está vigente",
+ * "rige", "entró en vigencia", "en vigor", "actualmente").
+ */
+function assertsCurrentForce(afirmacion) {
+  return /(\best[áa] vigente\b|\brige\b|\bentr[oó] en vigencia\b|\ben vigor\b|\bactualmente\b|\bya se aplica\b|\best[áa] en vigor\b)/i.test(
+    String(afirmacion || ''),
+  );
+}
+
 /** Lenguaje normativo categórico que una doctrina no debería emitir como regla general. */
 const DOCTRINAL_OVERREACH_RE =
   /\bes obligatorio\b|\bes (?:legal|ilegal)\b|\best[áa] (?:permitid[oa]|prohibid[oa])\b|\bla (?:ley|normativa|legislaci[oó]n) (?:establece|permite|proh[íi]be)\b/i;
@@ -219,7 +252,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
 
   for (const claim of claims) {
     if (!claim || typeof claim !== 'object') continue;
-    const { fuente_id: fuenteId, afirmacion, fragmento } = claim;
+    const { fuente_id: fuenteId, afirmacion, fragmento, fragment_id: modelFragmentId } = claim;
     const source = fuenteId ? sourcesById.get(fuenteId) : undefined;
 
     if (!source) {
@@ -253,11 +286,23 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
     // RE-ANCLA al fragmento específico que realmente la respalda (no a todo el
     // texto de la fuente). Si ningún fragmento contiene los conceptos afirmados,
     // se descarta/reformula la afirmación.
+    // Fase 4.1 (trazabilidad): si el modelo citó un fragment_id, se usa SOLO si
+    // ese fragmento existe en la fuente y respalda la afirmación; un fragment_id
+    // inventado, inexistente o que no respalda obliga al re-anclaje, y si ningún
+    // fragmento respalda, la afirmación se descarta.
     let evidence = fragment;
     let fragmentId = null;
     const fragments = source.kind === 'normativa' ? (source.metadata?.fragments || []) : [];
     if (fragments.length > 0) {
-      const aligned = resolveClaimFragment(afirmacionText, fragments);
+      let aligned = null;
+      const fragmentById = new Map(fragments.map((f) => [f.id, f]));
+      if (modelFragmentId && fragmentById.has(modelFragmentId)) {
+        const candidate = fragmentById.get(modelFragmentId);
+        if (fragmentSupportsClaim(candidate, afirmacionText)) aligned = candidate;
+      }
+      if (!aligned) {
+        aligned = resolveClaimFragment(afirmacionText, fragments);
+      }
       if (aligned) {
         evidence = String(aligned.text).trim();
         fragmentId = aligned.id || null;
@@ -276,13 +321,28 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
       continue;
     }
 
-    // Fase 4.0.2: vigencia de una norma.
+    // Fase 4.1 (Etapa 5): vigencia POR AFIRMACIÓN. La afirmación decide cómo se
+    // presenta la norma:
+    //   - vigente     → puede presentarse como vigente.
+    //   - diferida    → admisible, pero NUNCA como vigente ya (aviso obligatorio).
+    //   - derogada    → nunca como derecho vigente.
+    //   - desconocida → advertencia de vigencia no determinada.
+    let vigenciaNota = null;
     if (source.kind === 'normativa') {
-      if (source.vigency === 'derogada' && assertsVigencia(afirmacionText, evidence)) {
+      if (source.vigency === 'derogada' && assertsCurrentForce(afirmacionText)) {
         warnings.push(
-          `Se descartó una afirmación que presenta como vigente la norma "${source.citation}", que tiene indicios de estar derogada.`,
+          `Se descartó una afirmación que presenta como vigente la norma "${source.citation}", que está derogada.`,
         );
         continue;
+      }
+      if (source.vigency === 'diferida' && assertsCurrentForce(afirmacionText)) {
+        warnings.push(
+          `Se reformuló la afirmación sobre "${source.citation}": tiene vigencia diferida y NO es derecho vigente aún.`,
+        );
+      }
+      if (source.vigency === 'diferida') {
+        vigenciaNota =
+          'Vigencia diferida: la norma aún NO rige (entra en vigencia según LeyChile).';
       }
       if (source.vigency === 'desconocida' && !flaggedVigencia.has(source.id)) {
         flaggedVigencia.add(source.id);
@@ -296,8 +356,11 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
       source,
       source_id: source.id,
       fragment_id: fragmentId,
+      category,
       afirmacion: afirmacionText,
       fragmento: evidence,
+      vigencia: source.kind === 'normativa' ? source.vigency : undefined,
+      vigencia_nota: vigenciaNota,
     });
   }
 
@@ -309,7 +372,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
  * Compatible con el render del frontend (párrafos, listas, negrita/italic).
  * Fase 4.0.2: secciones separadas por categoría con su autoridad explícita.
  */
-export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, doctrina, conclusion, advertencias }) {
+export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, doctrina, sintesis, conclusion, matices, advertencias }) {
   const lines = [];
   lines.push(`**Respuesta breve**\n\n${(resumen || '').trim()}`);
 
@@ -327,7 +390,8 @@ export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, d
       .map((c) => {
         const cite = c.source?.citation || c.fuente_id || '';
         const frag = c.fragmento ? ` *("${c.fragmento}")*` : '';
-        return `- **${cite}**${authoritySuffix(c)}: ${c.afirmacion}${frag}`;
+        const notaVigencia = c.vigencia_nota ? ` *( ${c.vigencia_nota} )*` : '';
+        return `- **${cite}**${authoritySuffix(c)}: ${c.afirmacion}${frag}${notaVigencia}`;
       })
       .join('\n');
     return `**${title}**\n\n${items}`;
@@ -339,8 +403,21 @@ export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, d
 
   lines.push(norm, jur, doc);
 
-  if (conclusion && String(conclusion).trim()) {
+  // Fase 4.1 (Etapa 2): síntesis VERIFICADA, ya procesada por synthesisVerifier.
+  // Retrocompatibilidad: si no hay síntesis verificada, se usa la conclusión del
+  // modelo con el encabezado histórico "Conclusión".
+  if (sintesis && String(sintesis).trim()) {
+    lines.push(`**Síntesis**\n\n${String(sintesis).trim()}`);
+  } else if (conclusion && String(conclusion).trim()) {
     lines.push(`**Conclusión**\n\n${String(conclusion).trim()}`);
+  }
+
+  // Fase 4.1 (Etapa 4): matices y contradicciones (no resueltos).
+  if (Array.isArray(matices) && matices.length > 0) {
+    const items = matices
+      .map((m) => `- ${m.nota || m.notas || m.tipo}`)
+      .join('\n');
+    lines.push(`**Matices y contradicciones**\n\n${items}`);
   }
 
   if (Array.isArray(advertencias) && advertencias.length > 0) {

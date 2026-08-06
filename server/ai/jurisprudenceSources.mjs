@@ -44,6 +44,9 @@ const NORM_STOPWORDS = new Set([
   'puede', 'pueden', 'es', 'son', 'qué pasa', 'que pasa', 'artículo',
   'articulo', 'art', 'n°', 'no', 'general', 'sin', 'número', 'numero',
   'saber', 'cual es', 'cuál es', 'explica',
+  'esta', 'este', 'estos', 'estas', 'ese', 'eso', 'esa', 'esos', 'esas',
+  'ella', 'ello', 'ello', 'ellos', 'ello', 'ellas', 'hace', 'hacen',
+  'ser', 'fue', 'fueron', 'están', 'estan', 'más', 'mas', 'muy',
 ]);
 
 // ----------------------- Utilidades compartidas ---------------------------
@@ -656,7 +659,7 @@ const GENERIC_CONCEPTS = new Set([
 ]);
 
 /** Normaliza un texto a tokens sin acentos (palabras simples, ≥4 caracteres). */
-function normalizeClaimTokens(text) {
+export function normalizeClaimTokens(text) {
   return String(text || '')
     .toLowerCase()
     .normalize('NFD')
@@ -664,6 +667,18 @@ function normalizeClaimTokens(text) {
     .replace(/[^a-z0-9ñ\s]/g, ' ')
     .split(/\s+/)
     .filter((t) => t.length >= 4 && !NORM_STOPWORDS.has(t));
+}
+
+/**
+ * Extrae los TÉRMINOS SUSTANTIVOS de un texto (tokens normalizados ≥4
+ * caracteres, sin stopwords ni conceptos genéricos). Se usa como base común
+ * para la verificación de claims, la síntesis verificada y la detección de
+ * contradicciones (Fase 4.1).
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function extractSubstantiveTerms(text) {
+  return normalizeClaimTokens(text).filter((t) => !GENERIC_CONCEPTS.has(t));
 }
 
 /** Verifica si un término aparece como PALABRA COMPLETA en texto normalizado. */
@@ -888,6 +903,23 @@ async function augmentNormasWithText(sources, query) {
 // Fuente: OpenAlex (doctrina académica chilena)
 // ---------------------------
 
+/**
+ * Reconstruye el abstract de OpenAlex desde su índice invertido.
+ * @param {Record<string, number[]>|null} invertedIndex
+ * @returns {string}
+ */
+export function reconstructOpenAlexAbstract(invertedIndex) {
+  if (!invertedIndex || typeof invertedIndex !== 'object') return '';
+  const words = [];
+  for (const [word, positions] of Object.entries(invertedIndex)) {
+    if (!Array.isArray(positions)) continue;
+    for (const pos of positions) {
+      if (Number.isInteger(pos) && pos >= 0) words[pos] = word;
+    }
+  }
+  return words.filter(Boolean).join(' ').trim();
+}
+
 export async function searchOpenAlexDoctrina(query, limit = 4) {
   const terms = normalizeSearchTerms(query, NORM_STOPWORDS);
   if (!terms) return [];
@@ -896,7 +928,7 @@ export async function searchOpenAlexDoctrina(query, limit = 4) {
     filter: 'authorships.institutions.country_code:CL',
     'per-page': String(Math.min(Math.max(limit, 1), 10)),
     sort: 'relevance_score:desc',
-    select: 'id,title,doi,publication_year,primary_location,authorships',
+    select: 'id,title,doi,publication_year,primary_location,authorships,abstract_inverted_index',
   });
   const data = await fetchJson(`${OPENALEX_API}?${params}`);
   const works = data?.results ?? [];
@@ -907,6 +939,11 @@ export async function searchOpenAlexDoctrina(query, limit = 4) {
     const authors = Array.isArray(w.authorships)
       ? w.authorships.map((a) => a?.author?.display_name).filter(Boolean).join('; ')
       : '';
+    // Fase 4.1 (Etapa 6): doctrina mínimamente usable. Solo si hay abstract se
+    // genera contenido citable; si no, la fuente queda sin fragmento textual
+    // (metadata de bajo valor) y no podrá respaldar claims.
+    const abstract = reconstructOpenAlexAbstract(w.abstract_inverted_index);
+    const abstractExcerpt = truncate(abstract, 1200);
     return {
       id: `doctrina-${String(w.id).split('/').pop() || w.doi || w.title}`,
       kind: 'doctrina',
@@ -918,11 +955,15 @@ export async function searchOpenAlexDoctrina(query, limit = 4) {
       date: w.publication_year ? String(w.publication_year) : undefined,
       url,
       publisher: 'Doctrina académica (OpenAlex)',
-      excerpt: truncate(authors ? `Autores: ${authors}` : '', 400),
+      excerpt: abstractExcerpt
+        ? `Doctrina (no vinculante) — ${abstractExcerpt}`
+        : truncate(authors ? `Autores: ${authors}` : '', 400),
       metadata: {
         source: 'openalex',
         doi: w.doi || null,
-        integrity: 'candidate',
+        authors: authors || null,
+        abstract: abstractExcerpt || null,
+        integrity: abstractExcerpt ? 'candidate' : 'low_value',
         legal_authority: 'doctrinal',
         vigency: 'no_aplica',
       },

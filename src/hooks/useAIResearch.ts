@@ -1,6 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 
+export type AIResearchClaim = {
+  source_id: string;
+  fragment_id: string | null;
+  category: 'normativa' | 'jurisprudencia' | 'doctrina' | null;
+  afirmacion: string;
+  evidencia: string;
+  verified: boolean;
+  vigencia?: string | null;
+  vigencia_nota?: string | null;
+};
+
 export type AIResearchSource = {
   id: string;
   kind: 'jurisprudencia' | 'normativa' | 'doctrina';
@@ -17,7 +28,17 @@ export type AIResearchSource = {
   date?: string | null;
   vigencia_detail?: string | null;
   fragments?: Array<{ article: string; text: string; idNorma?: string; url?: string }> | null;
+  claims?: AIResearchClaim[] | null;
   metadata?: Record<string, unknown> | null;
+};
+
+export type AIResearchMatiz = {
+  tipo?: string;
+  fuente_ids?: string[];
+  claims?: string[];
+  nota?: string;
+  notas?: string;
+  observada?: boolean;
 };
 
 export type AIResearchRequest = {

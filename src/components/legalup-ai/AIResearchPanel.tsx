@@ -200,6 +200,32 @@ function chileanDate(value?: string | null): string | null {
   return `${day}-${CHILEAN_MONTHS[Number(month) - 1] ?? month}-${year}`;
 }
 
+function SourceClaims({ claims }: { claims: AIResearchSource['claims'] }) {
+  if (!claims || claims.length === 0) return null;
+  return (
+    <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
+      {claims.map((claim, index) => (
+        <div key={index} className="rounded bg-white/70 p-2">
+          <p className="text-xs font-medium text-gray-900">
+            {claim.afirmacion}
+            {claim.fragment_id && (
+              <span className="ml-1 rounded bg-gray-200 px-1 py-0.5 font-mono text-[0.65rem] text-gray-600">
+                {claim.fragment_id}
+              </span>
+            )}
+          </p>
+          {claim.evidencia && (
+            <p className="mt-1 text-xs italic text-gray-600">"{claim.evidencia}"</p>
+          )}
+          {claim.vigencia_nota && (
+            <p className="mt-1 text-[0.65rem] font-medium text-indigo-700">{claim.vigencia_nota}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SourceItem({ source }: { source: AIResearchSource }) {
   const kindLabel =
     source.kind === 'jurisprudencia'
@@ -264,6 +290,7 @@ function SourceItem({ source }: { source: AIResearchSource }) {
         {source.excerpt && (
           <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
         )}
+        <SourceClaims claims={source.claims} />
       </li>
     );
   }
@@ -321,6 +348,7 @@ function SourceItem({ source }: { source: AIResearchSource }) {
       {source.excerpt && (
         <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
       )}
+      <SourceClaims claims={source.claims} />
     </li>
   );
 }
