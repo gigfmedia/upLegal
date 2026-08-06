@@ -398,11 +398,71 @@ export function buildTcSearchTermVariants(search) {
   return out.slice(0, TC_QUERY_MAX_ATTEMPTS - 1);
 }
 
+// Número máximo de caracteres retenidos como evidencia sustantiva por fuente TC.
+const TC_SUBSTANTIVE_SOURCE_CHARS = 3000;
+
+// Patrón de cabecera de ficha/notificación del proveedor TC (líneas de correo o
+// metadata que NO son contenido jurídico de la sentencia).
+const TC_HEADER_LINE_RE =
+  /^(?:de|enviado el|para|asunto|datos adjuntos?|cc|bcc|importancia|prioridad|urgencia|adjuntos?|destinatarios?)\s*[:：][^\n]*\n?/gi;
+
+/**
+ * Límpia texto de cabeceras de ficha/notificación del proveedor TC (líneas tipo
+ * "De:", "Para:", "Asunto:", "Datos adjuntos:", campos de correo). Solo elimina
+ * esa metadata administrativa; no descarta contenido narrativo de la sentencia.
+ * @param {string} text
+ * @returns {string}
+ */
+export function cleanTcSubstantiveText(text) {
+  const t = String(text || '').trim();
+  if (!t) return '';
+  return t.replace(TC_HEADER_LINE_RE, '').trim();
+}
+
+/**
+ * Extrae la evidencia sustantiva de una fila del TC. La API entrega:
+ *   - `content`: el texto completo de la sentencia ("VISTOS Y CONSIDERANDO…").
+ *   - `highlightParagraphs`: para varios roles solo cabeceras de notificación
+ *     o bloque de cierre (firmas), NO el razonamiento del fallo.
+ * Por eso se prioriza `content` (texto jurídico real); solo si no existe se
+ * cae a los highlights como respaldo débil. Nunca sintetiza ni inventa texto.
+ * @param {object} r - fila cruda del endpoint TC.
+ * @returns {{ excerpt: string, excerpt_source: string }}
+ */
+export function extractTcSubstantiveExcerpt(r) {
+  const rawContent = String(r.content || '').trim();
+  const highlights =
+    (r.highlightParagraphs || [])
+      .map((h) => h.full ?? h.summary)
+      .filter((v) => v && typeof v === 'string' && v.trim())
+      .map(cleanTcSubstantiveText)
+      .filter(Boolean);
+
+  let excerpt;
+  let excerpt_source = 'fallback';
+  if (rawContent) {
+    excerpt = truncate(rawContent, TC_SUBSTANTIVE_SOURCE_CHARS);
+    excerpt_source = 'content';
+  } else if (highlights.length > 0) {
+    excerpt = truncate(highlights.join(' '), TC_SUBSTANTIVE_SOURCE_CHARS);
+    excerpt_source = 'highlight';
+  } else {
+    excerpt = '';
+    excerpt_source = 'empty';
+  }
+  return { excerpt, excerpt_source };
+}
+
 /** Convierte una fila cruda del endpoint TC en una fuente `Source` normalizada. */
 function mapTcRow(r) {
-  const highlights =
-    r.highlightParagraphs?.map((h) => h.full ?? h.summary).filter(Boolean) ?? [];
-  const excerpt = highlights.join(' ') || truncate(r.content, 3000);
+  const { excerpt, excerpt_source: excerptSource } = extractTcSubstantiveExcerpt(r);
+  logDiagnostic('jurisprudence_tc_excerpt', {
+    source_id: r.id ? `tc-${r.id}` : 'tc-?',
+    excerpt_source: excerptSource,
+    excerpt_length: excerpt.length,
+    highlight_count: Array.isArray(r.highlightParagraphs) ? r.highlightParagraphs.length : 0,
+    content_length: String(r.content || '').length,
+  });
   return {
     id: `tc-${r.id}`,
     kind: 'jurisprudencia',
