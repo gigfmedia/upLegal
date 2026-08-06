@@ -2,15 +2,24 @@ import type { AIResearchSource } from '@/hooks/useAIResearch';
 
 // ---------------------------------------------------------------------------
 // Fase 4.1.3 · Respuesta breve: la UI NO muestra extensiones de enumeraciones
-// cerradas sin respaldo ("…, y bloqueo, entre otros"). Solo se elimina la
-// expresión de apertura cuando los MISMOS elementos de la lista existen como
+// cerradas sin respaldo ("…, y bloqueo, entre otros"). Se elimina la expresión
+// de apertura SOLO cuando los MISMOS elementos de la lista existen como
 // enumeración cerrada en los claims verificados. Sin correspondencia exacta,
 // no se modifica el texto (regla conservadora).
+//
+// Además, cuando tras la enumeración cerrada hay una cláusula ADITIVA respaldada
+// ("además de que estos derechos son intransferibles…"), NO se elimina: se
+// NORMALIZA a oración independiente ("…, y bloqueo. Estos derechos son…").
 // Módulo separado (sin componentes) para preservar fast-refresh.
 // ---------------------------------------------------------------------------
 
 const OPEN_ENUM_PHRASE =
   /\b(?:entre\s+otros|entre\s+otras|entre\s+ellos|entre\s+ellas|incluyendo(?:\s+pero\s+no\s+limitad[oa])?|por\s+ejemplo|etc(?:étera)?\.?|y\s+dem[áa]s|y\s+otros|y\s+otras|u\s+otros|u\s+otras)\b/i;
+
+// Conectores que introducen una cláusula distinta tras la enumeración (característica,
+// condición, excepción o consecuencia jurídica) en lugar de un elemento nuevo de la
+// lista. Se separa como oración propia, conservando la información respaldada.
+const ADDITIVE_CLAUSE_CONNECTOR = /(?:además\s+de\s+que|además\s*,)/i;
 
 const CLOSED_LIST_RE = /\b([a-záéíóúüñ]+(?:\s*,\s*[a-záéíóúüñ]+)*\s*,?\s*\b(?:y|e|o|u)\b\s+[a-záéíóúüñ]+)\b/gi;
 
@@ -39,8 +48,41 @@ function collectClosedEnumerations(evidenceTexts: string[]): Set<string> {
 }
 
 /**
+ * Normaliza una cláusula ADITIVA respaldada que sigue a una enumeración
+ * cerrada ("…, y bloqueo, además de que estos derechos son intransferibles")
+ * separándola como oración propia ("…, y bloqueo. Estos derechos son…").
+ * Solo actúa si la lista previa coincide con una enumeración cerrada de los
+ * claims. No elimina la información: conservar la cláusula jurídica posterior.
+ */
+function normalizeAdditiveClause(result: string, closed: Set<string>): string {
+  const re = new RegExp(ADDITIVE_CLAUSE_CONNECTOR.source, 'gi');
+  let m: RegExpExecArray | null;
+  let next = result;
+  while ((m = re.exec(next)) !== null) {
+    const before = next.slice(0, m.index);
+    const trailing = TRAILING_LIST_RE.exec(before);
+    if (!trailing) continue;
+    const items = trailing[1]
+      .split(/\s*,\s*|\s+\b(?:y|e|o|u)\b\s+/i)
+      .map(normalizeEnumWord)
+      .filter(Boolean);
+    if (items.length < 2 || !closed.has(items.sort().join('|'))) continue;
+
+    const listEnd = trailing.index + trailing[0].length;
+    const tail = next.slice(m.index + m[0].length).trimStart();
+    const capitalized = tail.charAt(0).toUpperCase() + tail.slice(1);
+    const head = next.slice(0, listEnd).trimEnd().replace(/[,;]+\s*$/, '');
+    next = `${head}. ${capitalized}`;
+    // Solo normaliza una cláusula aditiva por texto (la respuesta breve es corta).
+    re.lastIndex = next.length;
+  }
+  return next;
+}
+
+/**
  * Elimina la primera apertura de enumeración cuyos elementos coincidan con una
- * enumeración cerrada de los claims. Devuelve el texto original si no es seguro.
+ * enumeración cerrada de los claims, y NORMALIZA cláusulas aditivas respaldadas
+ * a oración propia. Devuelve el texto original si no es seguro.
  */
 function trimUnsupportedEnumeration(text: string, evidenceTexts: string[]): string {
   const closed = collectClosedEnumerations(evidenceTexts);
@@ -62,7 +104,7 @@ function trimUnsupportedEnumeration(text: string, evidenceTexts: string[]): stri
     result = `${result.slice(0, cut).trimEnd()}${join}${tail}`;
     re.lastIndex = Math.max(0, cut);
   }
-  return result;
+  return normalizeAdditiveClause(result, closed);
 }
 
 /**

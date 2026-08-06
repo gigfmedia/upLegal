@@ -69,3 +69,96 @@ La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposi
     expect(out).toBe(cleanAnswer);
   });
 });
+
+describe('constrainResumenOverstatement — regla semántica: cerrar enumeraciones sin destruir información (Fase 4.1.3)', () => {
+  const resumen = (body: string) => `**Respuesta breve**
+
+${body}`;
+
+  const derechosClaims = sourceWithClaims([
+    {
+      afirmacion: 'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+      evidencia: 'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+    },
+  ]);
+
+  it('A. mantiene la enumeración cerrada sin cambios', () => {
+    const body = 'Los derechos son acceso, rectificación, supresión, oposición, portabilidad y bloqueo.';
+    expect(constrainResumenOverstatement(resumen(body), derechosClaims)).toBe(resumen(body));
+  });
+
+  it('B. elimina la expansión "entre otros"', () => {
+    const out = constrainResumenOverstatement(
+      resumen('Los derechos son acceso, rectificación, supresión, oposición, portabilidad y bloqueo, entre otros.'),
+      derechosClaims,
+    );
+    expect(out).not.toContain('entre otros');
+    expect(out).toContain('portabilidad y bloqueo');
+  });
+
+  it('C. permite una oración posterior independiente respaldada', () => {
+    const body = 'Los derechos son acceso, rectificación, supresión, oposición, portabilidad y bloqueo. Estos derechos son personales, intransferibles e irrenunciables.';
+    const out = constrainResumenOverstatement(resumen(body), derechosClaims);
+    expect(out).toContain('bloqueo.');
+    expect(out).toContain('intransferibles e irrenunciables');
+  });
+
+  it('D. no confunde una característica con un nuevo derecho: separa "además de que" en oración propia', () => {
+    const out = constrainResumenOverstatement(
+      resumen('Los derechos son acceso, rectificación, supresión, oposición, portabilidad y bloqueo, además de que estos derechos son intransferibles e irrenunciables.'),
+      derechosClaims,
+    );
+    expect(out).toContain('bloqueo.');
+    expect(out).toContain('intransferibles e irrenunciables');
+    expect(out).not.toMatch(/bloqueo,\s*además/);
+  });
+
+  it('E. no modifica afirmaciones que no pueden vincularse de forma segura a los claims', () => {
+    const body = 'Los derechos incluyen indemnización, reparación y compensación, entre otros.';
+    const differentClaims = sourceWithClaims([
+      {
+        afirmacion: 'La ley regula el tratamiento de datos personales.',
+        evidencia: 'Se regula el tratamiento de datos personales.',
+      },
+    ]);
+    const out = constrainResumenOverstatement(resumen(body), differentClaims);
+    expect(out).toContain('entre otros');
+  });
+
+  it('F. mantiene intacto el payload (misma cantidad de claims, no los muta)', () => {
+    const sources = sourceWithClaims([
+      {
+        afirmacion: 'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+        evidencia: 'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+      },
+    ]);
+    const snapshot = JSON.stringify(sources);
+    constrainResumenOverstatement(ANSWER, sources);
+    expect(JSON.stringify(sources)).toBe(snapshot);
+  });
+
+  it('G. mantiene intacto fragment_id', () => {
+    const sources = sourceWithClaims([
+      {
+        afirmacion: 'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+        evidencia: 'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+      },
+    ]);
+    expect(sources[0].claims?.[0]?.fragment_id).toBe('frag:1209272:1');
+    constrainResumenOverstatement(ANSWER, sources);
+    expect(sources[0].claims?.[0]?.fragment_id).toBe('frag:1209272:1');
+  });
+
+  it('H. mantiene intacta la evidencia principal del Artículo 4º', () => {
+    const sources = sourceWithClaims([
+      {
+        afirmacion: 'La Ley 21.719 reconoce los derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+        evidencia: 'Toda persona tiene derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+      },
+    ]);
+    const evidencia = sources[0].claims?.[0]?.evidencia;
+    constrainResumenOverstatement(ANSWER, sources);
+    expect(sources[0].claims?.[0]?.evidencia).toBe(evidencia);
+    expect(sources[0].claims?.[0]?.evidencia).toContain('acceso, rectificación, supresión, oposición, portabilidad y bloqueo');
+  });
+});
