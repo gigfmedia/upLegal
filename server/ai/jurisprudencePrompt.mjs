@@ -16,6 +16,8 @@
 // afirmaciones sin respaldo textual (no permite "falsa sensación de respaldo").
 // ---------------------------------------------------------------------------
 
+import { resolveClaimFragment } from './jurisprudenceSources.mjs';
+
 export const JURISPRUDENCE_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo.
   MAX_CONTEXT_CHARS: 30000,
@@ -246,7 +248,28 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
       );
     }
 
-    if (fragment && !fragmentIsSupported(fragment, source.excerpt || '')) {
+    // Fase 4.0.4: alineación exacta afirmación ↔ fragmento. Cuando la fuente
+    // normativa expone fragmentos por artículo, la afirmación se valida y se
+    // RE-ANCLA al fragmento específico que realmente la respalda (no a todo el
+    // texto de la fuente). Si ningún fragmento contiene los conceptos afirmados,
+    // se descarta/reformula la afirmación.
+    let evidence = fragment;
+    let fragmentId = null;
+    const fragments = source.kind === 'normativa' ? (source.metadata?.fragments || []) : [];
+    if (fragments.length > 0) {
+      const aligned = resolveClaimFragment(afirmacionText, fragments);
+      if (aligned) {
+        evidence = String(aligned.text).trim();
+        fragmentId = aligned.id || null;
+      } else {
+        warnings.push(
+          `Se descartó una afirmación de ${category} porque ningún fragmento de "${source.citation}" respalda específicamente: "${afirmacionText.slice(0, 90)}…".`,
+        );
+        continue;
+      }
+    }
+
+    if (evidence && !fragmentIsSupported(evidence, source.excerpt || '')) {
       warnings.push(
         `Se descartó una afirmación de ${category} cuyo fragmento no aparece en la fuente "${source.citation}".`,
       );
@@ -255,7 +278,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
 
     // Fase 4.0.2: vigencia de una norma.
     if (source.kind === 'normativa') {
-      if (source.vigency === 'derogada' && assertsVigencia(afirmacionText, fragment)) {
+      if (source.vigency === 'derogada' && assertsVigencia(afirmacionText, evidence)) {
         warnings.push(
           `Se descartó una afirmación que presenta como vigente la norma "${source.citation}", que tiene indicios de estar derogada.`,
         );
@@ -271,8 +294,10 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
 
     kept.push({
       source,
+      source_id: source.id,
+      fragment_id: fragmentId,
       afirmacion: afirmacionText,
-      fragmento: fragment,
+      fragmento: evidence,
     });
   }
 

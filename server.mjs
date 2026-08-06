@@ -30,6 +30,7 @@ import {
 import {
   searchJurisprudence,
 } from './server/ai/jurisprudenceSources.mjs';
+import { resolveClaimFragment } from './server/ai/jurisprudenceSources.mjs';
 import {
   buildJurisprudenceSystemPrompt,
   buildJurisprudenceContext,
@@ -7851,10 +7852,16 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         const titleText = String(candidate.title || candidate.citation || '')
           .replace(/\s+/g, ' ')
           .trim();
+        // Fase 4.0.4: si la norma recuperada expone fragmentos reales de
+        // LeyChile, la afirmación promovida se respalda con el fragmento
+        // específico más relevante (mostrado como evidencia puntual).
+        const alignedFragment = resolveClaimFragment(query, candidate.metadata?.fragments || []);
         autoNormativas.push({
           source: candidate,
+          source_id: candidate.id,
+          fragment_id: alignedFragment?.id || null,
           afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
-          fragmento: '',
+          fragmento: alignedFragment ? String(alignedFragment.text).trim() : '',
         });
         researchWarnings.push(
           `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,

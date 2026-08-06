@@ -169,6 +169,37 @@ const KIND_GROUP_META: Record<
   },
 };
 
+const NORM_TYPE_LABELS: Record<string, string> = {
+  ley: 'Ley',
+  decreto: 'Decreto',
+  decreto_ley: 'Decreto Ley',
+  dfl: 'DFL',
+  codigo: 'Código',
+  reglamento: 'Reglamento',
+  resolucion: 'Resolución',
+  constitucion: 'Constitución',
+  otra: 'Norma',
+};
+
+/** Norma "21719" → "21.719" (formato chileno). Conserva el dado si ya lleva separadores. */
+function formatNormNumber(value?: string | null): string {
+  const s = String(value ?? '').trim();
+  if (!s) return '';
+  if (/[.,]/.test(s)) return s.replace(/,/g, '.');
+  if (/^\d{1,6}$/.test(s)) return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return s;
+}
+
+const CHILEAN_MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+
+/** "2024-12-13" → "13-DIC-2024" (usado en las líneas de publicación/vigencia). */
+function chileanDate(value?: string | null): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? '').trim());
+  if (!m) return null;
+  const [, year, month, day] = m;
+  return `${day}-${CHILEAN_MONTHS[Number(month) - 1] ?? month}-${year}`;
+}
+
 function SourceItem({ source }: { source: AIResearchSource }) {
   const kindLabel =
     source.kind === 'jurisprudencia'
@@ -181,6 +212,62 @@ function SourceItem({ source }: { source: AIResearchSource }) {
     source.legal_authority ??
     '';
   const vigency = VIGENCY_LABELS[source.vigency ?? ''] ?? '';
+
+  // Fase 4.0.4: presentación profesional de una norma (Publicada / Entrada en
+  // vigencia / Autoridad · Vigencia) en lugar de un paréntesis con la fecha,
+  // que podría confundirse con la fecha de vigencia.
+  const metadata = source.metadata as
+    | { fechaPublicacion?: string; fechaEntradaVigencia?: string | null; idNorma?: string }
+    | null
+    | undefined;
+
+  const isNormalizedNormativa =
+    source.kind === 'normativa' && metadata && (metadata.fechaPublicacion || metadata.fechaEntradaVigencia);
+
+  if (isNormalizedNormativa) {
+    const typeLabel = NORM_TYPE_LABELS[source.norm_type ?? ''] ?? 'Norma';
+    const num = formatNormNumber(source.norm_number);
+    const title = `${typeLabel}${num ? ` N° ${num}` : ''}`;
+    const fechaPublicacion = chileanDate(metadata.fechaPublicacion);
+    const fechaEntrada = chileanDate(metadata.fechaEntradaVigencia);
+    const autoridadVigencia = [authority, vigency].filter(Boolean);
+
+    return (
+      <li className="rounded-lg border border-gray-200 bg-gray-50/60 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-gray-200">
+            <FileText className="h-3 w-3 text-blue-700" aria-hidden="true" />
+          </span>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {kindLabel}
+          </Badge>
+          {source.url && (
+            <a
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-green-900 hover:underline"
+            >
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+              Ver fuente
+            </a>
+          )}
+        </div>
+        <p className="mt-2 text-sm font-semibold text-gray-900">{title || source.citation}</p>
+        {fechaPublicacion && <p className="mt-1 text-xs text-gray-600">Publicada: {fechaPublicacion}</p>}
+        {fechaEntrada && <p className="text-xs text-gray-600">Entrada en vigencia: {fechaEntrada}</p>}
+        {autoridadVigencia.length > 0 && (
+          <p className="mt-0.5 text-[0.68rem] font-medium text-gray-500">
+            {autoridadVigencia.join(' · ')}
+          </p>
+        )}
+        {source.excerpt && (
+          <p className="mt-1 line-clamp-3 text-xs text-gray-600">{source.excerpt}</p>
+        )}
+      </li>
+    );
+  }
+
   const vigencyClass =
     source.vigency === 'derogada'
       ? 'bg-red-100 text-red-800'

@@ -7,6 +7,9 @@ import {
   buildVigenciaDetail,
   formatChileanDate,
   detectNormVigency,
+  formatNormNumber,
+  fragmentSupportsClaim,
+  resolveClaimFragment,
 } from './jurisprudenceSources.mjs';
 
 describe('extractLawNumber', () => {
@@ -54,6 +57,18 @@ describe('detectNormVigency', () => {
   });
   it('sigue usando el título como pista de menor confianza', () => {
     expect(detectNormVigency('TEXTO REFUNDIDO Y ACTUALIZADO ...')).toBe('vigente');
+  });
+});
+
+describe('formatNormNumber', () => {
+  it('formatea números de ley en formato chileno (21719 → 21.719)', () => {
+    expect(formatNormNumber('21719')).toBe('21.719');
+    expect(formatNormNumber('19628')).toBe('19.628');
+    expect(formatNormNumber('11207')).toBe('11.207');
+  });
+  it('conserva separadores ya presentes y números cortos', () => {
+    expect(formatNormNumber('21.719')).toBe('21.719');
+    expect(formatNormNumber('4')).toBe('4');
   });
 });
 
@@ -108,5 +123,75 @@ describe('rankFragments', () => {
     ];
     const ranked = rankFragments('protección de datos personales', frags, { limit: 3 });
     expect(ranked[0].article).toBe('Artículo 1');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fase 4.0.4 — Alineación exacta afirmación ↔ fragmento
+// ---------------------------------------------------------------------------
+
+const ley21719Fragments = [
+  {
+    id: 'frag:1209272:f1',
+    article: 'Artículo 2',
+    text: 'Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+  },
+  {
+    id: 'frag:1209272:f2',
+    article: 'Artículo 14',
+    text: 'El tratamiento de datos personales efectuado por organismos públicos se sujetará a las normas de esta ley.',
+  },
+  {
+    id: 'frag:1209272:f3',
+    article: 'Artículo 5',
+    text: 'El responsable del tratamiento deberá informar de manera clara y verificable al titular de datos personales.',
+  },
+];
+
+describe('fragmentSupportsClaim', () => {
+  it('afirmación sobre derechos de titulares respaldada por el fragmento que los lista', () => {
+    const af = 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares';
+    expect(fragmentSupportsClaim(ley21719Fragments[0], af)).toBe(true);
+  });
+  it('un fragmento sobre organismos públicos NO respalda la lista de derechos', () => {
+    const af = 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares';
+    expect(fragmentSupportsClaim(ley21719Fragments[1], af)).toBe(false);
+  });
+  it('deber de información queda respaldado por el fragmento de información al titular', () => {
+    const af = 'El responsable debe informar al titular de datos personales el tratamiento';
+    expect(fragmentSupportsClaim(ley21719Fragments[2], af)).toBe(true);
+  });
+  it('no respalda con menos de dos términos significativos', () => {
+    expect(fragmentSupportsClaim(ley21719Fragments[0], 'y pues')).toBe(false);
+  });
+});
+
+describe('resolveClaimFragment', () => {
+  it('elige el fragmento de los derechos de los titulares (no el de organismos)', () => {
+    const af = 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares';
+    const resolved = resolveClaimFragment(af, ley21719Fragments);
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe('frag:1209272:f1');
+    expect(resolved.article).toBe('Artículo 2');
+  });
+  it('objeto de la Ley: asocia al fragmento que regula el objeto de la materia', () => {
+    const fragments = [
+      { id: 'F1', article: 'Artículo 1', text: 'El objeto de esta ley es regular el tratamiento de datos personales en igualdad de condiciones.' },
+      { id: 'F2', article: 'Artículo 14', text: 'Regulación sobre organismos públicos y su cumplimiento.' },
+    ];
+    const resolved = resolveClaimFragment('El objeto de la ley es regular el tratamiento de datos personales', fragments);
+    expect(resolved?.id).toBe('F1');
+  });
+  it('supresión: elige el fragmento que menciona supresión de datos personales', () => {
+    const fragments = [
+      { id: 'F1', article: 'Artículo 2', text: 'derechos de acceso, rectificación, supresión y oposición de los datos personales' },
+      { id: 'F2', article: 'Artículo 9', text: 'tratamiento de datos por fuerzas de orden y seguridad' },
+    ];
+    const resolved = resolveClaimFragment('El titular puede solicitar la supresión de sus datos personales', fragments);
+    expect(resolved?.id).toBe('F1');
+  });
+  it('devuelve null cuando ningún fragmento respalda la afirmación', () => {
+    const af = 'indemnización por despido injustificado del trabajador';
+    expect(resolveClaimFragment(af, ley21719Fragments)).toBeNull();
   });
 });

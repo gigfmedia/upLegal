@@ -183,6 +183,15 @@ export function extractNormNumber(title) {
   return m ? m[0] : null;
 }
 
+/** Norma "21719" → "21.719" (formato chileno). Conserva separadores si ya existen. */
+export function formatNormNumber(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return '';
+  if (/[.,]/.test(s)) return s.replace(/,/g, '.');
+  if (/^\d{1,6}$/.test(s)) return s.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return s;
+}
+
 /**
  * Determina la vigencia de una norma. Prioriza la información EXPLÍCITA que
  * BCN/LeyChile reporta en sus metadatos (derogado, tipo de versión y fechas de
@@ -370,8 +379,10 @@ function mapBcnBinding(b) {
   }
   const vigency = detectNormVigency(title);
   const typeLabel = NORM_TYPE_LABELS[normType] || 'Norma';
+  // Fase 4.0.4: cita profesional sin paréntesis de fecha (publicación y vigencia
+  // se muestran por separado) y con el número en formato chileno ("Ley N° 21.719").
   const citation = normNumber
-    ? `${typeLabel} N° ${normNumber}${date ? ` (${date})` : ''}`
+    ? `${typeLabel} N° ${formatNormNumber(normNumber)}`
     : `${typeLabel} ${title}`;
   return {
     id: `bcn-${code || title}`,
@@ -380,7 +391,7 @@ function mapBcnBinding(b) {
     legal_authority: 'vinculante',
     vigency,
     norm_type: normType,
-    norm_number: normNumber,
+    norm_number: normNumber ? formatNormNumber(normNumber) : null,
     title,
     citation,
     date,
@@ -388,7 +399,7 @@ function mapBcnBinding(b) {
       ? `https://www.bcn.cl/leychile/navegar?idNorma=${encodeURIComponent(code)}`
       : undefined,
     publisher: 'Biblioteca del Congreso Nacional / LeyChile',
-    excerpt: `idNorma ${code || '—'} · ${NORM_TYPE_LABELS[normType] || 'Norma'} N° ${normNumber || '—'} · ${vigencyLabel(vigency)}`,
+    excerpt: `idNorma ${code || '—'} · ${NORM_TYPE_LABELS[normType] || 'Norma'} N° ${formatNormNumber(normNumber) || '—'} · ${vigencyLabel(vigency)}`,
     metadata: {
       leychileCode: code || null,
       hasNumber: number || null,
@@ -641,6 +652,48 @@ export function rankFragments(query, fragments, { limit = 5 } = {}) {
   return ranked.slice(0, limit).map((s) => s.fragment);
 }
 
+/**
+ * Determina si una afirmación está respaldada por el texto de un fragmento:
+ * los términos significativos (≥4 caracteres) de la afirmación deben aparecer
+ * en el fragmento con una proporción mínima. Exige al menos dos términos.
+ * @param {{ text?: string }|string} fragment - fragmento (objeto o texto plano).
+ * @param {string} claimText - afirmación/concepto a verificar.
+ * @returns {boolean}
+ */
+export function fragmentSupportsClaim(fragment, claimText, { minOverlap = 0.5 } = {}) {
+  const text = String(fragment?.text || fragment || '');
+  const tokens = String(claimText || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9ñ\s]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length >= 4 && !NORM_STOPWORDS.has(t));
+  if (tokens.length < 2) return false;
+  const norm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const matched = tokens.filter((t) => norm.includes(t)).length;
+  return matched / tokens.length >= minOverlap;
+}
+
+/**
+ * Asocia una afirmación al fragmento ESPECÍFICO que la respalda. rankFragments
+ * favorece los fragmentos que contienen directamente los términos/conceptos de
+ * la afirmación; luego fragmentSupportsClaim exige que el texto del fragmento
+ * efectivamente contenga esos conceptos. Devuelve el fragmento respaldante o
+ * null si ninguno respalda suficientemente la afirmación.
+ * @param {string} claimText - afirmación a respaldar.
+ * @param {Array<{ article: string, text: string, id?: string }>} fragments
+ * @returns {{ id?: string, article: string, text: string } | null}
+ */
+export function resolveClaimFragment(claimText, fragments, { minOverlap = 0.5 } = {}) {
+  if (!Array.isArray(fragments) || fragments.length === 0) return null;
+  const ranked = rankFragments(claimText, fragments, { limit: fragments.length });
+  for (const frag of ranked) {
+    if (fragmentSupportsClaim(frag, claimText, { minOverlap })) return frag;
+  }
+  return null;
+}
+
 const LEYCHILE_URL = (code) => `https://www.bcn.cl/leychile/navegar?idNorma=${encodeURIComponent(code)}`;
 
 const CHILE_MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
@@ -730,7 +783,8 @@ async function augmentNormaWithText(src, query) {
       fechaEntradaVigencia: entradaVigencia,
       vigenciaTipo: ley.meta.tipo_version_s || null,
       vigencia_detail: buildVigenciaDetail(ley.meta),
-      fragments: selected.map((f) => ({
+      fragments: selected.map((f, i) => ({
+        id: `frag:${code}:${i + 1}`,
         article: f.article,
         text: f.text,
         idNorma: code,

@@ -511,3 +511,133 @@ describe('Fase 4.0.2 · contexto y respuesta con jerarquía', () => {
     expect(warnings.length).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fase 4.0.4 — Alineación exacta afirmación ↔ fragmento en la verificación
+// ---------------------------------------------------------------------------
+
+describe('Fase 4.0.4 · claim·fragment alignment en verifyJurisprudenceClaims', () => {
+const artSource = (id, vigency = 'diferida', excerpt, fragments) => ({
+    id,
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency,
+    citation: 'Ley 21.719',
+    excerpt,
+    metadata: { fragments },
+  });
+
+  const fragments = [
+    { id: 'frag:1209272:f1', article: 'Artículo 2', text: 'Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.' },
+    { id: 'frag:1209272:f2', article: 'Artículo 14', text: 'El tratamiento de datos personales efectuado por organismos públicos se sujetará a las normas de esta ley.' },
+  ];
+  const excerpt = fragments.map((f) => f.text).join('\n');
+
+  it('re-ancla el claim al fragmento que respalda la afirmación y conserva fragment_id', () => {
+    const byId = new Map([
+      [
+        'bcn-21719',
+        artSource('bcn-21719', 'diferida', excerpt, fragments),
+      ],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares',
+          fragmento: 'fragmento equivocado sobre organismos públicos',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:f1');
+    expect(kept[0].fragmento).toContain('portabilidad');
+    expect(kept[0].fragmento).toContain('supresión');
+    expect(kept[0].source_id).toBe('bcn-21719');
+    expect(warnings.length).toBe(0);
+  });
+
+  it('descarta una afirmación que ningún fragmento respalda (organismos ≠ derechos)', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares.',
+          fragment: 'artículo 14 sobre organismos públicos',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    // La afirmación SI está respaldada por el Art. 2, así que se re-ancla y NO se descarta.
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:f1');
+    expect(kept[0].fragmento).toMatch(/Art[.]?culo 2|Derechos de los titulares/);
+  });
+
+  it('elimina la afirmación cuando ninguna fragura contiene sus conceptos', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'indemnización por despido injustificado del trabajador y pago de cotizaciones',
+          fragment: 'organismos públicos',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(0);
+    expect(warnings.length).toBe(1);
+  });
+
+  it('vigencia diferida: mantiene la afirmación respaldada sin aviso de vigencia incierta', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'Los titulares pueden solicitar la supresión de sus datos personales.',
+          fragment: 'cualquier fragmento',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:f1');
+    expect(warnings.some((w) => w.includes('Vigencia'))).toBe(false);
+  });
+
+  it('usa texto no fabricado: la fragmento mostrado es el real (supresión + portabilidad)', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'El titular goza del derecho de supresión y portabilidad de sus datos personales.',
+          // El modelo cita mal (art 14); la verificación deve re-anclar al Art. 2.
+          fragment: 'organismos públicos se de a las normas',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragmento).toContain('supresión');
+    expect(kept[0].fragmento).toContain('portabilidad');
+  });
+});
