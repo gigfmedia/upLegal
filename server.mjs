@@ -6600,6 +6600,16 @@ const getAILawyerAccess = async (userId) => {
           // Solo se dispara en la transición trial → expired (la actualización
           // previa hace idempotente el evento: la siguiente lectura ya ve 'expired').
           await capturePostHog('ai_subscription_expired', userId, { plan: subscription.plan || null });
+        } else {
+          // Disparo perezoso del recordatorio de fin de prueba: al consultar el
+          // acceso, si toca un hito (3 o 1 día natural), se envía el email y la
+          // notificación in-app una sola vez. Idempotente (trial_reminder_day),
+          // así que no depende de que exista un cron externo.
+          try {
+            await sendTrialReminderIfDue(subscription);
+          } catch {
+            /* nunca romper el acceso por un fallo del reminder */
+          }
         }
         break;
       case 'past_due':
@@ -8140,9 +8150,102 @@ app.get('/api/ai/usage', async (req, res) => {
   }
 });
 
+// Días naturales restantes hasta trial_ends_at contados por inicio de día
+// calendario (no por horas), para que el disparo no dependa de la hora de
+// ejecución: siempre cae en 1 y 3 sin saltarse hitos.
+const calendarDaysLeft = (trialEndMs, now = Date.now()) => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(trialEndMs);
+  endOfDay.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((endOfDay - startOfToday) / DAY_MS));
+};
+
+// Envía el recordatorio de fin de prueba (3 y 1 día natural restante) para
+// una suscripción si toca un hito y aún no se mandó. Idempotente por abogado
+// (columna trial_reminder_day) y a prueba de reintentos. Retorna true si
+// envió email + notificación in-app. Reutilizable por cron y por acceso lazy.
+const sendTrialReminderIfDue = async (sub) => {
+  const trialEndMs = Date.parse(sub.trial_ends_at);
+  if (!trialEndMs || trialEndMs <= Date.now()) return false;
+
+  // daysLeft usa el día calendario restante (p. ej. termina "mañana" → 1),
+  // sin depender de la hora exacta a la que corra el cron/la app.
+  const daysLeft = Math.max(1, calendarDaysLeft(trialEndMs));
+
+  // Solo envíos en hitos concretos y sin duplicar.
+  if (daysLeft !== 3 && daysLeft !== 1) return false;
+  if (sub.trial_reminder_day === daysLeft) return false;
+
+  const userData = await getAILawyerEmail(sub.lawyer_id);
+  if (!userData?.email) return false;
+
+  const subject = daysLeft === 1
+    ? 'Tu prueba de LegalUp AI termina hoy'
+    : '¿Ya probaste LegalUp AI con un caso real?';
+  await sendAIEmail(
+    userData.email,
+    subject,
+    aiSubscriptionEmailTemplates.trialReminder(daysLeft)
+  );
+  await supabase.from('ai_subscriptions').update({ trial_reminder_day: daysLeft }).eq('id', sub.id);
+
+  // Notificación in-app al centro de notificaciones (se ve aunque no llegue
+  // el email o el abogado no esté logueado justo en ese momento).
+  await notificationsService.notifyUser({
+    userId: sub.lawyer_id,
+    type: daysLeft === 1 ? 'ai.trial.last_day' : 'ai.trial.day_3',
+    title: daysLeft === 1 ? 'Tu prueba de LegalUp AI termina hoy' : 'Te quedan 3 días de prueba gratuita',
+    message: daysLeft === 1
+      ? 'Tu prueba gratuita de LegalUp AI vence mañana. Suscríbete para no perder el acceso a tus casos, análisis y chat.'
+      : 'Te quedan 3 días de prueba gratuita de LegalUp AI. Aprovecha para analizar un documento con IA.',
+    entityType: 'ai_subscription',
+    entityId: sub.id,
+    eventId: `ai-trial-reminder-${sub.id}-${daysLeft}`,
+  });
+
+  // Hitos de días de la prueba según días restantes (trial de 5 días).
+  // Día 3 → quedan 3 días; Día 5 / último día → queda 1 día.
+  if (daysLeft === 1) {
+    await capturePostHog('ai_trial_expiring', sub.lawyer_id, { days_left: daysLeft });
+    await capturePostHog('ai_trial_last_day', sub.lawyer_id, { days_left: daysLeft });
+  } else {
+    await capturePostHog('ai_trial_day_3', sub.lawyer_id, { days_left: daysLeft });
+  }
+  return true;
+};
+
+// Escaneo global de trials vigentes: marca como expirados los vencidos y
+// dispara los recordatorios que toquen hito. Reutilizado por el endpoint de
+// cron externo y por el scheduler interno del proceso (Render mantiene vivo
+// el servidor, así que no depende de infraestructura externa).
+const runTrialReminderScan = async () => {
+  const { data: trialing, error } = await supabase
+    .from('ai_subscriptions')
+    .select('id, lawyer_id, status, trial_ends_at, trial_reminder_day')
+    .eq('status', 'trialing')
+    .not('trial_ends_at', 'is', null);
+  if (error) throw error;
+
+  let sent = 0;
+  let expired = 0;
+  for (const sub of trialing || []) {
+    const trialEndMs = Date.parse(sub.trial_ends_at);
+    if (!trialEndMs || trialEndMs <= Date.now()) {
+      await supabase.from('ai_subscriptions').update({ status: 'expired', updated_at: new Date().toISOString() }).eq('id', sub.id);
+      expired += 1;
+      continue;
+    }
+    if (await sendTrialReminderIfDue(sub)) sent += 1;
+  }
+  return { processed: (trialing || []).length, sent, expired };
+};
+
 // POST /api/ai/trial/reminders — envía recordatorios de fin de prueba (3 y 1
-// días restantes). Pensado para ser llamado por un cron con el header
-// `x-trial-secret`. Es idempotente por abogado (columna trial_reminder_day).
+// días restantes) a todos los trials vigentes. Pensado para ser llamado por
+// un cron con el header `x-trial-secret`. Es idempotente por abogado
+// (columna trial_reminder_day).
 app.post('/api/ai/trial/reminders', async (req, res) => {
   const secret = process.env.TRIAL_REMINDER_SECRET;
   if (!secret || String(req.headers['x-trial-secret'] || '') !== String(secret)) {
@@ -8150,62 +8253,29 @@ app.post('/api/ai/trial/reminders', async (req, res) => {
   }
 
   try {
-    const { data: trialing, error } = await supabase
-      .from('ai_subscriptions')
-      .select('id, lawyer_id, status, trial_ends_at, trial_reminder_day')
-      .eq('status', 'trialing')
-      .not('trial_ends_at', 'is', null);
-
-    if (error) throw error;
-
-    const now = Date.now();
-    const DAY_MS = 24 * 60 * 60 * 1000;
-    let sent = 0;
-
-    for (const sub of trialing || []) {
-      const trialEndMs = Date.parse(sub.trial_ends_at);
-      if (!trialEndMs || trialEndMs <= now) {
-        // Trial ya vencido: marcar como expirado.
-        await supabase.from('ai_subscriptions').update({ status: 'expired', updated_at: new Date().toISOString() }).eq('id', sub.id);
-        continue;
-      }
-
-      const daysLeft = Math.max(1, Math.ceil((trialEndMs - now) / DAY_MS));
-
-      // Solo envíos en hitos concretos y sin duplicar.
-      if (daysLeft !== 3 && daysLeft !== 1) continue;
-      if (sub.trial_reminder_day === daysLeft) continue;
-
-      const userData = await getAILawyerEmail(sub.lawyer_id);
-      if (userData?.email) {
-        const subject = daysLeft === 1
-          ? 'Tu prueba de LegalUp AI termina hoy'
-          : '¿Ya probaste LegalUp AI con un caso real?';
-        await sendAIEmail(
-          userData.email,
-          subject,
-          aiSubscriptionEmailTemplates.trialReminder(daysLeft)
-        );
-        await supabase.from('ai_subscriptions').update({ trial_reminder_day: daysLeft }).eq('id', sub.id);
-
-        // Hitos de días de la prueba según días restantes (trial de 5 días).
-        // Día 3 → quedan 3 días; Día 5 / último día → queda 1 día.
-        if (daysLeft === 1) {
-          await capturePostHog('ai_trial_expiring', sub.lawyer_id, { days_left: daysLeft });
-          await capturePostHog('ai_trial_last_day', sub.lawyer_id, { days_left: daysLeft });
-        } else {
-          await capturePostHog('ai_trial_day_3', sub.lawyer_id, { days_left: daysLeft });
-        }
-        sent += 1;
-      }
-    }
-
-    res.json({ success: true, processed: (trialing || []).length, sent });
+    const result = await runTrialReminderScan();
+    res.json({ success: true, ...result });
   } catch (error) {
     console.error('[LegalUpAI] trial reminders error:', error);
     res.status(500).json({ error: 'No se pudieron enviar los recordatorios.' });
   }
 });
+
+// Scheduler interno: recorre los trials cada 6 horas (0, 6, 12, 18 h) para
+// marcar expirados y disparar los recordatorios de hito aunque nadie abra la
+// app. El cálculo por día natural + trial_reminder_day lo hace idempotente,
+// así que los disparos repetidos del cron externo nunca duplican.
+const TRIAL_REMINDER_SCAN_MS = 6 * 60 * 60 * 1000;
+setInterval(async () => {
+  try {
+    const result = await runTrialReminderScan();
+    if (result.sent > 0 || result.expired > 0) {
+      console.log(`[LegalUpAI] trial reminder scan: ${result.sent} sent, ${result.expired} expired`);
+    }
+  } catch (error) {
+    console.error('[LegalUpAI] trial reminder scan error:', error);
+  }
+}, TRIAL_REMINDER_SCAN_MS).unref();
 
 // ---- Error handling middleware ----
 app.use((error, req, res, next) => {
