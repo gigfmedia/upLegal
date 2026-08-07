@@ -22,6 +22,57 @@ export const AI_ANALYSIS_QUERY_KEY = ['ai-document-analyses'] as const;
 
 export const AI_DOCUMENTS_BUCKET = 'ai-documents';
 
+/**
+ * Polling guard: devuelve el intervalo de polling de documentos mientras haya
+ * documentos en procesamiento/análisis, pero se detiene si un documento permanece
+ * continuamente en `processing` más del límite (evita que un caso atascado genere
+ * miles de requests). La lógica es pura e inyectable para poder testearla.
+ */
+export const DOCUMENTS_POLL_INTERVAL_MS = 4000;
+export const DOCUMENTS_STUCK_PROCESSING_MS = 10 * 60 * 1000; // 10 minutos
+
+export type DocumentPollState = { startedAtById: Map<string, number> };
+
+export function createDocumentPollingState(): DocumentPollState {
+  return { startedAtById: new Map() };
+}
+
+export function computeDocumentPollInterval(
+  state: DocumentPollState,
+  docs: AIDocumentListItem[] | undefined,
+  now: number
+): number | false {
+  const processing = (docs ?? []).filter(
+    (d) => d.status === 'processing' || d.analysis_status === 'processing'
+  );
+  const processingIds = new Set(processing.map((d) => d.id));
+
+  // Limpia marcadores de documentos que ya no están en processing (completed/failed).
+  for (const id of Array.from(state.startedAtById.keys())) {
+    if (!processingIds.has(id)) state.startedAtById.delete(id);
+  }
+  // Registra el inicio continuo de processing para documentos nuevos.
+  for (const doc of processing) {
+    if (!state.startedAtById.has(doc.id)) state.startedAtById.set(doc.id, now);
+  }
+
+  if (processing.length === 0) return false;
+
+  let earliestStart = now;
+  for (const doc of processing) {
+    const start = state.startedAtById.get(doc.id) ?? now;
+    if (start < earliestStart) earliestStart = start;
+  }
+
+  const elapsed = now - earliestStart;
+  return elapsed >= DOCUMENTS_STUCK_PROCESSING_MS ? false : DOCUMENTS_POLL_INTERVAL_MS;
+}
+
+// Clarificado: `state` compartido a nivel de módulo para sobrevivir remontajes de
+// componentes con la misma sesión (evita que un documento atascado reactive el
+// polling al volver a montar la página).
+const documentsPollingState = createDocumentPollingState();
+
 const getApiBaseUrl = (): string => {
   const base = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
   return (base || 'http://localhost:3001').replace(/\/+$/, '');
@@ -43,12 +94,12 @@ export function useAIDocuments(workspaceId: string | undefined) {
   const query = useQuery<AIDocumentListItem[]>({
     queryKey: [...AI_DOCUMENTS_QUERY_KEY, lawyerId, workspaceId],
     enabled: !!lawyerId && !!workspaceId,
-    refetchInterval: (q) => {
-      const busy = q.state.data?.some(
-        (d) => d.status === 'processing' || d.analysis_status === 'processing'
-      );
-      return busy ? 4000 : false;
-    },
+    refetchInterval: (q) =>
+      computeDocumentPollInterval(
+        documentsPollingState,
+        q.state.data as AIDocumentListItem[] | undefined,
+        Date.now()
+      ),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_documents')
