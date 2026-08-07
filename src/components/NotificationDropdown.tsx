@@ -22,7 +22,7 @@ import { es } from 'date-fns/locale';
 import posthog from 'posthog-js';
 
 export function NotificationDropdown() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading, isError } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading, isError, refetchNotifications } =
     useNotifications();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +37,7 @@ export function NotificationDropdown() {
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
+      refetchNotifications();
       posthog.capture('notification_viewed');
     }
   };

@@ -39,6 +39,7 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   updateSettings: (settings: Partial<NotificationSettings>) => Promise<void>;
   fetchNotifications: () => void;
+  refetchNotifications: () => void;
   addNotification: (notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) => void;
 }
 
@@ -72,7 +73,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return fetchNotificationsFromApi(token, role, { limit: 50 });
     },
     enabled,
-    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
@@ -84,13 +84,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return fetchUnreadCountFromApi(token);
     },
     enabled,
-    refetchInterval: 30000,
     refetchOnWindowFocus: true,
   });
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
   }, [queryClient]);
+
+  const refetchNotifications = useCallback(() => {
+    invalidate();
+  }, [invalidate]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -190,6 +193,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         markAllAsRead,
         updateSettings,
         fetchNotifications,
+        refetchNotifications,
         addNotification,
       }}
     >
