@@ -3609,10 +3609,10 @@ const aiSubscriptionEmailTemplates = {
   trialReminder: (daysLeft) => {
     const isLastDay = daysLeft === 1;
     const heading = isLastDay
-      ? 'Tu prueba de LegalUp AI termina hoy'
+      ? 'Tu prueba de LegalUp AI termina mañana'
       : '¿Ya probaste LegalUp AI con un caso real?';
     const intro = isLastDay
-      ? 'Tu prueba gratuita de LegalUp AI <strong>termina hoy</strong>.'
+      ? 'Tu prueba gratuita de LegalUp AI <strong>termina mañana</strong>.'
       : `Te quedan <strong>${daysLeft} días</strong> de prueba gratuita de LegalUp AI. ¿Ya analizaste un documento o chateaste con un caso?`;
     return aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">${heading}</h1>
@@ -8182,7 +8182,7 @@ const sendTrialReminderIfDue = async (sub) => {
   if (!userData?.email) return false;
 
   const subject = daysLeft === 1
-    ? 'Tu prueba de LegalUp AI termina hoy'
+    ? 'Tu prueba de LegalUp AI termina mañana'
     : '¿Ya probaste LegalUp AI con un caso real?';
   await sendAIEmail(
     userData.email,
@@ -8196,7 +8196,7 @@ const sendTrialReminderIfDue = async (sub) => {
   await notificationsService.notifyUser({
     userId: sub.lawyer_id,
     type: daysLeft === 1 ? 'ai.trial.last_day' : 'ai.trial.day_3',
-    title: daysLeft === 1 ? 'Tu prueba de LegalUp AI termina hoy' : 'Te quedan 3 días de prueba gratuita',
+    title: daysLeft === 1 ? 'Tu prueba de LegalUp AI termina mañana' : 'Te quedan 3 días de prueba gratuita',
     message: daysLeft === 1
       ? 'Tu prueba gratuita de LegalUp AI vence mañana. Suscríbete para no perder el acceso a tus casos, análisis y chat.'
       : 'Te quedan 3 días de prueba gratuita de LegalUp AI. Aprovecha para analizar un documento con IA.',
