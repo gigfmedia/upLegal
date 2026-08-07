@@ -418,7 +418,7 @@ function DashboardLayout() {
             )}
 
             {/* Main content */}
-            <main className="flex-1 w-full">
+            <main className="flex-1 min-w-0 w-full">
               <div className="min-h-screen">
                 <Outlet />
               </div>

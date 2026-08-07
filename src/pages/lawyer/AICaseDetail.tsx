@@ -218,8 +218,8 @@ export default function AICaseDetail() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <section className="space-y-4">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:min-w-0">
+                <section className="min-w-0 space-y-4">
                   <Card id="ai-documents-section">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
@@ -294,7 +294,7 @@ export default function AICaseDetail() {
                   </section>
                 </section>
 
-                <section className="space-y-4">
+                <section className="min-w-0 space-y-4">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
