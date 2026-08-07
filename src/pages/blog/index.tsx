@@ -198,6 +198,9 @@ const BlogPage = () => {
                       className="h-full w-full object-cover"
                       src={featuredArticle.image || "../assets/arriendo.png"}
                       alt={featuredArticle.category}
+                      width={744}
+                      height={496}
+                      fetchPriority="high"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "../assets/arriendo.png";
                       }}
@@ -287,6 +290,10 @@ const BlogPage = () => {
                     src={article.image || "../assets/arriendo.png"}
                     alt={article.title}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    width={384}
+                    height={256}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "../assets/arriendo.png";
                     }}

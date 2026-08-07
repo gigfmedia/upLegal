@@ -256,10 +256,86 @@ function DashboardLayout() {
         <div className="bg-cream-900 mx-auto">
           <div className="flex">
             {/* Sidebar */}
+            {/* Desktop sidebar */}
+            <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-white border-r border-gray-200">
+              {/* Nav pinned at the top (never rises with the footer) */}
+              <nav className="w-full sticky top-16 self-start py-4">
+                <ul className="space-y-1 px-3">
+                  {navItems.map(({ href, icon: Icon, label, exact, badge, highlightIcon, aiBadge }) => (
+                    <li key={href}>
+                      <Link
+                        to={href}
+                        className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                          isActive(href, exact)
+                            ? 'bg-green-50 text-green-900'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setIsSidebarOpen(false)}
+                      >
+                        <Icon
+                          className={`mr-3 h-5 w-5 ${
+                            highlightIcon
+                              ? 'text-green-400'
+                              : isActive(href, exact)
+                                ? 'text-green-400'
+                                : 'text-gray-400 group-hover:text-gray-500'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <span className="flex flex-1 items-center gap-1.5">
+                          <span>{label}</span>
+                          {aiBadge && (
+                            <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">
+                              AI
+                            </span>
+                          )}
+                        </span>
+                        {badge && (
+                          <span className="ml-auto flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm" />
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+
+              <div className="flex-1" />
+
+              {/* Bottom actions pinned to the bottom; rise with the footer on page end */}
+              <div className="w-full sticky bottom-0 self-end border-t border-gray-200 p-4">
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      to="/dashboard/settings"
+                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        location.pathname === '/dashboard/settings'
+                          ? 'bg-gray-100 text-gray-900'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Settings className="mr-3 h-5 w-5 text-gray-400" />
+                      Configuración
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center px-3 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50"
+                    >
+                      <LogOut className="mr-3 h-5 w-5" />
+                      Cerrar Sesión
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            </aside>
+
+            {/* Mobile drawer */}
             <aside
-              className={`fixed lg:sticky top-16 h-[calc(100vh-64px)] z-40 w-72 lg:w-64 bg-white border-r border-gray-200 flex flex-col ${
+              className={`fixed top-16 bottom-0 z-40 w-72 bg-white border-r border-gray-200 flex flex-col lg:hidden ${
                 isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-              } lg:translate-x-0 transition-transform duration-200 ease-in-out`}
+              } transition-transform duration-200 ease-in-out`}
             >
               <div className="flex-1 overflow-y-auto py-4">
                 <nav>
@@ -302,8 +378,6 @@ function DashboardLayout() {
                   </ul>
                 </nav>
               </div>
-
-              {/* Bottom section */}
               <div className="border-t border-gray-200 p-4">
                 <ul className="space-y-1">
                   <li>

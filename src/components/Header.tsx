@@ -8,9 +8,9 @@ import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabaseClient";
-import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 const AuthModal = lazy(() => import("./AuthModal").then(m => ({ default: m.AuthModal })));
+const NotificationDropdown = lazy(() => import("./NotificationDropdown").then(m => ({ default: m.NotificationDropdown })));
 
 interface HeaderProps {
   onAuthClick?: (mode: 'login' | 'signup') => void;
@@ -214,7 +214,9 @@ export default function Header({
                 (pathname.startsWith('/dashboard') ||
                   pathname.startsWith('/lawyer') ||
                   pathname.startsWith('/admin')) && (
-                  <NotificationDropdown />
+                  <Suspense fallback={null}>
+                    <NotificationDropdown />
+                  </Suspense>
                 )
               )}
               {user ? (

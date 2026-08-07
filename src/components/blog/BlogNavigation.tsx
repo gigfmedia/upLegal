@@ -66,6 +66,10 @@ export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
                   src={prevArticle.image} 
                   alt={prevArticle.title} 
                   className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                  width={400}
+                  height={300}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div className="w-full sm:w-2/3 p-6 flex flex-col justify-between">
@@ -94,6 +98,10 @@ export const BlogNavigation = ({ currentArticleId }: BlogNavigationProps) => {
                   src={nextArticle.image} 
                   alt={nextArticle.title} 
                   className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                  width={400}
+                  height={300}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div className="w-full sm:w-2/3 p-6 flex flex-col justify-between text-right">

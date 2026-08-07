@@ -106,7 +106,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: mode === 'development',
-      minify: 'terser',
+      minify: 'esbuild',
       chunkSizeWarningLimit: 1000,
     },
     plugins: [react()],
