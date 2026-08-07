@@ -337,14 +337,14 @@ const AI_DEFAULT_MODEL = process.env.AI_DEFAULT_MODEL || 'gpt-4o-mini';
 const MAX_EXTRACTED_TEXT_CHARS = 80000;
 
 // ---- LegalUp AI — Fase 3.5: suscripción y trial ----
-const AI_SUBSCRIPTION_PLAN = 'pro';
+const AI_SUBSCRIPTION_PLAN = 'essential';
 const AI_SUBSCRIPTION_PRICE_CLP = 49900;
 const AI_SUBSCRIPTION_TRIAL_DAYS = 5;
 const AI_SUBSCRIPTION_TRIAL_MS = AI_SUBSCRIPTION_TRIAL_DAYS * 24 * 60 * 60 * 1000;
 const AI_EXTERNAL_REF_PREFIX = 'AI_';
 const AI_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
-// Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Pro activo no limita.
+// Límites de uso (Bloque 22). Solo aplican durante el trial; el plan Essential activo no limita.
 // Coinciden con la política del trigger en la BD (3 casos / 10 documentos).
 const AI_MAX_DOCUMENT_SIZE_MB = 20;
 
@@ -6780,7 +6780,7 @@ const checkAIProtectionLimits = async (userId) => {
 
 // Límites de uso del trial (Bloque 22). Retorna un mensaje de error si el
 // abogado en trial superó sus límites, o null si puede continuar.
-// El plan Pro activo no tiene límite de casos/documentos.
+// El plan Essential activo no tiene límite de casos/documentos.
 const checkAILimits = async (userId, access) => {
   if (!access?.isTrialing) return null;
 

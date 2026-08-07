@@ -1,7 +1,7 @@
 /**
  * LegalUp AI — registro de features y gating por plan.
  *
- * Fase 3.5: el acceso a las features requiere una suscripción Pro
+ * Fase 3.5: el acceso a las features requiere una suscripción Essential
  * (activa o en trial). El backend es la autoridad real (402 AI_PLAN_REQUIRED);
  * esta capa solo guía la UI.
  */
@@ -26,13 +26,13 @@ export const AI_FEATURES: AIFeature[] = [
   { key: 'case_analysis', label: 'Analizar mi caso' },
 ];
 
-export const AI_SUBSCRIPTION_PLAN = 'pro';
+export const AI_SUBSCRIPTION_PLAN = 'essential';
 export const AI_SUBSCRIPTION_PRICE_CLP = 49900;
 export const AI_SUBSCRIPTION_TRIAL_DAYS = 5;
 
 export const AI_SUBSCRIPTION_PRICE_LABEL = '$49.900';
 
-/** Límites de uso iniciales (trial y Pro). La autoridad operativa es el backend. */
+/** Límites de uso iniciales (trial y Essential). La autoridad operativa es el backend. */
 export const AI_LIMITS = {
   trialMaxCases: 3,
   trialMaxDocuments: 10,
@@ -42,7 +42,7 @@ export const AI_LIMITS = {
 /** Features disponibles según el plan de la suscripción AI. */
 const PLAN_FEATURES: Record<string, AIFeatureKey[]> = {
   free: [],
-  pro: AI_FEATURES.map(f => f.key),
+  essential: AI_FEATURES.map(f => f.key),
 };
 
 /**

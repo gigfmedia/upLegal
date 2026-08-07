@@ -48,7 +48,7 @@ function formatDate(value: string | null): string {
  * Modal de suscripción / paywall de LegalUp AI.
  * - Sin prueba iniciada → "Empezar prueba gratis".
  * - En trial → "Suscribirme por $49.900/mes".
- * - Plan Pro activo → muestra estado y permite cancelar.
+ * - Plan Essential activo → muestra estado y permite cancelar.
  */
 export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
   const sub = useAISubscription();
@@ -127,7 +127,7 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
 
           <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6">
             {/* <Badge className="absolute right-4 top-4 bg-emerald-100 text-emerald-800">
-              Pro
+              Essential
             </Badge> */}
             <p className="text-3xl font-bold text-gray-900">
               {AI_SUBSCRIPTION_PRICE_LABEL}
@@ -149,7 +149,7 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
 
           {sub.isActive && (
             <p className="text-sm text-muted-foreground">
-              Tu plan <strong>Pro</strong> está activo. Puedes gestionarlo desde tu perfil.
+              Tu plan <strong>Essential</strong> está activo. Puedes gestionarlo desde tu perfil.
             </p>
           )}
 

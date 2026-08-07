@@ -13,12 +13,12 @@ describe('aiFeatures — gating por plan (Fase 3.5)', () => {
     expect(canUseAIFeature('case_analysis', 'free')).toBe(false);
   });
 
-  it('plan pro habilita todas las features', () => {
-    expect(canUseAIFeature('document_analysis', 'pro')).toBe(true);
-    expect(canUseAIFeature('case_chat', 'pro')).toBe(true);
-    expect(canUseAIFeature('case_analysis', 'pro')).toBe(true);
-    expect(canUseAIFeature('jurisprudence', 'pro')).toBe(true);
-    expect(canUseAIFeature('document_drafting', 'pro')).toBe(true);
+  it('plan essential habilita todas las features', () => {
+    expect(canUseAIFeature('document_analysis', 'essential')).toBe(true);
+    expect(canUseAIFeature('case_chat', 'essential')).toBe(true);
+    expect(canUseAIFeature('case_analysis', 'essential')).toBe(true);
+    expect(canUseAIFeature('jurisprudence', 'essential')).toBe(true);
+    expect(canUseAIFeature('document_drafting', 'essential')).toBe(true);
   });
 
   it('plan desconocido se trata como free (sin features)', () => {

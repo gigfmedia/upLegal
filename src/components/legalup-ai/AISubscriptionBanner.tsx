@@ -13,7 +13,7 @@ import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
  * Banner compacto de suscripción que aparece en el workspace de LegalUp AI.
  * - Sin acceso → CTA "Empezar prueba gratis".
  * - En trial → días restantes + CTA "Suscribirme".
- * - Plan Pro activo → no muestra banner.
+ * - Plan Essential activo → no muestra banner.
  */
 export function AISubscriptionBanner() {
   const sub = useAISubscription();

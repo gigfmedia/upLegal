@@ -27,7 +27,7 @@ function formatDate(value: string | null): string {
 
 const STATUS_META: Record<AIAccessStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   trialing: { label: 'En prueba gratuita', variant: 'secondary' },
-  active: { label: 'Plan Pro activo', variant: 'default' },
+  active: { label: 'Plan Essential activo', variant: 'default' },
   cancelled: { label: 'Cancelada', variant: 'outline' },
   past_due: { label: 'Pago pendiente', variant: 'destructive' },
   expired: { label: 'Expirada', variant: 'destructive' },
@@ -77,7 +77,7 @@ export function AISubscriptionCard() {
                 <Crown className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="font-semibold text-gray-900">Plan Pro</p>
+                <p className="font-semibold text-gray-900">Plan Essential</p>
                 <p className="text-sm text-muted-foreground">
                   {AI_SUBSCRIPTION_PRICE_LABEL}/mes
                 </p>
