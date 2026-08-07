@@ -62,12 +62,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cuántos meses debes de arriendo para que te desalojen en Chile? Lo que nadie te dice (2026)"
-        description="¿Sabías que con 1 mes de deuda de arriendo ya pueden iniciar un desalojo? Descubre cuánto tiempo tienes realmente, cómo funciona el juicio y qué hacer para protegerte."
+        title="¿Cuántos meses sin pagar arriendo antes del desalojo en Chile? (2026) | LegalUp"
+        description="Con 1 mes de deuda de arriendo el arrendador ya puede demandarte. Descubre cuánto tiempo tienes realmente, cómo funciona el proceso y qué puedes hacer para protegerte."
         image="/assets/desalojo-3-chile-2026.png"
         url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"
         datePublished="2026-04-20"
-        dateModified="2026-04-20"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -84,7 +84,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Cuántos meses debo de arriendo para que me desalojen en Chile? La verdad sobre los plazos (2026)
+            ¿Cuántos meses sin pagar arriendo para que te desalojen en Chile? Los plazos reales (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">

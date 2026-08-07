@@ -47,18 +47,18 @@ const BlogArticle = () => {
     },
   ];
 
-  const title = "¿Cómo sacar a una persona de mi propiedad en Chile? Guía legal 2026";
+  const title = "Cómo desalojar a un arrendatario en Chile 2026 — pasos legales | LegalUp";
   const url = "https://legalup.cl/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026";
 
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
         title={title}
-        description="¿Necesitas desalojar a una persona de tu propiedad en Chile? Guía legal paso a paso: cómo sacar a un arrendatario, familiar u ocupante, plazos, costos y qué hacer según tu caso."
+        description="¿Necesitas desalojar a un arrendatario sin contrato o con deuda en Chile? Descubre la Ley Devuélveme Mi Casa, plazos, costos y cómo actuar legalmente en 2026."
         image="/assets/como-desalojar-chile-2026.png"
         url={url}
         datePublished="2026-05-02"
-        dateModified="2026-05-02"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
 
@@ -283,7 +283,7 @@ const BlogArticle = () => {
 
 
             <div className="mb-12 border-t border-gray-100 pt-12">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 2 — Cómo desalojar a alguien sin contrato escrito (Arriendo Verbal)</h2>
+              <h2 className="text-2xl font-bold mb-6 text-gray-900">Caso 2 — ¿Cómo desalojar a un arrendatario sin contrato escrito?</h2>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 Muchos propietarios en Chile arriendan "de palabra" a conocidos o familiares. Aunque el contrato verbal es <strong>legalmente válido</strong>, el desafío aquí no es la ley, sino la <strong>prueba</strong>.
               </p>

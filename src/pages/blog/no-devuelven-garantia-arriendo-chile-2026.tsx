@@ -49,12 +49,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)"
-        description="Si el arrendador no te devuelve la garantía de arriendo en Chile, tienes derechos. Aprende paso a paso cómo recuperar tu dinero, cuándo pueden retenerla y cómo demandar."
+        title="No me devuelven la garantía de arriendo en Chile: guía legal 2026 | LegalUp"
+        description="¿No te devuelven el mes de garantía? Conoce tus derechos, los plazos legales, la retención por bancos y cómo interponer una demanda por no devolución en Chile."
         image="/assets/no-devuelven-garantia-arriendo-chile-2026.png"
         url="https://legalup.cl/blog/no-devuelven-garantia-arriendo-chile-2026"
         datePublished="2026-04-08"
-        dateModified="2026-04-08"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -72,7 +72,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
-            No me devuelven la garantía de arriendo en Chile: qué hacer y cómo recuperarla (Guía 2026)
+            No me Devuelven la Garantía de Arriendo: ¿Cómo Recuperarla? (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -499,6 +499,13 @@ const BlogArticle = () => {
                 <p className="text-red-700">Sin evidencia de la relación de arriendo, reclamar la garantía se vuelve significativamente más difícil ante un tribunal.</p>
               </div>
             </div>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se puede retener la garantía de arriendo en bancos (como Banco de Chile)?</h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Es común que para arriendos de alto valor se utilicen vales vista o cuentas de garantía en entidades financieras como Banco de Chile para resguardar los fondos. El banco no puede retener ni liberar la garantía por su cuenta sin que se cumplan las instrucciones del valevista o exista una orden judicial. Si el arrendador se niega a firmar la liberación en el banco de forma injustificada, deberás demandar judicialmente para que el tribunal ordene el pago de la garantía retenida.
+            </p>
           </div>
 
           {/* Casos frecuentes */}

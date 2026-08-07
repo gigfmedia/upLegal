@@ -43,12 +43,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Qué pasa si no firmo el finiquito? Guía Chile 2026"
-        description="¿No firmaste el finiquito y no sabes qué hacer? Conoce los riesgos legales, la reserva de derechos y cómo reclamar lo que te corresponde según la ley chilena."
+        title="¿Qué pasa si no firmo el finiquito en Chile? (Guía 2026) | LegalUp"
+        description="¿No estás de acuerdo con tu finiquito? Entiende qué pasa si te niegas a firmar, los plazos legales para demandar y cómo firmar con reserva de derechos en 2026."
         image="/assets/que-pasa-si-no-firmo-finiquito-chile-2026.png"
         url="https://legalup.cl/blog/que-pasa-si-no-firmo-el-finiquito-chile-2026"
         datePublished="2026-05-20"
-        dateModified="2026-05-20"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -64,7 +64,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Qué pasa si no firmo el finiquito? Guía Chile 2026
+            ¿Qué Pasa si No Firmo el Finiquito en Chile?
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">

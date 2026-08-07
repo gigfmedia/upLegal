@@ -65,12 +65,12 @@ const BlogArticle = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <BlogGrowthHacks
-                title="Cese de convivencia en Chile 2026: qué es, cómo se acredita y por qué es clave para divorciarse"
-                description="Conoce qué es el cese de convivencia en Chile 2026, cómo acreditarlo, plazos para divorciarse, diferencias entre matrimonios pre y post 2004, y por qué es fundamental para el divorcio de mutuo acuerdo y unilateral."
+                title="Cese de convivencia en Chile 2026: cómo hacerlo y qué necesitas | LegalUp"
+                description="¿Planeas divorciarte en Chile? Conoce los requisitos y plazos del cese de convivencia en 2026, cómo obtenerlo en el Registro Civil y cómo acreditarlo fácilmente."
                 image="/assets/cese-de-convivencia-chile-2026.png"
                 url="https://legalup.cl/blog/cese-de-convivencia-chile-2026"
                 datePublished="2026-06-08"
-                dateModified="2026-06-08"
+                dateModified="2026-08-07"
                 faqs={faqs}
             />
 
@@ -89,7 +89,7 @@ const BlogArticle = () => {
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
-                        Cese de convivencia en Chile 2026: qué es, cómo se acredita y por qué es clave para divorciarse
+                        Cese de Convivencia en Chile 2026: Cómo Acreditarlo y Requisitos
                     </h1>
 
                     <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">

@@ -38,12 +38,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?"
-        description="Descubre cuánto demora un juicio laboral en Chile en 2026. Conoce los plazos reales, etapas del proceso, cómo acelerarlo y cuándo conviene llegar a acuerdo."
+        title="¿Cuánto dura un juicio laboral en Chile? Plazos exactos 2026 | LegalUp"
+        description="¿Cuánto se demora un juicio laboral por despido injustificado en Chile? Conoce los plazos reales de las audiencias, cuánto tarda la sentencia y cómo acelerar el proceso en 2026."
         image="/assets/duracion-juicio-laboral-chile-2026.png"
         url="https://legalup.cl/blog/cuanto-dura-juicio-laboral-despido-injustificado-chile-2026"
         datePublished="2026-05-05"
-        dateModified="2026-05-05"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -59,7 +59,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
-            ¿Cuánto dura un juicio laboral por despido injustificado en Chile 2026?
+            ¿Cuánto Dura un Juicio Laboral en Chile? Plazos Reales 2026
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -274,9 +274,19 @@ const BlogArticle = () => {
               ))}
             </div>
 
-            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto demora?</h3>
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto se demora la audiencia de juicio?</h3>
             <p className="text-gray-600 mb-6 leading-relaxed">
               La audiencia de juicio puede durar entre 2 horas y un día completo dependiendo de la complejidad. En casos simples el juez puede fallar en el acto. En casos complejos puede tomarse <strong>hasta 15 días hábiles</strong> para dictar sentencia.
+            </p>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto dura una audiencia laboral en Chile?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Por regla general, una audiencia laboral (preparatoria o de juicio) dura entre 1 y 3 horas. Sin embargo, si hay gran cantidad de testigos o pruebas documentales complejas que rendir, la audiencia de juicio puede extenderse por un día entero o suspenderse para continuar en una fecha posterior.
+            </p>
+
+            <h3 className="text-xl font-bold mb-4 text-gray-900">¿Cuánto tarda la sentencia después de un juicio laboral?</h3>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Una vez finalizada la audiencia de juicio, el juez laboral puede dictar el fallo de inmediato de forma verbal o tomarse un plazo de hasta 15 días hábiles para notificar la sentencia por escrito. Si el empleador decide apelar ante la Corte de Apelaciones, el proceso puede prolongarse entre 6 y 12 meses adicionales.
             </p>
           </div>
 

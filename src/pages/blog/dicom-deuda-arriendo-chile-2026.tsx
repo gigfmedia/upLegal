@@ -48,12 +48,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden meter a DICOM por deuda de arriendo en Chile? Guía legal 2026"
-        description="Descubre cuándo una deuda de arriendo puede afectar tu DICOM en Chile. Requisitos legales, cómo salir y qué hacer si te amenazan. Consulta abogados en LegalUp."
+        title="DICOM y deuda de arriendo en Chile: ¿Cuándo te puede afectar? Guía 2026 | LegalUp"
+        description="¿Puedes ir a DICOM por deuda de arriendo? No es automático. Descubre cuándo el arrendador puede reportarte, qué dice la ley y cómo protegerte si ya estás en DICOM."
         image="/assets/dicom-arriendo-chile-2026.png"
         url="https://legalup.cl/blog/dicom-deuda-arriendo-chile-2026"
         datePublished="2026-04-10"
-        dateModified="2026-04-10"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -71,7 +71,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
-            ¿Me pueden meter a DICOM por deuda de arriendo en Chile? (Guía legal completa 2026)
+            DICOM y Deuda de Arriendo: ¿Cuándo puede afectarte como Arrendatario en Chile? (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
@@ -222,7 +222,7 @@ const BlogArticle = () => {
                     {i + 1}
                   </div>
 
-            
+
 
 
                   <div>
@@ -506,10 +506,38 @@ const BlogArticle = () => {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo dura una deuda en DICOM?</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuánto tiempo dura una deuda de arriendo en DICOM?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Depende del caso. Pero en general puede mantenerse varios años hasta que se pague o elimine.
+              La duración de una deuda de arriendo en DICOM depende de cómo se originó y documentó el registro comercial. En términos generales, las deudas en DICOM pueden mantenerse varios años mientras no se paguen o eliminen.
             </p>
+            <div className="space-y-4 mb-6">
+              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0 mt-0.5">1</div>
+                <div>
+                  <p className="text-lg font-bold text-gray-900 mb-1">Si la deuda se paga</p>
+                  <p className="text-gray-600">Una vez pagada, puedes solicitar la eliminación del registro. El plazo para que se actualice depende del tipo de deuda y del registro comercial.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0 mt-0.5">2</div>
+                <div>
+                  <p className="text-lg font-bold text-gray-900 mb-1">Si no se paga</p>
+                  <p className="text-gray-600">La deuda puede permanecer en el registro comercial de forma indefinida, o hasta que prescriba según la normativa aplicable. Esto puede dificultar arrendar nuevamente, obtener créditos o firmar contratos financieros.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="bg-gray-900 text-white w-7 h-7 rounded-lg flex items-center justify-center font-normal text-sm flex-shrink-0 mt-0.5">3</div>
+                <div>
+                  <p className="text-lg font-bold text-gray-900 mb-1">Si el registro fue indebido</p>
+                  <p className="text-gray-600">Tienes derecho a solicitar la eliminación inmediata si la deuda no cumplía los requisitos legales para ser informada. En estos casos puedes ejercer acciones legales para proteger tu historial comercial.</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8">
+              <p className="text-gray-700 leading-relaxed font-bold">
+                Por eso es importante actuar rápido. Una deuda que se mantiene años en DICOM puede cerrar puertas financieras y habitacionales mucho más allá del conflicto original de arriendo.
+              </p>
+            </div>
           </div>
 
           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 mb-8">

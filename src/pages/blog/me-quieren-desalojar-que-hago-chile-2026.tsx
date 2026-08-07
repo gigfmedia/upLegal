@@ -43,12 +43,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero"
-        description="Para desalojarte, el arrendador debe seguir un proceso legal que puede tomar meses. Conoce los plazos, tus derechos y cuándo un desalojo sin orden judicial es ilegal. Consulta en LegalUp."
+        title="Me quieren desalojar: ¿qué hago? Derechos y pasos urgentes en Chile (2026) | LegalUp"
+        description="Si te quieren desalojar tienes derechos. En Chile nadie puede sacarte sin orden judicial. Descubre qué hacer ahora, cuánto dura el proceso y cómo defenderte legalmente."
         image="/assets/desalojo-chile-2026.png"
         url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"
         datePublished="2026-03-13"
-        dateModified="2026-03-16"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -66,7 +66,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
-            ¿Me pueden desalojar sin orden judicial en Chile? Lo que tienen que hacer primero
+            Me Quieren Desalojar ¿Qué Hago? Tus Derechos y Pasos Urgentes en Chile (2026)
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">

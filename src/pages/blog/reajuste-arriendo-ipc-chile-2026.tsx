@@ -35,8 +35,8 @@ const BlogArticle = () => {
 
   const faqs = [
     {
-      question: "¿Existe una calculadora oficial del IPC para arriendos?",
-      answer: "No existe una calculadora oficial del INE específica para arriendos. Sin embargo, el INE publica el IPC oficial mensualmente. Puedes usar la calculadora incluida en esta guía para estimar el reajuste, pero el cálculo exacto debe basarse en el porcentaje de variación del IPC que establezca tu contrato y el período correspondiente.",
+      question: "¿Existe una calculadora de IPC para arriendos en Chile?",
+      answer: "No existe una calculadora oficial del INE específica para arriendos. Sin embargo, el INE publica el IPC oficial mensualmente y en esta página incluimos una calculadora de IPC arriendo que puedes usar para estimar el reajuste al instante. El cálculo exacto debe basarse en el porcentaje de variación del IPC que establezca tu contrato y el período correspondiente.",
     },
     {
       question: "¿Cuánto pueden subir el arriendo según el IPC en Chile 2026?",
@@ -47,15 +47,19 @@ const BlogArticle = () => {
       answer: "No. El reajuste por IPC solo aplica si el contrato de arriendo lo establece expresamente. Si el contrato no tiene cláusula de reajuste, el arrendador no puede subir el arriendo de forma unilateral durante la vigencia del contrato."
     },
     {
-      question: "¿Cada cuánto se puede reajustar el arriendo en Chile?",
-      answer: "Depende de lo que establezca el contrato. Lo más común es un reajuste anual, aunque algunos contratos establecen reajustes semestrales. El contrato debe indicar claramente la periodicidad y el mecanismo de cálculo."
+      question: "¿Cada cuánto se puede subir el arriendo en Chile?",
+      answer: "Depende del contrato. Lo más habitual es que el arriendo se reajuste una vez al año según el IPC acumulado de los últimos 12 meses. Algunos contratos establecen reajustes semestrales. Sin cláusula de reajuste, el arrendador no puede subir el valor de forma unilateral durante la vigencia del acuerdo."
     },
     {
-      question: "¿Dónde se obtiene el IPC oficial para calcular el reajuste?",
-      answer: "El IPC es publicado mensualmente por el Instituto Nacional de Estadísticas (INE) de Chile en su sitio web oficial. Para calcular correctamente el reajuste debes usar el IPC acumulado del período exacto que indica tu contrato, no el IPC mensual."
+      question: "¿Dónde se obtiene el IPC oficial para calcular el reajuste de arriendo?",
+      answer: "El IPC es publicado mensualmente por el Instituto Nacional de Estadísticas (INE) de Chile en su sitio web oficial (ine.gob.cl). Para calcular correctamente el reajuste de arriendo debes usar el IPC acumulado del período exacto que indica tu contrato, no el IPC mensual puntual."
     },
     {
-      question: "¿Qué puedo hacer si el arrendador aplicó un reajuste incorrecto?",
+      question: "¿Qué es el IPC en Chile y cómo afecta el arriendo?",
+      answer: "El IPC (Índice de Precios al Consumidor) es el indicador oficial de inflación en Chile, publicado mensualmente por el INE. Cuando el contrato de arriendo incluye una cláusula de reajuste por IPC, el valor mensual se actualiza según la inflación acumulada del período, protegiendo a ambas partes de variaciones arbitrarias del precio."
+    },
+    {
+      question: "¿Qué puedo hacer si el arrendador aplicó un reajuste de arriendo incorrecto?",
       answer: "Primero revisa tu contrato para verificar la cláusula de reajuste y el período. Luego compara con el IPC oficial del INE. Si el cobro no corresponde, puedes solicitar una explicación por escrito al arrendador. Si el error persiste, corresponde buscar asesoría legal para evaluar si existe cobro indebido."
     }
   ];
@@ -63,12 +67,12 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Calculadora IPC Arriendo Chile 2026 [Fórmula Exacta]"
-        description="Calculadora de IPC Chile 2026 para reajuste de arriendo. Ingresa tu renta y calcula el aumento exacto por IPC al instante. + Guía legal si te cobran mal."
+        title="Calculadora IPC arriendo 2026: calcula tu reajuste al instante | LegalUp"
+        description="¿Cuánto sube tu arriendo según el IPC? Usa nuestra calculadora de IPC Chile 2026 e ingresa tu renta para obtener el reajuste exacto en segundos. Incluye guía legal completa."
         image="/assets/reajuste-arriendo-ipc-2026.png"
         url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
         datePublished="2026-04-06"
-        dateModified="2026-04-06"
+        dateModified="2026-08-07"
         faqs={faqs}
       />
       <Header onAuthClick={() => { }} />
@@ -86,7 +90,7 @@ const BlogArticle = () => {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
-            Calculadora IPC Arriendo Chile 2026: Reajuste de Alquiler Exacto
+            Calculadora IPC Arriendo Chile 2026: Calcula tu Reajuste al Instante
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
