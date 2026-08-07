@@ -6,16 +6,27 @@
 -- ese nombre. Este plan pasa a llamarse `essential`.
 --
 -- Partes:
---   1) Normaliza las filas existentes: `plan = 'pro'` → `plan = 'essential'`.
---   2) Actualiza el DEFAULT de la columna para concordar con el código
+--   1) Elimina el CHECK existente sobre `plan` (ai_subscriptions_plan_check)
+--      que aún solo admite 'pro'/'base'; sin esto el UPDATE choca (23514).
+--   2) Normaliza las filas existentes: `plan = 'pro'/'base'` → `plan = 'essential'`.
+--   3) Actualiza el DEFAULT de la columna para concordar con el código
 --      (AI_SUBSCRIPTION_PLAN = 'essential').
+--   4) Recrea el CHECK admitiendo el catálogo vigente.
 
--- 1) Migración de datos: 'pro'/'base' → 'essential'.
+-- 1) Quitar el CHECK que restringe los valores de plan.
+ALTER TABLE public.ai_subscriptions DROP CONSTRAINT IF EXISTS ai_subscriptions_plan_check;
+
+-- 2) Migración de datos: 'pro'/'base' → 'essential'.
 UPDATE public.ai_subscriptions
   SET plan = 'essential',
       updated_at = now()
   WHERE plan IN ('pro', 'base');
 
--- 2) DEFAULT coherente con el código.
+-- 3) DEFAULT coherente con el código.
 ALTER TABLE public.ai_subscriptions
   ALTER COLUMN plan SET DEFAULT 'essential';
+
+-- 4) Recrear el CHECK con el catálogo vigente ('free' histórico + 'essential').
+ALTER TABLE public.ai_subscriptions
+  ADD CONSTRAINT ai_subscriptions_plan_check
+  CHECK (plan IN ('free', 'essential'));
