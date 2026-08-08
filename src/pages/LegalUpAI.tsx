@@ -1430,11 +1430,12 @@ function AIVsCell({
   }
   const isCheck = value.startsWith("✓");
   const text = isCheck ? value.slice(1).trim() : value;
+  const hasText = text.length > 0 || !!note;
   return (
-    <span className="flex items-start gap-2.5">
+    <span className={cn("flex items-center", hasText && "gap-2.5")}>
       {isCheck && <VSCheckIcon tone="ai" />}
       <span>
-        <span className="text-[0.85rem] leading-snug text-[var(--ink-dim)]">
+        <span className="text-[0.85rem] leading-snug text-white">
           {text}
         </span>
         {note && (
@@ -1459,7 +1460,7 @@ function AIVsGeneralSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-3xl"
+          className="max-w-4xl"
         >
           <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
             ¿Ya usas ChatGPT o Claude?
@@ -1528,7 +1529,7 @@ function AIVsGeneralSection() {
                 {VS_GENERAL_ROWS.map((row) => (
                   <tr
                     key={row.feature}
-                    className="align-top transition-colors duration-300 hover:bg-[var(--surface)]/20"
+                    className="align-center transition-colors duration-300 hover:bg-[var(--surface)]/20"
                   >
                     <th
                       scope="row"
@@ -1563,7 +1564,7 @@ function AIVsGeneralSection() {
                   {row.feature}
                 </h3>
                 <dl className="mt-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <dt className="pt-1.5 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-[var(--ink-faint)]">
                       ChatGPT / Claude
                     </dt>
@@ -1571,7 +1572,7 @@ function AIVsGeneralSection() {
                       <AIGeneralCell value={row.general} />
                     </dd>
                   </div>
-                  <div className="flex items-start justify-between gap-3 border-t border-[var(--hairline)] pt-3">
+                  <div className="flex items-center justify-between gap-3 border-t border-[var(--hairline)] pt-3">
                     <dt className="pt-1.5 text-[0.6rem] font-medium uppercase tracking-[0.16em] text-[var(--primary)]">
                       LegalUp AI
                     </dt>
