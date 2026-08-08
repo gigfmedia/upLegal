@@ -126,17 +126,23 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
           )}
 
           <div className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6">
-            {/* <Badge className="absolute right-4 top-4 bg-emerald-100 text-emerald-800">
+            <Badge className="absolute right-4 top-4 bg-emerald-100 text-emerald-800">
               Essential
-            </Badge> */}
+            </Badge>
             <p className="text-3xl font-bold text-gray-900">
               {AI_SUBSCRIPTION_PRICE_LABEL}
               <span className="text-sm font-medium text-muted-foreground">/mes</span>
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Empieza con {AI_SUBSCRIPTION_TRIAL_DAYS} días gratis, sin tarjeta. Cancela
-              cuando quieras.
-            </p>
+            {status === 'none' ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Empieza con {AI_SUBSCRIPTION_TRIAL_DAYS} días gratis, sin tarjeta. Cancela
+                cuando quieras.
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Suscríbete para activar tu acceso completo a LegalUp AI.
+              </p>
+            )}
             <ul className="mt-4 space-y-2">
               {PERKS.map((perk) => (
                 <li key={perk} className="flex items-start gap-2 text-sm text-gray-700">
@@ -162,7 +168,7 @@ export function AIPricingModal({ open, onOpenChange }: AIPricingModalProps) {
 
         <div className="mt-2 flex flex-col gap-2">
           {status === 'expired' && (
-            <p className="flex items-center gap-2 text-sm text-amber-600">
+            <p className="flex items-center gap-2 text-sm text-amber-600 mb-4">
               <AlertTriangle className="h-4 w-4" aria-hidden="true" />
               Tu acceso expiró. Suscríbete para continuar.
             </p>

@@ -223,15 +223,15 @@ const ArriendoLanding = () => {
 
                     <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
-                            <div className="text-3xl font-bold text-gray-900">{lawyers.length > 0 ? `${lawyers.length} abogados` : 'Abogados verificados'}</div>
+                            <div className="text-2xl font-bold text-gray-900">{lawyers.length > 0 ? `${lawyers.length} abogados` : 'Abogados verificados'}</div>
                             <p className="text-sm text-gray-500 mt-1">Verificados por el PJUD y disponibles para tu caso</p>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
-                            <div className="text-3xl font-bold text-gray-900">Pago online</div>
+                            <div className="text-2xl font-bold text-gray-900">Pago online</div>
                             <p className="text-sm text-gray-500 mt-1">Procesado de forma segura por Mercado Pago</p>
                         </div>
                         <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
-                            <div className="text-3xl font-bold text-gray-900">Tarifa 100% transparente</div>
+                            <div className="text-2xl font-bold text-gray-900">Tarifa 100% transparente</div>
                             <p className="text-sm text-gray-500 mt-1">El precio que ves es el que pagas.</p>
                         </div>
                     </div>

@@ -3736,12 +3736,17 @@ const aiSubscriptionEmailTemplates = {
   `, 'AI'),
   trialReminder: (daysLeft) => {
     const isLastDay = daysLeft === 1;
+    const endsToday = daysLeft === 0;
     const heading = isLastDay
       ? 'Tu prueba de LegalUp AI termina mañana'
-      : '¿Ya probaste LegalUp AI con un caso real?';
+      : endsToday
+        ? 'Tu prueba de LegalUp AI termina hoy'
+        : '¿Ya probaste LegalUp AI con un caso real?';
     const intro = isLastDay
       ? 'Tu prueba gratuita de LegalUp AI <strong>termina mañana</strong>.'
-      : `Te quedan <strong>${daysLeft} días</strong> de prueba gratuita de LegalUp AI. ¿Ya analizaste un documento o chateaste con un caso?`;
+      : endsToday
+        ? 'Tu prueba gratuita de LegalUp AI <strong>termina hoy</strong>.'
+        : `Te quedan <strong>${daysLeft} días</strong> de prueba gratuita de LegalUp AI. ¿Ya analizaste un documento o chateaste con un caso?`;
     return aiSubscriptionEmailTemplates.shell(`
     <h1 style="color:#1a202c;">${heading}</h1>
     <p>${intro}</p>
@@ -8298,12 +8303,13 @@ const sendTrialReminderIfDue = async (sub) => {
   const trialEndMs = Date.parse(sub.trial_ends_at);
   if (!trialEndMs || trialEndMs <= Date.now()) return false;
 
-  // daysLeft usa el día calendario restante (p. ej. termina "mañana" → 1),
-  // sin depender de la hora exacta a la que corra el cron/la app.
-  const daysLeft = Math.max(1, calendarDaysLeft(trialEndMs));
+  // daysLeft usa el día calendario restante (p. ej. termina "mañana" → 1,
+  // termina "hoy" → 0), sin depender de la hora exacta a la que corra el
+  // cron/la app. Sin clamp: 0 es un hito válido (último día).
+  const daysLeft = calendarDaysLeft(trialEndMs);
 
   // Solo envíos en hitos concretos y sin duplicar.
-  if (daysLeft !== 3 && daysLeft !== 1) return false;
+  if (daysLeft !== 3 && daysLeft !== 1 && daysLeft !== 0) return false;
   if (sub.trial_reminder_day === daysLeft) return false;
 
   const userData = await getAILawyerEmail(sub.lawyer_id);
@@ -8311,7 +8317,9 @@ const sendTrialReminderIfDue = async (sub) => {
 
   const subject = daysLeft === 1
     ? 'Tu prueba de LegalUp AI termina mañana'
-    : '¿Ya probaste LegalUp AI con un caso real?';
+    : daysLeft === 0
+      ? 'Tu prueba de LegalUp AI termina hoy'
+      : '¿Ya probaste LegalUp AI con un caso real?';
   await sendAIEmail(
     userData.email,
     subject,
@@ -8323,19 +8331,25 @@ const sendTrialReminderIfDue = async (sub) => {
   // el email o el abogado no esté logueado justo en ese momento).
   await notificationsService.notifyUser({
     userId: sub.lawyer_id,
-    type: daysLeft === 1 ? 'ai.trial.last_day' : 'ai.trial.day_3',
-    title: daysLeft === 1 ? 'Tu prueba de LegalUp AI termina mañana' : 'Te quedan 3 días de prueba gratuita',
+    type: daysLeft === 0 ? 'ai.trial.last_day' : daysLeft === 1 ? 'ai.trial.last_day' : 'ai.trial.day_3',
+    title: daysLeft === 1
+      ? 'Tu prueba de LegalUp AI termina mañana'
+      : daysLeft === 0
+        ? 'Tu prueba de LegalUp AI termina hoy'
+        : 'Te quedan 3 días de prueba gratuita',
     message: daysLeft === 1
       ? 'Tu prueba gratuita de LegalUp AI vence mañana. Suscríbete para no perder el acceso a tus casos, análisis y chat.'
-      : 'Te quedan 3 días de prueba gratuita de LegalUp AI. Aprovecha para analizar un documento con IA.',
+      : daysLeft === 0
+        ? 'Tu prueba gratuita de LegalUp AI vence hoy. Suscríbete para no perder el acceso a tus casos, análisis y chat.'
+        : 'Te quedan 3 días de prueba gratuita de LegalUp AI. Aprovecha para analizar un documento con IA.',
     entityType: 'ai_subscription',
     entityId: sub.id,
     eventId: `ai-trial-reminder-${sub.id}-${daysLeft}`,
   });
 
   // Hitos de días de la prueba según días restantes (trial de 5 días).
-  // Día 3 → quedan 3 días; Día 5 / último día → queda 1 día.
-  if (daysLeft === 1) {
+  // Día 3 → quedan 3 días; Día 5 / último día → queda 1 día; último día → 0.
+  if (daysLeft <= 1) {
     await capturePostHog('ai_trial_expiring', sub.lawyer_id, { days_left: daysLeft });
     await capturePostHog('ai_trial_last_day', sub.lawyer_id, { days_left: daysLeft });
   } else {
