@@ -1789,7 +1789,7 @@ function PricingSection({
             <div>
               <div className="flex items-center gap-3">
                 <h3 className="font-[var(--font-display)] text-2xl font-bold tracking-tight">
-                  LegalUp AI
+                  LegalUp AI Essential
                 </h3>
                 <span
                   className="rounded-full border border-[var(--primary)]/40 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-[var(--primary)]"
