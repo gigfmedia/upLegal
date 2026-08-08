@@ -8,10 +8,48 @@ import './index.css';
 
 import posthog from "posthog-js";
 import { PostHogProvider } from "@posthog/react";
+import { isTestHostname } from './lib/owner';
 
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
 });
+
+// Aislamiento de pruebas del dueño: marca cada evento con is_owner del owner
+// si estamos en un hostname de test (localhost / preview) para poder filtrar
+// en los dashboards y no contaminar métricas reales.
+const isTestHost = isTestHostname();
+if (isTestHost) {
+  posthog.register({
+    is_owner: true,
+    environment: 'test',
+  });
+}
+
+// Envuelve window.gtag para inyectar un flag de dueño en TODOS los eventos GA4
+// sin tocar cada call-site. Si GTM reemplaza window.gtag después de montar
+// (async), el wrapper queda como best-effort y jamás bloquea analytics real.
+{
+  const realTag = (window as unknown as Record<string, unknown>).gtag;
+  const gtagWrapper = (...args: unknown[]) => {
+    const command = args[0];
+    const eventName = args[1];
+    if (typeof command === 'string' && typeof eventName === 'string' && isTestHost) {
+      const inObj = typeof args[2] === 'object' && args[2] !== null ? (args[2] as Record<string, unknown>) : {};
+      const params = { ...inObj, is_owner: true };
+      try {
+        return typeof realTag === 'function' ? (realTag as (...a: unknown[]) => unknown)(command, eventName, params) : undefined;
+      } catch {
+        return undefined;
+      }
+    }
+    try {
+      return typeof realTag === 'function' ? (realTag as (...a: unknown[]) => unknown)(...args) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  (window as unknown as Record<string, unknown>).gtag = gtagWrapper;
+}
 
 
 // Theme context
@@ -30,7 +68,9 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState('light');
   
   useEffect(() => {
-    posthog.capture("test_event");
+    if (isTestHost) {
+      posthog.capture("test_event");
+    }
   }, []);
   
   return (

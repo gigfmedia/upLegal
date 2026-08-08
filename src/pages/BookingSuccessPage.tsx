@@ -68,24 +68,8 @@ export default function BookingSuccessPage() {
     if (booking && !purchaseTracked.current) {
       purchaseTracked.current = true;
 
-      const isService = booking.booking_type === 'service';
-      const itemName = isService
-        ? booking.service_title || 'Servicio legal'
-        : `Asesoría con ${booking.lawyer?.first_name || 'Tu'} ${booking.lawyer?.last_name || 'Abogado'}`.trim();
-
-      window.gtag?.('event', 'purchase', {
-        transaction_id: booking.id,
-        booking_id: booking.id,
-        value: booking.price,
-        currency: 'CLP',
-        items: [{
-          item_id: booking.id,
-          item_name: itemName,
-          price: booking.price,
-          quantity: 1,
-        }],
-      });
-
+      // GA4 purchase NO se dispara desde el cliente (evita duplicados con el
+      // purchase server-side del webhook aprobado, donde Supabase es fuente de verdad).
       window.gtag?.('event', 'booking_confirmed', {
         booking_id: booking.id,
         booking_type: booking.booking_type || 'appointment',

@@ -110,6 +110,15 @@ const resolveWebhookUrl = (req) => {
   return `${protocol}://${host}/api/mercadopago/webhook`;
 };
 
+// Emails del dueño/propietario de LegalUp (para marcar pruebas internas y que
+// no contaminen métricas reales de clientes).
+const OWNER_EMAILS = new Set([
+  'gigfmedia@icloud.com',
+  'juan.fercommerce@gmail.com',
+]);
+
+const isOwnerEmail = (email) => OWNER_EMAILS.has(String(email || '').trim().toLowerCase());
+
 if (!resend) {
   console.warn('⚠️ RESEND_API_KEY is not configured. Emails will NOT be sent.');
 }
@@ -132,7 +141,7 @@ if (!ga4MeasurementId || !ga4ApiSecret) {
 
 // Send GA4 Purchase Event using Measurement Protocol
 const sendGA4PurchaseEvent = async (params) => {
-  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id } = params;
+  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner } = params;
 
   if (!ga4MeasurementId || !ga4ApiSecret) {
     console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
@@ -153,6 +162,14 @@ const sendGA4PurchaseEvent = async (params) => {
             transaction_id,
             value,
             currency,
+            // GA4 Measurement Protocol lee los parámetros custom como claves
+            // planas de `params`, no anidadas. Se envían así para que el flag
+            // is_owner / transport_is_owner pueda registrarse como dimensión
+            // custom en GA4 y filtrarse en los dashboards.
+            ...(booking_id && { booking_id }),
+            ...(lawyer_id && { lawyer_id }),
+            ...(appointment_id && { appointment_id }),
+            ...(is_owner !== undefined && { transport_is_owner: is_owner }),
             items: [
               {
                 item_id: booking_id,
@@ -160,12 +177,7 @@ const sendGA4PurchaseEvent = async (params) => {
                 price: value,
                 quantity: 1
               }
-            ],
-            custom_parameters: {
-              booking_id,
-              lawyer_id,
-              ...(appointment_id && { appointment_id })
-            }
+            ]
           }
         }
       ]
@@ -2142,6 +2154,69 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       return res.status(200).send('OK');
     }
 
+    // 1.1. Validación de firma MercadoPago (x-signature) — FAIL CLOSED
+    // MANIFEST ARGENTINA: id:{data.id};request-id:{x-request-id};ts:{ts};
+    // data.id se toma de query params (lowercased), fallback al body.
+    const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+    const signatureDataId = (
+      req.query?.['data.id'] ??
+      req.query?.data_id ??
+      req.body?.data?.id ??
+      ''
+    ).toString().trim();
+    const xSignatureHeader = req.headers['x-signature'] || '';
+    const xRequestIdHeader = req.headers['x-request-id'] || '';
+
+    const verifyWebhookSignature = (dataId, xSignature, requestId) => {
+      const kv = {};
+      for (const part of xSignature.split(',')) {
+        const eq = part.indexOf('=');
+        if (eq === -1) continue;
+        const key = part.slice(0, eq).trim();
+        const value = part.slice(eq + 1).trim();
+        if (key) kv[key] = value;
+      }
+
+      const ts = kv['ts'];
+      const v1 = kv['v1'];
+      if (!ts || !v1) return { valid: false, reason: 'header_malformed' };
+
+      const manifestParts = [];
+      if (dataId) manifestParts.push(`id:${dataId.toLowerCase()}`);
+      if (requestId) manifestParts.push(`request-id:${requestId}`);
+      manifestParts.push(`ts:${ts}`);
+      const manifest = manifestParts.join(';') + ';';
+
+      const computed = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex');
+      const a = Buffer.from(computed, 'utf8');
+      const b = Buffer.from(v1, 'utf8');
+      const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
+      return { valid, reason: valid ? null : 'signature_mismatch' };
+    };
+
+    // FAIL CLOSED: sin secret configurado no se procesa nada.
+    if (!webhookSecret) {
+      console.error('[webhook] MERCADOPAGO_WEBHOOK_SECRET NOT configured. Webhook REJECTED (fail-closed). Set it in the webhook config of the sidebar.');
+      return res.status(500).json({ error: 'Webhook verification secret not configured' });
+    }
+
+    // FAIL CLOSED: sin x-signature se rechaza siempre.
+    if (!xSignatureHeader) {
+      console.error('[webhook] Missing x-signature header. Webhook REJECTED (fail closed). x-request-id=' + xRequestIdHeader);
+      return res.status(401).json({ error: 'Missing webhook signature' });
+    }
+
+    // FAIL CLOSED: con x-signature presente, exige firma válida.
+    const signatureCheck = verifyWebhookSignature(signatureDataId, xSignatureHeader, xRequestIdHeader);
+    if (signatureCheck.valid !== true) {
+      console.error('[webhook] signature_verification_failed', {
+        reason: signatureCheck.reason,
+        x_request_id: xRequestIdHeader,
+        topic,
+      });
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
+
     let paymentId = null;
     let source = '';
 
@@ -2237,7 +2312,28 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       console.log('[webhook] step=payment_ingestion payment_id=' + paymentId + ' booking_id=' + bookingId);
 
+      // Idempotencia: si este payment_id ya fue procesado (evento success persistido),
+      // evitamos re-correr appointment, notificaciones, emails, GA4 y duplicar payment_events.
+      try {
+        const { data: existingSuccess } = await supabase
+          .from('payment_events')
+          .select('id, created_at')
+          .eq('event_type', 'success')
+          .filter('metadata->>payment_id', 'eq', paymentId)
+          .maybeSingle();
+
+        if (existingSuccess) {
+          console.log('[webhook] step=idempotency status=skipped payment_id=' + paymentId + ' existing_event=' + existingSuccess.id + ' created_at=' + existingSuccess.created_at);
+          return;
+        }
+      } catch (idempotencyError) {
+        console.error('[webhook] step=idempotency status=check_failed payment_id=' + paymentId, idempotencyError);
+      }
+
       // STEP 1: Payment ingestion - Get booking
+      // Claim atómico: solo actualizamos la booking si aún no tiene payment_id
+      // (guard de idempotencia por row-lock). Si otra entrega concurrente ya
+      // la confirmó, esta actualización afecta 0 filas y se trata como duplicada.
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .update({
@@ -2246,12 +2342,18 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           payment_id: paymentId,
           updated_at: new Date().toISOString()
         })
+        .is('payment_id', null)
         .eq('id', bookingId)
         .select()
         .maybeSingle();
 
-      if (bookingError || !booking) {
+      if (bookingError) {
         console.error('[webhook] step=payment_ingestion status=failed error=' + (bookingError?.message || 'booking not found'));
+        return;
+      }
+
+      if (!booking) {
+        console.log('[webhook] step=idempotency status=skipped booking_already_claimed payment_id=' + paymentId + ' booking_id=' + bookingId);
         return;
       }
 
@@ -2264,7 +2366,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           await fetch('https://us.i.posthog.com/capture/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+              body: JSON.stringify({
               api_key: posthogKey,
               event: 'booking_paid',
               distinct_id: booking.posthog_distinct_id || booking.user_id || booking.user_email,
@@ -2274,6 +2376,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 lawyer_id: booking.lawyer_id,
                 amount: payment.transaction_amount,
                 variant: booking.experiment_variant,
+                is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
               },
             }),
           });
@@ -2471,10 +2574,15 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       const shouldCreateAppointment = booking.requires_meeting !== false;
 
-      // Track payment event
+      // Track payment event.
+      // Idempotencia a nivel DB: el UNIQUE partial index payment_events_success_payment_once
+      // garantiza una sola fila success por payment_id. Un redelivery que haya superado
+      // el SELECT previo y el claim atómico de booking llegará aquí y fallará con 23505;
+      // se trata como duplicado (DO NOTHING) y NO se re-ejecutan efectos secundarios.
       try {
-        await supabase.from('payment_events').insert({
+        const { error: paymentEventError } = await supabase.from('payment_events').insert({
           event_type: 'success',
+          payment_id: paymentId,
           amount: payment.transaction_amount,
           status: 'completed',
           metadata: {
@@ -2485,6 +2593,25 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           },
           user_id: userId || null,
         });
+
+        if (paymentEventError) {
+          // Solo una unique violation provocada POR el índice de idempotencia es un
+          // duplicado benigno. Cualquier otra cosa (network, permisos, RLS, schema,
+          // otra constraint) se propaga como error real.
+          const isIdempotencyConflict =
+            paymentEventError.code === '23505' &&
+            (paymentEventError.message || '').indexOf('payment_events_success_payment_once') !== -1;
+
+          if (isIdempotencyConflict) {
+            console.log(
+              '[webhook] step=payment_event status=already_exists event=duplicate_payment_event ' +
+              'payment_id=' + paymentId + ' booking_id=' + bookingId +
+              ' sqlstate=23505 constraint=payment_events_success_payment_once'
+            );
+          } else {
+            throw paymentEventError;
+          }
+        }
       } catch (trackingError) {
         console.error('[webhook] step=booking_normalization error=payment_event', trackingError);
       }
@@ -2548,7 +2675,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           currency: 'CLP',
           booking_id: bookingId,
           lawyer_id: booking.lawyer_id,
-          appointment_id: appointmentId
+          appointment_id: appointmentId,
+          is_owner: isOwnerEmail(booking.user_email),
         });
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);

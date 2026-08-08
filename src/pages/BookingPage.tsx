@@ -563,7 +563,9 @@ export default function BookingPage() {
           scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
           scheduled_time: selectedTime,
           duration,
-          price: totalPrice
+          price: totalPrice,
+          experiment_variant: variant || null,
+          posthog_distinct_id: posthog.get_distinct_id() || null,
         })
       });
 

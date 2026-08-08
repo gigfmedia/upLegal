@@ -50,7 +50,7 @@ const ArriendoLanding = () => {
 
                 let completeResults = (results || []).filter((lawyer) => {
                     return Boolean(
-                        (lawyer.verified || lawyer.pjud_verified) &&
+                        lawyer.pjud_verified === true &&
                         lawyer.hourly_rate_clp > 0 &&
                         lawyer.bio && lawyer.bio.trim() !== '' &&
                         lawyer.specialties && lawyer.specialties.length > 0 &&
@@ -98,8 +98,8 @@ const ArriendoLanding = () => {
     return (
         <div className="min-h-screen bg-white pt-16">
             <Helmet>
-                <title>Abogado para Problemas de Arriendo en Chile | LegalUp</title>
-                <meta name="description" content="Abogados especialistas en arrendamiento: contratos, cobranza de rentas, término de contratos y recuperación de propiedades." />
+                <title>Abogado Arriendo Chile | Recupera Rentas y Propiedad | LegalUp</title>
+                <meta name="description" content="Abogado para arriendos en Chile: recupera rentas impagas y tu propiedad cuando el arrendatario no paga. Compara abogados verificados por el PJUD, precio por hora y agenda online." />
             </Helmet>
 
             <Header onAuthClick={() => setShowAuthModal(true)} />
@@ -111,10 +111,10 @@ const ArriendoLanding = () => {
                             Derecho Civil / Arrendamiento
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6 leading-tight">
-                            ¿Problemas con tu arriendo o arrendatario?
+                            Tu arrendatario no paga: recupera las rentas y la propiedad
                         </h1>
                         <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
-                            Abogados especialistas en arrendamiento resuelven conflictos de rentas, contratos y recuperación de propiedades.
+                            Encuentra un abogado de arriendo en Chile que inicia el juicio, cobra las rentas impagas y recupera tu departamento o casa. Precio por hora claro y sin sorpresas.
                         </p>
 
                         <div className="flex flex-col items-center gap-3 mb-12">
@@ -130,7 +130,7 @@ const ArriendoLanding = () => {
                             </div>
                             <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                Abogados verificados por el PJUD
+                                {lawyers.length > 0 ? `${lawyers.length} abogados verificados por el PJUD` : 'Abogados disponibles'}
                             </p>
                         </div>
                     </div>
@@ -212,11 +212,29 @@ const ArriendoLanding = () => {
 
                     <h2 className="text-3xl font-bold text-gray-900 mt-12 mb-6">¿Cuánto cuesta un abogado para problemas de arriendo?</h2>
                     <p>
-                        Los costos varían según el servicio: redactar un contrato de arriendo cuesta entre $80.000 y $200.000 CLP; un juicio sumario de arriendo puede costar $500.000 a $1.200.000 CLP dependiendo de la complejidad.
+                        En LegalUp cada abogado publica su propia tarifa por hora, así que el precio que ves es el que pagas. Para evaluar tu caso puedes agendar una consulta inicial que vale la mitad de la tarifa por hora del abogado (una sesión de 30 minutos de media, según la tarifa publicada en su perfil).
                     </p>
                     <p>
-                        Muchos abogados ofrecen consultas iniciales por un valor reducido (aproximadamente la mitad de su hora) para evaluar tu caso. En LegalUp puedes comparar precios transparentes y elegir al especialista que mejor se adapte a tu presupuesto.
+                        Al pagar en línea se agrega un recargo del 10% por los costos de la plataforma (tarifas de Mercado Pago y procesamiento de tu pago). El valor del abogado y el recargo se muestran desglosados antes de confirmar el pago, sin cargos ocultos.
                     </p>
+                    <p>
+                        Un juicio de arriendo o la redacción de un contrato tienen tarifas variables según la complejidad del caso. Al comparar abogados en LegalUp verás su tarifa por hora y podrás elegir al especialista que mejor se ajuste a tu presupuesto.
+                    </p>
+
+                    <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+                            <div className="text-3xl font-bold text-gray-900">{lawyers.length > 0 ? `${lawyers.length} abogados` : 'Abogados verificados'}</div>
+                            <p className="text-sm text-gray-500 mt-1">Verificados por el PJUD y disponibles para tu caso</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+                            <div className="text-3xl font-bold text-gray-900">Pago online</div>
+                            <p className="text-sm text-gray-500 mt-1">Procesado de forma segura por Mercado Pago</p>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+                            <div className="text-3xl font-bold text-gray-900">Tarifa 100% transparente</div>
+                            <p className="text-sm text-gray-500 mt-1">El precio que ves es el que pagas.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -266,10 +284,10 @@ const ArriendoLanding = () => {
             <section className="py-20 bg-green-900 text-white">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl font-bold font-serif text-green-600 mb-6">
-                        ¿Tienes problemas con tu arriendo o arrendatario?
+                        Recupera tu propiedad y las rentas que te deben
                     </h2>
                     <p className="text-xl text-white mb-10">
-                        Un abogado especialista puede resolver tu conflicto rápidamente y proteger tu inversión.
+                        Agenda una consulta inicial por la mitad de la tarifa por hora de un abogado verificado y evalúa tu caso hoy mismo.
                     </p>
                     <Button
                         size="lg"
