@@ -3,6 +3,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { getSupabaseClient } from '@/lib/supabaseClient';
 import { validateAndRefreshSession, refreshSession } from '@/lib/sessionUtils';
 import { handleAuthError } from '@/lib/authErrorHandler';
+import { setOwnerActive, isOwnerEmail } from '@/lib/owner';
 
 declare module '@supabase/supabase-js' {
   interface User {
@@ -59,6 +60,9 @@ export const useAuthState = (): AuthState => {
       const { data: { session: currentSession }, error } = await supabase.auth.getSession();
       
       if (currentSession?.user) {
+        // Activar bloqueo de analytics si el usuario autenticado es el dueño
+        setOwnerActive(isOwnerEmail(currentSession.user.email));
+
         let profileData = null;
         
         // Only try to fetch profile if we have a valid user ID
@@ -232,6 +236,7 @@ export const useAuthState = (): AuthState => {
                 case 'TOKEN_REFRESHED':
                 case 'USER_UPDATED':
                   if (session) {
+                    setOwnerActive(isOwnerEmail(session.user.email));
                     updateState({
                       session,
                       user: session.user,
@@ -243,6 +248,7 @@ export const useAuthState = (): AuthState => {
                   break;
                   
                 case 'SIGNED_OUT':
+                  setOwnerActive(false);
                   updateState({
                     session: null,
                     user: null,

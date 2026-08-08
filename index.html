@@ -63,6 +63,31 @@
 
   <!-- Google Tag Manager -->
   <script>
+    // Bloqueo de analytics para el dueño: si este navegador fue marcado como
+    // dispositivo del dueño (localStorage legalup_owner_device), se niega el
+    // consentimiento ANTES de cargar GTM/gtag.js. Google no enviará ningún
+    // hit de analytics (ni GTM ni ReactGA), así el tráfico del dueño no
+    // contamina la data de GA4. El email que veías en Realtime lo asocia
+    // Google Signals, no el sitio; negar el consentimiento lo detiene.
+    (function () {
+      var isOwnerDevice = false;
+      try {
+        isOwnerDevice = window.localStorage.getItem('legalup_owner_device') === '1';
+      } catch (e) { /* localStorage no disponible */ }
+      if (isOwnerDevice) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { window.dataLayer.push(arguments); }
+        gtag('consent', 'default', {
+          'ad_storage': 'denied',
+          'analytics_storage': 'denied',
+          'ad_user_data': 'denied',
+          'ad_personalization': 'denied'
+        });
+        window['__LEGALUP_BLOCK_ANALYTICS'] = true;
+      }
+    })();
+  </script>
+  <script>
     (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
