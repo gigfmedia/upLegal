@@ -29,13 +29,13 @@ function jsonResponse(body) {
   };
 }
 
-function row(id, rol) {
+function row(id, rol, content = 'contenido') {
   return {
     id: String(id),
     rol: String(rol),
     competenciaShortName: 'Inaplicabilidad',
     highlightParagraphs: [{ full: 'texto del fallo' }],
-    content: 'contenido',
+    content,
   };
 }
 
@@ -66,11 +66,15 @@ function mockTcFetch(handler) {
 function strictTcHandler(rowsBySearch) {
   return (search) => {
     for (const [key, rows] of Object.entries(rowsBySearch)) {
-      if (key === search || search === key) return rows;
+      if (key === search || search === key) {
+        // El proveedor devuelve filas cuyo texto contiene los términos buscados:
+        // el content de cada fila refleja los términos que hicieron match.
+        return rows.map((r) => ({
+          ...r,
+          content: `${r.content} ${search}`,
+        }));
+      }
     }
-    // Simula el matching estricto: la query larga no matchea.
-    const tokens = search.split(/\s+/).filter(Boolean);
-    if (tokens.length > 3) return [];
     return [];
   };
 }
@@ -148,7 +152,7 @@ describe('Test C — deduplicación', () => {
     mockTcFetch((search) => {
       // Devuelve la misma sentencia (mismo id) para varios subconjuntos.
       if (search === 'datos personales' || search === 'personales vida') {
-        return [row(7, '7700-2021')];
+        return [row(7, '7700-2021', 'tratamiento de datos personales y de la vida de las personas')];
       }
       return [];
     });
@@ -173,7 +177,11 @@ describe('Test D — sin resultados reales', () => {
 // Test E: respeta el límite aunque los fallbacks produzcan muchos resultados.
 describe('Test E — límite', () => {
   it('presenta como máximo `limit` fuentes', async () => {
-    const manyRows = Array.from({ length: 8 }, (_, i) => row(1000 + i, `${1000 + i}-2020`));
+    // Devuelve la misma sentencia (mismo id) para varios subconjuntos.
+      const manyRows = Array.from(
+        { length: 8 },
+        (_, i) => row(1000 + i, `${1000 + i}-2020`, 'tratamiento de datos personales de los titulares'),
+      );
     mockTcFetch((search) => (search === 'datos personales' ? manyRows : []));
 
     const sources = await searchTcSentencias(MIXED_QUERY, 2);
@@ -198,5 +206,114 @@ describe('Test F — seguridad de logs', () => {
     expect(logs).not.toContain('12.345.678-9');
     expect(logs).not.toContain('¿puede Juan');
     expect(logs).not.toContain('demandar');
+  });
+});
+
+// Fase 4.1.6 — FIX 1: las entidades numéricas legales (21.719) se conservan
+// como un solo token, no se parten en números sueltos ("21" + "719") que
+// generan basura. FIX 2: un intento no puede llenar el `limit` con filas de
+// coincidencia incidental; si las filas no contienen los términos señal del
+// intento, se ignoran y el fallback continúa hacia variantes conceptuales.
+
+const SHORT_QUERY =
+  '¿Qué derechos reconoce la Ley 21.719 a los titulares de datos personales?';
+
+describe('FIX 1 — conserva entidades numéricas legales', () => {
+  it('no parte "21.719" en tokens sueltos "21"/"719"', async () => {
+    const calls = mockTcFetch(() => []);
+    await searchTcSentencias(SHORT_QUERY, 8);
+
+    const tokens = calls.flatMap((c) => c.split(/\s+/).filter(Boolean));
+    expect(tokens).toContain('21719');
+    expect(tokens).not.toContain('21');
+    expect(tokens).not.toContain('719');
+    // El primer intento usa la entidad fusionada, no los números separados.
+    expect(calls[0].split(/\s+/).filter(Boolean)).toContain('21719');
+  });
+});
+
+describe('FIX 2 — la basura por número incidente no corta el fallback', () => {
+  it('descarta filas incidentales del ancla numérica y recupera las relevantes', async () => {
+    const calls = mockTcFetch((search) => {
+      // Filas que matchean el número "21719" pero NO contienen los términos
+      // señal del intento (coincidencia incidental); deben descartarse.
+      if (search.includes('21719')) {
+        return [row(1577, '1577-2018'), row(3687, '3687-2020'), row(2857, '2857-2019')];
+      }
+      if (search === 'titulares datos personales') {
+        return [
+          row(9666, '9666-2024', 'protección de los datos personales de los titulares de derechos'),
+          row(9511, '9511-2024', 'los titulares de datos personales ejercen sus derechos'),
+        ];
+      }
+      return [];
+    });
+
+    const sources = await searchTcSentencias(SHORT_QUERY, 8);
+
+    const ids = sources.map((s) => s.id);
+    expect(ids).not.toContain('tc-1577');
+    expect(ids).not.toContain('tc-3687');
+    expect(ids).not.toContain('tc-2857');
+    expect(ids).toEqual(['tc-9666', 'tc-9511']);
+    // El fallback continuó hasta la variante conceptual relevante.
+    expect(calls).toContain('titulares datos personales');
+  });
+
+  it('un lote grande de basura no satura el límite y se recupera la relevante', async () => {
+    const calls = mockTcFetch((search) => {
+      if (search.includes('21719')) {
+        return Array.from({ length: 6 }, (_, i) => row(5000 + i, `${5000 + i}-2018`));
+      }
+      if (search === 'titulares datos personales') {
+        return [
+          row(9666, '9666-2024', 'protección de los datos personales de los titulares de derechos'),
+        ];
+      }
+      return [];
+    });
+
+    const sources = await searchTcSentencias(SHORT_QUERY, 2);
+    expect(sources.map((s) => s.id)).toEqual(['tc-9666']);
+    expect(calls).toContain('titulares datos personales');
+  });
+});
+
+describe('FIX 2 — variante conceptual de 2 términos', () => {
+  it('recupera sentencias vía la variante "titulares datos"', async () => {
+    const calls = mockTcFetch((search) => {
+      if (search === 'titulares datos') {
+        return [
+          row(3593, '3593-2022', 'derechos que asisten a los titulares de los datos personales'),
+        ];
+      }
+      return [];
+    });
+
+    const sources = await searchTcSentencias(
+      '¿qué derechos tienen los titulares de datos personales?',
+      8,
+    );
+    expect(sources.map((s) => s.id)).toEqual(['tc-3593']);
+    expect(calls).toContain('titulares datos');
+  });
+});
+
+describe('FIX 2 — deduplicación con el filtro de relevancia activo', () => {
+  it('deduplica la misma sentencia que devuelven dos variantes conceptuales', async () => {
+    mockTcFetch((search) => {
+      if (search === 'datos personales' || search === 'titulares datos') {
+        return [
+          row(9666, '9666-2024', 'protección de los datos personales de los titulares de derechos'),
+        ];
+      }
+      return [];
+    });
+
+    const sources = await searchTcSentencias(
+      '¿qué derechos tienen los titulares de datos personales?',
+      8,
+    );
+    expect(sources.map((s) => s.id)).toEqual(['tc-9666']);
   });
 });

@@ -96,11 +96,26 @@ async function fetchJson(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return response.json();
 }
 
+/**
+ * Une entidades de numeración legal separadas por punto (ej. "21.719",
+ * "19.628", "20.285", "21.644") en una sola representación sin separadores
+ * ("21719"), para que la búsqueda no las fragmente en tokens numéricos sueltos
+ * por el punto ("21" + "719") que generan coincidencias incidentales. No toca
+ * años (sin punto), fechas ("13.12.2024": último grupo de 2 dígitos / tres
+ * grupos) ni RUT ("12.345.678-9": 3 o más grupos), que permanecen igual.
+ */
+function mergeNumericEntities(text) {
+  return String(text || '').replace(/\b\d{1,3}\.\d{3,4}\b(?!\.)/g, (match) =>
+    match.replace(/\./g, ''),
+  );
+}
+
 /** Normaliza una query: quita puntuación, stopwords y acentos para búsquedas. */
-function normalizeSearchTerms(query, stopwords) {
+function normalizeSearchTerms(query, stopwords, { preserveNumberEntities = false } = {}) {
   const raw = String(query || '').normalize('NFC').trim();
   if (!raw) return '';
-  const tokens = raw
+  const prepared = preserveNumberEntities ? mergeNumericEntities(raw) : raw;
+  const tokens = prepared
     .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
     .split(/\s+/)
     .filter(Boolean);
@@ -355,6 +370,49 @@ function isTcLowInfoTerm(term) {
 }
 
 /**
+ * Normaliza el texto de una fila TC para compararlo con los términos señal de
+ * un intento: minúsculas, sin diacríticos, y con la misma fusión de entidades
+ * numéricas ("21.719" → "21719") que se aplica a la consulta, para que la
+ * comparación sea consistente.
+ */
+function normalizeSignalText(text) {
+  return mergeNumericEntities(String(text || ''))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9ñ\s]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Términos "señal" de un intento de búsqueda TC: tokens informativos usados
+ * para evaluar si las filas devueltas por el proveedor tienen respaldo temático
+ * real en su texto (a diferencia de coincidencias incidentales de números
+ * sueltos o palabras genéricas). Excluye tokens de bajo valor informativo y
+ * tokens numéricos cortos; años y números de ley fusionados se conservan.
+ */
+function getTcSignalTerms(search) {
+  return (search || '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(foldTerm)
+    .filter((t) => t.length >= 3 && !isTcLowInfoTerm(t));
+}
+
+/** Indica si una fila TC contiene todos los términos señal del intento. */
+function tcRowHasSignals(row, signals) {
+  if (signals.length === 0) return true;
+  const text = normalizeSignalText(
+    `${row.content || ''} ${(row.highlightParagraphs || [])
+      .map((h) => h.full ?? h.summary ?? '')
+      .filter((v) => v && typeof v === 'string')
+      .join(' ')}`,
+  );
+  return signals.every((signal) => text.includes(signal));
+}
+
+/**
  * Genera de forma determinística la lista ordenada de subconjuntos de términos
  * que se probarán contra la API del TC cuando la query normalizada es larga:
  *   - conserva números de ley / artículos (lo más específico) al frente,
@@ -501,7 +559,7 @@ function mapTcRow(r) {
  * @returns {Promise<object[]>} Fuentes jurisprudenciales TC.
  */
 export async function searchTcSentencias(query, limit = 5, competencia = null) {
-  const attempt0 = normalizeSearchTerms(query, TC_STOPWORDS);
+  const attempt0 = normalizeSearchTerms(query, TC_STOPWORDS, { preserveNumberEntities: true });
   if (!attempt0) return [];
 
   const queryHash = hashQuery(query);
@@ -535,27 +593,44 @@ export async function searchTcSentencias(query, limit = 5, competencia = null) {
       continue;
     }
 
+    // Relevancia temática (Fase 4.1.6): un intento no puede llenar el `limit`
+    // con filas cuyas coincidencias son incidentales. Si las filas devueltas no
+    // contienen los términos significativos del intento, se ignoran y el fallback
+    // continúa hacia variantes conceptualmente más específicas, en vez de cortar
+    // la búsqueda con basura numérica/genérica.
+    const signals = getTcSignalTerms(search);
+    let keptCount = 0;
+    let ignoredCount = 0;
+
+    for (const r of rows) {
+      if (collected.length >= limit) break;
+      if (signals.length > 0 && !tcRowHasSignals(r, signals)) {
+        ignoredCount += 1;
+        continue;
+      }
+      const source = mapTcRow(r);
+      if (!seen.has(source.id)) {
+        seen.add(source.id);
+        collected.push(source);
+        keptCount += 1;
+      }
+    }
+
     logDiagnostic('jurisprudence_tc_query', {
       query_hash: queryHash,
       term_hash: hashQuery(search),
       term_count: (search || '').split(/\s+/).filter(Boolean).length,
       attempt: i + 1,
-      status,
+      status: rows.length > 0 && keptCount === 0 ? 'filtered' : status,
       source_count: rows.length,
+      kept_count: keptCount,
+      ignored_count: ignoredCount,
       duration_ms: Date.now() - startedAt,
     });
 
-    for (const r of rows) {
-      if (collected.length >= limit) break;
-      const source = mapTcRow(r);
-      if (!seen.has(source.id)) {
-        seen.add(source.id);
-        collected.push(source);
-      }
-    }
-
-    // Si la query completa ya dio resultados, conservar el comportamiento
-    // actual: no ejecutar fallbacks (más específico y evita llamadas extra).
+    // Si la query completa ya dio resultados relevantes, conservar el
+    // comportamiento actual: no ejecutar fallbacks (más específico y evita
+    // llamadas extra).
     if (attempts.length > 1 && i === 0 && collected.length > 0) break;
   }
 

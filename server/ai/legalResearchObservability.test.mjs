@@ -55,7 +55,9 @@ function leychileJsonResponse(html) {
   });
 }
 
-function tcResponse() {
+function tcResponse(search) {
+  // El proveedor devuelve filas cuyo texto contiene los términos buscados.
+  const text = `texto relevante del fallo sobre ${search || 'datos personales'}`;
   return jsonResponse({
     data: {
       results: [
@@ -63,11 +65,19 @@ function tcResponse() {
           id: '123',
           rol: '1234-2020',
           competenciaShortName: 'Inaplicabilidad',
+          content: text,
           highlightParagraphs: [{ full: 'texto relevante del fallo' }],
         },
       ],
     },
   });
+}
+
+/** Extrae el término `search` del filter codificado en la URL del TC. */
+function parseTcSearchFromUrl(url) {
+  const parsed = new URL(url);
+  const filter = JSON.parse(parsed.searchParams.get('filter'));
+  return filter.search;
 }
 
 function openalexResponse() {
@@ -95,7 +105,7 @@ function mockFetch({ sparqlFail = false } = {}) {
     if (target.includes(LEYCHILE_JSON_HOST)) {
       return leychileJsonResponse(LEY_21_719_HTML);
     }
-    if (target.includes(TC_API_HOST)) return tcResponse();
+    if (target.includes(TC_API_HOST)) return tcResponse(parseTcSearchFromUrl(url));
     if (target.includes(OPENALEX_API_HOST)) return openalexResponse();
     throw new Error(`unhandled: ${url}`);
   });
@@ -155,7 +165,7 @@ describe('Caso C — BCN cae, el pipeline sobrevive', () => {
       const target = String(url);
       if (target.includes(SPARQL_HOST)) throw new Error('SPARQL error');
       if (target.includes(LEYCHILE_JSON_HOST)) return leychileJsonResponse(LEY_21_719_HTML);
-      if (target.includes(TC_API_HOST)) return tcResponse();
+      if (target.includes(TC_API_HOST)) return tcResponse(parseTcSearchFromUrl(url));
       if (target.includes(OPENALEX_API_HOST)) return openalexResponse();
       throw new Error(`unhandled: ${url}`);
     });
