@@ -7904,7 +7904,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     const caseContext = buildJurisprudenceCaseContext(workspace);
 
-    const { raw, raw: rawText, usage } = await chatCompletion({
+    const { data, raw, raw: rawText, usage } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       system: buildJurisprudenceSystemPrompt(),
       messages: [
@@ -7918,9 +7918,9 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     });
 
     let validated;
-    if (raw) {
+    if (data) {
       try {
-        validated = AIResearchResponseSchema.parse(raw);
+        validated = AIResearchResponseSchema.parse(data);
       } catch {
         validated = null;
       }
