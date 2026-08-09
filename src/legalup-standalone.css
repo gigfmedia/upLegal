@@ -100,6 +100,7 @@
 .legalup-landing .bg-\[var\(--surface\)\]\/70{background-color:color-mix(in oklab,var(--surface)70%,transparent);}
 .legalup-landing .bg-\[var\(--surface\)\]\/90{background-color:color-mix(in oklab,var(--surface)90%,transparent);}
 .legalup-landing .bg-\[var\(--violet-accent\)\]\/70{background-color:color-mix(in oklab,var(--violet-accent)70%,transparent);}
+.legalup-landing .bg-\[var\(--violet-accent\)\]\/\[0\.05\]{background-color:color-mix(in oklab,var(--violet-accent)5%,transparent);}
 .legalup-landing .bg-\[var\(--violet-accent\)\]\/\[0\.06\]{background-color:color-mix(in oklab,var(--violet-accent)6%,transparent);}
 .legalup-landing .bg-\[var\(--violet-accent\)\]\/\[0\.08\]{background-color:color-mix(in oklab,var(--violet-accent)8%,transparent);}
 .legalup-landing .bg-black\/80{background-color:color-mix(in oklab,black 80%,transparent);}
@@ -177,6 +178,7 @@
 .legalup-landing .h-40{height:10.0rem;}
 .legalup-landing .h-5{height:1.25rem;}
 .legalup-landing .h-56{height:14.0rem;}
+.legalup-landing .h-\[24rem\]{height:24rem;}
 .legalup-landing .h-64{height:16.0rem;}
 .legalup-landing .h-7{height:1.75rem;}
 .legalup-landing .h-72{height:18.0rem;}
@@ -271,6 +273,7 @@
 .legalup-landing .p-7{padding:1.75rem;}
 .legalup-landing .p-8{padding:2.0rem;}
 .legalup-landing .pb-24{padding-bottom:6.0rem;}
+.legalup-landing .pb-6{padding-bottom:1.5rem;}
 .legalup-landing .pl-3\.5{padding-left:0.875rem;}
 .legalup-landing .placeholder\:text-\[var\(--ink-faint\)\]::placeholder{color:var(--ink-faint)}
 .legalup-landing .placeholder\:text-\[var\(--muted-foreground\)\]::placeholder{color:var(--muted-foreground)}
@@ -284,6 +287,7 @@
 .legalup-landing .px-3\.5{padding-left:0.875rem;padding-right:0.875rem;}
 .legalup-landing .px-4{padding-left:1.0rem;padding-right:1.0rem;}
 .legalup-landing .px-5{padding-left:1.25rem;padding-right:1.25rem;}
+.legalup-landing .px-6{padding-left:1.5rem;padding-right:1.5rem;}
 .legalup-landing .px-7{padding-left:1.75rem;padding-right:1.75rem;}
 .legalup-landing .px-8{padding-left:2.0rem;padding-right:2.0rem;}
 .legalup-landing .py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem;}
@@ -297,6 +301,7 @@
 .legalup-landing .py-3{padding-top:0.75rem;padding-bottom:0.75rem;}
 .legalup-landing .py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem;}
 .legalup-landing .py-4{padding-top:1.0rem;padding-bottom:1.0rem;}
+.legalup-landing .py-5{padding-top:1.25rem;padding-bottom:1.25rem;}
 .legalup-landing .py-px{padding-top:1px;padding-bottom:1px;}
 .legalup-landing .relative{position:relative;}
 .legalup-landing .right-4{right:1.0rem;}
@@ -365,6 +370,7 @@
 .legalup-landing .top-0{top:0;}
 .legalup-landing .top-1{top:0.25rem;}
 .legalup-landing .top-10{top:2.5rem;}
+.legalup-landing .top-16{top:4.0rem;}
 .legalup-landing .top-24{top:6.0rem;}
 .legalup-landing .top-32{top:8.0rem;}
 .legalup-landing .top-4{top:1.0rem;}
@@ -405,6 +411,7 @@
 .legalup-landing .w-72{width:18.0rem;}
 .legalup-landing .w-9{width:2.25rem;}
 .legalup-landing .w-\[26rem\]{width:26rem;}
+.legalup-landing .w-\[36rem\]{width:36rem;}
 .legalup-landing .w-\[2px\]{width:2px;}
 .legalup-landing .w-\[30rem\]{width:30rem;}
 .legalup-landing .w-\[34rem\]{width:34rem;}
@@ -463,6 +470,7 @@
 .legalup-landing .sm\:pb-32{padding-bottom:8.0rem;}
 .legalup-landing .sm\:pt-40{padding-top:10.0rem;}
 .legalup-landing .sm\:px-5{padding-left:1.25rem;padding-right:1.25rem;}
+.legalup-landing .sm\:px-7{padding-left:1.75rem;padding-right:1.75rem;}
 .legalup-landing .sm\:px-8{padding-left:2.0rem;padding-right:2.0rem;}
 .legalup-landing .sm\:py-32{padding-top:8.0rem;padding-bottom:8.0rem;}
 .legalup-landing .sm\:text-2xl{font-size:1.5rem;line-height:2rem;}

@@ -39,6 +39,7 @@ import {
   Clock,
   ArrowDown,
   ChevronRight,
+  ChevronDown,
   MailWarning,
   Send,
   type LucideIcon,
@@ -2258,6 +2259,9 @@ function LegalUpAI() {
         loading={trialLoading}
       />
 
+      {/* FAQ */}
+      <FAQSection />
+
       {/* FINAL CTA */}
       <section className="relative border-t border-[var(--hairline)] py-24 text-center sm:py-28">
         <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 -z-10 overflow-hidden">
@@ -2321,7 +2325,6 @@ function LegalUpAI() {
           </p>
         </div>
       </footer>
-
       <AIPricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
 
       <AuthModal
@@ -2332,6 +2335,132 @@ function LegalUpAI() {
         aiLanding
       />
     </div>
+  );
+}
+
+/* ───── FAQSection ───── */
+
+const FAQ_ITEMS = [
+  {
+    question: "¿Qué es LegalUp AI?",
+    answer:
+      "Un espacio de trabajo con inteligencia artificial diseñado para abogados, donde puedes analizar documentos, identificar riesgos y obligaciones y conversar con la información de tus casos.",
+  },
+  {
+    question: "¿Qué documentos puedo analizar?",
+    answer:
+      "Puedes cargar documentos jurídicos en PDF, como contratos, demandas, sentencias y otros documentos relacionados con tus casos.",
+  },
+  {
+    question: "¿La IA reemplaza el criterio del abogado?",
+    answer:
+      "No. LegalUp AI es una herramienta de apoyo. Los resultados deben ser revisados y validados por el abogado antes de utilizarlos profesionalmente.",
+  },
+  {
+    question: "¿Mis documentos y casos son privados?",
+    answer:
+      "Cada abogado trabaja en su propio workspace y sus casos y documentos están protegidos mediante controles de acceso para separar la información entre usuarios.",
+  },
+  {
+    question: "¿Cuánto cuesta?",
+    answer:
+      "Puedes probar LegalUp AI gratis durante 5 días. Después, la suscripción tiene un valor de $49.900 CLP al mes.",
+  },
+  {
+    question: "¿Qué pasa cuando termina la prueba?",
+    answer:
+      "Al terminar los 5 días puedes continuar utilizando LegalUp AI contratando la suscripción mensual. No necesitas pagar para comenzar la prueba.",
+  },
+];
+
+function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <section
+      id="faq"
+      className="relative overflow-hidden border-t border-[var(--hairline)] py-24 sm:py-32"
+    >
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute left-1/2 top-16 h-[24rem] w-[36rem] -translate-x-1/2 rounded-full bg-[var(--violet-accent)]/[0.05] blur-[150px]" />
+      </div>
+
+      <div className="mx-auto max-w-3xl px-5 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center"
+        >
+          <p className="text-[0.6875rem] tracking-[0.22em] uppercase font-medium text-[var(--ink-faint)]">
+            Preguntas frecuentes
+          </p>
+          <h2 className="mt-5 font-[var(--font-display)] text-3xl leading-[1.1] tracking-tight sm:text-5xl">
+            Resolvemos tus dudas.
+          </h2>
+        </motion.div>
+
+        <div className="mt-14 space-y-4">
+          {FAQ_ITEMS.map((item, i) => {
+            const isOpen = openIndex === i;
+            return (
+              <motion.div
+                key={item.question}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{
+                  duration: 0.6,
+                  delay: i * 0.06,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                className={`overflow-hidden rounded-2xl border transition-colors duration-300 ${
+                  isOpen
+                    ? "border-[var(--primary)]/30 bg-[var(--surface)]/40"
+                    : "border-[var(--hairline)] bg-[var(--surface)]/25 hover:border-[var(--primary)]/25"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left sm:px-7"
+                >
+                  <span className="font-[var(--font-display)] text-base font-semibold tracking-tight sm:text-lg">
+                    {item.question}
+                  </span>
+                  <motion.span
+                    animate={{ rotate: isOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className={`shrink-0 ${isOpen ? "text-[var(--primary)]" : "text-[var(--ink-faint)]"}`}
+                  >
+                    <ChevronDown className="h-5 w-5" />
+                  </motion.span>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <p className="px-6 pb-6 text-base leading-relaxed text-[var(--muted-foreground)] sm:px-7">
+                        {item.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
