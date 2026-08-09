@@ -191,7 +191,10 @@ export function AICaseTimeline({ workspaceId }: AICaseTimelineProps) {
     <Card>
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle className="font-semibold tracking-tight flex items-center gap-2 text-base">Timeline del caso</CardTitle>
+          
+          <CardTitle className="font-semibold tracking-tight flex items-center gap-2 text-base">
+            <CalendarClock className="h-4 w-4 text-green-700" aria-hidden="true" />
+            Timeline del caso</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Actividad y actualizaciones del caso en orden cronológico.
           </p>

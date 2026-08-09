@@ -503,6 +503,20 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             <p className="text-xs text-muted-foreground">
               Fuentes: Tribunal Constitucional · BCN/LeyChile · Doctrina académica.
             </p>
+
+            <AnimatePresence>
+              {runMutation.isPending && (
+                <motion.div
+                  key="research-thinking"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <AIThinkingIndicator />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
             <Button
               type="button"
               onClick={handleSubmit}
@@ -523,19 +537,6 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             </Button>
           </div>
         </div>
-
-        <AnimatePresence>
-          {runMutation.isPending && (
-            <motion.div
-              key="research-thinking"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <AIThinkingIndicator />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {runMutation.error && (
