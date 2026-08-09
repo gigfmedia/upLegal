@@ -477,7 +477,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   };
 
   return (
-    <Card className="mt-8">
+    <Card className="mt-4">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Scale className="h-4 w-4 text-green-700" aria-hidden="true" />
@@ -496,7 +496,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             placeholder="Ej.: ¿Qué dice la jurisprudencia sobre la indemnización por despido injustificado?"
             disabled={runMutation.isPending}
             aria-label="Consulta de jurisprudencia"
-            rows={3}
+            rows={5}
             className="resize-none"
           />
           <div className="flex items-center justify-between gap-2">

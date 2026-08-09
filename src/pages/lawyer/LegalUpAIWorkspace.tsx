@@ -34,6 +34,7 @@ import { EditCaseModal } from '@/components/legalup-ai/EditCaseModal';
 import { AISubscriptionBanner } from '@/components/legalup-ai/AISubscriptionBanner';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 import { AIUsageMeter } from '@/components/legalup-ai/AIUsageMeter';
+import { AICaseTimelinePreview } from '@/components/legalup-ai/AICaseTimelinePreview';
 import { useAISubscription } from '@/hooks/useAISubscription';
 import type { AIFeatureKey } from '@/lib/aiFeatures';
 
@@ -441,6 +442,17 @@ export default function LegalUpAIWorkspace() {
                         Actualizado: {formatDate(workspace.updated_at)}
                       </span>
                     </div>
+
+                    <AICaseTimelinePreview
+                      workspaceId={workspace.id}
+                      onOpen={() => {
+                        if (!hasAccess) {
+                          openPaywall();
+                          return;
+                        }
+                        navigate(`/lawyer/ai/cases/${workspace.id}`);
+                      }}
+                    />
 
                     <Button
                       type="button"

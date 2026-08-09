@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_case_timeline_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          lawyer_id: string
+          metadata: Json
+          title: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type: string
+          id?: string
+          lawyer_id: string
+          metadata?: Json
+          title: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          lawyer_id?: string
+          metadata?: Json
+          title?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_case_timeline_events_lawyer_id_fkey"
+            columns: ["lawyer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_case_timeline_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "ai_workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+
       ai_chat_messages: {
         Row: {
           content: string
@@ -320,6 +375,7 @@ export type Database = {
           started_at: string
           status: string
           trial_email: string | null
+          unlimited_trial: boolean
           trial_ends_at: string | null
           trial_reminder_day: number | null
           trial_started_at: string | null
@@ -340,6 +396,7 @@ export type Database = {
           started_at?: string
           status?: string
           trial_email?: string | null
+          unlimited_trial?: boolean
           trial_ends_at?: string | null
           trial_reminder_day?: number | null
           trial_started_at?: string | null
@@ -360,6 +417,7 @@ export type Database = {
           started_at?: string
           status?: string
           trial_email?: string | null
+          unlimited_trial?: boolean
           trial_ends_at?: string | null
           trial_reminder_day?: number | null
           trial_started_at?: string | null

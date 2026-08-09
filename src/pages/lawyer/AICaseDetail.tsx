@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   ArrowLeft,
   CalendarDays,
@@ -28,6 +30,12 @@ import {
   type AIDocument,
 } from '@/hooks/useAIDocuments';
 import { useAIFeatureAccess } from '@/hooks/useAISubscription';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import {
+  useAICaseTimeline,
+  syncAICaseTimelineEvents,
+  AI_TIMELINE_QUERY_KEY,
+} from '@/hooks/useAICaseTimeline';
 import { AIPricingModal } from '@/components/legalup-ai/AIPricingModal';
 import { DEFAULT_AI_MODEL } from '@/lib/aiModels';
 import { AIDocumentUpload } from '@/components/legalup-ai/AIDocumentUpload';
@@ -35,6 +43,7 @@ import { AIDocumentList } from '@/components/legalup-ai/AIDocumentList';
 import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
+import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 
 function formatDate(value: string): string {
   try {
@@ -56,6 +65,12 @@ export default function AICaseDetail() {
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
 
+  const { user } = useAuth();
+  const lawyerId = user?.id ?? null;
+  const queryClient = useQueryClient();
+  const { data: timelineEvents } = useAICaseTimeline(caseId);
+  const syncTimelineInFlight = useRef(false);
+
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [model, setModel] = useState(DEFAULT_AI_MODEL);
   const [pricingOpen, setPricingOpen] = useState(false);
@@ -69,6 +84,35 @@ export default function AICaseDetail() {
       setSelectedDocId(null);
     }
   }, [documents, selectedDocId]);
+
+  // Sincroniza eventos automáticos del timeline (case_created, document_uploaded,
+  // document_analyzed). Idempotente: verifica existencia en BD antes de insertar,
+  // así un reintento o re-ejecución de React Query nunca genera duplicados.
+  useEffect(() => {
+    if (!caseId || !lawyerId || !workspace || documentsQuery.isLoading || !timelineEvents) return;
+    if (syncTimelineInFlight.current) return;
+    syncTimelineInFlight.current = true;
+    syncAICaseTimelineEvents({
+      workspaceId: caseId,
+      lawyerId,
+      workspaceCreatedAt: workspace.created_at,
+      documents,
+      events: timelineEvents,
+    })
+      .then(() => {
+        queryClient.invalidateQueries({
+          queryKey: [...AI_TIMELINE_QUERY_KEY, caseId],
+        });
+        queryClient.invalidateQueries({ queryKey: [...AI_TIMELINE_QUERY_KEY, 'recent'] });
+      })
+      .catch((err) => {
+        console.error('[AICaseTimeline] Error sincronizando eventos:', err);
+      })
+      .finally(() => {
+        syncTimelineInFlight.current = false;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseId, lawyerId, workspace, documents, documentsQuery.isLoading, timelineEvents]);
 
   const analysisQuery = useAIDocumentAnalysis(
     selectedDoc?.id,
@@ -194,6 +238,29 @@ export default function AICaseDetail() {
               </Card>
             ) : null}
 
+            <Tabs defaultValue="documents" className="mb-6">
+              <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
+                <TabsTrigger
+                  value="documents"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
+                >
+                  Documentos y análisis
+                </TabsTrigger>
+                <TabsTrigger
+                  value="research"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
+                >
+                  Investigar jurisprudencia
+                </TabsTrigger>
+                <TabsTrigger
+                  value="timeline"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
+                >
+                  Timeline del caso
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="documents" className="mt-4">
             {!canAnalyze ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
@@ -354,7 +421,9 @@ export default function AICaseDetail() {
                 </section>
               </div>
             )}
+              </TabsContent>
 
+              <TabsContent value="research" className="mt-4">
             {!canResearch ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
@@ -382,6 +451,12 @@ export default function AICaseDetail() {
             ) : (
               <AIResearchPanel workspaceId={workspace.id} />
             )}
+              </TabsContent>
+
+              <TabsContent value="timeline" className="mt-4">
+                <AICaseTimeline workspaceId={workspace.id} />
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </div>

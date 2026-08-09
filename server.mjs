@@ -6916,6 +6916,8 @@ const checkAIProtectionLimits = async (userId) => {
 // El plan Essential activo no tiene límite de casos/documentos.
 const checkAILimits = async (userId, access) => {
   if (!access?.isTrialing) return null;
+  // Cuentas de prueba marcadas como ilimitadas no tienen límites de uso.
+  if (access.subscription?.unlimited_trial) return null;
 
   const [{ count: caseCount, error: casesError }, { count: docCount, error: docsError }] =
     await Promise.all([
