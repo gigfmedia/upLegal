@@ -119,7 +119,7 @@ function MarkdownText({ content }: { content: string }) {
 
 function formatDate(value: string): string {
   try {
-    return format(parseISO(value), "d 'de' MMMM yyyy", { locale: es });
+    return format(parseISO(value), "d 'de' MMMM yyyy, HH:mm", { locale: es });
   } catch {
     return value;
   }
@@ -471,6 +471,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [lastQuery, setLastQuery] = useState('');
+  const [freshId, setFreshId] = useState<string | null>(null);
 
   const history = useMemo(() => researchQuery.data ?? [], [researchQuery.data]);
 
@@ -485,7 +486,15 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
         onSuccess: (data) => {
           setInput('');
           setWarnings(data.warnings ?? []);
-          if (data.research) setExpanded(data.research.id);
+          if (data.research) {
+            setExpanded(data.research.id);
+            setFreshId(data.research.id);
+            // La animación de "respuesta lista" hace 2 pulsos (~5s): al
+            // terminar se limpia freshId para quitar también el borde verde.
+            window.setTimeout(() => {
+              setFreshId((cur) => (cur === data.research.id ? null : cur));
+            }, 5100);
+          }
           posthog.capture('ai_jurisprudence_research_completed', {
             source_count: data.sources?.length ?? 0,
           });
@@ -653,6 +662,7 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
               <ResearchItem
                 key={item.id}
                 item={item}
+                fresh={!!item.answer && item.id === freshId}
                 expanded={expanded === item.id}
                 onToggle={() =>
                   setExpanded((prev) => (prev === item.id ? null : item.id))
@@ -668,15 +678,19 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
 
 function ResearchItem({
   item,
+  fresh,
   expanded,
   onToggle,
 }: {
   item: AIResearchRequest;
+  fresh: boolean;
   expanded: boolean;
   onToggle: () => void;
 }) {
   return (
-    <li className="rounded-lg border border-gray-200">
+    <li
+      className={`rounded-lg border ${fresh ? 'research-ready-pulse border-emerald-200' : 'border-gray-200'}`}
+    >
       <button
         type="button"
         onClick={onToggle}
