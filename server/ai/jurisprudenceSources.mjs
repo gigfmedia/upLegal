@@ -464,6 +464,34 @@ const TC_SUBSTANTIVE_SOURCE_CHARS = 3000;
 const TC_HEADER_LINE_RE =
   /^(?:de|enviado el|para|asunto|datos adjuntos?|cc|bcc|importancia|prioridad|urgencia|adjuntos?|destinatarios?)\s*[:：][^\n]*\n?/gi;
 
+// Palabras numéricas (castellano) usadas por el proveedor TC en los números de
+// página ("SEISCIENTOS DIEZ Y OCHO") y que NO son contenido jurídico.
+const TC_PAGE_NUMBER_WORDS = new Set([
+  'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve',
+  'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciseis',
+  'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidos',
+  'veintitres', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta',
+  'ochenta', 'noventa', 'cien', 'ciento', 'doscientos', 'doscientas',
+  'trescientos', 'trescientas', 'cuatrocientos', 'cuatrocientas',
+  'quinientos', 'quinientas', 'seiscientos', 'seiscientas', 'setecientos',
+  'setecientas', 'ochocientos', 'ochocientas', 'novecientos', 'novecientas',
+  'mil', 'millon', 'millones', 'y',
+]);
+const TC_PAGE_NUMBER_RE = new RegExp(
+  `^(?:${[...TC_PAGE_NUMBER_WORDS].join('|')})(?:\s+(?:${[
+    ...TC_PAGE_NUMBER_WORDS,
+  ].join('|')}))*$`,
+  'i',
+);
+
+// Términos demasiado genéricos para priorizar ventanas de evidencia dentro del
+// texto de un fallo (no afectan la búsqueda, solo la selección del excerpt).
+// "constitucional"/"chile" aparecen en casi todo fallo del TC y no discriminan.
+const TC_EXCERPT_GENERIC_TERMS = new Set([
+  'constitucional', 'chile', 'chileno', 'chilenos', 'existe', 'existencia',
+  'existen', 'tribunal', 'sentencia', 'santiago', 'republica',
+]);
+
 /**
  * Límpia texto de cabeceras de ficha/notificación del proveedor TC (líneas tipo
  * "De:", "Para:", "Asunto:", "Datos adjuntos:", campos de correo). Solo elimina
@@ -477,17 +505,176 @@ export function cleanTcSubstantiveText(text) {
   return t.replace(TC_HEADER_LINE_RE, '').trim();
 }
 
+/** Dobla texto de un bloque del fallo para compararlo con términos de la query. */
+function foldContentShard(text) {
+  return mergeNumericEntities(
+    String(text || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{M}/gu, ''),
+  );
+}
+
+/**
+ * Términos significativos de la consulta para extraer ventanas del fallo:
+ * tokens >= 3 caracteres, sin stopwords del TC ni términos genéricos del
+ * excerpt. Preserva entidades numéricas legales fusionadas ("21.719"→"21719").
+ */
+function getTcExcerptTerms(query) {
+  const merged = mergeNumericEntities(String(query || '').normalize('NFC'));
+  const tokens = merged
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  const seen = new Set();
+  const terms = [];
+  for (const t of tokens) {
+    const folded = t.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+    if (folded.length < 3) continue;
+    if (TC_STOPWORDS.has(folded) || TC_EXCERPT_GENERIC_TERMS.has(folded)) continue;
+    if (seen.has(folded)) continue;
+    seen.add(folded);
+    terms.push(folded);
+  }
+  return terms;
+}
+
+/** Bloque puramente ruidoso (número de página, validación, banner)? */
+function isTcNoiseBlock(text) {
+  const t = String(text || '').trim();
+  if (!t) return true;
+  // Números de página ("0000544", "2022", "13") o marcadores SEO.
+  if (/^\d+[.\s\d-]*$/.test(t) && /\d/.test(t) && !/[a-zñáéíóú]/i.test(t)) return true;
+  // Código de validación u otros sellos del proveedor.
+  if (/^c[oó]digo de validaci[oó]n/i.test(t)) return true;
+  // Banners y separadores.
+  if (/^repl[úu]blica de chile$/i.test(t)) return true;
+  if (/^tribunal constitucional$/i.test(t)) return true;
+  if (/^[_\-=*]{3,}$/.test(t)) return true;
+  // Número de página en palabras ("SEISCIENTOS DIEZ Y OCHO").
+  const words = t
+    .replace(/[^\p{L}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length && words.every((w) => TC_PAGE_NUMBER_RE.test(w))) return true;
+  return false;
+}
+
+/** Divide el texto del fallo en bloques sustantivos, descartando ruido. */
+function splitTcContentBlocks(content) {
+  const parts = String(content || '').split(/\n\s*\n/);
+  const blocks = [];
+  for (const p of parts) {
+    const lines = p.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) continue;
+    const text = lines.join(' ');
+    if (isTcNoiseBlock(text)) continue;
+    const folded = foldContentShard(text);
+    if (!folded) continue;
+    blocks.push({ index: blocks.length, text, folded });
+  }
+  return blocks;
+}
+
+/**
+ * Extracción determinística y consciente de la consulta sobre el texto completo
+ * del fallo. Busca ventanas alrededor de los términos significativos de la
+ * consulta, prioriza los fragmentos donde coinciden varios términos, incluye
+ * contexto de los bloques vecinos y siempre conserva el bloque que declara la
+ * materia y la norma impugnada (REQUERIMIENTO/VISTOS/Sentencia Rol). Nunca
+ * sintetiza ni inventa texto.
+ * @param {string} content - texto completo del fallo (`row.content`).
+ * @param {string} query - consulta del usuario (para priorizar ventanas).
+ * @param {number} maxChars - presupuesto máximo del excerpt.
+ * @returns {string} excerpt sustantivo ('' si no hay términos útiles).
+ */
+function extractTcQueryAwareExcerpt(content, query, maxChars) {
+  const termFoldeds = getTcExcerptTerms(query);
+  if (termFoldeds.length === 0) return '';
+  const blocks = splitTcContentBlocks(content);
+  if (blocks.length === 0) return '';
+
+  for (const b of blocks) {
+    b.score = termFoldeds.reduce(
+      (n, term) => (b.folded.includes(term) ? n + 1 : n),
+      0,
+    );
+  }
+
+  // Sin evidencia real de los términos de la consulta en el fallo, no se marca
+  // como extracción query-aware ni se sintetiza contenido.
+  const matched = blocks
+    .filter((b) => b.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+  if (matched.length === 0) return '';
+
+  // Bloque de materia/norma impugnada: siempre se conserva cuando hay evidencia.
+  const leadIdx = blocks.findIndex((b) =>
+    /(requerimiento|vistos|sentencia\s+rol|precepto)/i.test(b.text),
+  );
+
+  const chosen = new Set();
+  let used = 0;
+  const lead = leadIdx >= 0 ? blocks[leadIdx] : null;
+  if (lead) {
+    chosen.add(lead.index);
+    used = lead.text.length + 4;
+  }
+  for (const b of matched) {
+    if (b.index === leadIdx) continue;
+    const piece = b.text.trim();
+    if (used + piece.length + 4 > maxChars) {
+      // Un bloque que por sí solo excede el presupuesto restante no puede
+      // incluirse, pero no debe truncar la selección: bloques posteriores con
+      // menor score pero tamaño más pequeño aún aportan evidencia al excerpt.
+      // Solo se corta cuando el presupuesto ya está completamente agotado.
+      if (used >= maxChars) break;
+      continue;
+    }
+    chosen.add(b.index);
+    used += piece.length + 4;
+    const prev = b.index - 1;
+    const next = b.index + 1;
+    if (prev >= 0 && !chosen.has(prev) && prev !== leadIdx) {
+      const prevPiece = blocks[prev].text.trim();
+      if (used + prevPiece.length + 4 <= maxChars) {
+        chosen.add(prev);
+        used += prevPiece.length + 4;
+      }
+    }
+    if (next < blocks.length && !chosen.has(next) && next !== leadIdx) {
+      const nextPiece = blocks[next].text.trim();
+      if (used + nextPiece.length + 4 <= maxChars) {
+        chosen.add(next);
+        used += nextPiece.length + 4;
+      }
+    }
+  }
+
+  const finalBlocks = [...chosen]
+    .sort((a, b) => a - b)
+    .map((i) => blocks[i].text.trim());
+  return finalBlocks.join('\n\n').trim();
+}
+
 /**
  * Extrae la evidencia sustantiva de una fila del TC. La API entrega:
- *   - `content`: el texto completo de la sentencia ("VISTOS Y CONSIDERANDO…").
- *   - `highlightParagraphs`: para varios roles solo cabeceras de notificación
- *     o bloque de cierre (firmas), NO el razonamiento del fallo.
- * Por eso se prioriza `content` (texto jurídico real); solo si no existe se
- * cae a los highlights como respaldo débil. Nunca sintetiza ni inventa texto.
+ *   - `content`: el texto completo de la sentencia ("VISTOS Y CONSIDERANDO…"),
+ *     cuyo inicio suele contener número de página/validación en español OCReado
+ *     y NO el razonamiento del fallo.
+ *   - `highlightParagraphs`: párrafos que coincidieron con la búsqueda; para
+ *     varios roles solo cabeceras de notificación o bloque de cierre (firmas).
+ * Por eso, cuando hay `query`, se prefiere una extracción consciente de la
+ * consulta sobre el `content` completo (ventanas alrededor de sus términos
+ * significativos) que garantiza evidencia jurídica real; solo si no existe
+ * `content` se cae a los highlights como respaldo débil; sin `query` se
+ * conserva el comportamiento histórico (inicio del `content`). Nunca sintetiza
+ * ni inventa texto.
  * @param {object} r - fila cruda del endpoint TC.
+ * @param {string} [query] - consulta del usuario para extracción query-aware.
  * @returns {{ excerpt: string, excerpt_source: string }}
  */
-export function extractTcSubstantiveExcerpt(r) {
+export function extractTcSubstantiveExcerpt(r, query) {
   const rawContent = String(r.content || '').trim();
   const highlights =
     (r.highlightParagraphs || [])
@@ -498,7 +685,20 @@ export function extractTcSubstantiveExcerpt(r) {
 
   let excerpt;
   let excerpt_source = 'fallback';
-  if (rawContent) {
+  if (rawContent && query) {
+    const aware = extractTcQueryAwareExcerpt(
+      rawContent,
+      query,
+      TC_SUBSTANTIVE_SOURCE_CHARS,
+    );
+    if (aware) {
+      excerpt = aware;
+      excerpt_source = 'content_query';
+    } else {
+      excerpt = truncate(rawContent, TC_SUBSTANTIVE_SOURCE_CHARS);
+      excerpt_source = 'content';
+    }
+  } else if (rawContent) {
     excerpt = truncate(rawContent, TC_SUBSTANTIVE_SOURCE_CHARS);
     excerpt_source = 'content';
   } else if (highlights.length > 0) {
@@ -512,8 +712,8 @@ export function extractTcSubstantiveExcerpt(r) {
 }
 
 /** Convierte una fila cruda del endpoint TC en una fuente `Source` normalizada. */
-function mapTcRow(r) {
-  const { excerpt, excerpt_source: excerptSource } = extractTcSubstantiveExcerpt(r);
+function mapTcRow(r, query) {
+  const { excerpt, excerpt_source: excerptSource } = extractTcSubstantiveExcerpt(r, query);
   logDiagnostic('jurisprudence_tc_excerpt', {
     source_id: r.id ? `tc-${r.id}` : 'tc-?',
     excerpt_source: excerptSource,
@@ -608,7 +808,7 @@ export async function searchTcSentencias(query, limit = 5, competencia = null) {
         ignoredCount += 1;
         continue;
       }
-      const source = mapTcRow(r);
+      const source = mapTcRow(r, query);
       if (!seen.has(source.id)) {
         seen.add(source.id);
         collected.push(source);
