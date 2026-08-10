@@ -423,7 +423,14 @@ export default function AICaseDetail() {
             )}
               </TabsContent>
 
-              <TabsContent value="research" className="mt-4">
+              {/* forceMount: mantiene el panel montado entre pestañas para que
+              el error + "Reintentar" (lastQuery) no se borren al cambiar a
+              Documentos/Análisis o Timeline. Se oculta vía data-state. */}
+              <TabsContent
+                value="research"
+                forceMount
+                className="mt-4 data-[state=inactive]:hidden"
+              >
             {!canResearch ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
