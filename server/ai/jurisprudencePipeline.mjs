@@ -4,7 +4,7 @@ import {
   detectExcessiveConclusions,
   buildJurisprudenceAnswer,
 } from './jurisprudencePrompt.mjs';
-import { resolveClaimFragment } from './jurisprudenceSources.mjs';
+import { resolveClaimFragment, isBcnNormaRelevantToQuery } from './jurisprudenceSources.mjs';
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
 import { orderNormativaByHierarchy, detectHierarchyMatices } from './hierarchy.mjs';
 import { detectContradictions } from './contradiction.mjs';
@@ -115,11 +115,16 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
   // norma y sí recuperamos BCN/LeyChile relevantes, PROMOVEMOS la ley más
   // relevante en lugar de afirmar que no existe normativa. La afirmación se
   // deriva del título oficial (rastreable al idNorma), sin inventar texto legal.
+  // Fase 4.1.12 (fix): SOLO se promueve una norma con relevancia verificable a
+  // la consulta (isBcnNormaRelevantToQuery). Si ninguna supera el umbral, NO se
+  // promueve nada y el pipeline deriva en NO_EVIDENCE: un falso positivo de
+  // fuente ("Ley X regula la materia") es más grave que la ausencia de evidencia.
   const autoNormativas = [];
   if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
+    const relevant = (s) => s.kind === 'normativa' && isBcnNormaRelevantToQuery(query, s);
     const candidate =
-      sources.find((s) => s.kind === 'normativa' && s.norm_type === 'ley') ||
-      sources.find((s) => s.kind === 'normativa');
+      sources.find((s) => relevant(s) && s.norm_type === 'ley') ||
+      sources.find((s) => relevant(s));
     if (candidate) {
       const typeLabel =
         candidate.norm_type === 'ley'

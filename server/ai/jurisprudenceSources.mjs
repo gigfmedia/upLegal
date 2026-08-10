@@ -1279,6 +1279,29 @@ const GENERIC_CONCEPTS = new Set([
   'adquirido', 'otorgando',
 ]);
 
+/**
+ * Términos de MUY bajo valor informativo para DECIDIR si una norma es relevante
+ * a la consulta (Fase 4.1.12, gate de promoción automática). A diferencia de
+ * GENERIC_CONCEPTS, aquí los términos de dominio que sí indican materia (datos,
+ * personales, tratamiento, protección…) cuentan como señal de contenido. Esta
+ * lista solo incluye los que por sí solos NO pueden hacer relevante una norma.
+ */
+const RELEVANCE_LOW_TERMS = new Set([
+  'ley', 'leyes', 'decreto', 'decretos', 'dfl', 'dl', 'dto', 'norma', 'normas',
+  'normativo', 'normativa', 'regula', 'regulan', 'regulacion', 'regular',
+  'derecho', 'derechos', 'articulo', 'titular', 'titulares', 'chile', 'chilena',
+  'chileno', 'chilenas', 'chilenos', 'establece', 'establecen', 'establecer',
+  'aplica', 'aplican', 'aplicable', 'vigente', 'vigentes', 'materia', 'materias',
+  'legal', 'legales', 'pregunta', 'consulta', 'existe', 'existen', 'saber',
+  'sobre', 'para', 'segun', 'cuando', 'como', 'reconoce', 'reconocen',
+  'reconozca', 'garantiza', 'garantizan', 'otorga', 'otorgan', 'confiere',
+  'confieren', 'dispone', 'dispondra', 'contempla', 'contemplan', 'consagra',
+  'incorpora', 'incluye', 'incluyendo', 'permite', 'permiten', 'permitir',
+  'asegura', 'aseguran', 'debera', 'deben', 'debe', 'podra', 'podran', 'podria',
+  'pueda', 'pueden', 'tiene', 'tienen', 'efecto', 'efectos', 'persona',
+  'personas', 'personal', 'resguardo', 'resguarda', 'sujeto', 'sujetos',
+]);
+
 /** Normaliza un texto a tokens sin acentos (palabras simples, ≥4 caracteres). */
 export function normalizeClaimTokens(text) {
   return String(text || '')
@@ -1308,6 +1331,87 @@ function hasWord(normText, term) {
   return new RegExp(`(^|[^a-z0-9ñ])${escaped}($|[^a-z0-9ñ])`).test(normText);
 }
 
+// Umbral mínimo de la señal de relevancia para permitir la PROMOCIÓN automática
+// de una norma cuando el modelo no citó normativa (Fase 4.1.12). La señal se
+// pondera: coincidencia en el título oficial vale más que en extracto/fragmento,
+// y los términos genéricos (ley, derechos, titular…) valen ~0. Bajo este umbral,
+// es preferible NO_EVIDENCE antes que afirmar "Ley X regula la materia".
+const BCN_RELEVANCE_THRESHOLD = 2.5;
+// Peso de una coincidencia de término sustantivo según dónde aparece.
+const BCN_RELEVANCE_WEIGHTS = { title: 3.0, excerpt: 1.5, fragment: 1.5 };
+// Peso residual de un término genérico (nunca decisivo por sí solo).
+const BCN_RELEVANCE_GENERIC_WEIGHT = 0.1;
+
+/**
+ * Determina si una norma BCN/LeyChile es suficientemente RELEVANTE a la consulta
+ * como para PROMOVERLA automáticamente cuando el modelo no citó normativa
+ * (Fase 4.1.12). Determinística y basada en señales de contenido del título,
+ * extracto y fragmentos de la fuente; NO en cantidad bruta de coincidencias.
+ *
+ * Reglas de señal:
+ *   - Términos genéricos (ley, derechos, artículo, titular, Chile, normativa,
+ *     regulación…) puntúan ~0 y por sí solos NUNCA alcanzan el umbral.
+ *   - Una coincidencia del número oficial de la norma citado en la consulta
+ *     (p. ej. "21.719") es señal fuerte y directa: la consulta nombra la norma.
+ *   - Términos sustantivos de la consulta (de dominio, no genéricos) que
+ *     aparecen en el título (peso 3.0), extracto o fragmentos (1.5) suman.
+ *   - Se exige señal >= umbral (2.5) con al menos un término sustantivo, o una
+ *     coincidencia de número oficial.
+ * @param {string} query - Consulta original del abogado.
+ * @param {object} source - Fuente BCN (kind === 'normativa').
+ * @returns {boolean}
+ */
+export function isBcnNormaRelevantToQuery(query, source) {
+  const q = String(query || '').trim();
+  if (!q || !source || source.kind !== 'normativa') return false;
+
+  // Términos sustantivos = tokens de la consulta que NO son de bajo valor
+  // informativo (stopwords ya removidas por normalizeClaimTokens). NO se usa
+  // extractSubstantiveTerms aquí porque GENERIC_CONCEPTS descarta términos de
+  // dominio (datos, personales, protección, tratamiento) que SÍ indican la
+  // materia de una norma y deben contar como señal de contenido.
+  const substantive = normalizeClaimTokens(q).filter((t) => !RELEVANCE_LOW_TERMS.has(t));
+  const generic = normalizeClaimTokens(q).filter((t) => RELEVANCE_LOW_TERMS.has(t));
+  const lawNumbers = extractLawNumber(q);
+
+  // Señal directa y fuerte: la consulta cita el número oficial de la norma.
+  const normNumber = String(source.norm_number || '').replace(/[.,]/g, '');
+  const hasNumberSignal = normNumber.length >= 4 && lawNumbers.includes(normNumber);
+
+  // Texto comparable de la fuente: título (siempre), extracto y fragmentos.
+  const haystacks = [];
+  if (source.title) haystacks.push({ text: source.title, weight: BCN_RELEVANCE_WEIGHTS.title });
+  if (source.excerpt) {
+    haystacks.push({ text: source.excerpt, weight: BCN_RELEVANCE_WEIGHTS.excerpt });
+  }
+  const fragments = Array.isArray(source.metadata?.fragments) ? source.metadata.fragments : [];
+  for (const f of fragments) {
+    if (f?.text) haystacks.push({ text: `${f.article || ''} ${f.text}`, weight: BCN_RELEVANCE_WEIGHTS.fragment });
+  }
+  const normalized = haystacks.map((h) => ({
+    text: String(h.text)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''),
+    weight: h.weight,
+  }));
+
+  let score = 0;
+  let substantiveMatches = 0;
+  for (const t of substantive) {
+    const hit = normalized.find((h) => hasWord(h.text, t));
+    if (hit) {
+      score += hit.weight;
+      substantiveMatches += 1;
+    }
+  }
+  for (const t of generic) {
+    if (normalized.some((h) => hasWord(h.text, t))) score += BCN_RELEVANCE_GENERIC_WEIGHT;
+  }
+
+  return hasNumberSignal || (substantiveMatches >= 1 && score >= BCN_RELEVANCE_THRESHOLD);
+}
+
 /**
  * Ordena los fragmentos según su relevancia a la consulta, priorizando la
  * coincidencia de CONCEPTOS JURÍDICOS SUSTANTIVOS (los términos genéricos como
@@ -1329,6 +1433,89 @@ export function rankFragments(query, fragments, { limit = 5 } = {}) {
     .filter((s) => s.score > 0 || fragments.length <= limit);
   const ranked = scored.sort((a, b) => b.score - a.score || a.index - b.index);
   return ranked.slice(0, limit).map((s) => s.fragment);
+}
+
+// Máximo de fragmentos preservados por señal de contenido (Fase 4.1.12). La
+// preservación NO amplía el presupuesto total (limit sigue controlando cuántos
+// fragmentos se devuelven); solo garantiza que los más relevantes por contenido
+// no queden desplazados por términos de otras dimensiones de la consulta.
+const NORMATIVE_PRESERVE_BUDGET = 2;
+// Mínimo de términos de la consulta presentes en un fragmento para considerarlo
+// "preservable" dentro de una norma ya identificada. Se cuenta cada término por
+// igual: dentro de una norma confirmada, los términos de dominio (derechos,
+// titular, datos, personales…) son señales válidas de materia.
+const NORMATIVE_PRESERVE_SIGNAL = 3;
+// Términos de OTRAS dimensiones (jurisprudencia/doctrina) que NO cuentan como
+// señal de relevancia de un fragmento normativo (Fase 4.1.12). El texto de una
+// ley suele citar "Tribunal Constitucional", "recurso" o "Constitución" como
+// referencias cruzadas; esos términos no indican que el artículo responda a la
+// materia consultada y pueden desplazar el artículo sustantivo correcto.
+const NORM_FRAGMENT_DIMENSION_TERMS = new Set([
+  'jurisprudencia', 'sentencia', 'sentencias', 'fallo', 'fallos', 'tribunal',
+  'tribunales', 'corte', 'rol', 'recurso', 'recursos', 'reclamo', 'reclamacion',
+  'casacion', 'resolucion', 'pronunciamiento', 'constitucional',
+  'constitucionalidad', 'doctrina', 'doctrinario', 'autor', 'autores',
+  'academico', 'ensayo', 'libro', 'chile', 'chilena', 'chileno', 'chilenas',
+  'chilenos', 'pregunta', 'consulta', 'respuesta',
+]);
+
+/**
+ * Selecciona los fragmentos de una norma con una CAPA DE PRESERVACIÓN
+ * (Fase 4.1.12). Se ejecuta el ranking actual de `rankFragments` y además se
+ * detectan fragmentos con señal de contenido altamente relevante (contienen al
+ * menos NORMATIVE_PRESERVE_SIGNAL términos de la consulta), que se preservan al
+ * frente del resultado aunque otros términos de la consulta (jurisprudencia,
+ * sentencia, tribunal…) alteren el ranking del resto. El presupuesto restante se
+ * completa con el ranking actual. Determinístico y basado en el contenido de los
+ * fragmentos, no en IDs: generalizable a cualquier ley.
+ *
+ * Regla de conservación de comportamiento:
+ *   - Si NINGÚN fragmento tiene señal > 0, devuelve [] (igual que el ranking
+ *     actual cuando la consulta no coincide con la norma).
+ * @param {string} query - Consulta del abogado.
+ * @param {Array<{ article: string, text: string, id?: string }>} fragments
+ * @param {{ limit?: number }} [opts]
+ * @returns {Array<{ article: string, text: string, id?: string }>}
+ */
+export function selectNormativeFragments(query, fragments, { limit = 6 } = {}) {
+  const items = Array.isArray(fragments) ? fragments : [];
+  if (items.length === 0) return [];
+
+  // Términos de la consulta que indican MATERIA de la norma: sin duplicados y
+  // sin términos de otras dimensiones (jurisprudencia/doctrina) que solo
+  // contaminan la señal cuando el texto de la ley los cita como referencia.
+  const tokens = [...new Set(normalizeClaimTokens(query))].filter(
+    (t) => !NORM_FRAGMENT_DIMENSION_TERMS.has(t),
+  );
+  const signals = items.map((f, index) => {
+    const norm = `${f.article || ''} ${f.text || ''}`
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    let hits = 0;
+    for (const t of tokens) {
+      if (hasWord(norm, t)) hits += 1;
+    }
+    return { fragment: f, hits, index };
+  });
+
+  // Sin ninguna coincidencia de contenido: mismo comportamiento que el ranking
+  // actual (no enriquecer la norma con fragmentos no relacionados).
+  if (!signals.some((s) => s.hits > 0)) return [];
+
+  const preserved = signals
+    .filter((s) => s.hits >= NORMATIVE_PRESERVE_SIGNAL)
+    .sort((a, b) => b.hits - a.hits || a.index - b.index)
+    .slice(0, NORMATIVE_PRESERVE_BUDGET)
+    .map((s) => s.fragment);
+
+  const ranked = rankFragments(query, items, { limit: items.length });
+  const merged = [];
+  for (const f of [...preserved, ...ranked]) {
+    if (merged.length >= limit) break;
+    if (!merged.some((m) => m === f || (m?.id && f?.id && m.id === f.id))) merged.push(f);
+  }
+  return merged;
 }
 
 /**
@@ -1457,7 +1644,7 @@ async function augmentNormaWithText(src, query) {
   }
   if (!ley || !ley.plain) return src;
   const fragments = splitLawArticles(ley.plain);
-  const selected = rankFragments(query, fragments, { limit: 6 });
+  const selected = selectNormativeFragments(query, fragments, { limit: 6 });
   if (selected.length === 0) return src;
 
   const vigency = detectNormVigency(src.title, {

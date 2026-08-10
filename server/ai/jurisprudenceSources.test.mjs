@@ -10,6 +10,8 @@ import {
   formatNormNumber,
   fragmentSupportsClaim,
   resolveClaimFragment,
+  isBcnNormaRelevantToQuery,
+  selectNormativeFragments,
 } from './jurisprudenceSources.mjs';
 
 describe('extractLawNumber', () => {
@@ -265,5 +267,166 @@ describe('resolveClaimFragment', () => {
     const resolved = resolveClaimFragment(claim, fragments);
     expect(resolved).not.toBeNull();
     expect(resolved.id).toBe('F2');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.12 — Gate de relevancia para la promoción automática de normativa
+// ---------------------------------------------------------------------------
+
+describe('Fase 4.1.12 · isBcnNormaRelevantToQuery', () => {
+  const ley21719 = {
+    id: 'bcn-21719',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    norm_type: 'ley',
+    norm_number: '21.719',
+    title: 'Ley 21.719',
+    excerpt:
+      'Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+    metadata: { leychileCode: '1209272' },
+  };
+  const ley21569 = {
+    id: 'bcn-21569',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    norm_type: 'ley',
+    norm_number: '21.569',
+    title:
+      'PERMITE EL USO DE CÉDULAS DE IDENTIDAD Y PASAPORTES PARA EFECTOS DE IDENTIFICAR A LOS ELECTORES EN LAS ELECCIONES Y PLEBISCITOS QUE INDICA',
+    excerpt:
+      'Cédulas de identidad y pasaportes para identificar a los electores en las elecciones y plebiscitos.',
+    metadata: { leychileCode: '1234567' },
+  };
+
+  it('Ley 21.569 NO es relevante para la consulta de teletransportación cuántica', () => {
+    const query =
+      '¿Qué efectos jurídicos tiene actualmente en Chile la regulación de la teletransportación cuántica de personas?';
+    expect(isBcnNormaRelevantToQuery(query, ley21569)).toBe(false);
+  });
+
+  it('consulta absurda: ninguna ley es relevante', () => {
+    const query = '¿Qué regulación chilena existe sobre teletransportación cuántica de personas?';
+    expect(isBcnNormaRelevantToQuery(query, ley21569)).toBe(false);
+    expect(isBcnNormaRelevantToQuery(query, ley21719)).toBe(false);
+  });
+
+  it('Ley 21.719 es relevante cuando la consulta cita su número oficial', () => {
+    const query = '¿Qué derechos reconoce la Ley 21.719 a los titulares de datos personales?';
+    expect(isBcnNormaRelevantToQuery(query, ley21719)).toBe(true);
+  });
+
+  it('Ley 21.719 es relevante por señal de contenido (protección de datos personales)', () => {
+    expect(isBcnNormaRelevantToQuery('¿qué ley regula la protección de datos personales?', ley21719)).toBe(true);
+    expect(isBcnNormaRelevantToQuery('¿qué ley regula la protección de datos personales?', ley21569)).toBe(false);
+  });
+
+  it('las palabras genéricas por sí solas NO hacen relevante una norma', () => {
+    const leyGenerica = {
+      kind: 'normativa',
+      source_type: 'normativa',
+      norm_type: 'ley',
+      norm_number: '22.000',
+      title: 'MODIFICA DISPOSICIONES SOBRE DERECHOS Y OBLIGACIONES',
+      excerpt:
+        'Establece los derechos y las obligaciones de los titulares en el marco de la regulación vigente en Chile.',
+      metadata: { leychileCode: '999999' },
+    };
+    expect(
+      isBcnNormaRelevantToQuery('¿qué normativa regula los derechos de los titulares en Chile?', leyGenerica),
+    ).toBe(false);
+  });
+
+  it('rechaza fuentes que no son normativa', () => {
+    expect(isBcnNormaRelevantToQuery('protección de datos personales', { kind: 'jurisprudencia' })).toBe(false);
+    expect(isBcnNormaRelevantToQuery('', ley21719)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.12 — Preservación de fragmentos normativos
+// ---------------------------------------------------------------------------
+
+describe('Fase 4.1.12 · selectNormativeFragments (preservación)', () => {
+  const fragments = [
+    {
+      id: 'frag:1209272:f1',
+      article: 'Artículo 1',
+      text: 'Objeto: regular el tratamiento de datos personales conforme a las disposiciones de esta ley.',
+    },
+    {
+      id: 'frag:1209272:f2',
+      article: 'Artículo 2',
+      text: 'Definiciones: dato personal, titular, responsable, encargado y tratamiento de datos personales.',
+    },
+    {
+      id: 'frag:1209272:f4',
+      article: 'Artículo 4',
+      text: 'Derechos del titular de datos personales: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+    },
+    {
+      id: 'frag:1209272:f5',
+      article: 'Artículo 5',
+      text: 'El responsable deberá informar al titular de datos personales sobre el tratamiento de sus datos.',
+    },
+    {
+      id: 'frag:1209272:f6',
+      article: 'Artículo 6',
+      text: 'Principios: licitud, finalidad, proporcionalidad, calidad y seguridad de los datos personales.',
+    },
+    {
+      id: 'frag:1209272:f14',
+      article: 'Artículo 14',
+      text: 'El tratamiento efectuado por organismos públicos se sujetará a las normas de esta ley.',
+    },
+    // Artículo que cita al Tribunal Constitucional como referencia cruzada:
+    // su texto NO debe desplazar el Artículo 4 cuando la consulta es sobre los
+    // derechos de los titulares (Fase 4.1.12).
+    {
+      id: 'frag:1209272:f30bis',
+      article: 'Artículo 30 bis',
+      text: 'Funciones de la Agencia de Protección de Datos Personales y requerimientos ante el Tribunal Constitucional.',
+    },
+  ];
+
+  it('consulta normativa pura: conserva el fragmento del Artículo 4 (derechos del titular)', () => {
+    const selected = selectNormativeFragments('¿Qué derechos reconoce la Ley 21.719?', fragments, { limit: 6 });
+    expect(selected.map((f) => f.id)).toContain('frag:1209272:f4');
+  });
+
+  it('consulta combinada (TC): el Artículo 4 se preserva y el verifier puede resolver claim → fragment_id', () => {
+    const query =
+      '¿Qué establece la Ley 21.719 sobre los derechos de los titulares de datos personales y qué jurisprudencia del Tribunal Constitucional de Chile existe sobre la protección de datos personales?';
+    const selected = selectNormativeFragments(query, fragments, { limit: 6 });
+    // El Art. 4 debe quedar dentro del top-3 visible al modelo (preservado al frente).
+    expect(selected.map((f) => f.id).slice(0, 3)).toContain('frag:1209272:f4');
+    const resolved = resolveClaimFragment(
+      'La ley reconoce a los titulares el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales',
+      selected,
+    );
+    expect(resolved).not.toBeNull();
+    expect(resolved.id).toBe('frag:1209272:f4');
+  });
+
+  it('preservación generalizable por contenido, no por ID específico', () => {
+    const otras = [
+      { id: 'frag:X1', article: 'Artículo 1', text: 'materia de la ley' },
+      {
+        id: 'frag:X4',
+        article: 'Artículo 4',
+        text: 'Derechos del titular de datos personales: acceso, rectificación, supresión y portabilidad de sus datos personales.',
+      },
+      { id: 'frag:X5', article: 'Artículo 5', text: 'deber de información al titular de datos personales' },
+      { id: 'frag:X6', article: 'Artículo 6', text: 'principios de licitud, finalidad y calidad de los datos' },
+    ];
+    const selected = selectNormativeFragments('¿Qué derechos reconoce la Ley 21.719?', otras, { limit: 6 });
+    expect(selected.map((f) => f.id)).toContain('frag:X4');
+  });
+
+  it('no enriquece cuando la consulta no coincide con la norma', () => {
+    expect(selectNormativeFragments('indemnización por despido injustificado del trabajador', fragments, { limit: 6 })).toEqual([]);
+    expect(selectNormativeFragments('', fragments, { limit: 6 })).toEqual([]);
   });
 });

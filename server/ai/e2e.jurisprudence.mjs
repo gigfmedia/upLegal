@@ -18,7 +18,7 @@ import {
   verifyJurisprudenceClaims,
   detectExcessiveConclusions,
 } from './jurisprudencePrompt.mjs';
-import { resolveClaimFragment } from './jurisprudenceSources.mjs';
+import { resolveClaimFragment, isBcnNormaRelevantToQuery } from './jurisprudenceSources.mjs';
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
 import { orderNormativaByHierarchy, detectHierarchyMatices } from './hierarchy.mjs';
 import { detectContradictions } from './contradiction.mjs';
@@ -145,11 +145,14 @@ async function runResearch(query, label) {
   ];
 
   // autoNormativas (mismo logic que el POST).
+  // Fase 4.1.12: solo se promueve una norma con relevancia verificable a la
+  // consulta; si ninguna supera el umbral, no se promueve nada.
   const autoNormativas = [];
   if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
+    const relevant = (s) => s.kind === 'normativa' && isBcnNormaRelevantToQuery(query, s);
     const candidate =
-      sources.find((s) => s.kind === 'normativa' && s.norm_type === 'ley') ||
-      sources.find((s) => s.kind === 'normativa');
+      sources.find((s) => relevant(s) && s.norm_type === 'ley') ||
+      sources.find((s) => relevant(s));
     if (candidate) {
       const typeLabel =
         candidate.norm_type === 'ley'

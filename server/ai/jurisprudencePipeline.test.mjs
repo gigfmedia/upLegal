@@ -273,3 +273,89 @@ describe('buildJurisprudenceOutcome · combinado (Ley 21.719 + TC + doctrina)', 
     expect(result.answer).toContain('Doctrina (no vinculante)');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.12 — Gate de relevancia en la promoción automática (autoNormativas)
+// ---------------------------------------------------------------------------
+
+const irrelevantBcn21569 = () => ({
+  id: 'bcn-21569',
+  kind: 'normativa',
+  source_type: 'normativa',
+  legal_authority: 'vinculante',
+  vigency: 'desconocida',
+  norm_type: 'ley',
+  norm_number: '21.569',
+  citation: 'Ley 21.569',
+  title:
+    'PERMITE EL USO DE CÉDULAS DE IDENTIDAD Y PASAPORTES PARA EFECTOS DE IDENTIFICAR A LOS ELECTORES EN LAS ELECCIONES Y PLEBISCITOS QUE INDICA',
+  excerpt: 'Cédulas de identidad y pasaportes para identificar a los electores en las elecciones.',
+});
+
+describe('buildJurisprudenceOutcome · autoNormativa gate de relevancia (Fase 4.1.12)', () => {
+  it('NO promueve una ley irrelevante (teletransportación → Ley 21.569) y deriva en NO_EVIDENCE', () => {
+    const query =
+      '¿Qué efectos jurídicos tiene actualmente en Chile la regulación de la teletransportación cuántica de personas?';
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'No se encontró normativa específica sobre teletransportación cuántica.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: ['No se encontró normativa que regule la materia.'],
+      },
+      sources: [irrelevantBcn21569()],
+      intent: 'normativa',
+      query,
+    });
+
+    expect(result.status).toBe('ok');
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims).toHaveLength(0);
+    expect(result.persistedSources).toEqual([]);
+    // La ley irrelevante NO aparece como normativa aplicable ni como afirmación.
+    expect(result.answer).not.toContain('21.569');
+    expect(result.answer).not.toContain('regula la materia consultada');
+    expect(result.answer).not.toContain('Normativa relevante');
+    expect(result.resumenFinal).toContain('No se encontró evidencia suficiente');
+  });
+
+  it('consulta absurda sin fuentes pertinentes → NO_EVIDENCE sin promoción', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'Sin evidencia.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [irrelevantBcn21569(), normativaSource()],
+      intent: 'normativa',
+      query: '¿Qué regulación chilena existe sobre teletransportación cuántica de personas?',
+    });
+
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims).toHaveLength(0);
+    expect(result.answer).not.toContain('21.569');
+    expect(result.answer).not.toContain('regula la materia consultada');
+  });
+
+  it('una norma relevante sigue promoviéndose (protección de datos → Ley 21.719)', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'No se encontró normativa específica.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [irrelevantBcn21569(), normativaSource()],
+      intent: 'normativa',
+      query: '¿qué ley regula la protección de datos personales?',
+    });
+
+    expect(result.outcome).toBe('SUCCESS');
+    expect(result.allVerifiedClaims[0].source_id).toBe('bcn-21719');
+    expect(result.allVerifiedClaims[0].afirmacion).toContain('regula la materia consultada');
+  });
+});
