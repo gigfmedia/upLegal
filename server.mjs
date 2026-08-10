@@ -3209,6 +3209,33 @@ app.post('/api/mercadopago/reconcile/:paymentId', async (req, res) => {
       return res.status(500).json({ error: 'Failed to update booking' });
     }
 
+    // Send PostHog booking_paid event (misma fuente de verdad que el webhook:
+    // pago aprobado por MercadoPago + booking actualizado a approved en Supabase).
+    try {
+      const posthogKey = process.env.POSTHOG_PROJECT_API_KEY || process.env.VITE_POSTHOG_KEY;
+      if (posthogKey) {
+        await fetch('https://us.i.posthog.com/capture/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: posthogKey,
+            event: 'booking_paid',
+            distinct_id: booking.posthog_distinct_id || booking.user_id || booking.user_email,
+            properties: {
+              booking_id: bookingId,
+              payment_id: payment.id.toString(),
+              lawyer_id: booking.lawyer_id,
+              amount: payment.transaction_amount,
+              variant: booking.experiment_variant,
+              is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
+            },
+          }),
+        });
+      }
+    } catch (posthogError) {
+      console.error('[reconcile] step=posthog_capture failed', posthogError);
+    }
+
     if (clientUserId) {
       const { data: existingAppointment } = await supabase
         .from('appointments')

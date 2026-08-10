@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
@@ -8,20 +8,22 @@ import './index.css';
 
 import posthog from "posthog-js";
 import { PostHogProvider } from "@posthog/react";
-import { isTestHostname, isOwnerActive } from './lib/owner';
+import { isTestHostname, isOwnerActive, isOwnerDevice } from './lib/owner';
 
 posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_POSTHOG_HOST,
 });
 
-// Aislamiento de pruebas del dueño: marca cada evento con is_owner del owner
-// si estamos en un hostname de test (localhost / preview) para poder filtrar
-// en los dashboards y no contaminar métricas reales.
+// Aislamiento de pruebas del dueño: marca cada evento con is_owner para poder
+// filtrar en los dashboards y no contaminar métricas reales. Aplica cuando el
+// hostname es de test (localhost / preview) o cuando el dispositivo ya fue
+// identificado como del dueño (legalup_owner_device). En producción, si el
+// dueño inicia sesión, setOwnerActive se encarga del registro en runtime.
 const isTestHost = isTestHostname();
-if (isTestHost) {
+if (isTestHost || isOwnerDevice()) {
   posthog.register({
     is_owner: true,
-    environment: 'test',
+    environment: isTestHost ? 'test' : 'prod',
   });
 }
 
@@ -59,13 +61,7 @@ const ThemeContext = React.createContext<ThemeContextType>({
 // Theme provider
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState('light');
-  
-  useEffect(() => {
-    if (isTestHost) {
-      posthog.capture("test_event");
-    }
-  }, []);
-  
+
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <div data-theme={theme} className={theme}>

@@ -247,8 +247,16 @@ export default function BookingPage() {
         lawyer_id: lawyer.user_id,
         lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`
       });
+      // Evento de PostHog con variante del experimento: es la entrada del funnel
+      // exposure → booking_continue_clicked → booking_paid. La exposición real del
+      // flag ($feature_flag_called) ya la emite useFeatureFlagVariantKey al montar.
+      posthog.capture('booking_page_viewed', {
+        variant,
+        lawyer_id: lawyer.user_id,
+        lawyer_name: `${lawyer.first_name} ${lawyer.last_name}`,
+      });
     }
-  }, [lawyer]);
+  }, [lawyer, variant]);
 
   // Apply deep link prefill once lawyer is loaded and slots are ready
   useEffect(() => {

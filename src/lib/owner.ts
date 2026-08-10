@@ -1,3 +1,5 @@
+import posthog from 'posthog-js';
+
 const OWNER_EMAILS = [
   'gigfmedia@icloud.com',
   'juan.fercommerce@gmail.com',
@@ -34,6 +36,13 @@ export const setOwnerActive = (active: boolean): void => {
   ownerActive = active;
   if (active) {
     markOwnerDevice();
+    // Marca la persona de PostHog como dueña en runtime (producción). En test
+    // hosts o dispositivos del dueño, main.tsx ya lo registra al bootear.
+    try {
+      posthog.register({ is_owner: true, environment: 'prod' });
+    } catch {
+      // noop — no debe romper el flujo de auth
+    }
   }
 };
 
