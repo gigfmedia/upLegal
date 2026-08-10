@@ -7,6 +7,7 @@ import {
   FileText,
   Landmark,
   Loader2,
+  RefreshCw,
   Scale,
   Sparkles,
 } from 'lucide-react';
@@ -434,10 +435,33 @@ function errorToMessage(error: AIResearchError | null): string {
       return 'El servicio de IA no está configurado. Contacta al equipo de LegalUp.';
     case 'OUTPUT_TOKEN_LIMIT':
       return 'La respuesta superó el presupuesto de tokens. Intenta con una consulta más acotada.';
+    case 'AI_PROVIDER_RATE_LIMITED':
+      return 'El proveedor de IA está temporalmente limitado. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_INVALID_RESPONSE':
+      return 'El modelo de IA no devolvió una respuesta válida. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_NETWORK':
+      return 'No se pudo conectar con el proveedor de IA. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_SERVER_ERROR':
+      return 'El proveedor de IA presentó un error temporal. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_AUTH':
+      return 'No se pudo autenticar con el proveedor de IA. Contacta al equipo de LegalUp.';
     default:
       return error?.message || 'No pudimos completar la investigación. Intenta nuevamente.';
   }
 }
+
+// Errores del proveedor ante los que tiene sentido ofrecer "Reintentar".
+// NO incluye errores de búsqueda/validación (NO_SOURCES_FOUND,
+// CONTEXT_TOO_LARGE), de configuración (AI_NOT_CONFIGURED) ni de
+// autenticación (AI_PROVIDER_AUTH).
+const RETRIABLE_CODES = new Set([
+  'AI_PROVIDER_RATE_LIMITED',
+  'AI_PROVIDER_INVALID_RESPONSE',
+  'AI_PROVIDER_NETWORK',
+  'AI_PROVIDER_SERVER_ERROR',
+  'AI_PROVIDER_ERROR',
+  'OUTPUT_TOKEN_LIMIT',
+]);
 
 export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   const researchQuery = useAICaseResearch(workspaceId, true);
@@ -446,18 +470,17 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
   const [input, setInput] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [lastQuery, setLastQuery] = useState('');
 
   const history = useMemo(() => researchQuery.data ?? [], [researchQuery.data]);
 
-  const handleSubmit = () => {
-    const trimmed = input.trim();
-    if (!trimmed || runMutation.isPending) return;
+  const runResearch = (query: string) => {
     setWarnings([]);
     posthog.capture('ai_jurisprudence_research_started', {
-      query_length: trimmed.length,
+      query_length: query.length,
     });
     runMutation.mutate(
-      { query: trimmed },
+      { query },
       {
         onSuccess: (data) => {
           setInput('');
@@ -475,6 +498,21 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
       }
     );
   };
+
+  const handleSubmit = () => {
+    const trimmed = input.trim();
+    if (!trimmed || runMutation.isPending) return;
+    setLastQuery(trimmed);
+    runResearch(trimmed);
+  };
+
+  const handleRetry = () => {
+    if (!lastQuery || runMutation.isPending) return;
+    runResearch(lastQuery);
+  };
+
+  const canRetry =
+    !!runMutation.error && !!lastQuery && RETRIABLE_CODES.has(runMutation.error.code ?? '');
 
   return (
     <Card className="mt-4">
@@ -545,10 +583,25 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
             >
               <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-              <p className="text-xs text-amber-900">{errorToMessage(runMutation.error)}</p>
+              <p className="min-w-0 flex-1 text-xs text-amber-900">
+                {errorToMessage(runMutation.error)}
+              </p>
+              {canRetry && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  disabled={runMutation.isPending}
+                  className="shrink-0 border-amber-300 text-amber-900 hover:bg-amber-100"
+                >
+                  <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                  Reintentar
+                </Button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -66,6 +66,82 @@ function extractJson(text) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
+// ---------------------------------------------------------------------------
+// Clasificación de errores del proveedor (Fase 4.1.10).
+// Convierte un status HTTP / cuerpo de error de OpenRouter en un error
+// TIPADO (code) para que el pipeline distinga con certeza:
+//   - AI_PROVIDER_RATE_LIMITED  → 429 OpenRouter (free models: rate-limit upstream)
+//   - AI_PROVIDER_AUTH          → 401/403
+//   - AI_PROVIDER_SERVER_ERROR  → 5xx temporales
+//   - AI_PROVIDER_NETWORK       → fallo de red / timeout
+//   - AI_PROVIDER_ERROR         → cualquier otro fallo del proveedor
+// El mensaje devuelto es SIEMPRE seguro para el cliente (sin JSON crudo,
+// sin "Darkbloom", sin metadata del proveedor). El detalle crudo queda en
+// `error.detail` para logging interno, nunca para la UI.
+// ---------------------------------------------------------------------------
+
+const isRateLimitBody = (body) => {
+  if (!body || typeof body !== 'object') return false;
+  const error = body.error || {};
+  const metadata = error.metadata || {};
+  const rawText = `${String(metadata.raw || '')} ${String(metadata.provider_name || '')} ${String(error.message || '')}`;
+  return error.code === 429 || /\b429\b/i.test(rawText) || /rate[ ._-]?limit/i.test(rawText);
+};
+
+/**
+ * Clasifica un error del proveedor y devuelve un Error tipado.
+ * @param {number} status - status HTTP real.
+ * @param {string} text - cuerpo de la respuesta (para detectar 429 de OpenRouter).
+ */
+export function classifyProviderError(status, text = '') {
+  const raw = String(text || '').slice(0, 300);
+  const body = (() => {
+    try {
+      return JSON.parse(String(text || ''));
+    } catch {
+      return null;
+    }
+  })();
+
+  let code;
+  let message;
+  let retriable;
+
+  if (status === 429 || (status !== 401 && status !== 403 && isRateLimitBody(body))) {
+    code = 'AI_PROVIDER_RATE_LIMITED';
+    message =
+      'El proveedor de IA está temporalmente limitado. Intenta nuevamente en unos minutos.';
+    retriable = true;
+  } else if (status === 401 || status === 403) {
+    code = 'AI_PROVIDER_AUTH';
+    message = 'No se pudo autenticar con el proveedor de IA. Contacta al equipo de LegalUp.';
+    retriable = false;
+  } else if (status >= 500) {
+    code = 'AI_PROVIDER_SERVER_ERROR';
+    message = 'El proveedor de IA presentó un error temporal. Intenta nuevamente en unos minutos.';
+    retriable = true;
+  } else {
+    code = 'AI_PROVIDER_ERROR';
+    message = `El proveedor de IA no pudo procesar la solicitud (${status}). Intenta nuevamente en unos minutos.`;
+    retriable = false;
+  }
+
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  error.retriable = retriable;
+  error.detail = raw; // solo logging interno, nunca al cliente.
+  return error;
+}
+
+// Reintento automático: MÁXIMO 1 reintento y SOLO para errores temporales
+// (429/5xx/red). Nunca para 401/403, ni errores de schema/prompt, ni para
+// multiplicar llamadas caras en modelos free/rate-limited.
+const MAX_TEMP_RETRIES = 1;
+const RETRY_BACKOFF_MS = Number(process.env.AI_PROVIDER_RETRY_BACKOFF_MS) || 800;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
  * Realiza un chat completion y devuelve:
  *   { data, raw, usage }
@@ -75,6 +151,8 @@ function extractJson(text) {
  * - usage: tokens y costo estimado para cost tracking.
  * Intenta primero con `response_format: json_object` y, si el proveedor lo
  * rechaza (HTTP 400/422), reintenta sin ese parámetro (compatibilidad).
+ * Reintenta UNA vez con backoff breve los errores temporales tipados
+ * (AI_PROVIDER_RATE_LIMITED, AI_PROVIDER_SERVER_ERROR, AI_PROVIDER_NETWORK).
  * No lanza por "JSON inválido": entrega `data: null` y deja que el llamador
  * decida (p. ej. el chat usa `raw` como respuesta directa).
  */
@@ -106,26 +184,42 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
 
   const attempt = async (withJsonMode) => {
     const body = withJsonMode ? payload : { ...payload, response_format: undefined };
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+    let response;
+    try {
+      response = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (netError) {
+      const error = new Error(
+        'No se pudo conectar con el proveedor de IA. Intenta nuevamente en unos minutos.'
+      );
+      error.status = 502;
+      error.code = 'AI_PROVIDER_NETWORK';
+      error.retriable = true;
+      error.detail = String(netError?.message || 'network error');
+      throw error;
+    }
 
     if (!response.ok) {
       const text = await response.text();
-      const error = new Error(`Proveedor IA respondió ${response.status}: ${text.slice(0, 300)}`);
-      error.status = response.status;
-      throw error;
+      throw classifyProviderError(response.status, text);
     }
 
     const data = await response.json();
     if (data?.error) {
-      const error = new Error(`Proveedor IA: ${data.error.message || JSON.stringify(data.error)}`);
-      error.status = data.error.code === 'json_validate_failed' ? 400 : response.status;
+      const status = data.error.code === 'json_validate_failed' ? 400 : response.status;
+      const error = new Error(
+        'El proveedor de IA no pudo procesar la solicitud. Intenta nuevamente en unos minutos.'
+      );
+      error.status = status;
+      error.code = 'AI_PROVIDER_ERROR';
+      error.retriable = false;
+      error.detail = String(data.error.message || JSON.stringify(data.error)).slice(0, 300);
       throw error;
     }
     const content = data?.choices?.[0]?.message?.content;
@@ -172,12 +266,30 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
     };
   };
 
-  try {
-    return await attempt(true);
-  } catch (error) {
-    if (error.status === 400 || error.status === 422) {
-      return await attempt(false);
+  // Un intento, reintentando una vez con `response_format: json_object`
+  // desactivado si el proveedor lo rechaza (HTTP 400/422), y con backoff breve
+  // si el error es temporal (429/5xx/red).
+  const attemptWithJsonFallback = async () => {
+    try {
+      return await attempt(true);
+    } catch (error) {
+      if (error.status === 400 || error.status === 422) {
+        return await attempt(false);
+      }
+      throw error;
     }
-    throw error;
+  };
+
+  let lastError = null;
+  for (let retry = 0; retry <= MAX_TEMP_RETRIES; retry += 1) {
+    try {
+      if (retry > 0) await sleep(RETRY_BACKOFF_MS * retry);
+      return await attemptWithJsonFallback();
+    } catch (error) {
+      lastError = error;
+      if (error.retriable === true && retry < MAX_TEMP_RETRIES) continue;
+      throw error;
+    }
   }
+  throw lastError;
 }

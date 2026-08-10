@@ -30,27 +30,16 @@ import {
 import {
   searchJurisprudence,
 } from './server/ai/jurisprudenceSources.mjs';
-import { resolveClaimFragment } from './server/ai/jurisprudenceSources.mjs';
 import {
   buildJurisprudenceSystemPrompt,
   buildJurisprudenceContext,
   buildJurisprudenceUserPrompt,
   buildJurisprudenceCaseContext,
-  buildJurisprudenceAnswer,
-  verifyJurisprudenceClaims,
-  detectExcessiveConclusions,
   JURISPRUDENCE_LIMITS,
 } from './server/ai/jurisprudencePrompt.mjs';
 import {
-  verifyAndBuildSynthesis,
-} from './server/ai/synthesisVerifier.mjs';
-import {
-  orderNormativaByHierarchy,
-  detectHierarchyMatices,
-} from './server/ai/hierarchy.mjs';
-import {
-  detectContradictions,
-} from './server/ai/contradiction.mjs';
+  buildJurisprudenceOutcome,
+} from './server/ai/jurisprudencePipeline.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 
 // Get current directory
@@ -7755,45 +7744,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
   }
 });
 
-// Esquema de respuesta del modelo para la investigación de jurisprudencia.
-const AIResearchResponseSchema = z
-  .object({
-    resumen: z.string().default(''),
-    normativa: z
-      .array(
-        z.object({
-          fuente_id: z.string().min(1),
-          fragment_id: z.string().optional(),
-          afirmacion: z.string().min(1),
-          fragmento: z.string().optional(),
-        }),
-      )
-      .default([]),
-    jurisprudencia: z
-      .array(
-        z.object({
-          fuente_id: z.string().min(1),
-          fragment_id: z.string().optional(),
-          afirmacion: z.string().min(1),
-          fragmento: z.string().optional(),
-        }),
-      )
-      .default([]),
-    doctrina: z
-      .array(
-        z.object({
-          fuente_id: z.string().min(1),
-          fragment_id: z.string().optional(),
-          afirmacion: z.string().min(1),
-          fragmento: z.string().optional(),
-        }),
-      )
-      .default([]),
-    conclusion: z.string().optional(),
-    advertencias: z.array(z.string()).default([]),
-  })
-  .strict();
-
+// Esquema de la solicitud de investigación de jurisprudencia.
 const AIResearchRequestSchema = z.object({
   query: z.string().trim().min(1).max(JURISPRUDENCE_LIMITS.MAX_QUERY_LENGTH),
 });
@@ -7904,7 +7855,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     const caseContext = buildJurisprudenceCaseContext(workspace);
 
-    const { data, raw, raw: rawText, usage } = await chatCompletion({
+    const { data, usage } = await chatCompletion({
       model: AI_DEFAULT_MODEL,
       system: buildJurisprudenceSystemPrompt(),
       messages: [
@@ -7917,259 +7868,41 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       temperature: 0.2,
     });
 
-    let validated;
-    if (data) {
-      try {
-        validated = AIResearchResponseSchema.parse(data);
-      } catch {
-        validated = null;
-      }
-    } else {
-      validated = null;
-    }
+    // Fase 4.1.11: todo el procesamiento POST-LLM (schema, verificación,
+    // síntesis, jerarquía, contradicciones y los estados SUCCESS/NO_EVIDENCE/
+    // INVALID_RESPONSE) vive en el pipeline puro `jurisprudencePipeline.mjs`.
+    // La ruta conserva búsqueda, chat, persistencia y observabilidad.
+    const outcomeResult = buildJurisprudenceOutcome({ data, sources, intent, query });
 
-    // --- Fallback si el modelo no devolvió el JSON estructurado válido ---
-    if (!validated) {
-      const rawTextSafe = (rawText || '').trim();
-      const fallbackAnswer = (() => {
-        const possible = typeof raw?.resumen === 'string' && raw.resumen.trim() ? raw.resumen.trim() : '';
-        if (possible) return possible;
-        const resumenMatch = rawTextSafe.match(/"resumen"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (resumenMatch && resumenMatch[1]) {
-          return resumenMatch[1]
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\n/g, '\n')
-            .trim();
-        }
-        const answerMatch = rawTextSafe.match(/"answer"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-        if (answerMatch && answerMatch[1]) {
-          return answerMatch[1]
-            .replace(/\\"/g, '"')
-            .replace(/\\\\/g, '\\')
-            .replace(/\\n/g, '\n')
-            .trim();
-        }
-        return rawTextSafe && !rawTextSafe.startsWith('{') && !rawTextSafe.startsWith('[')
-          ? rawTextSafe
-          : '';
-      })();
-      if (!fallbackAnswer) {
-        throw new Error('El modelo devolvió una respuesta vacía. Inténtalo nuevamente.');
-      }
-      // Recupera los ids citados por el modelo (JSON truncado o markdown),
-      // buscando cualquier id de fuente real conocido dentro del texto crudo.
-      const includedIdsSet = new Set(sources.map((source) => source.id));
-      const jsonIds = [...rawTextSafe.matchAll(/"id"\s*:\s*"([^"]+)"/g)].map((m) => m[1]);
-      const rawIds = [...includedIdsSet].filter((id) => rawTextSafe.includes(id));
-      const salvagedIds = [...new Set([...jsonIds, ...rawIds])].filter((id) =>
-        includedIdsSet.has(id),
-      );
-      validated = {
-        resumen: fallbackAnswer,
-        normativa: [],
-        jurisprudencia: [],
-        doctrina: [],
-        conclusion: '',
-        advertencias: [],
-      };
-      // Usa los ids rescatados como jurisprudencia genérica (sin fragmento),
-      // de modo que el usuario siempre pueda verificar la fuente original.
-      const fallbackById = new Map(sources.map((source) => [source.id, source]));
-      validated.jurisprudencia = salvagedIds
-        .filter((id) => fallbackById.get(id)?.kind === 'jurisprudencia')
-        .map((id) => ({
-          fuente_id: id,
-          afirmacion: '',
-          fragmento: '',
-        }));
-      validated.normativa = salvagedIds
-        .filter((id) => fallbackById.get(id)?.kind === 'normativa')
-        .map((id) => ({ fuente_id: id, afirmacion: '', fragmento: '' }));
-      validated.doctrina = salvagedIds
-        .filter((id) => fallbackById.get(id)?.kind === 'doctrina')
-        .map((id) => ({ fuente_id: id, afirmacion: '', fragmento: '' }));
-    }
-
-    // Solo se aceptan fuentes que correspondan a fuentes reales recuperadas.
-    const includedById = new Map(sources.map((source) => [source.id, source]));
-
-    // Verifica que cada afirmación tenga respaldo textual real en su fuente.
-    const verifiedNormativa = verifyJurisprudenceClaims(
-      validated.normativa,
-      includedById,
-      'normativa',
-    );
-    const verifiedJurisprudencia = verifyJurisprudenceClaims(
-      validated.jurisprudencia,
-      includedById,
-      'jurisprudencia',
-    );
-    const verifiedDoctrina = verifyJurisprudenceClaims(validated.doctrina, includedById, 'doctrina');
-
-    const researchWarnings = [
-      ...verifiedNormativa.warnings,
-      ...verifiedJurisprudencia.warnings,
-      ...verifiedDoctrina.warnings,
-    ];
-
-    // Fase 4.0.2 (fix): si la consulta busca normativa, el modelo no citó ninguna
-    // norma y sí recuperamos BCN/LeyChile relevantes, PROMOVEMOS la ley más
-    // relevante en lugar de afirmar que no existe normativa. La afirmación se
-    // deriva del título oficial (rastreable al idNorma), sin inventar texto legal.
-    const autoNormativas = [];
-    if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
-      const candidate =
-        sources.find((s) => s.kind === 'normativa' && s.norm_type === 'ley') ||
-        sources.find((s) => s.kind === 'normativa');
-      if (candidate) {
-        const typeLabel =
-          candidate.norm_type === 'ley'
-            ? 'Ley'
-            : candidate.norm_type === 'decreto'
-              ? 'Decreto'
-              : candidate.norm_type === 'dfl'
-                ? 'DFL'
-                : candidate.norm_type === 'codigo'
-                  ? 'Código'
-                  : candidate.norm_type === 'decreto_ley'
-                    ? 'Decreto Ley'
-                    : 'Norma';
-        const numeroPart =
-          candidate.norm_number && /^\d[\d.,]*$/.test(candidate.norm_number)
-            ? ` N° ${candidate.norm_number}`
-            : '';
-        const titleText = String(candidate.title || candidate.citation || '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        // Fase 4.0.4: si la norma recuperada expone fragmentos reales de
-        // LeyChile, la afirmación promovida se respalda con el fragmento
-        // específico más relevante (mostrado como evidencia puntual).
-        const alignedFragment = resolveClaimFragment(query, candidate.metadata?.fragments || []);
-        autoNormativas.push({
-          source: candidate,
-          source_id: candidate.id,
-          fragment_id: alignedFragment?.id || null,
-          afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
-          fragmento: alignedFragment ? String(alignedFragment.text).trim() : '',
-        });
-        researchWarnings.push(
-          `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,
-        );
-      }
-    }
-    const effectiveNormativa = verifiedNormativa.kept.length > 0
-      ? verifiedNormativa.kept
-      : autoNormativas;
-
-    if (intent === 'normativa' && effectiveNormativa.length === 0) {
-      researchWarnings.push(
-        'No se encontró normativa específica que responda la consulta en las fuentes públicas consultadas (BCN/LeyChile). Verifica la vigencia en el portal oficial.',
-      );
-    }
-    const modelAdvertencias = Array.isArray(validated.advertencias)
-      ? validated.advertencias
-          .filter(Boolean)
-          .filter(
-            (adv) =>
-              // Cuando promovimos una norma, descartamos avisos del modelo que
-              // afirmen la ausencia de normativa (contradicen la norma promovida).
-              !(autoNormativas.length > 0 && /\bno se encontr[oó]\b.{0,40}\b(normativa|norma|legislaci[oó]n|disposiciones)\b|\bsin (normativa|normas|disposiciones)\b/i.test(adv)),
-          )
-      : [];
-
-    // Fase 4.0.2: suaviza conclusiones categóricas que las fuentes no respaldan
-    // ("la ley establece…", "la jurisprudencia confirma…") y genera avisos.
-    const excessive = detectExcessiveConclusions({
-      resumen: validated.resumen,
-      conclusion: validated.conclusion || '',
-      normativa: effectiveNormativa,
-      jurisprudencia: verifiedJurisprudencia.kept,
-    });
-
-    // Cuando la normativa fue promovida automáticamente (el modelo no la citó),
-    // refuerza la coherencia del resumen con un puntero factual a la norma.
-    if (autoNormativas.length > 0 && effectiveNormativa[0]?.source) {
-      excessive.resumen = (
-        `${(excessive.resumen || '').trim()} Se identificó la normativa aplicable: ${
-          effectiveNormativa[0].source.citation
-        }.`
-      ).trim();
-    }
-
-    // Fase 4.1 (Etapa 3): jerarquía normativa — solo ordena la presentación;
-    // no decide cuál norma prevalece. Los matices de jerarquía se agregan a la
-    // sección "Matices y contradicciones" (no se resuelven automáticamente).
-    const ordenNormativa = orderNormativaByHierarchy(effectiveNormativa);
-    const { matices: maticesJerarquia } = detectHierarchyMatices(effectiveNormativa);
-
-    // Fase 4.1 (Etapa 4): contradicciones/matices entre fuentes. Conserva ambas
-    // fuentes y NO resuelve el conflicto (regla conservadora).
-    const { contradicciones, warnings: warningsContradicciones } = detectContradictions({
-      normativa: effectiveNormativa,
-      jurisprudencia: verifiedJurisprudencia.kept,
-      doctrina: verifiedDoctrina.kept,
-    });
-
-    // Fase 4.1 (Etapa 2): síntesis VERIFICADA. Cada oración se vincula a un
-    // claim verificado; las oraciones sin respaldo se eliminan o se marcan como
-    // inferencia del sistema (preferencia: ELIMINAR antes que inventar).
-    const allVerifiedClaims = [
-      ...effectiveNormativa,
-      ...verifiedJurisprudencia.kept,
-      ...verifiedDoctrina.kept,
-    ];
-    const synthesisResult = verifyAndBuildSynthesis(excessive.conclusion, allVerifiedClaims);
-    const síntesisText = synthesisResult.síntesis || '';
-    const maticesFinales = [...maticesJerarquia, ...contradicciones];
-
-    const answer = buildJurisprudenceAnswer({
-      resumen: excessive.resumen,
-      normativa: ordenNormativa,
-      jurisprudencia: verifiedJurisprudencia.kept,
-      doctrina: verifiedDoctrina.kept,
-      sintesis: síntesisText,
-      matices: maticesFinales,
-      advertencias: [
-        ...modelAdvertencias,
-        ...researchWarnings,
-        ...excessive.warnings,
-        ...synthesisResult.warnings,
-        ...warningsContradicciones,
-      ],
-    });
-
-    // Referencia (para persistir) solo las fuentes que sobrevivieron la verificación.
-    const referenced = [
-      ...ordenNormativa.map((c) => c.source),
-      ...verifiedJurisprudencia.kept.map((c) => c.source),
-      ...verifiedDoctrina.kept.map((c) => c.source),
-    ];
-    const referencedById = new Map(referenced.map((source) => [source.id, source]));
-    const referencedIds = [...referencedById.values()];
-
-    // Fase 4.1 (Etapa 7): persistir claims estructurados. Se reutiliza el JSONB
-    // existente "sources": cada fuente conserva sus claims verificados (sin
-    // migración y sin romper la compatibilidad con investigaciones previas).
-    const claimsBySource = new Map();
-    for (const c of allVerifiedClaims) {
-      if (!c.source_id) continue;
-      if (!claimsBySource.has(c.source_id)) claimsBySource.set(c.source_id, []);
-      claimsBySource.get(c.source_id).push({
-        source_id: c.source_id,
-        fragment_id: c.fragment_id || null,
-        category: c.category || c.source?.kind || null,
-        afirmacion: c.afirmacion,
-        evidencia: c.fragmento,
-        verified: true,
-        vigencia: c.vigencia || null,
-        vigencia_nota: c.vigencia_nota || null,
+    // Fase 4.1.10: una respuesta no estructurada (JSON/schema inválido) NUNCA se
+    // convierte en una respuesta jurídica, ni se reconstruye el resumen desde el
+    // texto crudo ("Proveedor IA respondió con 0 fuentes..."). Se trata como un
+    // fallo del proveedor: error claro, sin afirmaciones fabricadas y con opción
+    // de reintentar desde el frontend.
+    if (outcomeResult.status === 'invalid_response') {
+      logDiagnostic('jurisprudence_llm_invalid_response', {
+        intent,
+        total_sources: sources.length,
+        query_hash: queryHash,
+      });
+      return res.status(502).json({
+        error:
+          'El modelo de IA no devolvió una respuesta válida. Intenta nuevamente en unos minutos.',
+        code: 'AI_PROVIDER_INVALID_RESPONSE',
       });
     }
-    const persistedSources = referencedIds.map((source) => ({
-      ...source,
-      claims: claimsBySource.get(source.id) || [],
-    }));
+
+    const {
+      answer,
+      persistedSources,
+      allVerifiedClaims,
+      maticesFinales,
+      síntesisText,
+      researchWarnings,
+      contradicciones,
+      referencedIds,
+      outcome,
+    } = outcomeResult;
 
     // Registra el consumo real (no bloquea el flujo).
     await recordAIUsage({
@@ -8215,15 +7948,27 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       síntesis: síntesisText,
       warnings: researchWarnings,
       intent,
+      outcome,
     });
   } catch (error) {
     console.error('[LegalUpAI] jurisprudence error:', error);
-    const code =
-      error?.code === 'AI_NOT_CONFIGURED' || error?.code === 'OUTPUT_TOKEN_LIMIT'
-        ? error.code
-        : 'PROVIDER_ERROR';
-    res.status(error?.status && error.status >= 400 && error.status < 500 ? error.status : 500).json({
-      error: error.message || 'No se pudo completar la investigación.',
+    const code = error?.code || 'PROVIDER_ERROR';
+
+    // Fase 4.1.10: observabilidad estructurada de rate limits. Solo datos del
+    // proveedor/modelo/status, sin contenido de consultas ni datos de usuario.
+    if (code === 'AI_PROVIDER_RATE_LIMITED') {
+      logDiagnostic('ai_provider_rate_limited', {
+        provider: 'openrouter',
+        model: AI_DEFAULT_MODEL,
+        status: error?.status || 429,
+      });
+    }
+
+    const status =
+      error?.status && error.status >= 400 && error.status < 500 ? error.status : 500;
+    res.status(status).json({
+      error:
+        error.message || 'No se pudo completar la investigación. Intenta nuevamente en unos minutos.',
       code,
     });
   }
