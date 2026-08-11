@@ -142,6 +142,63 @@ describe('Fase 4.1 · síntesis verificada', () => {
   });
 });
 
+describe('Fase 4.1.17 · relación entre dos fuentes (inferencia anclada)', () => {
+  const claims = [
+    {
+      source_id: 'bcn-21719',
+      fragment_id: 'frag:1209272:f4',
+      afirmacion:
+        'La ley reconoce el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo a los titulares.',
+      fragmento:
+        'El artículo 4 de la Ley N° 21.719 reconoce a los titulares el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+      source: { kind: 'normativa', norm_number: '21.719' },
+    },
+    {
+      source_id: 'tc-9666',
+      afirmacion:
+        'El tribunal vinculó la protección de los datos personales a la autodeterminación informativa.',
+      fragmento:
+        'La protección de los datos personales se vincula a la autodeterminación informativa.',
+      source: { kind: 'jurisprudencia' },
+    },
+  ];
+
+  it('relación con ambos polos anclados (norma citada + contenido del TC) se conserva como INFERENCIA', () => {
+    const { sentences, warnings } = verifySynthesis(
+      'Los derechos reconocidos en el artículo 4 de la Ley 21.719 pueden analizarse en relación con la autodeterminación informativa desarrollada por el Tribunal Constitucional.',
+      claims,
+    );
+    expect(sentences[0].dropped).toBe(false);
+    expect(sentences[0].inference).toBe(true);
+    expect(sentences[0].category).toBe('inferencia');
+    // Ambas dimensiones quedan ancladas, no solo una.
+    expect(sentences[0].source_ids.sort()).toEqual(['bcn-21719', 'tc-9666']);
+    expect(warnings).toEqual([]);
+    const text = buildSynthesis(sentences);
+    expect(text).toContain('Sobre la base de las fuentes, puede inferirse');
+    expect(text).toContain('Inferencia del sistema');
+  });
+
+  it('relación que cita el artículo de la ley también se conserva como inferencia', () => {
+    const { sentences } = verifySynthesis(
+      'La relación entre el artículo 4 de la Ley 21.719 y la autodeterminación informativa puede analizarse a la luz de la jurisprudencia.',
+      claims,
+    );
+    expect(sentences[0].dropped).toBe(false);
+    expect(sentences[0].inference).toBe(true);
+  });
+
+  it('relación sin ancla del polo normativo (ni contenido ni cita) se elimina', () => {
+    const { sentences } = verifySynthesis(
+      'La relación entre la ley y la autodeterminación informativa está demostrada.',
+      claims,
+    );
+    // El polo normativo no cita disposición ni comparte contenido: no basta la
+    // pata jurisprudencial para conservar la relación.
+    expect(sentences[0].dropped).toBe(true);
+  });
+});
+
 describe('Fase 4.1.3 · enumeraciones cerradas (no ampliar lo que la evidencia cierra)', () => {
   const rightsClaim = [
     {

@@ -1233,6 +1233,43 @@ export function extractLawNumber(query) {
 }
 
 /**
+ * Extrae los números de artículo citados en un texto ("artículo 4",
+ * "art. 14", "Artículo 30 bis", "Artículo primero"...). Complementa a
+ * extractLawNumber para las citas de disposiciones específicas: el token
+ * "artículo" es stopword y el número es corto, por lo que el ranking por
+ * términos los ignora y la disposición citada se pierde.
+ * @param {string} text
+ * @returns {string[]} números normalizados (sin puntuación), ej. ["4", "30"].
+ */
+export function extractArticleNumbers(text) {
+  const src = String(text || '').normalize('NFC');
+  const found = new Set();
+  const articleOrdinals = {
+    primera: '1', primero: '1', segunda: '2', segundo: '2',
+    tercera: '3', tercero: '3', cuarta: '4', cuarto: '4',
+    quinta: '5', quinto: '5', sexta: '6', sexto: '6',
+    septima: '7', septimo: '7', séptima: '7', séptimo: '7',
+    octava: '8', octavo: '8', novena: '9', noveno: '9',
+    decima: '10', decimo: '10', décima: '10', décimo: '10',
+  };
+  const ordinal = '(?:primera|primero|segunda|segundo|tercera|tercero|' +
+    'cuarta|cuarto|quinta|quinto|sexta|sexto|s[eé]ptima|s[eé]ptimo|' +
+    'octava|octavo|novena|noveno|d[eé]cima|d[eé]cimo)';
+  const numero = '\\d{1,3}';
+  const re = new RegExp(
+    '\\b(?:art[íi]culo|art(?:s|\\.|s\\.)?)\\s*(?:n[°º]\\s*\\.?\\s*)?(' +
+      numero + '|' + ordinal + ')\\b',
+    'gi',
+  );
+  for (const m of src.matchAll(re)) {
+    const raw = m[1].toLowerCase().replace(/[.,]/g, '');
+    const num = articleOrdinals[raw] || raw;
+    if (/^\d+$/.test(num)) found.add(String(parseInt(num, 10)));
+  }
+  return [...found];
+}
+
+/**
  * Divide el texto consolidado de una norma en fragmentos por artículo.
  * Cada fragmento conserva su etiqueta de artículo y el texto literal.
  */
@@ -1297,6 +1334,10 @@ const GENERIC_CONCEPTS = new Set([
   'deber', 'deben', 'debe', 'deben', 'goza', 'gozar', 'gozara', 'gozando',
   'podra', 'podran', 'podria', 'pueda', 'pueden', 'tiene', 'tienen',
   'adquirido', 'otorgando',
+  // Cuantificadores: no son conceptos sustantivos. "toda persona tiene derecho
+  // al divorcio" no puede anclarse a un claim solo porque ambas frases
+  // contengan "toda" (Fase 4.1.17, contaminación de evidencia).
+  'toda', 'todo', 'todos', 'todas', 'cada', 'ninguna', 'ninguno',
 ]);
 
 /**
@@ -1317,8 +1358,10 @@ const RELEVANCE_LOW_TERMS = new Set([
   'reconozca', 'garantiza', 'garantizan', 'otorga', 'otorgan', 'confiere',
   'confieren', 'dispone', 'dispondra', 'contempla', 'contemplan', 'consagra',
   'incorpora', 'incluye', 'incluyendo', 'permite', 'permiten', 'permitir',
+  'permita', 'permitan', 'permitiera', 'permitieran',
   'asegura', 'aseguran', 'debera', 'deben', 'debe', 'podra', 'podran', 'podria',
-  'pueda', 'pueden', 'tiene', 'tienen', 'efecto', 'efectos', 'persona',
+  'pueda', 'puedan', 'pudiera', 'pudieran', 'pudiese', 'pudiesen',
+  'pueden', 'tiene', 'tienen', 'efecto', 'efectos', 'persona',
   'personas', 'personal', 'resguardo', 'resguarda', 'sujeto', 'sujetos',
   'puede', 'puedo', 'puedes', 'dice', 'dicen', 'dijo', 'senala', 'senalar',
   'senalan', 'indica', 'indican', 'indicar', 'menciona', 'mencionan',
@@ -1653,6 +1696,12 @@ export function selectNormativeFragments(query, fragments, { limit = 6 } = {}) {
   const tokens = [...new Set(normalizeClaimTokens(query))].filter(
     (t) => !NORM_FRAGMENT_DIMENSION_TERMS.has(t),
   );
+
+  // Cita explícita de disposición ("artículo 4", "art. 14", "Artículo 30"):
+  // el ranking por términos ignora el número corto, así que se preserva el
+  // fragmento exacto de la ley aunque la consulta no repita la materia.
+  const citedArticles = extractArticleNumbers(query);
+
   const signals = items.map((f, index) => {
     const norm = `${f.article || ''} ${f.text || ''}`
       .toLowerCase()
@@ -1665,9 +1714,17 @@ export function selectNormativeFragments(query, fragments, { limit = 6 } = {}) {
     return { fragment: f, hits, index };
   });
 
-  // Sin ninguna coincidencia de contenido: mismo comportamiento que el ranking
-  // actual (no enriquecer la norma con fragmentos no relacionados).
-  if (!signals.some((s) => s.hits > 0)) return [];
+  // Preservación por cita de artículo: aunque no haya coincidencia de materia,
+  // la referencia expresa a una disposición merece recuperar ese fragmento.
+  const byArticle = items.filter((f) => {
+    const label = extractArticleNumbers(f.article || '');
+    return label.some((n) => citedArticles.includes(n));
+  });
+
+  // Sin ninguna coincidencia de contenido ni de artículo: mismo
+  // comportamiento que el ranking actual (no enriquecer la norma con
+  // fragmentos no relacionados).
+  if (!signals.some((s) => s.hits > 0) && byArticle.length === 0) return [];
 
   const preserved = signals
     .filter((s) => s.hits >= NORMATIVE_PRESERVE_SIGNAL)
@@ -1677,7 +1734,7 @@ export function selectNormativeFragments(query, fragments, { limit = 6 } = {}) {
 
   const ranked = rankFragments(query, items, { limit: items.length });
   const merged = [];
-  for (const f of [...preserved, ...ranked]) {
+  for (const f of [...preserved, ...byArticle, ...ranked]) {
     if (merged.length >= limit) break;
     if (!merged.some((m) => m === f || (m?.id && f?.id && m.id === f.id))) merged.push(f);
   }

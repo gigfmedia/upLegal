@@ -14,7 +14,12 @@
 // Preferencia: ELIMINAR antes que inventar.
 // ---------------------------------------------------------------------------
 
-import { extractSubstantiveTerms, normalizeClaimTokens } from './jurisprudenceSources.mjs';
+import {
+  extractSubstantiveTerms,
+  normalizeClaimTokens,
+  extractLawNumber,
+  extractArticleNumbers,
+} from './jurisprudenceSources.mjs';
 
 // Palabras discursivas que NO prueban que la oración comparta el fondo con la
 // fuente (actor/tipo de fuente: "el tribunal", "la ley", "el autor"…). Se
@@ -43,6 +48,23 @@ const MODAL_HEDGE =
 // sustantivo, si se abre con estos conectores se etiqueta como inferencia.
 const INFERENCE_OPENER =
   /^(?:sobre\s+la\s+base\s+de\s+(?:las|estas|estas)?\s*fuentes|a\s+la\s+luz\s+de\s+las\s+fuentes|en\s+consecuencia|en\s+s[íi]ntesis|por\s+lo\s+tanto|cabe\s+(?:inferir|concluir)|puede\s+(?:inferirse|concluirse))/i;
+
+// Conector RELACIONAL: la oración declara una RELACIÓN entre dos materias (no
+// una simple afirmación atribuible a una sola fuente). Se usa solo para decidir
+// si una oración que no pudo anclarse a un solo claim se conserva como
+// INFERENCIA cuando cada polo de la relación tiene respaldo verificado.
+const RELATIONAL_CONNECTORS =
+  /\b(?:relaci[oó]n(?:\s+(?:conceptual|directa|directo|jur[ií]dica|jur[ií]dico|estrecha|estrecho|posible|eventual|causal|[íi]ntima|[íi]ntimo))?\s+(?:entre|con|de|que)|en\s+relaci[oó]n\s+con|relacionad[oa]s?\s+con|se\s+relaciona\s+con|relacionan|vincul[oó]|vincula(?:do)?\s+(?:a|con)|se\s+vincula\s+(?:a|con)|conexi[oó]n\s+entre|ligad[oa]\s+(?:a|con))\b/i;
+
+// Términos que son MEROS CONECTORES de la relación (no aportan contenido al
+// polo) y no pueden respaldar un ancla de contenido.
+const RELATIONAL_TOKEN_STOP = new Set([
+  'relacion', 'relaciones', 'relacionada', 'relacionadas', 'relacionado',
+  'relacionados', 'relaciona', 'relacionan', 'vinculo', 'vinculos',
+  'vincula', 'vinculan', 'vinculado', 'vinculada', 'vinculados',
+  'vinculadas', 'conexion', 'ligada', 'ligado', 'demostrada', 'demostrado',
+  'demostradas', 'demostrados',
+]);
 
 function detectFraming(sentence) {
   for (const [category, re] of Object.entries(FRAMING)) {
@@ -73,6 +95,82 @@ export function splitSentences(text) {
 function overlap(termsA, termsB) {
   const setB = new Set(termsB);
   return termsA.filter((t) => setB.has(t)).length;
+}
+
+/**
+ * Determina si una oración relacional cita expresamente la DISPOSICIÓN del
+ * claim normativo (número de ley y/o artículo). La cita de la entidad
+ * específica reemplaza al solape de contenido como ancla del polo normativo,
+ * porque el ranking por términos ignora números cortos ("artículo 4").
+ * @param {string} sentence - texto de la oración relacional.
+ * @param {{ afirmacion?: string, fragmento?: string, source?: object }} claim
+ * @returns {boolean}
+ */
+function claimEntityCited(sentence, claim) {
+  if (claim?.source?.kind !== 'normativa') return false;
+  const citedLaws = extractLawNumber(sentence);
+  const citedArticles = extractArticleNumbers(sentence);
+  const claimLaw = String(claim.source.norm_number || '').replace(/[^0-9]/g, '');
+  const claimArticles = extractArticleNumbers(
+    `${claim.afirmacion || ''} ${claim.fragmento || ''}`,
+  );
+  // Cita expresa de la ley: exige que coincida con la norma del claim.
+  if (citedLaws.length > 0 && claimLaw.length >= 4) {
+    return citedLaws.includes(claimLaw);
+  }
+  // Cita expresa de artículo: exige coincidencia con el artículo del claim
+  // cuando este lo precisa; si el claim no lo precisa, la cita es señal válida.
+  if (citedArticles.length > 0) {
+    if (claimArticles.length > 0) {
+      return citedArticles.some((a) => claimArticles.includes(a));
+    }
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Construye los anclas de una oración RELACIONAL entre dos materias. Se exige:
+ *   - una "pata fuerte": solape de contenido ≥2 con un claim de una categoría, y
+ *   - una segunda pata de OTRA categoría con solape ≥2 O, si es normativa, con
+ *     cita expresa de su disposición (número de ley o artículo).
+ * @param {string} sentence - texto de la oración relacional.
+ * @param {string[]} sentenceTerms - términos sustantivos no discursivos.
+ * @param {Array} claims - claims verificados.
+ * @returns {{ source_ids: string[], fragment_ids: string[] }|null}
+ */
+function buildRelationalAnchors(sentence, sentenceTerms, claims) {
+  // El conector relacional mismo no cuenta como contenido del polo.
+  const sentenceTokens = sentenceTerms.filter((t) => !RELATIONAL_TOKEN_STOP.has(t));
+  const legs = new Map();
+  const claimByCategory = new Map();
+  for (const claim of claims) {
+    const kind = claim.source?.kind || 'unknown';
+    const terms = extractSubstantiveTerms(`${claim.afirmacion} ${claim.fragmento}`).filter(
+      (t) => !DISCOURSE_TERMS.has(t),
+    );
+    if (!legs.has(kind)) {
+      legs.set(kind, new Set());
+      claimByCategory.set(kind, claim);
+    }
+    for (const t of terms) legs.get(kind).add(t);
+  }
+  const scores = [...legs.entries()].map(([kind, terms]) => ({
+    kind,
+    ov: overlap(sentenceTokens, [...terms]),
+    claim: claimByCategory.get(kind),
+  }));
+  scores.sort((a, b) => b.ov - a.ov);
+  const strong = scores.find((s) => s.ov >= 2);
+  if (!strong) return null;
+  const weak = scores.find((s) => s.kind !== strong.kind);
+  if (!weak) return null;
+  const weakOk = weak.ov >= 2 || claimEntityCited(sentence, weak.claim);
+  if (!weakOk) return null;
+  return {
+    source_ids: [strong.claim.source_id, weak.claim.source_id],
+    fragment_ids: [strong.claim.fragment_id, weak.claim.fragment_id].filter(Boolean),
+  };
 }
 
 /**
@@ -155,19 +253,31 @@ export function verifySynthesis(conclusion, claims = []) {
       }
     }
 
+    // Fase 4.1.17: si la oración cita un ARTÍCULO específico, el claim anclado
+    // debe corresponder a ese artículo. "El artículo 99 reconoce el derecho de
+    // acceso" NO puede respaldarse como HECHO con el texto del Artículo 4: la
+    // cita de disposición solo puede servir como ancla de una INFERENCIA
+    // relacional, nunca para afirmar un hecho normativo sustantivo.
+    const sentenceCitedArticles = extractArticleNumbers(sentence.text);
+    const claimArticles = Array.isArray(best?.article) ? best.article : [];
+    const articleMismatch =
+      sentenceCitedArticles.length > 0 &&
+      claimArticles.length > 0 &&
+      !sentenceCitedArticles.some((a) => claimArticles.includes(a));
+
     // Regla de respaldo:
     //   - ≥2 términos sustantivos no discursivos compartidos → respaldado.
     //   - 1 término compartido + marco discursivo coherente con la categoría.
     //   - lenguaje modal Y solape amplio de tokens significativos → inferencia
     //     construible desde los claims verificados.
-    if (best && bestOverlap >= 2) {
+    if (best && bestOverlap >= 2 && !articleMismatch) {
       sentence.category = best.source?.kind || null;
       sentence.source_ids = [best.source_id];
       sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
       continue;
     }
 
-    if (best && bestOverlap === 1 && framing && framing === best.source?.kind) {
+    if (best && bestOverlap === 1 && framing && framing === best.source?.kind && !articleMismatch) {
       sentence.category = best.source?.kind || null;
       sentence.source_ids = [best.source_id];
       sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
@@ -201,10 +311,29 @@ export function verifySynthesis(conclusion, claims = []) {
       }
     }
 
-    // Oración sin respaldo: se elimina (preferencia) y se advierte.
+    // Fase 4.1.17: oración RELACIONAL entre dos materias. Si no pudo anclarse a
+    // un solo claim (porque la relación cruza dimensiones), se conserva como
+    // INFERENCIA etiquetada SOLO si cada polo de la relación está respaldado por
+    // claims verificados: una pata con solape de contenido ≥2 y la otra de otra
+    // categoría con solape ≥2 o, si es normativa, con cita expresa de su
+    // disposición. Sin ambos polos, la oración se elimina (no se inventa).
+    if (RELATIONAL_CONNECTORS.test(sentence.text)) {
+      const anchor = buildRelationalAnchors(sentence.text, sentenceTerms, claims);
+      if (anchor) {
+        sentence.category = 'inferencia';
+        sentence.inference = true;
+        sentence.source_ids = anchor.source_ids;
+        sentence.fragment_ids = anchor.fragment_ids;
+        continue;
+      }
+    }
+
+    // Oración sin respaldo: se elimina (preferencia) y se advierte. El aviso NO
+    // reproduce el texto no verificado (evita que la afirmación fabricada se
+    // cuele en la respuesta final a través del propio aviso, Fase 4.1.17).
     sentence.dropped = true;
     warnings.push(
-      `Se eliminó de la síntesis una oración sin respaldo verificable: "${sentence.text.slice(0, 90)}…".`,
+      'Se eliminó de la síntesis una oración sin respaldo verificable en las fuentes; no se presenta como afirmación jurídica.',
     );
   }
 

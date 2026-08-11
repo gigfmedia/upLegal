@@ -16,7 +16,12 @@
 // afirmaciones sin respaldo textual (no permite "falsa sensación de respaldo").
 // ---------------------------------------------------------------------------
 
-import { resolveClaimFragment, fragmentSupportsClaim, hasSubstantiveNormativeEvidence } from './jurisprudenceSources.mjs';
+import {
+  resolveClaimFragment,
+  fragmentSupportsClaim,
+  hasSubstantiveNormativeEvidence,
+  extractArticleNumbers,
+} from './jurisprudenceSources.mjs';
 
 export const JURISPRUDENCE_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo.
@@ -265,7 +270,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
 
     if (!source) {
       warnings.push(
-        `Se descartó una afirmación sin fuente válida (${category}: "${(afirmacion || '').slice(0, 60)}…").`,
+        `Se descartó una afirmación de ${category} sin fuente válida recuperada; no se presenta como evidencia jurídica.`,
       );
       continue;
     }
@@ -285,7 +290,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
     // Fase 4.0.2: una doctrina no puede emitir mandatos legales categóricos.
     if (source.kind === 'doctrina' && DOCTRINAL_OVERREACH_RE.test(afirmacionText)) {
       warnings.push(
-        `La afirmación de doctrina "${afirmacionText.slice(0, 80)}…" usa lenguaje normativo; la doctrina no es fuente normativa.`,
+        'Se descartó una afirmación de doctrina que usa lenguaje normativo categórico; la doctrina no es fuente normativa.',
       );
     }
 
@@ -300,6 +305,8 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
     // fragmento respalda, la afirmación se descarta.
     let evidence = fragment;
     let fragmentId = null;
+    // Fase 4.1.17: artículos del fragmento anclado (para el verifier de síntesis).
+    let fragmentArticles = [];
     const fragments = source.kind === 'normativa' ? (source.metadata?.fragments || []) : [];
     if (fragments.length > 0) {
       let aligned = null;
@@ -312,11 +319,29 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
         aligned = resolveClaimFragment(afirmacionText, fragments);
       }
       if (aligned) {
+        // Fase 4.1.17: si la afirmación cita un ARTÍCULO específico, el fragmento
+        // anclado debe corresponder a ese artículo. Una afirmación sobre
+        // "artículo 99" no puede respaldarse con el texto del "Artículo 4"
+        // (evita citas falsas cuando el artículo citado no existe en la fuente).
+        // `fragmentArticles` (declarado al inicio del bucle) queda expuesto en el
+        // claim para que el síntesis verifier aplique la misma regla.
+        fragmentArticles = extractArticleNumbers(aligned.article || '');
+        const citedArticles = extractArticleNumbers(afirmacionText);
+        if (
+          citedArticles.length > 0 &&
+          fragmentArticles.length > 0 &&
+          !citedArticles.some((a) => fragmentArticles.includes(a))
+        ) {
+          warnings.push(
+            `Se descartó una afirmación de ${category} que cita "${source.citation}" (art. ${citedArticles.join(', ')}) porque ningún fragmento de esa fuente corresponde a ese artículo. "Artículo de la ley se pierde": no se sustituye la disposición citada por otra.`,
+          );
+          continue;
+        }
         evidence = String(aligned.text).trim();
         fragmentId = aligned.id || null;
       } else {
         warnings.push(
-          `Se descartó una afirmación de ${category} porque ningún fragmento de "${source.citation}" respalda específicamente: "${afirmacionText.slice(0, 90)}…".`,
+          `Se descartó una afirmación de ${category} porque ningún fragmento de "${source.citation}" respalda específicamente su contenido; no se presenta como evidencia.`,
         );
         continue;
       }
@@ -364,6 +389,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
       source,
       source_id: source.id,
       fragment_id: fragmentId,
+      article: fragmentArticles,
       category,
       afirmacion: afirmacionText,
       fragmento: evidence,

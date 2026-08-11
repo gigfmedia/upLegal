@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   extractLawNumber,
+  extractArticleNumbers,
   htmlToPlainText,
   splitLawArticles,
   rankFragments,
@@ -42,6 +43,24 @@ describe('extractLawNumber', () => {
   });
   it('devuelve vacío para frases sin numeración', () => {
     expect(extractLawNumber('La declaración de cumplimiento')).toEqual([]);
+  });
+});
+
+describe('extractArticleNumbers', () => {
+  it('detecta "artículo 4"', () => {
+    expect(extractArticleNumbers('Los derechos reconocidos en el artículo 4 de la Ley 21.719')).toEqual(['4']);
+  });
+  it('detecta "art. 14" con abreviatura', () => {
+    expect(extractArticleNumbers('Ver art. 14 de la ley.')).toEqual(['14']);
+  });
+  it('detecta "Artículo 30 bis" (número base)', () => {
+    expect(extractArticleNumbers('Artículo 30 bis')).toEqual(['30']);
+  });
+  it('detecta "Artículo primero" (ordinal)', () => {
+    expect(extractArticleNumbers('Artículo primero')).toEqual(['1']);
+  });
+  it('devuelve vacío sin cita de artículo', () => {
+    expect(extractArticleNumbers('la relación entre la ley y la autodeterminación informativa')).toEqual([]);
   });
 });
 
@@ -456,6 +475,12 @@ describe('Fase 4.1.12 · selectNormativeFragments (preservación)', () => {
   it('no enriquece cuando la consulta no coincide con la norma', () => {
     expect(selectNormativeFragments('indemnización por despido injustificado del trabajador', fragments, { limit: 6 })).toEqual([]);
     expect(selectNormativeFragments('', fragments, { limit: 6 })).toEqual([]);
+  });
+
+  it('consulta por cita expresa de ARTÍCULO conserva ese fragmento aunque la materia no coincida', () => {
+    const query = 'Necesito analizar el artículo 4 frente a la autodeterminación informativa del Tribunal Constitucional.';
+    const selected = selectNormativeFragments(query, fragments, { limit: 6 });
+    expect(selected.map((f) => f.id)).toContain('frag:1209272:f4');
   });
 });
 

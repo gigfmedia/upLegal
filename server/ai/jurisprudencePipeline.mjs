@@ -10,6 +10,7 @@ import {
   hasSubstantiveNormativeEvidence,
   isSubstantiveNormativeEvidence,
   extractLawNumber,
+  extractArticleNumbers,
 } from './jurisprudenceSources.mjs';
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
 import { orderNormativaByHierarchy, detectHierarchyMatices } from './hierarchy.mjs';
@@ -26,6 +27,21 @@ import { detectContradictions } from './contradiction.mjs';
 // supabase). La ruta conserva: parsing de request, búsqueda, chatCompletion,
 // persistencia y log/observabilidad.
 // ---------------------------------------------------------------------------
+
+// Elimina matices duplicados en la sección "Matices y contradicciones": varios
+// pares de fuentes pueden generar la MISMA nota genérica y se repetía la línea
+// tal cual. Se deduplica por el texto renderizado (nota/notas/tipo).
+function dedupeMatices(matices = []) {
+  const seen = new Set();
+  const out = [];
+  for (const m of matices) {
+    const key = String(m?.nota || m?.notas || m?.tipo || '').trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(m);
+  }
+  return out;
+}
 
 // Esquema de respuesta del modelo para la investigación de jurisprudencia.
 export const AIResearchResponseSchema = z
@@ -177,28 +193,56 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
       const titleText = String(candidate.title || candidate.citation || '')
         .replace(/\s+/g, ' ')
         .trim();
-      // Fase 4.0.4: si la norma recuperada expone fragmentos reales de
-      // LeyChile, la afirmación promovida se respalda con el fragmento
-      // específico más relevante (mostrado como evidencia puntual).
-      const alignedFragment = resolveClaimFragment(query, candidate.metadata?.fragments || []);
+      // Fase 4.1.17: la cita de una disposición ("artículo 4") es el ancla
+      // principal de recuperación: se prefiere el fragmento del artículo citado
+      // aunque otro fragmento coincida más por contenido lexical (la consulta
+      // pide "artículo 4", no "artículo 1").
+      const citedArticles = extractArticleNumbers(query);
+      const fragments = candidate.metadata?.fragments || [];
+      const byArticle =
+        citedArticles.length > 0
+          ? fragments.find((f) =>
+              extractArticleNumbers(f.article || '').some((a) => citedArticles.includes(a)),
+            )
+          : null;
+      const alignedFragment = byArticle || resolveClaimFragment(query, fragments);
       // Fase 4.1.16: si ningún fragmento se alinea por contenido, el claim se
       // ancla al primer fragmento SUSTANTIVO del articulado (evidencia real),
       // nunca a metadata/título.
       const substantiveFragment =
         alignedFragment ||
-        (Array.isArray(candidate.metadata?.fragments)
-          ? candidate.metadata.fragments.find((f) => isSubstantiveNormativeEvidence(f))
+        (Array.isArray(fragments)
+          ? fragments.find((f) => isSubstantiveNormativeEvidence(f))
           : null);
-      autoNormativas.push({
-        source: candidate,
-        source_id: candidate.id,
-        fragment_id: substantiveFragment?.id || null,
-        afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
-        fragmento: substantiveFragment ? String(substantiveFragment.text).trim() : '',
-      });
-      researchWarnings.push(
-        `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,
-      );
+
+      // Fase 4.1.17 (fix, misma regla que verifyJurisprudenceClaims): si la
+      // consulta cita un ARTÍCULO específico que no existe en la norma, NO se
+      // promueve la norma anclada a otra disposición. "Artículo 99" no puede
+      // sustituirse por "Artículo 4" solo porque el contenido coincida: se
+      // prefiere NO_EVIDENCE antes que citar la disposición equivocada.
+      const availableArticles = [
+        ...new Set(fragments.flatMap((f) => extractArticleNumbers(f.article || ''))),
+      ];
+      const articleMismatch =
+        citedArticles.length > 0 &&
+        availableArticles.length > 0 &&
+        !citedArticles.some((a) => availableArticles.includes(a));
+      if (articleMismatch) {
+        researchWarnings.push(
+          `La consulta cita el artículo ${citedArticles.join(', ')} de "${titleText}" (${candidate.norm_number || candidate.id}), pero esa disposición no existe en la fuente recuperada; no se promueve la norma en su lugar.`,
+        );
+      } else {
+        autoNormativas.push({
+          source: candidate,
+          source_id: candidate.id,
+          fragment_id: substantiveFragment?.id || null,
+          afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
+          fragmento: substantiveFragment ? String(substantiveFragment.text).trim() : '',
+        });
+        researchWarnings.push(
+          `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,
+        );
+      }
     }
   }
   const effectiveNormativa = verifiedNormativa.kept.length > 0
@@ -270,7 +314,9 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     allVerifiedClaims,
   );
   const síntesisText = hasVerifiedClaims ? synthesisResult.síntesis || '' : '';
-  const maticesFinales = hasVerifiedClaims ? [...maticesJerarquia, ...contradicciones] : [];
+  const maticesFinales = hasVerifiedClaims
+    ? dedupeMatices([...maticesJerarquia, ...contradicciones])
+    : [];
 
   // Fase 4.1.10: estado NO_EVIDENCE. El pipeline funcionó por completo (search
   // OK, LLM OK, schema OK, verifier OK), pero no quedó ningún claim verificado.

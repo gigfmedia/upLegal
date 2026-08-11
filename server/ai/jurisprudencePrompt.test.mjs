@@ -653,6 +653,49 @@ const artSource = (id, vigency = 'diferida', excerpt, fragments) => ({
     expect(kept[0].fragmento).toMatch(/Art[.]?culo 2|Derechos de los titulares/);
   });
 
+  // -------------------------------------------------------------------------
+  // Fase 4.1.17 — el artículo citado en la afirmación NO se sustituye por otro
+  // fragmento ("artículo 99" no puede anclarse al "Artículo 4"): cita falsa.
+  // -------------------------------------------------------------------------
+  it('descarta una afirmación que cita un artículo inexistente aunque su contenido exista en otro artículo', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'El artículo 99 de la Ley N° 21.719 reconoce el derecho de acceso a los titulares.',
+          fragmento: 'toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    // El contenido existe, pero en el Artículo 2, no en el 99: no se sustituye.
+    expect(kept.length).toBe(0);
+    expect(warnings.some((w) => w.includes('art. 99'))).toBe(true);
+  });
+
+  it('conserva una afirmación que cita el artículo exacto que la respalda', () => {
+    const byId = new Map([
+      ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
+    ]);
+    const { kept } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'bcn-21719',
+          afirmacion: 'El artículo 2 de la Ley N° 21.719 reconoce el derecho de acceso a los titulares.',
+          fragmento: 'toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo',
+        },
+      ],
+      byId,
+      'normativa',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].fragment_id).toBe('frag:1209272:f1');
+  });
+
   it('elimina la afirmación cuando ninguna fragura contiene sus conceptos', () => {
     const byId = new Map([
       ['bcn-21719', artSource('bcn-21719', 'diferida', excerpt, fragments)],
