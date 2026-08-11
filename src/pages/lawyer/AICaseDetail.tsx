@@ -323,7 +323,7 @@ export default function AICaseDetail() {
                     </CardContent>
                   </Card>
 
-                  <section className="lg:sticky lg:top-20">
+                  <section className="lg:sticky lg:top-[calc(4rem+2.75rem)]">
                     {!canChat ? (
                       <Card className="border-dashed">
                         <CardContent className="flex flex-col items-center gap-3 py-10 text-center">

@@ -29,6 +29,7 @@ import {
 } from './server/ai/legalChatPrompt.mjs';
 import {
   searchJurisprudence,
+  validateResearchQuery,
 } from './server/ai/jurisprudenceSources.mjs';
 import {
   buildJurisprudenceSystemPrompt,
@@ -7821,6 +7822,18 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
     const { query } = parsed.data;
+
+    // Fase 4.1.13 (BARRERA 1): una consulta sin suficiente contenido para
+    // investigar (solo etiquetas de fuentes, solo términos genéricos, vacía) NO
+    // ejecuta retrieval ni llama al LLM. Se detiene el pipeline de inmediato.
+    const validation = validateResearchQuery(query);
+    if (!validation.valid) {
+      return res.status(422).json({
+        error:
+          'Formula una pregunta jurídica o indica una materia específica para iniciar la investigación.',
+        code: 'AI_RESEARCH_QUERY_TOO_VAGUE',
+      });
+    }
 
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });

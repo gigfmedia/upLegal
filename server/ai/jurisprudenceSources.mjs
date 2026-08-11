@@ -1139,7 +1139,27 @@ export async function searchBcnNormas(query, limit = 6) {
       (normTypeRank[a.src.norm_type] ?? 9) - (normTypeRank[b.src.norm_type] ?? 9) ||
       (b.date < a.date ? -1 : b.date > a.date ? 1 : 0),
   );
-  const srcs = ranked.slice(0, limit).map((r) => r.src);
+  // Fase 4.1.13 (relevance gate): los candidatos del fallback textual pasan por
+  // el gate de relevancia ANTES de enriquecerlos con el texto de LeyChile. Un
+  // resultado recuperado por un único término genérico/incidental (p. ej.
+  // "efectos" arrastra Ley 21.569 para "teletransportación cuántica") se
+  // descarta: es preferible 0 fuentes a una fuente jurídicamente irrelevante.
+  // Los matches por número explícito (byNumber) ya son señal fuerte y no pasan
+  // por este filtro (searchBcnNormas retorna antes en el branch byNumber).
+  const srcs = ranked
+    .slice(0, limit)
+    .map((r) => r.src)
+    .filter((s) => isBcnNormaRelevantToQuery(query, s));
+  if (srcs.length === 0) {
+    logDiagnostic('jurisprudence_bcn_result', {
+      query_hash: queryHash,
+      status: 'no_relevant',
+      match_by: 'title',
+      candidate_count: Math.min(ranked.length, limit),
+      source_count: 0,
+    });
+    return [];
+  }
   // En general enriquecemos solo las 1-2 normas con más texto para no saturar.
   logDiagnostic('jurisprudence_bcn_result', {
     query_hash: queryHash,
@@ -1458,6 +1478,129 @@ const NORM_FRAGMENT_DIMENSION_TERMS = new Set([
   'academico', 'ensayo', 'libro', 'chile', 'chilena', 'chileno', 'chilenas',
   'chilenos', 'pregunta', 'consulta', 'respuesta',
 ]);
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.13: VALIDACIÓN DE CONSULTA + RELEVANCE GATE antes del LLM.
+// ---------------------------------------------------------------------------
+
+// Términos que por sí solos solo describen el PROVEEDOR de fuentes o la
+// dimensión de búsqueda (y NO una materia jurídica investigable). Una consulta
+// formada únicamente por estos términos, sin pregunta ni materia concreta, es
+// QUERY_TOO_VAGUE y NO debe disparar retrieval ni llamada al LLM. No se busca
+// ser exhaustivo: la validación además requiere señal (pregunta, número de ley
+// o ≥2 términos de contenido) antes de declarar la consulta válida.
+const QUERY_TOO_VAGUE_TERMS = new Set([
+  'fuentes', 'fuente', 'tribunal', 'tribunales', 'constitucional',
+  'constitucionalidad', 'leychile', 'bcn', 'doctrina', 'jurisprudencia',
+  'jurisprudencial', 'academica', 'academico', 'academicos', 'sentencia',
+  'sentencias', 'fallo', 'fallos', 'norma', 'normas', 'normativa', 'normativo',
+  'ley', 'leyes', 'legal', 'legales', 'vigente', 'vigentes', 'regula',
+  'regulan', 'regulacion', 'derecho', 'derechos', 'persona', 'personas',
+  'personal', 'personales', 'datos', 'articulo', 'materia', 'materias',
+  'consulta', 'pregunta', 'respuesta', 'sobre', 'relativo', 'relativa',
+  'relacion', 'relativas', 'efecto', 'efectos', 'juridico', 'juridicos',
+  'juridica', 'juridicas', 'tema', 'temas', 'aspecto', 'aspectos',
+  'informacion', 'tratamiento', 'titular', 'titulares', 'proteccion',
+  'proteger', 'chile', 'chilena', 'chileno', 'chilenas', 'chilenos',
+  'investigar', 'investigacion', 'buscar', 'busqueda', 'puede', 'pueden',
+  'tiene', 'tienen', 'hace', 'hacen', 'ser', 'esta', 'estan',
+]);
+
+// Adverbios/pronombres interrogativos que, sin signo de interrogación, indican
+// una pregunta investigable ("que establece la ley 21.719", "como se regula…").
+const QUERY_INTERROGATIVE_RE = /\b(que|cual|cuales|cuando|como|donde|existe|existen)\b/;
+
+// Términos demasiado comunes en textos jurídicos como para ser DISTINTIVOS de
+// la materia consultada (Fase 4.1.13, gate de jurisprudencia/doctrina). Se
+// suman a RELEVANCE_LOW_TERMS solo en isSourceRelevantToQuery: "jurídicos" o
+// "actualmente" aparecen en casi cualquier fallo/paper y NO prueban que la
+// fuente responda a la consulta (evita el match incidental por boilerplate).
+const RETRIEVAL_GATE_GENERIC_TERMS = new Set([
+  'juridico', 'juridica', 'juridicos', 'juridicas', 'actualmente', 'legal',
+  'legales', 'aplicacion', 'aplicar', 'aplicable', 'norma', 'normas',
+  'normativo', 'normativa', 'regula', 'regulan', 'regulacion', 'vigente',
+  'vigentes', 'nacional', 'materia', 'materias', 'efecto', 'efectos',
+  'persona', 'personas', 'derecho', 'derechos', 'chile', 'chilena', 'chileno',
+  'tiene', 'tienen', 'puede', 'pueden', 'debe', 'deben', 'deber', 'ser',
+  'sido', 'fue', 'fueron', 'son', 'esta', 'estan', 'contiene', 'contenido',
+  'respecto', 'siguiente', 'establece', 'establecer', 'señala', 'indica',
+  'dispone', 'disposicion', 'articulo', 'titular', 'titulares', 'ley',
+  'leyes', 'constitucional', 'constitucionalidad', 'requerimiento',
+  'inaplicabilidad', 'sentencia', 'sentencias', 'fallo', 'fallos',
+  'resolucion', 'pronunciamiento',
+]);
+
+/**
+ * Valida que una consulta contenga suficiente contenido para ejecutar una
+ * investigación jurídica (Fase 4.1.13, BARRERA 1). Una consulta vaga NO debe
+ * disparar retrieval ni llamada al LLM: es preferible pedir una pregunta
+ * concreta antes que fabricar una investigación con fuentes irrelevantes.
+ *
+ * Se considera investigable si hay:
+ *   1. número de ley explícito ("Ley 21.719", "artículo 4 de la Ley 21.719"),
+ *   2. pregunta explícita ("?") o adverbio interrogativo, o
+ *   3. al menos dos términos de contenido que no sean etiquetas de fuente ni
+ *      términos genéricos de dominio.
+ *
+ * No es excesivamente agresivo: una pregunta breve o una materia concreta
+ * (p. ej. "teletransportación cuántica de personas") pasa la validación.
+ * @param {string} query - Consulta en lenguaje natural del abogado.
+ * @returns {{ valid: true } | { valid: false, code: 'QUERY_TOO_VAGUE' }}
+ */
+export function validateResearchQuery(query) {
+  const raw = String(query || '').trim();
+  if (!raw) return { valid: false, code: 'QUERY_TOO_VAGUE' };
+
+  // Señal fuerte y directa: la consulta cita el número oficial de una norma.
+  if (extractLawNumber(raw).length > 0) return { valid: true };
+
+  const folded = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const hasQuestionMark = raw.includes('?') || raw.includes('¿');
+  if (hasQuestionMark || QUERY_INTERROGATIVE_RE.test(folded)) return { valid: true };
+
+  // Materia concreta: al menos dos términos de contenido (no etiquetas de
+  // fuente ni términos genéricos de dominio) sin necesidad de pregunta.
+  const contentTokens = normalizeClaimTokens(raw).filter((t) => !QUERY_TOO_VAGUE_TERMS.has(t));
+  if (contentTokens.length >= 2) return { valid: true };
+
+  return { valid: false, code: 'QUERY_TOO_VAGUE' };
+}
+
+/**
+ * Fase 4.1.13 (BARRERA 2): determina si una fuente recuperada es REALMENTE
+ * relevante a la consulta, más allá de su tipo (normativa/jurisprudencia/
+ * doctrina). Para normativa reutiliza el gate de Fase 4.1.12
+ * (isBcnNormaRelevantToQuery: señal de número oficial o términos sustantivos en
+ * título/extracto/fragmentos). Para jurisprudencia/doctrina exige que el
+ * título, cita o extracto contenga al menos un término sustantivo de la
+ * consulta: una coincidencia de un único término genérico o incidental NO hace
+ * relevante una fuente. Con la query vaga (sin términos sustantivos) ninguna
+ * fuente supera el gate.
+ * @param {string} query - Consulta original del abogado.
+ * @param {object} source - Fuente recuperada (cualquier kind).
+ * @returns {boolean}
+ */
+export function isSourceRelevantToQuery(query, source) {
+  const q = String(query || '').trim();
+  if (!q || !source) return false;
+  if (source.kind === 'normativa') return isBcnNormaRelevantToQuery(query, source);
+
+  // Términos DISTINTIVOS de la consulta: los que NO son de bajo valor ni
+  // boilerplate jurídico común (juridicos, actualmente, establece…). Se exige
+  // al menos uno presente en la fuente: un match de un único término genérico o
+  // incidental NO hace relevante una fuente.
+  const distinctive = normalizeClaimTokens(q).filter(
+    (t) => !RELEVANCE_LOW_TERMS.has(t) && !RETRIEVAL_GATE_GENERIC_TERMS.has(t),
+  );
+  if (distinctive.length === 0) return false;
+  const haystack = [source.title, source.excerpt, source.citation, source.metadata?.abstract]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return distinctive.some((t) => hasWord(haystack, t));
+}
 
 /**
  * Selecciona los fragmentos de una norma con una CAPA DE PRESERVACIÓN
@@ -1875,6 +2018,22 @@ export async function searchJurisprudence(
     settleSearch('doctrina', () => searchOpenAlexDoctrina(query, allocation.doctrina), warnings, { queryHash }),
   ]);
 
-  const sources = prioritizeSources([...tc, ...bcn, ...doctrina], intent);
+  // Fase 4.1.13 (BARRERA 2 · relevance gate): tras recuperar candidatos, se
+  // descartan los que NO responden realmente a la consulta, sin importar su
+  // tipo de fuente. Un resultado recuperado por un término incidental/genérico
+  // no se promueve como fuente jurídica. Para BCN el gate ya se aplicó antes de
+  // enriquecer (searchBcnNormas); aquí se aplica como red de seguridad a todas
+  // las dimensiones y antes de construir el contexto para el LLM.
+  const keptTc = tc.filter((s) => isSourceRelevantToQuery(query, s));
+  const keptBcn = bcn.filter((s) => isSourceRelevantToQuery(query, s));
+  const keptDoctrina = doctrina.filter((s) => isSourceRelevantToQuery(query, s));
+  logDiagnostic('ai_research_relevance_gate', {
+    intent,
+    candidate_count: tc.length + bcn.length + doctrina.length,
+    relevant_count: keptTc.length + keptBcn.length + keptDoctrina.length,
+    query_hash: queryHash,
+  });
+
+  const sources = prioritizeSources([...keptTc, ...keptBcn, ...keptDoctrina], intent);
   return { sources, warnings, intent, queryHash };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,6 +18,7 @@ import {
   Heart,
   Sparkles,
   Bell,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -61,6 +62,14 @@ function DashboardLayout() {
   useEffect(() => {
     setUserRole(getUserRole());
   }, [location.pathname, user]);
+
+  // Prefetch del chunk de AICaseDetail en navegación SPA dentro de /lawyer:
+  // se descarga en segundo plano al montar el layout, así al entrar a un caso
+  // el Suspense interno resuelve al instante (un solo spinner).
+  useEffect(() => {
+    if (!location.pathname.startsWith('/lawyer')) return;
+    void import('@/pages/lawyer/AICaseDetail').catch(() => {});
+  }, [location.pathname]);
 
   // Check if lawyer has services configured
   useEffect(() => {
@@ -420,7 +429,19 @@ function DashboardLayout() {
             {/* Main content */}
             <main className="flex-1 min-w-0 w-full">
               <div className="min-h-screen">
-                <Outlet />
+                {/* Suspense interno: el layout (header/sidebar) queda montado
+                    mientras carga el chunk lazy de la ruta hija. Así no se
+                    "corta" la pantalla ni vuelve el spinner full-screen del
+                    Suspense exterior de App.tsx al navegar entre rutas. */}
+                <Suspense
+                  fallback={
+                    <div className="flex min-h-[60vh] items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-gray-900" aria-hidden="true" />
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
               </div>
             </main>
           </div>

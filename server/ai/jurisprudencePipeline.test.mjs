@@ -359,3 +359,75 @@ describe('buildJurisprudenceOutcome · autoNormativa gate de relevancia (Fase 4.
     expect(result.allVerifiedClaims[0].afirmacion).toContain('regula la materia consultada');
   });
 });
+
+describe('buildJurisprudenceOutcome · autoNormativa NO promueve irrelevantes (Fase 4.1.13, TEST 8 y 31)', () => {
+  const irrelevantNorma = {
+    id: 'bcn-1191771',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency: 'desconocida',
+    citation: 'Ley 21.569',
+    title: 'Ley N° 21.569',
+    norm_type: 'ley',
+    norm_number: '21.569',
+    excerpt: 'idNorma 1191771 · Ley N° 21.569 · Norma vigente',
+    metadata: { leychileCode: '1191771' },
+  };
+
+  const irrelevantTc = {
+    id: 'tc-2800',
+    kind: 'jurisprudencia',
+    source_type: 'jurisprudencia',
+    legal_authority: 'persuasiva',
+    vigency: 'no_aplica',
+    citation: 'Tribunal Constitucional — Rol 2800',
+    excerpt: 'Sobre la aplicación de la ley en el tiempo y los efectos de la sentencia.',
+  };
+
+  it('con sources irrelevantes y sin cita del modelo → NO promueve nada, NO_EVIDENCE (TEST 8)', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'No encontré normativa.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [irrelevantNorma, irrelevantTc],
+      intent: 'normativa',
+      query: '¿Qué efectos jurídicos tiene la regulación de la teletransportación cuántica de personas?',
+    });
+
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims).toHaveLength(0);
+    // Ni la primera norma encontrada ni la jurisprudencia irrelevante se promueven.
+    expect(result.persistedSources).toEqual([]);
+    expect(result.answer).not.toContain('21.569');
+    expect(result.answer).not.toContain('Rol 2800');
+    expect(result.answer).not.toContain('regula la materia consultada');
+    expect(result.resumenFinal).toContain('No se encontró evidencia suficiente');
+  });
+
+  it('candidato recuperado por un término genérico → el gate no lo promueve (TEST 31)', () => {
+    // La norma "coincidió" por la palabra genérica "normativa"; sin señal
+    // sustantiva ni número explícito, el gate la descarta y NO se promueve.
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'Sin normativa específica.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [irrelevantNorma],
+      intent: 'normativa',
+      query: '¿Qué regula la normativa?',
+    });
+
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims).toHaveLength(0);
+    expect(result.answer).not.toContain('21.569');
+    expect(result.answer).not.toContain('regula la materia consultada');
+  });
+});

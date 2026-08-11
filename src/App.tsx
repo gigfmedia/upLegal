@@ -22,7 +22,10 @@ import { supabase } from '@/lib/supabaseClient';
 // Layouts (lazy load these as they're not needed for home page)
 const DashboardLayout = lazy(() => import('@/components/dashboard/DashboardLayout'));
 const AdminLayout = lazy(() => import('@/components/admin/AdminLayout'));
-const RequireLawyer = lazy(() => import('@/components/auth/RequireLawyer'));
+// RequireLawyer es diminuto; se importa estático para evitar un segundo
+// suspend/secuencia del Suspense del layout al cargar una ruta /lawyer
+// (cada lazy que suspende re-monta el fallback y reinicia el spinner).
+import RequireLawyer from '@/components/auth/RequireLawyer';
 const RequireAdmin = lazy(() => import('@/components/auth/RequireAdmin'));
 import Footer from '@/components/Footer';
 
@@ -99,6 +102,13 @@ const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
 const LegalUpAIWorkspace = lazy(() => import('./pages/lawyer/LegalUpAIWorkspace'));
 const AICaseDetail = lazy(() => import('./pages/lawyer/AICaseDetail'));
+
+// Prefetch del chunk de AICaseDetail en cargas directas a /lawyer: arranca la
+// descarga en paralelo al layout para que el Suspense interno de DashboardLayout
+// resuelva al instante y el loading no aparezca dos veces (layout + caso).
+if (typeof window !== 'undefined' && window.location.pathname.startsWith('/lawyer')) {
+  void import('./pages/lawyer/AICaseDetail').catch(() => {});
+}
 const NotFound = lazy(() => import('@/pages/NotFound'));
 const LegalAgent = lazy(() => import('@/components/LegalAgent'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));

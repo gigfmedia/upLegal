@@ -429,6 +429,8 @@ function errorToMessage(error: AIResearchError | null): string {
   switch (error?.code) {
     case 'NO_SOURCES_FOUND':
       return 'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.';
+    case 'AI_RESEARCH_QUERY_TOO_VAGUE':
+      return 'Formula una pregunta jurídica o indica una materia específica para iniciar la investigación.';
     case 'CONTEXT_TOO_LARGE':
       return 'Hay demasiadas fuentes para procesarlas en una sola consulta. Acota la pregunta.';
     case 'AI_NOT_CONFIGURED':
@@ -550,19 +552,6 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             <p className="text-xs text-muted-foreground">
               Fuentes: Tribunal Constitucional · BCN/LeyChile · Doctrina académica.
             </p>
-
-            <AnimatePresence>
-              {runMutation.isPending && (
-                <motion.div
-                  key="research-thinking"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <AIThinkingIndicator />
-                </motion.div>
-              )}
-            </AnimatePresence>
             
             <Button
               type="button"
@@ -584,6 +573,21 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
             </Button>
           </div>
         </div>
+
+        <AnimatePresence>
+          {runMutation.isPending && (
+            <motion.div
+              key="research-thinking"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <AIThinkingIndicator
+                stages={['Pensando', 'Investigando jurisprudencia', 'Preparando la respuesta']}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {runMutation.error && (

@@ -12,6 +12,8 @@ import {
   resolveClaimFragment,
   isBcnNormaRelevantToQuery,
   selectNormativeFragments,
+  validateResearchQuery,
+  isSourceRelevantToQuery,
 } from './jurisprudenceSources.mjs';
 
 describe('extractLawNumber', () => {
@@ -428,5 +430,163 @@ describe('Fase 4.1.12 · selectNormativeFragments (preservación)', () => {
   it('no enriquece cuando la consulta no coincide con la norma', () => {
     expect(selectNormativeFragments('indemnización por despido injustificado del trabajador', fragments, { limit: 6 })).toEqual([]);
     expect(selectNormativeFragments('', fragments, { limit: 6 })).toEqual([]);
+  });
+});
+
+describe('Fase 4.1.13 · validateResearchQuery (QUERY_TOO_VAGUE)', () => {
+  const INVALID = { valid: false, code: 'QUERY_TOO_VAGUE' };
+  const VALID = { valid: true };
+
+  it('query vacía y solo espacios → QUERY_TOO_VAGUE', () => {
+    expect(validateResearchQuery('')).toEqual(INVALID);
+    expect(validateResearchQuery('   ')).toEqual(INVALID);
+    expect(validateResearchQuery(null)).toEqual(INVALID);
+    expect(validateResearchQuery(undefined)).toEqual(INVALID);
+  });
+
+  it('solo selección de fuentes → QUERY_TOO_VAGUE (TEST 1)', () => {
+    expect(validateResearchQuery('Fuentes: Tribunal Constitucional · BCN/LeyChile · Doctrina académica.')).toEqual(INVALID);
+  });
+
+  it('solo etiquetas de fuente → QUERY_TOO_VAGUE (TEST 2 y TEST 4.D)', () => {
+    expect(validateResearchQuery('BCN/LeyChile')).toEqual(INVALID);
+    expect(validateResearchQuery('Tribunal Constitucional')).toEqual(INVALID);
+    expect(validateResearchQuery('Doctrina académica')).toEqual(INVALID);
+    expect(validateResearchQuery('Jurisprudencia')).toEqual(INVALID);
+    expect(validateResearchQuery('Ley')).toEqual(INVALID);
+    expect(validateResearchQuery('Fuentes: BCN/LeyChile.')).toEqual(INVALID);
+  });
+
+  it('texto excesivamente genérico → QUERY_TOO_VAGUE (TEST 4.E)', () => {
+    expect(validateResearchQuery('Datos personales')).toEqual(INVALID);
+    expect(validateResearchQuery('Protección de datos personales')).toEqual(INVALID);
+  });
+
+  it('pregunta jurídica válida → valid (TEST 3)', () => {
+    expect(validateResearchQuery('¿Qué derechos reconoce la Ley N° 21.719 a los titulares de datos personales según su artículo 4°?')).toEqual(VALID);
+    expect(validateResearchQuery('¿Qué dice el artículo 19 N° 4 de la Constitución?')).toEqual(VALID);
+  });
+
+  it('consulta que nombra una ley específica → valid aunque sea breve', () => {
+    expect(validateResearchQuery('Ley 21.719')).toEqual(VALID);
+    expect(validateResearchQuery('Ley N° 21.719')).toEqual(VALID);
+  });
+
+  it('pregunta combinada normativa + jurisprudencia → valid (TEST 6)', () => {
+    expect(validateResearchQuery('¿Qué establece la Ley N° 21.719 sobre los derechos de los titulares de datos personales y qué ha señalado el Tribunal Constitucional sobre la protección de datos personales y la autodeterminación informativa?')).toEqual(VALID);
+  });
+
+  it('consulta absurda pero sintácticamente válida → valid (TEST 4.H / teletransportación)', () => {
+    expect(validateResearchQuery('¿Qué efectos jurídicos tiene actualmente en Chile la regulación de la teletransportación cuántica de personas?')).toEqual(VALID);
+  });
+
+  it('pregunta genérica sin materia → pasa validación (la relevancia decide después)', () => {
+    expect(validateResearchQuery('¿Qué regula la normativa?')).toEqual(VALID);
+  });
+
+  it('materia concreta sin pregunta ni número de ley → valid', () => {
+    expect(validateResearchQuery('indemnización de perjuicios por violación de datos personales')).toEqual(VALID);
+    expect(validateResearchQuery('obligaciones de las empresas que tratan datos personales de clientes')).toEqual(VALID);
+  });
+});
+
+describe('Fase 4.1.13 · relevance gate (isSourceRelevantToQuery)', () => {
+  const teleportQuery = '¿Qué efectos jurídicos tiene actualmente en Chile la regulación de la teletransportación cuántica de personas?';
+  const ley21719Query = '¿Qué derechos reconoce la Ley N° 21.719 a los titulares de datos personales según su artículo 4°?';
+
+  const bcnNorma = (extra = {}) => ({
+    id: 'bcn-1191771',
+    kind: 'normativa',
+    source_type: 'normativa',
+    norm_type: 'ley',
+    norm_number: '21.569',
+    title: 'Ley N° 21.569',
+    excerpt: 'idNorma 1191771 · Ley N° 21.569 · Norma vigente',
+    metadata: { leychileCode: '1191771' },
+    ...extra,
+  });
+
+  it('teletransportación NO hace relevante a Ley 21.569 (TEST 4: nunca Ley 21.569)', () => {
+    expect(isSourceRelevantToQuery(teleportQuery, bcnNorma())).toBe(false);
+  });
+
+  it('Ley 21.719 sí es relevante a su consulta (TEST 5)', () => {
+    const ley21719 = {
+      ...bcnNorma({
+        id: 'bcn-1209272',
+        norm_number: '21.719',
+        title: 'Ley N° 21.719',
+        metadata: { leychileCode: '1209272' },
+      }),
+    };
+    expect(isSourceRelevantToQuery(ley21719Query, ley21719)).toBe(true);
+  });
+
+  it('un único término genérico/incidental no hace relevante una fuente (TEST 9)', () => {
+    // "efectos" aparece en la consulta y en la cita, pero es genérico: no basta.
+    expect(isSourceRelevantToQuery(teleportQuery, bcnNorma())).toBe(false);
+    expect(isSourceRelevantToQuery('¿Qué regula la normativa?', bcnNorma())).toBe(false);
+  });
+
+  it('norma relevante por términos de dominio en el título → relevante', () => {
+    const leyDatos = bcnNorma({
+      id: 'bcn-1209272',
+      norm_number: '21.719',
+      title: 'Ley N° 21.719 REGULA LA PROTECCIÓN DE LOS DATOS PERSONALES',
+    });
+    expect(isSourceRelevantToQuery('¿Qué regula la protección de datos personales en Chile?', leyDatos)).toBe(true);
+  });
+
+  it('jurisprudencia sin términos sustantivos de la consulta → no relevante', () => {
+    const tc = {
+      id: 'tc-2800',
+      kind: 'jurisprudencia',
+      source_type: 'jurisprudencia',
+      title: 'Rol 2800',
+      citation: 'Tribunal Constitucional — Rol 2800',
+      excerpt: 'Sobre la aplicación de la ley en el tiempo y los efectos de la sentencia.',
+    };
+    expect(isSourceRelevantToQuery(teleportQuery, tc)).toBe(false);
+  });
+
+  it('jurisprudencia con el término sustantivo en el extracto → relevante', () => {
+    const tcDatos = {
+      id: 'tc-5174',
+      kind: 'jurisprudencia',
+      source_type: 'jurisprudencia',
+      title: 'Rol 5174',
+      citation: 'Tribunal Constitucional — Rol 5174',
+      excerpt: 'Establece que la protección de los datos personales es un derecho fundamental.',
+    };
+    expect(isSourceRelevantToQuery('¿qué ha dicho la jurisprudencia sobre la protección de datos personales?', tcDatos)).toBe(true);
+  });
+
+  it('doctrina sin términos sustantivos → no relevante', () => {
+    const doc = {
+      id: 'doctrina-1',
+      kind: 'doctrina',
+      source_type: 'doctrina',
+      title: 'La ejecución del acuerdo de mediación en asuntos civiles y comerciales.',
+      citation: 'Autor. (2018). La ejecución del acuerdo de mediación.',
+      excerpt: 'Doctrina (no vinculante) — análisis de la mediación civil.',
+    };
+    expect(isSourceRelevantToQuery('¿qué obligaciones tienen las empresas que tratan datos personales de clientes?', doc)).toBe(false);
+  });
+
+  it('doctrina con el término sustantivo → relevante', () => {
+    const doc = {
+      id: 'doctrina-2',
+      kind: 'doctrina',
+      source_type: 'doctrina',
+      title: 'Interés legítimo y tratamiento de datos personales: antecedentes comparados.',
+      citation: 'P. Contreras. (2019). Interés legítimo y tratamiento de datos personales.',
+      excerpt: 'Doctrina (no vinculante) — el consentimiento en el tratamiento de datos personales.',
+    };
+    expect(isSourceRelevantToQuery('¿qué obligaciones tienen las empresas que tratan datos personales de clientes?', doc)).toBe(true);
+  });
+
+  it('sin query o sin fuente → no relevante', () => {
+    expect(isSourceRelevantToQuery('', bcnNorma())).toBe(false);
+    expect(isSourceRelevantToQuery('consulta de prueba', null)).toBe(false);
   });
 });

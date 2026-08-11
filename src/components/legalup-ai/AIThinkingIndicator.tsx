@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 
-const THINKING_STAGES = [
+const DEFAULT_THINKING_STAGES = [
   'Pensando',
   'Analizando el documento',
   'Revisando el contexto del caso',
@@ -12,6 +12,10 @@ const THINKING_STAGES = [
 const STAGE_MS = 2200;
 const DOT_MS = 340;
 const MAX_DOTS = 3;
+
+type AIThinkingIndicatorProps = {
+  stages?: string[];
+};
 
 /**
  * Indicador de "Pensando…" del chat de LegalUp AI.
@@ -23,16 +27,16 @@ const MAX_DOTS = 3;
  * saltos de layout y respeta prefers-reduced-motion (sin animación).
  * Todos los timers se limpian al desmontar.
  */
-export function AIThinkingIndicator() {
+export function AIThinkingIndicator({ stages = DEFAULT_THINKING_STAGES }: AIThinkingIndicatorProps) {
   const reducedMotion = useReducedMotion();
   const [stage, setStage] = useState(0);
   const [dots, setDots] = useState(0);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const id = setInterval(() => setStage((s) => (s + 1) % THINKING_STAGES.length), STAGE_MS);
+    const id = setInterval(() => setStage((s) => (s + 1) % stages.length), STAGE_MS);
     return () => clearInterval(id);
-  }, [reducedMotion]);
+  }, [reducedMotion, stages.length]);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -40,7 +44,7 @@ export function AIThinkingIndicator() {
     return () => clearInterval(id);
   }, [reducedMotion]);
 
-  const label = `${THINKING_STAGES[stage]}${'.'.repeat(dots)}`;
+  const label = `${stages[stage]}${'.'.repeat(dots)}`;
 
   return (
     <div
