@@ -1320,6 +1320,9 @@ const RELEVANCE_LOW_TERMS = new Set([
   'asegura', 'aseguran', 'debera', 'deben', 'debe', 'podra', 'podran', 'podria',
   'pueda', 'pueden', 'tiene', 'tienen', 'efecto', 'efectos', 'persona',
   'personas', 'personal', 'resguardo', 'resguarda', 'sujeto', 'sujetos',
+  'puede', 'puedo', 'puedes', 'dice', 'dicen', 'dijo', 'senala', 'senalar',
+  'senalan', 'indica', 'indican', 'indicar', 'menciona', 'mencionan',
+  'mencionar',
 ]);
 
 /** Normaliza un texto a tokens sin acentos (palabras simples, ≥4 caracteres). */
@@ -1377,6 +1380,11 @@ const BCN_RELEVANCE_GENERIC_WEIGHT = 0.1;
  *     aparecen en el título (peso 3.0), extracto o fragmentos (1.5) suman.
  *   - Se exige señal >= umbral (2.5) con al menos un término sustantivo, o una
  *     coincidencia de número oficial.
+ *   - El número oficial citado (Fase 4.1.15) es señal suficiente SOLO cuando la
+ *     consulta es una cita desnuda del número ("Ley 21.719"). Si la consulta
+ *     además trae contenido sustantivo propio, ese contenido debe coincidir con
+ *     la norma: "¿puedo divorciarme según la Ley 21.719?" NO vuelve relevante
+ *     una ley de protección de datos personales.
  * @param {string} query - Consulta original del abogado.
  * @param {object} source - Fuente BCN (kind === 'normativa').
  * @returns {boolean}
@@ -1389,9 +1397,14 @@ export function isBcnNormaRelevantToQuery(query, source) {
   // informativo (stopwords ya removidas por normalizeClaimTokens). NO se usa
   // extractSubstantiveTerms aquí porque GENERIC_CONCEPTS descarta términos de
   // dominio (datos, personales, protección, tratamiento) que SÍ indican la
-  // materia de una norma y deben contar como señal de contenido.
-  const substantive = normalizeClaimTokens(q).filter((t) => !RELEVANCE_LOW_TERMS.has(t));
-  const generic = normalizeClaimTokens(q).filter((t) => RELEVANCE_LOW_TERMS.has(t));
+  // materia de una norma y deben contar como señal de contenido. Se excluye el
+  // propio número de ley citado (solo dígitos): ese número lo maneja
+  // hasNumberSignal y NUNCA debe sumar como señal de contenido (de lo contrario
+  // "divorcio Ley 21.719" promovería una ley de datos personales porque su
+  // título contiene "21.719").
+  const allTokens = normalizeClaimTokens(q);
+  const substantive = allTokens.filter((t) => !RELEVANCE_LOW_TERMS.has(t) && !/^\d+$/.test(t));
+  const generic = allTokens.filter((t) => RELEVANCE_LOW_TERMS.has(t));
   const lawNumbers = extractLawNumber(q);
 
   // Señal directa y fuerte: la consulta cita el número oficial de la norma.
@@ -1429,7 +1442,17 @@ export function isBcnNormaRelevantToQuery(query, source) {
     if (normalized.some((h) => hasWord(h.text, t))) score += BCN_RELEVANCE_GENERIC_WEIGHT;
   }
 
-  return hasNumberSignal || (substantiveMatches >= 1 && score >= BCN_RELEVANCE_THRESHOLD);
+  // Fase 4.1.15: el número oficial citado solo es señal suficiente cuando la
+  // consulta NO aporta contenido sustantivo propio (cita desnuda del número,
+  // p.ej. "Ley 21.719" o "¿qué dice la Ley 21.719?"). Si la consulta trae
+  // contenido sustantivo (divorcio, despido, compraventa…), ese contenido debe
+  // corroborar la materia de la norma; en caso contrario el número es incidental
+  // y la fuente NO debe promoverse.
+  const contentMatches = substantive.filter((t) => normalized.some((h) => hasWord(h.text, t))).length;
+  const numberSignalPasses =
+    hasNumberSignal && (substantive.length === 0 || contentMatches >= 1);
+
+  return numberSignalPasses || (substantiveMatches >= 1 && score >= BCN_RELEVANCE_THRESHOLD);
 }
 
 /**

@@ -345,6 +345,30 @@ describe('Fase 4.1.12 · isBcnNormaRelevantToQuery', () => {
     expect(isBcnNormaRelevantToQuery('protección de datos personales', { kind: 'jurisprudencia' })).toBe(false);
     expect(isBcnNormaRelevantToQuery('', ley21719)).toBe(false);
   });
+
+  // Fase 4.1.15 — el número oficial citado NO basta cuando el tema sustantivo
+  // es incompatible con la materia de la norma.
+  it('NO es relevante cuando el tema sustantivo contradice la norma aunque cite el número (divorcio ≠ datos personales)', () => {
+    expect(isBcnNormaRelevantToQuery('¿puedo divorciarme según la Ley 21.719?', ley21719)).toBe(false);
+    expect(isBcnNormaRelevantToQuery('¿qué dice la Ley 21.719 sobre divorcio y separación de bienes?', ley21719)).toBe(false);
+    expect(isBcnNormaRelevantToQuery('¿divorcio? ¿aplica la Ley 21.719?', ley21719)).toBe(false);
+  });
+
+  it('una cita DESNUDA del número oficial sigue siendo señal suficiente', () => {
+    expect(isBcnNormaRelevantToQuery('Ley 21.719', ley21719)).toBe(true);
+    expect(isBcnNormaRelevantToQuery('¿qué dice la Ley 21.719?', ley21719)).toBe(true);
+  });
+
+  it('el número citado no cuenta como término de contenido para el gate global', () => {
+    // El número "21.719" aparece en el título de la norma; de contarse como
+    // señal de contenido, "divorcio + Ley 21.719" pasaría el gate.
+    const tituloConNumero = {
+      ...ley21719,
+      title: 'Ley N° 21.719 REGULA LA PROTECCIÓN DE LOS DATOS PERSONALES',
+    };
+    expect(isBcnNormaRelevantToQuery('¿puedo divorciarme según la Ley 21.719?', tituloConNumero)).toBe(false);
+    expect(isBcnNormaRelevantToQuery('¿qué derechos reconoce la Ley 21.719 a los titulares?', tituloConNumero)).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -516,6 +540,8 @@ describe('Fase 4.1.13 · relevance gate (isSourceRelevantToQuery)', () => {
         id: 'bcn-1209272',
         norm_number: '21.719',
         title: 'Ley N° 21.719',
+        excerpt:
+          'Ley 21.719 — Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
         metadata: { leychileCode: '1209272' },
       }),
     };
