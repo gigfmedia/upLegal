@@ -431,3 +431,154 @@ describe('buildJurisprudenceOutcome · autoNormativa NO promueve irrelevantes (F
     expect(result.answer).not.toContain('regula la materia consultada');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.14 — Entidad explícita: Ley 21.719 no debe ser desplazada por una
+// ley distinta (Ley 21.713) que coincida solo por contenido compartido.
+// ---------------------------------------------------------------------------
+
+describe('buildJurisprudenceOutcome · entidad explícita por número (Fase 4.1.14)', () => {
+  const ley21713 = () => ({
+    id: 'bcn-21713',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency: 'desconocida',
+    norm_type: 'ley',
+    norm_number: '21.713',
+    citation: 'Ley 21.713',
+    title: 'Ley N° 21.713',
+    excerpt:
+      'Regula la protección de los datos personales y el tratamiento de información personal.',
+    metadata: { leychileCode: '90001' },
+  });
+  const ley21719 = () => ({
+    id: 'bcn-21719',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency: 'desconocida',
+    norm_type: 'ley',
+    norm_number: '21.719',
+    citation: 'Ley 21.719',
+    title: 'Ley N° 21.719',
+    excerpt:
+      'Derechos del titular de datos personales: acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+    metadata: { leychileCode: '1209272' },
+  });
+
+  it('Ley 21.713 (primera en el listado y relevante por contenido) NO gana a la Ley 21.719 citada por número', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'Sin normativa citada.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [ley21713(), ley21719()],
+      intent: 'normativa',
+      query: '¿Qué establece la Ley 21.719 sobre la protección de datos personales?',
+    });
+
+    expect(result.outcome).toBe('SUCCESS');
+    expect(result.allVerifiedClaims[0].source_id).toBe('bcn-21719');
+    expect(result.allVerifiedClaims[0].afirmacion).toContain('21.719');
+    expect(result.answer).not.toContain('21.713');
+  });
+
+  it('sin número citado conserva la preferencia por ley del orden dado', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'Sin normativa citada.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: [],
+      },
+      sources: [ley21719(), ley21713()],
+      intent: 'normativa',
+      query: '¿Qué ley regula la protección de datos personales?',
+    });
+    expect(result.allVerifiedClaims[0].source_id).toBe('bcn-21719');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fase 4.1.14 — Relación no demostrada: el pipeline NO presenta como hallazgo
+// verificado una relación entre la ley y la autodeterminación informativa que
+// ninguna fuente establece (CASO D).
+// ---------------------------------------------------------------------------
+
+describe('buildJurisprudenceOutcome · relación no demostrada (Fase 4.1.14, CASO D)', () => {
+  const tc9666 = () => ({
+    id: 'tc-9666',
+    kind: 'jurisprudencia',
+    source_type: 'jurisprudencia',
+    legal_authority: 'persuasiva',
+    vigency: 'no_aplica',
+    citation: 'Tribunal Constitucional — Rol 9666',
+    excerpt:
+      'La protección de los datos personales se vincula a la autodeterminación informativa.',
+  });
+  const ley21719 = () => ({
+    id: 'bcn-21719',
+    kind: 'normativa',
+    source_type: 'normativa',
+    legal_authority: 'vinculante',
+    vigency: 'desconocida',
+    norm_type: 'ley',
+    norm_number: '21.719',
+    citation: 'Ley 21.719',
+    title: 'Ley N° 21.719',
+    excerpt:
+      'Derechos del titular de datos personales: acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+    metadata: { leychileCode: '1209272' },
+  });
+
+  it('la síntesis NO incluye una relación causal no demostrada entre la ley y la autodeterminación informativa', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'La ley y el Tribunal Constitucional tratan la protección de datos personales.',
+        normativa: [
+          {
+            fuente_id: 'bcn-21719',
+            afirmacion:
+              'La ley reconoce a los titulares el derecho de acceso, rectificación, supresión, oposición, portabilidad y bloqueo.',
+            fragmento:
+              'derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo',
+          },
+        ],
+        jurisprudencia: [
+          {
+            fuente_id: 'tc-9666',
+            afirmacion:
+              'El tribunal vinculó la protección de datos personales a la autodeterminación informativa.',
+            fragmento: 'autodeterminación informativa',
+          },
+        ],
+        doctrina: [],
+        conclusion:
+          'La relación entre la ley y la autodeterminación informativa está demostrada.',
+      },
+      sources: [tc9666(), ley21719()],
+      intent: 'general',
+      query:
+        '¿Qué derechos reconoce la Ley N° 21.719 a los titulares de datos personales y qué relación existe con el derecho a la autodeterminación informativa reconocido por el Tribunal Constitucional?',
+    });
+
+    expect(result.outcome).toBe('SUCCESS');
+    // La oración de relación no demostrada se ELIMINA de la síntesis.
+    expect(result.síntesisText).not.toContain('relación entre la ley');
+    expect(result.síntesisText).not.toContain('demostrada');
+    // No se atribuye al tribunal una afirmación que su evidencia no contiene.
+    expect(result.answer).not.toContain(
+      'El Tribunal resolvió en el caso citado: La relación entre la ley y la autodeterminación informativa está demostrada.',
+    );
+    // Las afirmaciones verificadas de ambas dimensiones se conservan.
+    expect(result.allVerifiedClaims.map((c) => c.category).sort()).toEqual([
+      'jurisprudencia',
+      'normativa',
+    ]);
+  });
+});

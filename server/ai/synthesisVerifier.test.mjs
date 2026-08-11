@@ -60,6 +60,49 @@ describe('Fase 4.1 · síntesis verificada', () => {
     expect(sentences[0].dropped).toBe(true);
   });
 
+  // -------------------------------------------------------------------------
+  // Fase 4.1.14 — una oración con marco discursivo de una categoría SOLO puede
+  // anclarse a claims de esa misma categoría (source-kind guard).
+  // -------------------------------------------------------------------------
+
+  it('oración sobre el tribunal NO se ancla a un claim NORMATIVO aunque comparta términos (cross-kind guard)', () => {
+    const soloNormativa = [
+      claim(
+        'bcn-21719',
+        'normativa',
+        'La ley reconoce la protección de los datos personales como derecho fundamental.',
+        'la protección de los datos personales como derecho fundamental',
+      ),
+    ];
+    const { sentences } = verifySynthesis(
+      'El Tribunal Constitucional sostuvo que la protección de los datos personales es un derecho fundamental.',
+      soloNormativa,
+    );
+    // No puede presentarse como "La norma establece: El Tribunal Constitucional…".
+    expect(sentences[0].dropped).toBe(true);
+    expect(sentences[0].category).toBeNull();
+  });
+
+  it('oración sobre el tribunal sí se ancla a un claim JURISPRUDENCIAL (mismo kind)', () => {
+    const { sentences } = verifySynthesis(
+      'El Tribunal Constitucional vinculó la protección de los datos personales a la autodeterminación informativa.',
+      claims,
+    );
+    expect(sentences[0].dropped).toBe(false);
+    expect(sentences[0].category).toBe('jurisprudencia');
+    expect(sentences[0].source_ids).toContain('tc-1');
+  });
+
+  it('relación no demostrada entre la ley y la autodeterminación informativa se elimina (CASO D)', () => {
+    const { sentences } = verifySynthesis(
+      'La relación entre la ley y la autodeterminación informativa está demostrada.',
+      claims,
+    );
+    // Ninguna fuente establece esa relación: la oración no sobrevive como
+    // hallazgo verificado ni se atribuye al tribunal.
+    expect(sentences[0].dropped).toBe(true);
+  });
+
   it('etiqueta como inferencia una oración con lenguaje modal construible desde claims', () => {
     const { sentences } = verifySynthesis(
       'Sobre la base de estas fuentes, puede inferirse que el régimen de protección de datos reconoce estos derechos al titular.',

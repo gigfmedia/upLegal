@@ -510,6 +510,49 @@ describe('Fase 4.0.2 · contexto y respuesta con jerarquía', () => {
     });
     expect(warnings.length).toBe(0);
   });
+
+  // Fase 4.1.14 — suaviza afirmaciones categóricas en femenino/verbal
+  // ("queda demostrada", "está demostrada", "se ha demostrado") que las
+  // fuentes no respaldan, y no toca la oración si la categoría está respaldada.
+  it('suaviza "está demostrada" (femenino) sin jurisprudencia respaldada', () => {
+    const { conclusion, warnings } = detectExcessiveConclusions({
+      resumen: '',
+      conclusion: 'La relación entre la ley y la autodeterminación informativa está demostrada.',
+      normativa: [{ fuente_id: 'bcn-21719' }],
+      jurisprudencia: [],
+    });
+    expect(warnings.length).toBeGreaterThan(0);
+    expect(conclusion).not.toContain('está demostrada');
+    expect(conclusion).toContain('las fuentes muestran');
+  });
+
+  it('suaviza "queda demostrada" / "se ha demostrado" sin jurisprudencia respaldada', () => {
+    const r1 = detectExcessiveConclusions({
+      resumen: '',
+      conclusion: 'Queda demostrada la relación entre ambas materias.',
+      normativa: [],
+      jurisprudencia: [],
+    });
+    const r2 = detectExcessiveConclusions({
+      resumen: '',
+      conclusion: 'Se ha demostrado que los derechos se ejercen libremente.',
+      normativa: [],
+      jurisprudencia: [],
+    });
+    expect(r1.conclusion).not.toContain('Queda demostrada');
+    expect(r2.conclusion).not.toContain('Se ha demostrado');
+  });
+
+  it('no suaviza "está demostrada" si la jurisprudencia quedó respaldada', () => {
+    const { conclusion, warnings } = detectExcessiveConclusions({
+      resumen: '',
+      conclusion: 'La relación está demostrada por las sentencias.',
+      normativa: [],
+      jurisprudencia: [{ fuente_id: 'tc-1' }],
+    });
+    expect(conclusion).toContain('está demostrada');
+    expect(warnings.length).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

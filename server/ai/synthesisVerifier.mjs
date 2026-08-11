@@ -105,9 +105,17 @@ export function verifySynthesis(conclusion, claims = []) {
     const opensAsInference = INFERENCE_OPENER.test(sentence.text.trim());
 
     // Busca el claim con mayor solape de términos sustantivos no discursivos.
+    // Fase 4.1.14: si la oración lleva marco discursivo de una categoría (el
+    // tribunal, la ley, la doctrina), SOLO puede anclarse a claims de ESA misma
+    // categoría. Sin esta restricción, una fuente normativa podía "respaldar"
+    // una oración sobre el tribunal (y viceversa), o una oración que afirmaba
+    // una relación no demostrada entre dos materias terminaba con el marco
+    // "El Tribunal resolvió en el caso citado:", atribuyendo a la fuente una
+    // afirmación que su evidencia no contiene.
     let best = null;
     let bestOverlap = 0;
     for (const claim of claims) {
+      if (framing && claim.source?.kind && claim.source.kind !== framing) continue;
       const claimTerms = extractSubstantiveTerms(`${claim.afirmacion} ${claim.fragmento}`).filter(
         (t) => !DISCOURSE_TERMS.has(t),
       );

@@ -4,7 +4,11 @@ import {
   detectExcessiveConclusions,
   buildJurisprudenceAnswer,
 } from './jurisprudencePrompt.mjs';
-import { resolveClaimFragment, isBcnNormaRelevantToQuery } from './jurisprudenceSources.mjs';
+import {
+  resolveClaimFragment,
+  isBcnNormaRelevantToQuery,
+  extractLawNumber,
+} from './jurisprudenceSources.mjs';
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
 import { orderNormativaByHierarchy, detectHierarchyMatices } from './hierarchy.mjs';
 import { detectContradictions } from './contradiction.mjs';
@@ -122,7 +126,17 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
   const autoNormativas = [];
   if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
     const relevant = (s) => s.kind === 'normativa' && isBcnNormaRelevantToQuery(query, s);
+    // Fase 4.1.14: si la consulta cita un número de ley ("Ley 21.719"), se
+    // prefiere la norma que coincide por número oficial ANTES que una ley
+    // distinta relevante solo por contenido compartido ("Ley 21.713" no debe
+    // ganar a "Ley 21.719" por compartir palabras de la materia).
+    const citedNumber = extractLawNumber(query)[0];
+    const matchesCitedNumber = (s) =>
+      citedNumber &&
+      s.kind === 'normativa' &&
+      String(s.norm_number || '').replace(/[^0-9]/g, '') === citedNumber;
     const candidate =
+      sources.find((s) => relevant(s) && matchesCitedNumber(s)) ||
       sources.find((s) => relevant(s) && s.norm_type === 'ley') ||
       sources.find((s) => relevant(s));
     if (candidate) {

@@ -481,7 +481,7 @@ const CATEGORICAL_PATTERNS = [
     replacement: 'según las fuentes podría ser obligatorio',
   },
   {
-    re: /\b(?:queda|est[áa]) demostrado\b/i,
+    re: /\b(?:queda|est[áa]|se\s+ha) demostrad[oa]\b/i,
     requires: 'jurisprudencia',
     replacement: 'las fuentes muestran',
   },
