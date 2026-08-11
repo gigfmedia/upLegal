@@ -231,6 +231,60 @@ describe('buildJurisprudenceOutcome · autoNormativa (intent normativa sin cita 
   });
 });
 
+describe('buildJurisprudenceOutcome · gate de evidencia sustantiva (Fase 4.1.16)', () => {
+  const metadataOnly = (id = 'bcn-19628') =>
+    normativaSource(id, {
+      citation: 'Ley 19.628',
+      title: 'Ley 19.628',
+      norm_number: '19.628',
+      excerpt:
+        'Ley 19.628, publicada el 10-ene-2024, norma vigente sobre la protección de la vida privada.',
+    });
+
+  it('NO promueve una norma identificada solo por título/número sin evidencia sustantiva', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'No se encontró normativa específica.',
+        normativa: [],
+        jurisprudencia: [],
+        doctrina: [],
+        advertencias: ['No se encontró normativa que regule la materia.'],
+      },
+      sources: [metadataOnly()],
+      intent: 'normativa',
+      query: '¿qué dice la Ley 19.628 sobre protección de la vida privada?',
+    });
+
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims.length).toBe(0);
+    expect(result.answer).not.toContain('Ley 19.628');
+    expect(result.answer).not.toContain('Normativa relevante');
+  });
+
+  it('descarta el claim del modelo que cite una norma sin evidencia sustantiva', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'La Ley 19.628 regula la protección de la vida privada.',
+        normativa: [
+          {
+            fuente_id: 'bcn-19628',
+            afirmacion: 'La Ley 19.628 regula la protección de datos de la vida privada.',
+            fragmento: 'protección de la vida privada',
+          },
+        ],
+        jurisprudencia: [],
+        doctrina: [],
+      },
+      sources: [metadataOnly()],
+      intent: 'general',
+      query: '¿qué dice la Ley 19.628 sobre protección de la vida privada?',
+    });
+
+    expect(result.outcome).toBe('NO_EVIDENCE');
+    expect(result.allVerifiedClaims.length).toBe(0);
+  });
+});
+
 describe('buildJurisprudenceOutcome · combinado (Ley 21.719 + TC + doctrina)', () => {
   it('verifica normativa, jurisprudencia y doctrina en una consulta mixta', () => {
     const sources = [normativaSource(), tcSource(), doctrinaSource()];

@@ -33,7 +33,8 @@ const sources = [
     citation: 'Norma N° 19628 (2020)',
     publisher: 'Biblioteca del Congreso Nacional / LeyChile',
     url: 'https://www.bcn.cl/leychile/navegar?idNorma=19628',
-    excerpt: 'Normas sobre protección de la vida privada.',
+    excerpt:
+      'El titular de datos personales tiene derecho a exigir al responsable información sobre el tratamiento de sus datos, su finalidad, los destinatarios y la forma de obtenerla, pudiendo solicitar su modificación o eliminación en los casos previstos.',
   },
 ];
 
@@ -62,6 +63,33 @@ describe('buildJurisprudenceContext', () => {
   it('devuelve contexto vacío sin fuentes', () => {
     const { context } = buildJurisprudenceContext([]);
     expect(context).toContain('0 fuentes');
+  });
+
+  it('excluye normas identificadas sin evidencia sustantiva (Fase 4.1.16)', () => {
+    const { context } = buildJurisprudenceContext([
+      {
+        id: 'bcn-19628',
+        kind: 'normativa',
+        legal_authority: 'vinculante',
+        vigency: 'desconocida',
+        citation: 'Ley 19.628',
+        publisher: 'LeyChile',
+        url: 'https://x',
+        excerpt:
+          'Ley 19.628, publicada el 10-ene-2024, norma vigente sobre la protección de la vida privada.',
+      },
+      {
+        id: 'tc-123',
+        kind: 'jurisprudencia',
+        legal_authority: 'persuasiva',
+        vigency: 'no_aplica',
+        citation: 'Tribunal Constitucional — Rol 7845-2019',
+        excerpt: 'Establece que el derecho a la salud es un derecho fundamental.',
+      },
+    ]);
+    expect(context).not.toContain('bcn-19628');
+    expect(context).not.toContain('Ley 19.628');
+    expect(context).toContain('tc-123');
   });
 });
 
@@ -450,7 +478,8 @@ describe('Fase 4.0.2 · contexto y respuesta con jerarquía', () => {
         citation: 'Ley 19.628',
         publisher: 'LeyChile',
         url: 'https://x',
-        excerpt: 'Normas sobre el tratamiento de datos.',
+        excerpt:
+          'El tratamiento de datos personales solo puede efectuarse cuando la ley lo autoriza o el titular consiente expresamente, debiendo el responsable otorgar información previa sobre la finalidad y el destinatario de la información.',
       },
     ]);
     expect(context).toContain('Autoridad:');

@@ -1752,6 +1752,68 @@ export function resolveClaimFragment(claimText, fragments, { minOverlap = 0.5 } 
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// Fase 4.1.16: CALIDAD DE EVIDENCIA SUSTANTIVA.
+// Una fuente IDENTIFICADA (título, idNorma, número, fecha, vigencia) NO es
+// evidencia del contenido de la norma. Solo el texto de disposiciones reales
+// (articulado sustantivo) puede respaldar qué establece la ley.
+// ---------------------------------------------------------------------------
+
+// Mínimo de caracteres de cuerpo sustantivo (tras eliminar identificación y
+// boilerplate) para considerar que un fragmento es una disposición real y no un
+// encabezado/cierre administrativo.
+const NORMATIVE_MIN_SUBSTANTIVE_CHARS = 60;
+
+// Marcas de IDENTIFICACIÓN/metadata de la norma: son identificación de fuente,
+// NO contenido sustantivo (idNorma, "Ley N° X", publicación, vigencia, URL).
+const NORMATIVE_IDENTIFIER_RE =
+  /\bidnorma\b|leychile|www\.|publicad(?:a|o)?|publicaci[oó]n|entra(?:r)?\s+en\s+vigencia|entrada en vigencia|norma (?:vigente|derogada)|en vigor|\d{1,2}-(?:ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)-\d{4}/i;
+
+// Boilerplate de PROMULGACIÓN / preámbulo / cierre administrativo. Al
+// eliminarse deja el cuerpo sustantivo real del artículo.
+const NORMATIVE_BOILERPLATE_RE =
+  /teniendo presente|he tenido a bien|aprobarlo y sancionarlo|prom[úu]lguese|publiq[úu]ese|inscr[íi]base|c[úu]mplase|arch[íi]vese|an[óo]tese|comun[íi]quese|t[ée]ngase presente|apru[ée]base|sancionad(?:o|a) y promulgad(?:o|a)/gi;
+
+/**
+ * Determina si un fragmento/texto constituye EVIDENCIA SUSTANTIVA de la norma
+ * (una disposición real del articulado) en lugar de identificación o texto
+ * administrativo (Fase 4.1.16). Reglas:
+ *   - Preámbulo / promulgación / cierre sin cuerpo sustantivo → false.
+ *   - Identificación/metadata (idNorma, "Ley N° X", fechas, vigencia, URL) → false.
+ *   - Una disposición real conserva ≥ NORMATIVE_MIN_SUBSTANTIVE_CHARS caracteres
+ *     tras eliminar boilerplate e identificación → true.
+ * @param {{ article?: string, text?: string }|string} fragment - fragmento o texto.
+ * @returns {boolean}
+ */
+export function isSubstantiveNormativeEvidence(fragment) {
+  const text = String(fragment?.text ?? fragment ?? '').trim();
+  if (!text) return false;
+  const article = String(fragment?.article || '').trim();
+  if (/^pre[áa]mbulo$/i.test(article) || /^pre[áa]mbulo$/i.test(text)) return false;
+
+  const norm = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (NORMATIVE_IDENTIFIER_RE.test(norm)) return false;
+
+  const content = norm.replace(NORMATIVE_BOILERPLATE_RE, ' ').replace(/\s+/g, ' ').trim();
+  return content.length >= NORMATIVE_MIN_SUBSTANTIVE_CHARS;
+}
+
+/**
+ * Indica si una fuente de normativa expone EVIDENCIA SUSTANTIVA (fragmentos
+ * reales del articulado o un extracto con contenido de disposición). Una fuente
+ * identificada por título/número pero sin texto sustantivo (metadata_only) NO
+ * es evidencia y no debe promover claims ni presentarse como normativa
+ * relevante (Fase 4.1.16).
+ * @param {object} source - Fuente BCN/LeyChile (kind === 'normativa').
+ * @returns {boolean}
+ */
+export function hasSubstantiveNormativeEvidence(source) {
+  if (!source || source.kind !== 'normativa') return false;
+  const fragments = Array.isArray(source.metadata?.fragments) ? source.metadata.fragments : [];
+  if (fragments.length > 0) return fragments.some((f) => isSubstantiveNormativeEvidence(f));
+  return isSubstantiveNormativeEvidence({ article: '', text: source.excerpt });
+}
+
 const LEYCHILE_URL = (code) => `https://www.bcn.cl/leychile/navegar?idNorma=${encodeURIComponent(code)}`;
 
 const CHILE_MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
@@ -1795,9 +1857,20 @@ async function getLeyChileText(code, timeoutMs = 15000) {
 }
 
 /**
+ * Indica si la consulta cita por número oficial a esta norma (entidad explícita).
+ * La cita numérica identifica la fuente; no implica evidencia sustantiva.
+ */
+function sourceCitedByNumber(src, query) {
+  const normDigits = String(src?.norm_number || '').replace(/[^0-9]/g, '');
+  if (!normDigits || normDigits.length < 4) return false;
+  return extractLawNumber(query).includes(normDigits);
+}
+
+/**
  * Enriquece una fuente de normativa BCN con el texto real de LeyChile
  * (fragmentos por artículo), la vigencia explícita y las referencias oficiales.
- * Si la recuperación falla, devuelve la fuente original sin texto.
+ * Si la recuperación falla, devuelve la fuente original sin texto, marcada como
+ * evidence_quality = 'metadata_only' (identificada pero sin evidencia sustantiva).
  */
 async function augmentNormaWithText(src, query) {
   const code = src?.metadata?.leychileCode;
@@ -1806,12 +1879,29 @@ async function augmentNormaWithText(src, query) {
   try {
     ley = await getLeyChileText(code);
   } catch {
-    return src;
+    return { ...src, metadata: { ...src.metadata, evidence_quality: 'metadata_only' } };
   }
-  if (!ley || !ley.plain) return src;
+  if (!ley || !ley.plain) {
+    return { ...src, metadata: { ...src.metadata, evidence_quality: 'metadata_only' } };
+  }
   const fragments = splitLawArticles(ley.plain);
-  const selected = selectNormativeFragments(query, fragments, { limit: 6 });
-  if (selected.length === 0) return src;
+  let selected = selectNormativeFragments(query, fragments, { limit: 6 });
+  // Fase 4.1.16: cita desnuda por número ("Ley 21.719", "¿Qué dice la Ley
+  // 21.719?") identifica la norma por entidad explícita. Aunque los tokens de la
+  // consulta no aparezcan en el articulado, se recuperan los fragmentos
+  // SUSTANTIVOS del texto para que la identificación no se convierta en la
+  // única evidencia. NO aplica si la consulta trae materia incompatible (la
+  // relevancia gate de 4.1.15 la rechaza).
+  if (
+    selected.length === 0 &&
+    sourceCitedByNumber(src, query) &&
+    isBcnNormaRelevantToQuery(query, src)
+  ) {
+    selected = fragments.filter((f) => isSubstantiveNormativeEvidence(f)).slice(0, 6);
+  }
+  if (selected.length === 0) {
+    return { ...src, metadata: { ...src.metadata, evidence_quality: 'metadata_only' } };
+  }
 
   const vigency = detectNormVigency(src.title, {
     derogado: ley.meta.derogado,
@@ -1834,6 +1924,7 @@ async function augmentNormaWithText(src, query) {
     metadata: {
       ...src.metadata,
       integrity: 'text_verified',
+      evidence_quality: 'substantive',
       idNorma: code,
       leychileCode: code,
       officialUrl: baseUrl,
@@ -2058,5 +2149,20 @@ export async function searchJurisprudence(
   });
 
   const sources = prioritizeSources([...keptTc, ...keptBcn, ...keptDoctrina], intent);
+
+  // Fase 4.1.16 (evidence gate): observabilidad de la separación entre fuente
+  // IDENTIFICADA y EVIDENCIA SUSTANTIVA. Una norma puede pasar el relevance gate
+  // (por número/título) pero carecer de texto sustantivo; esa norma NO se
+  // presenta como evidencia (la filtran buildJurisprudenceContext y el
+  // pipeline), solo queda el diagnóstico interno.
+  const normativas = sources.filter((s) => s.kind === 'normativa');
+  logDiagnostic('ai_research_evidence_gate', {
+    intent,
+    total_sources: sources.length,
+    normativa_substantive: normativas.filter(hasSubstantiveNormativeEvidence).length,
+    normativa_metadata_only: normativas.filter((s) => !hasSubstantiveNormativeEvidence(s)).length,
+    query_hash: queryHash,
+  });
+
   return { sources, warnings, intent, queryHash };
 }

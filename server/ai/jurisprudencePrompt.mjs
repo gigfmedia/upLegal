@@ -16,7 +16,7 @@
 // afirmaciones sin respaldo textual (no permite "falsa sensación de respaldo").
 // ---------------------------------------------------------------------------
 
-import { resolveClaimFragment, fragmentSupportsClaim } from './jurisprudenceSources.mjs';
+import { resolveClaimFragment, fragmentSupportsClaim, hasSubstantiveNormativeEvidence } from './jurisprudenceSources.mjs';
 
 export const JURISPRUDENCE_LIMITS = {
   // Límite total de caracteres del contexto enviado al modelo.
@@ -145,7 +145,15 @@ function truncate(text, max = 1200) {
  */
 export function buildJurisprudenceContext(sources = []) {
   const limit = JURISPRUDENCE_LIMITS.MAX_SOURCES;
-  const selected = sources.slice(0, limit);
+  // Fase 4.1.16 (evidence gate, antes del LLM): una norma IDENTIFICADA pero sin
+  // evidencia sustantiva (solo título/idNorma/fecha/vigencia o texto de
+  // promulgación) NO se entrega al modelo como si fuera evidencia jurídica.
+  // Solo las fuentes con texto sustantivo (fragmentos o disposiciones) entran
+  // al contexto. La identificación queda como diagnóstico interno.
+  const withEvidence = sources.filter(
+    (s) => s.kind !== 'normativa' || hasSubstantiveNormativeEvidence(s),
+  );
+  const selected = withEvidence.slice(0, limit);
 
   const blocks = [
     'CONTEXTO DE FUENTES VERIFICABLES',

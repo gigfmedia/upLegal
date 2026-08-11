@@ -7,6 +7,8 @@ import {
 import {
   resolveClaimFragment,
   isBcnNormaRelevantToQuery,
+  hasSubstantiveNormativeEvidence,
+  isSubstantiveNormativeEvidence,
   extractLawNumber,
 } from './jurisprudenceSources.mjs';
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
@@ -77,7 +79,15 @@ export const AIResearchResponseSchema = z
  */
 export function buildJurisprudenceOutcome({ data, sources, intent, query = '' }) {
   // Solo se aceptan fuentes que correspondan a fuentes reales recuperadas.
-  const includedById = new Map(sources.map((source) => [source.id, source]));
+  // Fase 4.1.16 (evidence gate): una norma IDENTIFICADA pero sin evidencia
+  // sustantiva (solo título/idNorma/fecha/vigencia o texto de promulgación) NO
+  // puede anclar claims: excluirla del mapa evita que el modelo la convierta
+  // en afirmación jurídica ("La Ley X establece…") sin texto de disposición.
+  const includedById = new Map(
+    sources
+      .filter((source) => source.kind !== 'normativa' || hasSubstantiveNormativeEvidence(source))
+      .map((source) => [source.id, source]),
+  );
 
   let validated;
   if (data) {
@@ -125,7 +135,15 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
   // fuente ("Ley X regula la materia") es más grave que la ausencia de evidencia.
   const autoNormativas = [];
   if (intent === 'normativa' && verifiedNormativa.kept.length === 0) {
-    const relevant = (s) => s.kind === 'normativa' && isBcnNormaRelevantToQuery(query, s);
+    // Fase 4.1.16 (evidence gate): además de pasar el relevance gate (4.1.12/
+    // 4.1.15), la norma debe exponer EVIDENCIA SUSTANTIVA (fragmentos reales o
+    // extracto con disposiciones). Una norma identificada solo por título/
+    // número/metadata no se promueve: cae a NO_EVIDENCE antes que afirmar
+    // "regula la materia" sin texto que lo respalde.
+    const relevant = (s) =>
+      s.kind === 'normativa' &&
+      isBcnNormaRelevantToQuery(query, s) &&
+      hasSubstantiveNormativeEvidence(s);
     // Fase 4.1.14: si la consulta cita un número de ley ("Ley 21.719"), se
     // prefiere la norma que coincide por número oficial ANTES que una ley
     // distinta relevante solo por contenido compartido ("Ley 21.713" no debe
@@ -163,12 +181,20 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
       // LeyChile, la afirmación promovida se respalda con el fragmento
       // específico más relevante (mostrado como evidencia puntual).
       const alignedFragment = resolveClaimFragment(query, candidate.metadata?.fragments || []);
+      // Fase 4.1.16: si ningún fragmento se alinea por contenido, el claim se
+      // ancla al primer fragmento SUSTANTIVO del articulado (evidencia real),
+      // nunca a metadata/título.
+      const substantiveFragment =
+        alignedFragment ||
+        (Array.isArray(candidate.metadata?.fragments)
+          ? candidate.metadata.fragments.find((f) => isSubstantiveNormativeEvidence(f))
+          : null);
       autoNormativas.push({
         source: candidate,
         source_id: candidate.id,
-        fragment_id: alignedFragment?.id || null,
+        fragment_id: substantiveFragment?.id || null,
         afirmacion: `La ${typeLabel}${numeroPart} "${titleText}" regula la materia consultada.`,
-        fragmento: alignedFragment ? String(alignedFragment.text).trim() : '',
+        fragmento: substantiveFragment ? String(substantiveFragment.text).trim() : '',
       });
       researchWarnings.push(
         `La normativa se identificó por su título oficial (idNorma ${candidate.metadata?.leychileCode || candidate.id}); revisa su texto completo en LeyChile.`,

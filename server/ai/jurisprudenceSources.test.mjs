@@ -14,6 +14,8 @@ import {
   selectNormativeFragments,
   validateResearchQuery,
   isSourceRelevantToQuery,
+  isSubstantiveNormativeEvidence,
+  hasSubstantiveNormativeEvidence,
 } from './jurisprudenceSources.mjs';
 
 describe('extractLawNumber', () => {
@@ -614,5 +616,40 @@ describe('Fase 4.1.13 · relevance gate (isSourceRelevantToQuery)', () => {
   it('sin query o sin fuente → no relevante', () => {
     expect(isSourceRelevantToQuery('', bcnNorma())).toBe(false);
     expect(isSourceRelevantToQuery('consulta de prueba', null)).toBe(false);
+  });
+});
+
+describe('Fase 4.1.16 · evidencia sustantiva de normativa', () => {
+  const substantive = {
+    kind: 'normativa',
+    excerpt:
+      'Derechos de los titulares: toda persona tiene derecho a acceso, rectificación, supresión, oposición, portabilidad y bloqueo de sus datos personales.',
+  };
+  const metadataOnly = {
+    kind: 'normativa',
+    excerpt: 'idNorma 1191771 · Ley N° 21.569 · Publicada el 10-ene-2024 · Norma vigente',
+  };
+  const promulgation = { kind: 'normativa', excerpt: 'Teniendo presente que el H. Congreso Nacional ha dado su aprobación al siguiente proyecto de ley.' };
+
+  it('isSubstantiveNormativeEvidence: disposición real → true', () => {
+    expect(isSubstantiveNormativeEvidence({ article: 'Artículo 4°', text: substantive.excerpt })).toBe(true);
+  });
+
+  it('isSubstantiveNormativeEvidence: identificación/metadata y preámbulo → false', () => {
+    expect(isSubstantiveNormativeEvidence(metadataOnly)).toBe(false);
+    expect(isSubstantiveNormativeEvidence(promulgation)).toBe(false);
+    expect(isSubstantiveNormativeEvidence({ article: 'Preámbulo', text: 'texto cualquiera' })).toBe(false);
+    expect(isSubstantiveNormativeEvidence('')).toBe(false);
+  });
+
+  it('hasSubstantiveNormativeEvidence: true con fragmentos o extracto sustantivo', () => {
+    expect(hasSubstantiveNormativeEvidence(substantive)).toBe(true);
+    expect(hasSubstantiveNormativeEvidence({ kind: 'normativa', metadata: { fragments: [{ article: 'Art. 4', text: substantive.excerpt }] } })).toBe(true);
+  });
+
+  it('hasSubstantiveNormativeEvidence: false si solo metadata/identificación', () => {
+    expect(hasSubstantiveNormativeEvidence(metadataOnly)).toBe(false);
+    expect(hasSubstantiveNormativeEvidence({ kind: 'normativa', metadata: { fragments: [{ article: '', text: metadataOnly.excerpt }] } })).toBe(false);
+    expect(hasSubstantiveNormativeEvidence({ kind: 'jurisprudencia', excerpt: 'cualquier texto largo de una sentencia' })).toBe(false);
   });
 });
