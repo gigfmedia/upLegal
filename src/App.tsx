@@ -110,7 +110,7 @@ if (typeof window !== 'undefined' && window.location.pathname.startsWith('/lawye
   void import('./pages/lawyer/AICaseDetail').catch(() => {});
 }
 const NotFound = lazy(() => import('@/pages/NotFound'));
-const LegalAgent = lazy(() => import('@/components/LegalAgent'));
+const LegalUpAssistant = lazy(() => import('@/components/assistant/LegalUpAssistant'));
 const ReviewPage = lazy(() => import('./pages/ReviewPage'));
 const CAELanding = lazy(() => import('./pages/CAELanding'));
 const CategoryLanding = lazy(() => import('./pages/CategoryLanding'));
@@ -308,6 +308,7 @@ import { MessageProvider } from '@/contexts/MessageProvider';
 const AppContent = () => {
   const { isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Track page views
   usePageTracking();
@@ -392,9 +393,13 @@ const AppContent = () => {
           <Suspense fallback={null}>
             <GoogleAnalytics />
           </Suspense>
-          <Suspense fallback={null}>
-            <LegalAgent />
-          </Suspense>
+          {!location.pathname.startsWith('/lawyer') &&
+            !location.pathname.startsWith('/admin') &&
+            !location.pathname.startsWith('/empresa') && (
+            <Suspense fallback={null}>
+              <LegalUpAssistant />
+            </Suspense>
+          )}
           <Suspense fallback={
             <div
               className="flex items-center justify-center min-h-screen"

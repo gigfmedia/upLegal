@@ -467,22 +467,22 @@ const Index = () => {
       <Header onAuthClick={handleAuthClick} />
       
       {/* Hero Section - Padding top adjusted for Top Bar (40px) + Header (64px) */}
-      <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-32 pb-16 px-4 sm:px-6 lg:px-8 min-h-screen">
         <div className="max-w-7xl mx-auto text-center">
-          <p className="border border-gray-900 bg-gray-900 rounded-full p-1 text-sm text-white mb-8 max-w-3xl mx-auto w-fit px-2 mt-4 flex items-center gap-2">
+          <p className="border border-gray-300 rounded-full p-1 text-sm text-gray-600 mb-8 max-w-3xl mx-auto w-fit px-2 py-2 mt-12 flex items-center gap-2">
             <span className="w-1 h-1 bg-green-400 rounded-full"></span>
             Abogados verificados en todo Chile
           </p>
-          <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold text-gray-900 font-serif mb-8 mt-8">
+          <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold text-gray-900 font-serif my-8">
             Asesoría legal online con&nbsp;
             <span className="text-green-900 underline underline-offset-8 font-serif italic">Abogados verificados.</span> 
             <br />Rápido, seguro y sin complicaciones.
           </h1>
-          <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
-            Conecta con un abogado experto según tu caso.<br /> Videollamada, precios claros y disponibilidad inmediata.
+          <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-5xl mx-auto">
+            Conecta con un abogado experto según tu caso. Videollamada, precios claros y disponibilidad inmediata.
           </p>
           {/* Search Section */}
-          <div className="max-w-2xl mx-auto mb-12">
+          <div className="max-w-3xl mx-auto mb-8">
             <SearchBar
               searchTerm={searchTerm}
               onSearchTermChange={setSearchTerm}
@@ -498,41 +498,8 @@ const Index = () => {
             />
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            <div className="text-center">
-              <div className="flex flex-col items-center">
-                <div className="text-3xl font-bold text-green-900 mb-2">
-                  +10
-                </div>
-              </div>
-              <div className="text-gray-900 mb-1">Áreas legales disponibles</div>
-              <p className="text-sm text-gray-800">Despidos injustificados, Problemas de arriendo, Deudas y embargos, Familia y pensión alimenticia</p>
-            </div>
-            
-            {/*<div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">
-                {isLoadingCount.completed ? (
-                  <div className="h-8 w-24 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
-                ) : (
-                  <>{completedCasesCount !== null ? `${completedCasesCount}+` : '10k+'}</>
-                )}
-              </div>
-              <div className="text-gray-600">Casos Resueltos</div>
-            </div>*/}
-            {/* <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">4.8★</div>
-              <div className="text-gray-600">Calificación Promedio</div>
-            </div> */}
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-900 mb-2">24/7</div>
-              <div className="text-gray-900 mb-1">No enfrentes tu problema legal solo</div>
-              <p className="text-sm text-gray-800">Recibe orientación legal clara y encuentra al abogado indicado para tu caso.</p>
-            </div>
-            
-          </div>
-          <div className="mt-12">
-            <p className="text-gray-900 font-bold mb-4">Búsqueda rápida por especialidad:</p>
+          <div className="mb-12">
+            {/* <p className="text-gray-900 font-bold mb-4">Búsqueda rápida por especialidad:</p> */}
             <div className="flex flex-wrap gap-2 justify-center">
               {[
                 "Arriendo",
@@ -554,13 +521,47 @@ const Index = () => {
                     // Navigate to search page with the query parameter
                     navigate(`/search?query=${encodeURIComponent(tag)}`);
                   }}
-                  className="border border-gray-900 hover:bg-gray-900 text-gray-900 hover:text-white px-3 py-1 rounded-full text-sm transition-colors"
+                  className="border border-gray-300 hover:bg-gray-200 text-gray-600 px-3 py-2 rounded-full text-sm transition-colors"
                 >
                   {tag}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Stats */}
+          {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
+            <div className="text-center">
+              <div className="flex flex-col items-center">
+                <div className="text-3xl font-bold text-green-900 mb-2">
+                  +10
+                </div>
+              </div>
+              <div className="text-gray-900 mb-1">Áreas legales disponibles</div>
+              <p className="text-sm text-gray-800">Despidos injustificados, Problemas de arriendo, Deudas y embargos, Familia y pensión alimenticia</p>
+            </div> */}
+            
+            {/*<div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
+                {isLoadingCount.completed ? (
+                  <div className="h-8 w-24 bg-gray-200 rounded-md animate-pulse mx-auto"></div>
+                ) : (
+                  <>{completedCasesCount !== null ? `${completedCasesCount}+` : '10k+'}</>
+                )}
+              </div>
+              <div className="text-gray-600">Casos Resueltos</div>
+            </div>*/}
+            {/* <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-2">4.8★</div>
+              <div className="text-gray-600">Calificación Promedio</div>
+            </div> */}
+            {/* <div className="text-center">
+              <div className="text-3xl font-bold text-green-900 mb-2">24/7</div>
+              <div className="text-gray-900 mb-1">No enfrentes tu problema legal solo</div>
+              <p className="text-sm text-gray-800">Recibe orientación legal clara y encuentra al abogado indicado para tu caso.</p>
+            </div>
+            
+          </div> */}
         </div>
       </section>
 

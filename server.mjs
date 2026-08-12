@@ -41,6 +41,20 @@ import {
 import {
   buildJurisprudenceOutcome,
 } from './server/ai/jurisprudencePipeline.mjs';
+import {
+  classifyProblem,
+  matchLawyers,
+  buildRecommendationCopy,
+  explainRecommendation,
+  sanitizeMessages,
+  sanitizeText,
+  detectProcessIntent,
+  detectLawyerServicesIntent,
+  findLawyerServicesByName,
+  ASSISTANT_CATEGORIES,
+  ASSISTANT_SUBCATEGORIES,
+  ASSISTANT_LIMITS,
+} from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 
 // Get current directory
@@ -1440,6 +1454,23 @@ app.post('/api/bookings/create', async (req, res) => {
     }
 
     const paymentLink = mpData.init_point || mpData.sandbox_init_point;
+
+    // Evento de conversión principal del asistente/plataforma. No bloquea el flujo.
+    try {
+      await capturePostHog('booking_created', user_email, {
+        booking_id: booking.id,
+        booking_type: booking.booking_type,
+        lawyer_id,
+        service_id: booking.service_id || null,
+        service_title: booking.service_title || null,
+        price,
+        duration: resolvedDuration,
+        source: body.source || 'site',
+        posthog_distinct_id: req.body.posthog_distinct_id || null,
+      });
+    } catch (posthogError) {
+      console.error('[Assistant] booking_created failed', posthogError);
+    }
 
     res.json({
       success: true,
@@ -8205,6 +8236,276 @@ setInterval(async () => {
     console.error('[LegalUpAI] trial reminder scan error:', error);
   }
 }, TRIAL_REMINDER_SCAN_MS).unref();
+
+// ============================================================================
+// ASISTENTE COMERCIAL Y DE ORIENTACIÓN (front público)
+// ============================================================================
+// POST /api/assistant/chat
+// Entrada:  { messages: [{role, content}], userCity?, source? }
+// Salida:   { reply, category, subcategory, summary, urgency, commercialIntent,
+//             readyToRecommend, stage, lawyers?, question?, followUp? }
+// El backend clasifica con IA, hace matching determinístico contra Supabase y
+// devuelve abogados reales. La IA nunca decide qué abogados existen.
+// ----------------------------------------------------------------------------
+
+// Rate limiting simple por IP + token budget por sesión (control de costos §30).
+const assistantRateBuckets = new Map();
+const ASSISTANT_RATE_WINDOW_MS = 60_000;
+const ASSISTANT_RATE_MAX_PER_WINDOW = 12;
+
+const assistantRateLimit = (ip) => {
+  const now = Date.now();
+  const bucket = assistantRateBuckets.get(ip);
+  if (!bucket || now - bucket.startedAt > ASSISTANT_RATE_WINDOW_MS) {
+    assistantRateBuckets.set(ip, { startedAt: now, count: 1 });
+    return true;
+  }
+  if (bucket.count >= ASSISTANT_RATE_MAX_PER_WINDOW) return false;
+  bucket.count += 1;
+  return true;
+};
+
+app.post('/api/assistant/chat', async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').toString().split(',')[0].trim();
+    if (!assistantRateLimit(ip)) {
+      return res.status(429).json({
+        error: 'Has hecho demasiadas consultas en poco tiempo. Espera un momento e inténtalo de nuevo.',
+        code: 'RATE_LIMITED',
+      });
+    }
+
+    const body = req.body || {};
+    const messages = sanitizeMessages(body.messages, ASSISTANT_LIMITS.MAX_HISTORY_MESSAGES);
+    const userCity = sanitizeText(body.userCity, 60) || null;
+    const source = sanitizeText(body.source, 40) || 'widget';
+
+    if (messages.length === 0) {
+      return res.status(400).json({ error: 'No hay mensajes en la conversación.', code: 'INVALID_REQUEST' });
+    }
+
+    if (!isAIProviderConfigured()) {
+      console.warn('[Assistant] AI no configurada, usando clasificador fallback.');
+    }
+
+    // Preguntas de proceso/ayuda (cómo reservar, pagar, cómo funciona): se
+    // responden con instrucciones concretas sin clasificar un problema legal.
+    const processIntent = detectProcessIntent(messages);
+    if (processIntent) {
+      try {
+        await capturePostHog('assistant_process_help', ip, {
+          type: processIntent.type,
+          source,
+        });
+      } catch (e) {
+        console.error('[Assistant] process_help tracking failed', e);
+      }
+      return res.json({
+        reply: processIntent.reply,
+        category: 'otros',
+        subcategory: 'otros',
+        summary: (messages[messages.length - 1]?.content || '').slice(0, 200),
+        urgency: 'low',
+        commercialIntent: 'high',
+        readyToRecommend: false,
+        stage: 'help',
+        question: null,
+        options: [],
+        lawyers: [],
+        usedAI: false,
+        processHelp: processIntent.type,
+      });
+    }
+
+    // Consulta directa por los servicios de un abogado concreto ("servicios del
+    // abogado X"): se busca el perfil real en Supabase y se muestran SUS servicios.
+    const servicesIntent = detectLawyerServicesIntent(messages);
+    if (servicesIntent) {
+      const servicesResult = await findLawyerServicesByName({
+        supabase,
+        candidates: servicesIntent.candidates,
+      });
+      if (servicesResult) {
+        try {
+          await capturePostHog('lawyer_services_viewed', ip, {
+            lawyer_id: servicesResult.lawyer.id,
+            lawyer_name: servicesResult.name,
+            service_count: servicesResult.items.length,
+            source,
+          });
+        } catch (e) {
+          console.error('[Assistant] lawyer_services_viewed tracking failed', e);
+        }
+        const hasServices = servicesResult.items.length > 0;
+        const reply = hasServices
+          ? `Estos son los servicios que ofrece **${servicesResult.name}**:`
+          : `**${servicesResult.name}** no tiene servicios publicados por ahora, pero puedes reservar una consulta o ver su perfil.`;
+        return res.json({
+          reply,
+          category: 'otros',
+          subcategory: 'servicios_abogado',
+          summary: (messages[messages.length - 1]?.content || '').slice(0, 200),
+          urgency: 'low',
+          commercialIntent: 'high',
+          readyToRecommend: false,
+          stage: 'services',
+          question: null,
+          options: [],
+          lawyers: [],
+          services: {
+            lawyer: servicesResult.lawyer,
+            items: hasServices ? servicesResult.items : [],
+          },
+          usedAI: false,
+        });
+      }
+    }
+
+    const { classification, usedAI, usage } = await classifyProblem({
+      history: messages,
+      userCity,
+      chatCompletion: (params) =>
+        chatCompletion({
+          model: AI_DEFAULT_MODEL,
+          temperature: 0.4,
+          maxTokens: 700,
+          ...params,
+        }),
+    });
+
+    const { reply, category, subcategory, summary, urgency, commercialIntent, readyToRecommend, question } = classification;
+
+    // Tracking: el problema se entendió/clasificó (no bloquea el flujo).
+    if (usedAI) {
+      try {
+        await capturePostHog('problem_classified', ip, {
+          category,
+          subcategory,
+          urgency,
+          commercial_intent: commercialIntent,
+          ready_to_recommend: readyToRecommend,
+          source,
+          estimated_cost_usd: usage?.estimated_cost_usd ?? null,
+        });
+      } catch (e) {
+        console.error('[Assistant] problem_classified failed', e);
+      }
+    }
+
+    let lawyers = null;
+    let stage = readyToRecommend ? 'matching' : 'understanding';
+    let followUp = null;
+
+    if (readyToRecommend) {
+      lawyers = await matchLawyers({
+        supabase,
+        category,
+        subcategory,
+        userCity,
+        limit: ASSISTANT_LIMITS.MAX_LAWYERS,
+      });
+
+      const fallbackCopy = buildRecommendationCopy({ category, subcategory, urgency, commercialIntent });
+      const hasLawyers = Array.isArray(lawyers) && lawyers.length > 0;
+      const finalReply = hasLawyers && reply ? reply : hasLawyers ? fallbackCopy : reply;
+      let finalLawyers = lawyers;
+
+      stage = hasLawyers ? 'recommendation' : 'matching';
+      followUp = hasLawyers
+        ? 'Puedes revisar los abogados sugeridos, ver su perfil o reservar una consulta directamente.'
+        : 'Puedo mostrarte abogados del área legal más cercana a tu situación.';
+
+      if (hasLawyers) {
+        // Cerebro 3 · Explicación grounded (no bloquea el flujo): la IA explica
+        // por qué cada abogado real es adecuado. Si falla, caen a matchReasons.
+        let explanationReasons = {};
+        let explainedWithAI = false;
+        let explanationCostUsd = null;
+        if (isAIProviderConfigured()) {
+          try {
+            const problemText = messages
+              .filter((m) => m.role === 'user')
+              .map((m) => m.content)
+              .join('\n')
+              .slice(0, ASSISTANT_LIMITS.MAX_MESSAGE_LENGTH);
+            const explanation = await explainRecommendation({
+              problem: problemText,
+              lawyers: lawyers.slice(0, ASSISTANT_LIMITS.MAX_EXPLANATION_REASONS),
+              chatCompletion: (params) =>
+                chatCompletion({
+                  model: AI_DEFAULT_MODEL,
+                  temperature: 0.3,
+                  maxTokens: 800,
+                  ...params,
+                }),
+            });
+            explanationReasons = explanation.reasons || {};
+            explainedWithAI = explanation.usedAI;
+            explanationCostUsd = explanation.usage?.estimated_cost_usd ?? null;
+          } catch (e) {
+            console.warn('[Assistant] explicación falló:', e?.message || e);
+          }
+        }
+
+        finalLawyers = lawyers.map((lawyer) => ({
+          ...lawyer,
+          explanation: explanationReasons[lawyer.id] || null,
+        }));
+
+        try {
+          await capturePostHog('lawyer_recommended', ip, {
+            category,
+            subcategory,
+            lawyer_count: lawyers.length,
+            top_lawyer_score: lawyers[0]?.matchScore ?? 0,
+            explained_by_ai: explainedWithAI,
+            explanation_cost_usd: explanationCostUsd,
+            source,
+          });
+        } catch (e) {
+          console.error('[Assistant] lawyer_recommended failed', e);
+        }
+      }
+
+      return res.json({
+        reply: finalReply,
+        category,
+        subcategory,
+        summary,
+        urgency,
+        commercialIntent,
+        readyToRecommend,
+        stage,
+        followUp,
+        options: [],
+        lawyers: hasLawyers ? finalLawyers : [],
+        usedAI,
+      });
+    }
+
+    res.json({
+      reply,
+      category,
+      subcategory,
+      summary,
+      urgency,
+      commercialIntent,
+      readyToRecommend: false,
+      stage,
+      question: question || null,
+      options: classification.options || [],
+      followUp: null,
+      lawyers: [],
+      usedAI,
+    });
+  } catch (error) {
+    console.error('[Assistant] chat error:', error);
+    res.status(500).json({
+      error: 'No se pudo procesar tu consulta. Intenta nuevamente en unos minutos.',
+      code: error?.code || 'ASSISTANT_ERROR',
+    });
+  }
+});
 
 // ---- Error handling middleware ----
 app.use((error, req, res, next) => {

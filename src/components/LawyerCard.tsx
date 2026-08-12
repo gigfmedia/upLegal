@@ -96,17 +96,10 @@ export function LawyerCard({
     const size = { width: img.naturalWidth, height: img.naturalHeight };
     setImageSize(size);
     setImageLoaded(true);
-    const needsZoomCondition = size.width < 100 || size.height < 100 ||
-      Math.abs(size.width - size.height) > 20 || Math.min(size.width, size.height) < 80;
   };
 
-  // Calculate if image needs zoom (smaller than container or not square enough)
-  const needsZoom = imageLoaded && (
-    imageSize.width < 100 ||
-    imageSize.height < 100 ||
-    Math.abs(imageSize.width - imageSize.height) > 20 || // Not square (difference > 20px)
-    Math.min(imageSize.width, imageSize.height) < 80
-  );
+  // Zoom solo si la imagen es muy chica; object-cover ya recorta sin deformar.
+  const needsZoom = imageLoaded && Math.min(imageSize.width, imageSize.height) < 80;
   const zoomScale = needsZoom ? 1.5 : 1;
 
   const displayName = React.useMemo(() => {
@@ -376,11 +369,11 @@ export function LawyerCard({
             <div className="flex space-x-4 w-full">
               <div className="relative">
                 <div className="relative">
-                  <Avatar className="h-16 w-16">
+                  <Avatar className="h-16 w-16 overflow-hidden">
                     <AvatarImage
                       src={getOptimizedImageUrl(lawyer.image, 256)}
                       alt={lawyer.name}
-                      className="object-contain"
+                      className="object-cover"
                       style={{
                         // Apply zoom only if image is smaller than container
                         transform: `scale(${zoomScale})`,
