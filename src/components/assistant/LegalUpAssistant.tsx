@@ -17,6 +17,7 @@ import {
   QUICK_TOPICS,
   getLawyerProfileUrl,
   sendAssistantMessage,
+  getAssistantVisitorId,
   AssistantApiError,
 } from '@/lib/assistantService';
 import { cn } from '@/lib/utils';
@@ -83,6 +84,13 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
   const endRef = useRef<HTMLDivElement>(null);
   const [checkoutData, setCheckoutData] = useState<ServiceCheckoutData | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+
+  // Analytics del chat: identidad anónima persistente + id de esta conversación
+  // (widget). Solo metadata; no se envía contenido sensible.
+  const visitorId = useMemo(() => getAssistantVisitorId(), []);
+  const conversationId = useRef<string>(
+    `conv-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10)}`
+  ).current;
 
   // El hint del botón flotante no debe ser agresivo: aparece una vez, se oculta
   // solo tras unos segundos y deja de mostrarse cuando el usuario ya abrió el chat.
@@ -199,6 +207,8 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
         const response = await sendAssistantMessage({
           messages: [...sendableMessages, { role: 'user', content: text }],
           source,
+          visitorId,
+          conversationId,
         });
 
         const hasLawyers = Array.isArray(response.lawyers) && response.lawyers.length > 0;
@@ -226,7 +236,7 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
         setLoading(false);
       }
     },
-    [messages, sendableMessages, loading, stage, source, appendAssistant]
+    [messages, sendableMessages, loading, stage, source, visitorId, conversationId, appendAssistant]
   );
 
   const handleQuickTopic = (topic: QuickTopic) => {

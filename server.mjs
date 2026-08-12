@@ -3352,6 +3352,185 @@ app.get('/api/admin/booking-leads-count', async (req, res) => {
   }
 });
 
+// GET /api/admin/chat-analytics?from&to
+// Métricas del chat/agente público (tab "Chat" de /admin/analytics). Agrega
+// chat_events (SIEMPRE excluye tráfico local de desarrollo) y liga los leads
+// reales booking_leads del periodo. Requiere admin.
+app.get('/api/admin/chat-analytics', requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    if (!from || !to) {
+      return res.status(400).json({ error: 'Faltan parámetros from/to (ISO).' });
+    }
+
+    const [
+      { data: events, error: eventsError },
+      { data: leadsData, error: leadsError },
+    ] = await Promise.all([
+      supabase
+        .from('chat_events')
+        .select('created_at, event_type, visitor_id')
+        .gte('created_at', from)
+        .lte('created_at', to)
+        .eq('is_local', false),
+      supabase
+        .from('booking_leads')
+        .select('created_at')
+        .gte('created_at', from)
+        .lte('created_at', to),
+    ]);
+
+    if (eventsError) throw new Error(eventsError.message);
+    if (leadsError) throw new Error(leadsError.message);
+
+    const list = events || [];
+    const conversations = list.filter((e) => e.event_type === 'conversation_started').length;
+    const messages = list.filter((e) => e.event_type === 'message_sent').length;
+    const users = new Set(list.map((e) => e.visitor_id).filter(Boolean)).size;
+    const leads = (leadsData || []).length;
+
+    res.json({
+      totals: { users, conversations, messages, leads },
+      // Timestamps crudos para que el frontend agrupe por día en su zona horaria
+      // (misma convención que /api/admin/booking-leads-count).
+      daily: {
+        events: list.map((e) => ({ created_at: e.created_at, event_type: e.event_type, visitor_id: e.visitor_id })),
+        leads: (leadsData || []).map((l) => l.created_at),
+      },
+    });
+  } catch (err) {
+    console.error('[/api/admin/chat-analytics] Error:', err);
+    return res.status(500).json({ error: 'No pudimos cargar las métricas del chat.' });
+  }
+});
+
+// GET /api/admin/chat-leads?from&to&status&source&q&page&pageSize&export=1
+// Lista paginada de leads (booking_leads) para el tab "Leads del Chat". Filtros
+// por fecha, estado real del lead, origen del flujo y búsqueda (nombre/email/
+// teléfono/servicio). Con export=1 devuelve CSV respetando los filtros.
+app.get('/api/admin/chat-leads', requireAdmin, async (req, res) => {
+  try {
+    const {
+      from = '', to = '', status = 'all', source = 'all',
+      q = '', page = '1', pageSize = '20', export: exportCsv = '',
+    } = req.query;
+    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+    const size = Math.min(100, Math.max(1, parseInt(String(pageSize), 10) || 20));
+
+    let query = supabase
+      .from('booking_leads')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (from) query = query.gte('created_at', String(from));
+    if (to) query = query.lte('created_at', String(to));
+    if (status && status !== 'all') query = query.eq('status', String(status));
+    if (source && source !== 'all') query = query.eq('source', String(source));
+    if (q) {
+      const term = `%${String(q).trim().slice(0, 80)}%`;
+      query = query.or(
+        `name.ilike.${term},email.ilike.${term},phone.ilike.${term},service_title.ilike.${term}`,
+      );
+    }
+
+    // Export CSV: no pagina, respeta los filtros y devuelve hasta 1.000 filas.
+    if (String(exportCsv) === '1') {
+      const { data, error } = await query.limit(1000);
+      if (error) throw new Error(error.message);
+
+      const header = ['fecha', 'nombre', 'email', 'telefono', 'servicio', 'area_tipo', 'abogado_id', 'estado', 'origen', 'monto_clp', 'booking_id'];
+      const rows = (data || []).map((l) => [
+        l.created_at,
+        l.name,
+        l.email,
+        l.phone,
+        l.service_title || '',
+        l.booking_type || '',
+        l.lawyer_id || '',
+        l.status,
+        l.source || '',
+        l.price ?? '',
+        l.booking_id || '',
+      ]);
+      const csv = [header, ...rows]
+        .map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';'))
+        .join('\n');
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="leads-${new Date().toISOString().slice(0, 10)}.csv"`,
+      );
+      return res.send(csv);
+    }
+
+    const fromRow = (pageNum - 1) * size;
+    const { data, count, error } = await query.range(fromRow, fromRow + size - 1);
+    if (error) throw new Error(error.message);
+
+    // Nombres de abogado (perfil) para mostrar, sin exponer rut ni datos sensibles.
+    const lawyerIds = [...new Set((data || []).map((l) => l.lawyer_id).filter(Boolean))];
+    let lawyerNameById = {};
+    if (lawyerIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, display_name')
+        .in('user_id', lawyerIds);
+      if (profiles) {
+        lawyerNameById = profiles.reduce((acc, p) => {
+          acc[p.user_id] = p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Abogado';
+          return acc;
+        }, {});
+      }
+    }
+
+    const leads = (data || []).map((l) => ({
+      ...l,
+      lawyer_name: lawyerNameById[l.lawyer_id] || null,
+    }));
+
+    res.json({
+      leads,
+      total: count || 0,
+      page: pageNum,
+      pageSize: size,
+    });
+  } catch (err) {
+    console.error('[/api/admin/chat-leads] Error:', err);
+    return res.status(500).json({ error: 'No pudimos cargar los leads del chat.' });
+  }
+});
+
+// GET /api/admin/documents-revenue?from&to
+// Ventas de documentos legales generados (p. ej. Pagaré $9.990). Se registran en
+// generated_documents: el webhook de documentos NO escribe payment_events, por
+// eso "Total de Pagos" no las incluía. Sin from/to devuelve todo; con from/to
+// acota al rango. Exige admin.
+app.get('/api/admin/documents-revenue', requireAdmin, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    let query = supabase
+      .from('generated_documents')
+      .select('total_paid')
+      .neq('status', 'pending_payment')
+      .not('payment_id', 'is', null);
+    if (from) query = query.gte('created_at', String(from));
+    if (to) query = query.lte('created_at', String(to));
+
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const rows = data || [];
+    res.json({
+      count: rows.length,
+      total: rows.reduce((sum, d) => sum + (d.total_paid || 0), 0),
+    });
+  } catch (err) {
+    console.error('[/api/admin/documents-revenue] Error:', err);
+    return res.status(500).json({ error: 'No pudimos cargar el revenue de documentos.' });
+  }
+});
+
 // Endpoint para notificar abogados
 app.post('/api/admin/notify-lawyers', async (req, res) => {
   try {
@@ -8240,6 +8419,43 @@ setInterval(async () => {
 // ============================================================================
 // ASISTENTE COMERCIAL Y DE ORIENTACIÓN (front público)
 // ============================================================================
+
+// Persistencia de analytics del asistente (solo metadata, SIN contenido de la
+// conversación). Alimenta /admin/analytics · Chat: usuarios únicos, inicios de
+// conversación, mensajes, categoría e intención comercial. No bloquee el flujo.
+const persistChatEvent = async (event) => {
+  try {
+    const {
+      eventType,
+      visitorId = null,
+      conversationId = null,
+      source = 'widget',
+      category = null,
+      subcategory = null,
+      commercialIntent = null,
+      urgency = null,
+      isLocal = false,
+    } = event || {};
+    const insert = {
+      event_type: String(eventType || 'message_sent'),
+      visitor_id: visitorId ? String(visitorId).slice(0, 128) : null,
+      conversation_id: conversationId ? String(conversationId).slice(0, 128) : null,
+      source: String(source || 'widget').slice(0, 40),
+      category: category ? String(category).slice(0, 40) : null,
+      subcategory: subcategory ? String(subcategory).slice(0, 60) : null,
+      commercial_intent: commercialIntent ? String(commercialIntent).slice(0, 40) : null,
+      urgency: urgency ? String(urgency).slice(0, 20) : null,
+      is_local: isLocal,
+    };
+    const { error } = await supabase.from('chat_events').insert([insert]);
+    if (error) {
+      console.error('[Assistant] chat_events insert error:', error?.message || error);
+    }
+  } catch (e) {
+    console.error('[Assistant] persistChatEvent failed:', e?.message || e);
+  }
+};
+
 // POST /api/assistant/chat
 // Entrada:  { messages: [{role, content}], userCity?, source? }
 // Salida:   { reply, category, subcategory, summary, urgency, commercialIntent,
@@ -8280,6 +8496,31 @@ app.post('/api/assistant/chat', async (req, res) => {
     const userCity = sanitizeText(body.userCity, 60) || null;
     const source = sanitizeText(body.source, 40) || 'widget';
 
+    // Metadata de analytics (sin contenido): identidad anónima del visitante y
+    // de la conversación, enviada por el widget. El conteo de "usuarios únicos"
+    // usa visitor_id (misma clave que page_views) y "conversaciones" usa el
+    // primer mensaje de cada conversation_id.
+    const clientVisitorId = sanitizeText(body.visitor_id, 128) || null;
+    const conversationId = sanitizeText(body.conversation_id, 128) || null;
+    const requestHost = (req.headers?.host || '') + ' ' + (req.headers?.origin || '') + ' ' + String(req.headers['x-forwarded-for'] || '');
+    const isLocalRequest = /localhost|127\.0\.0\.1|\[::1\]/.test(requestHost);
+    const isFirstMessage = messages.filter((m) => m?.role === 'user').length === 1;
+
+    // Registra el turno del usuario en chat_events. En el primer mensaje de la
+    // conversación se emite además 'conversation_started'. Nunca guarda texto.
+    const trackAssistantTurn = async (overrides = {}) => {
+      const base = {
+        visitorId: clientVisitorId,
+        conversationId,
+        source,
+        isLocal: isLocalRequest,
+      };
+      if (isFirstMessage) {
+        await persistChatEvent({ ...base, ...overrides, eventType: 'conversation_started' });
+      }
+      await persistChatEvent({ ...base, ...overrides, eventType: 'message_sent' });
+    };
+
     if (messages.length === 0) {
       return res.status(400).json({ error: 'No hay mensajes en la conversación.', code: 'INVALID_REQUEST' });
     }
@@ -8300,6 +8541,7 @@ app.post('/api/assistant/chat', async (req, res) => {
       } catch (e) {
         console.error('[Assistant] process_help tracking failed', e);
       }
+      await trackAssistantTurn({ category: 'otros', subcategory: 'proceso', commercialIntent: 'high', urgency: 'low' });
       return res.json({
         reply: processIntent.reply,
         category: 'otros',
@@ -8340,6 +8582,7 @@ app.post('/api/assistant/chat', async (req, res) => {
         const reply = hasServices
           ? `Estos son los servicios que ofrece **${servicesResult.name}**:`
           : `**${servicesResult.name}** no tiene servicios publicados por ahora, pero puedes reservar una consulta o ver su perfil.`;
+        await trackAssistantTurn({ category: 'otros', subcategory: 'servicios_abogado', commercialIntent: 'high', urgency: 'low' });
         return res.json({
           reply,
           category: 'otros',
@@ -8391,6 +8634,9 @@ app.post('/api/assistant/chat', async (req, res) => {
         console.error('[Assistant] problem_classified failed', e);
       }
     }
+
+    // Analytics del chat en Supabase (solo metadata; mismo turno que antes).
+    await trackAssistantTurn({ category, subcategory, commercialIntent, urgency });
 
     let lawyers = null;
     let stage = readyToRecommend ? 'matching' : 'understanding';
@@ -8500,6 +8746,13 @@ app.post('/api/assistant/chat', async (req, res) => {
     });
   } catch (error) {
     console.error('[Assistant] chat error:', error);
+    // Registra que el usuario sí envió un mensaje aunque el agente fallara
+    // (analytics de uso, sin contenido). No bloquea la respuesta.
+    try {
+      await trackAssistantTurn({});
+    } catch (trackError) {
+      console.error('[Assistant] chat_events tracking on error failed:', trackError?.message);
+    }
     res.status(500).json({
       error: 'No se pudo procesar tu consulta. Intenta nuevamente en unos minutos.',
       code: error?.code || 'ASSISTANT_ERROR',

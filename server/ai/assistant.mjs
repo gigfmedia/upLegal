@@ -226,6 +226,12 @@ REGLAS:
   quién puede llevar mi caso" = alta. Consulta general = media. Curiosidad = baja.
 - Clasifica en una categoría de la taxonomía. Si no encaja, usa "otros".
 - "reply" debe ser un texto natural que continúe la conversación.
+- Responde SIEMPRE al ÚLTIMO mensaje del usuario. Nunca reinicies la conversación:
+  no repitas saludos ni introducciones ya dichas antes (por ejemplo, no vuelvas a
+  escribir "Entiendo, tu caso está relacionado con..." si ya lo escribiste).
+- Si el último mensaje del usuario es corto o de confirmación (p. ej. "s", "sí",
+  "ok", "no", "claro"), continúa naturalmente desde lo que ya sabes: aclara la
+  última pregunta o pasa a recomendar, sin reexplicar lo ya dicho.
 
 TAXONOMÍA (categoría):
 arriendo | familia | laboral | civil | consumidor | comercial | penal | otros
@@ -700,11 +706,48 @@ const FALLBACK_OPTIONS = {
   otros: ['Es un problema personal', 'Es de mi empresa o negocio', 'No estoy seguro/a'],
 };
 
+// Respuestas de seguimiento del fallback determinístico: se usan cuando la misma
+// plantilla ya se envió antes en la conversación, para no repetir el mensaje.
+const FALLBACK_FOLLOWUPS = {
+  arriendo:
+    'Para enfocarte mejor, cuéntame: ¿ya entregaste el inmueble o sigues en el lugar, y hace cuánto ocurrió?',
+  familia:
+    'Para enfocarte mejor: ¿esto parte desde cero o ya existe una resolución o acuerdo previo (por ejemplo, una pensión fijada por el tribunal)?',
+  laboral: 'Para enfocarte mejor: ¿cuándo terminó tu relación laboral y ya firmaste el finiquito?',
+  civil: 'Para enfocarte mejor: ¿ya existe un documento firmado y hay algún plazo vencido?',
+  consumidor: 'Para enfocarte mejor: ¿qué tipo de producto o servicio es y qué te indicó la empresa?',
+  comercial: 'Para enfocarte mejor: ¿involucra un contrato, una sociedad o una cobranza?',
+  penal: 'Para enfocarte mejor: ¿ya existe una denuncia, citación o audiencia, o recién evalúas qué hacer?',
+  otros: 'Cuéntame un poco más sobre qué ocurrió y qué esperas lograr, así puedo encontrar al abogado más adecuado.',
+};
+
+const FALLBACK_RECONFIRM_REPLY =
+  'Perfecto, ya tengo el contexto de tu caso. Estos son abogados verificados que trabajan casos similares, ordenados según su especialidad, experiencia y el valor de su consulta. Tú decides con quién agendar.';
+
+// Consultas sobre CÓMO se elige al abogado ("cómo sabes el mejor que coincide?",
+// "qué criterios usas", "cómo funciona el matching"...). Se responden explicando
+// la metodología determinística en lugar de repetir la plantilla de la categoría.
+const FALLBACK_MATCHING_PATTERNS = [
+  /c[oó]mo sab(e|es)/i,
+  /c[oó]mo (sabes|eliges|determinas|calculas)/i,
+  /c[oó]mo (funciona|funcion[ae]) el (matching|coincidencia|emparejamiento|sistema)/i,
+  /qu[eé] criterios/i,
+  /en qu[eé] te basas/i,
+  /por qu[eé] (ese|este|el? )?abogad[oa]/i,
+  /el abogad[oa] (que mejor|correct[oa]|indicad[oa]|mejor)/i,
+  /mejor (coincide|encaja|se ajusta)/i,
+];
+
+const FALLBACK_MATCHING_REPLY =
+  'Te explico: buscamos abogados verificados cuya especialidad coincida con tu tipo de caso y luego los ordenamos según su experiencia, cobertura y el valor de su consulta, considerando tu urgencia. Son abogados reales; tú eliges con quién agendar una consulta.';
+
 const classifyFallback = (history) => {
   const userText = history
     .filter((m) => m.role === 'user')
     .map((m) => m.content)
     .join(' ');
+  const lastUserText =
+    [...history].reverse().find((m) => m.role === 'user')?.content || '';
 
   let match = null;
   for (const rule of KEYWORD_RULES) {
@@ -726,12 +769,37 @@ const classifyFallback = (history) => {
     }
   }
 
-  const question =
-    category !== 'otros' && userText.length > 40 ? null : FALLBACK_QUESTIONS[category];
   const readyToRecommend = category !== 'otros' && userText.length > 40;
+  const question = readyToRecommend ? null : FALLBACK_QUESTIONS[category];
+
+  // Si el usuario pregunta por la metodología del matching, explicarla en vez de
+  // repetir la plantilla de la categoría.
+  if (FALLBACK_MATCHING_PATTERNS.some((p) => p.test(lastUserText))) {
+    return normalizeClassification({
+      reply: FALLBACK_MATCHING_REPLY,
+      category,
+      subcategory,
+      summary,
+      urgency,
+      commercialIntent,
+      readyToRecommend,
+      question: null,
+      options: [],
+    });
+  }
+
+  // Anti-repetición: si la plantilla de esta categoría ya se dijo antes en la
+  // conversación, usar un seguimiento distinto en vez del mismo mensaje.
+  const assistantText = history
+    .filter((m) => m.role === 'assistant')
+    .map((m) => m.content)
+    .join('\n');
+  const wouldRepeat = assistantText.includes(FALLBACK_REPLIES[category]);
 
   return normalizeClassification({
-    reply: FALLBACK_REPLIES[category],
+    reply: readyToRecommend
+      ? wouldRepeat ? FALLBACK_RECONFIRM_REPLY : FALLBACK_REPLIES[category]
+      : wouldRepeat ? FALLBACK_FOLLOWUPS[category] : FALLBACK_REPLIES[category],
     category,
     subcategory,
     summary,

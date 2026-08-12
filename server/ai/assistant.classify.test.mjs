@@ -95,6 +95,66 @@ describe('Classify · opciones contextuales (quick replies)', () => {
     expect(classification.readyToRecommend).toBe(true);
     expect(classification.options).toEqual([]);
   });
+
+  it('responde cómo funciona el matching cuando el usuario lo pregunta', async () => {
+    const { classification, usedAI } = await classifyProblem({
+      history: [
+        {
+          role: 'user',
+          content:
+            'Mi pareja y yo nos separamos y tenemos dos hijos en común. Quiero saber cómo quedará la pensión y el cuidado del niño.',
+        },
+        {
+          role: 'assistant',
+          content:
+            'Entiendo. Por lo que me cuentas, tu caso está relacionado con derecho de familia. Un abogado de familia puede orientarte sobre las opciones que existen en tu situación.',
+        },
+        { role: 'user', content: 'cómo sabes el mejor que coincide?' },
+      ],
+      chatCompletion: failingProvider,
+    });
+    expect(usedAI).toBe(false);
+    expect(classification.reply).toContain('especialidad');
+    expect(classification.reply).not.toContain('Entiendo. Por lo que me cuentas');
+    expect(classification.options).toEqual([]);
+  });
+
+  it('no repite la misma plantilla del fallback si ya se dijo antes', async () => {
+    const template =
+      'Entiendo. Por lo que me cuentas, tu caso está relacionado con derecho de familia. Un abogado de familia puede orientarte sobre las opciones que existen en tu situación.';
+    const { classification } = await classifyProblem({
+      history: [
+        {
+          role: 'user',
+          content:
+            'Mi pareja y yo nos separamos y tenemos dos hijos en común. Quiero saber cómo quedará la pensión y el cuidado del niño.',
+        },
+        { role: 'assistant', content: template },
+        { role: 'user', content: 'sí' },
+      ],
+      chatCompletion: failingProvider,
+    });
+    expect(classification.readyToRecommend).toBe(true);
+    expect(classification.reply).not.toBe(template);
+    expect(classification.reply).not.toContain('Entiendo. Por lo que me cuentas');
+  });
+
+  it('usa el seguimiento de pregunta en vez de repetir cuando aún no puede recomendar', async () => {
+    const template =
+      'Entiendo. Por lo que me cuentas, tu caso está relacionado con derecho de familia. Un abogado de familia puede orientarte sobre las opciones que existen en tu situación.';
+    const { classification } = await classifyProblem({
+      history: [
+        { role: 'user', content: 'tengo un problema de familia' },
+        { role: 'assistant', content: template },
+        { role: 'user', content: 'claro' },
+      ],
+      chatCompletion: failingProvider,
+    });
+    expect(classification.readyToRecommend).toBe(false);
+    expect(classification.reply).not.toBe(template);
+    expect(classification.reply).toContain('parte desde cero');
+    expect(classification.question).toContain('parte desde cero');
+  });
 });
 
 describe('Classify · preguntas de proceso (cómo reservar/pagar/funciona)', () => {

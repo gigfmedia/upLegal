@@ -144,16 +144,21 @@ export default function FunnelDashboard() {
         supabase.from('bookings').select('*', { count: 'exact', head: true }).gte('created_at', start.toISOString()).lte('created_at', end.toISOString()).eq('status', 'completed')
       ]);
 
-      // Fetch payments
-      const { data: payments, count: paymentsCount } = await supabase
-        .from('payments')
-        .select('*', { count: 'exact', head: true })
+      // Pagos exitosos reales (payment_events = mismo origen que "Total de Pagos"
+      // del Resumen). La tabla legacy `payments` NO se escribe desde el webhook de
+      // MercadoPago: usa status 'succeeded'/'pending' y deja total_amount nulo (el
+      // monto real vive en `amount`), por eso antes el Funnel mostraba $0.
+      const { data: successEvents } = await supabase
+        .from('payment_events')
+        .select('id, amount, created_at, user_id, payment_id, metadata')
         .gte('created_at', start.toISOString())
         .lte('created_at', end.toISOString())
-        .eq('status', 'approved');
+        .eq('event_type', 'success');
 
-      // Calculate total revenue
-      const totalRevenue = payments?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0;
+      const successPayments = successEvents || [];
+
+      const paymentsCount = successPayments.length;
+      const totalRevenue = successPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
       // Fetch lawyer conversions
       const { data: lawyerData } = await supabase
@@ -162,13 +167,23 @@ export default function FunnelDashboard() {
         .gte('created_at', start.toISOString())
         .lte('created_at', end.toISOString());
 
-      // Fetch payments for lawyer conversions
-      const { data: lawyerPayments } = await supabase
-        .from('payments')
-        .select('lawyer_user_id, total_amount')
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString())
-        .eq('status', 'approved');
+      // Atribución de pagos a abogado: payment_events no guarda lawyer_user_id, así
+      // que se resuelve booking_id → bookings.lawyer_id.
+      const bookingIds = [...new Set((successEvents || []).map((e) => e.metadata?.booking_id).filter(Boolean))];
+      const bookingLawyerMap: Record<string, string> = {};
+      if (bookingIds.length > 0) {
+        const { data: bookingRows } = await supabase
+          .from('bookings')
+          .select('id, lawyer_id')
+          .in('id', bookingIds);
+        (bookingRows || []).forEach((b) => {
+          bookingLawyerMap[b.id] = b.lawyer_id;
+        });
+      }
+      const lawyerPayments = successPayments.map((e) => ({
+        lawyer_user_id: bookingLawyerMap[e.metadata?.booking_id],
+        total_amount: e.amount,
+      }));
 
       // Calculate lawyer conversions
       const lawyerMap = new Map<string, LawyerConversion>();
@@ -274,12 +289,10 @@ export default function FunnelDashboard() {
         .gte('created_at', start.toISOString())
         .lte('created_at', end.toISOString());
 
-      const { data: dailyPayments } = await supabase
-        .from('payments')
-        .select('created_at, total_amount')
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString())
-        .eq('status', 'approved');
+      const dailyPayments = successPayments.map((e) => ({
+        created_at: e.created_at,
+        amount: e.amount,
+      }));
 
       // Aggregate by day
       const dailyMetricsMap = new Map<string, DailyMetrics>();
@@ -320,11 +333,25 @@ export default function FunnelDashboard() {
         const metrics = dailyMetricsMap.get(dateKey);
         if (metrics) {
           metrics.payments++;
-          metrics.revenue += payment.total_amount || 0;
+          metrics.revenue += payment.amount || 0;
         }
       });
 
       const dailyMetrics = Array.from(dailyMetricsMap.values());
+
+      // Ventas de documentos legales pagados (ej. Pagaré $9.990) dentro del rango.
+      // El webhook de documentos no escribe payment_events; se agregan al revenue
+      // para cuadrar con "Total de Pagos" del Resumen.
+      let documentRevenue = 0;
+      try {
+        const docRes = await fetch(
+          `${apiBase}/api/admin/documents-revenue?from=${start.toISOString()}&to=${end.toISOString()}`
+        );
+        const docJson = docRes.ok ? await docRes.json() : { total: 0 };
+        documentRevenue = docJson.total ?? 0;
+      } catch (err) {
+        console.warn('[Funnel] documents revenue fetch failed', err);
+      }
 
       return {
         visitors: visitorsCount || 0,
@@ -336,6 +363,7 @@ export default function FunnelDashboard() {
         completedBookings: completedBookings || 0,
         payments: paymentsCount || 0,
         totalRevenue,
+        documentRevenue,
         lawyerConversions,
         specialtyConversions,
         dailyMetrics
@@ -508,8 +536,8 @@ export default function FunnelDashboard() {
           trend={null}
         />
         <MetricCard
-          title="Revenue total"
-          value={`$${(funnelData?.totalRevenue || 0).toLocaleString('es-CL')}`}
+          title="Revenue total (cons. + docs)"
+          value={`$${((funnelData?.totalRevenue || 0) + (funnelData?.documentRevenue || 0)).toLocaleString('es-CL')}`}
           icon={TrendingUp}
           trend={null}
         />

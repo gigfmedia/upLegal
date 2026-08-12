@@ -11,6 +11,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { formatDistanceToNow } from 'date-fns';
 import ProfileViewsChart from '@/components/admin/ProfileViewsChart';
 import LawyerProfileCards from '@/components/admin/LawyerProfileCards';
+import ChatAnalytics from '@/components/admin/ChatAnalytics';
+import ChatLeadsTab from '@/components/admin/ChatLeadsTab';
 import FunnelDashboard from './FunnelDashboard';
 
 // Types
@@ -45,6 +47,8 @@ type PaymentEvent = {
   created_at: string;
   amount: number | null;
   status: string | null;
+  payment_id?: string | null;
+  appointment_id?: string | null;
   metadata: any;
 };
 
@@ -212,6 +216,25 @@ export default function AnalyticsDashboard() {
       return data as PaymentEvent[];
     },
     retry: 1
+  });
+
+  // Ventas de documentos legales pagados (ej. Pagaré $9.990). Se guardan en
+  // generated_documents y NO aparecen en payment_events (el webhook de documentos
+  // no las escribe), así que se suman aparte al "Total de Pagos".
+  const { data: docRevenue = { count: 0, total: 0 } } = useQuery({
+    queryKey: ['document-revenue'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const res = await fetch(`${apiBase}/api/admin/documents-revenue`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Error al cargar revenue de documentos');
+      return res.json();
+    },
+    staleTime: 60_000,
+    retry: 1,
   });
 
   // Fetch page views
@@ -705,23 +728,18 @@ export default function AnalyticsDashboard() {
   const successfulPaymentsList = paymentEvents.filter(e => e.event_type === 'success');
   const uniqueSuccessfulPayments = new Map();
   successfulPaymentsList.forEach(p => {
-    // Filtrar pagos que provienen de migraciones o el ID de pago duplicado específico
-    if (
-      p.metadata?.source === 'migration' ||
-      p.payment_id === '146509806436' ||
-      p.metadata?.payment_id === '146509806436'
-    ) {
-      return; // Skip this event
-    }
-
     const key = p.payment_id || p.appointment_id || p.id;
     if (!uniqueSuccessfulPayments.has(key)) {
       uniqueSuccessfulPayments.set(key, p);
     }
   });
 
-  const totalPagado = Array.from(uniqueSuccessfulPayments.values()).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-  const originalPriceSum = totalPagado / 1.1;
+  // Consultas pagadas (payment_events) + documentos legales pagados (generated_documents).
+  // El desglose 30/20/10 se calcula solo sobre consultas para no desvirtuar el cálculo.
+  const totalConsultasPagadas = Array.from(uniqueSuccessfulPayments.values()).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+  const documentRevenue = docRevenue?.total || 0;
+  const totalPagado = totalConsultasPagadas + documentRevenue;
+  const originalPriceSum = totalConsultasPagadas / 1.1;
   const totalRetenido20 = originalPriceSum * 0.2;
   const totalRecargo10 = originalPriceSum * 0.1;
 
@@ -768,17 +786,17 @@ export default function AnalyticsDashboard() {
           icon={Landmark}
         />
         <StatCard
-          title="Ingreso Total (30%)"
-          value={formatCLP(totalRetenido20 + totalRecargo10)}
+          title="Ingreso LegalUp (30% cons. + docs)"
+          value={formatCLP(totalRetenido20 + totalRecargo10 + documentRevenue)}
           icon={Landmark}
         />
         <StatCard
-          title="Comisión Plataforma (20%)"
+          title="Comisión Plataforma (20% cons.)"
           value={formatCLP(totalRetenido20)}
           icon={Landmark}
         />
         <StatCard
-          title="Recargo Adicional (10%)"
+          title="Recargo Adicional (10% cons.)"
           value={formatCLP(totalRecargo10)}
           icon={Landmark}
         />
@@ -871,6 +889,8 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="funnel">Funnel</TabsTrigger>
           <TabsTrigger value="errors">Errores</TabsTrigger>
           <TabsTrigger value="profile-views">Vistas</TabsTrigger>
+          <TabsTrigger value="chat">Chat</TabsTrigger>
+          <TabsTrigger value="chat-leads">Leads del Chat</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -1190,6 +1210,12 @@ export default function AnalyticsDashboard() {
         <TabsContent value="profile-views" className="space-y-6">
           <ProfileViewsChart />
           <LawyerProfileCards />
+        </TabsContent>
+        <TabsContent value="chat" className="space-y-6">
+          <ChatAnalytics />
+        </TabsContent>
+        <TabsContent value="chat-leads" className="space-y-6">
+          <ChatLeadsTab />
         </TabsContent>
       </Tabs>
     </div>

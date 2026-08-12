@@ -55,6 +55,8 @@ interface SendAssistantInput {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>;
   userCity?: string;
   source?: string;
+  visitorId?: string;
+  conversationId?: string;
 }
 
 export class AssistantApiError extends Error {
@@ -67,15 +69,34 @@ export class AssistantApiError extends Error {
   }
 }
 
+// Identidad anónima persistente del visitante (requiere navegador).
+export function getAssistantVisitorId(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    let id = window.localStorage.getItem('legalup_visitor_id');
+    if (!id) {
+      id =
+        window.crypto?.randomUUID?.() ||
+        Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      window.localStorage.setItem('legalup_visitor_id', id);
+    }
+    return id;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function sendAssistantMessage({
   messages,
   userCity,
   source = 'widget',
+  visitorId,
+  conversationId,
 }: SendAssistantInput): Promise<AssistantChatResponse> {
   const res = await fetch(`${getApiBaseUrl()}/api/assistant/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, userCity, source }),
+    body: JSON.stringify({ messages, userCity, source, visitor_id: visitorId, conversation_id: conversationId }),
   });
 
   const body = (await res.json().catch(() => ({}))) as {
