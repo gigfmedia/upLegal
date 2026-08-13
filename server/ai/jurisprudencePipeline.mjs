@@ -400,3 +400,75 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     contradicciones,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Fase 4.2.4 — retry controlado por JSON/schema inválido.
+// El modelo free (gpt-oss-20b) ocasionalmente devuelve JSON sintácticamente o
+// estructuralmente inválido (~1/6 en QA). Al repetir la llamada puede producir
+// JSON válido. Este helper reintenta SOLO ese caso (formato/schema), con máximo
+// LLM_RETRY_MAX_ATTEMPTS intentos y SIN incluir la salida inválida en el prompt
+// de reintento. NO reintenta NO_EVIDENCE (respuesta válida), ni errores de
+// provider (su retry temporal ya vive en chatCompletion), ni CONTEXT_TOO_LARGE
+// (se detecta antes de llamar al LLM). No duplica el sistema de retry existente:
+// lo complementa únicamente para el fallo de formato que él no cubre.
+// ---------------------------------------------------------------------------
+export const LLM_RETRY_MAX_ATTEMPTS = 3;
+export const LLM_RETRY_PROMPT =
+  'La respuesta anterior no cumplió el formato requerido. Responde nuevamente utilizando exclusivamente el JSON solicitado. No agregues markdown, explicaciones ni texto fuera del JSON.';
+
+function mergeUsage(usages = []) {
+  return usages.reduce(
+    (acc, u) => ({
+      provider: acc.provider || u.provider,
+      model: acc.model || u.model,
+      input_tokens: acc.input_tokens + (u.input_tokens || 0),
+      output_tokens: acc.output_tokens + (u.output_tokens || 0),
+      total_tokens: acc.total_tokens + (u.total_tokens || 0),
+      estimated_cost_usd: acc.estimated_cost_usd + (u.estimated_cost_usd || 0),
+    }),
+    {
+      provider: '',
+      model: '',
+      input_tokens: 0,
+      output_tokens: 0,
+      total_tokens: 0,
+      estimated_cost_usd: 0,
+    },
+  );
+}
+
+/**
+ * Ejecuta la investigación jurídica con reintentos limitados ante JSON/schema
+ * inválido. `llmCall` recibe la instrucción de reintento (null en el primer
+ * intento) y debe devolver { data, raw, usage } o lanzar un error tipado de
+ * provider (que NO se reintenta aquí).
+ *
+ * @param {object} input
+ * @param {(retryInstruction: string|null) => Promise<{data: object|null, raw: string, usage: object}>} input.llmCall
+ * @param {object[]} input.sources
+ * @param {string} input.intent
+ * @param {string} input.query
+ * @returns {Promise<{outcome: object, attempts: number, retryCount: number, usage: object}>}
+ */
+export async function runJurisprudenceWithRetry({ llmCall, sources, intent, query }) {
+  const usages = [];
+  let outcome = null;
+  let attempts = 0;
+
+  for (let attempt = 1; attempt <= LLM_RETRY_MAX_ATTEMPTS; attempt += 1) {
+    attempts = attempt;
+    const retryInstruction = attempt === 1 ? null : LLM_RETRY_PROMPT;
+    const result = await llmCall(retryInstruction);
+    if (result?.usage) usages.push(result.usage);
+
+    outcome = buildJurisprudenceOutcome({ data: result?.data ?? null, sources, intent, query });
+    if (outcome.status !== 'invalid_response') break;
+  }
+
+  return {
+    outcome,
+    attempts,
+    retryCount: attempts - 1,
+    usage: mergeUsage(usages),
+  };
+}

@@ -40,6 +40,7 @@ import {
 } from './server/ai/jurisprudencePrompt.mjs';
 import {
   buildJurisprudenceOutcome,
+  runJurisprudenceWithRetry,
 } from './server/ai/jurisprudencePipeline.mjs';
 import {
   classifyProblem,
@@ -8105,24 +8106,46 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     const caseContext = buildJurisprudenceCaseContext(workspace);
 
-    const { data, usage } = await chatCompletion({
-      model: AI_DEFAULT_MODEL,
-      system: buildJurisprudenceSystemPrompt(),
-      messages: [
-        {
-          role: 'user',
-          content: buildJurisprudenceUserPrompt({ question: query, context, caseContext, intent: intentClass }),
-        },
-      ],
-      maxTokens: AI_CHAT_MAX_TOKENS,
-      temperature: 0.2,
+    // Fase 4.2.4: el retry de JSON/schema inválido vive en el pipeline puro.
+    // chatCompletion cubre el retry temporal del proveedor (429/5xx/red); este
+    // helper reintenta SOLO el fallo de formato (máx. 3 intentos, sin incluir
+    // la salida inválida en el prompt de reintento). NO reintenta NO_EVIDENCE,
+    // errores de provider ni CONTEXT_TOO_LARGE.
+    const { outcome: outcomeResult, attempts, retryCount, usage } = await runJurisprudenceWithRetry({
+      llmCall: (retryInstruction) =>
+        chatCompletion({
+          model: AI_DEFAULT_MODEL,
+          system: buildJurisprudenceSystemPrompt(),
+          messages: [
+            {
+              role: 'user',
+              content: buildJurisprudenceUserPrompt({ question: query, context, caseContext, intent: intentClass }),
+            },
+            ...(retryInstruction ? [{ role: 'user', content: retryInstruction }] : []),
+          ],
+          maxTokens: AI_CHAT_MAX_TOKENS,
+          temperature: 0.2,
+        }),
+      sources,
+      intent,
+      query,
     });
+
+    if (attempts > 1) {
+      logDiagnostic('jurisprudence_llm_retry', {
+        intent,
+        query_hash: queryHash,
+        llm_attempts: attempts,
+        llm_retry_count: retryCount,
+        llm_valid: outcomeResult.status !== 'invalid_response',
+        model: AI_DEFAULT_MODEL,
+      });
+    }
 
     // Fase 4.1.11: todo el procesamiento POST-LLM (schema, verificación,
     // síntesis, jerarquía, contradicciones y los estados SUCCESS/NO_EVIDENCE/
     // INVALID_RESPONSE) vive en el pipeline puro `jurisprudencePipeline.mjs`.
     // La ruta conserva búsqueda, chat, persistencia y observabilidad.
-    const outcomeResult = buildJurisprudenceOutcome({ data, sources, intent, query });
 
     // Fase 4.1.10: una respuesta no estructurada (JSON/schema inválido) NUNCA se
     // convierte en una respuesta jurídica, ni se reconstruye el resumen desde el
