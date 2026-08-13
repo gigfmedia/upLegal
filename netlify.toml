@@ -54,4 +54,6 @@
     Expires = "0"
 
 [build.environment]
-  NODE_VERSION = "18.0.0"
+  # Vite 8 usa rolldown como bundler: requiere Node >= 20.12 (styleText de
+  # node:util). Node 18 rompe el build ("node:util no provee styleText").
+  NODE_VERSION = "22"
