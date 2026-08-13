@@ -133,6 +133,8 @@ function sourceBadgeKind(source: AIResearchSource) {
       return 'bg-blue-100 text-blue-800';
     case 'doctrina':
       return 'bg-amber-100 text-amber-800';
+    case 'document':
+      return 'bg-teal-100 text-teal-800';
     default:
       return 'bg-gray-100 text-gray-600';
   }
@@ -155,6 +157,7 @@ const VIGENCY_LABELS: Record<string, string> = {
 };
 
 const KIND_GROUP_ORDER: Array<AIResearchSource['kind']> = [
+  'document',
   'normativa',
   'jurisprudencia',
   'doctrina',
@@ -164,6 +167,12 @@ const KIND_GROUP_META: Record<
   AIResearchSource['kind'],
   { label: string; headingClass: string }
 > = {
+  // Fase 4.2.6: los hechos del caso (evidencia documental) van primero, antes
+  // de las fuentes jurídicas que los analizan.
+  document: {
+    label: 'Documentos del caso',
+    headingClass: 'text-teal-800',
+  },
   normativa: {
     label: 'Normativa',
     headingClass: 'text-blue-800',
@@ -213,15 +222,16 @@ function hasVerifiedClaims(source: AIResearchSource): boolean {
   return (source.claims ?? []).some((c) => c.verified);
 }
 
-function SourceClaims({ source }: { source: AIResearchSource }) {
+export function SourceClaims({ source }: { source: AIResearchSource }) {
   const plan = useMemo(() => buildSourceEvidencePlan(source), [source]);
+  const isDocument = source.kind === 'document';
 
   if (plan.primary.length === 0) return null;
 
   return (
     <div className="mt-2 space-y-2 border-t border-gray-200 pt-2">
       <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-gray-500">
-        Evidencia
+        {isDocument ? 'Evidencia del documento' : 'Evidencia'}
       </p>
       {plan.primary.map((claim, index) => (
         <div key={index} className="rounded bg-white/70 p-2">
@@ -241,7 +251,7 @@ function SourceClaims({ source }: { source: AIResearchSource }) {
               <span className="rounded bg-gray-100 px-1 py-0.5 font-mono text-gray-500">
                 {claim.fragment_id}
               </span>
-              <span>fragmento de la fuente</span>
+              <span>{isDocument ? 'fragmento del documento' : 'fragmento de la fuente'}</span>
             </p>
           )}
           {claim.vigencia_nota && (
@@ -274,7 +284,9 @@ function SourceItem({ source }: { source: AIResearchSource }) {
       ? 'Jurisprudencia'
       : source.kind === 'normativa'
         ? 'Normativa'
-        : 'Doctrina';
+        : source.kind === 'document'
+          ? 'Documento'
+          : 'Doctrina';
   const authority =
     AUTHORITY_LABELS[source.legal_authority ?? ''] ??
     source.legal_authority ??
@@ -353,6 +365,8 @@ function SourceItem({ source }: { source: AIResearchSource }) {
             <Landmark className="h-3 w-3 text-emerald-700" aria-hidden="true" />
           ) : source.kind === 'normativa' ? (
             <FileText className="h-3 w-3 text-blue-700" aria-hidden="true" />
+          ) : source.kind === 'document' ? (
+            <FileText className="h-3 w-3 text-teal-700" aria-hidden="true" />
           ) : (
             <Scale className="h-3 w-3 text-amber-700" aria-hidden="true" />
           )}
@@ -360,6 +374,11 @@ function SourceItem({ source }: { source: AIResearchSource }) {
         <Badge variant="secondary" className={sourceBadgeKind(source)}>
           {kindLabel}
         </Badge>
+        {source.kind === 'document' && (
+          <span className="rounded bg-teal-50 px-1.5 py-0.5 text-[0.65rem] font-medium text-teal-800">
+            Documento privado del caso
+          </span>
+        )}
         {authority && (
           <span className="rounded bg-gray-700 px-1.5 py-0.5 text-[0.65rem] font-medium text-white">
             {authority}

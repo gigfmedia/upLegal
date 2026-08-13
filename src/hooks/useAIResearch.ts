@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export type AIResearchClaim = {
   source_id: string;
   fragment_id: string | null;
-  category: 'normativa' | 'jurisprudencia' | 'doctrina' | null;
+  category: 'normativa' | 'jurisprudencia' | 'doctrina' | 'document' | null;
   afirmacion: string;
   evidencia: string;
   verified: boolean;
@@ -14,7 +14,7 @@ export type AIResearchClaim = {
 
 export type AIResearchSource = {
   id: string;
-  kind: 'jurisprudencia' | 'normativa' | 'doctrina';
+  kind: 'jurisprudencia' | 'normativa' | 'doctrina' | 'document';
   source_type?: 'normativa' | 'jurisprudencia' | 'doctrina';
   legal_authority?: 'vinculante' | 'persuasiva' | 'doctrinal' | 'informativa';
   vigency?: 'vigente' | 'diferida' | 'derogada' | 'modificada' | 'desconocida' | 'no_aplica';
@@ -96,6 +96,9 @@ export type AIResearchMatiz = {
   observada?: boolean;
 };
 
+/** Tipo de investigación devuelto por el backend (Fase 4.2.6). */
+export type AIResearchType = 'jurisprudence' | 'document' | 'mixed';
+
 export type AIResearchRequest = {
   id: string;
   workspace_id: string;
@@ -105,6 +108,8 @@ export type AIResearchRequest = {
   sources: AIResearchSource[];
   model: string | null;
   created_at: string;
+  /** Fase 4.2.6: expuesto solo en la respuesta POST; opcional por retrocompatibilidad. */
+  research_type?: AIResearchType;
 };
 
 export type AIResearchError = Error & { code?: string };
@@ -150,6 +155,8 @@ type RunResearchResult = {
   research: AIResearchRequest;
   sources: AIResearchSource[];
   warnings?: string[];
+  /** Fase 4.2.6: 'jurisprudence' | 'document' | 'mixed'. Solo en la respuesta POST. */
+  research_type?: AIResearchType;
 };
 
 /** Ejecuta una investigación de jurisprudencia y la guarda en el caso. */
