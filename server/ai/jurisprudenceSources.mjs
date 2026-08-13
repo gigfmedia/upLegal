@@ -1255,7 +1255,7 @@ export function extractArticleNumbers(text) {
   const ordinal = '(?:primera|primero|segunda|segundo|tercera|tercero|' +
     'cuarta|cuarto|quinta|quinto|sexta|sexto|s[eé]ptima|s[eé]ptimo|' +
     'octava|octavo|novena|noveno|d[eé]cima|d[eé]cimo)';
-  const numero = '\\d{1,3}';
+  const numero = '\\d{1,4}';
   const re = new RegExp(
     '\\b(?:art[íi]culo|art(?:s|\\.|s\\.)?)\\s*(?:n[°º]\\s*\\.?\\s*)?(' +
       numero + '|' + ordinal + ')\\b',
@@ -2194,6 +2194,22 @@ const DOCTRINE_SIGNAL_RE = /\b(?:doctrina\w*|doctrinari\w*|tratadista\w*|manual(
 // 4) Señales de APLICACIÓN NORMATIVA (consulta de aplicación a un caso).
 const APPLICATION_SIGNAL_RE = /\b(?:puedo|puede|pueden|podr[ií]a|podr[ií]an|se\s+aplica|aplica\s+a|es\s+aplicable|qu[ée]\s+pasa\s+si|tengo\s+derecho|reconoce\s+el\s+derecho|reconoce\s+la\s+ley|permite|obliga|tengo\s+que|necesito)\b/i;
 
+// 4.5) Señal DOCUMENTAL (Fase 4.2.6): el abogado pregunta por el CONTENIDO de
+// un documento del caso ("¿qué dice el contrato?", "¿qué establece la
+// escritura?", "esta cláusula..."). Conservadora a propósito: NO matchea
+// "puedo terminar el contrato por incumplimiento" (sin demostrativo ni verbo
+// lector), que debe seguir clasificándose como aplicación normativa.
+const DOCUMENT_NOUN_RE = '(?:contrato|documento|escritura|clausula|escrito|finiquito|demanda|acta)';
+const DOCUMENT_ANALYSIS = 'DOCUMENT_ANALYSIS';
+export const DOCUMENT_SIGNAL_RE = new RegExp(
+  '\\b(?:este|esta|estos|estas|ese|esa|esos|esas|aquel|aquella|aquellos|aquellas|dicho|dicha|dichos|dichas|referido|referida|mencionado|mencionada)\\s+' +
+    DOCUMENT_NOUN_RE +
+    '\\b|\\b(?:dice|establece|senala|indica|expresa|contiene)\\s+(?:el|la)\\s+' +
+    DOCUMENT_NOUN_RE +
+    '\\b',
+  'i'
+);
+
 // 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
 const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
 
@@ -2206,6 +2222,7 @@ const LEGAL_QUERY_INTENTS = {
   DOCTRINE_LOOKUP: 'DOCTRINE_LOOKUP',
   RELATIONAL_LEGAL_QUERY: 'RELATIONAL_LEGAL_QUERY',
   MIXED_NORM_JURISPRUDENCE: 'MIXED_NORM_JURISPRUDENCE',
+  DOCUMENT_ANALYSIS,
   GENERAL_LEGAL_QUERY: 'GENERAL_LEGAL_QUERY',
 };
 
@@ -2237,6 +2254,7 @@ export function classifyLegalQuery(query) {
     articleCitations: [],
     jurisprudenceSignals: [],
     relationalSignals: [],
+    documentSignal: false,
     substantiveTerms: [],
     poles: { normative: [], jurisprudence: [] },
   };
@@ -2265,6 +2283,9 @@ export function classifyLegalQuery(query) {
     relationalSignals.length > 0 ||
     (RELATIONAL_CONNECTORS.test(text) && !(hasJurisprudence && !hasNormCitation));
 
+  // Fase 4.2.6: señal documental (solo el CONTENIDO del documento del caso).
+  const hasDocumentSignal = DOCUMENT_SIGNAL_RE.test(text);
+
   const isApplication = APPLICATION_SIGNAL_RE.test(text) && !GENERIC_HELP_RE.test(text);
   const hasJurisprudenceOnly = hasJurisprudence && !hasNormCitation;
   const hasDoctrineOnly = hasDoctrine && !hasJurisprudence && !hasNormCitation;
@@ -2282,6 +2303,7 @@ export function classifyLegalQuery(query) {
     articleCitations,
     jurisprudenceSignals,
     relationalSignals,
+    documentSignal: hasDocumentSignal,
     substantiveTerms: extractSubstantiveTerms(raw),
     poles: {
       normative: [...normCitations, ...articleCitations.map((a) => `art. ${a}`)],
@@ -2328,6 +2350,12 @@ export function classifyLegalQuery(query) {
   }
   if (hasDoctrineOnly) {
     return { ...base, intent: LEGAL_QUERY_INTENTS.DOCTRINE_LOOKUP };
+  }
+  // Fase 4.2.6: si la consulta pregunta SOLO por el contenido de un documento
+  // del caso (y no cita norma, tribunal ni doctrina), la investigación es
+  // documental: no hay necesidad de retrieval externo (documento = evidencia).
+  if (hasDocumentSignal && !hasNormCitation && !hasJurisprudence && !hasDoctrine) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.DOCUMENT_ANALYSIS };
   }
   if (isApplication) {
     return { ...base, intent: LEGAL_QUERY_INTENTS.NORMATIVE_APPLICATION };
@@ -2677,6 +2705,17 @@ export function getRetrievalStrategy(query, cls = {}, { limit = 6 } = {}) {
         poleCount: poles.length,
         modes,
         tasks,
+      };
+    }
+    case LEGAL_QUERY_INTENTS.DOCUMENT_ANALYSIS: {
+      // Fase 4.2.6: la investigación documental NO recupera fuentes públicas;
+      // la evidencia son los documentos privados del caso (document_grounding).
+      // tasks vacío evita cualquier llamada TC/BCN/OpenAlex innecesaria.
+      return {
+        ...base,
+        primary: 'document',
+        modes: ['document'],
+        tasks: [],
       };
     }
     default: {

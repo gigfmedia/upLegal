@@ -22,7 +22,7 @@ export const CHAT_LIMITS = {
 };
 
 /** Tokeniza un texto a minúsculas (palabras alfanuméricas de ≥3 caracteres). */
-function tokenize(text) {
+export function tokenize(text) {
   return text
     .toLowerCase()
     .match(/[a-záéíóúüñ0-9]{3,}/g) || [];
@@ -33,7 +33,7 @@ function tokenize(text) {
  * términos). Permite que, en documentos extensos, solo se incluya el tramo
  * relevante a la pregunta en lugar de cortar ciegamente desde el inicio.
  */
-function scoreChunk(chunkText, questionTokens) {
+export function scoreChunk(chunkText, questionTokens) {
   const chunkTokens = tokenize(chunkText);
   if (chunkTokens.length === 0) return 0;
   const counts = new Map();
@@ -46,14 +46,20 @@ function scoreChunk(chunkText, questionTokens) {
   return questionTokens.length > 0 ? score / Math.sqrt(chunkTokens.length) : 0;
 }
 
-/** Divide el texto extraído en chunks con solape, limitado a MAX_CHUNKS_PER_DOC. */
-function chunkText(text) {
+/**
+ * Divide el texto extraído en chunks con solape, limitado a maxChunks.
+ * @param {string} text - Texto a fragmentar.
+ * @param {{ chunkSize?: number, overlap?: number, maxChunks?: number }} [opts]
+ *   - Si se omiten, usa los límites de CHAT_LIMITS (Fase 3).
+ * @returns {string[]} Lista de chunks en orden de aparición.
+ */
+export function chunkText(text, opts = {}) {
   if (!text) return [];
-  const size = CHAT_LIMITS.CHUNK_SIZE;
-  const overlap = CHAT_LIMITS.CHUNK_OVERLAP;
+  const size = opts.chunkSize ?? CHAT_LIMITS.CHUNK_SIZE;
+  const overlap = opts.overlap ?? CHAT_LIMITS.CHUNK_OVERLAP;
+  const max = opts.maxChunks ?? CHAT_LIMITS.MAX_CHUNKS_PER_DOC;
   const chunks = [];
   let start = 0;
-  const max = CHAT_LIMITS.MAX_CHUNKS_PER_DOC;
   while (start < text.length && chunks.length < max) {
     let end = Math.min(start + size, text.length);
     chunks.push(text.slice(start, end));
@@ -70,7 +76,7 @@ function chunkText(text) {
  * Selecciona los chunks más relevantes de un documento para la pregunta,
  * repartiéndolos dentro del presupuesto de caracteres que le queda al contexto.
  */
-function selectRelevantChunks(text, questionTokens, budgetChars) {
+export function selectRelevantChunks(text, questionTokens, budgetChars) {
   const chunks = chunkText(text);
   if (chunks.length === 0) return '';
   if (chunks.length === 1) return chunks[0].slice(0, budgetChars);

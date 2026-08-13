@@ -41,8 +41,58 @@ export const JURISPRUDENCE_LIMITS = {
   MAX_SOURCES: 20,
 };
 
-export function buildJurisprudenceSystemPrompt() {
-  return `Eres un investigador jurídico para profesionales del derecho en Chile. Respondes preguntas sobre normativa, jurisprudencia y doctrina usando ÚNICAMENTE las fuentes verificables del contexto.
+export function buildJurisprudenceSystemPrompt({ documentMode = 'none' } = {}) {
+  const isDocument = documentMode === 'document';
+  const isMixed = documentMode === 'mixed';
+  const hasDocuments = isDocument || isMixed;
+
+  const documentRules = hasDocuments
+    ? `
+Reglas para EVIDENCIA DOCUMENTAL DEL CASO (${isDocument ? 'modo documental: la ÚNICA evidencia son los documentos privados del caso' : 'modo mixto: junto con las fuentes públicas'}):
+13. La "EVIDENCIA DOCUMENTAL DEL CASO" del contexto son documentos PRIVADOS del abogado (contratos, escrituras, finiquitos, etc.). Son evidencia de los HECHOS del caso, NO son normas ni jurisprudencia. Nunca las presentes como derecho vigente.
+14. Cada claim documental DEBE citar el "document_id" exacto y el "fragment_id" exacto que aparecen en la evidencia documental, y su "afirmacion" DEBE estar respaldada por un fragmento textual copiado literalmente.
+15. Distingue SIEMPRE tres cosas: los HECHOS (lo que dice el documento), las INFERENCIAS (lo que se deduce razonablemente de los hechos) y las CONSECUENCIAS jurídicas (solo si el documento las establece expresamente). Nunca presentes una inferencia como un hecho ni inventes consecuencias.
+16. No conviertas la mera mención de una norma dentro de un documento en una conclusión de incumplimiento: si el documento solo menciona una norma, descríbela como un hecho del caso.
+17. Si el documento no permite responder la pregunta, dilo con claridad y señala qué información falta.
+${isMixed ? `18. En modo mixto mantén la separación estricta: los claims de "normativa"/"jurisprudencia"/"doctrina" se respaldan SOLO en fuentes públicas del contexto; los claims de "documento" se respaldan SOLO en la evidencia documental del caso.` : ''}`
+    : '';
+
+  const formatJson = hasDocuments
+    ? `{
+  "resumen": "Respuesta breve en 2-4 líneas",
+  "normativa": [{ "fuente_id": "id del contexto", "fragment_id": "frag:…", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "jurisprudencia": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "doctrina": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "documento": [{ "document_id": "id del documento en el contexto", "fragment_id": "frag:…", "afirmacion": "afirmación puntual sobre el documento", "fragmento": "fragmento textual literal del documento" }],
+  "conclusion": "Síntesis de 3-4 líneas con matices",
+  "advertencias": ["aviso si falta evidencia, hay información no verificable, etc."]
+}`
+    : `{
+  "resumen": "Respuesta breve en 2-4 líneas",
+  "normativa": [{ "fuente_id": "id del contexto", "fragment_id": "frag:…", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "jurisprudencia": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "doctrina": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
+  "conclusion": "Síntesis de 3-4 líneas con matices",
+  "advertencias": ["aviso si falta normativa, hay vigencia incierta, doctrina no vinculante, etc."]
+}`;
+
+  const formatRules = hasDocuments
+    ? `
+Reglas del formato:
+- Usa EXCLUSIVAMENTE "fuente_id" y "document_id" que aparezcan en el contexto.
+- "fragment_id" solo en claims de normativa y de documento, y solo si ese fragmento aparece en el bloque "Fragmentos:" de la fuente o en la evidencia documental citada.
+- Si no hay afirmaciones respaldadas para una categoría, deja el arreglo vacío [] y agrega una advertencia.
+- "fragmento" debe ser texto literal del extracto de la fuente o del documento, no un resumen.
+- No agregues texto, comentarios ni bloques markdown fuera del JSON.`
+    : `
+Reglas del formato:
+- Usa EXCLUSIVAMENTE "fuente_id" que aparezcan en el contexto.
+- "fragment_id" solo en claims de normativa y solo si ese fragmento aparece en el bloque "Fragmentos:" de la fuente citada.
+- Si no hay afirmaciones respaldadas para una categoría, deja el arreglo vacío [] y agrega una advertencia.
+- "fragmento" debe ser texto literal del extracto de la fuente, no un resumen.
+- No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
+
+  return `Eres un investigador jurídico para profesionales del derecho en Chile. Respondes preguntas sobre normativa, jurisprudencia y doctrina usando ÚNICAMENTE las fuentes verificables del contexto.${documentRules}
 
 Reglas de evidencia:
 1. Usa exclusivamente las fuentes proporcionadas en el contexto. No inventes leyes, números de norma, roles, tribunales, fechas, artículos ni autores.
@@ -60,21 +110,8 @@ Reglas de evidencia:
 
 Formato de respuesta:
 Responde ÚNICAMENTE con un objeto JSON válido, sin texto fuera:
-{
-  "resumen": "Respuesta breve en 2-4 líneas",
-  "normativa": [{ "fuente_id": "id del contexto", "fragment_id": "frag:…", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
-  "jurisprudencia": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
-  "doctrina": [{ "fuente_id": "id del contexto", "afirmacion": "afirmación puntual", "fragmento": "fragmento textual literal de la fuente" }],
-  "conclusion": "Síntesis de 3-4 líneas con matices",
-  "advertencias": ["aviso si falta normativa, hay vigencia incierta, doctrina no vinculante, etc."]
-}
-
-Reglas del formato:
-- Usa EXCLUSIVAMENTE "fuente_id" que aparezcan en el contexto.
-- "fragment_id" solo en claims de normativa y solo si ese fragmento aparece en el bloque "Fragmentos:" de la fuente citada.
-- Si no hay afirmaciones respaldadas para una categoría, deja el arreglo vacío [] y agrega una advertencia.
-- "fragmento" debe ser texto literal del extracto de la fuente, no un resumen.
-- No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
+${formatJson}
+${formatRules}`;
 }
 
 export const LEGAL_AUTHORITY_LABELS = {
@@ -221,6 +258,7 @@ const KIND_INTENT_PRIORITY = {
   DOCTRINE_LOOKUP: { doctrina: 1000, jurisprudencia: 200, normativa: 80 },
   RELATIONAL_LEGAL_QUERY: { normativa: 600, jurisprudencia: 600, doctrina: 100 },
   MIXED_NORM_JURISPRUDENCE: { normativa: 600, jurisprudencia: 600, doctrina: 100 },
+  DOCUMENT_ANALYSIS: { normativa: 0, jurisprudencia: 0, doctrina: 0 },
   GENERAL_LEGAL_QUERY: { normativa: 500, jurisprudencia: 480, doctrina: 260 },
 };
 
@@ -641,18 +679,30 @@ const INTENT_ASSEMBLY_GUIDE = {
   JURISPRUDENCE_LOOKUP: 'Ancla la respuesta en la jurisprudencia: criterios de los tribunales y cómo se han resuelto casos similares.',
   RELATIONAL_LEGAL_QUERY: 'Responde la relación entre las dos materias citadas: puntos de contacto, diferencias e interacciones, con respaldo de ambos polos.',
   MIXED_NORM_JURISPRUDENCE: 'Combina norma y jurisprudencia: qué establece la ley y cómo la han aplicado los tribunales, en ese orden.',
+  DOCUMENT_ANALYSIS: 'Ancla la respuesta en el documento del caso citado: qué establece textualmente y qué se infiere razonablemente. No busques fuentes externas.',
   GENERAL_LEGAL_QUERY: 'Organiza la respuesta equilibrando la normativa, jurisprudencia y doctrina disponibles.',
 };
 
 /**
  * Construye el mensaje de usuario enviado al modelo.
- * @param {{ question: string, context?: string, caseContext?: string, intent?: string }} params
+ * @param {{ question: string, context?: string, caseContext?: string, intent?: string, documentContext?: string }} params
+ *  - documentContext: evidencia documental del caso (Fase 4.2.6). Si se provee,
+ *    se inserta como bloque propio "EVIDENCIA DOCUMENTAL DEL CASO".
  */
-export function buildJurisprudenceUserPrompt({ question, context = '', caseContext = '', intent = '' }) {
+export function buildJurisprudenceUserPrompt({
+  question,
+  context = '',
+  caseContext = '',
+  intent = '',
+  documentContext = '',
+}) {
   const parts = [
     'CONTEXTO DEL CASO (solo como referencia)',
     caseContext || 'Sin contexto de caso.',
     context,
+    documentContext
+      ? `EVIDENCIA DOCUMENTAL DEL CASO\n${documentContext}`
+      : '',
     `PREGUNTA DEL ABOGADO:\n${question}`,
   ];
   const guide = INTENT_ASSEMBLY_GUIDE[intent];
@@ -878,7 +928,7 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
  * Compatible con el render del frontend (párrafos, listas, negrita/italic).
  * Fase 4.0.2: secciones separadas por categoría con su autoridad explícita.
  */
-export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, doctrina, sintesis, conclusion, matices, advertencias }) {
+export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, doctrina, documento = [], sintesis, conclusion, matices, advertencias }) {
   const lines = [];
   lines.push(`**Respuesta breve**\n\n${(resumen || '').trim()}`);
 
@@ -903,11 +953,15 @@ export function buildJurisprudenceAnswer({ resumen, normativa, jurisprudencia, d
     return `**${title}**\n\n${items}`;
   };
 
+  // Fase 4.2.6: los HECHOS del caso (evidencia documental) van primero; después
+  // la normativa/jurisprudencia/doctrina que los analiza. Separa siempre hechos
+  // de inferencias.
+  const docFacts = section('Hechos del caso (documentos)', documento);
   const norm = section('Normativa relevante', normativa);
   const jur = section('Jurisprudencia relevante', jurisprudencia);
-  const doc = section('Doctrina (no vinculante)', doctrina);
+  const doctrinaSec = section('Doctrina (no vinculante)', doctrina);
 
-  lines.push(norm, jur, doc);
+  lines.push(docFacts, norm, jur, doctrinaSec);
 
   // Fase 4.1 (Etapa 2): síntesis VERIFICADA, ya procesada por synthesisVerifier.
   // Retrocompatibilidad: si no hay síntesis verificada, se usa la conclusión del

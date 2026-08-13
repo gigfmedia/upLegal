@@ -32,14 +32,37 @@ const DISCOURSE_TERMS = new Set([
   'establece', 'establecen', 'regula', 'regulan', 'consagra', 'dispone',
   'sostiene', 'sostienen', 'resolvio', 'decidio', 'ordena', 'dispone',
   'derecho', 'derechos', 'titular', 'titulares', 'persona', 'personas',
+  // Fase 4.2.6: sustantivos documentales (el documento es el soporte, no el
+  // contenido). Evita anclar afirmaciones vacías solo por nombrar el documento.
+  'contrato', 'contratos', 'documento', 'documentos', 'escritura',
+  'escrituras', 'clausula', 'clausulas', 'finiquito', 'demanda', 'acta',
+  'actas', 'escrito', 'escritos',
 ]);
 
 // Marcadores de marco discursivo por categoría de fuente.
+// Fase 4.2.6: `document` va PRIMERO porque el regex de normativa matchea verbos
+// sueltos ("establece"), y "El contrato establece…" no debe quedar como
+// normativa. El regex documental es conservador: demostrativo/artículo + nombre
+// documental (con o sin verbo lector).
 const FRAMING = {
+  document: /\b(?:el|la|este|esta|ese|esa|aquel|aquella)\s+(?:contrato|documento|escritura|cl[áa]usula|escrito|finiquito|demanda|acta)\b/i,
   normativa: /\b(?:la\s+ley|las?\s+normas?|el\s+art[íi]culo|la\s+normativa|el\s+decreto|el\s+c[óo]digo|la\s+constituci[óo]n)\b|establece|regula|dispone|consagra/i,
   jurisprudencia: /\b(?:el\s+tribunal|la\s+corte|la\s+sentencia|el\s+fallo|el\s+rol|el\s+t[cC]|resolvi[oó]|decidi[oó]|sostuvo\s+el\s+tribunal)\b/i,
   doctrina: /\b(?:el\s+autor|la\s+doctrina|los\s+autores|sostiene|considera\s+la\s+doctrina|seg[úu]n\s+la\s+doctrina)\b/i,
 };
+
+/**
+ * Fase 4.2.6: indica si la oración cita una ENTIDAD JURÍDICA concreta (número de
+ * artículo o referencia a un artículo/ley con número). Se usa para impedir que
+ * una oración documental se ancle a UN solo claim de documento cuando además
+ * invoca derecho: en ese caso se exige respaldo de AMBOS polos (relacional).
+ */
+function citesLegalEntity(sentence) {
+  return (
+    extractArticleNumbers(sentence).length > 0 ||
+    /\b(?:art[íi]culo|Ley)\s+N?[°º]?\s*\d/i.test(sentence)
+  );
+}
 
 // Lenguaje modal explícito: permite conservar una oración como inferencia.
 const MODAL_HEDGE =
@@ -253,37 +276,10 @@ export function verifySynthesis(conclusion, claims = []) {
       }
     }
 
-    // Fase 4.1.17: si la oración cita un ARTÍCULO específico, el claim anclado
-    // debe corresponder a ese artículo. "El artículo 99 reconoce el derecho de
-    // acceso" NO puede respaldarse como HECHO con el texto del Artículo 4: la
-    // cita de disposición solo puede servir como ancla de una INFERENCIA
-    // relacional, nunca para afirmar un hecho normativo sustantivo.
-    const sentenceCitedArticles = extractArticleNumbers(sentence.text);
-    const claimArticles = Array.isArray(best?.article) ? best.article : [];
-    const articleMismatch =
-      sentenceCitedArticles.length > 0 &&
-      claimArticles.length > 0 &&
-      !sentenceCitedArticles.some((a) => claimArticles.includes(a));
-
-    // Regla de respaldo:
-    //   - ≥2 términos sustantivos no discursivos compartidos → respaldado.
-    //   - 1 término compartido + marco discursivo coherente con la categoría.
-    //   - lenguaje modal Y solape amplio de tokens significativos → inferencia
-    //     construible desde los claims verificados.
-    if (best && bestOverlap >= 2 && !articleMismatch) {
-      sentence.category = best.source?.kind || null;
-      sentence.source_ids = [best.source_id];
-      sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
-      continue;
-    }
-
-    if (best && bestOverlap === 1 && framing && framing === best.source?.kind && !articleMismatch) {
-      sentence.category = best.source?.kind || null;
-      sentence.source_ids = [best.source_id];
-      sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
-      continue;
-    }
-
+    // Fase 4.2.6: el lenguaje modal tiene precedencia sobre el anclaje a un
+    // hecho. "Podría inferirse que…" NUNCA se presenta como hecho documental ni
+    // como norma, aunque haya solape sustantivo con un claim (el solape solo
+    // certifica que la inferencia es construible). Se etiqueta como inferencia.
     if (isHedged) {
       const sentenceTokens = normalizeClaimTokens(sentence.text).filter(
         (t) => !DISCOURSE_TERMS.has(t),
@@ -311,13 +307,60 @@ export function verifySynthesis(conclusion, claims = []) {
       }
     }
 
+    // Fase 4.1.17: si la oración cita un ARTÍCULO específico, el claim anclado
+    // debe corresponder a ese artículo. "El artículo 99 reconoce el derecho de
+    // acceso" NO puede respaldarse como HECHO con el texto del Artículo 4: la
+    // cita de disposición solo puede servir como ancla de una INFERENCIA
+    // relacional, nunca para afirmar un hecho normativo sustantivo.
+    const sentenceCitedArticles = extractArticleNumbers(sentence.text);
+    const claimArticles = Array.isArray(best?.article) ? best.article : [];
+    const articleMismatch =
+      sentenceCitedArticles.length > 0 &&
+      claimArticles.length > 0 &&
+      !sentenceCitedArticles.some((a) => claimArticles.includes(a));
+
+    // Fase 4.2.6 (guard F5/F6/F7): una oración documental que además cita una
+    // ENTIDAD JURÍDICA (artículo/ley con número) NO puede anclarse a UN solo
+    // claim de documento: invocar "el artículo 1602" exige que la disposición
+    // también esté respaldada. Se fuerza el camino relacional (ambos polos) o se
+    // elimina la oración.
+    const guardDocLegal = framing === 'document' && citesLegalEntity(sentence.text);
+
+    // Regla de respaldo:
+    //   - ≥2 términos sustantivos no discursivos compartidos → respaldado.
+    //   - 1 término compartido + marco discursivo coherente con la categoría.
+    //   - lenguaje modal Y solape amplio de tokens significativos → inferencia
+    //     construible desde los claims verificados.
+    if (best && bestOverlap >= 2 && !articleMismatch && !guardDocLegal) {
+      sentence.category = best.source?.kind || null;
+      sentence.source_ids = [best.source_id];
+      sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
+      continue;
+    }
+
+    if (
+      best &&
+      bestOverlap === 1 &&
+      framing &&
+      framing === best.source?.kind &&
+      !articleMismatch &&
+      !guardDocLegal
+    ) {
+      sentence.category = best.source?.kind || null;
+      sentence.source_ids = [best.source_id];
+      sentence.fragment_ids = best.fragment_id ? [best.fragment_id] : [];
+      continue;
+    }
+
     // Fase 4.1.17: oración RELACIONAL entre dos materias. Si no pudo anclarse a
     // un solo claim (porque la relación cruza dimensiones), se conserva como
     // INFERENCIA etiquetada SOLO si cada polo de la relación está respaldado por
     // claims verificados: una pata con solape de contenido ≥2 y la otra de otra
     // categoría con solape ≥2 o, si es normativa, con cita expresa de su
     // disposición. Sin ambos polos, la oración se elimina (no se inventa).
-    if (RELATIONAL_CONNECTORS.test(sentence.text)) {
+    // Fase 4.2.6: el guard documental+legal (F5/F6/F7) también fuerza este
+    // camino aunque la oración no tenga conector relacional explícito.
+    if (RELATIONAL_CONNECTORS.test(sentence.text) || guardDocLegal) {
       const anchor = buildRelationalAnchors(sentence.text, sentenceTerms, claims);
       if (anchor) {
         sentence.category = 'inferencia';
@@ -452,6 +495,7 @@ export function constrainOpenEndedEnumerations(sentences, claims = []) {
 }
 
 const CATEGORY_PREFIX = {
+  document: 'Hechos del caso',
   normativa: 'La norma establece',
   jurisprudencia: 'El Tribunal resolvió en el caso citado',
   doctrina: 'La doctrina sostiene',

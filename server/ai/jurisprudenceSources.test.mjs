@@ -62,6 +62,10 @@ describe('extractArticleNumbers', () => {
   it('devuelve vacío sin cita de artículo', () => {
     expect(extractArticleNumbers('la relación entre la ley y la autodeterminación informativa')).toEqual([]);
   });
+  it('detecta números de artículo de 4 dígitos (ej. 1545 Código Civil)', () => {
+    expect(extractArticleNumbers('¿Cuál es el riesgo de esta cláusula según el artículo 1545?')).toEqual(['1545']);
+    expect(extractArticleNumbers('artículo 1602 del Código Civil')).toEqual(['1602']);
+  });
 });
 
 describe('detectNormVigency', () => {

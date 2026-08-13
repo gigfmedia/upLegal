@@ -30,7 +30,13 @@ import {
 import {
   searchJurisprudence,
   validateResearchQuery,
+  classifyLegalQuery,
 } from './server/ai/jurisprudenceSources.mjs';
+import {
+  detectDocumentMode,
+  selectDocumentEvidence,
+  DOCUMENT_GROUNDING_LIMITS,
+} from './server/ai/documentGrounding.mjs';
 import {
   buildJurisprudenceSystemPrompt,
   buildJurisprudenceUserPrompt,
@@ -8060,20 +8066,69 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
-    // Busca fuentes reales en paralelo (TC + BCN SPARQL + OpenAlex), priorizando
-    // según la intención de la consulta (normativa → jurisprudencia → doctrina).
+    // Fase 4.2.6 (CASE INTELLIGENCE): carga los documentos READY del caso con
+    // filtro server-side doble capa (workspace_id + lawyer_id) y detecta el modo
+    // de la investigación: 'document' (solo documento del caso), 'mixed'
+    // (documento + fuentes públicas) o 'none' (flujo clásico).
+    const { data: readyDocs, error: docsError } = await supabase
+      .from('ai_documents')
+      .select('id, original_filename, extracted_text, workspace_id, lawyer_id, status')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .eq('status', 'ready');
+    if (docsError) throw docsError;
+    const caseDocuments = readyDocs || [];
+
+    const classification = classifyLegalQuery(query);
+    const documentModeResult = detectDocumentMode(query, caseDocuments, classification);
+    const { mode: documentMode } = documentModeResult;
+
+    // Señal documental sin evidencia en el caso → banner NO_DOCUMENT_EVIDENCE
+    // (el frontend ya tiene mapeado este código a "pesquisa-sem-evidencias-ai").
+    if (documentModeResult.noEvidence) {
+      logDiagnostic('ai_research_document_grounding', {
+        document_mode: documentMode,
+        documents_considered: caseDocuments.length,
+        documents_used: 0,
+        document_fragments_selected: 0,
+        document_claims_kept: 0,
+        document_claims_dropped: 0,
+      });
+      return res.status(422).json({
+        error:
+          'No hay evidencia documental disponible en el caso para responder esa pregunta.',
+        code: 'NO_DOCUMENT_EVIDENCE',
+      });
+    }
+
+    // En modo 'document' la investigación NO consulta fuentes públicas: la
+    // evidencia son los documentos del caso. En 'mixed'/'none' se hace retrieval.
+    const research =
+      documentMode === 'document'
+        ? {
+            sources: [],
+            warnings: [],
+            intent: 'document',
+            intentClass: classification.intent || 'DOCUMENT_ANALYSIS',
+            queryHash: '',
+            classification,
+            strategy: null,
+          }
+        : await searchJurisprudence(
+            query,
+            { limit: 8 },
+          );
+
     const {
       sources,
       warnings,
       intent,
       intentClass = '',
       queryHash = '',
-      classification = null,
+      classification: classificationFromSearch = null,
       strategy = null,
-    } = await searchJurisprudence(
-      query,
-      { limit: 8 },
-    );
+    } = research;
+    const effectiveClassification = classificationFromSearch || classification;
 
     const normativaCount = sources.filter((s) => s.kind === 'normativa').length;
     const jurisprudenciaCount = sources.filter((s) => s.kind === 'jurisprudencia').length;
@@ -8085,8 +8140,9 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       jurisprudencia_count: jurisprudenciaCount,
       doctrina_count: doctrinaCount,
       query_hash: queryHash,
+      document_mode: documentMode,
     });
-    if (intent === 'normativa' && normativaCount === 0) {
+    if (documentMode !== 'document' && intent === 'normativa' && normativaCount === 0) {
       logDiagnostic('jurisprudence_normativa_source_missing', {
         intent,
         normativa_count: normativaCount,
@@ -8095,7 +8151,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
-    if (sources.length === 0) {
+    if (documentMode !== 'document' && sources.length === 0) {
       return res.status(422).json({
         error:
           'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.',
@@ -8107,13 +8163,26 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     // armar el contexto. Reduce los casos de CONTEXT_TOO_LARGE sin tocar los
     // gates de evidencia (que siguen intactos aguas abajo en el pipeline). El
     // selector solo decide qué evidencia VÁLIDA llega al LLM.
+    // Fase 4.2.6: en modo 'mixed' se reserva ~25% del presupuesto de contexto
+    // para la evidencia documental del caso (composición legal + documento).
+    const legalMaxChars =
+      documentMode === 'mixed'
+        ? Math.floor(JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS * 0.75)
+        : JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS;
     const {
       sources: selectedSources,
       context,
       tooLarge,
       applied: budgetApplied,
       stats: selectionStats,
-    } = selectSourcesForContext({ sources, query, intentClass, classification, strategy });
+    } = selectSourcesForContext({
+      sources,
+      query,
+      intentClass,
+      classification: effectiveClassification,
+      strategy,
+      maxContextChars: legalMaxChars,
+    });
 
     logDiagnostic('ai_research_context_selection', {
       intent,
@@ -8127,6 +8196,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       context_chars_after: selectionStats.context_chars_after,
       budget_applied: budgetApplied,
       poles_preserved: selectionStats.poles_preserved,
+      document_mode: documentMode,
     });
     if (tooLarge) {
       return res.status(422).json({
@@ -8135,6 +8205,33 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         code: 'CONTEXT_TOO_LARGE',
       });
     }
+
+    // Fase 4.2.6: selección de evidencia documental del caso (document grounding).
+    // En modo 'none' (sin señal documental) se preserva el flujo clásico: la
+    // investigación NO inyecta documentos privados en el prompt.
+    const documentEvidence =
+      documentMode === 'none'
+        ? {
+            context: '',
+            selected: [],
+            docsById: new Map(),
+            stats: {
+              documents_considered: 0,
+              documents_used: 0,
+              fragments_selected: 0,
+              context_chars: 0,
+            },
+          }
+        : selectDocumentEvidence({
+            documents: caseDocuments,
+            query,
+            maxChars:
+              documentMode === 'mixed'
+                ? JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS - legalMaxChars
+                : DOCUMENT_GROUNDING_LIMITS.MAX_DOCUMENT_CONTEXT_CHARS,
+            workspaceId: workspace.id,
+            lawyerId: userId,
+          });
 
     const caseContext = buildJurisprudenceCaseContext(workspace);
 
@@ -8147,11 +8244,17 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       llmCall: (retryInstruction) =>
         chatCompletion({
           model: AI_DEFAULT_MODEL,
-          system: buildJurisprudenceSystemPrompt(),
+          system: buildJurisprudenceSystemPrompt({ documentMode }),
           messages: [
             {
               role: 'user',
-              content: buildJurisprudenceUserPrompt({ question: query, context, caseContext, intent: intentClass }),
+              content: buildJurisprudenceUserPrompt({
+                question: query,
+                context,
+                caseContext,
+                intent: intentClass,
+                documentContext: documentEvidence.context,
+              }),
             },
             ...(retryInstruction ? [{ role: 'user', content: retryInstruction }] : []),
           ],
@@ -8161,6 +8264,10 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       sources,
       intent,
       query,
+      documents: documentMode === 'none' ? null : caseDocuments,
+      workspaceId: workspace.id,
+      lawyerId: userId,
+      documentMode,
     });
 
     if (attempts > 1) {
@@ -8207,7 +8314,17 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       contradicciones,
       referencedIds,
       outcome,
+      documentClaimsDropped = 0,
     } = outcomeResult;
+
+    logDiagnostic('ai_research_document_grounding', {
+      document_mode: documentMode,
+      documents_considered: documentEvidence.stats.documents_considered,
+      documents_used: documentEvidence.stats.documents_used,
+      document_fragments_selected: documentEvidence.stats.fragments_selected,
+      document_claims_kept: allVerifiedClaims.filter((c) => c.category === 'document').length,
+      document_claims_dropped: documentClaimsDropped,
+    });
 
     // Registra el consumo real (no bloquea el flujo).
     await recordAIUsage({
@@ -8240,6 +8357,9 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         claims_kept: allVerifiedClaims.length,
         warnings_count: researchWarnings.length,
         contradicciones: contradicciones.length,
+        document_mode: documentMode,
+        document_claims_kept: allVerifiedClaims.filter((c) => c.category === 'document').length,
+        document_claims_dropped: documentClaimsDropped,
       });
     } catch (posthogError) {
       console.error('[LegalUpAI] ai_jurisprudence_researched failed', posthogError);
@@ -8254,6 +8374,11 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       warnings: researchWarnings,
       intent,
       outcome,
+      // Fase 4.2.6: tipo de investigación (document/mixed/jurisprudence). Se
+      // expone en la respuesta HTTP pero NO se persiste (la columna
+      // research_type de ai_research_requests no está garantizada en todos los
+      // entornos); el frontend ya tipa este campo.
+      research_type: documentMode === 'none' ? 'jurisprudence' : documentMode,
     });
   } catch (error) {
     console.error('[LegalUpAI] jurisprudence error:', error);

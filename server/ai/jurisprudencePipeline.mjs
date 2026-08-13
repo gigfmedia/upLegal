@@ -15,6 +15,7 @@ import {
 import { verifyAndBuildSynthesis } from './synthesisVerifier.mjs';
 import { orderNormativaByHierarchy, detectHierarchyMatices } from './hierarchy.mjs';
 import { detectContradictions } from './contradiction.mjs';
+import { verifyDocumentClaims } from './documentGrounding.mjs';
 
 // ---------------------------------------------------------------------------
 // Pipeline puro de investigación jurídica (Fase 4.1.11).
@@ -77,6 +78,17 @@ export const AIResearchResponseSchema = z
         }),
       )
       .default([]),
+    // Fase 4.2.6: claims documentales del caso (document grounding).
+    documento: z
+      .array(
+        z.object({
+          document_id: z.string().min(1),
+          fragment_id: z.string().optional(),
+          afirmacion: z.string().min(1),
+          fragmento: z.string().optional(),
+        }),
+      )
+      .default([]),
     conclusion: z.string().optional(),
     advertencias: z.array(z.string()).default([]),
   })
@@ -91,9 +103,20 @@ export const AIResearchResponseSchema = z
  *                                       'SUCCESS' (hay claims verificados) o
  *                                       'NO_EVIDENCE' (ninguno sobrevivió).
  *
- * @param {{ data: object|null, sources: object[], intent: string, query: string }} input
+ * @param {{ data: object|null, sources: object[], intent: string, query: string,
+ *   documents?: object[]|null, workspaceId?: string|null, lawyerId?: string|null,
+ *   documentMode?: 'none'|'document'|'mixed' }} input
  */
-export function buildJurisprudenceOutcome({ data, sources, intent, query = '' }) {
+export function buildJurisprudenceOutcome({
+  data,
+  sources,
+  intent,
+  query = '',
+  documents = null,
+  workspaceId = null,
+  lawyerId = null,
+  documentMode = 'none',
+}) {
   // Solo se aceptan fuentes que correspondan a fuentes reales recuperadas.
   // Fase 4.1.16 (evidence gate): una norma IDENTIFICADA pero sin evidencia
   // sustantiva (solo título/idNorma/fecha/vigencia o texto de promulgación) NO
@@ -104,6 +127,12 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
       .filter((source) => source.kind !== 'normativa' || hasSubstantiveNormativeEvidence(source))
       .map((source) => [source.id, source]),
   );
+
+  // Fase 4.2.6: mapa de documentos del caso para verificar claims documentales.
+  const docsById =
+    Array.isArray(documents) && documents.length > 0
+      ? new Map(documents.filter((d) => d && d.id).map((d) => [d.id, d]))
+      : new Map();
 
   let validated;
   if (data) {
@@ -135,10 +164,21 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
   );
   const verifiedDoctrina = verifyJurisprudenceClaims(validated.doctrina, includedById, 'doctrina');
 
+  // Fase 4.2.6: claims documentales verificados contra los documentos del caso
+  // (los que cita el modelo deben existir, pertenecer al caso y tener respaldo
+  // textual en el fragmento del documento; sin respaldo → se descartan).
+  const verifiedDocumentos = verifyDocumentClaims(
+    validated.documento,
+    docsById,
+    workspaceId,
+    lawyerId,
+  );
+
   const researchWarnings = [
     ...verifiedNormativa.warnings,
     ...verifiedJurisprudencia.warnings,
     ...verifiedDoctrina.warnings,
+    ...verifiedDocumentos.warnings,
   ];
 
   // Fase 4.0.2 (fix): si la consulta busca normativa, el modelo no citó ninguna
@@ -315,6 +355,7 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     ...effectiveNormativa,
     ...verifiedJurisprudencia.kept,
     ...verifiedDoctrina.kept,
+    ...verifiedDocumentos.kept,
   ];
   const hasVerifiedClaims = allVerifiedClaims.length > 0;
   const synthesisResult = verifyAndBuildSynthesis(
@@ -330,9 +371,12 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
   // OK, LLM OK, schema OK, verifier OK), pero no quedó ningún claim verificado.
   // El resumen no verificado del modelo NO se exhibe como afirmación jurídica
   // respaldada; se reemplaza por un mensaje explícito de ausencia de evidencia.
+  // Fase 4.2.6: en modo documental el mensaje apunta a los documentos del caso.
   const resumenFinal = hasVerifiedClaims
     ? excessive.resumen
-    : 'No se encontró evidencia suficiente en las fuentes públicas consultadas para responder esta pregunta de manera verificable.';
+    : documentMode === 'document'
+      ? 'No se encontró evidencia suficiente en los documentos del caso para responder esta pregunta de manera verificable.'
+      : 'No se encontró evidencia suficiente en las fuentes públicas consultadas para responder esta pregunta de manera verificable.';
   const advertenciasFinales = hasVerifiedClaims
     ? [
         ...modelAdvertencias,
@@ -348,6 +392,7 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     normativa: hasVerifiedClaims ? ordenNormativa : [],
     jurisprudencia: hasVerifiedClaims ? verifiedJurisprudencia.kept : [],
     doctrina: hasVerifiedClaims ? verifiedDoctrina.kept : [],
+    documento: hasVerifiedClaims ? verifiedDocumentos.kept : [],
     sintesis: síntesisText,
     matices: maticesFinales,
     advertencias: advertenciasFinales,
@@ -358,6 +403,7 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     ...ordenNormativa.map((c) => c.source),
     ...verifiedJurisprudencia.kept.map((c) => c.source),
     ...verifiedDoctrina.kept.map((c) => c.source),
+    ...verifiedDocumentos.kept.map((c) => c.source),
   ];
   const referencedById = new Map(referenced.map((source) => [source.id, source]));
   const referencedIds = [...referencedById.values()];
@@ -398,6 +444,7 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     síntesisText,
     researchWarnings,
     contradicciones,
+    documentClaimsDropped: verifiedDocumentos.warnings.length,
   };
 }
 
@@ -448,9 +495,22 @@ function mergeUsage(usages = []) {
  * @param {object[]} input.sources
  * @param {string} input.intent
  * @param {string} input.query
+ * @param {object[]|null} [input.documents]
+ * @param {string|null} [input.workspaceId]
+ * @param {string|null} [input.lawyerId]
+ * @param {'none'|'document'|'mixed'} [input.documentMode]
  * @returns {Promise<{outcome: object, attempts: number, retryCount: number, usage: object}>}
  */
-export async function runJurisprudenceWithRetry({ llmCall, sources, intent, query }) {
+export async function runJurisprudenceWithRetry({
+  llmCall,
+  sources,
+  intent,
+  query,
+  documents = null,
+  workspaceId = null,
+  lawyerId = null,
+  documentMode = 'none',
+}) {
   const usages = [];
   let outcome = null;
   let attempts = 0;
@@ -461,7 +521,16 @@ export async function runJurisprudenceWithRetry({ llmCall, sources, intent, quer
     const result = await llmCall(retryInstruction);
     if (result?.usage) usages.push(result.usage);
 
-    outcome = buildJurisprudenceOutcome({ data: result?.data ?? null, sources, intent, query });
+    outcome = buildJurisprudenceOutcome({
+      data: result?.data ?? null,
+      sources,
+      intent,
+      query,
+      documents,
+      workspaceId,
+      lawyerId,
+      documentMode,
+    });
     if (outcome.status !== 'invalid_response') break;
   }
 
