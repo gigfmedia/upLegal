@@ -8061,7 +8061,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     // Busca fuentes reales en paralelo (TC + BCN SPARQL + OpenAlex), priorizando
     // según la intención de la consulta (normativa → jurisprudencia → doctrina).
-    const { sources, warnings, intent, queryHash = '' } = await searchJurisprudence(
+    const { sources, warnings, intent, intentClass = '', queryHash = '' } = await searchJurisprudence(
       query,
       { limit: 8 },
     );
@@ -8111,7 +8111,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       messages: [
         {
           role: 'user',
-          content: buildJurisprudenceUserPrompt({ question: query, context, caseContext }),
+          content: buildJurisprudenceUserPrompt({ question: query, context, caseContext, intent: intentClass }),
         },
       ],
       maxTokens: AI_CHAT_MAX_TOKENS,

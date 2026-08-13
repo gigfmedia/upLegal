@@ -19,6 +19,7 @@ import {
   normalizeClaimTokens,
   extractLawNumber,
   extractArticleNumbers,
+  RELATIONAL_CONNECTORS,
 } from './jurisprudenceSources.mjs';
 
 // Palabras discursivas que NO prueban que la oración comparta el fondo con la
@@ -49,12 +50,11 @@ const MODAL_HEDGE =
 const INFERENCE_OPENER =
   /^(?:sobre\s+la\s+base\s+de\s+(?:las|estas|estas)?\s*fuentes|a\s+la\s+luz\s+de\s+las\s+fuentes|en\s+consecuencia|en\s+s[íi]ntesis|por\s+lo\s+tanto|cabe\s+(?:inferir|concluir)|puede\s+(?:inferirse|concluirse))/i;
 
-// Conector RELACIONAL: la oración declara una RELACIÓN entre dos materias (no
-// una simple afirmación atribuible a una sola fuente). Se usa solo para decidir
-// si una oración que no pudo anclarse a un solo claim se conserva como
-// INFERENCIA cuando cada polo de la relación tiene respaldo verificado.
-const RELATIONAL_CONNECTORS =
-  /\b(?:relaci[oó]n(?:\s+(?:conceptual|directa|directo|jur[ií]dica|jur[ií]dico|estrecha|estrecho|posible|eventual|causal|[íi]ntima|[íi]ntimo))?\s+(?:entre|con|de|que)|en\s+relaci[oó]n\s+con|relacionad[oa]s?\s+con|se\s+relaciona\s+con|relacionan|vincul[oó]|vincula(?:do)?\s+(?:a|con)|se\s+vincula\s+(?:a|con)|conexi[oó]n\s+entre|ligad[oa]\s+(?:a|con))\b/i;
+// Conector RELACIONAL a nivel de ORACIÓN. Definido y exportado en
+// jurisprudenceSources.mjs (helper único compartido con classifyLegalQuery).
+// Se usa solo para decidir si una oración que no pudo anclarse a un solo
+// claim se conserva como INFERENCIA cuando cada polo de la relación tiene
+// respaldo verificado.
 
 // Términos que son MEROS CONECTORES de la relación (no aportan contenido al
 // polo) y no pueden respaldar un ancla de contenido.

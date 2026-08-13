@@ -2157,6 +2157,152 @@ export function prioritizeSources(sources, intent) {
   return ranked;
 }
 
+// ---------------------------------------------------------------------------
+// QUERY INTENT — Fase 4.2.1: taxonomía fina de intención de la consulta.
+// ---------------------------------------------------------------------------
+// Complementa a detectQueryIntent (coarse: normativa/jurisprudencia/doctrina)
+// con 7 intenciones finas y determinísticas, previas al retrieval. No usa LLM.
+
+// 1) Señales de cita normativa (códigos chilenos por nombre).
+const NORM_CITATION_CODE_RE = /\bc[oó]digo\s+(?:civil|del\s+trabajo|de\s+comercio|penal|procesal\s+penal|de\s+procedimiento\s+(?:civil|penal)|sanitario|de\s+aguas|de\s+miner[ií]a|tributario)\b/i;
+
+// 2) Señales de JURISPRUDENCIA (tribunales, cortes, fallos, roles).
+const JURISPRUDENCE_SIGNAL_RE = /\b(?:tribunal\s+constitucional|corte\s+suprema|corte\s+de\s+apelaciones|jurisprudencia|sentencia\w*|fallo\w*|casaci[oó]n|recurso\s+de\s+protecci[oó]n)\b/i;
+
+// Conector RELACIONAL a nivel de ORACIÓN, definido aquí como helper único y
+// compartido: synthesisVerifier lo importa para decidir si una oración no
+// anclable a un solo claim se conserva como INFERENCIA.
+export const RELATIONAL_CONNECTORS =
+  /\b(?:relaci[oó]n(?:\s+(?:conceptual|directa|directo|jur[ií]dica|jur[ií]dico|estrecha|estrecho|posible|eventual|causal|[íi]ntima|[íi]ntimo))?\s+(?:entre|con|de|que)|en\s+relaci[oó]n\s+con|relacionad[oa]s?\s+con|se\s+relaciona\s+con|relacionan|vincul[oó]|vincula(?:do)?\s+(?:a|con)|se\s+vincula\s+(?:a|con)|conexi[oó]n\s+entre|ligad[oa]\s+(?:a|con))\b/i;
+
+// 3) Señales de RELACIÓN a nivel de CONSULTA (frases de pregunta relacional
+//    que no cubre el conector oracional anterior).
+const RELATIONAL_QUERY_RE = /\b(?:qu[ée]\s+relaci[oó]n|qu[ée]\s+v[ií]nculo|c[óo]mo\s+se\s+relaciona|c[óo]mo\s+se\s+vincula|en\s+relaci[oó]n\s+con|respecto\s+de|a\s+la\s+luz\s+de|entre\s+.{1,80}\s+y\b)/i;
+
+// 4) Señales de APLICACIÓN NORMATIVA (consulta de aplicación a un caso).
+const APPLICATION_SIGNAL_RE = /\b(?:puedo|puede|pueden|podr[ií]a|podr[ií]an|se\s+aplica|aplica\s+a|es\s+aplicable|qu[ée]\s+pasa\s+si|tengo\s+derecho|reconoce\s+el\s+derecho|reconoce\s+la\s+ley|permite|obliga|tengo\s+que|necesito)\b/i;
+
+// 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
+const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
+
+// 6) Intenciones finas de la Fase 4.2.1.
+const LEGAL_QUERY_INTENTS = {
+  BARE_NORM_CITATION: 'BARE_NORM_CITATION',
+  ARTICLE_LOOKUP: 'ARTICLE_LOOKUP',
+  NORMATIVE_APPLICATION: 'NORMATIVE_APPLICATION',
+  JURISPRUDENCE_LOOKUP: 'JURISPRUDENCE_LOOKUP',
+  RELATIONAL_LEGAL_QUERY: 'RELATIONAL_LEGAL_QUERY',
+  MIXED_NORM_JURISPRUDENCE: 'MIXED_NORM_JURISPRUDENCE',
+  GENERAL_LEGAL_QUERY: 'GENERAL_LEGAL_QUERY',
+};
+
+// 7) Clasificador determinístico de intención jurídica.
+/**
+ * Clasifica la consulta en una de las 7 intenciones legales de la Fase 4.2.1.
+ * No usa LLM: es determinístico, reproducible y previo al retrieval.
+ * @param {string} query - Consulta en lenguaje natural del abogado.
+ * @returns {{
+ *   intent: string,
+ *   normCitations: string[],
+ *   articleCitations: string[],
+ *   jurisprudenceSignals: string[],
+ *   relationalSignals: string[],
+ *   substantiveTerms: string[],
+ *   poles: { normative: string[], jurisprudence: string[] },
+ * }}
+ */
+export function classifyLegalQuery(query) {
+  const raw = String(query || '').trim();
+  // Normaliza a NFD y elimina los acentos combinantes: las regex de señales
+  // usan clases con la base ASCII ([ée], [áa]…), así matchean tanto acentos
+  // precompuestos como descompuestos y no se rompe el \s+ por un acento final.
+  // Los helpers extract* normalizan NFC internamente, por eso reciben `raw`.
+  const text = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const emptyResult = {
+    intent: LEGAL_QUERY_INTENTS.GENERAL_LEGAL_QUERY,
+    normCitations: [],
+    articleCitations: [],
+    jurisprudenceSignals: [],
+    relationalSignals: [],
+    substantiveTerms: [],
+    poles: { normative: [], jurisprudence: [] },
+  };
+  if (!text) return emptyResult;
+
+  const lawNumbers = extractLawNumber(raw);
+  const articleCitations = extractArticleNumbers(raw) || [];
+  const codeMatch = text.match(NORM_CITATION_CODE_RE);
+  const hasCode = Boolean(codeMatch);
+  const hasNormCitation = lawNumbers.length > 0 || hasCode || articleCitations.length > 0;
+
+  const jurisprudenceSignals = [...new Set(text.match(JURISPRUDENCE_SIGNAL_RE) || [])];
+  const hasJurisprudence = jurisprudenceSignals.length > 0;
+
+  const relationalSignals = [...new Set(text.match(RELATIONAL_QUERY_RE) || [])];
+  const hasRelational = relationalSignals.length > 0 || RELATIONAL_CONNECTORS.test(text);
+
+  const isApplication = APPLICATION_SIGNAL_RE.test(text) && !GENERIC_HELP_RE.test(text);
+  const hasJurisprudenceOnly = hasJurisprudence && !hasNormCitation;
+
+  const normCitations = [
+    ...new Set([
+      ...lawNumbers,
+      ...(hasCode ? [codeMatch[0].trim()] : []),
+    ]),
+  ];
+
+  const base = {
+    intent: LEGAL_QUERY_INTENTS.GENERAL_LEGAL_QUERY,
+    normCitations,
+    articleCitations,
+    jurisprudenceSignals,
+    relationalSignals,
+    substantiveTerms: extractSubstantiveTerms(raw),
+    poles: {
+      normative: [...normCitations, ...articleCitations.map((a) => `art. ${a}`)],
+      jurisprudence: jurisprudenceSignals,
+    },
+  };
+
+  // Prioridad de clasificación: MIXED > RELATIONAL > ARTICLE_LOOKUP >
+  // NORMATIVE_APPLICATION > JURISPRUDENCE_LOOKUP > BARE_NORM_CITATION >
+  // GENERAL_LEGAL_QUERY. MIXED exige NORMA + JURISPRUDENCIA + coordinación
+  // explícita ("y …") SIN conector relacional: "vínculo entre X y el criterio
+  // del TC" es RELATIONAL_LEGAL_QUERY, no mixto.
+  if (
+    hasNormCitation &&
+    hasJurisprudence &&
+    !hasRelational &&
+    /\b(?:y|tambi[ée]n|adem[áa]s)\b/i.test(text)
+  ) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.MIXED_NORM_JURISPRUDENCE };
+  }
+  if (hasRelational) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.RELATIONAL_LEGAL_QUERY };
+  }
+  if (
+    hasNormCitation &&
+    articleCitations.length > 0 &&
+    (/\b(?:qu[ée]|cu[áa]l|c[óo]mo|d[óo]nde)\b/i.test(text) ||
+      /expl[ií]came|dime|ind[ií]came/i.test(text))
+  ) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.ARTICLE_LOOKUP };
+  }
+  if (isApplication) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.NORMATIVE_APPLICATION };
+  }
+  if (hasJurisprudenceOnly) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.JURISPRUDENCE_LOOKUP };
+  }
+  if (hasNormCitation) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.BARE_NORM_CITATION };
+  }
+  if (hasJurisprudence) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.JURISPRUDENCE_LOOKUP };
+  }
+  return { ...base, intent: LEGAL_QUERY_INTENTS.GENERAL_LEGAL_QUERY };
+}
+
 /**
  * Busca jurisprudencia + normativa + doctrina de forma resiliente. Cada fuente
  * se consulta en paralelo; si una falla, no rompe las demás. Las fuentes se
@@ -2173,13 +2319,25 @@ export async function searchJurisprudence(
   const warnings = [];
   const intent = detectQueryIntent(query);
 
-  // Ajusta el reparto de fuentes según la intención: más del tipo buscado.
+  // Fase 4.2.1: intención fina (determinística, previa al retrieval).
+  // Complementa a detectQueryIntent (coarse) sin reemplazarla: el coarse
+  // conserva la compatibilidad legacy de la auto-promoción normativa en
+  // buildJurisprudenceOutcome.
+  const cls = classifyLegalQuery(query);
+
+  // Reparto de fuentes por intención: el coarse define la base y la intención
+  // fina empuja el foco (normativa / jurisprudencia / equilibrio mixto).
   const allocation =
-    intent === 'normativa'
+    intent === 'normativa' ||
+    ['BARE_NORM_CITATION', 'ARTICLE_LOOKUP', 'NORMATIVE_APPLICATION'].includes(cls.intent)
       ? { tc: Math.max(2, Math.round(limit * 0.3)), bcn: Math.max(3, limit), doctrina: 2 }
       : intent === 'doctrina'
         ? { tc: 3, bcn: 2, doctrina: Math.max(3, limit) }
-        : { tc: Math.round(limit * 0.5), bcn: 3, doctrina: 3 };
+        : cls.intent === 'JURISPRUDENCE_LOOKUP'
+          ? { tc: Math.max(3, limit), bcn: 2, doctrina: 3 }
+          : cls.intent === 'RELATIONAL_LEGAL_QUERY' || cls.intent === 'MIXED_NORM_JURISPRUDENCE'
+            ? { tc: Math.max(2, Math.round(limit * 0.5)), bcn: Math.max(2, Math.round(limit * 0.5)), doctrina: 3 }
+            : { tc: Math.round(limit * 0.5), bcn: 3, doctrina: 3 };
 
   const queryHash = hashQuery(query);
 
@@ -2207,6 +2365,19 @@ export async function searchJurisprudence(
 
   const sources = prioritizeSources([...keptTc, ...keptBcn, ...keptDoctrina], intent);
 
+  // Fase 4.2.1 (intent): observabilidad del clasificador fino. Emite solo
+  // metadatos de señales (números de norma/artículo, señales de tribunales),
+  // nunca datos del caso, para no filtrar información de la consulta.
+  logDiagnostic('ai_research_intent', {
+    query_hash: queryHash,
+    intent,
+    intent_class: cls.intent,
+    norm_citations: cls.normCitations,
+    article_citations: cls.articleCitations,
+    jurisprudence_signals: cls.jurisprudenceSignals,
+    relational_signals: cls.relationalSignals,
+  });
+
   // Fase 4.1.16 (evidence gate): observabilidad de la separación entre fuente
   // IDENTIFICADA y EVIDENCIA SUSTANTIVA. Una norma puede pasar el relevance gate
   // (por número/título) pero carecer de texto sustantivo; esa norma NO se
@@ -2221,5 +2392,5 @@ export async function searchJurisprudence(
     query_hash: queryHash,
   });
 
-  return { sources, warnings, intent, queryHash };
+  return { sources, warnings, intent, intentClass: cls.intent, classification: cls, queryHash };
 }

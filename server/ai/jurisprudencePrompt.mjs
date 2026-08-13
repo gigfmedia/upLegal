@@ -178,15 +178,35 @@ export function buildJurisprudenceContext(sources = []) {
 }
 
 /**
- * Construye el mensaje de usuario enviado al modelo.
+ * Guía de ensamblaje por intención fina (Fase 4.2.1): instruye al modelo cómo
+ * estructurar la respuesta según la intención de la consulta. Solo se renderiza
+ * cuando la ruta entrega intentClass, por lo que es retrocompatible.
  */
-export function buildJurisprudenceUserPrompt({ question, context, caseContext = '' }) {
+const INTENT_ASSEMBLY_GUIDE = {
+  BARE_NORM_CITATION: 'Ancla la respuesta en la norma citada; usa jurisprudencia y doctrina solo como apoyo.',
+  ARTICLE_LOOKUP: 'Explica el artículo citado: alcance, condiciones y efectos; apóyate en la norma de la que forma parte.',
+  NORMATIVE_APPLICATION: 'Aplica la norma al caso concreto: responde si la norma alcanza la situación descrita y qué requisitos exige.',
+  JURISPRUDENCE_LOOKUP: 'Ancla la respuesta en la jurisprudencia: criterios de los tribunales y cómo se han resuelto casos similares.',
+  RELATIONAL_LEGAL_QUERY: 'Responde la relación entre las dos materias citadas: puntos de contacto, diferencias e interacciones, con respaldo de ambos polos.',
+  MIXED_NORM_JURISPRUDENCE: 'Combina norma y jurisprudencia: qué establece la ley y cómo la han aplicado los tribunales, en ese orden.',
+  GENERAL_LEGAL_QUERY: 'Organiza la respuesta equilibrando la normativa, jurisprudencia y doctrina disponibles.',
+};
+
+/**
+ * Construye el mensaje de usuario enviado al modelo.
+ * @param {{ question: string, context?: string, caseContext?: string, intent?: string }} params
+ */
+export function buildJurisprudenceUserPrompt({ question, context = '', caseContext = '', intent = '' }) {
   const parts = [
     'CONTEXTO DEL CASO (solo como referencia)',
     caseContext || 'Sin contexto de caso.',
     context,
     `PREGUNTA DEL ABOGADO:\n${question}`,
   ];
+  const guide = INTENT_ASSEMBLY_GUIDE[intent];
+  if (guide) {
+    parts.push(`INTENCIÓN DE LA CONSULTA (guía de ensamblaje):\n${guide}`);
+  }
   return parts.filter(Boolean).join('\n\n');
 }
 
