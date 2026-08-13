@@ -21,6 +21,9 @@ import {
   fragmentSupportsClaim,
   hasSubstantiveNormativeEvidence,
   extractArticleNumbers,
+  extractLawNumber,
+  normalizeClaimTokens,
+  rankFragments,
 } from './jurisprudenceSources.mjs';
 
 export const JURISPRUDENCE_LIMITS = {
@@ -175,6 +178,455 @@ export function buildJurisprudenceContext(sources = []) {
     tooLarge = true;
   }
   return { context, tooLarge };
+}
+
+// ---------------------------------------------------------------------------
+// Fase 4.2.5 — Context Budget + Evidence-Aware Source Selection.
+// Selecciona, ANTES de armar el contexto, las mejores fuentes/fragmentos para
+// reducir los casos de CONTEXT_TOO_LARGE sin sacrificar las garantías de
+// evidencia. El selector SOLO decide qué evidencia VÁLIDA llega al LLM; no
+// decide qué evidencia es verdadera (los gates de 4.1.x-4.2.4 siguen intactos
+// aguas abajo).
+//
+// Reglas inalterables:
+//   - evidence gate: una norma metadata_only NO ocupa espacio de contexto si
+//     existe evidencia sustantiva; nunca se convierte metadata en evidencia.
+//   - article-first: la fuente/fragmento del artículo citado tiene prioridad.
+//   - article mismatch: no se sustituye la disposición citada por otra.
+//   - relacional/mixto: se reserva presupuesto para AMBOS polos (40-60% c/u)
+//     cuando ambos tienen evidencia sustantiva.
+//   - fallback: si el presupuesto no alcanza para representar los polos, NO se
+//     inventa ni se elimina evidencia crítica: se conserva CONTEXT_TOO_LARGE
+//     como resultado seguro.
+//   - determinismo: misma entrada → misma selección.
+// ---------------------------------------------------------------------------
+
+export const CONTEXT_SELECTION = {
+  // Fracción del límite máximo reservada al contexto de fuentes. Deja margen
+  // para la cabecera, la pregunta, el contexto del caso y la guía de ensamblaje.
+  HEADROOM_RATIO: 0.85,
+  // Factor de seguridad del estimador de caracteres: debe ser conservador
+  // (>= al formateador real) para no sobrepasar el presupuesto en el greedy.
+  ESTIMATE_SAFETY_FACTOR: 1.15,
+};
+
+// Prioridad de tipo de fuente según la intención fina (Fase 4.2.1/4.2.3).
+// En relacional/mixto, norma y jurisprudencia pesan igual: ambos polos deben
+// quedar representados cuando ambos tienen evidencia.
+const KIND_INTENT_PRIORITY = {
+  ARTICLE_LOOKUP: { normativa: 1000, jurisprudencia: 120, doctrina: 60 },
+  BARE_NORM_CITATION: { normativa: 1000, jurisprudencia: 120, doctrina: 60 },
+  NORMATIVE_APPLICATION: { normativa: 800, jurisprudencia: 200, doctrina: 100 },
+  JURISPRUDENCE_LOOKUP: { jurisprudencia: 1000, doctrina: 200, normativa: 80 },
+  DOCTRINE_LOOKUP: { doctrina: 1000, jurisprudencia: 200, normativa: 80 },
+  RELATIONAL_LEGAL_QUERY: { normativa: 600, jurisprudencia: 600, doctrina: 100 },
+  MIXED_NORM_JURISPRUDENCE: { normativa: 600, jurisprudencia: 600, doctrina: 100 },
+  GENERAL_LEGAL_QUERY: { normativa: 500, jurisprudencia: 480, doctrina: 260 },
+};
+
+/** Verifica si un término aparece como PALABRA COMPLETA en texto normalizado. */
+function containsWord(normText, term) {
+  const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9ñ])${escaped}($|[^a-z0-9ñ])`).test(normText);
+}
+
+/** Nº de términos de la consulta presentes como palabra en el texto de la fuente. */
+function tokenOverlap(queryTokens, source) {
+  const hay = [
+    source.title,
+    source.excerpt,
+    source.citation,
+    source.kind === 'normativa' && Array.isArray(source.metadata?.fragments)
+      ? source.metadata.fragments.map((f) => `${f.article || ''} ${f.text || ''}`).join(' ')
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  return queryTokens.reduce((acc, t) => acc + (containsWord(hay, t) ? 2 : 0), 0);
+}
+
+/**
+ * Ordena los fragmentos de una norma para el contexto: los del ARTÍCULO CITADO
+ * van primero (article-first, Fase 4.2.2) y el resto por relevancia lexical.
+ * No elimina fragmentos: conserva los ids para la trazabilidad claim→source→
+ * fragment aguas abajo. Solo reordena (el formateador muestra los primeros 3).
+ * @param {object} source - Fuente normativa.
+ * @param {string} query - Consulta del abogado.
+ */
+export function orderSourceFragments(source, query = '') {
+  if (source.kind !== 'normativa' || !Array.isArray(source.metadata?.fragments)) return source;
+  const fragments = source.metadata.fragments;
+  if (fragments.length <= 1) return source;
+  const citedArticles = extractArticleNumbers(query);
+  const ranked = rankFragments(query, fragments, { limit: fragments.length });
+  if (citedArticles.length > 0) {
+    const byArticle = fragments.filter((f) =>
+      extractArticleNumbers(f.article || '').some((a) => citedArticles.includes(a)),
+    );
+    const others = ranked.filter((f) => !byArticle.includes(f));
+    return { ...source, metadata: { ...source.metadata, fragments: [...byArticle, ...others] } };
+  }
+  return { ...source, metadata: { ...source.metadata, fragments: ranked } };
+}
+
+/**
+ * Ranking evidence-aware de fuentes para el contexto. Considera, en orden de
+ * prioridad: artículo citado > norma citada por número > tipo según intent >
+ * evidencia sustantiva > relevancia lexical > polo > calidad > penalización por
+ * expansión léxica (auxiliar). Determinístico (empates conservan el orden).
+ * @param {object[]} sources
+ * @param {{ query?: string, intentClass?: string }} [opts]
+ */
+export function rankSourcesForContext(sources, { query = '', intentClass = 'GENERAL_LEGAL_QUERY' } = {}) {
+  const queryTokens = normalizeClaimTokens(query);
+  const citedArticles = extractArticleNumbers(query);
+  const citedLaws = extractLawNumber(query);
+  const priority = KIND_INTENT_PRIORITY[intentClass] || KIND_INTENT_PRIORITY.GENERAL_LEGAL_QUERY;
+  return sources
+    .map((source, index) => {
+      let score = priority[source.kind] ?? 0;
+      if (source.kind === 'normativa') {
+        if (hasSubstantiveNormativeEvidence(source)) score += 120;
+        const normDigits = String(source.norm_number || '').replace(/[^0-9]/g, '');
+        if (citedLaws.length > 0 && normDigits && citedLaws.includes(normDigits)) score += 800;
+        const fragArticles = (source.metadata?.fragments || []).flatMap((f) =>
+          extractArticleNumbers(f.article || ''),
+        );
+        if (citedArticles.length > 0 && fragArticles.some((a) => citedArticles.includes(a))) {
+          score += 2000;
+        }
+      } else {
+        const excerptLen = String(source.excerpt || '').length;
+        if (excerptLen >= 800) score += 60;
+        else if (excerptLen >= 200) score += 35;
+      }
+      score += tokenOverlap(queryTokens, source);
+      const pole = source.metadata?.retrieval_pole;
+      if (intentClass === 'RELATIONAL_LEGAL_QUERY' || intentClass === 'MIXED_NORM_JURISPRUDENCE') {
+        if (pole === 'normative' && source.kind === 'normativa') score += 40;
+        if (pole === 'jurisprudence' && source.kind === 'jurisprudencia') score += 40;
+      } else if (pole && pole !== 'general') {
+        score += 15;
+      }
+      if (source.metadata?.retrieval_expansion) score -= 25;
+      if (source.kind === 'jurisprudencia' && source.rol) score += 12;
+      if (source.kind === 'doctrina' && source.metadata?.authors) score += 5;
+      return { source, score, index };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+}
+
+/**
+ * Estima conservadoramente los caracteres que la fuente ocupará en el contexto
+ * formateado (espejo de `formatSource` + factor de seguridad). No debe
+ * subestimar: el presupuesto se vuelve a verificar con el formateador real.
+ * @param {object} source
+ */
+function estimateSourceChars(source) {
+  const parts = [];
+  parts.push(`[Fuente 1] id: ${source.id}`);
+  parts.push(`Tipo: ${source.kind} (${source.publisher || 'Fuente pública'})`);
+  if (source.legal_authority) parts.push(`Autoridad: ${authorityLabel(source.legal_authority)}`);
+  if (source.vigency) parts.push(`Vigencia: ${vigencyLabel(source.vigency)}`);
+  if (source.citation) parts.push(`Cita: ${source.citation}`);
+  if (source.date) parts.push(`Fecha: ${source.date}`);
+  if (source.url) parts.push(`URL: ${source.url}`);
+  if (
+    source.kind === 'normativa' &&
+    Array.isArray(source.metadata?.fragments) &&
+    source.metadata.fragments.length > 0
+  ) {
+    parts.push('Fragmentos:');
+    for (const frag of source.metadata.fragments.slice(0, JURISPRUDENCE_LIMITS.MAX_FRAGMENTS_PER_SOURCE)) {
+      parts.push(`  - fragment_id: ${frag.id} | Artículo: ${frag.article}`);
+      parts.push(`    Texto: ${truncate(frag.text, JURISPRUDENCE_LIMITS.MAX_FRAGMENT_CHARS)}`);
+    }
+  }
+  if (source.excerpt) parts.push(`Extracto: ${truncate(source.excerpt, JURISPRUDENCE_LIMITS.MAX_SOURCE_CHARS)}`);
+  return parts.reduce((acc, p) => acc + p.length + 2, 2);
+}
+
+function isRelationalOrMixed(intentClass) {
+  return intentClass === 'RELATIONAL_LEGAL_QUERY' || intentClass === 'MIXED_NORM_JURISPRUDENCE';
+}
+
+/**
+ * Núcleo mínimo (floor) que la selección NUNCA reduce: el polo citado
+ * (article-first) o, en relacional/mixto, la mejor fuente de CADA polo presente
+ * con evidencia. Si ni siquiera el floor cabe, se conserva CONTEXT_TOO_LARGE
+ * (fail-safe) en lugar de eliminar evidencia crítica o inventar polos.
+ * @param {Array<{ source: object, score: number, index: number }>} ranked
+ * @returns {Array<{ source: object, score: number, index: number }>}
+ */
+function computeFloor(ranked, query, intentClass) {
+  const floor = [];
+  if (isRelationalOrMixed(intentClass)) {
+    const norm = ranked.find((r) => r.source.kind === 'normativa');
+    const jur = ranked.find((r) => r.source.kind === 'jurisprudencia');
+    if (norm) floor.push(norm);
+    if (jur) floor.push(jur);
+    return floor;
+  }
+  const citedArticles = extractArticleNumbers(query);
+  if (citedArticles.length > 0) {
+    const byArticle = ranked.find(
+      (r) =>
+        r.source.kind === 'normativa' &&
+        (r.source.metadata?.fragments || []).some((f) =>
+          extractArticleNumbers(f.article || '').some((a) => citedArticles.includes(a)),
+        ),
+    );
+    if (byArticle) floor.push(byArticle);
+  }
+  if (floor.length === 0 && ranked.length > 0) floor.push(ranked[0]);
+  return floor;
+}
+
+/**
+ * Selección greedy por presupuesto de caracteres. En relacional/mixto reserva
+ * ~50% del presupuesto por polo (intercala norma y jurisprudencia) para que
+ * ninguno desplace al otro, y completa con el resto cuando hay sobrante.
+ */
+function greedySelect(ranked, floor, budget, intentClass) {
+  const est = (entry) => estimateSourceChars(entry.source) * CONTEXT_SELECTION.ESTIMATE_SAFETY_FACTOR;
+  const result = [...floor];
+  const seen = new Set(result.map((r) => r.source.id));
+  let used = result.reduce((acc, r) => acc + est(r), 0);
+
+  if (!isRelationalOrMixed(intentClass)) {
+    for (const entry of ranked) {
+      if (seen.has(entry.source.id)) continue;
+      const cost = est(entry);
+      if (used + cost > budget) break;
+      result.push(entry);
+      seen.add(entry.source.id);
+      used += cost;
+    }
+    return result;
+  }
+
+  const normPool = ranked.filter((r) => r.source.kind === 'normativa' && !seen.has(r.source.id));
+  const jurPool = ranked.filter((r) => r.source.kind === 'jurisprudencia' && !seen.has(r.source.id));
+  const otherPool = ranked.filter(
+    (r) => r.source.kind !== 'normativa' && r.source.kind !== 'jurisprudencia' && !seen.has(r.source.id),
+  );
+  const quota = Math.floor(budget / 2);
+  let normUsed = result.filter((r) => r.source.kind === 'normativa').reduce((a, r) => a + est(r), 0);
+  let jurUsed = result.filter((r) => r.source.kind === 'jurisprudencia').reduce((a, r) => a + est(r), 0);
+  let i = 0;
+  let j = 0;
+  const pushNorm = () => {
+    if (i >= normPool.length) return false;
+    const entry = normPool[i];
+    const cost = est(entry);
+    if (used + cost > budget || normUsed + cost > quota) return false;
+    result.push(entry);
+    seen.add(entry.source.id);
+    used += cost;
+    normUsed += cost;
+    i += 1;
+    return true;
+  };
+  const pushJur = () => {
+    if (j >= jurPool.length) return false;
+    const entry = jurPool[j];
+    const cost = est(entry);
+    if (used + cost > budget || jurUsed + cost > quota) return false;
+    result.push(entry);
+    seen.add(entry.source.id);
+    used += cost;
+    jurUsed += cost;
+    j += 1;
+    return true;
+  };
+  // Intercala ambos polos hasta agotar cuota o presupuesto.
+  let progress = true;
+  while (progress) {
+    progress = false;
+    if (i < normPool.length && normUsed < quota && pushNorm()) progress = true;
+    if (j < jurPool.length && jurUsed < quota && pushJur()) progress = true;
+  }
+  // Completa con el sobrante (restos de polo + doctrina).
+  for (const entry of [...normPool.slice(i), ...jurPool.slice(j), ...otherPool]) {
+    if (seen.has(entry.source.id)) continue;
+    const cost = est(entry);
+    if (used + cost > budget) continue;
+    result.push(entry);
+    seen.add(entry.source.id);
+    used += cost;
+  }
+  return result;
+}
+
+/** Indica si la selección conserva los polos/tipos que el intent exige. */
+function polesPreserved(kindsBefore, kindsAfter, intentClass) {
+  if (isRelationalOrMixed(intentClass)) {
+    return (
+      (!kindsBefore.has('normativa') || kindsAfter.has('normativa')) &&
+      (!kindsBefore.has('jurisprudencia') || kindsAfter.has('jurisprudencia'))
+    );
+  }
+  const required =
+    intentClass === 'JURISPRUDENCE_LOOKUP'
+      ? 'jurisprudencia'
+      : intentClass === 'DOCTRINE_LOOKUP'
+        ? 'doctrina'
+        : intentClass === 'ARTICLE_LOOKUP' ||
+            intentClass === 'BARE_NORM_CITATION' ||
+            intentClass === 'NORMATIVE_APPLICATION'
+          ? 'normativa'
+          : null;
+  if (!required) return true;
+  return !kindsBefore.has(required) || kindsAfter.has(required);
+}
+
+/**
+ * Selecciona las fuentes/fragmentos que llegan al contexto del LLM, con
+ * presupuesto de caracteres explícito y evidencia-aware. Pura y determinística.
+ *
+ * NO modifica las fuentes originales (devuelve copias con los fragmentos
+ * reordenados): la verificación aguas abajo sigue usando las fuentes completas,
+ * por lo que la trazabilidad claim→source→fragment permanece intacta.
+ *
+ * @param {object} input
+ * @param {object[]} input.sources - Fuentes recuperadas (todas).
+ * @param {string} [input.query] - Consulta del abogado.
+ * @param {string} [input.intentClass] - Intención fina (Fase 4.2.1).
+ * @param {object} [input.classification] - Salida de classifyLegalQuery (opcional).
+ * @param {object} [input.strategy] - Salida de getRetrievalStrategy (opcional).
+ * @param {number} [input.maxContextChars] - Límite de caracteres del contexto
+ *   (por defecto JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS).
+ * @returns {{ sources: object[], context: string, tooLarge: boolean,
+ *   applied: boolean, stats: object }}
+ */
+export function selectSourcesForContext({
+  sources = [],
+  query = '',
+  intentClass = 'GENERAL_LEGAL_QUERY',
+  classification = null,
+  strategy = null,
+  maxContextChars = JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS,
+} = {}) {
+  const budget = Math.floor(maxContextChars * CONTEXT_SELECTION.HEADROOM_RATIO);
+  const isTooLarge = (ctx) => ctx.tooLarge || ctx.context.length > maxContextChars;
+
+  // Contexto "antes" (lo que se habría enviado sin selección) para diagnóstico.
+  const beforeCtx = buildJurisprudenceContext(sources);
+  const fragmentsBefore = sources.reduce(
+    (acc, s) => acc + (Array.isArray(s.metadata?.fragments) ? s.metadata.fragments.length : 0),
+    0,
+  );
+  const kindsBefore = new Set(sources.map((s) => s.kind));
+
+  // 1) Evidence gate (pre-context): una norma metadata_only NO ocupa espacio de
+  //    contexto si existe evidencia sustantiva; nunca se convierte en evidencia.
+  const eligible = sources.filter(
+    (s) => s.kind !== 'normativa' || hasSubstantiveNormativeEvidence(s),
+  );
+
+  if (eligible.length === 0) {
+    const ctx = buildJurisprudenceContext([]);
+    return {
+      sources: [],
+      context: ctx.context,
+      tooLarge: false,
+      applied: false,
+      stats: {
+        sources_before: sources.length,
+        sources_after: 0,
+        fragments_before: 0,
+        fragments_after: 0,
+        context_chars_before: beforeCtx.context.length,
+        context_chars_after: ctx.context.length,
+        budget_applied: false,
+        poles_preserved: true,
+      },
+    };
+  }
+
+  // 2) Reordena fragmentos (article-first + relevancia) en copias inmutables.
+  const prepared = eligible.map((s) => orderSourceFragments(s, query));
+
+  // 3) Ranking evidence-aware.
+  const ranked = rankSourcesForContext(prepared, { query, intentClass });
+
+  // 4) Núcleo mínimo: si ni el floor cabe, se conserva CONTEXT_TOO_LARGE.
+  const floor = computeFloor(ranked, query, intentClass);
+  const floorCtx = buildJurisprudenceContext(floor.map((r) => r.source));
+  if (floor.length > 0 && isTooLarge(floorCtx)) {
+    const floorSources = floor.map((r) => r.source);
+    return {
+      sources: floorSources,
+      context: floorCtx.context,
+      tooLarge: true,
+      applied: true,
+      stats: {
+        sources_before: sources.length,
+        sources_after: floorSources.length,
+        fragments_before: fragmentsBefore,
+        fragments_after: floorSources.reduce(
+          (acc, s) =>
+            acc +
+            Math.min(
+              Array.isArray(s.metadata?.fragments) ? s.metadata.fragments.length : 0,
+              JURISPRUDENCE_LIMITS.MAX_FRAGMENTS_PER_SOURCE,
+            ),
+          0,
+        ),
+        context_chars_before: beforeCtx.context.length,
+        context_chars_after: floorCtx.context.length,
+        budget_applied: true,
+        poles_preserved: polesPreserved(kindsBefore, new Set(floorSources.map((s) => s.kind)), intentClass),
+      },
+    };
+  }
+
+  // 5) Selección greedy con reserva de polos.
+  let selected = greedySelect(ranked, floor, budget, intentClass);
+
+  // 6) Recorte de seguridad verificado con el formateador real (nunca por
+  //    debajo del floor).
+  let final = selected;
+  let ctx = buildJurisprudenceContext(final.map((r) => r.source));
+  const floorSize = floor.length;
+  while (isTooLarge(ctx) && final.length > floorSize) {
+    final = final.slice(0, -1);
+    ctx = buildJurisprudenceContext(final.map((r) => r.source));
+  }
+
+  const selectedSources = final.map((r) => r.source);
+  const fragmentsAfter = selectedSources.reduce(
+    (acc, s) =>
+      acc +
+      Math.min(
+        Array.isArray(s.metadata?.fragments) ? s.metadata.fragments.length : 0,
+        JURISPRUDENCE_LIMITS.MAX_FRAGMENTS_PER_SOURCE,
+      ),
+    0,
+  );
+  const kindsAfter = new Set(selectedSources.map((s) => s.kind));
+
+  const stats = {
+    sources_before: sources.length,
+    sources_after: selectedSources.length,
+    fragments_before: fragmentsBefore,
+    fragments_after: fragmentsAfter,
+    context_chars_before: beforeCtx.context.length,
+    context_chars_after: ctx.context.length,
+    budget_applied: selectedSources.length < sources.length || fragmentsAfter < fragmentsBefore,
+    poles_preserved: polesPreserved(kindsBefore, kindsAfter, intentClass),
+  };
+
+  return {
+    sources: selectedSources,
+    context: ctx.context,
+    tooLarge: isTooLarge(ctx),
+    applied: stats.budget_applied,
+    stats,
+  };
 }
 
 /**

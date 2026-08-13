@@ -33,9 +33,9 @@ import {
 } from './server/ai/jurisprudenceSources.mjs';
 import {
   buildJurisprudenceSystemPrompt,
-  buildJurisprudenceContext,
   buildJurisprudenceUserPrompt,
   buildJurisprudenceCaseContext,
+  selectSourcesForContext,
   JURISPRUDENCE_LIMITS,
 } from './server/ai/jurisprudencePrompt.mjs';
 import {
@@ -8062,7 +8062,15 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
 
     // Busca fuentes reales en paralelo (TC + BCN SPARQL + OpenAlex), priorizando
     // según la intención de la consulta (normativa → jurisprudencia → doctrina).
-    const { sources, warnings, intent, intentClass = '', queryHash = '' } = await searchJurisprudence(
+    const {
+      sources,
+      warnings,
+      intent,
+      intentClass = '',
+      queryHash = '',
+      classification = null,
+      strategy = null,
+    } = await searchJurisprudence(
       query,
       { limit: 8 },
     );
@@ -8095,7 +8103,31 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
-    const { context, tooLarge } = buildJurisprudenceContext(sources);
+    // Fase 4.2.5: selección evidence-aware de fuentes/fragmentos ANTES de
+    // armar el contexto. Reduce los casos de CONTEXT_TOO_LARGE sin tocar los
+    // gates de evidencia (que siguen intactos aguas abajo en el pipeline). El
+    // selector solo decide qué evidencia VÁLIDA llega al LLM.
+    const {
+      sources: selectedSources,
+      context,
+      tooLarge,
+      applied: budgetApplied,
+      stats: selectionStats,
+    } = selectSourcesForContext({ sources, query, intentClass, classification, strategy });
+
+    logDiagnostic('ai_research_context_selection', {
+      intent,
+      intent_class: intentClass,
+      query_hash: queryHash,
+      sources_before: selectionStats.sources_before,
+      sources_after: selectionStats.sources_after,
+      fragments_before: selectionStats.fragments_before,
+      fragments_after: selectionStats.fragments_after,
+      context_chars_before: selectionStats.context_chars_before,
+      context_chars_after: selectionStats.context_chars_after,
+      budget_applied: budgetApplied,
+      poles_preserved: selectionStats.poles_preserved,
+    });
     if (tooLarge) {
       return res.status(422).json({
         error:
