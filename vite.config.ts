@@ -5,7 +5,7 @@ import path from 'path';
 import { readFileSync, existsSync } from 'fs';
 
 function loadBuildEnv() {
-  const buildFile = path.resolve(__dirname, '.env.build');
+  const buildFile = path.resolve(import.meta.dirname, '.env.build');
   if (!existsSync(buildFile)) return {};
   const content = readFileSync(buildFile, 'utf-8');
   const vars: Record<string, string> = {};
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
       alias: [
         {
           find: '@',
-          replacement: path.resolve(__dirname, './src'),
+          replacement: path.resolve(import.meta.dirname, './src'),
         },
       ],
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
@@ -106,7 +106,7 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: mode === 'development',
-      minify: 'esbuild',
+      minify: 'oxc',
       chunkSizeWarningLimit: 1000,
     },
     plugins: [react()],
