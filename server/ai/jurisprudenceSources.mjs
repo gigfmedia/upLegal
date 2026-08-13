@@ -2167,7 +2167,11 @@ export function prioritizeSources(sources, intent) {
 const NORM_CITATION_CODE_RE = /\bc[oó]digo\s+(?:civil|del\s+trabajo|de\s+comercio|penal|procesal\s+penal|de\s+procedimiento\s+(?:civil|penal)|sanitario|de\s+aguas|de\s+miner[ií]a|tributario)\b/i;
 
 // 2) Señales de JURISPRUDENCIA (tribunales, cortes, fallos, roles).
-const JURISPRUDENCE_SIGNAL_RE = /\b(?:tribunal\s+constitucional|corte\s+suprema|corte\s+de\s+apelaciones|jurisprudencia|sentencia\w*|fallo\w*|casaci[oó]n|recurso\s+de\s+protecci[oó]n)\b/i;
+// Fase 4.2.3: se amplían con "TC" (abreviatura del Tribunal Constitucional),
+// "rol/es" (causas judiciales), "jurisprudencial/es" (criterios de tribunales)
+// y "tribunal" a secas. Son señales FUERTES: ante su presencia y sin citación
+// normativa concreta, la consulta debe priorizar la intención jurisprudencial.
+const JURISPRUDENCE_SIGNAL_RE = /\b(?:tribunal\s+constitucional|corte\s+suprema|corte\s+de\s+apelaciones|jurisprudencia|jurisprudencial(?:es)?|sentencia\w*|fallo\w*|casaci[oó]n|recurso\s+de\s+protecci[oó]n|tribunal|tc|rol(?:es)?)\b/i;
 
 // Conector RELACIONAL a nivel de ORACIÓN, definido aquí como helper único y
 // compartido: synthesisVerifier lo importa para decidir si una oración no
@@ -2176,8 +2180,16 @@ export const RELATIONAL_CONNECTORS =
   /\b(?:relaci[oó]n(?:\s+(?:conceptual|directa|directo|jur[ií]dica|jur[ií]dico|estrecha|estrecho|posible|eventual|causal|[íi]ntima|[íi]ntimo))?\s+(?:entre|con|de|que)|en\s+relaci[oó]n\s+con|relacionad[oa]s?\s+con|se\s+relaciona\s+con|relacionan|vincul[oó]|vincula(?:do)?\s+(?:a|con)|se\s+vincula\s+(?:a|con)|conexi[oó]n\s+entre|ligad[oa]\s+(?:a|con))\b/i;
 
 // 3) Señales de RELACIÓN a nivel de CONSULTA (frases de pregunta relacional
-//    que no cubre el conector oracional anterior).
-const RELATIONAL_QUERY_RE = /\b(?:qu[ée]\s+relaci[oó]n|qu[ée]\s+v[ií]nculo|c[óo]mo\s+se\s+relaciona|c[óo]mo\s+se\s+vincula|en\s+relaci[oó]n\s+con|respecto\s+de|a\s+la\s+luz\s+de|entre\s+.{1,80}\s+y\b)/i;
+//    que no cubre el conector oracional anterior). Fase 4.2.3: se excluyen los
+//    marcadores DÉBILES de topicalización ("respecto de", "en relación con")
+//    que no expresan relación entre dos materias jurídicas y secuestraban la
+//    intención jurisprudencial hacia RELATIONAL_LEGAL_QUERY.
+const RELATIONAL_QUERY_RE = /\b(?:qu[ée]\s+relaci[oó]n(?: existe)?|qu[ée]\s+v[ií]nculo|c[óo]mo\s+se\s+relaciona\w*|c[óo]mo\s+se\s+vincula|relaci[oó]n\s+(?:existe\s+)?entre|v[ií]nculo\s+entre|conexi[oó]n\s+entre|a\s+la\s+luz\s+de|entre\s+.{1,80}\s+y\b)\b/i;
+
+// 3b) Señales de DOCTRINA (fuentes académicas, no vinculantes). Fase 4.2.3:
+//     la intención doctrinal se prioriza con señales claras de doctrina, sin
+//     convertir en doctrina una consulta con palabras jurídicas genéricas.
+const DOCTRINE_SIGNAL_RE = /\b(?:doctrina\w*|doctrinari\w*|tratadista\w*|manual(?:es)?|tesis\w*|acad[ée]mic\w*|ensayos?|literatura\s+jur[ií]dica|posici[oó]n\s+de\s+la\s+doctrina|papel\s+de\s+la\s+doctrina|art[ií]culo\s+(?:acad[ée]mic\w*|doctrinar\w*)|opini[oó]n\s+(?:acad[ée]mic\w*|doctrinar\w*)|sostiene\s+la\s+doctrina|sostienen\s+los\s+autores)\b/i;
 
 // 4) Señales de APLICACIÓN NORMATIVA (consulta de aplicación a un caso).
 const APPLICATION_SIGNAL_RE = /\b(?:puedo|puede|pueden|podr[ií]a|podr[ií]an|se\s+aplica|aplica\s+a|es\s+aplicable|qu[ée]\s+pasa\s+si|tengo\s+derecho|reconoce\s+el\s+derecho|reconoce\s+la\s+ley|permite|obliga|tengo\s+que|necesito)\b/i;
@@ -2185,12 +2197,13 @@ const APPLICATION_SIGNAL_RE = /\b(?:puedo|puede|pueden|podr[ií]a|podr[ií]an|se
 // 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
 const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
 
-// 6) Intenciones finas de la Fase 4.2.1.
+// 6) Intenciones finas de la Fase 4.2.1 (+ DOCTRINE_LOOKUP en 4.2.3).
 const LEGAL_QUERY_INTENTS = {
   BARE_NORM_CITATION: 'BARE_NORM_CITATION',
   ARTICLE_LOOKUP: 'ARTICLE_LOOKUP',
   NORMATIVE_APPLICATION: 'NORMATIVE_APPLICATION',
   JURISPRUDENCE_LOOKUP: 'JURISPRUDENCE_LOOKUP',
+  DOCTRINE_LOOKUP: 'DOCTRINE_LOOKUP',
   RELATIONAL_LEGAL_QUERY: 'RELATIONAL_LEGAL_QUERY',
   MIXED_NORM_JURISPRUDENCE: 'MIXED_NORM_JURISPRUDENCE',
   GENERAL_LEGAL_QUERY: 'GENERAL_LEGAL_QUERY',
@@ -2238,11 +2251,23 @@ export function classifyLegalQuery(query) {
   const jurisprudenceSignals = [...new Set(text.match(JURISPRUDENCE_SIGNAL_RE) || [])];
   const hasJurisprudence = jurisprudenceSignals.length > 0;
 
+  const doctrineSignals = [...new Set(text.match(DOCTRINE_SIGNAL_RE) || [])];
+  const hasDoctrine = doctrineSignals.length > 0;
+
+  // Fase 4.2.3: los conectores relacionales DÉBILES ("relacionados con",
+  // "en relación con", etc.) no deben convertir en RELATIONAL_LEGAL_QUERY una
+  // consulta que, sin citación normativa concreta, pide jurisprudencia/doctrina
+  // ("¿Qué ha dicho el TC … relacionados con …?" es JURISPRUDENCE_LOOKUP, no
+  // relacional). Las frases relacionales FUERTES (relationalSignals) siempre
+  // prevalecen; la supresión solo aplica a los conectores débiles.
   const relationalSignals = [...new Set(text.match(RELATIONAL_QUERY_RE) || [])];
-  const hasRelational = relationalSignals.length > 0 || RELATIONAL_CONNECTORS.test(text);
+  const hasRelational =
+    relationalSignals.length > 0 ||
+    (RELATIONAL_CONNECTORS.test(text) && !(hasJurisprudence && !hasNormCitation));
 
   const isApplication = APPLICATION_SIGNAL_RE.test(text) && !GENERIC_HELP_RE.test(text);
   const hasJurisprudenceOnly = hasJurisprudence && !hasNormCitation;
+  const hasDoctrineOnly = hasDoctrine && !hasJurisprudence && !hasNormCitation;
 
   const normCitations = [
     ...new Set([
@@ -2265,10 +2290,20 @@ export function classifyLegalQuery(query) {
   };
 
   // Prioridad de clasificación: MIXED > RELATIONAL > ARTICLE_LOOKUP >
-  // NORMATIVE_APPLICATION > JURISPRUDENCE_LOOKUP > BARE_NORM_CITATION >
-  // GENERAL_LEGAL_QUERY. MIXED exige NORMA + JURISPRUDENCIA + coordinación
-  // explícita ("y …") SIN conector relacional: "vínculo entre X y el criterio
-  // del TC" es RELATIONAL_LEGAL_QUERY, no mixto.
+  // JURISPRUDENCE_LOOKUP (solo-jurisprudencia) > DOCTRINE_LOOKUP (solo-doctrina)
+  // > NORMATIVE_APPLICATION > BARE_NORM_CITATION > JURISPRUDENCE_LOOKUP
+  // (general) > GENERAL_LEGAL_QUERY.
+  //
+  // Fase 4.2.3: la intención jurisprudencial/doctrinal se prioriza sobre la
+  // aplicación normativa cuando la consulta tiene una señal fuerte de tribunal,
+  // sentencia, fallo, rol, jurisprudencia o doctrina y NO existe una citación
+  // normativa concreta. Antes, "podría/podrían" (señal de aplicación) ganaba y
+  // consultas como I1/I3 ("¿Qué ha dicho el TC …?") terminaban en
+  // NORMATIVE_APPLICATION y perdían el camino de retrieval TC.
+  //
+  // MIXED exige NORMA + JURISPRUDENCIA + coordinación explícita ("y …") SIN
+  // conector relacional: "vínculo entre X y el criterio del TC" es
+  // RELATIONAL_LEGAL_QUERY, no mixto.
   if (
     hasNormCitation &&
     hasJurisprudence &&
@@ -2288,11 +2323,14 @@ export function classifyLegalQuery(query) {
   ) {
     return { ...base, intent: LEGAL_QUERY_INTENTS.ARTICLE_LOOKUP };
   }
-  if (isApplication) {
-    return { ...base, intent: LEGAL_QUERY_INTENTS.NORMATIVE_APPLICATION };
-  }
   if (hasJurisprudenceOnly) {
     return { ...base, intent: LEGAL_QUERY_INTENTS.JURISPRUDENCE_LOOKUP };
+  }
+  if (hasDoctrineOnly) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.DOCTRINE_LOOKUP };
+  }
+  if (isApplication) {
+    return { ...base, intent: LEGAL_QUERY_INTENTS.NORMATIVE_APPLICATION };
   }
   if (hasNormCitation) {
     return { ...base, intent: LEGAL_QUERY_INTENTS.BARE_NORM_CITATION };
@@ -2580,6 +2618,18 @@ export function getRetrievalStrategy(query, cls = {}, { limit = 6 } = {}) {
         expansion: tasks.some((t) => t.expansion),
         modes: ['jurisprudence'],
         tasks,
+      };
+    }
+    case LEGAL_QUERY_INTENTS.DOCTRINE_LOOKUP: {
+      return {
+        ...base,
+        primary: 'doctrina',
+        modes: ['doctrine'],
+        tasks: [
+          { provider: 'doctrina', query: raw, limit: Math.max(3, limit), pole: null },
+          { provider: 'tc', query: raw, limit: support(), pole: 'jurisprudence' },
+          { provider: 'bcn', query: raw, limit: support(), pole: null },
+        ],
       };
     }
     case LEGAL_QUERY_INTENTS.RELATIONAL_LEGAL_QUERY:
