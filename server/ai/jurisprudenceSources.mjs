@@ -2303,14 +2303,359 @@ export function classifyLegalQuery(query) {
   return { ...base, intent: LEGAL_QUERY_INTENTS.GENERAL_LEGAL_QUERY };
 }
 
+// ---------------------------------------------------------------------------
+// QUERY PLANNING + RETRIEVAL STRATEGY — Fase 4.2.2.
+// La intención fina (intentClass) deja de ser solo observabilidad y pasa a
+// CONTROLAR la estrategia de retrieval: qué fuentes priorizar, qué consultas
+// emitir (consulta completa, por polo, o con expansión léxica controlada) y
+// cómo combinar resultados. 100% determinístico, sin LLM.
+//
+// Reglas inalterables (heredadas de 4.1.x):
+//   - relevance gate: cada fuente se evalúa contra la consulta que la recuperó.
+//   - evidence gate: la identificación NO es evidencia; metadata-only no
+//     produce claims; la expansión de términos jamás se convierte en evidencia.
+//   - article/law mismatch: nunca sustituir la disposición/norma citada por otra.
+// ---------------------------------------------------------------------------
+
+// Expansión léxica controlada para RETRIEVAL (Fase 4.2.2, §19-20): un conjunto
+// PEQUEÑO de relaciones de alto valor entre conceptos jurídicos frecuentes.
+// Los términos "extra" solo amplían las consultas a los proveedores; no son
+// sinónimos jurídicos absolutos y NUNCA se usan como evidencia (el evidence
+// gate exige que el fragmento contenga las palabras concretas del claim).
+const CONTROLLED_LEGAL_EXPANSIONS = [
+  { trigger: /autodeterminaci[oó]n\s+informativa/i, extra: ['datos personales'] },
+  { trigger: /protecci[oó]n\s+de\s+datos/i, extra: ['datos personales'] },
+  { trigger: /datos\s+personales/i, extra: ['protección de datos', 'autodeterminación informativa'] },
+  { trigger: /vida\s+privada/i, extra: ['autodeterminación informativa'] },
+];
+
 /**
- * Busca jurisprudencia + normativa + doctrina de forma resiliente. Cada fuente
- * se consulta en paralelo; si una falla, no rompe las demás. Las fuentes se
- * ordenan según la intención de la consulta (normativa → jurisprudencia →
- * doctrina por defecto).
+ * Devuelve los términos de expansión léxica aplicables a una consulta
+ * (Fase 4.2.2, §19-20-31). Asistencia de retrieval únicamente: un término
+ * expandido NO respalda un claim si el fragmento no lo contiene textualmente.
+ * @param {string} query - Consulta original del abogado.
+ * @returns {string[]} frases adicionales de búsqueda (sin duplicados).
+ */
+export function expandLegalQueryTerms(query) {
+  const text = String(query || '').normalize('NFC');
+  const extra = [];
+  for (const rule of CONTROLLED_LEGAL_EXPANSIONS) {
+    if (rule.trigger.test(text)) {
+      for (const t of rule.extra) {
+        if (!extra.includes(t)) extra.push(t);
+      }
+    }
+  }
+  return extra;
+}
+
+/** Palabra "y" como posible frontera entre polos de una relación/mezcla. */
+const POLE_SPLIT_Y_RE = /\by\b/g;
+/** Inicio del ámbito de los polos: el "entre" de una relación ("entre X y Y"). */
+const POLE_ENTRE_RE = /\bentre\b/i;
+
+/**
+ * Divide determinísticamente una consulta relacional o mixta en sus dos polos.
+ * Encuentra la mejor frontera entre los separadores "y" disponibles, puntuando
+ * cada candidato según separe estructura normativa de jurisprudencial (norma →
+ * tribunal, o viceversa). Prefiere la frontera más tardía para conservar el
+ * polo A completo (su cita normativa puede contener "y" internos, p. ej. una
+ * enumeración de derechos). Si no hay frontera razonable devuelve null.
+ * @param {string} query
+ * @returns {{ a: string, b: string } | null}
+ */
+export function splitRelationalPoles(query) {
+  const raw = String(query || '').trim();
+  if (!raw) return null;
+
+  const ys = [];
+  let m;
+  POLE_SPLIT_Y_RE.lastIndex = 0;
+  while ((m = POLE_SPLIT_Y_RE.exec(raw)) !== null) ys.push(m.index);
+  if (ys.length === 0) return null;
+
+  const entre = POLE_ENTRE_RE.exec(raw);
+  const start = entre ? entre.index + entre[0].length : 0;
+  const candidates = ys.filter((i) => i >= start);
+  if (candidates.length === 0) return null;
+
+  const last = candidates[candidates.length - 1];
+  let best = null;
+  let bestScore = -1;
+  for (const i of candidates) {
+    const left = raw.slice(0, i);
+    const right = raw.slice(i + 1);
+    const leftNorm =
+      extractLawNumber(left).length +
+      extractArticleNumbers(left).length +
+      (NORM_CITATION_CODE_RE.test(left) ? 1 : 0);
+    const rightNorm =
+      extractLawNumber(right).length +
+      extractArticleNumbers(right).length +
+      (NORM_CITATION_CODE_RE.test(right) ? 1 : 0);
+    const leftJur = (left.match(JURISPRUDENCE_SIGNAL_RE) || []).length;
+    const rightJur = (right.match(JURISPRUDENCE_SIGNAL_RE) || []).length;
+    let score = 0;
+    if (leftNorm > 0 && rightJur > 0) score += 3;
+    if (leftJur > 0 && rightNorm > 0) score += 3;
+    if (leftNorm > 0 || leftJur > 0) score += 1;
+    if (rightNorm > 0 || rightJur > 0) score += 1;
+    if (i === last) score += 0.5;
+    if (score > bestScore) {
+      bestScore = score;
+      best = i;
+    }
+  }
+  if (best === null) return null;
+
+  // Cuando hay un "entre", el polo A es el contenido DESPUÉS de esa palabra
+  // ("¿Qué relación existe ENTRE el artículo 4… y …?" → "el artículo 4…"),
+  // sin el preámbulo interrogativo/relacional que solo ensucia la búsqueda.
+  const aStart = entre && entre.index < best ? entre.index + entre[0].length : 0;
+  const a = raw.slice(aStart, best).replace(/[\s¿?.,;:]+$/g, '').trim();
+  const b = raw.slice(best + 1).replace(/^[\s¿?.,;:]+/g, '').replace(/[\s¿?.,;:]+$/g, '').trim();
+  if (!a || !b) return null;
+  return { a, b };
+}
+
+/**
+ * Clasifica el tipo de un polo (normative / jurisprudence / general) según sus
+ * señales de cita. Determinístico, reutiliza los extractores existentes.
+ */
+function detectPoleKind(text) {
+  const t = String(text || '');
+  const hasRol = /\brol(?:es)?\s*\d+/i.test(t);
+  const hasJurisprudence =
+    hasRol ||
+    (t.match(JURISPRUDENCE_SIGNAL_RE) || []).length > 0 ||
+    /tribunal|corte|sentencia|fallo|jurisprudencia/i.test(t);
+  if (hasJurisprudence) return 'jurisprudence';
+  const hasNormative =
+    extractLawNumber(t).length > 0 ||
+    extractArticleNumbers(t).length > 0 ||
+    NORM_CITATION_CODE_RE.test(t);
+  if (hasNormative) return 'normative';
+  return 'general';
+}
+
+/**
+ * Detecta los polos de una consulta relacional/mixta (Fase 4.2.2, §11-13).
+ * Formato: [{ kind, query }]. Si la frontera textual falla, construye los polos
+ * desde las señales del clasificador (cita normativa y señales de tribunales).
+ * @param {string} query
+ * @param {object} [cls] - salida de classifyLegalQuery.
+ * @returns {Array<{ kind: string, query: string }>}
+ */
+export function detectRelationalPoles(query, cls = {}) {
+  const raw = String(query || '').trim();
+  const split = splitRelationalPoles(raw);
+  if (split) {
+    return [
+      { kind: detectPoleKind(split.a), query: split.a },
+      { kind: detectPoleKind(split.b), query: split.b },
+    ];
+  }
+  const poles = [];
+  const nums = (cls?.normCitations || []).filter((n) => /^\d+$/.test(n));
+  const arts = cls?.articleCitations || [];
+  if (nums.length > 0 || arts.length > 0) {
+    const parts = [];
+    if (arts.length) parts.push(`artículo ${arts[0]}`);
+    if (nums.length) parts.push(`Ley ${formatNormNumber(nums[0])}`);
+    poles.push({ kind: 'normative', query: parts.join(' de la ') });
+  }
+  const jurSignals = cls?.jurisprudenceSignals || [];
+  if (jurSignals.length > 0) {
+    const terms = (cls?.substantiveTerms || []).slice(0, 3);
+    poles.push({
+      kind: 'jurisprudence',
+      query: [jurSignals[0], ...terms].join(' ').trim(),
+    });
+  }
+  return poles;
+}
+
+/**
+ * Construye la consulta normativa explícita de un polo/consulta (artículo +
+ * ley) para el retrieval article-first de BCN/LeyChile.
+ */
+function buildNormativePoleQuery(raw, cls = {}) {
+  const nums = (cls?.normCitations || []).filter((n) => /^\d+$/.test(n));
+  const arts = cls?.articleCitations || [];
+  const parts = [];
+  if (arts.length) parts.push(`artículo ${arts[0]}`);
+  if (nums.length) parts.push(`Ley ${formatNormNumber(nums[0])}`);
+  return parts.length ? parts.join(' de la ') : raw;
+}
+
+/**
+ * Planifica la estrategia de retrieval según la intención fina (Fase 4.2.2).
+ * Determina fuentes prioritarias, consultas por proveedor, polos, article-first,
+ * prioridad TC y si se permite expansión léxica. Puro y determinístico.
+ * @param {string} query
+ * @param {object} [cls] - salida de classifyLegalQuery.
+ * @param {{ limit?: number }} [opts]
+ * @returns {{
+ *   intentClass: string,
+ *   primary: string,
+ *   articleFirst: boolean,
+ *   tcPriority: boolean,
+ *   expansion: boolean,
+ *   poleCount: number,
+ *   modes: string[],
+ *   tasks: Array<{ provider: string, query: string, limit: number,
+ *     pole: string|null, expansion?: boolean, joint?: boolean }>
+ * }}
+ */
+export function getRetrievalStrategy(query, cls = {}, { limit = 6 } = {}) {
+  const raw = String(query || '').trim();
+  const intentClass = cls.intent || LEGAL_QUERY_INTENTS.GENERAL_LEGAL_QUERY;
+  const half = () => Math.max(2, Math.round(limit * 0.5));
+  const support = () => Math.max(1, Math.round(limit * 0.3));
+  const base = {
+    intentClass,
+    articleFirst: false,
+    tcPriority: false,
+    expansion: false,
+    poleCount: 0,
+    modes: [],
+  };
+
+  switch (intentClass) {
+    case LEGAL_QUERY_INTENTS.BARE_NORM_CITATION: {
+      const q = buildNormativePoleQuery(raw, cls);
+      return {
+        ...base,
+        primary: 'normativa',
+        modes: ['normative'],
+        tasks: [
+          { provider: 'bcn', query: q, limit: Math.max(3, limit), pole: 'normative' },
+          { provider: 'tc', query: raw, limit: support(), pole: null },
+          { provider: 'doctrina', query: raw, limit: 2, pole: null },
+        ],
+      };
+    }
+    case LEGAL_QUERY_INTENTS.ARTICLE_LOOKUP: {
+      const q = buildNormativePoleQuery(raw, cls);
+      return {
+        ...base,
+        primary: 'normativa',
+        articleFirst: true,
+        modes: ['normative'],
+        tasks: [
+          { provider: 'bcn', query: q, limit: Math.max(3, limit), pole: 'normative' },
+          { provider: 'tc', query: raw, limit: support(), pole: null },
+          { provider: 'doctrina', query: raw, limit: 2, pole: null },
+        ],
+      };
+    }
+    case LEGAL_QUERY_INTENTS.NORMATIVE_APPLICATION: {
+      return {
+        ...base,
+        primary: 'normativa',
+        modes: ['normative'],
+        tasks: [
+          { provider: 'bcn', query: raw, limit, pole: 'normative' },
+          { provider: 'tc', query: raw, limit: half(), pole: 'jurisprudence' },
+          { provider: 'doctrina', query: raw, limit: 2, pole: null },
+        ],
+      };
+    }
+    case LEGAL_QUERY_INTENTS.JURISPRUDENCE_LOOKUP: {
+      const tasks = [
+        { provider: 'tc', query: raw, limit: Math.max(3, limit), pole: 'jurisprudence', expansion: false },
+      ];
+      // Expansión léxica controlada: SOLO amplía la búsqueda (nunca evidencia).
+      for (const extra of expandLegalQueryTerms(raw)) {
+        tasks.push({ provider: 'tc', query: extra, limit: support(), pole: 'jurisprudence', expansion: true });
+      }
+      tasks.push(
+        { provider: 'bcn', query: raw, limit: 2, pole: null, expansion: false },
+        { provider: 'doctrina', query: raw, limit: half(), pole: null, expansion: false },
+      );
+      return {
+        ...base,
+        primary: 'jurisprudencia',
+        tcPriority: true,
+        expansion: tasks.some((t) => t.expansion),
+        modes: ['jurisprudence'],
+        tasks,
+      };
+    }
+    case LEGAL_QUERY_INTENTS.RELATIONAL_LEGAL_QUERY:
+    case LEGAL_QUERY_INTENTS.MIXED_NORM_JURISPRUDENCE: {
+      const poles = detectRelationalPoles(raw, cls);
+      const modes = [...new Set(poles.map((p) => p.kind))];
+      const tasks = [];
+      if (poles.length >= 2) {
+        for (const p of poles) {
+          if (p.kind === 'normative') {
+            tasks.push({ provider: 'bcn', query: p.query, limit: half(), pole: 'normative', expansion: false });
+          } else if (p.kind === 'jurisprudence') {
+            tasks.push({ provider: 'tc', query: p.query, limit: half(), pole: 'jurisprudence', expansion: false });
+            for (const extra of expandLegalQueryTerms(p.query)) {
+              tasks.push({ provider: 'tc', query: extra, limit: support(), pole: 'jurisprudence', expansion: true });
+            }
+          } else {
+            // Polo conceptual general → se busca como concepto (jurisprudencia),
+            // con la misma expansión léxica controlada de los polos de tribunal
+            // ("autodeterminación informativa" → +"datos personales").
+            tasks.push({ provider: 'tc', query: p.query, limit: support(), pole: 'general', expansion: false });
+            for (const extra of expandLegalQueryTerms(p.query)) {
+              tasks.push({ provider: 'tc', query: extra, limit: support(), pole: 'general', expansion: true });
+            }
+          }
+        }
+        if (intentClass === LEGAL_QUERY_INTENTS.RELATIONAL_LEGAL_QUERY) {
+          // Búsqueda conjunta como COMPLEMENTO (nunca la única, §14).
+          tasks.push({ provider: 'bcn', query: raw, limit: 2, pole: null, joint: true, expansion: false });
+          tasks.push({ provider: 'tc', query: raw, limit: 2, pole: null, joint: true, expansion: false });
+        }
+        tasks.push({ provider: 'doctrina', query: raw, limit: 2, pole: null, expansion: false });
+      } else {
+        // Fallback: recuperación clásica equilibrada (no pierde recall).
+        tasks.push(
+          { provider: 'bcn', query: raw, limit: half(), pole: 'normative', expansion: false },
+          { provider: 'tc', query: raw, limit: half(), pole: 'jurisprudence', expansion: false },
+          { provider: 'doctrina', query: raw, limit: 2, pole: null, expansion: false },
+        );
+      }
+      return {
+        ...base,
+        primary: intentClass === LEGAL_QUERY_INTENTS.RELATIONAL_LEGAL_QUERY ? 'relacional' : 'mixta',
+        expansion: tasks.some((t) => t.expansion),
+        poleCount: poles.length,
+        modes,
+        tasks,
+      };
+    }
+    default: {
+      // GENERAL_LEGAL_QUERY → estrategia conservadora actual (§3, §22).
+      return {
+        ...base,
+        primary: 'general',
+        modes: [],
+        tasks: [
+          { provider: 'bcn', query: raw, limit: Math.max(3, limit), pole: null },
+          { provider: 'tc', query: raw, limit: Math.max(2, Math.round(limit * 0.5)), pole: null },
+          { provider: 'doctrina', query: raw, limit: 3, pole: null },
+        ],
+      };
+    }
+  }
+}
+
+/**
+ * Busca jurisprudencia + normativa + doctrina de forma resiliente y ORIENTADA
+ * POR INTENCIÓN (Fase 4.2.2). Cada tarea de la estrategia se consulta en
+ * paralelo; si una falla, no rompe las demás. El relevance gate se aplica POR
+ * TAREA (contra la consulta que recuperó cada fuente: consulta completa, polo o
+ * expansión), y el evidence gate sigue actuando aguas abajo sin debilitarse.
  * @param {string} query - Consulta en lenguaje natural del abogado.
  * @param {{ limit?: number, competencia?: string }} [opts]
- * @returns {Promise<{ sources: object[], warnings: string[], intent: string }>}
+ * @returns {Promise<{ sources: object[], warnings: string[], intent: string,
+ *   intentClass: string, classification: object, strategy: object,
+ *   queryHash: string }>}
  */
 export async function searchJurisprudence(
   query,
@@ -2325,53 +2670,89 @@ export async function searchJurisprudence(
   // buildJurisprudenceOutcome.
   const cls = classifyLegalQuery(query);
 
-  // Reparto de fuentes por intención: el coarse define la base y la intención
-  // fina empuja el foco (normativa / jurisprudencia / equilibrio mixto).
-  const allocation =
-    intent === 'normativa' ||
-    ['BARE_NORM_CITATION', 'ARTICLE_LOOKUP', 'NORMATIVE_APPLICATION'].includes(cls.intent)
-      ? { tc: Math.max(2, Math.round(limit * 0.3)), bcn: Math.max(3, limit), doctrina: 2 }
-      : intent === 'doctrina'
-        ? { tc: 3, bcn: 2, doctrina: Math.max(3, limit) }
-        : cls.intent === 'JURISPRUDENCE_LOOKUP'
-          ? { tc: Math.max(3, limit), bcn: 2, doctrina: 3 }
-          : cls.intent === 'RELATIONAL_LEGAL_QUERY' || cls.intent === 'MIXED_NORM_JURISPRUDENCE'
-            ? { tc: Math.max(2, Math.round(limit * 0.5)), bcn: Math.max(2, Math.round(limit * 0.5)), doctrina: 3 }
-            : { tc: Math.round(limit * 0.5), bcn: 3, doctrina: 3 };
+  // Fase 4.2.2: la intención fina controla el retrieval (fuentes, consultas,
+  // polos, article-first, prioridad TC y expansión).
+  const strategy = getRetrievalStrategy(query, cls, { limit });
 
   const queryHash = hashQuery(query);
 
-  const [tc, bcn, doctrina] = await Promise.all([
-    settleSearch('tc', () => searchTcSentencias(query, allocation.tc, competencia), warnings, { queryHash }),
-    settleSearch('bcn', () => searchBcnNormas(query, allocation.bcn), warnings, { queryHash }),
-    settleSearch('doctrina', () => searchOpenAlexDoctrina(query, allocation.doctrina), warnings, { queryHash }),
-  ]);
+  let candidateCount = 0;
+  let relevantCount = 0;
+  const runTask = async (task) => {
+    const provider = task.provider;
+    const fn =
+      provider === 'tc'
+        ? () => searchTcSentencias(task.query, task.limit, competencia)
+        : provider === 'bcn'
+          ? () => searchBcnNormas(task.query, task.limit)
+          : () => searchOpenAlexDoctrina(task.query, task.limit);
+    const fetched = await settleSearch(provider, fn, warnings, { queryHash });
+    candidateCount += fetched.length;
+    // Fase 4.1.13 (BARRERA 2 · relevance gate) POR TAREA: cada fuente se evalúa
+    // contra la consulta que realmente la recuperó (su polo), no contra la
+    // consulta completa mixta que contiene el polo opuesto y la haría parecer
+    // irrelevante. El gate no se relaja: misma función, mismo umbral.
+    const relevant = fetched.filter((s) => isSourceRelevantToQuery(task.query, s));
+    relevantCount += relevant.length;
+    return relevant.map((s) => ({
+      ...s,
+      metadata: {
+        ...(s.metadata || {}),
+        retrieval_pole: task.pole || null,
+        retrieval_expansion: Boolean(task.expansion),
+        retrieval_joint: Boolean(task.joint),
+      },
+    }));
+  };
 
-  // Fase 4.1.13 (BARRERA 2 · relevance gate): tras recuperar candidatos, se
-  // descartan los que NO responden realmente a la consulta, sin importar su
-  // tipo de fuente. Un resultado recuperado por un término incidental/genérico
-  // no se promueve como fuente jurídica. Para BCN el gate ya se aplicó antes de
-  // enriquecer (searchBcnNormas); aquí se aplica como red de seguridad a todas
-  // las dimensiones y antes de construir el contexto para el LLM.
-  const keptTc = tc.filter((s) => isSourceRelevantToQuery(query, s));
-  const keptBcn = bcn.filter((s) => isSourceRelevantToQuery(query, s));
-  const keptDoctrina = doctrina.filter((s) => isSourceRelevantToQuery(query, s));
+  const taskResults = await Promise.all(strategy.tasks.map(runTask));
+
+  // Deduplica por id conservando el orden de la estrategia (los polos van
+  // primero; la búsqueda conjunta es complemento).
+  const seen = new Set();
+  const sources = [];
+  for (const taskSources of taskResults) {
+    for (const s of taskSources) {
+      if (seen.has(s.id)) continue;
+      seen.add(s.id);
+      sources.push(s);
+    }
+  }
+
+  // Fase 4.2.2 (observabilidad técnica del retrieval): solo metadatos, nunca
+  // la consulta ni contenido sensible.
+  logDiagnostic('ai_research_retrieval', {
+    query_hash: queryHash,
+    intent,
+    intent_class: cls.intent,
+    retrieval_strategy: strategy.primary,
+    pole_count: strategy.poleCount,
+    retrieval_modes: strategy.modes,
+    task_count: strategy.tasks.length,
+    expansion_used: strategy.expansion,
+    article_first: strategy.articleFirst,
+    tc_priority: strategy.tcPriority,
+  });
+
   logDiagnostic('ai_research_relevance_gate', {
     intent,
-    candidate_count: tc.length + bcn.length + doctrina.length,
-    relevant_count: keptTc.length + keptBcn.length + keptDoctrina.length,
+    candidate_count: candidateCount,
+    relevant_count: relevantCount,
     query_hash: queryHash,
   });
 
-  const sources = prioritizeSources([...keptTc, ...keptBcn, ...keptDoctrina], intent);
+  const prioritized = prioritizeSources(sources, intent);
 
-  // Fase 4.2.1 (intent): observabilidad del clasificador fino. Emite solo
-  // metadatos de señales (números de norma/artículo, señales de tribunales),
-  // nunca datos del caso, para no filtrar información de la consulta.
+  // Fase 4.2.1 (intent): observabilidad del clasificador fino + estrategia de
+  // retrieval. Emite solo metadatos de señales (números de norma/artículo,
+  // señales de tribunales), nunca datos del caso, para no filtrar información.
   logDiagnostic('ai_research_intent', {
     query_hash: queryHash,
     intent,
     intent_class: cls.intent,
+    retrieval_strategy: strategy.primary,
+    pole_count: strategy.poleCount,
+    retrieval_modes: strategy.modes,
     norm_citations: cls.normCitations,
     article_citations: cls.articleCitations,
     jurisprudence_signals: cls.jurisprudenceSignals,
@@ -2392,5 +2773,13 @@ export async function searchJurisprudence(
     query_hash: queryHash,
   });
 
-  return { sources, warnings, intent, intentClass: cls.intent, classification: cls, queryHash };
+  return {
+    sources,
+    warnings,
+    intent,
+    intentClass: cls.intent,
+    classification: cls,
+    strategy,
+    queryHash,
+  };
 }

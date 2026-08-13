@@ -164,15 +164,23 @@ export function buildJurisprudenceOutcome({ data, sources, intent, query = '' })
     // prefiere la norma que coincide por número oficial ANTES que una ley
     // distinta relevante solo por contenido compartido ("Ley 21.713" no debe
     // ganar a "Ley 21.719" por compartir palabras de la materia).
+    // Fase 4.2.2 (§33): si la consulta cita un número de ley que NO corresponde
+    // a ninguna norma recuperada ("Ley 99.999"), no se promueve una ley real
+    // distinta aunque comparta términos de la materia (protección, datos,
+    // derechos). La cita por número identifica la entidad; no autoriza a
+    // sustituirla por otra.
     const citedNumber = extractLawNumber(query)[0];
     const matchesCitedNumber = (s) =>
       citedNumber &&
       s.kind === 'normativa' &&
       String(s.norm_number || '').replace(/[^0-9]/g, '') === citedNumber;
+    const citedNumberMatched = citedNumber && sources.some(matchesCitedNumber);
     const candidate =
       sources.find((s) => relevant(s) && matchesCitedNumber(s)) ||
-      sources.find((s) => relevant(s) && s.norm_type === 'ley') ||
-      sources.find((s) => relevant(s));
+      (!citedNumber || citedNumberMatched
+        ? sources.find((s) => relevant(s) && s.norm_type === 'ley') ||
+          sources.find((s) => relevant(s))
+        : undefined);
     if (candidate) {
       const typeLabel =
         candidate.norm_type === 'ley'
