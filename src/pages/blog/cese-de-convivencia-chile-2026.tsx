@@ -19,7 +19,6 @@ import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
-// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
 const BlogArticle = () => {
@@ -571,15 +570,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA before Conclusion */}
-                    {/*
-                    <PreConclusionCTA
-                        description="Para iniciar un divorcio unilateral en Chile debes acreditar un cese de convivencia de al menos 3 años, si no hay acuerdo, será necesario iniciar un proceso judicial. Consulta con un abogado especialista."
-                        link="/abogados-divorcio"
-                        buttonText="Comparar abogados especializados"
-                    />
-                    */}
-
-                                        <InArticleCTA
+                    <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
                         buttonText="Habla con un abogado ahora"

@@ -570,7 +570,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si la deuda está respaldada por un pagaré u otro título ejecutivo, pueden existir mecanismos de cobro que permitan avanzar hacia medidas como el embargo. Sin embargo, el deudor puede tener alternativas dependiendo de las circunstancias. Si recibiste una demanda, requerimiento de pago o actuación relacionada con un embargo, revisar oportunamente el caso puede ayudarte a conocer tus opciones antes de tomar una decisión. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

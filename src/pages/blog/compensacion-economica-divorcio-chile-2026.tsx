@@ -17,7 +17,6 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -473,15 +472,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA before Conclusion */}
-                    {/*
-                    <PreConclusionCTA
-                        description="La compensación económica depende de pruebas concretas. Compara abogados especializados en divorcio y patrimonio familiar antes de iniciar la demanda."
-                        link="/abogados-divorcio"
-                        buttonText="Comparar abogados especializados"
-                    />
-                    */}
-
-                                        <InArticleCTA
+                    <InArticleCTA
                         title="¿Necesitas resolver tu situación familiar?"
                         message="Un abogado de familia puede orientarte sobre los pasos a seguir en tu caso y ayudarte a tomar decisiones informadas."
                         buttonText="Habla con un abogado ahora"

@@ -540,7 +540,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si recibiste una demanda ejecutiva, una notificación de embargo o tienes dudas sobre una deuda, actuar rápidamente y obtener asesoría jurídica puede ayudarte a proteger mejor tus derechos y evitar decisiones que compliquen aún más la situación. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

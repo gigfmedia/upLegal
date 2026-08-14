@@ -159,7 +159,8 @@ const SearchResults = () => {
             emergencyConsultations: true,
             experience_years: lawyer.experience_years || 0,
             experienceYears: lawyer.experience_years || 0,
-            availability_config: lawyer.availability ? (typeof lawyer.availability === 'object' ? lawyer.availability : undefined) : undefined
+            availability_config: lawyer.availability ? (typeof lawyer.availability === 'object' ? lawyer.availability : undefined) : undefined,
+            created_at: lawyer.created_at || undefined
           };
         });
         setSearchResult(prev => ({

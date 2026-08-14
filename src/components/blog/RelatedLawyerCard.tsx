@@ -36,6 +36,11 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
   const displayPrice = roundToThousands(price * (1 + clientSurchargePercent));
   const isVerified = Boolean(lawyer.verified || lawyer.pjud_verified);
   const experienceYears = lawyer.experience_years || 0;
+  const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
+  const isNewLawyer = Boolean(
+    lawyer.created_at &&
+    Date.now() - new Date(lawyer.created_at).getTime() < THREE_MONTHS_MS
+  );
 
   const specialties = (Array.isArray(lawyer.specialties)
     ? lawyer.specialties.flatMap(s => typeof s === 'string' ? s.split(',').map(x => x.trim()) : [])
@@ -71,11 +76,11 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
 
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col group"
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-full group"
       onClick={handleClick}
     >
       <div className="p-6 flex flex-col h-full">
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-start gap-4 mb-4">
           <div className="relative flex-shrink-0">
             <Avatar className="h-14 w-14 ring-2 ring-green-100">
               <AvatarImage src={lawyer.image} alt={displayName} className="object-cover" />
@@ -89,26 +94,37 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-lg font-bold text-gray-900 truncate">{displayName}</h3>
-            {/* <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="flex items-center">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`h-3.5 w-3.5 ${star <= Math.round(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
-              {reviewCount > 0 && (
-                <span className="text-xs text-gray-500">({reviewCount} reseñas)</span>
-              )}
-            </div> */}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-0.5 flex items-center min-h-[21px]">
+              {reviewCount > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-3.5 w-3.5 ${star <= Math.round(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
+                  <span className="text-xs text-gray-500">({reviewCount} reseñas)</span>
+                </div>
+              ) : isNewLawyer ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-800 w-fit">
+                  Nuevo en LegalUp
+                </span>
+              ) : isVerified ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 w-fit">
+                  <ShieldCheck className="h-3 w-3 mr-0.5" />
+                  Verificado en PJUD
+                </span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 mt-1 min-h-[20px]">
               {/* <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 border-none text-[11px] px-2 py-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse mr-1" />
                 Responde hoy
               </Badge> */}
-              {isVerified && (
+              {isVerified && (reviewCount > 0 || isNewLawyer) && (
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none text-[11px] px-2 py-0">
                   <ShieldCheck className="h-3 w-3 mr-0.5" />
                   Verificado en PJUD
@@ -136,7 +152,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
           <p className="text-sm text-gray-600 mb-4 line-clamp-2">{lawyer.bio}</p>
         )}
 
-        <div className="auto">
+        <div className="mt-auto">
           <div className="flex items-baseline gap-1 mb-4">
             <span className="text-2xl font-bold text-gray-900">${formatCLP(displayPrice)}<span className="text-sm text-gray-500 font-normal text-lg"> CLP</span></span>
             <span className="text-sm text-gray-500">/ consulta 60 min</span>

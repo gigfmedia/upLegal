@@ -205,7 +205,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Derecho Civil" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
+            <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." priceNote="Consulta legal de 60 min desde $35.000" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se mantiene el mismo contrato?</h2>
@@ -571,10 +571,15 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* CTA before Conclusion */}
-          <div className="mb-12">
-            
-          </div>          <div className="mb-12 border-t pt-8">
+          <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿Sigues arrendando sin contrato vigente y no sabes cuáles son tus derechos?"
+            message="Un abogado puede regularizar tu tácita reconducción, revisar las condiciones del arriendo y protegerte ante un desalojo sorpresa."
+            buttonText="Regularizar mi situación"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
+          <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -622,7 +627,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <BlogConversionPopup category="Derecho Civil" topic="tacita-reconduccion" />
+      <BlogConversionPopup category="Derecho Civil" topic="tacita-reconduccion" targetUrl="/abogado-arriendo" title="¿Tu contrato venció y sigues arrendando?" message="Conoce si estás en tácita reconducción y qué derechos tienes sobre tu arriendo, con la ayuda de un abogado especializado." buttonText="Consultar mi situación" />
     </div>
   );
 };

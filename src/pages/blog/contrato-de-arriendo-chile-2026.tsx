@@ -270,7 +270,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Derecho Civil" title="¿Estás por firmar un contrato de arriendo?" message="Un abogado especializado puede revisar las cláusulas, detectar abusos y proteger tus derechos antes de que firmes." />
+            <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Estás por firmar un contrato de arriendo?" message="Un abogado especializado puede revisar las cláusulas, detectar abusos y proteger tus derechos antes de que firmes." priceNote="Consulta legal de 60 min desde $35.000" />
 
           {/* Tipos de contrato */}
           <div className="mb-12">
@@ -662,7 +662,7 @@ const BlogArticle = () => {
               <p className="font-bold text-amber-900">Firmar sin revisar puede costarte caro</p>
               <p className="text-amber-800">Una cláusula abusiva, un reajuste mal redactado o una garantía mal documentada pueden significar miles de pesos al mes y conflictos difíciles de revertir. Antes de firmar, vale la pena que un abogado revise el contrato.</p>
             </div>
-            <InArticleCTA category="Derecho Civil" title="¿Ya firmaste un contrato y tienes dudas?" message="Un abogado inmobiliario puede revisar tu contrato de arriendo, detectar cláusulas abusivas y orientarte sobre cómo actuar." />
+            <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Ya firmaste un contrato y tienes dudas?" message="Un abogado inmobiliario puede revisar tu contrato de arriendo, detectar cláusulas abusivas y orientarte sobre cómo actuar." priceNote="Consulta legal de 60 min desde $35.000" />
           </div>
 
           {/* Conclusión */}
@@ -714,7 +714,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="contrato-arriendo" />
+      <BlogConversionPopup category="Derecho Civil" topic="contrato-arriendo" targetUrl="/abogado-arriendo" title="¿Firmaste o estás por firmar un contrato de arriendo?" message="Revisa tus cláusulas y detecta abusos antes de comprometerte, con la ayuda de un abogado especializado en arriendos." buttonText="Revisar mi contrato con un abogado" />
     </div>
   );
 };

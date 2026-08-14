@@ -536,7 +536,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Determinar si una deuda está prescrita exige analizar el tipo de documento, las fechas relevantes y las actuaciones judiciales que hayan ocurrido durante los años posteriores. Antes de asumir que una deuda ya no puede cobrarse —o antes de pagar una obligación antigua— resulta recomendable obtener asesoría profesional para conocer la situación jurídica específica de tu caso. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

@@ -157,7 +157,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 mt-4">
                             Si necesitas evaluar tu situación antes de iniciar una demanda o responder frente a una empresa, puedes consultar con un{" "}
-                            <Link to="/abogado-consumidor" className="text-green-700 underline hover:text-green-500">
+                            <Link to="/search?specialty=Derecho de Consumidor" className="text-green-700 underline hover:text-green-500">
                                 abogado especialista en derecho del consumidor en Chile
                             </Link>{" "}
                             directamente online.
@@ -431,7 +431,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si tu reclamo fue rechazado, sufriste un perjuicio económico importante o necesitas evaluar una demanda contra una empresa, puedes revisar tu situación junto a un{" "}
-                            <Link to="/abogado-consumidor" className="text-green-700 underline hover:text-green-500">abogado especialista en derecho del consumidor</Link>{" "}
+                            <Link to="/search?specialty=Derecho de Consumidor" className="text-green-700 underline hover:text-green-500">abogado especialista en derecho del consumidor</Link>{" "}
                             y conocer cuáles son las alternativas legales más adecuadas para tu caso.
                         </p>
                     </div>

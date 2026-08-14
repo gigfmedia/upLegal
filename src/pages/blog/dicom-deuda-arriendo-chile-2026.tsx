@@ -8,7 +8,6 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -175,7 +174,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Tienes una deuda de arriendo y no sabes qué puede hacer el arrendador?" message="Un abogado puede revisar tu situación, explicarte qué opciones tienes y orientarte sobre los pasos que puedes tomar." buttonText="Consultar con un abogado" />
+          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Tienes una deuda de arriendo y no sabes qué puede hacer el arrendador?" message="Un abogado puede revisar tu situación, explicarte qué opciones tienes y orientarte sobre los pasos que puedes tomar." buttonText="Consultar con un abogado" priceNote="Consulta legal de 60 min desde $35.000" />
 
 
           <div className="mb-12">
@@ -616,7 +615,15 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          {/* CTA before Conclusion */}
+          <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿Ya estás en DICOM por una deuda de arriendo y no sabes cómo salir?"
+            message="Un abogado puede revisar si la deuda es exigible, negociar el pago o la condonación, y orientarte sobre los pasos para salir del registro."
+            buttonText="Resolver mi deuda de arriendo"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
+
           {/* Conclusion */}          <div className="mb-12 border-t pt-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
             <p className="text-gray-600 leading-relaxed mb-4">
@@ -663,7 +670,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="dicom-arriendo" />
+      <BlogConversionPopup category="Derecho Civil" topic="dicom-arriendo" targetUrl="/abogado-arriendo" title="¿Estás en DICOM por una deuda de arriendo?" message="Un abogado puede revisar si tu deuda es exigible y explicarte las opciones para regularizarla o salir del registro." buttonText="Resolver mi deuda con un abogado" />
     </div>
   );
 };

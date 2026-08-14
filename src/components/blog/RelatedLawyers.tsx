@@ -83,6 +83,7 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
             verified: Boolean(l.verified),
             pjud_verified: Boolean(l.pjud_verified),
             experience_years: l.experience_years || 0,
+            created_at: l.created_at || undefined,
             availability: {
               availableToday: true,
               availableThisWeek: true,
@@ -166,7 +167,7 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lawyers.map((lawyer, idx) => (
-              <div key={lawyer.id} onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
+              <div key={lawyer.id} className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
                 <RelatedLawyerCard lawyer={lawyer} category={category} />
               </div>
             ))}

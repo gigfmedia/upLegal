@@ -9,6 +9,8 @@ interface InArticleCTAProps {
   message?: string;
   buttonText?: string;
   title?: string;
+  targetUrl?: string;
+  priceNote?: string;
 }
 
 const InArticleCTA: React.FC<InArticleCTAProps> = ({
@@ -16,11 +18,13 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   message,
   buttonText,
   title,
+  targetUrl,
+  priceNote,
 }) => {
   const DEFAULT_TITLE = "¿Necesitas resolver tu situación?";
   const DEFAULT_MESSAGE = "Un abogado puede analizar tu caso y orientarte sobre las alternativas disponibles.";
   const DEFAULT_BUTTON = "Consultar con un abogado";
-  const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
+  const resolvedTarget = targetUrl || `/search?specialty=${encodeURIComponent(category)}`;
 
   const { ref, inView } = useInView({
     triggerOnce: true,
@@ -61,7 +65,11 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
         <span className="flex items-center gap-1.5 text-sm text-green-900"><span className="text-green-600 font-bold">✓</span> Precio fijo</span>
       </div>
 
-      <Link to={targetUrl} onClick={handleCTA} className="inline-block w-full sm:w-auto">
+      {priceNote && (
+        <p className="text-sm text-green-900 font-medium mb-5">{priceNote}</p>
+      )}
+
+      <Link to={resolvedTarget} onClick={handleCTA} className="inline-block w-full sm:w-auto">
         <Button
           className="bg-green-900 hover:bg-green-700 text-white px-8 h-12 rounded-lg transition-all shadow-md active:scale-95 w-full sm:w-auto font-bold text-base"
         >

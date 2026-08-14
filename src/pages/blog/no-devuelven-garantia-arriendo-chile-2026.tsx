@@ -8,7 +8,6 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -144,9 +143,11 @@ const BlogArticle = () => {
 
             <InArticleCTA
               category="Derecho Civil"
+              targetUrl="/abogado-arriendo"
               title="¿No te devolvieron el mes de garantía?"
               message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
               buttonText="Revisar mi caso"
+              priceNote="Consulta legal de 60 min desde $35.000"
             />
 
           {/* ¿Qué es la garantía? */}
@@ -546,14 +547,6 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          {/*
-          <PreConclusionCTA
-            description="Retener la garantía sin fundamento puede ser ilegal. Compara abogados especializados y recupera lo que te corresponde."
-            link="/abogado-arriendo"
-            buttonText="Comparar abogados especializados"
-          />
-          */}
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿En qué situaciones conviene consultar cuanto antes a un abogado inmobiliario?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">La devolución de la garantía parece un trámite sencillo, pero hay situaciones donde el arrendador puede aprovecharse si no actúas con asesoría legal.</p>
@@ -567,10 +560,18 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+          <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿Quieres recuperar tu garantía sin perder tiempo?"
+            message="Compara abogados de arriendo que pueden revisar tu contrato, detectar retenciones indebidas y ayudarte a exigir la devolución de tu mes de garantía."
+            buttonText="Recuperar mi garantía"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
+
           {/* Conclusión */}          <div className="mb-12 border-t pt-8">
 
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
-            <p className="text-gray-600 mb-4 leading-relaxed">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>            <p className="text-gray-600 mb-4 leading-relaxed">
               La garantía de arriendo no es un pago perdido — es tu dinero, y la ley chilena te da herramientas concretas para recuperarlo.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -628,7 +629,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="garantia-arriendo" />
+      <BlogConversionPopup category="Derecho Civil" topic="garantia-arriendo" targetUrl="/abogado-arriendo" title="¿Todavía no recuperas tu garantía de arriendo?" message="Revisa si la retención de tu mes de garantía es procedente y qué pasos seguir para recuperar tu dinero, con ayuda de un abogado de arriendo." buttonText="Recuperar mi garantía con un abogado" />
     </div>
   );
 };

@@ -9,7 +9,6 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-// import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
@@ -641,14 +640,6 @@ const BlogArticle = () => {
           </div>
 
           {/* CTA before Conclusion */}
-          {/*
-          <PreConclusionCTA
-            description="Si las necesidades de tu hijo superan la pensión actual y el alimentante tiene capacidad económica para pagar más, un abogado de familia puede preparar la demanda con las pruebas necesarias."
-            link="/abogado-pension-alimentos"
-            buttonText="Ver abogados de pensión de alimentos"
-          />
-          */}
-
           {/* Conclusión */}          <div className="prose prose-lg max-w-none mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Conclusión</h2>

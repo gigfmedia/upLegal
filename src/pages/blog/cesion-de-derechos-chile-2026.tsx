@@ -589,7 +589,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Antes de firmar un contrato de cesión, es importante verificar quién es el titular, qué derecho se está transfiriendo, qué documentos lo respaldan, cuál es el precio y qué formalidades deben cumplirse. Si la operación involucra una cantidad importante de dinero, una herencia, un inmueble o un litigio, una revisión jurídica puede ayudarte a comprender exactamente qué estás adquiriendo o transfiriendo y cuáles son los riesgos. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

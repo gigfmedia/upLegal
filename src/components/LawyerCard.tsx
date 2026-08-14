@@ -55,6 +55,7 @@ export interface Lawyer {
   experience_years?: number;
   review_count?: number;
   availability_config?: Record<string, boolean[]>; // Raw availability config from DB
+  created_at?: string;
 }
 
 interface LawyerCardProps {
@@ -122,6 +123,14 @@ export function LawyerCard({
 
   // Check if the lawyer is verified and has the required fields
   const hasVerificationFlag = Boolean(lawyer.verified || lawyer.pjud_verified);
+
+  // True if the lawyer's profile was created within the last 3 months
+  const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
+  const isNewLawyer = Boolean(
+    lawyer.created_at &&
+    Date.now() - new Date(lawyer.created_at).getTime() < THREE_MONTHS_MS
+  );
+
   const isVerifiedLawyer = Boolean(
     hasVerificationFlag &&
     lawyer.hourlyRate > 0 &&
@@ -326,14 +335,16 @@ export function LawyerCard({
   const handleScheduleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    window.gtag?.('event', 'select_lawyer', {
+    // New flow: redirect to public profile, where the user reviews the lawyer
+    // and selects the lawyer to continue to booking (select_lawyer fires there)
+    window.gtag?.('event', 'lawyer_profile_viewed', {
       lawyer_id: lawyer.user_id || lawyer.id,
+      lawyer_name: displayName,
     });
 
-    // New flow: Redirect to booking page without auth check
     const lawyerName = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
     const nameSlug = lawyerName ? createSlug(lawyerName) : 'abogado';
-    navigate(`/booking/${nameSlug}-${lawyer.user_id || lawyer.id}`);
+    navigate(`/abogado/${nameSlug}-${lawyer.id}`);
   };
 
   return (
@@ -438,8 +449,8 @@ export function LawyerCard({
                   <span>Atención online en todo Chile</span>
                 </div>
 
-                <div className="flex items-center space-x-4 text-sm mt-2 mb-2">
-                  {currentReviewCount >= 3 && (
+                <div className="flex items-center space-x-4 text-sm mt-2 mb-2 min-h-[24px]">
+                  {currentReviewCount > 0 ? (
                     <div className="flex-1">
                       <button
                         className="flex items-center space-x-1 text-gray-500 hover:text-blue-600 transition-colors"
@@ -459,7 +470,13 @@ export function LawyerCard({
                         <span className="text-gray-400">({currentReviewCount})</span>
                       </button>
                     </div>
-                  )}
+                  ) : isNewLawyer ? (
+                    <div className="flex-1">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Nuevo en LegalUp
+                      </span>
+                    </div>
+                  ) : null}
                   {displayName.toLowerCase().includes('jorge') && displayName.toLowerCase().includes('pacheco') && (
                     <div className="text-xs text-gray-500 text-[11px]">
                       Casos complejos · Alta experiencia

@@ -10,7 +10,6 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
 
@@ -246,7 +245,7 @@ const BlogArticle = () => {
               El contrato debe indicar claramente dos cosas: la periodicidad del reajuste y el período exacto del IPC a usar. Si alguna de estas no está definida, hay margen para interpretación y potencial conflicto.
             </p>
           </div>
-<InArticleCTA category="Derecho Civil" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." />
+<InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." priceNote="Consulta legal de 60 min desde $35.000" />
 
 
           <div className="mb-12">
@@ -357,6 +356,15 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿El reajuste que te cobraron no coincide con este cálculo?"
+            message="Un abogado puede revisar tu contrato y verificar si el reajuste aplicado corresponde al IPC real de tu período, para que no pagues de más."
+            buttonText="Revisar mi reajuste con un abogado"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
 
           <div className="mb-12">
             <h3 className="text-xl font-bold mb-6 text-gray-900 border-t pt-8">Ejemplos reales de reajuste</h3>
@@ -622,6 +630,15 @@ const BlogArticle = () => {
             </ul>
           </div>
 
+                    <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿Ya calculaste tu reajuste y quieres confirmarlo?"
+            message="Compara abogados de arriendo que pueden revisar tu contrato y verificar que el reajuste aplicado por tu arrendador corresponda al IPC oficial."
+            buttonText="Verificar mi reajuste"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
+
                     <div className="mb-12 border-t pt-8">
 
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
@@ -674,7 +691,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Civil" topic="ipc" />
+      <BlogConversionPopup category="Derecho Civil" topic="ipc" targetUrl="/abogado-arriendo" title="¿Quieres confirmar si tu reajuste de arriendo es correcto?" message="Revisa si el IPC que te aplicó el arrendador corresponde al valor oficial de tu período, con ayuda de un abogado de arriendo." buttonText="Revisar mi reajuste con un abogado" />
     </div>
   );
 };

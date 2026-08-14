@@ -526,7 +526,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Si bien puede redactarse de distintas maneras, mientras más completo y preciso sea el documento, mayores serán las posibilidades de evitar conflictos futuros o acreditar correctamente la existencia de la deuda en caso de un juicio. Cuando se trata de préstamos importantes o acuerdos comerciales relevantes, contar con asesoría jurídica antes de firmar puede marcar una diferencia significativa. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

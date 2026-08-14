@@ -1207,6 +1207,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                           onClick={(e) => {
                             e.preventDefault();
                             if (currentUser?.id !== lawyer?.user_id && lawyer) {
+                              window.gtag?.('event', 'select_lawyer', {
+                                lawyer_id: lawyer.user_id || lawyer.id,
+                              });
                               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
                               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
                               navigate(`/booking/${nameSlug}-${lawyer.user_id}`);

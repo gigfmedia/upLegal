@@ -6,17 +6,25 @@ import { X } from 'lucide-react';
 interface BlogConversionPopupProps {
   category?: string;
   topic?: string;
+  targetUrl?: string;
+  title?: string;
+  message?: string;
+  buttonText?: string;
 }
 
 const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({ 
   category = "Derecho Laboral",
-  topic
+  topic,
+  targetUrl,
+  title,
+  message,
+  buttonText,
 }) => {
   const [phase, setPhase] = useState<'hidden' | 'popup'>('hidden');
   const [hasDismissed, setHasDismissed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const targetUrl = `/search?specialty=${encodeURIComponent(category)}`;
+  const resolvedTarget = targetUrl || `/search?specialty=${encodeURIComponent(category)}`;
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -99,8 +107,9 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
   if (phase === 'hidden' || hasDismissed) return null;
 
   const content = {
-    title: "¿Necesitas resolver este problema?",
-    message: `Habla hoy con un abogado especialista en ${category}.`,
+    title: title || "¿Necesitas resolver este problema?",
+    message: message || `Habla hoy con un abogado especialista en ${category}.`,
+    buttonText: buttonText || "Agendar con un abogado",
   };
 
   return (
@@ -134,9 +143,9 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
               </ul>
 
               <div className="w-full">
-                <Link to={targetUrl} onClick={handleCTA}>
+                <Link to={resolvedTarget} onClick={handleCTA}>
                   <Button className="w-full bg-gray-900 hover:bg-green-900 text-white rounded-xl h-12 text-base font-bold shadow-md active:scale-95 transition-all">
-                    Agendar con un abogado
+                    {content.buttonText}
                   </Button>
                 </Link>
               </div>
@@ -172,9 +181,9 @@ const BlogConversionPopup: React.FC<BlogConversionPopupProps> = ({
               </ul>
 
               <div className="w-full pt-2">
-                <Link to={targetUrl} onClick={handleCTA}>
+                <Link to={resolvedTarget} onClick={handleCTA}>
                   <Button className="w-full bg-gray-900 hover:bg-green-900 text-white rounded-lg h-12 text-sm font-bold shadow-md transition-all active:scale-95">
-                    Agendar con un abogado
+                    {content.buttonText}
                   </Button>
                 </Link>
               </div>

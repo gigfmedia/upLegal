@@ -567,7 +567,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Sin embargo, ello no significa que toda demanda sea válida ni que el acreedor tenga automáticamente la razón. Existen requisitos legales, plazos de prescripción y diversas defensas que pueden resultar aplicables según cada caso. Si firmaste un pagaré, recibiste una demanda ejecutiva o necesitas cobrar una deuda respaldada por este documento, es recomendable consultar con un abogado para analizar la mejor estrategia jurídica. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>

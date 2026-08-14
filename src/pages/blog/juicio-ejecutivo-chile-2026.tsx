@@ -600,7 +600,7 @@ const BlogArticle = () => {
                         </p>
                         <p className="text-gray-600 leading-relaxed">
                             Aunque el procedimiento busca facilitar el cobro al acreedor, el deudor mantiene derechos importantes, incluyendo la posibilidad de presentar excepciones, alegar la prescripción cuando corresponda y cuestionar la validez del título ejecutivo. Si recibiste una demanda ejecutiva o quieres saber cuáles son tus opciones antes de enfrentar un embargo, obtener asesoría jurídica temprana puede marcar una diferencia importante en el resultado del proceso. Puedes consultar con un{" "}
-                            <Link to="/abogado-civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
+                            <Link to="/search?specialty=Derecho Civil" className="text-green-700 underline hover:text-green-500">abogado civil en Chile</Link>{" "}
                             a través de LegalUp.
                         </p>
                     </div>
