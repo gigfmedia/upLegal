@@ -82,6 +82,10 @@ export const TestimonialsSection = () => {
                       <img
                         src={testimonial.avatarImage}
                         alt={testimonial.name}
+                        width={96}
+                        height={128}
+                        loading="lazy"
+                        decoding="async"
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (

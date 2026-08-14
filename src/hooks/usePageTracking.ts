@@ -45,8 +45,20 @@ export function usePageTracking() {
       }
     };
 
-    // Track the page view
-    trackPageView();
+    // Track the page view de forma diferida: el insert a Supabase y la llamada
+    // a auth.getUser() compiten con el primer render de la landing. Se ejecutan
+    // cuando el navegador está idle (requestIdleCallback) o tras un timeout de
+    // respaldo, sin perder el tracking.
+    const trackWhenIdle = () => {
+      trackPageView();
+    };
+    const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void };
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(trackWhenIdle, { timeout: 3000 });
+    } else {
+      const timeoutId = win.setTimeout(trackWhenIdle, 1500);
+      return () => win.clearTimeout(timeoutId);
+    }
   }, [location]);
 
   return null;

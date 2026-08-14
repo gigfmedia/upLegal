@@ -34,33 +34,6 @@
     }, true);
   </script>
 
-  <!-- PostHog script -->
-  <script>
-    !function (t, e) { var o, n, p, r; e.__SV || (window.posthog && window.posthog.__loaded) || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.crossOrigin = "anonymous", p.async = !0, p.src = s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "Ei Ni init zi Gi Nr Ui Xi Vi capture calculateEventProperties tn register register_once register_for_session unregister unregister_for_session an getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync ln identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty nn Qi createPersonProfile setInternalOrTestUser sn qi cn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Ji debug Fr rn getPageViewId captureTraceFeedback captureTraceMetric Bi".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);
-    posthog.init('phc_CSTbdRjVd5ffcXTJNXS8ZgNtfir4AA3TzU2CTrpvU73C', {
-      api_host: 'https://us.i.posthog.com',
-      defaults: '2026-01-30',
-      person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
-    })
-  </script>
-
-  <!-- TikTok Pixel Code Start -->
-  <script>
-    !function (w, d, t) {
-      w.TiktokAnalyticsObject = t; var ttq = w[t] = w[t] || []; ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie", "holdConsent", "revokeConsent", "grantConsent"], ttq.setAndDefer = function (t, e) { t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } }; for (var i = 0; i < ttq.methods.length; i++)ttq.setAndDefer(ttq, ttq.methods[i]); ttq.instance = function (t) {
-        for (
-          var e = ttq._i[t] || [], n = 0; n < ttq.methods.length; n++)ttq.setAndDefer(e, ttq.methods[n]); return e
-      }, ttq.load = function (e, n) {
-        var r = "https://analytics.tiktok.com/i18n/pixel/events.js", o = n && n.partner; ttq._i = ttq._i || {}, ttq._i[e] = [], ttq._i[e]._u = r, ttq._t = ttq._t || {}, ttq._t[e] = +new Date, ttq._o = ttq._o || {}, ttq._o[e] = n || {}; n = document.createElement("script")
-          ; n.type = "text/javascript", n.async = !0, n.src = r + "?sdkid=" + e + "&lib=" + t; e = document.getElementsByTagName("script")[0]; e.parentNode.insertBefore(n, e)
-      };
-
-      ttq.load('D7J6UK3C77U32HD1GSC0');
-      ttq.page();
-    }(window, document, 'ttq');
-  </script>
-  <!-- TikTok Pixel Code End -->
-
   <!-- Google Tag Manager -->
   <script>
     // Bloqueo de analytics para el dueño: si este navegador fue marcado como
@@ -88,13 +61,60 @@
     })();
   </script>
   <script>
-    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-TBP7XN9K');
+    // GTM se carga de forma diferida: define el dataLayer inmediatamente para
+    // que los eventos de gtag() se encolen, pero inyecta gtm.js solo cuando el
+    // navegador está idle (requestIdleCallback) o tras un timeout de respaldo.
+    // Esto saca ~157KB de terceros del critical path de la landing sin perder
+    // eventos: las llamadas a gtag() ocurren en interacciones del usuario, que
+    // suceden después de que el contenedor ya está cargado.
+    (function (w) {
+      w.dataLayer = w.dataLayer || [];
+      if (typeof w.gtag !== 'function') {
+        w.gtag = function () { w.dataLayer.push(arguments); };
+      }
+      function loadGTM() {
+        (function (w, d, s, l, i) {
+          w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+          var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
+          j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+          f.parentNode.insertBefore(j, f);
+        })(w, document, 'script', 'dataLayer', 'GTM-TBP7XN9K');
+      }
+      if ('requestIdleCallback' in w) {
+        w.requestIdleCallback(loadGTM, { timeout: 3000 });
+      } else {
+        w.setTimeout(loadGTM, 2500);
+      }
+    })(window);
   </script>
   <!-- End Google Tag Manager -->
+
+  <!-- TikTok Pixel Code Start -->
+  <script>
+    // El stub de ttq se define inmediatamente (para encolar llamadas tempranas),
+    // pero el script real de events.js se carga de forma diferida (idle/timeout)
+    // para sacar ~157KB de terceros del critical path de la landing.
+    !function (w, d, t) {
+      w.TiktokAnalyticsObject = t; var ttq = w[t] = w[t] || []; ttq.methods = ["page", "track", "identify", "instances", "debug", "on", "off", "once", "ready", "alias", "group", "enableCookie", "disableCookie", "holdConsent", "revokeConsent", "grantConsent"], ttq.setAndDefer = function (t, e) { t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } }; for (var i = 0; i < ttq.methods.length; i++)ttq.setAndDefer(ttq, ttq.methods[i]); ttq.instance = function (t) {
+        for (
+          var e = ttq._i[t] || [], n = 0; n < ttq.methods.length; n++)ttq.setAndDefer(e, ttq.methods[n]); return e
+      }, ttq.load = function (e, n) {
+        var r = "https://analytics.tiktok.com/i18n/pixel/events.js", o = n && n.partner; ttq._i = ttq._i || {}, ttq._i[e] = [], ttq._i[e]._u = r, ttq._t = ttq._t || {}, ttq._t[e] = +new Date, ttq._o = ttq._o || {}, ttq._o[e] = n || {}; n = document.createElement("script")
+          ; n.type = "text/javascript", n.async = !0, n.src = r + "?sdkid=" + e + "&lib=" + t; e = document.getElementsByTagName("script")[0]; e.parentNode.insertBefore(n, e)
+      };
+
+      function loadTikTok() {
+        ttq.load('D7J6UK3C77U32HD1GSC0');
+        ttq.page();
+      }
+      if ('requestIdleCallback' in w) {
+        w.requestIdleCallback(loadTikTok, { timeout: 3000 });
+      } else {
+        w.setTimeout(loadTikTok, 2500);
+      }
+    }(window, document, 'ttq');
+  </script>
+  <!-- TikTok Pixel Code End -->
 
   <!-- Metadatos básicos -->
   <meta name="author" content="LegalUp" />

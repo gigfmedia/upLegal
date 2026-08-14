@@ -15,6 +15,8 @@ const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.c
 
 posthog.init(posthogKey, {
   api_host: posthogHost,
+  defaults: '2026-01-30',
+  person_profiles: 'identified_only',
 });
 
 // Aislamiento de pruebas del dueño: marca cada evento con is_owner para poder
