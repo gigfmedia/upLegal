@@ -10,8 +10,11 @@ import posthog from "posthog-js";
 import { PostHogProvider } from "@posthog/react";
 import { isTestHostname, isOwnerActive, isOwnerDevice } from './lib/owner';
 
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
+const posthogKey = import.meta.env.VITE_POSTHOG_KEY || 'phc_CSTbdRjVd5ffcXTJNXS8ZgNtfir4AA3TzU2CTrpvU73C';
+const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
+
+posthog.init(posthogKey, {
+  api_host: posthogHost,
 });
 
 // Aislamiento de pruebas del dueño: marca cada evento con is_owner para poder

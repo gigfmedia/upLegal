@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       ...viteEnv,
+      __SERVER_FORWARD_CONSOLE__: 'false',
       'import.meta.env.MODE': JSON.stringify(mode),
       'process.env': Object.entries(merged).reduce((prev, [key, val]) => {
         if (key.startsWith('VITE_')) {

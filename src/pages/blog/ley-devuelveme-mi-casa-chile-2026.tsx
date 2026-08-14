@@ -9,7 +9,6 @@ import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
-import PreConclusionCTA from "@/components/blog/PreConclusionCTA";
 import { ReadTime } from "@/components/blog/ReadTime";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 
@@ -233,7 +232,7 @@ const BlogArticle = () => {
                 <div key={i} className="flex items-center gap-3 bg-red-50 p-3 rounded-lg border border-red-100 h-full min-h-[3rem]">
                   <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                   <span className="text-base text-gray-700">{item}</span>
-                </div>              ))}
+                </div>))}
             </div>
             <p className="text-gray-600 mb-4 leading-relaxed">Esto podría ser ilegal y perjudicarte judicialmente, siempre necesitas un proceso judicial.</p>
             <p className="text-gray-600 mb-4 leading-relaxed">Si quieres profundizar en esto, revisa:</p>
@@ -270,7 +269,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <RelatedLawyers category="Derecho Civil" />
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué cambia con la Ley 21.461?</h2>
@@ -586,7 +585,7 @@ const BlogArticle = () => {
             </div>
           </div>
           <div className="mb-12">
-            
+
           </div>
 
           <div className="mb-12">
