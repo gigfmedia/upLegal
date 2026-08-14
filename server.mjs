@@ -45,6 +45,9 @@ import {
   JURISPRUDENCE_LIMITS,
 } from './server/ai/jurisprudencePrompt.mjs';
 import {
+  allocateDynamicContextBudget,
+} from './server/ai/dynamicContextBudget.mjs';
+import {
   buildJurisprudenceOutcome,
   runJurisprudenceWithRetry,
 } from './server/ai/jurisprudencePipeline.mjs';
@@ -8163,12 +8166,20 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     // armar el contexto. Reduce los casos de CONTEXT_TOO_LARGE sin tocar los
     // gates de evidencia (que siguen intactos aguas abajo en el pipeline). El
     // selector solo decide qué evidencia VÁLIDA llega al LLM.
-    // Fase 4.2.6: en modo 'mixed' se reserva ~25% del presupuesto de contexto
-    // para la evidencia documental del caso (composición legal + documento).
-    const legalMaxChars =
-      documentMode === 'mixed'
-        ? Math.floor(JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS * 0.75)
-        : JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS;
+    // Fase 4.2.7: allocation dinámica de contexto basado en evidencia disponible.
+    // Reemplaza el reparto estático 75%/25% por una asignación proporcional a los
+    // pesos de evidencia documental y jurídica.
+    const allocation = allocateDynamicContextBudget({
+      documents: caseDocuments,
+      sources,
+      query,
+      intentClass,
+      documentMode,
+    });
+
+    const legalMaxChars = allocation.legalBudget;
+    const documentMaxChars = allocation.documentBudget;
+
     const {
       sources: selectedSources,
       context,
@@ -8197,6 +8208,13 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       budget_applied: budgetApplied,
       poles_preserved: selectionStats.poles_preserved,
       document_mode: documentMode,
+      // Fase 4.2.7: telemetría de allocation dinámica
+      document_budget: allocation.documentBudget,
+      legal_budget: allocation.legalBudget,
+      document_ratio: allocation.documentRatio,
+      legal_ratio: allocation.legalRatio,
+      document_weight: allocation.documentWeight,
+      legal_weight: allocation.legalWeight,
     });
     if (tooLarge) {
       return res.status(422).json({
@@ -8209,6 +8227,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     // Fase 4.2.6: selección de evidencia documental del caso (document grounding).
     // En modo 'none' (sin señal documental) se preserva el flujo clásico: la
     // investigación NO inyecta documentos privados en el prompt.
+    // Fase 4.2.7: usa el presupuesto documental dinámico calculado por allocateDynamicContextBudget.
     const documentEvidence =
       documentMode === 'none'
         ? {
@@ -8225,10 +8244,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         : selectDocumentEvidence({
             documents: caseDocuments,
             query,
-            maxChars:
-              documentMode === 'mixed'
-                ? JURISPRUDENCE_LIMITS.MAX_CONTEXT_CHARS - legalMaxChars
-                : DOCUMENT_GROUNDING_LIMITS.MAX_DOCUMENT_CONTEXT_CHARS,
+            maxChars: documentMaxChars,
             workspaceId: workspace.id,
             lawyerId: userId,
           });
