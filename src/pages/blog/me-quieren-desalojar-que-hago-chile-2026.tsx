@@ -145,7 +145,7 @@ const BlogArticle = () => {
             </p>
 
           <InArticleCTA
-            category="Arrendamiento"
+            category="Derecho Civil"
             title="¿Te están intentando desalojar?"
             message="Si recibiste una notificación o tienes problemas con tu arrendador, un abogado puede revisar tu situación y explicarte qué opciones tienes."
             buttonText="Revisar mi caso"
@@ -220,7 +220,7 @@ const BlogArticle = () => {
               ))}
             </div>
           </div>
-<RelatedLawyers category="Arrendamiento" title="¿Te quieren desalojar de tu vivienda? Un abogado puede ayudarte hoy" />
+<RelatedLawyers category="Derecho Civil" title="¿Te quieren desalojar de tu vivienda? Un abogado puede ayudarte hoy" />
 
 
           <div className="mb-12">
@@ -419,7 +419,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Arrendamiento" topic="desalojo-que-hago" />
+      <BlogConversionPopup category="Derecho Civil" topic="desalojo-que-hago" />
     </div>
   );
 };

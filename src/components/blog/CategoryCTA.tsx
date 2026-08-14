@@ -37,7 +37,7 @@ const CategoryCTA: React.FC<CategoryCTAProps> = ({ category, topic }) => {
     consumidor: {
       title: '¿Tienes un problema como consumidor?',
       description: 'Un abogado especializado en derecho del consumidor puede ayudarte a presentar reclamos, exigir garantías y defender tus derechos.',
-      link: '/search?specialty=Derecho%20del%20Consumidor',
+      link: '/search?specialty=Derecho%20de%20Consumidor',
       linkText: 'Revisar mi caso con un abogado',
     },
     civil: {

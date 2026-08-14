@@ -61,13 +61,13 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'patente': ['Derecho Comercial'],
   'propiedad intelectual': ['Derecho Comercial'],
   
-  // Inmobiliario
-  'inmobiliario': ['Derecho Inmobiliario'],
-  'propiedad': ['Derecho Inmobiliario'],
-  'hipoteca': ['Derecho Inmobiliario'],
-  'usufructo': ['Derecho Inmobiliario'],
-  'servidumbre': ['Derecho Inmobiliario'],
-  'regularizacion': ['Derecho Inmobiliario'],
+  // Inmobiliario (mapea a Derecho Civil: especialidad real con abogados; no existe "Derecho Inmobiliario")
+  'inmobiliario': ['Derecho Civil'],
+  'propiedad': ['Derecho Civil'],
+  'hipoteca': ['Derecho Civil'],
+  'usufructo': ['Derecho Civil'],
+  'servidumbre': ['Derecho Civil'],
+  'regularizacion': ['Derecho Civil'],
   
   // Penal
   'penal': ['Derecho Penal'],
@@ -94,8 +94,8 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'herencia': ['Derecho Sucesorio'],
   'testamento': ['Derecho Sucesorio'],
   'sucesion': ['Derecho Sucesorio'],
-  'consumidor': ['Derecho del Consumidor'],
-  'proteccion consumidor': ['Derecho del Consumidor'],
+  'consumidor': ['Derecho de Consumidor'],
+  'proteccion consumidor': ['Derecho de Consumidor'],
   'salud': ['Derecho de Salud'],
   'isapre': ['Derecho de Salud'],
   'fonasa': ['Derecho de Salud'],
@@ -117,7 +117,7 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'derecho de familia': ['Derecho de Familia'],
   'derecho laboral': ['Derecho Laboral'],
   'derecho penal': ['Derecho Penal'],
-  'derecho inmobiliario': ['Derecho Inmobiliario'],
+  'derecho inmobiliario': ['Derecho Civil'],
   'derecho civil': ['Derecho Civil'],
   'derecho comercial': ['Derecho Comercial'],
   'derecho tributario': ['Derecho Tributario'],
@@ -127,7 +127,8 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'derecho de salud': ['Derecho de Salud'],
   'derecho de tránsito': ['Derecho de Tránsito'],
   'derecho sucesorio': ['Derecho Sucesorio'],
-  'derecho del consumidor': ['Derecho del Consumidor']
+  'derecho del consumidor': ['Derecho de Consumidor'],
+  'derecho de consumidor': ['Derecho de Consumidor'],
 };
 
 // Función para escapar caracteres especiales en búsquedas LIKE

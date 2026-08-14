@@ -192,7 +192,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <RelatedLawyers category="Derecho del Consumidor" />
+                    <RelatedLawyers category="Derecho de Consumidor" />
 
 
                     {/* DERECHOS */}
@@ -243,7 +243,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mt-4">Cuando estas obligaciones no se cumplen, pueden surgir responsabilidades administrativas y civiles.</p>
                     </div>
 
-                        <InArticleCTA category="Derecho del Consumidor"  title="¿Tienes un problema con un producto o servicio?" message="Un abogado especialista en consumo puede revisar tu caso, identificar tus derechos y buscar la reparación que corresponde." />
+                        <InArticleCTA category="Derecho de Consumidor"  title="¿Tienes un problema con un producto o servicio?" message="Un abogado especialista en consumo puede revisar tu caso, identificar tus derechos y buscar la reparación que corresponde." />
 
 
                     {/* QUE HACER */}
@@ -420,7 +420,7 @@ const BlogArticle = () => {
                         title="¿Te están vulnerando tus derechos como consumidor?"
                         message="No dejes pasar los plazos para reclamar. Un abogado del consumidor puede revisar tu caso y orientarte."
                         buttonText="Habla con un abogado ahora"
-                        category="Derecho del Consumidor"
+                        category="Derecho de Consumidor"
                     />
 
 {/* CONCLUSION */}                    <div className="mb-12 border-t pt-8">
@@ -474,7 +474,7 @@ const BlogArticle = () => {
                     </Link>
                 </div>
             </div>
-            <BlogConversionPopup category="Derecho del Consumidor" topic="consumidor" />
+            <BlogConversionPopup category="Derecho de Consumidor" topic="consumidor" />
         </div>
     );
 };

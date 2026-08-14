@@ -202,7 +202,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Arrendamiento" />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -290,7 +290,7 @@ const BlogArticle = () => {
             </div>
 
           </div>
-<InArticleCTA category="Arrendamiento"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
+<InArticleCTA category="Derecho Civil"  title="¿Vives arrendado sin contrato escrito?" message="Un abogado inmobiliario puede evaluar tu situación, determinar tus derechos y orientarte sobre cómo protegerte legalmente." />
 
 
           <div className="mb-12">
@@ -586,7 +586,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <BlogConversionPopup category="Derecho Inmobiliario" topic="sin-contrato" />
+      <BlogConversionPopup category="Derecho Civil" topic="sin-contrato" />
     </div>
   );
 };

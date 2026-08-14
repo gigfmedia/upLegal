@@ -874,7 +874,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Derecho Inmobiliario" topic="derecho-arrendamiento" />
+      <BlogConversionPopup category="Derecho Civil" topic="derecho-arrendamiento" />
     </div>
   );
 };

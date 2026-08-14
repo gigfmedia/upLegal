@@ -186,7 +186,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Arrendamiento" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
+          <InArticleCTA category="Derecho Civil" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
 
 
           <div className="mb-12">
@@ -250,7 +250,7 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-          <RelatedLawyers category="Arrendamiento" />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -596,7 +596,7 @@ const BlogArticle = () => {
           </Link>
         </div>
       </div>
-      <BlogConversionPopup category="Arrendamiento" topic="orden-desalojo" />
+      <BlogConversionPopup category="Derecho Civil" topic="orden-desalojo" />
     </div>
   );
 };

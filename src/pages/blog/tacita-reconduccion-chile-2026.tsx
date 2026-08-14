@@ -173,7 +173,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <RelatedLawyers category="Arrendamiento" />
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué pasa cuando hay tácita reconducción?</h2>
@@ -205,7 +205,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <InArticleCTA category="Arrendamiento" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
+            <InArticleCTA category="Derecho Civil" title="¿Tu contrato venció y sigues arrendando sin renovar?" message="Un abogado inmobiliario puede regularizar tu situación de tácita reconducción y proteger tus derechos." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Se mantiene el mismo contrato?</h2>
@@ -622,7 +622,7 @@ const BlogArticle = () => {
         </div>
       </div>
 
-      <BlogConversionPopup category="Derecho Inmobiliario" topic="tacita-reconduccion" />
+      <BlogConversionPopup category="Derecho Civil" topic="tacita-reconduccion" />
     </div>
   );
 };
