@@ -17,7 +17,30 @@ posthog.init(posthogKey, {
   api_host: posthogHost,
   defaults: '2026-01-30',
   person_profiles: 'identified_only',
+  // P1: Session Recording se difiere hasta después del critical path. Con
+  // disable_session_recording=true posthog-js NO carga posthog-recorder.js al
+  // inicio; se activa más abajo con startSessionRecording() en requestIdleCallback,
+  // así el recorder no compite con el primer render de la landing.
+  disable_session_recording: true,
 });
+
+// P1: Activar Session Recording cuando el navegador esté idle (o tras un timeout
+// de respaldo). Retrasa la carga de posthog-recorder.js hasta después de pintar.
+if (typeof window !== 'undefined') {
+  const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void };
+  const startRecordingWhenIdle = () => {
+    try {
+      posthog.startSessionRecording(true);
+    } catch {
+      // Nunca bloquear el boot de la app por session recording
+    }
+  };
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(startRecordingWhenIdle, { timeout: 4000 });
+  } else {
+    win.setTimeout(startRecordingWhenIdle, 3000);
+  }
+}
 
 // Aislamiento de pruebas del dueño: marca cada evento con is_owner para poder
 // filtrar en los dashboards y no contaminar métricas reales. Aplica cuando el

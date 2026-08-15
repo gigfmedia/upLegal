@@ -80,10 +80,20 @@
           f.parentNode.insertBefore(j, f);
         })(w, document, 'script', 'dataLayer', 'GTM-TBP7XN9K');
       }
-      if ('requestIdleCallback' in w) {
-        w.requestIdleCallback(loadGTM, { timeout: 3000 });
+      // P3: espera el evento load del window antes de programar el idle. Así gtm.js
+      // no compite con el primer render ni con LCP: se descarga tras la carga
+      // completa de la página y cuando el navegador esté idle.
+      function scheduleWhenIdle(fn) {
+        if ('requestIdleCallback' in w) {
+          w.requestIdleCallback(fn, { timeout: 5000 });
+        } else {
+          w.setTimeout(fn, 4000);
+        }
+      }
+      if (document.readyState === 'complete') {
+        scheduleWhenIdle(loadGTM);
       } else {
-        w.setTimeout(loadGTM, 2500);
+        w.addEventListener('load', function () { scheduleWhenIdle(loadGTM); });
       }
     })(window);
   </script>
@@ -107,10 +117,21 @@
         ttq.load('D7J6UK3C77U32HD1GSC0');
         ttq.page();
       }
-      if ('requestIdleCallback' in w) {
-        w.requestIdleCallback(loadTikTok, { timeout: 3000 });
+      // P3: igual que GTM, TikTok espera el evento load de window antes de
+      // programar el idle. Saca los ~112ms de parse/exec de events.js del
+      // critical path (TBT) sin perder el pixel: el stub ttq encola las
+      // llamadas y events.js se carga tras la carga completa.
+      function scheduleWhenIdle(fn) {
+        if ('requestIdleCallback' in w) {
+          w.requestIdleCallback(fn, { timeout: 5000 });
+        } else {
+          w.setTimeout(fn, 4000);
+        }
+      }
+      if (document.readyState === 'complete') {
+        scheduleWhenIdle(loadTikTok);
       } else {
-        w.setTimeout(loadTikTok, 2500);
+        w.addEventListener('load', function () { scheduleWhenIdle(loadTikTok); });
       }
     }(window, document, 'ttq');
   </script>
