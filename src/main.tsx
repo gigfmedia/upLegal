@@ -24,13 +24,16 @@ posthog.init(posthogKey, {
   disable_session_recording: true,
 });
 
-// P1: Activar Session Recording cuando el navegador esté idle (o tras un timeout
-// de respaldo). Retrasa la carga de posthog-recorder.js hasta después de pintar.
+// P1/P2: Activar Session Recording cuando el navegador esté idle (o tras un
+// timeout de respaldo). Retrasa la carga de posthog-recorder.js hasta después de
+// pintar. IMPORTANTE: startSessionRecording() SIN args respeta el trigger remoto
+// de /decide (solo /booking*). Con `true` se forzaría el override de url_trigger
+// y el recorder (61KB) cargaría también en la landing — justo lo que evitamos.
 if (typeof window !== 'undefined') {
   const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void };
   const startRecordingWhenIdle = () => {
     try {
-      posthog.startSessionRecording(true);
+      posthog.startSessionRecording();
     } catch {
       // Nunca bloquear el boot de la app por session recording
     }

@@ -33,10 +33,16 @@ function ensureGtagLoaded(): void {
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
   document.head.appendChild(script);
 
+  // El stub de dataLayer/gtag ya lo define index.html ANTES del boot (para
+  // encolar eventos tempranos y para que main.tsx capture realTag). No
+  // sobrescribimos window.gtag aquí para no pisar el wrapper anti-dueño que
+  // instala main.tsx; solo aseguramos que exista el dataLayer.
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag() {
-    window.dataLayer.push(arguments);
-  };
+  if (typeof window.gtag !== "function") {
+    window.gtag = function gtag() {
+      window.dataLayer.push(arguments);
+    };
+  }
 }
 
 function gtag(...args: unknown[]): void {

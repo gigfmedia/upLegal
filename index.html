@@ -34,14 +34,18 @@
     }, true);
   </script>
 
-  <!-- Google Tag Manager -->
+  <!-- Analytics GA4 -->
   <script>
     // Bloqueo de analytics para el dueño: si este navegador fue marcado como
     // dispositivo del dueño (localStorage legalup_owner_device), se niega el
-    // consentimiento ANTES de cargar GTM/gtag.js. Google no enviará ningún
-    // hit de analytics (ni GTM ni ReactGA), así el tráfico del dueño no
-    // contamina la data de GA4. El email que veías en Realtime lo asocia
-    // Google Signals, no el sitio; negar el consentimiento lo detiene.
+    // consentimiento ANTES de cargar gtag.js. Google no enviará ningún hit de
+    // analytics, así el tráfico del dueño no contamina la data de GA4. El email
+    // que veías en Realtime lo asocia Google Signals, no el sitio; negar el
+    // consentimiento lo detiene.
+    //
+    // Nota (Fase 3): el container GTM-TBP7XN9K está VACÍO (tags/predicates/rules
+    // = []), así que se eliminó la carga de gtm.js de la landing. GA4 funciona
+    // únicamente por GoogleAnalytics.tsx, que inyecta gtag.js una sola vez.
     (function () {
       var isOwnerDevice = false;
       try {
@@ -61,43 +65,18 @@
     })();
   </script>
   <script>
-    // GTM se carga de forma diferida: define el dataLayer inmediatamente para
-    // que los eventos de gtag() se encolen, pero inyecta gtm.js solo cuando el
-    // navegador está idle (requestIdleCallback) o tras un timeout de respaldo.
-    // Esto saca ~157KB de terceros del critical path de la landing sin perder
-    // eventos: las llamadas a gtag() ocurren en interacciones del usuario, que
-    // suceden después de que el contenedor ya está cargado.
+    // Stub de GA4: define dataLayer y window.gtag inmediatamente para encolar
+    // eventos tempranos. GoogleAnalytics.tsx inyecta gtag.js (que toma el control
+    // del dataLayer) y NUNCA se duplica. Reemplaza al bloque que antes cargaba
+    // gtm.js del container vacío GTM-TBP7XN9K.
     (function (w) {
       w.dataLayer = w.dataLayer || [];
       if (typeof w.gtag !== 'function') {
         w.gtag = function () { w.dataLayer.push(arguments); };
       }
-      function loadGTM() {
-        (function (w, d, s, l, i) {
-          w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-          var f = d.getElementsByTagName(s)[0], j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : '';
-          j.async = true; j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-          f.parentNode.insertBefore(j, f);
-        })(w, document, 'script', 'dataLayer', 'GTM-TBP7XN9K');
-      }
-      // P3: espera el evento load del window antes de programar el idle. Así gtm.js
-      // no compite con el primer render ni con LCP: se descarga tras la carga
-      // completa de la página y cuando el navegador esté idle.
-      function scheduleWhenIdle(fn) {
-        if ('requestIdleCallback' in w) {
-          w.requestIdleCallback(fn, { timeout: 5000 });
-        } else {
-          w.setTimeout(fn, 4000);
-        }
-      }
-      if (document.readyState === 'complete') {
-        scheduleWhenIdle(loadGTM);
-      } else {
-        w.addEventListener('load', function () { scheduleWhenIdle(loadGTM); });
-      }
     })(window);
   </script>
-  <!-- End Google Tag Manager -->
+  <!-- End Analytics GA4 -->
 
   <!-- TikTok Pixel Code Start -->
   <script>
@@ -215,10 +194,6 @@
       document.body.style.backgroundColor = '#0a0d12';
     }
   </script>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TBP7XN9K"
-  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
