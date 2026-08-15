@@ -11,7 +11,7 @@ import { Loader2, ShieldCheck, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logPaymentEvent } from '@/utils/paymentLogger';
 import { supabase } from '@/lib/supabaseClient';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 
 export interface AppointmentCheckoutData {
   type: 'appointment';

@@ -12,6 +12,7 @@ import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 import RouteHandler from '@/components/RouteHandler';
+import { DeferredMount } from '@/components/DeferredMount';
 
 // Context Providers
 import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
@@ -398,7 +399,9 @@ const AppContent = () => {
             !location.pathname.startsWith('/admin') &&
             !location.pathname.startsWith('/empresa') && (
             <Suspense fallback={null}>
-              <LegalUpAssistant />
+              <DeferredMount>
+                <LegalUpAssistant />
+              </DeferredMount>
             </Suspense>
           )}
           <Suspense fallback={

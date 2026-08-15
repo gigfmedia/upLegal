@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 import {
   MessageCircleMore,
   X,
