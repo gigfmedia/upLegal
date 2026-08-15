@@ -1,8 +1,45 @@
 /// <reference types="vitest" />
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 import { readFileSync, existsSync } from 'fs';
+
+// Fase 6C: carga no-bloqueante del CSS global.
+// Reemplaza el <link rel="stylesheet"> que inyecta Vite por una estrategia
+// async con fallback robusto (no-JS y onload no disparado).
+function asyncStylesheetPlugin(): Plugin {
+  let fallbackScriptAdded = false;
+  return {
+    name: 'legalup-async-stylesheet',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        return html.replace(
+          /<link\s+rel="stylesheet"([^>]*?)\s*href="([^"]+\.css)"([^>]*?)\/?\s*>/gi,
+          (_match, before, href, after) => {
+            const cross =
+              before.includes('crossorigin') || after.includes('crossorigin')
+                ? ' crossorigin'
+                : '';
+            let out =
+              `<link rel="preload" as="style" href="${href}"${cross}>` +
+              `<link rel="stylesheet" href="${href}"${cross} media="print" onload="this.onload=null;this.media='all'">` +
+              `<noscript><link rel="stylesheet" href="${href}"${cross}></noscript>`;
+            if (!fallbackScriptAdded) {
+              out +=
+                `<script>window.addEventListener('load',function(){` +
+                `var l=document.querySelector('link[rel="stylesheet"][media="print"]');` +
+                `if(l)l.media='all';});</script>`;
+              fallbackScriptAdded = true;
+            }
+            return out;
+          }
+        );
+      },
+    },
+  };
+}
 
 function loadBuildEnv() {
   const buildFile = path.resolve(import.meta.dirname, '.env.build');
@@ -110,7 +147,7 @@ export default defineConfig(({ mode }) => {
       minify: 'oxc',
       chunkSizeWarningLimit: 1000,
     },
-    plugins: [react()],
+    plugins: [react(), asyncStylesheetPlugin()],
     test: {
       globals: true,
       environment: 'happy-dom',
