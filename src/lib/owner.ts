@@ -1,4 +1,4 @@
-import posthog from 'posthog-js';
+import { posthog } from './posthogLoader';
 
 const OWNER_EMAILS = [
   'gigfmedia@icloud.com',

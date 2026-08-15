@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Scale, User, LogOut, Eye, ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext/clean/useAuth";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabaseClient";
 
 const AuthModal = lazy(() => import("./AuthModal").then(m => ({ default: m.AuthModal })));
 const NotificationDropdown = lazy(() => import("./NotificationDropdown").then(m => ({ default: m.NotificationDropdown })));

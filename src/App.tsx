@@ -97,6 +97,7 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const AcceptInvite = lazy(() => import('./pages/auth/AcceptInvite'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
+const PostHogBoundary = lazy(() => import('@/components/PostHogBoundary'));
 const BookingSuccessPage = lazy(() => import('./pages/BookingSuccessPage'));
 const CheckoutResume = lazy(() => import('./pages/CheckoutResume'));
 const QuoteRequestsPage = lazy(() => import('./pages/lawyer/QuoteRequestsPage'));
@@ -421,7 +422,11 @@ const AppContent = () => {
               <Route path="/booking/failure" element={<PaymentFailure />} />
               <Route path="/booking/pending" element={<PaymentPending />} />
               <Route path="/booking/success" element={<BookingSuccessPage />} />
-              <Route path="/booking/:lawyerId" element={<BookingPage />} />
+              <Route path="/booking/:lawyerId" element={
+                <PostHogBoundary>
+                  <BookingPage />
+                </PostHogBoundary>
+              } />
               <Route path="/checkout/:bookingId" element={<CheckoutResume />} />
 
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import posthog from 'posthog-js';
+import { posthog } from '@/lib/posthogLoader';
 import { useAuth } from '@/hooks/useAuthState';
 import { toast } from '@/components/ui/use-toast';
 import {

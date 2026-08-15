@@ -6,42 +6,35 @@ import { HelmetProvider } from 'react-helmet-async';
 import App from './App';
 import './index.css';
 
-import posthog from "posthog-js";
-import { PostHogProvider } from "@posthog/react";
+import { loadPostHog, posthog } from './lib/posthogLoader';
 import { isTestHostname, isOwnerActive, isOwnerDevice } from './lib/owner';
 
-const posthogKey = import.meta.env.VITE_POSTHOG_KEY || 'phc_CSTbdRjVd5ffcXTJNXS8ZgNtfir4AA3TzU2CTrpvU73C';
-const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
-
-posthog.init(posthogKey, {
-  api_host: posthogHost,
-  defaults: '2026-01-30',
-  person_profiles: 'identified_only',
-  // P1: Session Recording se difiere hasta después del critical path. Con
-  // disable_session_recording=true posthog-js NO carga posthog-recorder.js al
-  // inicio; se activa más abajo con startSessionRecording() en requestIdleCallback,
-  // así el recorder no compite con el primer render de la landing.
-  disable_session_recording: true,
-});
-
-// P1/P2: Activar Session Recording cuando el navegador esté idle (o tras un
-// timeout de respaldo). Retrasa la carga de posthog-recorder.js hasta después de
-// pintar. IMPORTANTE: startSessionRecording() SIN args respeta el trigger remoto
-// de /decide (solo /booking*). Con `true` se forzaría el override de url_trigger
+// P1/P2: posthog-js se carga diferido (fuera del critical path de la landing).
+// Con `import('posthog-js')` dinámico, el chunk (~73KB gzip) solo se solicita
+// cuando el navegador está idle. Los eventos/registros tempranos se encolan en
+// posthogLoader y se reproducen al inicializar, así no se pierde data.
+// IMPORTANTE: startSessionRecording() SIN args respeta el trigger remoto de
+// /decide (solo /booking*). Con `true` se forzaría el override de url_trigger
 // y el recorder (61KB) cargaría también en la landing — justo lo que evitamos.
 if (typeof window !== 'undefined') {
   const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void };
-  const startRecordingWhenIdle = () => {
+  const initPostHogWhenIdle = () => {
     try {
-      posthog.startSessionRecording();
+      loadPostHog().then(() => {
+        try {
+          posthog.startSessionRecording();
+        } catch {
+          // Nunca bloquear el boot de la app por session recording
+        }
+      });
     } catch {
-      // Nunca bloquear el boot de la app por session recording
+      // Nunca bloquear el boot de la app por analytics
     }
   };
   if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(startRecordingWhenIdle, { timeout: 4000 });
+    win.requestIdleCallback(initPostHogWhenIdle, { timeout: 4000 });
   } else {
-    win.setTimeout(startRecordingWhenIdle, 3000);
+    win.setTimeout(initPostHogWhenIdle, 3000);
   }
 }
 
@@ -174,19 +167,17 @@ sessionStorage.removeItem('asset_reload_count');
 // Renderizar la aplicación
 root.render(
   <StrictMode>
-    <PostHogProvider client={posthog}>
-      <HelmetProvider>
-        <ThemeProvider>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <AppWrapper />
-          </BrowserRouter>
-        </ThemeProvider>
-      </HelmetProvider>
-    </PostHogProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppWrapper />
+        </BrowserRouter>
+      </ThemeProvider>
+    </HelmetProvider>
   </StrictMode>
 );
