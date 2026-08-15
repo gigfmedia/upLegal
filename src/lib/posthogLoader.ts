@@ -19,6 +19,7 @@ export const loadPostHog = (): Promise<PostHog> => {
         defaults: '2026-01-30',
         person_profiles: 'identified_only',
         disable_session_recording: true,
+        disable_surveys: true,
       });
       posthogInstance = posthog;
       const queued = pendingCalls.splice(0, pendingCalls.length);
