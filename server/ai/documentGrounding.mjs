@@ -15,7 +15,13 @@
 // ---------------------------------------------------------------------------
 
 import { chunkText, scoreChunk, tokenize } from './legalChatPrompt.mjs';
-import { resolveClaimFragment, fragmentSupportsClaim, DOCUMENT_SIGNAL_RE } from './jurisprudenceSources.mjs';
+import {
+  resolveClaimFragment,
+  fragmentSupportsClaim,
+  DOCUMENT_SIGNAL_RE,
+  GENERIC_LEGAL_SIGNAL_RE,
+  hasCaseReferenceSignal,
+} from './jurisprudenceSources.mjs';
 
 // Límites del presupuesto documental (coherentes con el chunking de Fase 3).
 export const DOCUMENT_GROUNDING_LIMITS = {
@@ -371,27 +377,47 @@ export function verifyDocumentClaims(claims, docsById, workspaceId = null, lawye
  *     (norma/jurisprudencia/doctrina): se usan fuentes públicas + evidencia.
  *   - 'none'     → sin señal documental: flujo clásico de investigación.
  * También expone flags para la ruta (noEvidence = señal documental sin documentos).
+ * Fase 4.2.9: añade el fallback documental (hasCaseReferenceSignal) y la señal
+ * jurídica genérica (GENERIC_LEGAL_SIGNAL_RE, P2) al polo legal.
  * @param {string} query
  * @param {object[]} documents - Documentos disponibles del caso.
  * @param {object|null} [classification] - Salida de classifyLegalQuery.
- * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
+ * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, fallbackSignal: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
  */
 export function detectDocumentMode(query, documents = [], classification = null) {
   const cls = classification || {};
+  const normQuery = String(query || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
   const hasDocumentSignal =
-    Boolean(cls.documentSignal) || DOCUMENT_SIGNAL_RE.test(String(query || ''));
+    Boolean(cls.documentSignal) || DOCUMENT_SIGNAL_RE.test(normQuery);
   const hasLegal =
     (Array.isArray(cls.normCitations) && cls.normCitations.length > 0) ||
     (Array.isArray(cls.articleCitations) && cls.articleCitations.length > 0) ||
     (Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0) ||
-    (Array.isArray(cls.doctrineSignals) && cls.doctrineSignals.length > 0);
+    (Array.isArray(cls.doctrineSignals) && cls.doctrineSignals.length > 0) ||
+    GENERIC_LEGAL_SIGNAL_RE.test(normQuery);
   const hasDocs = Array.isArray(documents) && documents.length > 0;
+  // Fase 4.2.9 (P1): fallback documental. Si hay documentos del caso y la
+  // consulta menciona una ESTRUCTURA del expediente (cláusula, partes, hechos,
+  // oficios, prisión preventiva…) sin haber disparado la señal primaria, se
+  // activa el modo documento para no descartar en silencio el expediente.
+  // Nunca aplica a consultas puramente jurídicas (bloqueo por jurisprudencia
+  // sobre tópico abstracto) y como exige hasDocs jamás produce noEvidence.
+  const fallbackSignal =
+    hasDocs &&
+    !hasDocumentSignal &&
+    hasCaseReferenceSignal(normQuery, {
+      hasJurisprudence:
+        Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0,
+    });
+  const documentSignal = hasDocumentSignal || fallbackSignal;
   // Fase 4.2.6: la señal documental sin evidencia NO debe bloquear la consulta
   // cuando además hay polo jurídico (modo mixto): la ausencia de documentos NO
   // debe provocar errores artificiales ni cortar la investigación legal, que
   // sigue siendo respondible con fuentes públicas. El gate solo aplica a
   // consultas PURAMENTE documentales (sin polo jurídico al que recurrir).
-  const noEvidence = hasDocumentSignal && !hasDocs && !hasLegal;
-  const mode = !hasDocumentSignal ? 'none' : hasLegal ? 'mixed' : 'document';
-  return { mode, documentSignal: hasDocumentSignal, hasDocs, hasLegal, noEvidence };
+  const noEvidence = documentSignal && !hasDocs && !hasLegal;
+  const mode = !documentSignal ? 'none' : hasLegal ? 'mixed' : 'document';
+  return { mode, documentSignal, fallbackSignal, hasDocs, hasLegal, noEvidence };
 }

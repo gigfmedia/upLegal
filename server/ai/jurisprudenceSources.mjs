@@ -2199,16 +2199,111 @@ const APPLICATION_SIGNAL_RE = /\b(?:puedo|puede|pueden|podr[ií]a|podr[ií]an|se
 // escritura?", "esta cláusula..."). Conservadora a propósito: NO matchea
 // "puedo terminar el contrato por incumplimiento" (sin demostrativo ni verbo
 // lector), que debe seguir clasificándose como aplicación normativa.
-const DOCUMENT_NOUN_RE = '(?:contrato|documento|escritura|clausula|escrito|finiquito|demanda|acta)';
+// Fase 4.2.9 (P1): se amplía el léxico de sustantivos con los tipos de piezas
+// típicos de un expediente y se añaden FAMILIAS de patrones (construcción
+// "X del contrato", "hechos del caso", eventos procesales, fecha/tiempo de
+// detención o prisión preventiva) para corregir los falsos negativos de la
+// auditoría 4.2.8 (D2, D4, G3 → mode none). Se evita a propósito el patrón más
+// amplio [artículo definido + "contrato"] suelto ("puedo terminar el
+// contrato") para no secuestrar la aplicación normativa (invariante 4.2.6).
+const DOCUMENT_NOUN_RE =
+  '(?:contrato|documento|expediente|escritura|clausula|escrito|finiquito|demanda|acta|oficio|informe|solicitud|resolucion|obligacion|canon)';
 const DOCUMENT_ANALYSIS = 'DOCUMENT_ANALYSIS';
+// Corre sobre texto NFD (acentos separados y eliminados): los sustantivos van
+// en base ASCII. Seis familias de patrones, todas con anclas \b:
+//   1) deíctico + sustantivo          "esta cláusula", "dicho escrito"
+//   2) verbo lector + artículo        "¿qué dice el contrato?"
+//   3) "X del contrato/documento…"    "partes del contrato", "cláusula del
+//                                      contrato", "obligaciones de la causa"
+//   4) "hechos (relevantes) del caso"
+//   5) eventos procesales             "se presentó", "lo solicitado"
+//   6) fecha/tiempo de detención/PP   "fecha de detención", "meses en prisión
+//                                      preventiva"
 export const DOCUMENT_SIGNAL_RE = new RegExp(
-  '\\b(?:este|esta|estos|estas|ese|esa|esos|esas|aquel|aquella|aquellos|aquellas|dicho|dicha|dichos|dichas|referido|referida|mencionado|mencionada)\\s+' +
+  '\\b(?:' +
+    '(?:este|esta|estos|estas|ese|esa|esos|esas|aquel|aquella|aquellos|aquellas|dicho|dicha|dichos|dichas|referido|referida|mencionado|mencionada)\\s+' +
     DOCUMENT_NOUN_RE +
-    '\\b|\\b(?:dice|establece|senala|indica|expresa|contiene)\\s+(?:el|la)\\s+' +
+    '\\b|' +
+    '(?:dice|establece|senala|indica|expresa|contiene|menciona|dispone)\\s+(?:el|la|los|las)\\s+' +
     DOCUMENT_NOUN_RE +
-    '\\b',
+    '\\b|' +
+    '(?:partes|termino|obligaciones|clausula|clausulas|hechos|antecedentes|contenido|vigencia|objeto|condiciones|disposiciones|estipulaciones|canon)\\s+del\\s+(?:contrato|documento|expediente|escritura|finiquito|demanda|acta)\\b' +
+    '|(?:partes|hechos|antecedentes|termino|obligaciones)\\s+de\\s+la\\s+causa\\b' +
+    '|' +
+    '(?:hechos|antecedentes)(?:\\s+(?:relevantes|principales|m[áa]s))?\\s+del\\s+caso\\b' +
+    '|' +
+    '\\b(?:se\\s+present(?:o|aron|ado)|se\\s+envi(?:o|aron|ado)|se\\s+pidio|se\\s+solicito|lo\\s+solicitado|lo\\s+presentado|lo\\s+enviado|se\\s+acompano|se\\s+adjunto)\\b' +
+    '|' +
+    '\\b(?:fecha|tiempo|d[ií]as|meses|semanas|a[ñn]os|periodo)\\b.{0,25}\\b(?:la\\s+)?(?:detencion|prision\\s+preventiva|cautela)\\b)',
   'i'
 );
+
+// 4.5b) Señal JURÍDICA GENÉRICA (Fase 4.2.9, P2 de la auditoría 4.2.8): frases
+// que expresan consulta legal SIN citar una norma concreta ("según la
+// normativa aplicable", "qué fuentes jurídicas", "qué normas o fallos podrían
+// ser aplicables"). No crea intent nuevo ni citación: solo dota de polo
+// jurídico (hasLegal) a consultas que de otro modo caerían a modo 'document'
+// con presupuesto legal 0 (E2, E3, G2 → mixed). La usa detectDocumentMode.
+export const GENERIC_LEGAL_SIGNAL_RE = new RegExp(
+  '\\b(?:' +
+    'seg[uú]n\\s+la\\s+normativa\\s+aplicable|' +
+    'la\\s+normativa\\s+(?:aplicable|vigente)|' +
+    'normativa\\s+vigente|' +
+    'legislaci[oó]n\\s+vigente|' +
+    'fuentes?\\s+jur[ií]dic[oa]s?|' +
+    'qu[ée]\\s+fuentes?\\s+jur[ií]dicas?|' +
+    'qu[ée]\\s+normativa\\s+(?:aplica|rige|aplicable|vigente)|' +
+    'normas?\\s+o\\s+fallos?|' +
+    'fallos?\\s+o\\s+normas?|' +
+    'qu[ée]\\s+normas?\\s+o\\s+fallos?\\s+(?:podr[ií]an|podr[ií]a|deber[ií]an)?\\s+(?:ser\\s+)?aplicables?' +
+    ')',
+  'i'
+);
+
+// 4.5c) Señal de ESTRUCTURA DE EXPEDIENTE (Fase 4.2.9, fallback documental):
+// cuando la consulta NO dispara DOCUMENT_SIGNAL_RE pero hay documentos
+// disponibles y menciona una estructura del expediente (cláusula, partes,
+// hechos, antecedentes, oficios, escrito, resolución, informe, audiencia,
+// solicitud, presentación, detención, prisión preventiva, cautela), se activa
+// el modo documento para no descartar en silencio el documento del caso (P1).
+// "contrato" a propósito NO está en la lista core: "puedo terminar el
+// contrato" sigue siendo aplicación normativa (invariante 4.2.6).
+const CASE_STRUCTURE_NOUNS =
+  '(?:clausula|clausulas|partes|hechos|antecedentes|oficios?|escrito|resolucion|informe|audiencia|solicitud|presentacion|detencion|prision\\s+preventiva|cautela|cautelas)';
+export const CASE_STRUCTURE_SIGNAL_RE = new RegExp(
+  '\\b(?:' +
+    '(?:el|la|los|las|un|una|unos|unas|alg[uú]n|alguna|alg[uú]nas|dicho|dicha|dichos|dichas|tales|esos|esas|estos|estas|nuestros|nuestras|sus|mi|mis)\\s+' +
+    CASE_STRUCTURE_NOUNS +
+    '\\b|' +
+    'qu[ée]\\s+(?:contienen|dicen|establecen)\\s+(?:los|las)\\s+(?:hechos|antecedentes|oficios|clausulas)|' +
+    'qui[eé]nes\\s+son\\s+las\\s+partes' +
+    '|' +
+    '(?:partes|hechos|antecedentes|clausula|clausulas|oficios?|escrito|resolucion|informe|audiencia|solicitud|detencion|cautela)\\s+del\\s+(?:caso|expediente|causa|documento)\\b)',
+  'i'
+);
+
+/**
+ * Fallback documental de la Fase 4.2.9: true si la consulta menciona una
+ * ESTRUCTURA del expediente aunque no haya disparado DOCUMENT_SIGNAL_RE. Solo
+ * lo invoca detectDocumentMode cuando hay documentos (hasDocs). Se bloquea
+ * cuando la consulta es jurisprudencia sobre un tópico abstracto ("¿Qué ha
+ * dicho el TC sobre la prisión preventiva?") para no robar consultas de
+ * jurisprudencia pura.
+ * @param {string} query
+ * @param {{ hasJurisprudence?: boolean }} [opts]
+ * @returns {boolean}
+ */
+export function hasCaseReferenceSignal(query, opts = {}) {
+  const { hasJurisprudence = false } = opts;
+  const text = String(query || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+  if (!text) return false;
+  if (!CASE_STRUCTURE_SIGNAL_RE.test(text)) return false;
+  if (hasJurisprudence && /\bsobre\b/.test(text)) return false;
+  return true;
+}
 
 // 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
 const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
