@@ -35,6 +35,7 @@ import {
 import {
   detectDocumentMode,
   selectDocumentEvidence,
+  shouldAllowDocumentOnlyFallback,
   DOCUMENT_GROUNDING_LIMITS,
 } from './server/ai/documentGrounding.mjs';
 import {
@@ -8154,11 +8155,31 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
       });
     }
 
+    // Fase 4.2.12 (H5): si el retrieval público no encontró fuentes pero el caso
+    // tiene documentos y la consulta es documental-compatible (no exige
+    // jurisprudencia/doctrina/artículo/norma externa), se responde SOLO con la
+    // evidencia documental en vez de cortar con NO_SOURCES_FOUND. Consultas cuyo
+    // polo esencial es público (JURISPRUDENCE_LOOKUP, ARTICLE_LOOKUP, etc.)
+    // conservan el 422 (no se fabrica jurisprudencia desde el documento).
     if (documentMode !== 'document' && sources.length === 0) {
-      return res.status(422).json({
-        error:
-          'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.',
-        code: 'NO_SOURCES_FOUND',
+      const allowDocumentOnly = shouldAllowDocumentOnlyFallback({
+        documentMode,
+        intent: effectiveClassification.intent || classification.intent,
+        hasDocs: caseDocuments.length > 0,
+      });
+      if (!allowDocumentOnly) {
+        return res.status(422).json({
+          error:
+            'No encontramos jurisprudencia ni normativa en las fuentes públicas consultadas. Prueba con otros términos.',
+          code: 'NO_SOURCES_FOUND',
+        });
+      }
+      logDiagnostic('ai_research_document_only_fallback', {
+        intent: effectiveClassification.intent || classification.intent,
+        document_mode: documentMode,
+        documents_considered: caseDocuments.length,
+        sources_total: sources.length,
+        query_hash: queryHash,
       });
     }
 

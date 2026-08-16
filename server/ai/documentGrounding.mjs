@@ -21,6 +21,9 @@ import {
   DOCUMENT_SIGNAL_RE,
   GENERIC_LEGAL_SIGNAL_RE,
   hasCaseReferenceSignal,
+  hasCaseContentReference,
+  extractSubstantiveTerms,
+  normalizeClaimTokens,
 } from './jurisprudenceSources.mjs';
 
 // Límites del presupuesto documental (coherentes con el chunking de Fase 3).
@@ -61,6 +64,238 @@ function normalizeForPresence(text) {
 
 /** Prefijo de los fragment_id deterministas de documentos. */
 export const DOCUMENT_FRAGMENT_PREFIX = 'document';
+
+// ---------------------------------------------------------------------------
+// Fase 4.2.12 (H4): verificación NIVEL 2 de claims documentales, tolerante a
+// paráfrasis de hechos EXISTENTES y sin debilitar la anti-alucinación.
+// El Nivel 1 (fragmentSupportsClaim) es solape léxico: paráfrasis válidas
+// ("La vigencia contractual es de 12 meses" vs "una duración de doce meses") se
+// descartaban y dejaban consultas válidas en NO_EVIDENCE (no-determinismo D4/M1
+// de la auditoría 4.2.11). Esta verificación estructural extrae los HECHOS
+// VERIFICABLES del claim (números/montos y roles de las partes) y los contrasta
+// contra el fragmento real del documento:
+//   - 'reject': el claim cita un número/monto ausente en el fragmento (renta
+//     $700.000 vs $500.000) o asigna un ROL distinto al que el fragmento
+//     respalda ("propietaria" vs "arrendadora") → se descarta, aunque Nivel 1
+//     lo hubiera aceptado por solape parcial.
+//   - 'accept': el claim tiene números/roles respaldados por el fragmento y al
+//     menos un término sustantivo compartido → paráfrasis válida de un hecho.
+//   - 'neutral': sin hechos verificables → decide solo el Nivel 1.
+// Determinístico (sin LLM ni embeddings), puro y testeable.
+// ---------------------------------------------------------------------------
+
+// Palabras numéricas españolas → dígitos (base NFD). Cubre los montos/plazos
+// habituales de un contrato ("doce meses", "quinientos mil", "dos meses"). Los
+// artículos "un/uno/una" NO cuentan como hecho numérico (evitan falsos rechazos
+// de paráfrasis con artículos: "una renta de 500.000").
+const SPANISH_NUMBER_WORDS = {
+  cero: 0, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5,
+  seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12,
+  trece: 13, catorce: 14, quince: 15, veinte: 20, treinta: 30, cuarenta: 40,
+  cincuenta: 50, sesenta: 60, setenta: 70, ochenta: 80, noventa: 90,
+  cien: 100, ciento: 100, doscientos: 200, trescientos: 300, cuatrocientos: 400,
+  quinientos: 500, seiscientos: 600, setecientos: 700,
+  ochocientos: 800, novecientos: 900, mil: 1000, millon: 1000000, millones: 1000000,
+};
+
+/** Extrae los hechos NUMÉRICOS (dígitos y palabras de número) de un texto. */
+function extractNumericFacts(text) {
+  const lower = String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const facts = new Set();
+  for (const m of lower.match(/\d{1,3}(?:[.,]\d{3})+|\d+/g) || []) {
+    const n = parseInt(m.replace(/[.,]/g, ''), 10);
+    if (Number.isFinite(n)) facts.add(n);
+  }
+  // Compone palabras de número ("quinientos mil" → 500000, "doce meses" → 12).
+  // Las palabras de número NO contiguas (separadas por términos no numéricos)
+  // son hechos distintos ("doce meses" y "cinco días" → 12 y 5, no 17).
+  const words = lower.split(/[^a-z0-9ñ]+/).filter((w) => w !== 'un' && w !== 'uno' && w !== 'una');
+  let current = 0;
+  const parts = [];
+  const flush = () => {
+    if (current) {
+      parts.push(current);
+      current = 0;
+    }
+  };
+  for (const w of words) {
+    if (!Object.prototype.hasOwnProperty.call(SPANISH_NUMBER_WORDS, w)) {
+      flush();
+      continue;
+    }
+    const n = SPANISH_NUMBER_WORDS[w];
+    if (n < 100) {
+      current += n;
+    } else if (n === 100) {
+      current = (current || 1) * n;
+    } else if (n === 1000 || n === 1000000) {
+      parts.push((current || 1) * n);
+      current = 0;
+    }
+  }
+  flush();
+  for (const p of parts) facts.add(p);
+  return [...facts];
+}
+
+// Roles de las partes típicos de un documento contractual/procesal. Si el claim
+// asigna un rol que el fragmento NO respalda (o contradice con otro rol), el
+// claim no se presenta como evidencia (anti-alucinación de H4).
+const DOCUMENT_ROLE_TERMS = new Set([
+  'arrendador', 'arrendadora', 'arrendatario', 'arrendataria',
+  'propietario', 'propietaria', 'dueno', 'duena', 'demandante',
+  'demandado', 'demandada', 'locador', 'locadora', 'locatario', 'locataria',
+  'fiador', 'fiadora', 'cedente', 'cesionario', 'cesionaria',
+  'heredero', 'heredera', 'conyuge', 'mandante', 'mandatario',
+  'comprador', 'compradora', 'vendedor', 'vendedora',
+  'comodante', 'comodatario', 'aval', 'avales', 'codemandado', 'codemandada',
+]);
+
+// Normaliza el GÉNERO de los roles para no rechazar paráfrasis válidas por
+// flexión ("la arrendataria" vs "el arrendatario" es el MISMO rol). La
+// distinción de rol se mantiene: "propietaria" → "propietario" sigue siendo un
+// rol distinto de "arrendador".
+const ROLE_CANONICAL_FORM = new Map([
+  ['arrendadora', 'arrendador'],
+  ['arrendataria', 'arrendatario'],
+  ['duena', 'dueno'],
+  ['propietaria', 'propietario'],
+  ['demandada', 'demandado'],
+  ['locadora', 'locador'],
+  ['locataria', 'locatario'],
+  ['fiadora', 'fiador'],
+  ['cesionaria', 'cesionario'],
+  ['heredera', 'heredero'],
+  ['compradora', 'comprador'],
+  ['vendedora', 'vendedor'],
+  ['codemandada', 'codemandado'],
+]);
+
+/** Roles de las partes mencionados por el claim (base NFD, forma canónica). */
+function extractRoleWords(text) {
+  return [
+    ...new Set(
+      normalizeClaimTokens(text)
+        .filter((t) => DOCUMENT_ROLE_TERMS.has(t))
+        .map((t) => ROLE_CANONICAL_FORM.get(t) || t),
+    ),
+  ];
+}
+
+// Términos DÉBILES para la ancla sustantiva del Nivel 2: referencias genéricas
+// al documento/caso que aparecen en casi todo el texto ("el contrato garantiza
+// tres inmuebles adicionales" NO puede anclarse a "CLÁUSULA ADICIONAL 3" solo
+// porque ambos mencionan "contrato" y el número "3"). Los números del claim se
+// validan por separado; su palabra no cuenta como ancla semántica.
+const WEAK_ACCEPT_TERMS = new Set([
+  ...Object.keys(SPANISH_NUMBER_WORDS),
+  'contrato', 'documento', 'expediente', 'escritura', 'finiquito', 'demanda',
+  'acta', 'oficio', 'informe', 'solicitud', 'resolucion', 'escrito', 'caso',
+  'causa', 'partes', 'clausula', 'clausulas',
+]);
+
+/** Verifica si un término aparece como PALABRA COMPLETA en texto normalizado. */
+function hasWordTerm(normText, term) {
+  const escaped = String(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9ñ])${escaped}($|[^a-z0-9ñ])`).test(normText);
+}
+
+/**
+ * Nivel 2 de verificación documental (H4). Devuelve:
+ *   - 'reject': el claim contradice/no respalda hechos verificables del fragmento.
+ *   - 'accept': el claim es una paráfrasis válida de hechos presentes en el
+ *     fragmento (números/roles respaldados + ancla sustantiva fuerte compartida).
+ *   - 'neutral': sin hechos verificables; decide el Nivel 1 (fragmentSupportsClaim).
+ * @param {string} claimText
+ * @param {string} fragmentText
+ * @returns {'accept'|'reject'|'neutral'}
+ */
+export function checkDocumentClaimFacts(claimText, fragmentText) {
+  const ff = normalizeForPresence(fragmentText);
+  const claim = String(claimText || '').trim();
+  if (!ff || claim.length < 4) return 'neutral';
+
+  const claimNumbers = extractNumericFacts(claim);
+  const fragmentNumbers = extractNumericFacts(fragmentText);
+  // Rechazo por número/monto: un hecho numérico del claim ausente en el
+  // fragmento es una cifra no soportada o contradicha.
+  if (
+    claimNumbers.length > 0 &&
+    !claimNumbers.every((n) => fragmentNumbers.includes(n))
+  ) {
+    return 'reject';
+  }
+
+  const claimRoles = extractRoleWords(claim);
+  const fragmentRoles = extractRoleWords(fragmentText);
+  // Rechazo por rol: el claim asigna un rol distinto al respaldado por el
+  // fragmento ("propietaria" cuando el documento dice "arrendadora").
+  if (
+    claimRoles.length > 0 &&
+    fragmentRoles.length > 0 &&
+    claimRoles.every((r) => !fragmentRoles.includes(r))
+  ) {
+    return 'reject';
+  }
+
+  // Aceptación por hechos verificables: un número respaldado + un término
+  // sustantivo FUERTE compartido en la MISMA oración del fragmento (el número
+  // es la evidencia del hecho y debe co-ocurrir con la ancla; si el claim solo
+  // tiene rol, el rol debe co-ocurrir con la ancla). La co-ocurrencia evita que
+  // un número de cláusula o encabezado ("CLÁUSULA ADICIONAL 3") respalde un
+  // hecho ("tres propiedades") junto a un término de otra oración
+  // ("arrendatario").
+  const claimStrongTerms = extractSubstantiveTerms(claim).filter(
+    (t) => !WEAK_ACCEPT_TERMS.has(t),
+  );
+  const sentences = String(fragmentText).split(/(?:\.(?!\d)|\n|[;!?])+/);
+  const anchoredInSentence = sentences.some((sentence) => {
+    const hasStrong = claimStrongTerms.some((t) => hasWordTerm(sentence, t));
+    if (!hasStrong) return false;
+    if (claimNumbers.length > 0) {
+      return claimNumbers.some((n) => extractNumericFacts(sentence).includes(n));
+    }
+    const sentenceRoles = extractRoleWords(sentence);
+    return claimRoles.some((r) => sentenceRoles.includes(r));
+  });
+  if ((claimNumbers.length > 0 || claimRoles.length > 0) && anchoredInSentence) {
+    return 'accept';
+  }
+  return 'neutral';
+}
+
+/**
+ * Decisión H5 (Fase 4.2.12): si el caso tiene documentos y la consulta cayó a
+ * modo 'document'/'mixed' pero el retrieval público no encontró NINGUNA fuente
+ * (sources.length === 0), ¿se permite responder SOLO con la evidencia
+ * documental? Se permite cuando el documento del caso es suficiente y la
+ * consulta NO exige fuentes públicas (jurisprudencia/doctrina/artículo/norma).
+ * Consultas cuyo polo esencial es normativa o jurisprudencia externa se quedan
+ * con NO_SOURCES_FOUND (no se fabrica jurisprudencia desde el documento).
+ * @param {{ documentMode?: 'none'|'document'|'mixed', intent?: string, hasDocs?: boolean }} [input]
+ * @returns {boolean}
+ */
+const REQUIRES_PUBLIC_EVIDENCE_INTENTS = new Set([
+  'BARE_NORM_CITATION',
+  'ARTICLE_LOOKUP',
+  'NORMATIVE_APPLICATION',
+  'JURISPRUDENCE_LOOKUP',
+  'DOCTRINE_LOOKUP',
+  'RELATIONAL_LEGAL_QUERY',
+  'MIXED_NORM_JURISPRUDENCE',
+]);
+export function shouldAllowDocumentOnlyFallback({
+  documentMode = 'none',
+  intent = '',
+  hasDocs = false,
+} = {}) {
+  if (documentMode === 'none') return false;
+  if (!hasDocs) return false;
+  return !REQUIRES_PUBLIC_EVIDENCE_INTENTS.has(String(intent || ''));
+}
 
 /**
  * Fragmenta el texto extraído de un documento en chunks deterministas con id.
@@ -325,13 +560,30 @@ export function verifyDocumentClaims(claims, docsById, workspaceId = null, lawye
     // Re-fragmentado determinista para validar el fragment_id citado.
     const chunks = chunkDocumentText(String(doc.extracted_text || ''), { documentId: doc.id });
     const fragmentById = new Map(chunks.map((f) => [f.id, f]));
+    // Fase 4.2.12 (H4): Nivel 1 (fragmentSupportsClaim, solape léxico) + Nivel 2
+    // (checkDocumentClaimFacts, hechos verificables). El Nivel 2 RESCATA
+    // paráfrasis válidas de hechos existentes y RECHAZA claims que el Nivel 1
+    // hubiera aceptado por solape parcial pero que contradicen números o roles
+    // del fragmento (renta $700.000 vs $500.000, "propietaria" vs "arrendadora").
+    const claimSupportedByFragment = (frag, text) => {
+      if (fragmentSupportsClaim(frag, text)) {
+        return checkDocumentClaimFacts(text, frag.text) !== 'reject';
+      }
+      return checkDocumentClaimFacts(text, frag.text) === 'accept';
+    };
     let aligned = null;
     if (modelFragmentId && fragmentById.has(modelFragmentId)) {
       const candidate = fragmentById.get(modelFragmentId);
-      if (fragmentSupportsClaim(candidate, afirmacionText)) aligned = candidate;
+      if (claimSupportedByFragment(candidate, afirmacionText)) aligned = candidate;
     }
     if (!aligned) {
       aligned = resolveClaimFragment(afirmacionText, chunks);
+    }
+    if (!aligned) {
+      // Fallback H4: ningún fragmento supera el Nivel 1, pero un fragmento real
+      // respalda los HECHOS VERIFICABLES del claim (paráfrasis estructural).
+      aligned =
+        chunks.find((f) => checkDocumentClaimFacts(afirmacionText, f.text) === 'accept') || null;
     }
     if (!aligned) {
       warnings.push(
@@ -342,7 +594,7 @@ export function verifyDocumentClaims(claims, docsById, workspaceId = null, lawye
 
     const evidence = String(aligned.text).trim();
     if (!evidence) continue;
-    if (!fragmentSupportsClaim(aligned, afirmacionText)) {
+    if (!claimSupportedByFragment(aligned, afirmacionText)) {
       warnings.push(
         `Se descartó una afirmación documental cuyo contenido no aparece en el documento "${doc.original_filename}".`,
       );
@@ -379,10 +631,14 @@ export function verifyDocumentClaims(claims, docsById, workspaceId = null, lawye
  * También expone flags para la ruta (noEvidence = señal documental sin documentos).
  * Fase 4.2.9: añade el fallback documental (hasCaseReferenceSignal) y la señal
  * jurídica genérica (GENERIC_LEGAL_SIGNAL_RE, P2) al polo legal.
+ * Fase 4.2.12 (H3): añade la señal de contenido factual del caso
+ * (hasCaseContentReference) para consultas naturales sobre el documento
+ * ("¿Qué riesgos tiene el contrato?", "¿Qué plazo establece?", "¿Se permite
+ * subarrendar?") que 4.2.9 aún dejaba en mode 'none'.
  * @param {string} query
  * @param {object[]} documents - Documentos disponibles del caso.
  * @param {object|null} [classification] - Salida de classifyLegalQuery.
- * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, fallbackSignal: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
+ * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, fallbackSignal: boolean, contentSignal: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
  */
 export function detectDocumentMode(query, documents = [], classification = null) {
   const cls = classification || {};
@@ -411,7 +667,18 @@ export function detectDocumentMode(query, documents = [], classification = null)
       hasJurisprudence:
         Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0,
     });
-  const documentSignal = hasDocumentSignal || fallbackSignal;
+  // Fase 4.2.12 (H3): señal de contenido factual del caso. Como exige hasDocs,
+  // nunca produce noEvidence, y se bloquea internamente ante jurisprudencia o
+  // marco de fuentes públicas.
+  const contentSignal =
+    hasDocs &&
+    !hasDocumentSignal &&
+    !fallbackSignal &&
+    hasCaseContentReference(normQuery, {
+      hasJurisprudence:
+        Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0,
+    });
+  const documentSignal = hasDocumentSignal || fallbackSignal || contentSignal;
   // Fase 4.2.6: la señal documental sin evidencia NO debe bloquear la consulta
   // cuando además hay polo jurídico (modo mixto): la ausencia de documentos NO
   // debe provocar errores artificiales ni cortar la investigación legal, que
@@ -419,5 +686,5 @@ export function detectDocumentMode(query, documents = [], classification = null)
   // consultas PURAMENTE documentales (sin polo jurídico al que recurrir).
   const noEvidence = documentSignal && !hasDocs && !hasLegal;
   const mode = !documentSignal ? 'none' : hasLegal ? 'mixed' : 'document';
-  return { mode, documentSignal, fallbackSignal, hasDocs, hasLegal, noEvidence };
+  return { mode, documentSignal, fallbackSignal, contentSignal, hasDocs, hasLegal, noEvidence };
 }

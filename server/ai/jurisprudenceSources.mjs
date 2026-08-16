@@ -2305,6 +2305,66 @@ export function hasCaseReferenceSignal(query, opts = {}) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Fase 4.2.12 (H3): referencia a CONTENIDO FACTUAL del caso.
+// DOCUMENT_SIGNAL_RE exige deíctico / verbo lector / "X del contrato" y
+// CASE_STRUCTURE_SIGNAL_RE exige estructura del expediente, por lo que consultas
+// naturales sobre el contenido ("¿Qué riesgos tiene el contrato?", "¿Qué plazo
+// establece?", "¿Se permite subarrendar?") caían a mode 'none' y descartaban en
+// silencio el documento del caso (hallazgo H3 de la auditoría 4.2.11). Esta
+// señal cierra esa brecha SIN sobredetectar:
+//   - Familia 1: sustantivo de contenido factual (plazo, renta, riesgo, canon,
+//     garantía…) + referencia al caso/documento/partes, en cualquier orden.
+//   - Familia 2: permiso contractual explícito ("se permite subarrendar",
+//     "se prohíbe terminar el contrato"). Los verbos genéricos (terminar,
+//     renovar, ceder…) exigen objeto contractual para no robar consultas
+//     laborales/públicas ("se permite terminar la relación laboral").
+// Se BLOQUEA ante marco de fuentes públicas ("la ley", "normativa", "artículo",
+// "código", "tribunal", "decreto", "reglamento"…) o señal de jurisprudencia,
+// para no secuestrar consultas jurídicas puras (negativos N1-N5 del spec
+// 4.2.12). Como exige hasDocs en detectDocumentMode jamás produce noEvidence.
+// ---------------------------------------------------------------------------
+const CASE_FACT_NOUNS =
+  '(?:plazo|renta|canon|canones|riesgo|riesgos|garantia|garantias|vigencia|duracion|monto|montos|fecha|fechas|obligacion|obligaciones|hechos|antecedentes|clausula|clausulas|termino|terminos|objeto|subarriendo|subarriendos|subarrendamiento|pago|pagos|valor|valores|comision|comisiones|interes|intereses|multa|multas|penalidad|penalidades|pena|penas)';
+const CASE_REF_ANCHOR =
+  '(?:contrato|documento|expediente|escritura|finiquito|demanda|acta|oficio|informe|solicitud|resolucion|escrito|caso|causa|partes)';
+const PUBLIC_LAW_FRAME_RE =
+  /\b(?:la\s+ley|las\s+leyes|una\s+ley|normativa|legislaci[oó]n|jurisprudencia|doctrina|el\s+tc\b|tribunal|corte\b|art[ií]culo|art\.?\s*\d|c[oó]digo|precepto|disposici[oó]n\s+legal|fuentes?\s+jur[ií]dic|fallos?\b|sentencias?|reglamento|decreto)\b/i;
+const CASE_FACT_CONTENT_RE = new RegExp(
+  `(?=.*(?:${CASE_FACT_NOUNS})\\b)(?=.*\\b(?:${CASE_REF_ANCHOR})\\b)`,
+  'i',
+);
+const CASE_DOCUMENT_PERMISSION_RE = new RegExp(
+  '\\bse\\s+(?:permite|prohibe|autoriza|admite|impide|faculta)\\s+' +
+    '(?:subarrendar|subarriendar|subarrendarlo|' +
+    '(?:terminar|prorrogar|renovar|modificar|modificarlo|traspasar|traspasarlo|ceder|cederlo)\\s+' +
+    '(?:el\\s+)?(?:contrato|documento|arriendo|arrendamiento|inmueble|clausula|clausulas)\\b)',
+  'i',
+);
+
+/**
+ * Fallback documental de la Fase 4.2.12 (H3): true si la consulta pregunta por
+ * CONTENIDO FACTUAL típico del documento del caso (plazo, renta, riesgo,
+ * garantía, subarriendo…) con referencia al caso/documento, o por un permiso
+ * contractual explícito. Solo lo invoca detectDocumentMode cuando hay
+ * documentos (hasDocs). Se bloquea ante jurisprudencia y ante marco de fuentes
+ * públicas para no robar consultas jurídicas puras.
+ * @param {string} query
+ * @param {{ hasJurisprudence?: boolean }} [opts]
+ * @returns {boolean}
+ */
+export function hasCaseContentReference(query, opts = {}) {
+  const { hasJurisprudence = false } = opts;
+  const text = String(query || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+  if (!text) return false;
+  if (hasJurisprudence) return false;
+  if (PUBLIC_LAW_FRAME_RE.test(text)) return false;
+  return CASE_FACT_CONTENT_RE.test(text) || CASE_DOCUMENT_PERMISSION_RE.test(text);
+}
+
 // 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
 const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
 
