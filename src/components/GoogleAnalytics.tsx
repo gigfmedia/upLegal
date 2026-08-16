@@ -60,6 +60,10 @@ const GoogleAnalytics = () => {
     if (import.meta.env.DEV) {
       //console.log(`GA Init: ${GA_MEASUREMENT_ID}`);
     }
+    // Cargar el script real de gtag.js ANTES de encolar config/eventos. Sin esta
+    // llamada, los comandos gtag van al stub del dataLayer pero nunca se envían
+    // (regresión FASE 9: GA4 quedó en 0 porque se perdió la inyección del script).
+    ensureGtagLoaded();
     // Configurar GA4. Si gtag.js ya está (por GTM u otra carga) no se duplica;
     // el config entra al dataLayer igualmente.
     gtag("js", new Date());
