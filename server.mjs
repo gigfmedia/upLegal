@@ -19,7 +19,7 @@ import {
   normalizeAIEmail,
 } from './server/ai/trialIdentity.mjs';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
-import { chatCompletion, isAIProviderConfigured, estimateAICostUsd } from './server/ai/provider.mjs';
+import { chatCompletion, isAIProviderConfigured, estimateAICostUsd, createLlmCallBudget } from './server/ai/provider.mjs';
 import { buildAnalysisSystemPrompt, buildAnalysisUserPrompt } from './server/ai/legalPrompt.mjs';
 import {
   buildChatSystemPrompt,
@@ -8256,6 +8256,10 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
     // helper reintenta SOLO el fallo de formato (máx. 3 intentos, sin incluir
     // la salida inválida en el prompt de reintento). NO reintenta NO_EVIDENCE,
     // errores de provider ni CONTEXT_TOO_LARGE.
+    // Fase 4.2.10: presupuesto global de llamadas compartido entre el retry de
+    // provider (dentro de chatCompletion) y el de schema (aquí): el total de
+    // fetch por request queda acotado y determinista.
+    const llmBudget = createLlmCallBudget();
     const { outcome: outcomeResult, attempts, retryCount, usage } = await runJurisprudenceWithRetry({
       llmCall: (retryInstruction) =>
         chatCompletion({
@@ -8276,6 +8280,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
           ],
           maxTokens: AI_CHAT_MAX_TOKENS,
           temperature: 0.2,
+          budget: llmBudget,
         }),
       sources,
       intent,
@@ -8293,6 +8298,16 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         llm_attempts: attempts,
         llm_retry_count: retryCount,
         llm_valid: outcomeResult.status !== 'invalid_response',
+        model: AI_DEFAULT_MODEL,
+      });
+    }
+
+    // Fase 4.2.10: la recuperación controlada por OUTPUT_TOKEN_LIMIT (salida
+    // compacta, una sola vez) quedó registrada en la respuesta del pipeline.
+    if (outcomeResult.outputLimitRecovered) {
+      logDiagnostic('jurisprudence_output_limit_recovered', {
+        intent,
+        query_hash: queryHash,
         model: AI_DEFAULT_MODEL,
       });
     }
@@ -8407,6 +8422,19 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         provider: 'openrouter',
         model: AI_DEFAULT_MODEL,
         status: error?.status || 429,
+      });
+    }
+
+    // Fase 4.2.10: observabilidad de fallos de infraestructura del proveedor
+    // (timeout, red, 5xx, vacío, límite de llamadas, presupuesto de salida).
+    // Solo metadata; nunca consultas, documentos, claims ni contenido jurídico.
+    if (code.startsWith('AI_PROVIDER_') || code === 'OUTPUT_TOKEN_LIMIT') {
+      logDiagnostic('ai_provider_error', {
+        error_code: code,
+        provider: 'openrouter',
+        model: AI_DEFAULT_MODEL,
+        status: error?.status || null,
+        latency_ms: Number.isFinite(error?.latencyMs) ? error.latencyMs : null,
       });
     }
 

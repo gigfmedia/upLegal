@@ -458,6 +458,12 @@ function errorToMessage(error: AIResearchError | null): string {
       return 'La respuesta superó el presupuesto de tokens. Intenta con una consulta más acotada.';
     case 'AI_PROVIDER_RATE_LIMITED':
       return 'El proveedor de IA está temporalmente limitado. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_TIMEOUT':
+      return 'El servicio de IA está tardando más de lo esperado. Intenta nuevamente.';
+    case 'AI_PROVIDER_EMPTY_RESPONSE':
+      return 'El proveedor de IA no devolvió contenido. Intenta nuevamente en unos minutos.';
+    case 'AI_PROVIDER_CALL_LIMIT':
+      return 'Se alcanzó el límite de llamadas para esta consulta. Intenta nuevamente en unos minutos.';
     case 'AI_PROVIDER_INVALID_RESPONSE':
       return 'El modelo de IA no devolvió una respuesta válida. Intenta nuevamente en unos minutos.';
     case 'AI_PROVIDER_NETWORK':
@@ -477,6 +483,9 @@ function errorToMessage(error: AIResearchError | null): string {
 // autenticación (AI_PROVIDER_AUTH).
 const RETRIABLE_CODES = new Set([
   'AI_PROVIDER_RATE_LIMITED',
+  'AI_PROVIDER_TIMEOUT',
+  'AI_PROVIDER_EMPTY_RESPONSE',
+  'AI_PROVIDER_CALL_LIMIT',
   'AI_PROVIDER_INVALID_RESPONSE',
   'AI_PROVIDER_NETWORK',
   'AI_PROVIDER_SERVER_ERROR',

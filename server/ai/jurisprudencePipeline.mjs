@@ -463,6 +463,14 @@ export const LLM_RETRY_MAX_ATTEMPTS = 3;
 export const LLM_RETRY_PROMPT =
   'La respuesta anterior no cumplió el formato requerido. Responde nuevamente utilizando exclusivamente el JSON solicitado. No agregues markdown, explicaciones ni texto fuera del JSON.';
 
+// Fase 4.2.10: recuperación controlada por OUTPUT_TOKEN_LIMIT. El modelo free
+// (gpt-oss-20b) a veces agota el presupuesto de salida en el razonamiento
+// interno. Se reintenta UNA vez con una instrucción de salida compacta (sin
+// tocar AI_CHAT_MAX_TOKENS ni el presupuesto documental de 4.2.7). Las
+// afirmaciones siguen pasando por el verifier: no se debilita la evidencia.
+export const OUTPUT_TOKEN_LIMIT_RETRY_PROMPT =
+  'La respuesta anterior excedió el límite de tokens de salida. Responde nuevamente SOLO con el JSON solicitado en su forma mínima: resumen breve, la afirmación verificada más relevante por categoría y conclusiones concisas. Omite fragmentos extensos y advertencias redundantes. No agregues texto fuera del JSON.';
+
 function mergeUsage(usages = []) {
   return usages.reduce(
     (acc, u) => ({
@@ -514,11 +522,27 @@ export async function runJurisprudenceWithRetry({
   const usages = [];
   let outcome = null;
   let attempts = 0;
+  let outputLimitRecovered = false;
 
   for (let attempt = 1; attempt <= LLM_RETRY_MAX_ATTEMPTS; attempt += 1) {
     attempts = attempt;
     const retryInstruction = attempt === 1 ? null : LLM_RETRY_PROMPT;
-    const result = await llmCall(retryInstruction);
+
+    let result;
+    try {
+      result = await llmCall(retryInstruction);
+    } catch (error) {
+      // Fase 4.2.10: recuperación controlada por OUTPUT_TOKEN_LIMIT, una sola
+      // vez por request y sin tocar el presupuesto de tokens ni el de contexto.
+      // Cualquier otro error de provider se propaga (no es un fallo de formato:
+      // el retry de schema no aplica a fallos de infraestructura).
+      if (!outputLimitRecovered && error?.code === 'OUTPUT_TOKEN_LIMIT') {
+        outputLimitRecovered = true;
+        result = await llmCall(OUTPUT_TOKEN_LIMIT_RETRY_PROMPT);
+      } else {
+        throw error;
+      }
+    }
     if (result?.usage) usages.push(result.usage);
 
     outcome = buildJurisprudenceOutcome({
@@ -539,5 +563,6 @@ export async function runJurisprudenceWithRetry({
     attempts,
     retryCount: attempts - 1,
     usage: mergeUsage(usages),
+    outputLimitRecovered,
   };
 }

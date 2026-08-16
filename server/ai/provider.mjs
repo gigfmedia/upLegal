@@ -92,8 +92,9 @@ const isRateLimitBody = (body) => {
  * Clasifica un error del proveedor y devuelve un Error tipado.
  * @param {number} status - status HTTP real.
  * @param {string} text - cuerpo de la respuesta (para detectar 429 de OpenRouter).
+ * @param {string|null} retryAfterSeconds - header Retry-After (para backoff).
  */
-export function classifyProviderError(status, text = '') {
+export function classifyProviderError(status, text = '', retryAfterSeconds = null) {
   const raw = String(text || '').slice(0, 300);
   const body = (() => {
     try {
@@ -126,21 +127,68 @@ export function classifyProviderError(status, text = '') {
     retriable = false;
   }
 
+  const parsedRetryAfter = Number(retryAfterSeconds);
   const error = new Error(message);
   error.status = status;
   error.code = code;
   error.retriable = retriable;
+  error.retryAfter =
+    retryAfterSeconds == null || !Number.isFinite(parsedRetryAfter) ? null : parsedRetryAfter;
   error.detail = raw; // solo logging interno, nunca al cliente.
   return error;
 }
 
-// Reintento automático: MÁXIMO 1 reintento y SOLO para errores temporales
-// (429/5xx/red). Nunca para 401/403, ni errores de schema/prompt, ni para
-// multiplicar llamadas caras en modelos free/rate-limited.
-const MAX_TEMP_RETRIES = 1;
-const RETRY_BACKOFF_MS = Number(process.env.AI_PROVIDER_RETRY_BACKOFF_MS) || 800;
+// ---------------------------------------------------------------------------
+// Fase 4.2.10 — resiliencia del proveedor.
+// Timeout por llamada (AbortController), reintentos con backoff que respetan
+// Retry-After, límite global de llamadas por request y errores TIPADOS que se
+// distinguen con certeza de NO_EVIDENCE (nunca se convierten en "no hay
+// evidencia"). Configurable vía env (backend-only):
+//   AI_PROVIDER_TIMEOUT_MS      → timeout total por fetch (por defecto 60000 ms)
+//   AI_PROVIDER_RETRY_BACKOFF_MS→ backoff base (por defecto 1000 ms)
+// ---------------------------------------------------------------------------
+const AI_PROVIDER_TIMEOUT_MS = 60000; // por defecto; se lee del env al momento de la llamada.
+
+// Reintentos máximos ante errores temporales (429/5xx/red/vacío). Nunca para
+// 401/403, ni errores de schema/prompt. El presupuesto global por request
+// (MAX_LLM_CALLS_PER_REQUEST) impide que provider + schema retry se multipliquen
+// sin cota: cada llamada agota el mismo budget compartido.
+const MAX_PROVIDER_RETRIES = 2;
+const RETRY_BACKOFF_MS = Number(process.env.AI_PROVIDER_RETRY_BACKOFF_MS) || 1000;
+const MAX_RETRY_AFTER_MS = 5000; // tope para Retry-After (no bloquear al abogado)
+const MAX_LLM_CALLS_PER_REQUEST = 6; // presupuesto global de llamadas por request
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Delay de reintento: respeta el header Retry-After del proveedor (con tope) o
+ * usa backoff lineal por intento. Puro y testeable.
+ * @param {{ attempt: number, retryAfterSeconds?: number|null,
+ *   baseBackoffMs?: number, maxRetryAfterMs?: number }} input
+ */
+export function resolveRetryDelayMs({
+  attempt,
+  retryAfterSeconds = null,
+  baseBackoffMs = RETRY_BACKOFF_MS,
+  maxRetryAfterMs = Number(process.env.AI_PROVIDER_MAX_RETRY_AFTER_MS) || MAX_RETRY_AFTER_MS,
+}) {
+  if (attempt <= 0) return 0;
+  const seconds = Number(retryAfterSeconds);
+  if (Number.isFinite(seconds) && seconds > 0) {
+    return Math.min(seconds * 1000, maxRetryAfterMs);
+  }
+  return baseBackoffMs * attempt;
+}
+
+/**
+ * Presupuesto compartido de llamadas al LLM para una MISMA request (Fase
+ * 4.2.10). Se crea en la ruta y se comparte entre el retry de provider (dentro
+ * de chatCompletion) y el retry de schema (runJurisprudenceWithRetry) para que
+ * el total de fetch por request sea determinista y acotado.
+ */
+export function createLlmCallBudget(maxCalls = MAX_LLM_CALLS_PER_REQUEST) {
+  return { maxCalls: Math.max(1, maxCalls), calls: 0 };
+}
 
 /**
  * Realiza un chat completion y devuelve:
@@ -156,7 +204,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * No lanza por "JSON inválido": entrega `data: null` y deja que el llamador
  * decida (p. ej. el chat usa `raw` como respuesta directa).
  */
-export async function chatCompletion({ model, system, user, messages, maxTokens = 4000, temperature = 0.2 }) {
+export async function chatCompletion({ model, system, user, messages, maxTokens = 4000, temperature = 0.2, budget = null }) {
+  const startedAt = Date.now();
   const apiKey = getApiKey();
   const baseUrl = getBaseUrl();
 
@@ -183,7 +232,30 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
   };
 
   const attempt = async (withJsonMode) => {
+    // Fase 4.2.10: presupuesto global compartido (provider + schema retry).
+    // Al agotarse se lanza un error tipado NO reintentable: el total de fetch
+    // por request queda determinista y acotado.
+    if (budget) {
+      if (budget.calls >= budget.maxCalls) {
+        const err = new Error(
+          'Se alcanzó el límite de llamadas al proveedor de IA para esta consulta. Intenta nuevamente en unos minutos.'
+        );
+        err.status = 503;
+        err.code = 'AI_PROVIDER_CALL_LIMIT';
+        err.retriable = false;
+        throw err;
+      }
+      budget.calls += 1;
+    }
+
     const body = withJsonMode ? payload : { ...payload, response_format: undefined };
+    // Fase 4.2.10: timeout por llamada con AbortController. Se lee del env en
+    // cada llamada para permitir ajuste por entorno/test sin reiniciar el módulo.
+    // Si se aborta por nuestro timer se tipa como AI_PROVIDER_TIMEOUT (distinto
+    // de NO_EVIDENCE); si el AbortError viene de fuera, cae como fallo de red.
+    const timeoutMs = Number(process.env.AI_PROVIDER_TIMEOUT_MS) || AI_PROVIDER_TIMEOUT_MS;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     let response;
     try {
       response = await fetch(`${baseUrl}/chat/completions`, {
@@ -193,8 +265,23 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
     } catch (netError) {
+      if (controller.signal.aborted) {
+        // Abortó nuestro timer de timeout: fallo TIPADO, distinto de NO_EVIDENCE.
+        const error = new Error(
+          'El servicio de IA está tardando más de lo esperado. Intenta nuevamente.'
+        );
+        error.status = 504;
+        error.code = 'AI_PROVIDER_TIMEOUT';
+        error.retriable = false;
+        error.detail = 'request timed out'; // solo logging interno.
+        throw error;
+      }
+      // Fallo de red (ECONNRESET/ECONNREFUSED/ETIMEDOUT/UND_ERR_CONNECT_TIMEOUT/
+      // socket hang up/fetch failed). Un AbortError externo (sin nuestro timer)
+      // cae aquí también: es un fallo de conectividad, no un timeout propio.
       const error = new Error(
         'No se pudo conectar con el proveedor de IA. Intenta nuevamente en unos minutos.'
       );
@@ -203,11 +290,14 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
       error.retriable = true;
       error.detail = String(netError?.message || 'network error');
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
 
     if (!response.ok) {
       const text = await response.text();
-      throw classifyProviderError(response.status, text);
+      const retryAfter = response.headers?.get?.('retry-after') ?? null;
+      throw classifyProviderError(response.status, text, retryAfter);
     }
 
     const data = await response.json();
@@ -235,9 +325,19 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
         );
         err.status = 507;
         err.code = 'OUTPUT_TOKEN_LIMIT';
+        err.retriable = false;
         throw err;
       }
-      throw new Error('El proveedor IA no devolvió contenido.');
+      // Fase 4.2.10: respuesta HTTP 200 sin contenido (choices vacío o content
+      // null/vacío) es un fallo TIPADO del proveedor, con retry controlado y
+      // NUNCA se convierte en NO_EVIDENCE.
+      const err = new Error(
+        'El proveedor de IA no devolvió contenido. Intenta nuevamente en unos minutos.'
+      );
+      err.status = 502;
+      err.code = 'AI_PROVIDER_EMPTY_RESPONSE';
+      err.retriable = true;
+      throw err;
     }
 
     const usage = data?.usage || {};
@@ -281,13 +381,21 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
   };
 
   let lastError = null;
-  for (let retry = 0; retry <= MAX_TEMP_RETRIES; retry += 1) {
+  for (let retry = 0; retry <= MAX_PROVIDER_RETRIES; retry += 1) {
     try {
-      if (retry > 0) await sleep(RETRY_BACKOFF_MS * retry);
+      if (retry > 0) {
+        await sleep(
+          resolveRetryDelayMs({
+            attempt: retry,
+            retryAfterSeconds: lastError?.retryAfter ?? null,
+          }),
+        );
+      }
       return await attemptWithJsonFallback();
     } catch (error) {
       lastError = error;
-      if (error.retriable === true && retry < MAX_TEMP_RETRIES) continue;
+      if (error.retriable === true && retry < MAX_PROVIDER_RETRIES) continue;
+      error.latencyMs = Date.now() - startedAt; // solo metadata de logging.
       throw error;
     }
   }

@@ -57,7 +57,7 @@ const callChat = () =>
   });
 
 describe('chatCompletion · reintentos y clasificación (Fase 4.1.11)', () => {
-  it('HTTP 429 → reintenta UNA vez y tiene éxito (máx 2 llamadas)', async () => {
+  it('HTTP 429 → reintenta y tiene éxito (2 llamadas)', async () => {
     mockedFetch
       .mockResolvedValueOnce(errResponse(429, '{}'))
       .mockResolvedValueOnce(okResponse());
@@ -66,10 +66,10 @@ describe('chatCompletion · reintentos y clasificación (Fase 4.1.11)', () => {
     expect(mockedFetch).toHaveBeenCalledTimes(2);
   });
 
-  it('HTTP 429 persistente → lanza AI_PROVIDER_RATE_LIMITED SIN reintento infinito', async () => {
+  it('HTTP 429 persistente → AI_PROVIDER_RATE_LIMITED con 3 llamadas (sin loop)', async () => {
     mockedFetch.mockResolvedValue(errResponse(429, '{}'));
     await expect(callChat()).rejects.toMatchObject({ code: 'AI_PROVIDER_RATE_LIMITED', retriable: true });
-    expect(mockedFetch).toHaveBeenCalledTimes(2);
+    expect(mockedFetch).toHaveBeenCalledTimes(3);
   });
 
   it('429 oculto en el body con otro status (OpenRouter free) → AI_PROVIDER_RATE_LIMITED', async () => {
@@ -82,13 +82,13 @@ describe('chatCompletion · reintentos y clasificación (Fase 4.1.11)', () => {
     });
     mockedFetch.mockResolvedValue(errResponse(500, hidden));
     await expect(callChat()).rejects.toMatchObject({ code: 'AI_PROVIDER_RATE_LIMITED' });
-    expect(mockedFetch).toHaveBeenCalledTimes(2);
+    expect(mockedFetch).toHaveBeenCalledTimes(3);
   });
 
-  it('HTTP 5xx persistente → AI_PROVIDER_SERVER_ERROR con 2 llamadas (sin loop)', async () => {
+  it('HTTP 5xx persistente → AI_PROVIDER_SERVER_ERROR con 3 llamadas (sin loop)', async () => {
     mockedFetch.mockResolvedValue(errResponse(503, 'upstream error'));
     await expect(callChat()).rejects.toMatchObject({ code: 'AI_PROVIDER_SERVER_ERROR', retriable: true });
-    expect(mockedFetch).toHaveBeenCalledTimes(2);
+    expect(mockedFetch).toHaveBeenCalledTimes(3);
   });
 
   it('5xx temporal → el reintento puede tener éxito', async () => {
@@ -108,7 +108,7 @@ describe('chatCompletion · reintentos y clasificación (Fase 4.1.11)', () => {
     expect(error.status).toBe(502);
     expect(error.message).not.toContain('ECONNREFUSED');
     expect(error.detail).toContain('ECONNREFUSED');
-    expect(mockedFetch).toHaveBeenCalledTimes(2);
+    expect(mockedFetch).toHaveBeenCalledTimes(3);
   });
 
   it('401 → NO reintenta (1 llamada) y lanza AI_PROVIDER_AUTH', async () => {
