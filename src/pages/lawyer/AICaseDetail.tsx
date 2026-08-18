@@ -57,7 +57,7 @@ export default function AICaseDetail() {
   const { caseId } = useParams<{ caseId: string }>();
   const { data: workspace, isLoading, isError, error, refetch } = useAIWorkspace(caseId);
   const documentsQuery = useAIDocuments(caseId);
-  const { canUse } = useAIFeatureAccess();
+  const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
   const canAnalyze = canUse('document_analysis');
   const canChat = canUse('case_chat');
   const canResearch = canUse('jurisprudence');
@@ -261,7 +261,18 @@ export default function AICaseDetail() {
               </TabsList>
 
               <TabsContent value="documents" className="mt-4">
-            {!canAnalyze ? (
+            {accessLoading ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-5 w-56" />
+                  <Skeleton className="h-4 w-80 max-w-full" />
+                  <p className="text-sm text-muted-foreground">
+                    Cargando tu acceso a LegalUp AI…
+                  </p>
+                </CardContent>
+              </Card>
+            ) : !canAnalyze ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
@@ -431,7 +442,18 @@ export default function AICaseDetail() {
                 forceMount
                 className="mt-4 data-[state=inactive]:hidden"
               >
-            {!canResearch ? (
+            {accessLoading ? (
+              <Card className="border-dashed">
+                <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="h-5 w-56" />
+                  <Skeleton className="h-4 w-80 max-w-full" />
+                  <p className="text-sm text-muted-foreground">
+                    Cargando tu acceso a LegalUp AI…
+                  </p>
+                </CardContent>
+              </Card>
+            ) : !canResearch ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">

@@ -119,7 +119,8 @@ export function useAISubscription() {
  * Requiere acceso (trial o plan activo) y plan con la feature.
  */
 export function useAIFeatureAccess() {
-  const { subscription, status, plan, hasAccess, trialDaysRemaining } = useAISubscription();
+  const { subscription, status, plan, hasAccess, trialDaysRemaining, isLoading } =
+    useAISubscription();
 
   return {
     subscription,
@@ -127,6 +128,9 @@ export function useAIFeatureAccess() {
     status,
     hasAccess,
     trialDaysRemaining,
+    // Fase 4.2.16: expone el estado de carga de la suscripción para que la UI no
+    // muestre lock cards prematuramente mientras se determina el acceso.
+    isLoading,
     canUse: (feature: AIFeatureKey) => hasAccess && canUseAIFeature(feature, plan),
   };
 }

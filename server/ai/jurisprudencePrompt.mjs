@@ -810,10 +810,13 @@ export function verifyJurisprudenceClaims(claims, sourcesById, category = '') {
     }
 
     // Fase 4.0.2: una doctrina no puede emitir mandatos legales categóricos.
+    // Fase 4.2.16: el claim se DESCARTA de verdad (antes solo se avisaba y el
+    // claim permanecía en `kept`, contradiciendo el warning y la regla 5).
     if (source.kind === 'doctrina' && DOCTRINAL_OVERREACH_RE.test(afirmacionText)) {
       warnings.push(
         'Se descartó una afirmación de doctrina que usa lenguaje normativo categórico; la doctrina no es fuente normativa.',
       );
+      continue;
     }
 
     // Fase 4.0.4: alineación exacta afirmación ↔ fragmento. Cuando la fuente

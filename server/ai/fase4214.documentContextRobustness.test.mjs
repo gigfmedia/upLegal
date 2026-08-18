@@ -491,4 +491,34 @@ describe('buildJurisprudenceOutcome · gate 4.2.14', () => {
     expect(result.allVerifiedClaims.some((c) => c.category === 'document')).toBe(true);
     expect(result.allVerifiedClaims.some((c) => c.source_id === 'j-datos')).toBe(true);
   });
+
+  it('4.2.15: la fuente pública descartada por el gate NO aparece en el Markdown de la respuesta', () => {
+    const result = buildJurisprudenceOutcome({
+      data: {
+        resumen: 'El canon de arrendamiento se considera renta.',
+        normativa: [],
+        jurisprudencia: [
+          { fuente_id: 'j-arriendo', afirmacion: 'El tribunal reconoce el canon de arrendamiento como renta.', fragmento: 'canon de arrendamiento y la renta' },
+          { fuente_id: 'j-datos', afirmacion: 'El tribunal reconoce la protección de datos como derecho fundamental.', fragmento: 'derecho fundamental' },
+        ],
+        doctrina: [],
+        documento: [],
+        conclusion: '',
+      },
+      sources: [jurisRenta, jurisDatos],
+      intent: 'general',
+      query: '¿Cuál es la renta mensual?',
+      documents: [],
+      documentMode: 'mixed',
+    });
+    expect(result.status).toBe('ok');
+    expect(result.outcome).toBe('SUCCESS');
+    expect(result.relevanceDroppedSources).toBe(1);
+    expect(result.allVerifiedClaims.map((c) => c.source_id)).toEqual(['j-arriendo']);
+    expect(result.referencedIds.map((s) => s.id)).toEqual(['j-arriendo']);
+    const jurSection = (result.answer.split('**Jurisprudencia relevante**')[1] || '').split(/\n\*\*/)[0];
+    expect(jurSection).toContain('Corte Suprema — Rol 1111');
+    expect(jurSection).not.toContain('5174');
+    expect(result.answer).toContain('Se descartó la fuente pública "Corte Suprema — Rol 5174"');
+  });
 });

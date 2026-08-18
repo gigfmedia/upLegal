@@ -437,11 +437,16 @@ export function buildJurisprudenceOutcome({
       ]
     : researchWarnings;
 
+  // Fase 4.2.15: el Markdown de la respuesta usa las listas YA filtradas por el
+  // gate de relevancia (4.2.14). Antes se pasaban `verifiedJurisprudencia.kept`
+  // y `verifiedDoctrina.kept` (sin filtrar), con lo que una fuente pública
+  // irrelevante descartada seguía apareciendo en la respuesta mientras quedaba
+  // fuera de claims/referenced/persistedSources.
   const answer = buildJurisprudenceAnswer({
     resumen: resumenFinal,
     normativa: hasVerifiedClaims ? ordenNormativa : [],
-    jurisprudencia: hasVerifiedClaims ? verifiedJurisprudencia.kept : [],
-    doctrina: hasVerifiedClaims ? verifiedDoctrina.kept : [],
+    jurisprudencia: hasVerifiedClaims ? filteredJurisprudencia : [],
+    doctrina: hasVerifiedClaims ? filteredDoctrina : [],
     documento: hasVerifiedClaims ? verifiedDocumentos.kept : [],
     sintesis: síntesisText,
     matices: maticesFinales,

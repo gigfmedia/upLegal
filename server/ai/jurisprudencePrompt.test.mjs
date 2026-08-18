@@ -450,7 +450,9 @@ describe('Fase 4.0.2 · verificación por categoría y vigencia', () => {
     expect(warnings.some((w) => w.includes('Vigencia'))).toBe(true);
   });
 
-  it('avisa cuando una doctrina usa lenguaje normativo categórico', () => {
+  // Fase 4.2.16: un claim doctrinal con lenguaje normativo categórico se
+  // DESCARTA de verdad (antes solo se avisaba y quedaba en `kept`).
+  it('F2: descarta una doctrina con lenguaje normativo categórico', () => {
     const { kept, warnings } = verifyJurisprudenceClaims(
       [
         {
@@ -462,8 +464,80 @@ describe('Fase 4.0.2 · verificación por categoría y vigencia', () => {
       byId,
       'doctrina',
     );
-    expect(kept.length).toBe(1);
+    expect(kept.length).toBe(0);
     expect(warnings.some((w) => w.includes('no es fuente normativa'))).toBe(true);
+  });
+});
+
+describe('Fase 4.2.16 · F2 doctrina con lenguaje normativo categórico (overreach)', () => {
+  const doctrinaSource = {
+    id: 'doc-1',
+    kind: 'doctrina',
+    source_type: 'doctrina',
+    legal_authority: 'doctrinal',
+    vigency: 'no_aplica',
+    citation: 'Autor. (2024). Artículo.',
+    excerpt: 'La doctrina sostiene que el consentimiento debe ser informado y libre.',
+  };
+  const byId = new Map([['doc-1', doctrinaSource]]);
+
+  it('Caso 1: claim categórico "es obligatorio" se descarta', () => {
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'doc-1',
+          afirmacion: 'Es obligatorio cumplir la ley según la doctrina.',
+          fragmento: 'el consentimiento debe ser informado y libre',
+        },
+      ],
+      byId,
+      'doctrina',
+    );
+    expect(kept.length).toBe(0);
+    expect(warnings.length).toBeGreaterThanOrEqual(1);
+    expect(warnings.some((w) => w.includes('no es fuente normativa'))).toBe(true);
+  });
+
+  it('Caso 2: variaciones que DOCTRINAL_OVERREACH_RE ya detecta → descarte', () => {
+    const variants = [
+      'Es legal lo que sostiene la doctrina.',
+      'Está prohibido según la doctrina.',
+      'La normativa permite lo anterior.',
+      'La legislación prohíbe toda cesión.',
+      'La ley establece la obligación de pagar.',
+    ];
+    for (const afirmacion of variants) {
+      const { kept, warnings } = verifyJurisprudenceClaims(
+        [
+          {
+            fuente_id: 'doc-1',
+            afirmacion,
+            fragmento: 'el consentimiento debe ser informado y libre',
+          },
+        ],
+        byId,
+        'doctrina',
+      );
+      expect(kept.length).toBe(0);
+      expect(warnings.some((w) => w.includes('no es fuente normativa'))).toBe(true);
+    }
+  });
+
+  it('Caso 3: doctrina prudente y respaldada se conserva', () => {
+    const { kept, warnings } = verifyJurisprudenceClaims(
+      [
+        {
+          fuente_id: 'doc-1',
+          afirmacion: 'La doctrina ha sostenido que el consentimiento debe ser informado.',
+          fragmento: 'el consentimiento debe ser informado y libre',
+        },
+      ],
+      byId,
+      'doctrina',
+    );
+    expect(kept.length).toBe(1);
+    expect(kept[0].afirmacion).toBe('La doctrina ha sostenido que el consentimiento debe ser informado.');
+    expect(warnings.some((w) => w.includes('no es fuente normativa'))).toBe(false);
   });
 });
 
