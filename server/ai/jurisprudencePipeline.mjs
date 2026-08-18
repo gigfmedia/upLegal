@@ -7,6 +7,7 @@ import {
 import {
   resolveClaimFragment,
   isBcnNormaRelevantToQuery,
+  isSourceResponsiveToQuery,
   hasSubstantiveNormativeEvidence,
   isSubstantiveNormativeEvidence,
   extractLawNumber,
@@ -42,6 +43,27 @@ function dedupeMatices(matices = []) {
     out.push(m);
   }
   return out;
+}
+
+// Fase 4.2.14: gate de relevancia post-retrieval. En una consulta documental
+// (mode document/mixed) sin claims documentales verificados, conserva solo las
+// fuentes públicas que responden sustantivamente la consulta (coincidencia de
+// ley/artículo citado o solape de término sustantivo con título/cita/afirmación).
+// Determinístico, sin LLM. Expuesto para pruebas unitarias.
+export function applyRelevanceGate(claims, { query = '' } = {}) {
+  if (!Array.isArray(claims)) return { kept: [], droppedCount: 0, warnings: [] };
+  const kept = [];
+  const warnings = [];
+  for (const claim of claims) {
+    if (isSourceResponsiveToQuery({ query, source: claim.source, claims: [claim] })) {
+      kept.push(claim);
+    } else {
+      warnings.push(
+        `Se descartó la fuente pública "${claim.source?.citation || claim.source_id}" porque no responde la pregunta factual sobre el documento del caso.`,
+      );
+    }
+  }
+  return { kept, droppedCount: claims.length - kept.length, warnings };
 }
 
 // Esquema de respuesta del modelo para la investigación de jurisprudencia.
@@ -297,7 +319,35 @@ export function buildJurisprudenceOutcome({
     ? verifiedNormativa.kept
     : autoNormativas;
 
-  if (intent === 'normativa' && effectiveNormativa.length === 0) {
+  // Fase 4.2.14: gate de relevancia post-retrieval. Cuando la consulta es
+  // documental (mode document/mixed) y NINGÚN claim documental sobrevivió la
+  // verificación, las fuentes públicas no deben sustituir en silencio al
+  // documento del caso: "¿Cuál es la renta mensual?" no se responde con la renta
+  // de funcionarios de una ley ni con jurisprudencia genérica de arrendamiento.
+  // Se conservan solo las fuentes con señal sustantiva de responder la consulta
+  // (coincidencia de ley/artículo citado o solape de término sustantivo). Si
+  // nada pasa el gate, el resultado es NO_EVIDENCE honesto, nunca una fuente
+  // pública irrelevante. Determinístico, sin LLM.
+  const gateShouldFilter = documentMode !== 'none' && verifiedDocumentos.kept.length === 0;
+  const gateNormativa = gateShouldFilter
+    ? applyRelevanceGate(effectiveNormativa, { query })
+    : { kept: effectiveNormativa, droppedCount: 0, warnings: [] };
+  const gateJurisprudencia = gateShouldFilter
+    ? applyRelevanceGate(verifiedJurisprudencia.kept, { query })
+    : { kept: verifiedJurisprudencia.kept, droppedCount: 0, warnings: [] };
+  const gateDoctrina = gateShouldFilter
+    ? applyRelevanceGate(verifiedDoctrina.kept, { query })
+    : { kept: verifiedDoctrina.kept, droppedCount: 0, warnings: [] };
+  const filteredNormativa = gateNormativa.kept;
+  const filteredJurisprudencia = gateJurisprudencia.kept;
+  const filteredDoctrina = gateDoctrina.kept;
+  researchWarnings.push(
+    ...gateNormativa.warnings,
+    ...gateJurisprudencia.warnings,
+    ...gateDoctrina.warnings,
+  );
+
+  if (intent === 'normativa' && filteredNormativa.length === 0) {
     researchWarnings.push(
       'No se encontró normativa específica que responda la consulta en las fuentes públicas consultadas (BCN/LeyChile). Verifica la vigencia en el portal oficial.',
     );
@@ -320,16 +370,16 @@ export function buildJurisprudenceOutcome({
   const excessive = detectExcessiveConclusions({
     resumen: validated.resumen,
     conclusion: validated.conclusion || '',
-    normativa: effectiveNormativa,
-    jurisprudencia: verifiedJurisprudencia.kept,
+    normativa: filteredNormativa,
+    jurisprudencia: filteredJurisprudencia,
   });
 
   // Cuando la normativa fue promovida automáticamente (el modelo no la citó),
   // refuerza la coherencia del resumen con un puntero factual a la norma.
-  if (autoNormativas.length > 0 && effectiveNormativa[0]?.source) {
+  if (autoNormativas.length > 0 && filteredNormativa[0]?.source) {
     excessive.resumen = (
       `${(excessive.resumen || '').trim()} Se identificó la normativa aplicable: ${
-        effectiveNormativa[0].source.citation
+        filteredNormativa[0].source.citation
       }.`
     ).trim();
   }
@@ -337,24 +387,24 @@ export function buildJurisprudenceOutcome({
   // Fase 4.1 (Etapa 3): jerarquía normativa — solo ordena la presentación;
   // no decide cuál norma prevalece. Los matices de jerarquía se agregan a la
   // sección "Matices y contradicciones" (no se resuelven automáticamente).
-  const ordenNormativa = orderNormativaByHierarchy(effectiveNormativa);
-  const { matices: maticesJerarquia } = detectHierarchyMatices(effectiveNormativa);
+  const ordenNormativa = orderNormativaByHierarchy(filteredNormativa);
+  const { matices: maticesJerarquia } = detectHierarchyMatices(filteredNormativa);
 
   // Fase 4.1 (Etapa 4): contradicciones/matices entre fuentes. Conserva ambas
   // fuentes y NO resuelve el conflicto (regla conservadora).
   const { contradicciones, warnings: warningsContradicciones } = detectContradictions({
-    normativa: effectiveNormativa,
-    jurisprudencia: verifiedJurisprudencia.kept,
-    doctrina: verifiedDoctrina.kept,
+    normativa: filteredNormativa,
+    jurisprudencia: filteredJurisprudencia,
+    doctrina: filteredDoctrina,
   });
 
   // Fase 4.1 (Etapa 2): síntesis VERIFICADA. Cada oración se vincula a un
   // claim verificado; las oraciones sin respaldo se eliminan o se marcan como
   // inferencia del sistema (preferencia: ELIMINAR antes que inventar).
   const allVerifiedClaims = [
-    ...effectiveNormativa,
-    ...verifiedJurisprudencia.kept,
-    ...verifiedDoctrina.kept,
+    ...filteredNormativa,
+    ...filteredJurisprudencia,
+    ...filteredDoctrina,
     ...verifiedDocumentos.kept,
   ];
   const hasVerifiedClaims = allVerifiedClaims.length > 0;
@@ -401,8 +451,8 @@ export function buildJurisprudenceOutcome({
   // Referencia (para persistir) solo las fuentes que sobrevivieron la verificación.
   const referenced = [
     ...ordenNormativa.map((c) => c.source),
-    ...verifiedJurisprudencia.kept.map((c) => c.source),
-    ...verifiedDoctrina.kept.map((c) => c.source),
+    ...filteredJurisprudencia.map((c) => c.source),
+    ...filteredDoctrina.map((c) => c.source),
     ...verifiedDocumentos.kept.map((c) => c.source),
   ];
   const referencedById = new Map(referenced.map((source) => [source.id, source]));
@@ -445,6 +495,8 @@ export function buildJurisprudenceOutcome({
     researchWarnings,
     contradicciones,
     documentClaimsDropped: verifiedDocumentos.warnings.length,
+    relevanceDroppedSources:
+      gateNormativa.droppedCount + gateJurisprudencia.droppedCount + gateDoctrina.droppedCount,
   };
 }
 

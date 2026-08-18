@@ -8166,6 +8166,7 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
         documentMode,
         intent: effectiveClassification.intent || classification.intent,
         hasDocs: caseDocuments.length > 0,
+        implicitDocumentContext: documentModeResult.implicitContext,
       });
       if (!allowDocumentOnly) {
         return res.status(422).json({

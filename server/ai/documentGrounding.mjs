@@ -22,6 +22,8 @@ import {
   GENERIC_LEGAL_SIGNAL_RE,
   hasCaseReferenceSignal,
   hasCaseContentReference,
+  hasImplicitDocumentContext,
+  IMPLICIT_LEGAL_POLE_RE,
   extractSubstantiveTerms,
   normalizeClaimTokens,
 } from './jurisprudenceSources.mjs';
@@ -291,8 +293,9 @@ export function shouldAllowDocumentOnlyFallback({
   documentMode = 'none',
   intent = '',
   hasDocs = false,
+  implicitDocumentContext = false,
 } = {}) {
-  if (documentMode === 'none') return false;
+  if (documentMode === 'none' && !implicitDocumentContext) return false;
   if (!hasDocs) return false;
   return !REQUIRES_PUBLIC_EVIDENCE_INTENTS.has(String(intent || ''));
 }
@@ -635,10 +638,15 @@ export function verifyDocumentClaims(claims, docsById, workspaceId = null, lawye
  * (hasCaseContentReference) para consultas naturales sobre el documento
  * ("¿Qué riesgos tiene el contrato?", "¿Qué plazo establece?", "¿Se permite
  * subarrendar?") que 4.2.9 aún dejaba en mode 'none'.
+ * Fase 4.2.14: añade el contexto documental IMPLÍCITO (hasImplicitDocumentContext)
+ * para consultas factuales naturales ("¿Cuál es la renta mensual?", "¿Cuándo
+ * termina?", "¿Cuánto pagó Jorge?") con UN solo documento, y el polo jurídico de
+ * validez (IMPLICIT_LEGAL_POLE_RE) para pasar a 'mixed' las consultas que
+ * preguntan por la validez jurídica del documento.
  * @param {string} query
  * @param {object[]} documents - Documentos disponibles del caso.
  * @param {object|null} [classification] - Salida de classifyLegalQuery.
- * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, fallbackSignal: boolean, contentSignal: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
+ * @returns {{ mode: 'document'|'mixed'|'none', documentSignal: boolean, fallbackSignal: boolean, contentSignal: boolean, implicitContext: boolean, hasDocs: boolean, hasLegal: boolean, noEvidence: boolean }}
  */
 export function detectDocumentMode(query, documents = [], classification = null) {
   const cls = classification || {};
@@ -652,7 +660,8 @@ export function detectDocumentMode(query, documents = [], classification = null)
     (Array.isArray(cls.articleCitations) && cls.articleCitations.length > 0) ||
     (Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0) ||
     (Array.isArray(cls.doctrineSignals) && cls.doctrineSignals.length > 0) ||
-    GENERIC_LEGAL_SIGNAL_RE.test(normQuery);
+    GENERIC_LEGAL_SIGNAL_RE.test(normQuery) ||
+    IMPLICIT_LEGAL_POLE_RE.test(normQuery);
   const hasDocs = Array.isArray(documents) && documents.length > 0;
   // Fase 4.2.9 (P1): fallback documental. Si hay documentos del caso y la
   // consulta menciona una ESTRUCTURA del expediente (cláusula, partes, hechos,
@@ -678,7 +687,28 @@ export function detectDocumentMode(query, documents = [], classification = null)
       hasJurisprudence:
         Array.isArray(cls.jurisprudenceSignals) && cls.jurisprudenceSignals.length > 0,
     });
-  const documentSignal = hasDocumentSignal || fallbackSignal || contentSignal;
+  // Fase 4.2.14: contexto documental implícito. Solo con UN documento y cuando
+  // ninguna señal previa clasificó. Las consultas factuales naturales sobre
+  // contenido típico del contrato ("¿Cuál es la renta mensual?", "¿Se puede
+  // subarrendar?") activan modo document/mixed; los bloques de fuentes públicas
+  // y de procedimiento interno del fallback impiden robar consultas públicas.
+  const implicitContext =
+    hasDocs &&
+    !hasDocumentSignal &&
+    !fallbackSignal &&
+    !contentSignal &&
+    hasImplicitDocumentContext({
+      query: normQuery,
+      hasDocs,
+      documentCount: documents.length,
+      intent: cls.intent,
+      existingSignals: {
+        documentSignal: hasDocumentSignal,
+        fallbackSignal,
+        contentSignal,
+      },
+    });
+  const documentSignal = hasDocumentSignal || fallbackSignal || contentSignal || implicitContext;
   // Fase 4.2.6: la señal documental sin evidencia NO debe bloquear la consulta
   // cuando además hay polo jurídico (modo mixto): la ausencia de documentos NO
   // debe provocar errores artificiales ni cortar la investigación legal, que
@@ -686,5 +716,14 @@ export function detectDocumentMode(query, documents = [], classification = null)
   // consultas PURAMENTE documentales (sin polo jurídico al que recurrir).
   const noEvidence = documentSignal && !hasDocs && !hasLegal;
   const mode = !documentSignal ? 'none' : hasLegal ? 'mixed' : 'document';
-  return { mode, documentSignal, fallbackSignal, contentSignal, hasDocs, hasLegal, noEvidence };
+  return {
+    mode,
+    documentSignal,
+    fallbackSignal,
+    contentSignal,
+    implicitContext,
+    hasDocs,
+    hasLegal,
+    noEvidence,
+  };
 }

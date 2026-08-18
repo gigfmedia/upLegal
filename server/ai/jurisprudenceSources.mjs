@@ -1498,6 +1498,63 @@ export function isBcnNormaRelevantToQuery(query, source) {
   return numberSignalPasses || (substantiveMatches >= 1 && score >= BCN_RELEVANCE_THRESHOLD);
 }
 
+// ---------------------------------------------------------------------------
+// Fase 4.2.14: gate de relevancia post-retrieval para consultas documentales.
+// Cuando una consulta es documental (mode document/mixed) y NINGÚN claim
+// documental sobrevivió la verificación, una fuente pública "jurídicamente
+// relacionada" NO debe sustituir en silencio al documento como respuesta a una
+// pregunta factual ("¿Cuál es la renta mensual?" NO se responde con la renta
+// de funcionarios de una ley). Este gate conserva SOLO las fuentes públicas con
+// señal sustantiva real de responder la consulta: coincidencia de número de ley
+// o de artículo citado (señal directa) o al menos un término sustantivo de la
+// consulta presente en el título/cita/afirmación de la fuente. Determinístico,
+// sin LLM. Es un backstop: la defensa primaria es la clasificación de modo
+// (la consulta factual sin ancla se resuelve en modo document).
+// NOTA: NO colisiona con isSourceRelevantToQuery (Fase 4.1.13, gate de RETRIEVAL
+// que ya se aplica en fetchRelevantSources): esta opera POST-verificación sobre
+// claims verificados e incluye el texto de afirmación/fragmento que el modelo le
+// atribuye a cada fuente, la señal más fuerte de con qué pretende responder.
+// ---------------------------------------------------------------------------
+/**
+ * Determina si una fuente pública responde sustantivamente la consulta, para no
+ * usarla como sustituto silencioso del documento del caso (Fase 4.2.14).
+ * @param {{ query?: string, source?: object|null, claims?: object[] }} [input]
+ * @returns {boolean}
+ */
+export function isSourceResponsiveToQuery({ query = '', source = null, claims = [] } = {}) {
+  if (!source || typeof source !== 'object') return false;
+  const q = String(query || '').trim();
+  if (!q) return false;
+  const qTokens = normalizeClaimTokens(q).filter((t) => !RELEVANCE_LOW_TERMS.has(t));
+  if (qTokens.length === 0) return false;
+
+  // Señal directa: la consulta cita el número de ley o el artículo de la fuente.
+  const citedArticles = extractArticleNumbers(q);
+  if (citedArticles.length > 0) {
+    const sourceArticleText = (Array.isArray(source.article) ? source.article : [])
+      .concat((source.metadata?.fragments || []).map((f) => f.article || ''))
+      .filter(Boolean)
+      .join(' ');
+    const sourceArticles = extractArticleNumbers(sourceArticleText);
+    if (citedArticles.some((a) => sourceArticles.includes(a))) return true;
+  }
+  const citedLaws = extractLawNumber(q);
+  const sourceLaw = String(source.norm_number || '').replace(/[.,\s]/g, '');
+  if (citedLaws.length > 0 && sourceLaw.length >= 4 && citedLaws.includes(sourceLaw)) return true;
+
+  // Señal de contenido: solape de término sustantivo con el título/cita de la
+  // fuente o con la afirmación/fragmento que el modelo le atribuye.
+  const haystack = [
+    source.title,
+    source.citation,
+    ...claims.map((c) => `${c.afirmacion || ''} ${c.fragmento || ''}`),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const srcSet = new Set(normalizeClaimTokens(haystack));
+  return qTokens.some((t) => srcSet.has(t));
+}
+
 /**
  * Ordena los fragmentos según su relevancia a la consulta, priorizando la
  * coincidencia de CONCEPTOS JURÍDICOS SUSTANTIVOS (los términos genéricos como
@@ -2364,6 +2421,115 @@ export function hasCaseContentReference(query, opts = {}) {
   if (PUBLIC_LAW_FRAME_RE.test(text)) return false;
   return CASE_FACT_CONTENT_RE.test(text) || CASE_DOCUMENT_PERMISSION_RE.test(text);
 }
+
+// ---------------------------------------------------------------------------
+// Fase 4.2.14: contexto documental IMPLÍCITO en consultas factuales naturales.
+// Los fallbacks documentales previos (DOCUMENT_SIGNAL_RE, hasCaseReferenceSignal,
+// hasCaseContentReference) exigen una señal visible (deíctico, "X del contrato",
+// permiso explícito, sustantivo+ancla del expediente). Una consulta factual
+// natural ("¿Cuál es la renta mensual?", "¿Cuándo termina?", "¿Cuánto pagó
+// Jorge?", "¿Se puede subarrendar?") no la dispara y, con UN solo documento
+// disponible, caía a mode 'none': se descartaba el documento y se respondía con
+// fuentes públicas irrelevantes (hallazgos A1/A3/B5/C3/D4 de la auditoría
+// 4.2.13). Esta señal activa mode document/mixed SOLO cuando el caso tiene
+// exactamente un documento (singleton), la consulta es una PREGUNTA factual
+// sobre contenido típico del documento y ningún otro signal ya clasificó.
+//
+// Defensa contra over-activation (el riesgo real de este fallback):
+//   - Bloques FUERTES de fuentes públicas: IMPLICIT_PUBLIC_ONLY_RE (= marco de
+//     "la ley"/"normativa"/"artículo"/"código"/"tribunal" + regulación +
+//     constitución) y IMPLICIT_PROCEDURE_BLOCK_RE (prescripción, notificación,
+//     apelación, recurso, juicio, audiencia, juzgado, embargo, cautelar,
+//     ejecución, impuestos, sanciones, materia penal/laboral/tributaria,
+//     previsión, isapre, afp, remuneración, "renta base", sucesiones, familia).
+//   - Los sustantivos son de contenido contractual/factual (NO "intereses",
+//     "comisión", "pena" genérica) y los verbos genéricos exigen pregunta corta
+//     con palabra interrogativa para no robar consultas públicas genéricas.
+// Determinística, sin LLM. Es la base de la defensa 4.2.14 junto con el gate de
+// relevancia (isSourceResponsiveToQuery) y la eliminación del fallback público.
+// ---------------------------------------------------------------------------
+const IMPLICIT_DOC_FACTUAL_NOUNS =
+  '(?:renta|canon|canones|arriendo|arriendos|arrendamiento|garantia|garantias|clausula|clausulas|plazo|plazos|monto|montos|pago|pagos|multa|multas|penalidad|penalidades|domicilio|gastos\\s+comunes|mantencion|termino|terminos|vencimiento|duracion|vigencia|subarriendo|subarriendos|subarrendamiento|partes|obligacion|obligaciones|prohibicion|autorizacion|aviso|preaviso|fecha|fechas|inicio|estado|danos|reparaciones|entrega|devolucion|objeto|arrendatario|arrendataria|arrendador|arrendadora|inquilino|inquilina|dueno|duena|propietario|propietaria|cesionario|cesionaria|comodatario|comodante|fiador|fiadora)';
+const IMPLICIT_DOC_FACTUAL_NOUNS_RE = new RegExp(`\\b${IMPLICIT_DOC_FACTUAL_NOUNS}\\b`, 'i');
+const IMPLICIT_DOC_STRONG_VERBS_RE =
+  /\b(?:subarrendar|subarrienda|subarriendan|cede|ceden|ceder|vence|vencen|vencer|renueva|renuevan|prorroga|prorrogan|se\s+devuelve|se\s+entrega|se\s+restituye)\b/i;
+const IMPLICIT_DOC_GENERIC_VERBS_RE =
+  /\b(?:termina|terminan|terminar|comienza|comienzan|comenzo|empieza|inicia|inician|paga|pagan|pagar|pago|devuelve|devuelven|devolver|dejo|deja|dejan|dejar|se\s+permite|se\s+prohibe|se\s+autoriza|se\s+exige|se\s+admite|se\s+impide|se\s+faculta|entrega|entregan)\b/i;
+const IMPLICIT_QUESTION_RE = /\b(?:cu[aá]l|cu[aá]les|qu[ée]|qui[ée]n|qui[ée]nes|cu[aá]ndo|cu[aá]nt[oa]s?|d[oó]nde|c[oó]mo|por\s+qu[ée]|para\s+qu[ée])\b|\?|\u00bf/i;
+const IMPLICIT_QUESTION_WORD_RE = /\b(?:cu[aá]l|cu[aá]les|qu[ée]|qui[ée]n|qui[ée]nes|cu[aá]ndo|cu[aá]nt[oa]s?|d[oó]nde|c[oó]mo|por\s+qu[ée])\b/i;
+const IMPLICIT_YES_NO_RE =
+  /\b(?:se\s+puede|se\s+pueden|puede|pueden|hay|existe|existen|hubo|ha\s+habido|debe|deben|tiene|tienen|se\s+permite|se\s+prohibe|se\s+autoriza|se\s+exige|se\s+admite|se\s+impide|se\s+faculta)\b/i;
+const IMPLICIT_PUBLIC_ONLY_RE = new RegExp(
+  `${PUBLIC_LAW_FRAME_RE.source}|regulaci[oó]n|constituci[oó]n`,
+  'i',
+);
+const IMPLICIT_PROCEDURE_BLOCK_RE =
+  /\b(?:prescripcion|notificacion|apelar|apelacion|recurso|juicio|audiencia|juzgado|embargo|cautelar|ejecucion|impuesto|impuestos|tributo|tributos|sancion|sanciones|penal|penales|laboral|trabajo|trabajador|trabajadores|empleador|empleado|despid|despido|indemnizacion|prevision|isapre|afp|remuneracion|remuneraciones|renta\s+base|patrimonio|herencia|sucesion|sucesiones|divorcio|matrimonio|custodia|alimentos|mercado|declaracion\s+de\s+renta)\b/i;
+const IMPLICIT_EXCLUDED_INTENTS = new Set([
+  'JURISPRUDENCE_LOOKUP',
+  'ARTICLE_LOOKUP',
+  'BARE_NORM_CITATION',
+  'DOCTRINE_LOOKUP',
+  'RELATIONAL_LEGAL_QUERY',
+  'MIXED_NORM_JURISPRUDENCE',
+]);
+
+/**
+ * Señal de contexto documental IMPLÍCITO de la Fase 4.2.14. Activa mode
+ * document/mixed para consultas factuales naturales con un ÚNICO documento del
+ * caso. Solo la invoca detectDocumentMode cuando ningún otro signal clasificó y
+ * hay exactamente un documento. Nunca produce noEvidence por sí misma: el gate
+ * de relevancia (isSourceResponsiveToQuery) y la eliminación del fallback público
+ * garantizan que una consulta factual sin dato en el documento termine en
+ * NO_EVIDENCE honesto, no en fuentes públicas irrelevantes.
+ * @param {{ query?: string, hasDocs?: boolean, documentCount?: number, intent?: string, existingSignals?: object|null }} [input]
+ * @returns {boolean}
+ */
+export function hasImplicitDocumentContext({
+  query = '',
+  hasDocs = false,
+  documentCount = 0,
+  intent = '',
+  existingSignals = null,
+} = {}) {
+  if (!hasDocs || documentCount !== 1) return false;
+  if (existingSignals) {
+    if (existingSignals.documentSignal || existingSignals.fallbackSignal || existingSignals.contentSignal) {
+      return false;
+    }
+  }
+  if (IMPLICIT_EXCLUDED_INTENTS.has(String(intent || ''))) return false;
+  const text = String(query || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+  if (!text) return false;
+  if (IMPLICIT_PUBLIC_ONLY_RE.test(text)) return false;
+  if (IMPLICIT_PROCEDURE_BLOCK_RE.test(text)) return false;
+  if (!IMPLICIT_QUESTION_RE.test(text)) return false;
+
+  if (IMPLICIT_DOC_FACTUAL_NOUNS_RE.test(text)) return true;
+  const strongVerb = IMPLICIT_DOC_STRONG_VERBS_RE.test(text);
+  const genericVerb = IMPLICIT_DOC_GENERIC_VERBS_RE.test(text);
+  const questionWord = IMPLICIT_QUESTION_WORD_RE.test(text);
+  const yesNo = IMPLICIT_YES_NO_RE.test(text);
+  const shortQuery = text.length <= 40;
+  if (strongVerb && shortQuery) return true;
+  if (genericVerb && questionWord && shortQuery) return true;
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Fase 4.2.14: polo jurídico para consultas de VALIDEZ del documento.
+// "¿La cláusula de término anticipado es válida?" no pregunta por hechos del
+// documento sino por su validez jurídica (matriz 4.2.14 §13, columna C: doc +
+// interrogante jurídica -> mixed). detectDocumentMode lo OR en el cálculo de
+// hasLegal, así la señal documental de fondo pasa a mixed (derecho + documento).
+// Solo tiene efecto cuando ya hay una señal documental; por sí mismo NO clasifica
+// (evita regresión en los noEvidence tests de fase426/fase429).
+// ---------------------------------------------------------------------------
+export const IMPLICIT_LEGAL_POLE_RE =
+  /\b(?:es\s+(?:jur[ií]dicamente\s+)?v[aá]lid[oa]s?|son\s+v[aá]lid[oa]s?|v[aá]lidez\s+(?:jur[ií]dica|legal)|es\s+exigible|es\s+procedente|es\s+legal|es\s+conforme\s+(?:a|con)|cumple\s+con\s+(?:la\s+)?(?:ley|normativa|requisitos?|exigencias?|legislaci[oó]n)|se\s+ajusta\s+(?:a|con)\s+(?:la\s+)?(?:ley|normativa|legislaci[oó]n)|compatible\s+con\s+(?:la\s+)?(?:ley|normativa|c[oó]digo|legislaci[oó]n)|permite\s+(?:la\s+)?ley)\b/i;
 
 // 5) Frases GENÉRICAS de ayuda (no aplicación normativa concreta).
 const GENERIC_HELP_RE = /\b(?:qu[ée]\s+puedo\s+hacer|c[óo]mo\s+puedo|qu[ée]\s+opciones|qu[ée]\s+hago|tengo\s+un\s+problema|necesito\s+saber\s+qu[ée]|ay[uú]dame|expl[cíi]came)\b/i;
