@@ -474,8 +474,8 @@ const Index = () => {
             Abogados verificados en todo Chile
           </p>
           <h1 className="text-3xl sm:text-[3.5rem] leading-[1.4] sm:leading-[1.2] font-bold text-gray-900 font-serif my-8">
-            Asesoría legal online con&nbsp;
-            <span className="text-green-900 underline underline-offset-8 font-serif italic">Abogados verificados.</span> 
+            Reserva una consulta con un&nbsp;
+            <span className="text-green-900 underline underline-offset-8 font-serif italic">Abogado verificado.</span> 
             <br />Rápido, seguro y sin complicaciones.
           </h1>
           <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-5xl mx-auto">
@@ -564,10 +564,84 @@ const Index = () => {
           </div> */}
         </div>
       </section>
-
+      
+      {/* Lista de Abogados */}
+      <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 whitespace-nowrap">
+              Abogados destacados
+            </h2>
+            <Button variant="outline" onClick={() => navigate('/search')} className="w-full sm:w-auto">
+              Ver abogados disponibles
+            </Button>
+          </div>
+          
+          {isLoadingFeatured ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <Skeleton className="h-16 w-16 rounded-full" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-6 w-100" />
+                        <div className="flex space-x-2">
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                        </div>
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[...Array(2)].map((_, i) => (
+                        <Skeleton key={i} className="h-6 w-20 rounded-full" />
+                      ))}
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-4/6" />
+                    </div>
+                    <div className="mt-6 flex flex-col space-y-2">
+                      <Skeleton className="h-10 w-full rounded-md" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredLawyers.slice(0, 3).map((lawyer) => (
+                <LawyerCard
+                  key={lawyer.id}
+                  lawyer={lawyer}
+                  onContactClick={() => {
+                    if (!user) {
+                      setAuthMode('login');
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    handleContactClick(lawyer);
+                  }}
+                  onScheduleClick={() => {
+                    if (!user) {
+                      setAuthMode('login');
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    handleScheduleClick(lawyer);
+                  }}
+                  user={user}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-100">
         <div className="max-w-7xl mx-auto">
       
           {/* Header */}
@@ -584,7 +658,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             {/* Feature 1 */}
-            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-white">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <Search className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -601,7 +675,7 @@ const Index = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-white">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <Scale className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -618,7 +692,7 @@ const Index = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="group p-6 rounded-2xl border bg-gray-50 border-gray-100">
+            <div className="group p-6 rounded-2xl border bg-white">
               {/* <div className="bg-blue-50 w-fit p-3 rounded-xl mb-4">
                 <DollarSign className="w-6 h-6 text-blue-600" />
               </div> */}
@@ -865,81 +939,6 @@ const Index = () => {
       <Suspense fallback={<div className="h-40 animate-pulse bg-gray-50" />}>
         <TestimonialsSection />
       </Suspense>
-
-      {/* Lista de Abogados */}
-      <section ref={featuredSectionRef} id="abogados-destacados" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold font-serif text-gray-900 whitespace-nowrap">
-              Abogados destacados
-            </h2>
-            <Button variant="outline" onClick={() => navigate('/search')} className="w-full sm:w-auto">
-              Ver abogados disponibles
-            </Button>
-          </div>
-          
-          {isLoadingFeatured ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <Skeleton className="h-16 w-16 rounded-full" />
-                      <div className="space-y-2 flex-1">
-                        <Skeleton className="h-6 w-100" />
-                        <div className="flex space-x-2">
-                          <Skeleton className="h-6 w-16 rounded-full" />
-                          <Skeleton className="h-6 w-16 rounded-full" />
-                        </div>
-                        <Skeleton className="h-4 w-1/2" />
-                      </div>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {[...Array(2)].map((_, i) => (
-                        <Skeleton key={i} className="h-6 w-20 rounded-full" />
-                      ))}
-                    </div>
-                    <div className="mt-4 space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-4/6" />
-                    </div>
-                    <div className="mt-6 flex flex-col space-y-2">
-                      <Skeleton className="h-10 w-full rounded-md" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredLawyers.slice(0, 3).map((lawyer) => (
-                <LawyerCard
-                  key={lawyer.id}
-                  lawyer={lawyer}
-                  onContactClick={() => {
-                    if (!user) {
-                      setAuthMode('login');
-                      setShowAuthModal(true);
-                      return;
-                    }
-                    handleContactClick(lawyer);
-                  }}
-                  onScheduleClick={() => {
-                    if (!user) {
-                      setAuthMode('login');
-                      setShowAuthModal(true);
-                      return;
-                    }
-                    handleScheduleClick(lawyer);
-                  }}
-                  user={user}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* FAQ Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
