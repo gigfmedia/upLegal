@@ -82,6 +82,24 @@ const SearchResults = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref estable que almacena los parámetros de búsqueda actuales.
+  // Permite que el efecto de carga infinita lea los valores actuales SIN
+  // ser dependencia reactiva de ellos, evitando el loop de re-renders.
+  const currentSearchParamsRef = useRef({
+    query: '',
+    specialty: ['all'] as string[],
+    location: '',
+    minRating: 0,
+    minExperience: 0,
+    availableNow: false,
+    pageSize: 12,
+  });
+
+  // Ref para el número de página actual de la paginación infinita.
+  // Evita incluir searchResult.page como dep del efecto de scroll.
+  const currentPageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+
   const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1, triggerOnce: false });
 
   // Función de búsqueda
@@ -163,12 +181,19 @@ const SearchResults = () => {
             created_at: lawyer.created_at || undefined
           };
         });
+        const newPage = page;
+        const newPageSize = response.pageSize || 10;
+        const newTotal = response.total || 0;
+        const newHasMore = (newPage * newPageSize) < newTotal;
+        // Update refs so infinite scroll can read without being reactive deps
+        currentPageRef.current = newPage;
+        hasMoreRef.current = newHasMore;
         setSearchResult(prev => ({
           lawyers: page === 1 ? formatted : [...prev.lawyers, ...formatted],
-          total: response.total || 0,
-          page,
-          pageSize: response.pageSize || 10,
-          hasMore: (page * (response.pageSize || 10)) < (response.total || 0)
+          total: newTotal,
+          page: newPage,
+          pageSize: newPageSize,
+          hasMore: newHasMore
         }));
       }
     } catch (err) {
@@ -181,7 +206,11 @@ const SearchResults = () => {
     }
   }, []);
 
-  // Sincronización URL -> estado + búsqueda
+  // Sincronización URL -> estado + búsqueda.
+  // IMPORTANTE: Este efecto SOLO depende de searchParams (la URL) y performSearch (estable).
+  // Los estados locales se actualizan aquí como reflejo de la URL, pero NO son deps.
+  // Actualizar la ref estable ANTES de llamar performSearch evita que el efecto de
+  // carga infinita lea valores obsoletos.
   useEffect(() => {
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category');
@@ -203,7 +232,7 @@ const SearchResults = () => {
       newSpecialties = ['all'];
     }
 
-    // Actualizar estados locales
+    // Actualizar estados locales (para UI)
     setSearchTerm(urlQuery);
     setSelectedSpecialty(newSpecialties);
     setLocation(urlLocation);
@@ -211,7 +240,21 @@ const SearchResults = () => {
     setMinExperience(urlMinExperience);
     setSortBy(urlSort);
 
-    // Siempre que la URL cambie (incluso en primera carga), ejecutar búsqueda
+    // Actualizar ref estable PRIMERO para que el efecto de scroll pueda leer
+    // los valores correctos sin ser dependencia reactiva de los estados.
+    currentSearchParamsRef.current = {
+      query: urlQuery,
+      specialty: newSpecialties,
+      location: urlLocation,
+      minRating: urlMinRating,
+      minExperience: urlMinExperience,
+      availableNow: false,
+      pageSize: 12,
+    };
+    // Resetear refs de paginación en cada nueva búsqueda
+    currentPageRef.current = 1;
+    hasMoreRef.current = true;
+
     if (!initialLoadDone.current) {
       initialLoadDone.current = true;
     }
@@ -231,25 +274,29 @@ const SearchResults = () => {
     });
   }, [searchParams, performSearch]);
 
-  // Carga infinita
+  // Carga infinita.
+  // CRÍTICO: Este efecto SOLO depende de inView, loading, loadingMore y performSearch.
+  // Los parámetros de búsqueda y la paginación se leen desde refs estables para evitar
+  // el loop que causaba 491 pageviews/usuario en /search.
   useEffect(() => {
-    if (inView && !loading && !loadingMore && searchResult.hasMore && searchResult.lawyers.length) {
-      const nextPage = searchResult.page + 1;
+    if (inView && !loading && !loadingMore && hasMoreRef.current) {
+      const nextPage = currentPageRef.current + 1;
+      const p = currentSearchParamsRef.current;
       performSearch({
         page: nextPage,
         isInitialLoad: false,
         searchParams: {
-          query: searchTerm,
-          specialty: selectedSpecialty,
-          location,
-          minRating,
-          minExperience,
-          availableNow
+          query: p.query,
+          specialty: p.specialty,
+          location: p.location,
+          minRating: p.minRating,
+          minExperience: p.minExperience,
+          availableNow: p.availableNow
         },
-        pageSize: searchResult.pageSize
+        pageSize: p.pageSize
       });
     }
-  }, [inView, loading, loadingMore, searchResult.hasMore, searchResult.page, searchResult.pageSize, searchTerm, selectedSpecialty, location, minRating, minExperience, availableNow, searchResult.lawyers.length, performSearch]);
+  }, [inView, loading, loadingMore, performSearch]);
 
   // Handlers
   const handleSearch = useCallback(() => {

@@ -130,6 +130,32 @@ type BusySlot = {
   duration: number;
 };
 
+// Funciones puras de disponibilidad — definidas fuera del componente para tener
+// referencias ESTABLES y no ser nunca dependencias del useEffect de fetchAvailability.
+const DAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function getDayName(date: Date): string {
+  return DAYS_ES[date.getDay()];
+}
+
+function normalizeDayKey(key: string): string {
+  return key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function getAvailabilityForDay(
+  availability: Record<string, unknown> | null,
+  dayName: string
+): boolean[] | null {
+  if (!availability) return null;
+  const targetKey = normalizeDayKey(dayName);
+  for (const [key, value] of Object.entries(availability)) {
+    if (normalizeDayKey(key) === targetKey && Array.isArray(value)) {
+      return value as boolean[];
+    }
+  }
+  return null;
+}
+
 export default function BookingPage() {
   const { lawyerId } = useParams<{ lawyerId: string }>();
   const navigate = useNavigate();
@@ -154,6 +180,9 @@ export default function BookingPage() {
 
   const [lawyer, setLawyer] = useState<LawyerProfile | null>(null);
   const [lawyerAvailability, setLawyerAvailability] = useState<Record<string, boolean[]> | null | undefined>(undefined);
+  // Ref para leer lawyerAvailability dentro de fetchAvailability sin que sea
+  // una dependencia reactiva del useEffect (evita re-runs en cada cambio de estado).
+  const lawyerAvailabilityRef = useRef<Record<string, boolean[]> | null | undefined>(undefined);
   const availabilityInitialized = useRef(false);
   const [loading, setLoading] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -211,6 +240,7 @@ export default function BookingPage() {
 
       setLawyer({ ...data, availability: parsedAvailability ?? data.availability ?? null });
       setLawyerAvailability(parsedAvailability);
+      lawyerAvailabilityRef.current = parsedAvailability;
       availabilityInitialized.current = true;
       setLoading(false);
     }
@@ -295,39 +325,9 @@ export default function BookingPage() {
   }, [availableSlots, selectedTime]);
 
   // Constants mapping indices to hours for availability JSON
-  // ManageAvailability.tsx: const HOURS = Array.from({ length: 10 }, (_, i) => 9 + i); // 09:00–20:00 (Check: 9+9=18, so 09:00 to 18:00 start times)
+  // ManageAvailability.tsx: const HOURS = Array.from({ length: 10 }, (_, i) => 9 + i); // 09:00–20:00
   // ManageAvailability stores boolean array where index 0 = 9:00, index 1 = 10:00, etc.
   const AVAILABILITY_START_HOUR = 9;
-
-  // Helper to get Day string for availability JSON key
-  const getDayName = useCallback((date: Date) => {
-    const days = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-    return days[date.getDay()];
-  }, []);
-
-  const normalizeDayKey = useCallback((key: string) =>
-    key
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase(),
-    []);
-
-  const getAvailabilityForDay = useCallback((
-    availability: Record<string, unknown> | null,
-    dayName: string
-  ): boolean[] | null => {
-    if (!availability) return null;
-
-    const targetKey = normalizeDayKey(dayName);
-
-    for (const [key, value] of Object.entries(availability)) {
-      if (normalizeDayKey(key) === targetKey && Array.isArray(value)) {
-        return value as boolean[];
-      }
-    }
-
-    return null;
-  }, [normalizeDayKey]);
 
   // Generate available time slots for selected date
   useEffect(() => {
@@ -387,9 +387,10 @@ export default function BookingPage() {
 
         if (error) {
           console.error('[BookingPage] RPC error:', error);
-          if (availabilityInitialized.current && lawyerAvailability) {
+          // Error fallback: use ref (not reactive state) to avoid triggering this effect again
+          if (availabilityInitialized.current && lawyerAvailabilityRef.current) {
             const dayName = getDayName(selectedDate);
-            const dayAvail = getAvailabilityForDay(lawyerAvailability, dayName);
+            const dayAvail = getAvailabilityForDay(lawyerAvailabilityRef.current, dayName);
             const daySlots = baseSlots.filter(slot => {
               const hourIdx = parseInt(slot.time.split(':')[0]) - AVAILABILITY_START_HOUR;
               return Array.isArray(dayAvail) ? dayAvail[hourIdx] === true : false;
@@ -409,7 +410,10 @@ export default function BookingPage() {
           return;
         }
 
-        let availabilityConfig: Record<string, boolean[]> | null = lawyerAvailability;
+        // Read from ref so that lawyerAvailability is NOT a reactive dep of this effect.
+        // If it were a dep, every call to setLawyerAvailability would re-run this effect,
+        // creating a loop: fetch -> setLawyerAvailability -> re-run effect -> fetch -> ...
+        let availabilityConfig: Record<string, boolean[]> | null = lawyerAvailabilityRef.current ?? null;
 
         if ((!availabilityConfig || Object.keys(availabilityConfig).length === 0) && actualLawyerId) {
           const { data: profileData } = await supabase
@@ -427,7 +431,9 @@ export default function BookingPage() {
 
               if (rawAvail && typeof rawAvail === 'object' && Object.keys(rawAvail).length > 0) {
                 availabilityConfig = rawAvail as Record<string, boolean[]>;
+                // Sync both state and ref
                 setLawyerAvailability(availabilityConfig);
+                lawyerAvailabilityRef.current = availabilityConfig;
               }
             } catch (parseError) {
               console.warn('[BookingPage] Error parsing availability config:', parseError);
@@ -523,10 +529,11 @@ export default function BookingPage() {
     };
 
     fetchAvailability();
-  // selectedTime intentionally removed: we use selectedTimeRef to avoid re-running this effect
-  // when selectedTime changes, which would cause a double-fetch loop.
+  // CRÍTICO: getDayName y getAvailabilityForDay son funciones puras a nivel de módulo
+  // (referencias estables). lawyerAvailability se lee desde lawyerAvailabilityRef para
+  // evitar que el cambio de estado re-ejecute este efecto y cree un loop de fetches.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, duration, actualLawyerId, lawyerAvailability, getDayName, getAvailabilityForDay]);
+  }, [selectedDate, duration, actualLawyerId]);
 
   // Helper to add minutes to HHMM integer (e.g. 900 + 60 => 1000)
   // This is a bit hacky, cleaner to use Date objects but sufficient for static slots

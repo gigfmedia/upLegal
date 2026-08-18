@@ -19,6 +19,7 @@ import { AuthProvider } from '@/contexts/AuthContext/clean/AuthContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { supabase } from '@/lib/supabaseClient';
+import { StickyBottomBarProvider } from '@/contexts/StickyBottomBarContext';
 
 // Layouts (lazy load these as they're not needed for home page)
 const DashboardLayout = lazy(() => import('@/components/dashboard/DashboardLayout'));
@@ -638,11 +639,13 @@ const GoogleAnalytics = lazy(() => import('@/components/GoogleAnalytics'));
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <Toaster />
-      <Sonner />
-      <ErrorBoundary>
-        <AppContent />
-      </ErrorBoundary>
+      <StickyBottomBarProvider>
+        <Toaster />
+        <Sonner />
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </StickyBottomBarProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

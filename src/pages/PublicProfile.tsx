@@ -17,6 +17,7 @@ import { LawyerReviewsSection } from "@/components/reviews/LawyerReviewsSection"
 import { AuthModal } from "@/components/AuthModal";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { StickyBottomBar } from "@/components/StickyBottomBar";
 import {
   Star,
   MapPin,
@@ -1137,7 +1138,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
                     <div className="w-full">
                       <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 w-full sm:w-auto">
+                        <div id="experience-block" className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600 w-full sm:w-auto">
                           <div className="flex items-center gap-6">
                             {profileData.experience.length > 0 ? (
                               <>
@@ -1373,6 +1374,28 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
         </div>
       </div>
+
+      {/* Sticky Bottom Bar - aparece al hacer scroll */}
+      {lawyer && (
+        <StickyBottomBar
+          price={displayHourlyRate !== undefined && displayHourlyRate !== null
+            ? formatPrice(displayHourlyRate) + ' CLP'
+            : 'Consultar precio'}
+          duration="Consulta 60 min"
+          targetId="experience-block"
+          onBookClick={() => {
+            if (currentUser?.id !== lawyer?.user_id && lawyer) {
+              window.gtag?.('event', 'select_lawyer', {
+                lawyer_id: lawyer.user_id || lawyer.id,
+              });
+              const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+              const nameSlug = fullName ? createSlug(fullName) : 'abogado';
+              navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
+            }
+          }}
+          disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
+        />
+      )}
 
       {/* Modals */}
       {lawyer && (

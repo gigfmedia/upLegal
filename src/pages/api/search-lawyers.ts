@@ -61,13 +61,17 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'patente': ['Derecho Comercial'],
   'propiedad intelectual': ['Derecho Comercial'],
   
-  // Inmobiliario (mapea a Derecho Civil: especialidad real con abogados; no existe "Derecho Inmobiliario")
-  'inmobiliario': ['Derecho Civil'],
-  'propiedad': ['Derecho Civil'],
-  'hipoteca': ['Derecho Civil'],
-  'usufructo': ['Derecho Civil'],
-  'servidumbre': ['Derecho Civil'],
-  'regularizacion': ['Derecho Civil'],
+  // Inmobiliario — busca primero abogados con especialidad "Derecho Inmobiliario" registrada
+  // y también incluye "Derecho Civil" como fallback (perfil más amplio).
+  'inmobiliario': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'derecho inmobiliario': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'arriendo': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'arrendamiento': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'propiedad': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'hipoteca': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'usufructo': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'servidumbre': ['Derecho Inmobiliario', 'Derecho Civil'],
+  'regularizacion': ['Derecho Inmobiliario', 'Derecho Civil'],
   
   // Penal
   'penal': ['Derecho Penal'],
@@ -117,7 +121,7 @@ const SPECIALTY_MAPPING: Record<string, string[]> = {
   'derecho de familia': ['Derecho de Familia'],
   'derecho laboral': ['Derecho Laboral'],
   'derecho penal': ['Derecho Penal'],
-  'derecho inmobiliario': ['Derecho Civil'],
+  'derecho inmobiliario': ['Derecho Inmobiliario', 'Derecho Civil'],
   'derecho civil': ['Derecho Civil'],
   'derecho comercial': ['Derecho Comercial'],
   'derecho tributario': ['Derecho Tributario'],

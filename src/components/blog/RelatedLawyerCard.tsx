@@ -171,7 +171,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
 
           <Button
             size="lg"
-            className="w-full bg-gray-900 hover:bg-green-900 text-white text-base py-6 rounded-xl transition-all active:scale-[0.99]"
+            className="w-full bg-green-600 hover:bg-green-700 text-white text-base font-semibold py-6 rounded-xl transition-all active:scale-[0.99] shadow-sm"
             onClick={handleSchedule}
           >
             Agendar consulta →

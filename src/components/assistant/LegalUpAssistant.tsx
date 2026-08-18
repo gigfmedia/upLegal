@@ -1,18 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { posthog } from '@/lib/posthogLoader';
-import {
-  MessageCircleMore,
-  X,
-  ArrowLeft,
-  Maximize2,
-  Minimize2,
-  Info,
-} from 'lucide-react';
-import { ChatMessage } from './ChatMessage';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { MessageCircleMore, X, Minimize2, Maximize2, Send, ArrowLeft, Info } from 'lucide-react';
+import { AIChat } from '@/components/legalup-ai/AIChat';
+import { useStickyBottomBar } from '@/contexts/StickyBottomBarContext';
 import { ChatInput } from './ChatInput';
 import { AssistantTyping } from './AssistantTyping';
+import { ChatMessage } from './ChatMessage';
 import {
   QUICK_TOPICS,
   getLawyerProfileUrl,
@@ -21,6 +15,7 @@ import {
   AssistantApiError,
 } from '@/lib/assistantService';
 import { cn } from '@/lib/utils';
+import posthog from 'posthog-js';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { isInitialConsultationService } from '@/lib/serviceBooking';
 import PreCheckoutModal, { type ServiceCheckoutData } from '@/components/PreCheckoutModal';
@@ -56,17 +51,14 @@ type LegalUpAssistantProps = {
 
 export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistantProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const reducedMotion = useReducedMotion();
 
-  const [open, setOpen] = useState(() => {
-    try {
-      return sessionStorage.getItem(WIDGET_STORAGE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const { isVisible: isStickyBarVisible } = useStickyBottomBar();
+  const isLawyerProfile = location.pathname.startsWith('/abogado/');
+  const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [showHint, setShowHint] = useState(() => {
     try {
       return sessionStorage.getItem(HINT_STORAGE_KEY) !== 'true';
@@ -74,10 +66,10 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
       return true;
     }
   });
-  const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState<AssistantStage>('initial');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const openedTracked = useRef(false);
@@ -293,7 +285,11 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
 
   const panelClasses = expanded
     ? 'relative flex h-full w-full flex-col overflow-hidden rounded-none bg-background'
-    : 'relative flex h-[calc(100dvh-7rem)] sm:h-[min(680px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-2xl';
+    : `relative flex flex-col overflow-hidden rounded-3xl border border-border bg-background shadow-2xl ${
+        isLawyerProfile && isStickyBarVisible
+          ? 'h-[calc(100dvh-10rem)] sm:h-[min(600px,calc(100dvh-10rem))]'
+          : 'h-[calc(100dvh-7rem)] sm:h-[min(680px,calc(100dvh-7rem))]'
+      }`;
 
   return (
     <>
@@ -302,7 +298,9 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
         className={
           expanded
             ? 'pointer-events-none fixed inset-0 z-[1000]'
-            : 'pointer-events-none fixed bottom-24 right-4 left-4 sm:left-auto sm:w-[400px] z-[1000]'
+            : `pointer-events-none fixed right-4 left-4 sm:left-auto sm:w-[400px] z-[1000] transition-all duration-300 ease-in-out ${
+                isLawyerProfile && isStickyBarVisible ? 'bottom-40' : 'bottom-24'
+              }`
         }
       >
         <AnimatePresence>
@@ -448,7 +446,9 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.18 }}
-            className="pointer-events-auto fixed bottom-5 right-5 z-[1000] flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white shadow-xl transition-colors hover:bg-zinc-800"
+            className={`pointer-events-auto fixed right-5 z-[1200] flex h-14 w-14 items-center justify-center rounded-full bg-zinc-900 text-white shadow-xl transition-all duration-300 ease-in-out ${
+              isStickyBarVisible ? 'bottom-24' : 'bottom-5'
+            }`}
             aria-label="Cerrar asistente de LegalUp"
           >
             <X className="h-6 w-6" aria-hidden="true" />
@@ -460,7 +460,7 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
       <AnimatePresence>
         {!open && (
           <motion.div
-            className="fixed bottom-5 right-5 z-[1000] flex items-center gap-3"
+            className={`fixed right-5 z-[1000] flex items-center gap-3 transition-all duration-300 ease-in-out ${isStickyBarVisible ? 'bottom-24' : 'bottom-5'}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
