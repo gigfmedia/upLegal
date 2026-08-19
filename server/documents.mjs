@@ -345,7 +345,7 @@ async function generateDocument({ supabase, doc, resend }) {
 // ──────────────────────────────────────────────────
 // handleDocumentPayment — thin entry point
 // ──────────────────────────────────────────────────
-export async function handleDocumentPayment({ supabase, documentId, paymentId, resend }) {
+export async function handleDocumentPayment({ supabase, documentId, paymentId, resend, onPurchase }) {
   console.log(`[documents] handleDocumentPayment id=${documentId} paymentId=${paymentId}`);
 
   // 1. Load document
@@ -402,6 +402,16 @@ export async function handleDocumentPayment({ supabase, documentId, paymentId, r
   // 5. Execute unified pipeline
   try {
     await generateDocument({ supabase, doc: freshDoc, resend });
+
+    // 6. Server-side purchase analytics — only fires when a real, new payment
+    //    is confirmed by the webhook (idempotent calls return early above).
+    if (onPurchase) {
+      try {
+        await onPurchase({ doc: freshDoc, paymentId });
+      } catch (analyticsError) {
+        console.error(`[documents] Purchase analytics failed for ${documentId}:`, analyticsError.message);
+      }
+    }
   } catch (err) {
     const errorStack = err.stack || err.message;
     console.error(`[documents] Generation failed for ${documentId}:`, errorStack);

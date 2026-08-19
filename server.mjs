@@ -67,6 +67,7 @@ import {
   ASSISTANT_LIMITS,
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
+import { sendMetaPurchaseEvent } from './server/metaCapi.mjs';
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -217,6 +218,65 @@ const sendGA4PurchaseEvent = async (params) => {
     console.error('[GA4] Purchase event failed', error);
     // Do not throw - payment flow should continue even if GA4 fails
   }
+};
+
+const sendDocumentPurchaseEvent = async ({ doc, paymentId }) => {
+  const itemName = doc.type === 'pagare' ? 'Pagaré' : 'Documento Legal';
+  const is_owner = isOwnerEmail(doc.user_email);
+
+  // GA4 server-side purchase (only for real, webhook-confirmed payments)
+  if (ga4MeasurementId && ga4ApiSecret) {
+    try {
+      const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
+      const payload = {
+        client_id: doc.id,
+        events: [
+          {
+            name: 'purchase',
+            params: {
+              transaction_id: doc.id,
+              value: Number(doc.total_paid) || 0,
+              currency: 'CLP',
+              document_id: doc.id,
+              document_type: doc.type,
+              mp_payment_id: paymentId,
+              transport_is_owner: is_owner,
+              items: [
+                {
+                  item_id: doc.id,
+                  item_name: itemName,
+                  price: Number(doc.total_paid) || 0,
+                  quantity: 1,
+                },
+              ],
+            },
+          },
+        ],
+      };
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[GA4] Document purchase event failed', { status: response.status, error: errorText });
+      } else {
+        console.log('[GA4] Document purchase event sent', { transaction_id: doc.id, value: Number(doc.total_paid) || 0, currency: 'CLP' });
+      }
+    } catch (error) {
+      console.error('[GA4] Document purchase event failed', error);
+    }
+  }
+
+  // Meta CAPI server-side purchase (dedup via event_id = doc.id)
+  await sendMetaPurchaseEvent({
+    eventId: doc.id,
+    value: Number(doc.total_paid) || 0,
+    currency: 'CLP',
+    email: doc.user_email,
+    itemName,
+  });
 };
 
 if (!supabaseUrl || !serviceRoleKey) {
@@ -2334,6 +2394,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           documentId,
           paymentId,
           resend,
+          onPurchase: ({ doc, paymentId: mpPaymentId }) =>
+            sendDocumentPurchaseEvent({ doc, paymentId: mpPaymentId }),
         });
 
         console.log('[webhook] step=document_payment status=ok document_id=' + documentId);

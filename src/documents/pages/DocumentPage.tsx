@@ -13,6 +13,7 @@ import { getTemplate } from '../templates'
 import { createDocument, pollDocumentStatus } from '../engine/createDocument'
 import { PRICING } from '../pricing'
 import DocumentPreview from '../components/DocumentPreview'
+import { numberToCLPWordsCapitalized } from '../utils/numberToWords'
 import type { DocumentField } from '../types'
 import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge'
 
@@ -132,6 +133,14 @@ const DocumentPage = () => {
 
   const formValues = watch()
 
+  useEffect(() => {
+    const rawAmount = String(formValues.amount || '').replace(/[^0-9]/g, '')
+    if (!rawAmount) return
+    const amount = Number(rawAmount)
+    if (!Number.isFinite(amount) || amount <= 0) return
+    setValue('amount_words', numberToCLPWordsCapitalized(amount), { shouldValidate: true })
+  }, [formValues.amount, setValue])
+
   const onSubmit = useCallback(async (data: FormValues) => {
     if (!metadata) return
     setError(null)
@@ -175,12 +184,6 @@ const DocumentPage = () => {
         document_id: documentId,
         document_type: doc.type,
         price: doc.total_paid,
-      })
-      window.gtag?.('event', 'purchase', {
-        transaction_id: documentId,
-        value: doc.total_paid,
-        currency: 'CLP',
-        items: [{ item_id: documentId, item_name: doc.type, price: doc.total_paid, quantity: 1 }],
       })
     } catch (err: any) {
       setError(err.message || 'Error al generar el documento')
@@ -353,6 +356,7 @@ const DocumentPage = () => {
                                 id={field.id}
                                 type={field.type || 'text'}
                                 placeholder={field.placeholder}
+                                readOnly={field.id === 'amount_words'}
                                 {...register(field.id as any, {
                                   setValueAs: (v: string) => {
                                     if (field.validation === 'rut') return formatRut(v)
