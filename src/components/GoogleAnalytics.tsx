@@ -57,9 +57,6 @@ const GoogleAnalytics = () => {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      //console.log(`GA Init: ${GA_MEASUREMENT_ID}`);
-    }
     // Cargar el script real de gtag.js ANTES de encolar config/eventos. Sin esta
     // llamada, los comandos gtag van al stub del dataLayer pero nunca se envían
     // (regresión FASE 9: GA4 quedó en 0 porque se perdió la inyección del script).
@@ -73,9 +70,6 @@ const GoogleAnalytics = () => {
 
   useEffect(() => {
     if (initialized) {
-      if (import.meta.env.DEV) {
-        //console.log(`GA Pageview: ${location.pathname + location.search}`);
-      }
       gtag("event", "page_view", {
         page_path: location.pathname + location.search,
         page_title: typeof document !== "undefined" ? document.title : undefined,

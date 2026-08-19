@@ -314,7 +314,7 @@ async function sendClientNotification(
       const errText = await res.text();
       console.error('[send-service-quote] Resend error:', res.status, errText);
     } else {
-      console.log('[send-service-quote] Email sent successfully to', quoteRequest.user_email);
+      
     }
   } catch (err) {
     console.error('[send-service-quote] Failed to send email:', err);

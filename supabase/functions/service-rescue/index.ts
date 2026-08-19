@@ -71,8 +71,6 @@ serve(async (req) => {
       return jsonResponse({ error: error.message }, 500);
     }
 
-    console.log(`[service-rescue] ${bookings?.length ?? 0} pending services found`);
-
     const results: any[] = [];
 
     for (const booking of (bookings ?? []) as BookingRow[]) {
@@ -94,8 +92,6 @@ serve(async (req) => {
       }
 
       if (!step) continue;
-
-      console.log(`[service-rescue] booking=${booking.id} minutes=${minutesSinceCreated.toFixed(1)} step=${step}`);
 
       // Evitar duplicados
       const { data: existing } = await supabase
@@ -132,22 +128,9 @@ serve(async (req) => {
           .eq('user_id', booking.lawyer_id)
           .single();
 
-        if (lawyerError) {
-          console.log(`[service-rescue] Error fetching lawyer profile for booking ${booking.id}:`, lawyerError);
-        }
-
         const lawyerName =
           `${lawyer?.first_name ?? ''} ${lawyer?.last_name ?? ''}`.trim() || 'tu abogado';
         const lawyerSlug = lawyer?.slug;
-
-        console.log(`[service-rescue] Lawyer data for booking ${booking.id}:`, {
-          lawyerId: booking.lawyer_id,
-          lawyerName,
-          lawyerSlug,
-          hasLawyerData: !!lawyer,
-          firstName: lawyer?.first_name,
-          lastName: lawyer?.last_name
-        });
 
         // Usar datos congelados del booking (no consultar lawyer_services)
         const serviceTitle = booking.service_title || 'Servicio legal';
@@ -180,9 +163,6 @@ serve(async (req) => {
             .update({ status: 'sent', sent_at: new Date().toISOString() })
             .eq('id', tracking.id);
         }
-
-        console.log(`[service-rescue] sent booking=${booking.id} step=${step}`);
-
         results.push({ bookingId: booking.id, step, status: 'sent' });
       } catch (err) {
         if (tracking?.id) {
@@ -198,8 +178,6 @@ serve(async (req) => {
 
     const sentCount = results.filter(r => r.status === 'sent').length;
     const errorCount = results.filter(r => r.status === 'error').length;
-    console.log(`[service-rescue] sent=${sentCount} errors=${errorCount}`);
-
     return jsonResponse({ ok: true, results });
   } catch (error) {
     return jsonResponse({ error: String(error) }, 500);

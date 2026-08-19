@@ -118,17 +118,6 @@ export const createMercadoPagoPreference = async (req: Request) => {
   }
 
   const requestId = crypto.randomUUID();
-  
-  // Helper function to log messages with request ID
-  const log = (message: string, data: unknown = '') => {
-    //console.log(`[${new Date().toISOString()}] [${requestId}] ${message}`, data);
-  };
-  
-  log('Received request', {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries())
-  });
 
   try {
     // Only allow POST requests

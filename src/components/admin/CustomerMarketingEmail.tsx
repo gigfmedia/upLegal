@@ -144,12 +144,6 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
 
       const selectedCustomersData = customers.filter(c => selectedCustomers.includes(c.email));
 
-      console.log('Enviando petición a Edge Function...', {
-        emails: targetEmails,
-        subject: emailSubject,
-        testMode: isTestMode
-      });
-
       const { data, error } = await supabase.functions.invoke('send-customer-marketing-emails', {
         body: {
           emails: targetEmails,
@@ -158,8 +152,6 @@ export function CustomerMarketingEmail({ onClose }: CustomerMarketingEmailProps)
           testMode: isTestMode,
         }
       });
-
-      console.log('Respuesta de Edge Function:', { data, error });
 
       if (error) {
         console.error('Edge Function error object:', error);

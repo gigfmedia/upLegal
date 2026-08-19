@@ -56,8 +56,6 @@ serve(async (req) => {
       const url = new URL(req.url);
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
-      
-      console.log('🔥 CALLBACK FULL URL:', req.url);
 
       if (!code) {
         console.error('❌ Missing code from Google redirect');

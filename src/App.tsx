@@ -359,7 +359,7 @@ const AppContent = () => {
           if (setSessionError) {
             console.error('[AuthHash] Error estableciendo sesión:', setSessionError);
           } else {
-            console.log('[AuthHash] Session set successfully');
+            
           }
         } else if (accessToken) {
           const { data, error } = await supabase.auth.getSession();

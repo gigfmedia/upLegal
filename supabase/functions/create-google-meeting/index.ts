@@ -212,7 +212,7 @@ serve(async (req) => {
         }
       }
     } else {
-      //console.log('🔥 SKIPPING GOOGLE CALENDAR - NO INTEGRATION');
+
     }
 
     // Fallback to Jitsi Meet if Google failed or not available

@@ -449,7 +449,7 @@ export default function LawyerProfilePage() {
   // Sincronizar el porcentaje de completitud del perfil
   useEffect(() => {
     if (completionPercentage !== undefined) {
-      //console.log('Profile completion updated from hook:', completionPercentage, '%');
+    
     }
   }, [completionPercentage]);
 

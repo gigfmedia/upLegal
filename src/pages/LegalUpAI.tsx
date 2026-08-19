@@ -2277,7 +2277,7 @@ function LegalUpAI() {
             <h2 className="font-[var(--font-display)] text-3xl tracking-tight sm:text-5xl">
               Tu próximo caso puede empezar aquí.
             </h2>
-            <p className="mx-auto mt-5 max-w-xl text-[var(--muted-foreground)]">
+            <p className="mx-auto mt-5 max-w-2xl text-[var(--muted-foreground)]">
               {needsProfile
                 ? "Antes de comenzar tu prueba gratuita, necesitamos completar tu perfil de abogado."
                 : "Prueba LegalUp AI gratis durante 5 días."}

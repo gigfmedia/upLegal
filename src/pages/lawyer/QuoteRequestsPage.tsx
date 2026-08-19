@@ -112,12 +112,6 @@ export default function QuoteRequestsPage() {
         return;
       }
 
-      console.log('[QUOTE] Sending quote:', {
-        quoteRequestId,
-        price,
-        hasToken: !!session.access_token,
-      });
-
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-service-quote`,
         {
@@ -146,8 +140,6 @@ export default function QuoteRequestsPage() {
         console.error('[QUOTE] Error response:', { status: response.status, errorMessage });
         throw new Error(errorMessage || `Error del servidor (${response.status})`);
       }
-
-      console.log('[QUOTE] Quote sent successfully');
 
       toast({
         title: 'Presupuesto enviado',

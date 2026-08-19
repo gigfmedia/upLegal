@@ -453,7 +453,7 @@ export default function BookingPage() {
 
           if (dayAvailability && Array.isArray(dayAvailability)) {
             const result = dayAvailability[hourIndex] === true;
-            if (!result) console.log('[BookingPage] Slot filtered out by config:', slot.time, 'hourIndex:', hourIndex);
+            if (!result)
             return result;
           }
 

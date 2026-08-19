@@ -18,8 +18,6 @@ export async function generateDocument(
 ): Promise<{ pdfUrl: string }> {
   const { documentId, type, payload, templateVersion } = input
 
-  console.log(`[generateDocument] starting documentId=${documentId} type=${type}`)
-
   // 1. Mark as processing
   await supabase
     .from('generated_documents')
@@ -101,8 +99,6 @@ export async function generateDocument(
     // 5. Get public URL
     const { data: urlData } = supabase.storage.from('documents').getPublicUrl(fileName)
     const pdfUrl = urlData.publicUrl
-
-    console.log(`[generateDocument] PDF uploaded: ${pdfUrl}`)
 
     // 6. Update document record
     await supabase

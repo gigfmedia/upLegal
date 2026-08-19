@@ -91,24 +91,12 @@ serve(async (req: Request) => {
     }
 
     // Fetch lawyer profile for email notification
-    console.log('[service-quote-request] Fetching lawyer profile for user_id:', body.lawyer_id);
     
     const { data: lawyer, error: lawyerError } = await supabase
       .from('profiles')
       .select('email, first_name, last_name')
       .eq('user_id', body.lawyer_id)
       .single();
-
-    console.log('[service-quote-request] Lawyer profile fetch result:', lawyer ? 'found' : 'not found');
-    console.log('[service-quote-request] Lawyer profile fetch error:', lawyerError ? JSON.stringify(lawyerError) : 'none');
-    
-    if (lawyer) {
-      console.log('[service-quote-request] Lawyer profile data:', JSON.stringify({ 
-        email: lawyer.email, 
-        first_name: lawyer.first_name, 
-        last_name: lawyer.last_name 
-      }));
-    }
 
     if (!lawyer || !lawyer.email) {
       console.error('[service-quote-request] CRITICAL: Lawyer profile or email is missing for user_id:', body.lawyer_id);
@@ -120,33 +108,21 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log('[service-quote-request] Lawyer email:', lawyer.email);
-    console.log('[service-quote-request] Client email:', body.user_email);
-
     // Initialize Resend
     const resendApiKey = getEnv('RESEND_API_KEY');
     const appUrl = getEnv('APP_URL', 'https://legalup.cl');
-    console.log('[service-quote-request] RESEND_API_KEY exists:', !!resendApiKey);
-    console.log('[service-quote-request] APP_URL:', appUrl);
+    
+    
 
     const resend = new Resend(resendApiKey);
-    console.log('[service-quote-request] Resend client initialized');
+    
 
     // Send email notifications - fail if either email fails
     try {
-      console.log('[EMAIL] Starting email sending process...');
-      
       // Send confirmation email to client
-      console.log('[EMAIL] Sending client email to:', body.user_email);
       await sendClientConfirmation(resend, body, quoteRequest.id, appUrl);
-      console.log('[EMAIL] Client email sent successfully to:', body.user_email);
-
       // Send notification email to lawyer
-      console.log('[EMAIL] Sending lawyer email to:', lawyer.email);
       await sendLawyerNotification(resend, lawyer, body, quoteRequest.id, appUrl);
-      console.log('[EMAIL] Lawyer email sent successfully to:', lawyer.email);
-
-      console.log('[service-quote-request] Both emails sent successfully');
     } catch (error) {
       console.error('[EMAIL ERROR] Failed to send emails:', error);
       throw error; // Re-throw to ensure 500 response
@@ -173,12 +149,9 @@ async function sendLawyerNotification(
   quoteRequestId: string,
   appUrl: string
 ) {
-  console.log('[EMAIL LAWYER] Function called with lawyer email:', lawyer.email);
 
   const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim() || 'Abogado';
   const dashboardUrl = `${appUrl}/lawyer/quotes/${quoteRequestId}`;
-
-  console.log('[EMAIL LAWYER] Building HTML email...');
 
   const html = `
     <!DOCTYPE html>
@@ -228,8 +201,6 @@ async function sendLawyerNotification(
     </html>
   `;
 
-  console.log('[EMAIL LAWYER] HTML built successfully, preparing to send via Resend SDK...');
-
   const emailPayload = {
     from: 'LegalUp <hola@mg.legalup.cl>',
     to: lawyer.email,
@@ -237,18 +208,12 @@ async function sendLawyerNotification(
     html
   };
 
-  console.log('[EMAIL LAWYER] Email payload:', JSON.stringify({ to: emailPayload.to, subject: emailPayload.subject }));
-
   const { data, error } = await resend.emails.send(emailPayload);
-
-  console.log('[EMAIL LAWYER] Resend SDK response received');
 
   if (error) {
     console.error('[EMAIL LAWYER ERROR] Resend SDK error:', error);
     throw new Error(`Resend SDK error: ${JSON.stringify(error)}`);
   }
-
-  console.log('[EMAIL LAWYER SUCCESS] Lawyer email sent to:', lawyer.email, 'Response:', JSON.stringify(data));
 }
 
 async function sendClientConfirmation(
@@ -257,9 +222,6 @@ async function sendClientConfirmation(
   quoteRequestId: string,
   appUrl: string
 ) {
-  console.log('[EMAIL CLIENT] Function called with client email:', request.user_email);
-
-  console.log('[EMAIL CLIENT] Building HTML email...');
 
   const html = `
     <!DOCTYPE html>
@@ -301,8 +263,6 @@ async function sendClientConfirmation(
     </html>
   `;
 
-  console.log('[EMAIL CLIENT] HTML built successfully, preparing to send via Resend SDK...');
-
   const emailPayload = {
     from: 'LegalUp <hola@mg.legalup.cl>',
     to: request.user_email,
@@ -310,16 +270,10 @@ async function sendClientConfirmation(
     html
   };
 
-  console.log('[EMAIL CLIENT] Email payload:', JSON.stringify({ to: emailPayload.to, subject: emailPayload.subject }));
-
   const { data, error } = await resend.emails.send(emailPayload);
-
-  console.log('[EMAIL CLIENT] Resend SDK response received');
 
   if (error) {
     console.error('[EMAIL CLIENT ERROR] Resend SDK error:', error);
     throw new Error(`Resend SDK error: ${JSON.stringify(error)}`);
   }
-
-  console.log('[EMAIL CLIENT SUCCESS] Client email sent to:', request.user_email, 'Response:', JSON.stringify(data));
 }

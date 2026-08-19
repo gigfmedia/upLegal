@@ -76,7 +76,7 @@ export default function RequestConversation({ requestId, companyId, lawyerId }: 
       })
       if (!res.ok) throw new Error('Error al enviar')
       const data = await res.json()
-      console.log('[Conversation] POST response:', data)
+      
       const message = data.message
       setInput('')
       setEvents(prev => [...prev, {

@@ -80,8 +80,6 @@ serve(async (req) => {
             throw new Error('Failed to update quote request status');
           }
 
-          console.log(`Quote request ${payment.external_reference} marked as paid`);
-
           // Send email notifications
           await sendPaymentNotifications(supabaseAdmin, quoteRequest, payment);
         }
@@ -214,7 +212,7 @@ async function sendPaymentNotifications(
           const errText = await res.text();
           console.error('[webhook] Resend error (lawyer):', res.status, errText);
         } else {
-          console.log('[webhook] Payment notification sent to lawyer:', lawyerEmail);
+          
         }
       }
     } catch (err) {
@@ -274,7 +272,7 @@ async function sendPaymentNotifications(
         const errText = await res.text();
         console.error('[webhook] Resend error (client):', res.status, errText);
       } else {
-        console.log('[webhook] Payment confirmation sent to client:', quoteRequest.user_email);
+        
       }
     }
   } catch (err) {
