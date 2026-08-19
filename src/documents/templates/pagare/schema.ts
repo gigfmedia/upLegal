@@ -112,7 +112,7 @@ const schema: DocumentField[] = [
     id: 'amount_words',
     label: 'Monto en palabras',
     placeholder: 'Dos millones quinientos mil pesos',
-    helpText: 'Escribe el monto en letras',
+    helpText: 'Se completa automáticamente según el monto indicado',
     validation: 'text',
     group: 'Monto y condiciones',
     required: true,
