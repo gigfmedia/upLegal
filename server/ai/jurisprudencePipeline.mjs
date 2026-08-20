@@ -45,6 +45,21 @@ function dedupeMatices(matices = []) {
   return out;
 }
 
+// Fase 4.2.20 (§22): cobertura de atribución de evidencia. Razón entre los
+// claims verificados que tienen una referencia de fuente VÁLIDA (source_id no
+// vacío; toda fuente recuperada y verificada lleva cita/extracto que la hace
+// rastreable) y el total de claims verificados. Con 0 claims verificados
+// devuelve 1: no hay nada que atribuir mal (semántica vacía correcta, no un 0
+// que insinúe falla). Expuesto como `attributionCoverage` en el outcome del
+// pipeline. Puro, determinístico, sin LLM.
+export function computeAttributionCoverage(claims = []) {
+  if (!Array.isArray(claims) || claims.length === 0) return 1;
+  const valid = claims.filter(
+    (c) => c && typeof c.source_id === 'string' && c.source_id.trim() !== '',
+  ).length;
+  return valid / claims.length;
+}
+
 // Fase 4.2.14: gate de relevancia post-retrieval. En una consulta documental
 // (mode document/mixed) sin claims documentales verificados, conserva solo las
 // fuentes públicas que responden sustantivamente la consulta (coincidencia de
@@ -379,14 +394,14 @@ export function buildJurisprudenceOutcome({
   });
 
   // Cuando la normativa fue promovida automáticamente (el modelo no la citó),
-  // refuerza la coherencia del resumen con un puntero factual a la norma.
-  if (autoNormativas.length > 0 && filteredNormativa[0]?.source) {
-    excessive.resumen = (
-      `${(excessive.resumen || '').trim()} Se identificó la normativa aplicable: ${
-        filteredNormativa[0].source.citation
-      }.`
-    ).trim();
-  }
+  // refuerza la coherencia de la Respuesta breve con un puntero factual a la
+  // norma (rastreable al título oficial / idNorma). El puntero es generado por
+  // el pipeline (no por el modelo): NO se mezcla con el texto del modelo antes
+  // de la verificación de la breve (4.2.20); se re-adjunta a la breve VERIFICADA.
+  const normativaPromovidaPointer =
+    autoNormativas.length > 0 && filteredNormativa[0]?.source
+      ? `Se identificó la normativa aplicable: ${filteredNormativa[0].source.citation}.`
+      : '';
 
   // Fase 4.1 (Etapa 3): jerarquía normativa — solo ordena la presentación;
   // no decide cuál norma prevalece. Los matices de jerarquía se agregan a la
@@ -421,22 +436,52 @@ export function buildJurisprudenceOutcome({
     ? dedupeMatices([...maticesJerarquia, ...contradicciones])
     : [];
 
+  // Fase 4.2.20 (§11): la "Respuesta breve" NO puede hacer afirmaciones más
+  // fuertes que la evidencia verificada. Antes el resumen del modelo se exhibía
+  // tal cual (solo suavizado por detectExcessiveConclusions), mientras la
+  // "Síntesis" sí pasaba por el verifier: la breve podía colar una oración sin
+  // respaldo como afirmación jurídica. Se somete el resumen al MISMO verifier
+  // de síntesis: cada oración debe anclarse a un claim verificado (con el marco
+  // de procedencia hecho/ley/jurisprudencia/doctrina/inferencia) o se elimina.
+  // El texto verificado se usa como breve; si queda vacío se cae a un mensaje
+  // honesto que remite a la síntesis y la evidencia, nunca a un texto inventado.
+  const briefResult = hasVerifiedClaims
+    ? verifyAndBuildSynthesis(excessive.resumen, allVerifiedClaims)
+    : null;
+  const verifiedBrief =
+    hasVerifiedClaims && briefResult && briefResult.síntesis.trim()
+      ? briefResult.síntesis
+      : '';
+  // Puntero determinístico a la norma promovida (véase normativaPromovidaPointer).
+  const briefWithPointer =
+    verifiedBrief && normativaPromovidaPointer
+      ? `${verifiedBrief} ${normativaPromovidaPointer}`
+      : verifiedBrief || normativaPromovidaPointer;
+
   // Fase 4.1.10: estado NO_EVIDENCE. El pipeline funcionó por completo (search
   // OK, LLM OK, schema OK, verifier OK), pero no quedó ningún claim verificado.
   // El resumen no verificado del modelo NO se exhibe como afirmación jurídica
   // respaldada; se reemplaza por un mensaje explícito de ausencia de evidencia.
   // Fase 4.2.6: en modo documental el mensaje apunta a los documentos del caso.
   const resumenFinal = hasVerifiedClaims
-    ? excessive.resumen
+    ? (briefWithPointer ||
+        'La respuesta se respalda en las fuentes verificadas de este informe; revisa la síntesis y la evidencia para el detalle.')
     : documentMode === 'document'
       ? 'No se encontró evidencia suficiente en los documentos del caso para responder esta pregunta de manera verificable.'
       : 'No se encontró evidencia suficiente en las fuentes públicas consultadas para responder esta pregunta de manera verificable.';
+  const briefWarnings = hasVerifiedClaims ? [...(briefResult?.warnings || [])] : [];
+  if (hasVerifiedClaims && briefResult?.sentences?.some((s) => s.dropped)) {
+    briefWarnings.push(
+      'La respuesta breve contenía afirmaciones sin respaldo verificado en las fuentes; se limitó a las oraciones verificadas.',
+    );
+  }
   const advertenciasFinales = hasVerifiedClaims
     ? [
         ...modelAdvertencias,
         ...researchWarnings,
         ...excessive.warnings,
         ...synthesisResult.warnings,
+        ...briefWarnings,
         ...warningsContradicciones,
       ]
     : researchWarnings;
@@ -506,6 +551,7 @@ export function buildJurisprudenceOutcome({
     documentClaimsDropped: verifiedDocumentos.warnings.length,
     relevanceDroppedSources:
       gateNormativa.droppedCount + gateJurisprudencia.droppedCount + gateDoctrina.droppedCount,
+    attributionCoverage: computeAttributionCoverage(allVerifiedClaims),
   };
 }
 
