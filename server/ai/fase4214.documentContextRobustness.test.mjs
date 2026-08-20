@@ -464,7 +464,7 @@ describe('buildJurisprudenceOutcome · gate 4.2.14', () => {
     expect(result.relevanceDroppedSources).toBe(0);
   });
 
-  it('modo mixto CON claims documentales verificados: el gate NO filtra las fuentes públicas', () => {
+  it('modo mixto CON claims documentales verificados: el gate SÍ filtra las fuentes públicas irrelevantes (4.2.19)', () => {
     const doc = contratoDoc();
     const result = buildJurisprudenceOutcome({
       data: {
@@ -487,9 +487,9 @@ describe('buildJurisprudenceOutcome · gate 4.2.14', () => {
     });
     expect(result.status).toBe('ok');
     expect(result.outcome).toBe('SUCCESS');
-    expect(result.relevanceDroppedSources).toBe(0);
+    expect(result.relevanceDroppedSources).toBe(1);
     expect(result.allVerifiedClaims.some((c) => c.category === 'document')).toBe(true);
-    expect(result.allVerifiedClaims.some((c) => c.source_id === 'j-datos')).toBe(true);
+    expect(result.allVerifiedClaims.some((c) => c.source_id === 'j-datos')).toBe(false);
   });
 
   it('4.2.15: la fuente pública descartada por el gate NO aparece en el Markdown de la respuesta', () => {

@@ -319,16 +319,20 @@ export function buildJurisprudenceOutcome({
     ? verifiedNormativa.kept
     : autoNormativas;
 
-  // Fase 4.2.14: gate de relevancia post-retrieval. Cuando la consulta es
-  // documental (mode document/mixed) y NINGÚN claim documental sobrevivió la
-  // verificación, las fuentes públicas no deben sustituir en silencio al
-  // documento del caso: "¿Cuál es la renta mensual?" no se responde con la renta
-  // de funcionarios de una ley ni con jurisprudencia genérica de arrendamiento.
+  // Fase 4.2.14 + 4.2.19: gate de relevancia post-retrieval. En toda consulta
+  // documental (mode document/mixed) las fuentes públicas solo se exhiben si
+  // RESPONDEN la intención de la pregunta, independientemente de que existan
+  // claims documentales verificados. Sin esta regla (4.2.19), en modo 'mixed'
+  // una fuente pública VERIFICABLE pero de otra materia ("¿Cuál es la renta
+  // mensual?" → jurisprudencia de protección de datos) sobrevivía al lado del
+  // claim documental y se exhibía como respaldo de la pregunta factual.
   // Se conservan solo las fuentes con señal sustantiva de responder la consulta
-  // (coincidencia de ley/artículo citado o solape de término sustantivo). Si
-  // nada pasa el gate, el resultado es NO_EVIDENCE honesto, nunca una fuente
-  // pública irrelevante. Determinístico, sin LLM.
-  const gateShouldFilter = documentMode !== 'none' && verifiedDocumentos.kept.length === 0;
+  // (coincidencia de ley/artículo citado o solape de término sustantivo).
+  // Relevancia ≠ ausencia de evidencia: si el claim documental responde, el
+  // resultado es SUCCESS documental con la fuente irrelevante descartada; el
+  // NO_EVIDENCE queda reservado para cuando nada responde la pregunta.
+  // Determinístico, sin LLM.
+  const gateShouldFilter = documentMode !== 'none';
   const gateNormativa = gateShouldFilter
     ? applyRelevanceGate(effectiveNormativa, { query })
     : { kept: effectiveNormativa, droppedCount: 0, warnings: [] };
