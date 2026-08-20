@@ -79,6 +79,11 @@ const JuicioEjecutivoArticle = lazy(() => import('../pages/blog/juicio-ejecutivo
 const EmbargoArticle = lazy(() => import('../pages/blog/embargo-chile-2026'));
 const CobranzaJudicialArticle = lazy(() => import('../pages/blog/cobranza-judicial-chile-2026'));
 const CesionDerechosArticle = lazy(() => import('../pages/blog/cesion-de-derechos-chile-2026'));
+const CitacionFiscaliaArticle = lazy(() => import('../pages/blog/citacion-fiscalia-chile-2026'));
+const FormalizacionArticle = lazy(() => import('../pages/blog/formalizacion-chile-2026'));
+const DeclararFiscaliaArticle = lazy(() => import('../pages/blog/declarar-fiscalia-imputado-testigo-chile-2026'));
+const NoMePaganDeudaArticle = lazy(() => import('../pages/blog/no-me-pagan-una-deuda-chile-2026'));
+const ComoCobrarDeudaArticle = lazy(() => import('../pages/blog/como-cobrar-deuda-legalmente-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
 
 
@@ -90,6 +95,11 @@ export const BlogRoutes = () => (
   }>
     <Routes>
       <Route index element={<BlogIndex />} />
+      <Route path="como-cobrar-deuda-legalmente-chile-2026" element={<ComoCobrarDeudaArticle />} />
+      <Route path="no-me-pagan-una-deuda-chile-2026" element={<NoMePaganDeudaArticle />} />
+      <Route path="declarar-fiscalia-imputado-testigo-chile-2026" element={<DeclararFiscaliaArticle />} />
+      <Route path="formalizacion-chile-2026" element={<FormalizacionArticle />} />
+      <Route path="citacion-fiscalia-chile-2026" element={<CitacionFiscaliaArticle />} />
       <Route path="me-subieron-el-arriendo-que-hago-2026" element={<BlogArticle />} />
       <Route path="como-calcular-tu-finiquito-chile-2026" element={<FiniquitoArticle />} />
       <Route path="derecho-de-familia-chile-2026" element={<DerechoFamiliaArticle />} />

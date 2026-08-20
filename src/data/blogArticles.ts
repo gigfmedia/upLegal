@@ -11,6 +11,58 @@ export interface Article {
 }
 
 export const articles: Article[] = [
+  {
+    id: "como-cobrar-deuda-legalmente-chile-2026",
+    title: "Cómo cobrar una deuda legalmente en Chile 2026: las vías legales para recuperar tu dinero",
+    excerpt: "Descubre las vías legales para cobrar una deuda en Chile: negociación, juicio ejecutivo, juicio ordinario y embargo. Plazos, costos y qué hacer paso a paso para recuperar tu dinero.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "7 de Agosto, 2026",
+    readTime: "11 min",
+    image: "/assets/como-cobrar-deuda-legalmente-chile-2026.png"
+  },
+  {
+    id: "no-me-pagan-una-deuda-chile-2026",
+    title: "No me pagan una deuda en Chile 2026: qué hacer paso a paso para recuperar tu dinero",
+    excerpt: "Conoce qué hacer cuando no te pagan una deuda en Chile: qué pasos seguir, qué documentos necesitas, cuándo conviene demandar y cómo evitar la prescripción.",
+    category: "Derecho Civil",
+    cluster: "obligaciones",
+    author: "LegalUp",
+    date: "6 de Agosto, 2026",
+    readTime: "11 min",
+    image: "/assets/no-me-pagan-una-deuda-chile-2026.png"
+  },
+  {
+    id: "declarar-fiscalia-imputado-testigo-chile-2026",
+    title: "Declarar en la Fiscalía en Chile 2026: qué hacer si te citan como imputado o testigo",
+    excerpt: "Conoce cómo funciona una declaración en la Fiscalía en Chile, cuáles son tus derechos como imputado o testigo, qué ocurre durante la diligencia y cómo prepararte para declarar.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "5 de Agosto, 2026",
+    readTime: "12 min",
+    image: "/assets/declarar-fiscalia-imputado-testigo-chile-2026.png"
+  },
+  {
+    id: "formalizacion-chile-2026",
+    title: "Formalización en Chile 2026: qué es, qué pasa después y cómo defenderte",
+    excerpt: "Conoce qué es la formalización en Chile, cuándo se realiza, qué ocurre durante la audiencia, qué medidas puede decretar el tribunal y cómo preparar tu defensa.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "4 de Agosto, 2026",
+    readTime: "12 min",
+    image: "/assets/formalizacion-chile-2026.png"
+  },
+  {
+    id: "citacion-fiscalia-chile-2026",
+    title: "Citación de la Fiscalía en Chile 2026: qué significa, qué hacer y tus derechos",
+    excerpt: "Conoce qué es una citación de la Fiscalía en Chile, por qué razones pueden citarte, si es obligatorio asistir, qué hacer si no puedes ir y cuáles son tus derechos.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "3 de Agosto, 2026",
+    readTime: "12 min",
+    image: "/assets/citacion-fiscalia-chile-2026.png"
+  },
   // {
   //   id: "ley-del-consumidor-chile-2026",
   //   title: "Ley del Consumidor en Chile 2026: derechos, garantías y cómo reclamar",
