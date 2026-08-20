@@ -505,6 +505,18 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
 
   const history = useMemo(() => researchQuery.data ?? [], [researchQuery.data]);
 
+  // Fase 4.2.18: fallo técnico de carga del historial de investigaciones. Solo
+  // se registra el contador de intentos fallidos; nunca el contenido.
+  const lastResearchFailureRef = useRef(0);
+  useEffect(() => {
+    if (researchQuery.isError && researchQuery.failureCount > lastResearchFailureRef.current) {
+      lastResearchFailureRef.current = researchQuery.failureCount;
+      posthog.capture('ai_research_history_load_failed', {
+        failure_count: researchQuery.failureCount,
+      });
+    }
+  }, [researchQuery.isError, researchQuery.failureCount]);
+
   const runResearch = (query: string) => {
     setWarnings([]);
     posthog.capture('ai_jurisprudence_research_started', {
@@ -678,6 +690,26 @@ export function AIResearchPanel({ workspaceId }: AIResearchPanelProps) {
           <div className="space-y-2 py-2">
             <div className="h-20 animate-pulse rounded-lg bg-gray-100" />
             <div className="h-20 animate-pulse rounded-lg bg-gray-100" />
+          </div>
+        ) : researchQuery.isError && history.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 py-8 text-center">
+            <AlertTriangle className="h-8 w-8 text-amber-500" aria-hidden="true" />
+            <p className="text-sm font-medium text-amber-900">
+              No pudimos cargar tus investigaciones.
+            </p>
+            <p className="max-w-sm text-xs text-muted-foreground">
+              Hubo un problema de conexión. Reintenta para volver a verlas.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => researchQuery.refetch()}
+              className="border-amber-300 text-amber-900 hover:bg-amber-100"
+            >
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Reintentar
+            </Button>
           </div>
         ) : history.length === 0 && !runMutation.isPending ? (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center">

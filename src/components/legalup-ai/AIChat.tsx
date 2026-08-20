@@ -79,6 +79,18 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
     }
   }, [chatEnabled]);
 
+  // Fase 4.2.18: fallo técnico de carga del historial. Solo se registra el
+  // contador de intentos fallidos; nunca el contenido de la conversación.
+  const lastHistoryFailureRef = useRef(0);
+  useEffect(() => {
+    if (chatQuery.isError && chatQuery.failureCount > lastHistoryFailureRef.current) {
+      lastHistoryFailureRef.current = chatQuery.failureCount;
+      posthog.capture('ai_chat_history_load_failed', {
+        failure_count: chatQuery.failureCount,
+      });
+    }
+  }, [chatQuery.isError, chatQuery.failureCount]);
+
   const conversationId = chatQuery.data?.conversation?.id ?? null;
 
   const shownMessages = useMemo(() => {
@@ -272,6 +284,25 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
           <div className="space-y-3 py-4">
             <Skeleton className="h-16 w-3/4" />
             <Skeleton className="h-16 w-1/2 self-end" />
+          </div>
+        ) : chatQuery.isError && !chatQuery.data ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+              <AlertTriangle className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <p className="font-medium text-gray-900">No pudimos cargar el historial.</p>
+            <p className="mx-auto max-w-sm text-sm text-muted-foreground">
+              Hubo un problema de conexión. Reintenta para ver la conversación del caso.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => chatQuery.refetch()}
+              className="gap-1.5"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+              Reintentar
+            </Button>
           </div>
         ) : (
           <div className="flex flex-col">
