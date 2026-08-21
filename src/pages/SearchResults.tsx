@@ -59,6 +59,7 @@ const SearchResults = () => {
   const viewLawyersTrackedRef = useRef<{ key: string; timestamp: number } | null>(null);
   const initialLoadDone = useRef(false);
   const isSearching = useRef(false);
+  const hasScrolledToSort = useRef(false);
 
   // Estados locales
   const [searchTerm, setSearchTerm] = useState('');
@@ -298,6 +299,35 @@ const SearchResults = () => {
     }
   }, [inView, loading, loadingMore, performSearch]);
 
+  // Scroll to sort section when coming from home search on mobile
+  useEffect(() => {
+    const scrollTo = searchParams.get('scrollTo');
+    if (scrollTo === 'sort' && !hasScrolledToSort.current && !loading) {
+      hasScrolledToSort.current = true;
+
+      // Scroll to the sort section after a delay to ensure rendering
+      setTimeout(() => {
+        const sortSection = document.getElementById('sort-dropdown');
+        if (sortSection) {
+          const header = document.querySelector('div.fixed.top-0');
+          const headerHeight = header ? header.offsetHeight : 104; // 104px = h-10 (top bar) + h-16 (header)
+          const elementPosition = sortSection.getBoundingClientRect().top + window.pageYOffset;
+          const offsetPosition = elementPosition - headerHeight - 50; // 20px extra margin
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+
+          // Remove the parameter from URL after scrolling
+          const params = new URLSearchParams(searchParams);
+          params.delete('scrollTo');
+          setSearchParams(params);
+        }
+      }, 1500);
+    }
+  }, [searchParams, setSearchParams, loading]);
+
   // Handlers
   const handleSearch = useCallback(() => {
     const params = new URLSearchParams();
@@ -479,7 +509,7 @@ const SearchResults = () => {
                 </div>
               ) : <div />}
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto" id="sort-dropdown">
               <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
                 <label htmlFor="sort" className="text-sm text-gray-600 mr-2">Ordenar por:</label>
                 <select id="sort" value={sortBy} onChange={(e) => {

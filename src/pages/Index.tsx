@@ -379,11 +379,11 @@ const Index = () => {
   const handleSearch = useCallback((category?: string) => {
     // Prevent multiple rapid searches
     if (isSearching.current) return;
-    
+
     try {
       isSearching.current = true;
       setIsSearchingState(true);
-      
+
       // If both search term and location are empty, show all lawyers
       if (!searchTerm.trim() && !location.trim()) {
         navigate('/search');
@@ -391,24 +391,27 @@ const Index = () => {
       }
 
       const params = new URLSearchParams();
-      
+
       // Set search term parameter if it exists and is not empty
       if (searchTerm && searchTerm.trim()) {
         const searchTermValue = searchTerm.trim();
         params.set('query', searchTermValue); // Pass the raw natural language query
-        
+
         // Check if search term contains specialty keywords and set category parameter using the NLP heuristic
         const detectedCategory = detectEspecialidad(searchTermValue);
         if (detectedCategory) {
           params.set('category', detectedCategory);
         }
       }
-      
+
       // Set location parameter if it exists and is not empty
       if (location && location.trim()) {
         params.set('location', location.trim());
       }
-      
+
+      // Add scroll parameter for mobile to scroll to sort section
+      params.set('scrollTo', 'sort');
+
       // Navigate to search with the constructed parameters
       navigate(`/search${params.toString() ? `?${params.toString()}` : ''}`);
     } finally {
