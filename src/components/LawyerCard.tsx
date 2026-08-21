@@ -565,10 +565,10 @@ export function LawyerCard({
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-2xl font-bold text-gray-900">
-                    ${formatCLP(displayHourlyRate)} <small className="text-gray-500 font-normal text-lg">CLP</small>
+                    ${formatCLP(displayHourlyRate)} <small className="text-gray-500 font-normal text-lg">CLP · <small className="text-gray-500 text-xs">Consulta 60 min</small></small>
                   </span>
                   {/* <span className="text-gray-500 text-sm ml-1">/hora</span> */}
-                  <small className="text-gray-500 text-xs block">Consulta 60 min</small>
+                  <small className="text-gray-500 text-xs block mt-1">Videollamada · Respuesta hoy · Sin compromisos adicionales</small>
                   {/* <small className="text-gray-500 text-xs block mt-1">La duración puede variar según el caso y la disponibilidad del abogado</small> */}
                 </div>
               </div>

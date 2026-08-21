@@ -26,7 +26,27 @@ interface RelatedLawyerCardProps {
 
 export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyerCardProps) => {
   const navigate = useNavigate();
-  const displayName = lawyer.name || "Abogado";
+
+  // Format display name: shorten second last name to initial
+  const formatDisplayName = (name: string) => {
+    if (!name) return "Abogado";
+
+    const parts = name.trim().split(/\s+/);
+    if (parts.length <= 2) return name; // First name + last name only, no shortening needed
+
+    const firstName = parts[0];
+    const middleName = parts.length > 3 ? parts.slice(1, -2).join(' ') : '';
+    const lastName = parts.length > 2 ? parts[parts.length - 2] : '';
+    const secondLastName = parts[parts.length - 1];
+
+    // Always shorten second last name to initial if present
+    if (middleName) {
+      return `${firstName} ${middleName} ${lastName} ${secondLastName.charAt(0)}.`;
+    }
+    return `${firstName} ${lastName} ${secondLastName.charAt(0)}.`;
+  };
+
+  const displayName = formatDisplayName(lawyer.name || "");
   const initials = displayName.split(' ').filter(n => n).slice(0, 2).map(n => n[0]).join('').toUpperCase();
   const rating = lawyer.rating || 0;
   const reviewCount = lawyer.review_count || lawyer.reviews || 0;
@@ -36,11 +56,6 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
   const displayPrice = roundToThousands(price * (1 + clientSurchargePercent));
   const isVerified = Boolean(lawyer.verified || lawyer.pjud_verified);
   const experienceYears = lawyer.experience_years || 0;
-  const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
-  const isNewLawyer = Boolean(
-    lawyer.created_at &&
-    Date.now() - new Date(lawyer.created_at).getTime() < THREE_MONTHS_MS
-  );
 
   const specialties = (Array.isArray(lawyer.specialties)
     ? lawyer.specialties.flatMap(s => typeof s === 'string' ? s.split(',').map(x => x.trim()) : [])
@@ -93,7 +108,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold text-gray-900 truncate">{displayName}</h3>
+            <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
             <div className="mt-0.5 flex items-center min-h-[21px]">
               {reviewCount > 0 ? (
                 <div className="flex items-center gap-1.5">
@@ -108,10 +123,6 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
                   <span className="text-sm font-bold text-gray-900">{rating.toFixed(1)}</span>
                   <span className="text-xs text-gray-500">({reviewCount} reseñas)</span>
                 </div>
-              ) : isNewLawyer ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-800 w-fit">
-                  Nuevo en LegalUp
-                </span>
               ) : isVerified ? (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 w-fit">
                   <ShieldCheck className="h-3 w-3 mr-0.5" />
@@ -119,18 +130,12 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
                 </span>
               ) : null}
             </div>
-            <div className="flex items-center gap-2 mt-1 min-h-[20px]">
-              {/* <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200 border-none text-[11px] px-2 py-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse mr-1" />
-                Responde hoy
-              </Badge> */}
-              {isVerified && (reviewCount > 0 || isNewLawyer) && (
+            {isVerified && reviewCount > 0 && (
                 <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none text-[11px] px-2 py-0">
                   <ShieldCheck className="h-3 w-3 mr-0.5" />
                   Verificado en PJUD
                 </Badge>
               )}
-            </div>
             {experienceYears > 0 && (
               <p className="text-xs text-gray-500 mt-2">{experienceYears} años de experiencia</p>
             )}
@@ -159,9 +164,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
           </div>
 
           <div className="flex items-center gap-2 mb-2 text-xs text-gray-700">
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Agenda online</span>
-            <span className="text-gray-700">|</span>
-            <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />Consulta por videollamada</span>
+            <small className="text-gray-500 text-xs block mt-1">Videollamada · Respuesta hoy · Sin compromisos adicionales</small>
           </div>
 
           <p className="text-xs text-green-700 font-medium mb-2 flex items-center gap-1 mb-4">

@@ -265,7 +265,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {requiresQuote ? 'Solicitar evaluación' : (isService ? 'Solicitar servicio legal' : 'Confirmar tu asesoría')}
