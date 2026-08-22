@@ -67,9 +67,8 @@ export function StickyBottomBar({
   return (
     <div
       ref={barRef}
-      className={`fixed bottom-0 left-0 right-0 z-[1100] bg-white border-t border-gray-200 shadow-lg transition-transform duration-300 ease-in-out ${
-        isVisible ? 'translate-y-0' : 'translate-y-full'
-      }`}
+      className={`fixed bottom-0 left-0 right-0 z-[1100] bg-white border-t border-gray-200 shadow-lg transition-transform duration-300 ease-in-out ${isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
       role="banner"
       aria-label="Barra de agendamiento rápido"
     >
@@ -90,7 +89,7 @@ export function StickyBottomBar({
             onClick={onBookClick}
             disabled={disabled}
             className="bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 min-w-[160px] justify-center"
-            aria-label="Agendar consulta"
+            aria-label="Agenda consulta"
           >
             <Calendar className="h-4 w-4" />
             <span>Agenda consulta</span>

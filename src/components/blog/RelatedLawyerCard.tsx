@@ -131,11 +131,11 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
               ) : null}
             </div>
             {isVerified && reviewCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none text-[11px] px-2 py-0">
-                  <ShieldCheck className="h-3 w-3 mr-0.5" />
-                  Verificado en PJUD
-                </Badge>
-              )}
+              <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none text-[11px] px-2 py-0">
+                <ShieldCheck className="h-3 w-3 mr-0.5" />
+                Verificado en PJUD
+              </Badge>
+            )}
             {experienceYears > 0 && (
               <p className="text-xs text-gray-500 mt-2">{experienceYears} años de experiencia</p>
             )}
@@ -177,7 +177,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
             className="w-full bg-green-600 hover:bg-green-700 text-white text-base font-semibold py-6 rounded-xl transition-all active:scale-[0.99] shadow-sm"
             onClick={handleSchedule}
           >
-            Agendar consulta →
+            Agenda consulta →
           </Button>
 
           <p className="text-center text-xs text-gray-700 mt-3">
