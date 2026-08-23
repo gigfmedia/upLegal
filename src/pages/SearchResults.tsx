@@ -14,6 +14,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { useInView } from 'react-intersection-observer';
 import { Skeleton } from "@/components/ui/skeleton";
 import { detectEspecialidad } from "@/utils/askLLM";
+import { useLegalCategoryClassifier } from "@/hooks/useLegalCategoryClassifier";
 import SpecialtiesSlider from '@/components/search/SpecialtiesSlider';
 import { PaymentMethods } from '@/components/MercadoPagoBadge';
 
@@ -37,8 +38,8 @@ const normalizeSpecialty = (s: string | null): string => {
   if (lower.includes('familia')) return 'Derecho de Familia';
   if (lower.includes('laboral')) return 'Derecho Laboral';
   if (lower.includes('penal')) return 'Derecho Penal';
-  if (lower.includes('inmobiliario')) return 'Derecho Civil';
-  if (lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Civil';
+  if (lower.includes('inmobiliario')) return 'Derecho Inmobiliario';
+  if (lower.includes('arriendo') || lower.includes('arrendamiento')) return 'Derecho Inmobiliario';
   if (lower.includes('comercial')) return 'Derecho Comercial';
   if (lower.includes('tributario')) return 'Derecho Tributario';
   if (lower.includes('civil')) return 'Derecho Civil';
@@ -207,6 +208,15 @@ const SearchResults = () => {
     }
   }, []);
 
+  const SLUG_TO_CATEGORY: Record<string, string> = {
+    "arriendo": "Derecho Arrendamiento",
+    "laboral": "Derecho Laboral",
+    "familia": "Derecho Familia",
+    "penal": "Derecho Penal",
+    "civil": "Derecho Civil",
+    "consumidor": "Derecho del Consumidor",
+  };
+
   // Sincronización URL -> estado + búsqueda.
   // IMPORTANTE: Este efecto SOLO depende de searchParams (la URL) y performSearch (estable).
   // Los estados locales se actualizan aquí como reflejo de la URL, pero NO son deps.
@@ -215,6 +225,7 @@ const SearchResults = () => {
   useEffect(() => {
     const urlQuery = searchParams.get('query') || '';
     const urlCategory = searchParams.get('category');
+    const urlCategoria = searchParams.get('categoria');
     const urlSpecialties = searchParams.getAll('specialty');
     const urlLocation = searchParams.get('location') || '';
     const urlMinRating = Number(searchParams.get('minRating')) || 0;
@@ -222,7 +233,16 @@ const SearchResults = () => {
     const urlSort = searchParams.get('sort') || 'relevance';
 
     let newSpecialties: string[] = [];
-    if (urlCategory) {
+    let categoryFromSlug: string | null = null;
+    if (urlCategoria && SLUG_TO_CATEGORY[urlCategoria]) {
+      categoryFromSlug = SLUG_TO_CATEGORY[urlCategoria];
+    } else if (urlCategory && SLUG_TO_CATEGORY[urlCategory]) {
+      categoryFromSlug = SLUG_TO_CATEGORY[urlCategory];
+    }
+
+    if (categoryFromSlug) {
+      newSpecialties = [normalizeSpecialty(categoryFromSlug)];
+    } else if (urlCategory) {
       newSpecialties = [normalizeSpecialty(urlCategory)];
     } else if (urlSpecialties.length > 0) {
       newSpecialties = [...new Set(urlSpecialties.map(normalizeSpecialty))];
@@ -329,29 +349,71 @@ const SearchResults = () => {
   }, [searchParams, setSearchParams, loading]);
 
   // Handlers
-  const handleSearch = useCallback(() => {
-    const params = new URLSearchParams();
-    if (!searchTerm.trim()) {
+  const { classify, isClassifying } = useLegalCategoryClassifier();
+
+  const handleSearch = useCallback(async () => {
+    if (isClassifying) return;
+    const term = searchTerm.trim();
+    if (!term) {
       setSearchParams(new URLSearchParams());
       return;
     }
-    const detected = detectEspecialidad(searchTerm);
-    if (detected) {
-      const normalized = normalizeSpecialty(detected);
-      const newSpecialties = selectedSpecialty.filter(s => s !== 'all');
-      if (!newSpecialties.includes(normalized)) newSpecialties.push(normalized);
-      if (newSpecialties.length === 0) newSpecialties.push('all');
-      if (newSpecialties[0] !== 'all') {
-        newSpecialties.forEach(s => params.append('specialty', s));
+    const params = new URLSearchParams();
+    params.set('query', term);
+    params.set('caso', term);
+
+    let slug = "";
+    let detectedCategory: string | null = null;
+    if (term.length >= 10) {
+      try {
+        const result = await classify(term);
+        slug = result.slug;
+        detectedCategory = result.category;
+      } catch {
+        detectedCategory = detectEspecialidad(term);
+        if (detectedCategory) {
+          const fallbackSlugs: Record<string, string> = {
+            "Derecho Arrendamiento": "arriendo",
+            "Derecho Laboral": "laboral",
+            "Derecho Familia": "familia",
+            "Derecho Penal": "penal",
+            "Derecho Civil": "civil",
+            "Derecho del Consumidor": "consumidor",
+          };
+          slug = fallbackSlugs[detectedCategory] || "";
+        }
       }
-    } else if (selectedSpecialty[0] !== 'all') {
-      selectedSpecialty.forEach(s => params.append('specialty', s));
+    } else {
+      detectedCategory = detectEspecialidad(term);
+      if (detectedCategory) {
+        const fallbackSlugs: Record<string, string> = {
+          "Derecho Arrendamiento": "arriendo",
+          "Derecho Laboral": "laboral",
+          "Derecho Familia": "familia",
+          "Derecho Penal": "penal",
+          "Derecho Civil": "civil",
+          "Derecho del Consumidor": "consumidor",
+        };
+        slug = fallbackSlugs[detectedCategory] || "";
+      }
     }
-    if (searchTerm.trim()) params.set('query', searchTerm.trim());
+
+    if (slug) {
+      params.set('categoria', slug);
+      const mapped = SLUG_TO_CATEGORY[slug];
+      if (mapped) {
+        const normalized = normalizeSpecialty(mapped);
+        if (normalized !== 'all') params.append('specialty', normalized);
+      }
+    } else if (detectedCategory) {
+      const normalized = normalizeSpecialty(detectedCategory);
+      if (normalized !== 'all') params.append('specialty', normalized);
+    }
+
     if (location) params.set('location', location);
     if (sortBy !== 'relevance') params.set('sort', sortBy);
     setSearchParams(params);
-  }, [searchTerm, selectedSpecialty, location, sortBy, setSearchParams]);
+  }, [searchTerm, location, sortBy, classify, isClassifying, setSearchParams]);
 
   const filteredLawyers = useMemo(() => {
     if (loading && !searchResult.lawyers.length) return [];
@@ -399,6 +461,9 @@ const SearchResults = () => {
     const params = new URLSearchParams(searchParams);
     params.delete('specialty');
     params.delete('category');
+    params.delete('categoria');
+    params.delete('caso');
+    params.delete('query');
     unique.forEach(s => { if (s !== 'all') params.append('specialty', s); });
     setSearchParams(params);
   }, [searchParams, setSearchParams]);
@@ -435,6 +500,7 @@ const SearchResults = () => {
               onSearch={handleSearch}
               onFiltersClick={() => setShowFilters(true)}
               showMobileFilters={true}
+              isLoading={isClassifying}
             />
           </div>
 
@@ -446,6 +512,24 @@ const SearchResults = () => {
             />
             <div id="after-specialties" />
           </div>
+
+          {(() => {
+            const casoParam = searchParams.get('caso');
+            const categoriaParam = searchParams.get('categoria');
+            const displayCategoria = categoriaParam && SLUG_TO_CATEGORY[categoriaParam] ? SLUG_TO_CATEGORY[categoriaParam] : categoriaParam;
+            if (!casoParam && !displayCategoria) return null;
+            return (
+              <div className="mt-6 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
+                {displayCategoria && casoParam ? (
+                  <>Abogados de <strong>{displayCategoria}</strong> para tu caso: <em className="text-gray-700">“{decodeURIComponent(casoParam)}”</em></>
+                ) : displayCategoria ? (
+                  <>Filtrando por <strong>{displayCategoria}</strong></>
+                ) : (
+                  <>Buscando abogados para: <em className="text-gray-700">“{decodeURIComponent(casoParam || '')}”</em></>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
 

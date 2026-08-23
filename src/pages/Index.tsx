@@ -26,6 +26,7 @@ import { getVerifiedLawyersCount } from "@/lib/verifiedLawyers";
 import { getCompletedCasesCount } from "@/lib/caseServiceCounter";
 import { HomeGrowthHacks } from "@/components/HomeGrowthHacks";
 import { detectEspecialidad } from "@/utils/askLLM";
+import { useLegalCategoryClassifier } from "@/hooks/useLegalCategoryClassifier";
 
 import { PaymentMethods as MPbadge } from '@/components/MercadoPagoBadge';
 
@@ -375,10 +376,11 @@ const Index = () => {
   // Add a ref to track if a search is in progress
   const isSearching = useRef(false);
   const [isSearchingState, setIsSearchingState] = useState(false);
-  
-  const handleSearch = useCallback((category?: string) => {
+  const { classify, isClassifying } = useLegalCategoryClassifier();
+
+  const handleSearch = useCallback(async (category?: string) => {
     // Prevent multiple rapid searches
-    if (isSearching.current) return;
+    if (isSearching.current || isClassifying) return;
 
     try {
       isSearching.current = true;
@@ -395,13 +397,44 @@ const Index = () => {
       // Set search term parameter if it exists and is not empty
       if (searchTerm && searchTerm.trim()) {
         const searchTermValue = searchTerm.trim();
-        params.set('query', searchTermValue); // Pass the raw natural language query
+        params.set('query', searchTermValue);
 
-        // Check if search term contains specialty keywords and set category parameter using the NLP heuristic
-        const detectedCategory = detectEspecialidad(searchTermValue);
-        if (detectedCategory) {
-          params.set('category', detectedCategory);
+        // Clasificación inteligente vía LLM (reutiliza el mismo proveedor del ChatAssistant)
+        let slug = "";
+        let detectedCategory: string | null = null;
+        if (searchTermValue.length >= 10) {
+          try {
+            const result = await classify(searchTermValue);
+            slug = result.slug;
+            detectedCategory = result.category;
+          } catch {
+            detectedCategory = detectEspecialidad(searchTermValue);
+            if (detectedCategory) {
+              const fallbackSlugs: Record<string, string> = {
+                "Derecho Arrendamiento": "arriendo",
+                "Derecho Laboral": "laboral",
+                "Derecho Familia": "familia",
+                "Derecho Penal": "penal",
+                "Derecho Civil": "civil",
+                "Derecho del Consumidor": "consumidor",
+              };
+              slug = fallbackSlugs[detectedCategory] || "";
+            }
+          }
+        } else {
+          detectedCategory = detectEspecialidad(searchTermValue);
         }
+
+        if (slug) {
+          params.set("categoria", slug);
+          // Mantener compatibilidad con el filtro existente
+          params.set("category", detectedCategory || "");
+        } else if (detectedCategory) {
+          params.set("category", detectedCategory);
+        }
+
+        // Pasar el texto del caso para contexto en /search
+        params.set("caso", searchTermValue);
       }
 
       // Set location parameter if it exists and is not empty
@@ -421,7 +454,7 @@ const Index = () => {
         setIsSearchingState(false);
       }, 1000);
     }
-  }, [navigate, searchTerm, location]); // Added dependency array
+  }, [navigate, searchTerm, location, classify, isClassifying]);
   
   // Effect to handle initial category from URL
   useEffect(() => {
@@ -497,7 +530,7 @@ const Index = () => {
               buttonWidth="1/3"
               className="h-10"
               placeholder="Ej: me quieren desalojar por no pagar arriendo..."
-              isLoading={isSearchingState}
+              isLoading={isSearchingState || isClassifying}
             />
           </div>
 

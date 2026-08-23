@@ -50,23 +50,24 @@ export function SearchBar({
       <div className="relative w-full h-full flex flex-col z-20">
         <textarea
           placeholder={placeholder}
-          className="relative w-full min-h-[140px] p-5 rounded-2xl bg-transparent border-none outline-none resize-none focus-visible:outline-none"
+          className="relative w-full min-h-[140px] p-5 rounded-2xl bg-transparent border-none outline-none resize-none focus-visible:outline-none disabled:opacity-60"
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          disabled={isLoading}
         />
         
         <button 
           type="button"
           onClick={handleSearchClick}
-          disabled={isLoading}
-          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 md:hover:w-[190px] transition-all duration-300 ease-in-out overflow-hidden shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+          disabled={isLoading || searchTerm.trim().length < 2}
+          className="absolute bottom-3 right-3 bg-gray-900 hover:bg-green-900 text-white rounded-full flex items-center justify-end group/btn h-10 w-10 md:hover:w-[220px] transition-all duration-300 ease-in-out overflow-hidden shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
           title="Hablar con abogado"
         >
           {isLoading ? (
             <>
               <span className="hidden md:inline text-sm font-medium whitespace-nowrap opacity-0 md:group-hover/btn:opacity-100 transition-all duration-300 delay-75">
-                Hablar con abogado
+                Buscando el abogado ideal...
               </span>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
                 <Loader2 className="w-5 h-5 text-white animate-spin" strokeWidth={2.5} />
@@ -75,7 +76,7 @@ export function SearchBar({
           ) : (
             <>
               <span className="hidden md:inline text-sm font-medium whitespace-nowrap opacity-0 md:group-hover/btn:opacity-100 transition-all duration-300 delay-75">
-                Hablar con abogado
+                Encontrar a mi abogado
               </span>
               <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
                 <ArrowRight className="w-5 h-5 text-white" strokeWidth={2.5} />

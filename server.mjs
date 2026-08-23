@@ -9068,6 +9068,87 @@ app.post('/api/assistant/chat', async (req, res) => {
   }
 });
 
+// ---- Legal category classifier (home textarea) ----
+const LEGAL_CATEGORY_CLASSIFIER_PROMPT = `Eres un clasificador jurídico chileno experto.
+Tu única tarea es determinar a qué área del derecho pertenece el caso descrito.
+
+Áreas disponibles:
+- Derecho Arrendamiento: arriendos, desalojos, garantías, contratos de arriendo, IPC, arrendatario, arrendador
+- Derecho Laboral: despidos, finiquitos, acoso laboral, licencias médicas, contratos de trabajo, empleador, empleado, AFP, cotizaciones
+- Derecho Familia: divorcios, pensión de alimentos, cuidado personal, visitas, violencia intrafamiliar, tutela, herencias, matrimonio
+- Derecho Penal: delitos, robos, hurtos, estafas, lesiones, amenazas, denuncias, carabineros, fiscalía, imputado
+- Derecho Civil: accidentes, indemnizaciones, contratos civiles, deudas, pagarés, juicios ejecutivos, daños y perjuicios, colisiones, choques
+- Derecho del Consumidor: garantías de productos, SERNAC, tiendas, servicios defectuosos, publicidad engañosa
+
+Responde ÚNICAMENTE con una de estas opciones exactas (sin comillas, sin explicación, sin puntuación):
+Derecho Arrendamiento
+Derecho Laboral
+Derecho Familia
+Derecho Penal
+Derecho Civil
+Derecho del Consumidor
+
+Si el caso es ambiguo, elige la categoría más probable según el contexto chileno.`;
+
+const CATEGORY_SLUGS_SERVER = {
+  "Derecho Arrendamiento": "arriendo",
+  "Derecho Laboral": "laboral",
+  "Derecho Familia": "familia",
+  "Derecho Penal": "penal",
+  "Derecho Civil": "civil",
+  "Derecho del Consumidor": "consumidor",
+};
+
+function classifyLegalCategoryFallback(text) {
+  const lower = String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (/arriendo|arrendador|arrendatario|desalojo|garantia.*arriendo|ipc.*arriendo|contrato.*arriendo|cerradura.*arrendador|cambiar.*cerradura/.test(lower)) return "Derecho Arrendamiento";
+  if (/despid|finiquito|acoso.*laboral|laboralmente|licencia.*medica|contrato.*trabajo|empleador|afp|cotizacion/.test(lower)) return "Derecho Laboral";
+  if (/divorc|pension.*alimentos|cuidado personal|visitas|violencia intrafamiliar|tutela|herencia|matrimonio|no.*deja.*ver.*hijo|hijos/.test(lower) && /divorc|pension|alimentos|cuidado|visita|violencia|tutela|herencia|matrimonio|hijo/.test(lower)) return "Derecho Familia";
+  if (/divorc/.test(lower)) return "Derecho Familia";
+  if (/delito|rob|hurt|estafa|lesion|amenaza|denuncia|carabinero|fiscalia|imputado|celular.*metro|robaron/.test(lower)) return "Derecho Penal";
+  if (/sernac|garantia.*producto|tienda.*no.*cambia|servicio.*defectuoso|publicidad enganosa|televisor.*roto|llego roto/.test(lower)) return "Derecho del Consumidor";
+  if (/choque|colision|accidente.*auto|indemnizacion|pagare|deuda|juicio ejecutivo|danos.*perjuicios|poste/.test(lower)) return "Derecho Civil";
+  return "Derecho Civil";
+}
+
+app.post('/api/legal-category/classify', async (req, res) => {
+  try {
+    const text = String(req.body?.text || '').trim();
+    if (!text || text.length < 5) {
+      return res.status(400).json({ error: 'Texto requerido', code: 'INVALID_REQUEST' });
+    }
+
+    const validCategories = Object.keys(CATEGORY_SLUGS_SERVER);
+
+    if (!isAIProviderConfigured()) {
+      const category = classifyLegalCategoryFallback(text);
+      return res.json({ category, slug: CATEGORY_SLUGS_SERVER[category] });
+    }
+
+    try {
+      const result = await chatCompletion({
+        model: AI_DEFAULT_MODEL,
+        system: LEGAL_CATEGORY_CLASSIFIER_PROMPT,
+        user: text,
+        maxTokens: 30,
+        temperature: 0,
+      });
+      const raw = String(result.raw || result.data?.category || '').trim();
+      // El modelo debe devolver solo la categoría; tolerar comillas/espacios extra
+      const cleaned = raw.replace(/^["'\s]+|["'\s.]+$/g, '').trim();
+      const category = validCategories.includes(cleaned) ? cleaned : validCategories.find(c => raw.includes(c)) || classifyLegalCategoryFallback(text);
+      return res.json({ category, slug: CATEGORY_SLUGS_SERVER[category] });
+    } catch (aiError) {
+      console.warn('[LegalClassifier] AI falló, usando fallback:', aiError?.message || aiError);
+      const category = classifyLegalCategoryFallback(text);
+      return res.json({ category, slug: CATEGORY_SLUGS_SERVER[category] });
+    }
+  } catch (error) {
+    console.error('[LegalClassifier] error:', error);
+    return res.status(500).json({ error: 'No se pudo clasificar la categoría', code: 'CLASSIFY_ERROR' });
+  }
+});
+
 // ---- Error handling middleware ----
 app.use((error, req, res, next) => {
   if (error.message === 'Not allowed by CORS') {
