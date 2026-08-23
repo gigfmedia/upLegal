@@ -453,10 +453,27 @@ export function buildJurisprudenceOutcome({
       ? briefResult.síntesis
       : '';
   // Puntero determinístico a la norma promovida (véase normativaPromovidaPointer).
-  const briefWithPointer =
+  let briefWithPointer =
     verifiedBrief && normativaPromovidaPointer
       ? `${verifiedBrief} ${normativaPromovidaPointer}`
       : verifiedBrief || normativaPromovidaPointer;
+
+  // Fase 4.2.25: fallback quirúrgico para breve ultra-corta/genérica sin verificar.
+  // Si existe un claim documental verificado con source_id y evidencia válida y la
+  // breve verificada está vacía (LLM brief demasiado corta/genérica o no pasó el
+  // verifier), se reutiliza la afirmación del claim verificado como breve.
+  // No se crea nuevo claim, no se duplica fuente, no se reintroducen descartados.
+  // Solo en modo documental/mixed (documentMode !== 'none') y con claim documental.
+  let briefFallbackUsed = false;
+  if (!briefWithPointer && hasVerifiedClaims && documentMode !== 'none') {
+    const candidate = verifiedDocumentos.kept.find(
+      (c) => c && c.afirmacion && c.source_id && c.fragmento && String(c.fragmento).trim(),
+    );
+    if (candidate) {
+      briefWithPointer = candidate.afirmacion;
+      briefFallbackUsed = true;
+    }
+  }
 
   // Fase 4.1.10: estado NO_EVIDENCE. El pipeline funcionó por completo (search
   // OK, LLM OK, schema OK, verifier OK), pero no quedó ningún claim verificado.
@@ -552,6 +569,7 @@ export function buildJurisprudenceOutcome({
     relevanceDroppedSources:
       gateNormativa.droppedCount + gateJurisprudencia.droppedCount + gateDoctrina.droppedCount,
     attributionCoverage: computeAttributionCoverage(allVerifiedClaims),
+    briefFallbackUsed,
   };
 }
 
