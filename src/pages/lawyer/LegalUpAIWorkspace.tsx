@@ -450,7 +450,7 @@ export default function LegalUpAIWorkspace() {
                           openPaywall();
                           return;
                         }
-                        navigate(`/lawyer/ai/cases/${workspace.id}`);
+                        navigate(`/lawyer/ai/cases/${workspace.id}?tab=timeline`);
                       }}
                     />
 

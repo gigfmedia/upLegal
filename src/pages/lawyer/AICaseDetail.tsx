@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import posthog from 'posthog-js';
@@ -55,12 +55,15 @@ function formatDate(value: string): string {
 
 export default function AICaseDetail() {
   const { caseId } = useParams<{ caseId: string }>();
+  const [searchParams] = useSearchParams();
   const { data: workspace, isLoading, isError, error, refetch } = useAIWorkspace(caseId);
   const documentsQuery = useAIDocuments(caseId);
   const { canUse, isLoading: accessLoading } = useAIFeatureAccess();
   const canAnalyze = canUse('document_analysis');
   const canChat = canUse('case_chat');
   const canResearch = canUse('jurisprudence');
+
+  const defaultTab = searchParams.get('tab') || 'documents';
 
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
@@ -238,7 +241,7 @@ export default function AICaseDetail() {
               </Card>
             ) : null}
 
-            <Tabs defaultValue="documents" className="mb-6">
+            <Tabs defaultValue={defaultTab} className="mb-6">
               <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
                 <TabsTrigger
                   value="documents"
