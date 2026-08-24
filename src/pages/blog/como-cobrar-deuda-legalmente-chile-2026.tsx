@@ -372,20 +372,38 @@ const BlogArticle = () => {
                     {/* ERRORES */}
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">Errores comunes al cobrar una deuda</h2>
-                        <div className="space-y-4">
-                            {[
-                                { title: "Esperar demasiado", desc: "Cada día que pasa acerca la prescripción. Si la deuda está próxima a prescribir, actúa de inmediato." },
-                                { title: "Cobrar sin documentos", desc: "Sin pruebas de la deuda, cualquier vía legal se debilita. Reúne la documentación antes de actuar." },
-                                { title: "Elegir mal la vía", desc: "Demandar por la vía ejecutiva sin título ejecutivo, o a la inversa, puede alargar el proceso y aumentar los costos." },
-                                { title: "No formalizar los acuerdos", desc: "Un acuerdo verbal no interrumpe la prescripción ni sirve de título. Formaliza siempre por escrito." },
-                            ].map((error, i) => (
-                                <div key={i} className="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                                    <p className="font-bold text-gray-900 mb-2">{error.title}</p>
-                                    <p className="text-gray-700">{error.desc}</p>
-                                </div>
-                            ))}
+                        <div className="bg-red-50 rounded-2xl p-6 sm:p-8">
+                            <div className="space-y-6">
+                                {[
+                                    { title: "Esperar demasiado", desc: "Cada día que pasa acerca la prescripción. Si la deuda está próxima a prescribir, actúa de inmediato." },
+                                    { title: "Cobrar sin documentos", desc: "Sin pruebas de la deuda, cualquier vía legal se debilita. Reúne la documentación antes de actuar." },
+                                    { title: "Elegir mal la vía", desc: "Demandar por la vía ejecutiva sin título ejecutivo, o a la inversa, puede alargar el proceso y aumentar los costos." },
+                                    { title: "No formalizar los acuerdos", desc: "Un acuerdo verbal no interrumpe la prescripción ni sirve de título. Formaliza siempre por escrito." },
+                                ].map((item, i) => (
+                                    <div key={i} className="flex gap-4">
+                                        <div className="text-red-500 font-bold text-xl flex-shrink-0">✕</div>
+                                        <div>
+                                            <h4 className="font-bold text-red-900">{item.title}</h4>
+                                            <p className="text-red-800 opacity-90">{item.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
+
+                    <div className="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl mb-6">
+                        <p className="font-bold text-amber-900">El tiempo juega en tu contra</p>
+                        <p className="text-amber-800">Si ya existe un embargo o una demanda en tu contra, cada día sin actuar puede significar perder la oportunidad de oponer defensas como la prescripción o la nulidad de la notificación. No esperes a que el remate esté cerca para buscar ayuda.</p>
+                    </div>
+
+                    <InArticleCTA
+                        title="¿Te deben dinero y no sabes por dónde empezar?"
+                        message="Un abogado civil puede revisar tu documentación, verificar la prescripción y orientarte sobre la vía más rápida para recuperar tu dinero."
+                        buttonText="Hablar con un abogado civil"
+                        category="Derecho Civil"
+                    />
+
                     <div className="mb-12 border-t pt-8">
                         <h2 className="text-2xl font-bold mb-4">Conclusión</h2>
                         <p className="text-gray-600 leading-relaxed mb-4">

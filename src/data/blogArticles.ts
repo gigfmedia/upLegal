@@ -12,6 +12,56 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "contrato-compraventa-chile-2026",
+    title: "Contrato de compraventa en Chile 2026: qué debe incluir y cómo protegerte",
+    excerpt: "Descubre qué debe incluir un contrato de compraventa en Chile, cuándo usar la promesa, qué formalidades exige cada bien y cómo blindarte frente a impagos y vicios ocultos.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "14 de Agosto, 2026",
+    readTime: "12 min",
+    image: "/assets/contrato-compraventa-chile-2026.png"
+  },
+  {
+    id: "constitucion-empresa-chile-2026",
+    title: "Constitución de empresa en Chile 2026: SpA vs EIRL, cuál conviene según tu negocio",
+    excerpt: "SpA o EIRL en Chile 2026: diferencias, costos, responsabilidad y pasos para constituir tu empresa. Guía para emprendedores que quieren elegir bien desde el inicio.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "13 de Agosto, 2026",
+    readTime: "13 min",
+    image: "/assets/constitucion-empresa-chile-2026.png"
+  },
+  {
+    id: "accidente-transito-chile-2026",
+    title: "Accidente de tránsito en Chile 2026: quién paga los daños y cómo reclamar",
+    excerpt: "Quién paga los daños en un accidente de tránsito en Chile, qué cubre el SOAP y cómo reclamar indemnización por daños materiales, lesiones y daño moral paso a paso.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "12 de Agosto, 2026",
+    readTime: "13 min",
+    image: "/assets/accidente-transito-chile-2026.png"
+  },
+  {
+    id: "amenazas-whatsapp-chile-2026",
+    title: "Amenazas por WhatsApp en Chile 2026: cómo denunciar y qué pruebas necesitas",
+    excerpt: "Te amenazan por WhatsApp en Chile: qué delito es, cómo denunciar paso a paso y qué capturas, audios y respaldos sirven como prueba para que la Fiscalía actúe.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "11 de Agosto, 2026",
+    readTime: "12 min",
+    image: "/assets/amenazas-whatsapp-chile-2026.png"
+  },
+  {
+    id: "me-acusaron-delito-no-cometi-chile-2026",
+    title: "Me acusaron de un delito que no cometí en Chile 2026: qué hacer y cómo demostrar tu inocencia",
+    excerpt: "Te acusaron injustamente de un delito en Chile: qué hacer en las primeras horas, cómo demostrar tu inocencia, qué es la falsa denuncia y cómo defenderte con abogado penal.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "10 de Agosto, 2026",
+    readTime: "13 min",
+    image: "/assets/me-acusaron-delito-no-cometi-chile-2026.png"
+  },
+  {
     id: "como-cobrar-deuda-legalmente-chile-2026",
     title: "Cómo cobrar una deuda legalmente en Chile 2026: las vías legales para recuperar tu dinero",
     excerpt: "Descubre las vías legales para cobrar una deuda en Chile: negociación, juicio ejecutivo, juicio ordinario y embargo. Plazos, costos y qué hacer paso a paso para recuperar tu dinero.",
