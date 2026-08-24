@@ -43,6 +43,11 @@ const BlogArticle = () => {
       answer:
         "Sí, y es lo más recomendable en primera instancia. Muchas veces una carta formal o la intervención de un abogado que contacte al arrendador resuelve el problema sin necesidad de juicio. El juicio es más lento, más costoso y más desgastante para ambas partes. Si la negociación directa falla, el tribunal civil es el siguiente paso.",
     },
+    {
+      question: "¿Puede el Banco de Chile u otro banco retener mi garantía de arriendo por su cuenta?",
+      answer:
+        "No por decisión propia del banco. Cuando la garantía se resguarda con un vale vista u otro depósito bancario —por ejemplo en Banco de Chile—, el banco actúa solo como custodio y únicamente libera los fondos según las instrucciones del vale vista o por orden judicial. No puede retener ni entregar el dinero por solicitud unilateral de una sola parte. Si el arrendador no firma la liberación sin justificación, debes requerirlo por escrito y, si persiste la negativa, demandar para que el tribunal ordene el pago.",
+    },
   ];
 
   return (

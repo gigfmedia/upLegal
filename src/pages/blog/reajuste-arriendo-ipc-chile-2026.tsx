@@ -66,8 +66,8 @@ const BlogArticle = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <BlogGrowthHacks
-        title="Calculadora IPC arriendo 2026: calcula tu reajuste al instante | LegalUp"
-        description="¿Cuánto sube tu arriendo según el IPC? Usa nuestra calculadora de IPC Chile 2026 e ingresa tu renta para obtener el reajuste exacto en segundos. Incluye guía legal completa."
+        title="Calculadora IPC Chile 2026: calcula el reajuste de tu arriendo al instante | LegalUp"
+        description="¿Cuánto sube tu arriendo según el IPC? Usa nuestra calculadora IPC Chile 2026 e ingresa tu renta para obtener el reajuste exacto en segundos. Incluye guía legal completa."
         image="/assets/reajuste-arriendo-ipc-2026.png"
         url="https://legalup.cl/blog/reajuste-arriendo-ipc-chile-2026"
         datePublished="2026-04-06"
