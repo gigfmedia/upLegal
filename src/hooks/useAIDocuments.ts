@@ -329,6 +329,9 @@ export function formatFileSize(bytes: number): string {
 export type AICaseIntelligence = {
   workspace_id: string;
   document_count: number;
+  pending_count: number;
+  failed_count: number;
+  total_documents: number;
   documents: AIDocumentListItem[];
   facts: Array<{ text: string; source_id: string; evidence: string; page_number: number | null; document_filename: string; source_ids: string[]; evidences: Array<{ evidence: string; page_number: number | null; document_filename: string }> }>;
   parties: string[];

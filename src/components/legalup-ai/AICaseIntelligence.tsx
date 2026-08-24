@@ -1,11 +1,26 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers } from 'lucide-react';
+import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare } from 'lucide-react';
+import posthog from 'posthog-js';
+import { useEffect } from 'react';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
 
-export function AICaseIntelligence({ workspaceId }: { workspaceId: string }) {
+function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
+  if (data.contradictions.length > 0) return { label: 'Con contradicciones', color: 'bg-red-100 text-red-800' };
+  if (data.risks.length > 0) return { label: 'Con riesgos', color: 'bg-amber-100 text-amber-800' };
+  if (data.missingInformation.length > 0) return { label: 'Información incompleta', color: 'bg-blue-100 text-blue-800' };
+  if (data.document_count > 0) return { label: 'Listo para análisis', color: 'bg-green-100 text-green-800' };
+  return { label: 'En revisión', color: 'bg-gray-100 text-gray-600' };
+}
+
+export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspaceId: string; onQuestionClick?: (q: string) => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
+
+  useEffect(() => {
+    if (data) posthog.capture('ai_case_intelligence_viewed', { case_id: workspaceId, documents_ready: data.document_count });
+  }, [data, workspaceId]);
 
   if (isLoading) {
     return <div className="space-y-3"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>;
@@ -20,23 +35,68 @@ export function AICaseIntelligence({ workspaceId }: { workspaceId: string }) {
       </Card>
     );
   }
-  if (!data || data.document_count === 0) {
+  if (!data || (data.document_count === 0 && data.pending_count === 0 && data.failed_count === 0)) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-8 text-center">
           <Layers className="mx-auto h-8 w-8 text-gray-300" />
           <p className="mt-2 text-sm font-medium text-gray-700">Sin documentos para inteligencia del caso</p>
-          <p className="text-xs text-muted-foreground">Sube documentos y analízalos para ver el resumen consolidado.</p>
+          <p className="text-xs text-muted-foreground">Sube un documento para comenzar a construir la inteligencia del caso.</p>
         </CardContent>
       </Card>
     );
   }
 
+  const status = getCaseStatus(data);
+  const nextActions: Array<{ label: string; action: string }> = [];
+  if (data.contradictions.length > 0) nextActions.push({ label: 'Revisar documentos con información contradictoria', action: 'review_contradictions' });
+  else if (data.missingInformation.length > 0) nextActions.push({ label: 'Completar información pendiente del caso', action: 'review_missing_information' });
+  else if (data.risks.length > 0) nextActions.push({ label: 'Revisar los riesgos identificados', action: 'review_risks' });
+  else if (data.pending_count > 0) nextActions.push({ label: `Analizar ${data.pending_count} documento(s) pendiente(s)`, action: 'review_documents' });
+  else nextActions.push({ label: 'Revisar el análisis completo del caso', action: 'review_obligations' });
+
+  const quickQuestions = [
+    '¿Cuál es el hecho principal del caso?',
+    '¿Qué obligaciones aparecen en los documentos?',
+    '¿Qué riesgos aparecen en el caso?',
+    '¿Qué información contradictoria existe?',
+    '¿Qué información falta para completar el análisis?',
+  ];
+
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge className={status.color}>{status.label}</Badge>
+        <span className="text-xs text-muted-foreground">{data.document_count} documento(s) listo(s){data.pending_count > 0 ? ` · ${data.pending_count} pendiente(s)` : ''}</span>
+      </div>
+
+      {data.pending_count > 0 && (
+        <Card className="border-blue-200 bg-blue-50/60">
+          <CardContent className="py-3 text-sm text-blue-900">{data.pending_count} documento(s) todavía no están disponibles para el análisis del caso.</CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader><CardTitle className="text-base">Resumen del caso</CardTitle></CardHeader>
         <CardContent className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{data.caseSummary}</CardContent>
+      </Card>
+
+      <Card className="border-green-200 bg-green-50/60">
+        <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ArrowRight className="h-4 w-4" /> Siguiente paso</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          {nextActions.map((a) => (
+            <Button key={a.action} variant="outline" size="sm" onClick={() => { posthog.capture('ai_case_intelligence_action_clicked', { action: a.action }); document.getElementById(`intelligence-${a.action}`)?.scrollIntoView({ behavior: 'smooth' }); }}>{a.label}</Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4" /> Preguntas sugeridas</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          {quickQuestions.map((q) => (
+            <Button key={q} variant="secondary" size="sm" className="text-xs" onClick={() => { posthog.capture('ai_case_intelligence_action_clicked', { action: 'open_chat', question: q.length }); onQuestionClick?.(q); }}>{q}</Button>
+          ))}
+        </CardContent>
       </Card>
 
       {data.facts.length > 0 && (

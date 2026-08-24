@@ -8583,15 +8583,17 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
     const entitlement = await requireAIEntitlement(req, res, userId);
     if (entitlement.res) return entitlement.res;
 
-    // Solo documentos ready del workspace del abogado
-    const { data: docs, error: docsError } = await supabase
+    // Documentos del workspace (todos, para contar pendientes)
+    const { data: allDocs, error: allDocsError } = await supabase
       .from('ai_documents')
       .select('id, original_filename, file_path, file_size_bytes, mime_type, status, page_count, created_at')
       .eq('workspace_id', workspace.id)
       .eq('lawyer_id', userId)
-      .eq('status', 'ready')
       .order('created_at', { ascending: true });
-    if (docsError) throw docsError;
+    if (allDocsError) throw allDocsError;
+    const docs = (allDocs || []).filter((d) => d.status === 'ready');
+    const pendingDocs = (allDocs || []).filter((d) => d.status === 'pending' || d.status === 'processing');
+    const failedDocs = (allDocs || []).filter((d) => d.status === 'failed');
 
     const { data: analyses, error: analysesError } = await supabase
       .from('ai_document_analyses')
@@ -8676,6 +8678,9 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
       workspace_id: workspace.id,
       document_count: (docs || []).length,
       documents: docs || [],
+      pending_count: pendingDocs.length,
+      failed_count: failedDocs.length,
+      total_documents: (allDocs || []).length,
       analyses: analyses || [],
       facts,
       parties,
