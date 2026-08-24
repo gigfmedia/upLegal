@@ -241,7 +241,7 @@ export default function AdminReviewsPage() {
 
   return (
     <div className="w-full">
-      <div className="min-h-screen bg-slate-50 pt-12 pb-10">
+      <div className="min-h-screen bg-cream-900 pt-12 pb-10">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <div className="flex justify-between items-start">

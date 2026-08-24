@@ -276,7 +276,7 @@ export default function AdminDashboard() {
   return (
     <div className="w-full">
       <RequireAdmin>
-        <div className="min-h-screen bg-slate-50 pt-12 pb-10">
+        <div className="min-h-screen bg-cream-900 pt-12 pb-10">
           <div className="w-full max-w-7xl mx-auto space-y-6">
             <header>
               <Badge variant="outline" className="mb-2">

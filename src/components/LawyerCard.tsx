@@ -124,13 +124,6 @@ export function LawyerCard({
   // Check if the lawyer is verified and has the required fields
   const hasVerificationFlag = Boolean(lawyer.verified || lawyer.pjud_verified);
 
-  // True if the lawyer's profile was created within the last 3 months
-  const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
-  const isNewLawyer = Boolean(
-    lawyer.created_at &&
-    Date.now() - new Date(lawyer.created_at).getTime() < THREE_MONTHS_MS
-  );
-
   const isVerifiedLawyer = Boolean(
     hasVerificationFlag &&
     lawyer.hourlyRate > 0 &&
@@ -469,12 +462,6 @@ export function LawyerCard({
                         <span className="font-medium">{currentRating.toFixed(1)}</span>
                         <span className="text-gray-400">({currentReviewCount})</span>
                       </button>
-                    </div>
-                  ) : isNewLawyer ? (
-                    <div className="flex-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Nuevo en LegalUp
-                      </span>
                     </div>
                   ) : null}
                   {displayName.toLowerCase().includes('jorge') && displayName.toLowerCase().includes('pacheco') && (
