@@ -44,6 +44,7 @@ import { AIAnalysisView } from '@/components/legalup-ai/AIAnalysisView';
 import { AIChat } from '@/components/legalup-ai/AIChat';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
+import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 
 function formatDate(value: string): string {
   try {
@@ -254,6 +255,12 @@ export default function AICaseDetail() {
                   className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
                 >
                   Investigar jurisprudencia
+                </TabsTrigger>
+                <TabsTrigger
+                  value="intelligence"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
+                >
+                  Inteligencia del caso
                 </TabsTrigger>
                 <TabsTrigger
                   value="timeline"
@@ -487,6 +494,10 @@ export default function AICaseDetail() {
             ) : (
               <AIResearchPanel workspaceId={workspace.id} />
             )}
+              </TabsContent>
+
+              <TabsContent value="intelligence" className="mt-4">
+                <AICaseIntelligence workspaceId={workspace.id} />
               </TabsContent>
 
               <TabsContent value="timeline" className="mt-4">

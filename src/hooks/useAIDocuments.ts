@@ -325,3 +325,38 @@ export function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+export type AICaseIntelligence = {
+  workspace_id: string;
+  document_count: number;
+  documents: AIDocumentListItem[];
+  facts: Array<{ text: string; source_id: string; evidence: string; page_number: number | null; document_filename: string; source_ids: string[]; evidences: Array<{ evidence: string; page_number: number | null; document_filename: string }> }>;
+  parties: string[];
+  obligations: string[];
+  deadlines: Array<{ date: string; description: string }>;
+  risks: string[];
+  contradictions: Array<{ topic: string; versions: Array<{ text: string; source_id: string; document_filename: string; evidence: string }> }>;
+  missingInformation: string[];
+  caseSummary: string;
+  attributionCoverage: number;
+};
+
+export const AI_CASE_INTELLIGENCE_QUERY_KEY = ['ai-case-intelligence'] as const;
+
+export function useAICaseIntelligence(workspaceId: string | undefined, enabled = true) {
+  const { user } = useAuth();
+  return useQuery<AICaseIntelligence>({
+    queryKey: [...AI_CASE_INTELLIGENCE_QUERY_KEY, workspaceId, user?.id],
+    enabled: !!workspaceId && !!user?.id && enabled,
+    queryFn: async () => {
+      const token = await getAccessToken();
+      if (!token) throw new Error('Sesión no válida.');
+      const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/intelligence`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'No se pudo cargar la inteligencia del caso.');
+      return body as AICaseIntelligence;
+    },
+  });
+}

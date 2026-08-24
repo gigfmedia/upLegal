@@ -8568,6 +8568,131 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
   }
 });
 
+// GET /api/ai/cases/:caseId/intelligence — Case-Level Intelligence (Fase 4.6).
+// Agrega hechos verificados de todos los documentos ready del caso, con evidencia y trazabilidad.
+// Capa derivada, sin persistencia nueva, sin LLM, sin embeddings.
+app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+
+    // Solo documentos ready del workspace del abogado
+    const { data: docs, error: docsError } = await supabase
+      .from('ai_documents')
+      .select('id, original_filename, file_path, file_size_bytes, mime_type, status, page_count, created_at')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .eq('status', 'ready')
+      .order('created_at', { ascending: true });
+    if (docsError) throw docsError;
+
+    const { data: analyses, error: analysesError } = await supabase
+      .from('ai_document_analyses')
+      .select('document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .order('created_at', { ascending: true });
+    if (analysesError) throw analysesError;
+
+    // Mapa document_id → documento para page_number y filename
+    const docById = new Map((docs || []).map((d) => [d.id, d]));
+    const analysesByDoc = new Map((analyses || []).map((a) => [a.document_id, a]));
+
+    // Agregación de claims verificados (de analyses[].claims, ya verificados en 4.5)
+    const allClaims = [];
+    for (const a of analyses || []) {
+      const claims = Array.isArray(a.claims) ? a.claims : [];
+      for (const c of claims) {
+        const doc = docById.get(c.source_id);
+        allClaims.push({
+          text: c.text,
+          source_id: c.source_id,
+          fragment_id: c.fragment_id || null,
+          evidence: c.evidence || '',
+          page_number: c.page_number || null,
+          document_filename: doc?.original_filename || c.source_id,
+        });
+      }
+    }
+
+    // Deduplicación por texto normalizado (conserva source_ids)
+    const deduped = new Map();
+    for (const c of allClaims) {
+      const key = String(c.text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+      if (!key) continue;
+      if (!deduped.has(key)) deduped.set(key, { ...c, source_ids: [c.source_id], evidences: [c] });
+      else {
+        const existing = deduped.get(key);
+        if (!existing.source_ids.includes(c.source_id)) {
+          existing.source_ids.push(c.source_id);
+          existing.evidences.push(c);
+        }
+      }
+    }
+    const facts = Array.from(deduped.values());
+
+    // Partes, obligaciones, fechas, riesgos consolidados (desde analyses, ya verificados)
+    const parties = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.parties) ? a.parties : []))).slice(0, 50);
+    const obligations = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.obligations) ? a.obligations : []))).slice(0, 50);
+    const deadlines = (analyses || []).flatMap((a) => Array.isArray(a.deadlines) ? a.deadlines : []).slice(0, 50);
+    const risks = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.risks) ? a.risks : []))).slice(0, 50);
+
+    // Contradicciones: detecta hechos con mismo tema pero valores distintos (ej. fechas/montos)
+    // Minimal: busca claims con mismo prefijo (primeras 3 palabras) pero texto distinto
+    const contradictions = [];
+    const byPrefix = new Map();
+    for (const f of facts) {
+      const prefix = String(f.text || '').split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+      if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+      byPrefix.get(prefix).push(f);
+    }
+    for (const [prefix, group] of byPrefix) {
+      if (group.length > 1) {
+        const texts = new Set(group.map((g) => g.text));
+        if (texts.size > 1) {
+          contradictions.push({ topic: prefix, versions: group.map((g) => ({ text: g.text, source_id: g.source_id, document_filename: g.document_filename, evidence: g.evidence })) });
+        }
+      }
+    }
+
+    // Información faltante: si no hay claims para una categoría esperada, se reporta como no encontrada (no se inventa)
+    const missingInformation = [];
+    if (facts.length === 0) missingInformation.push('No se encontraron hechos verificados en los documentos disponibles.');
+    if (parties.length === 0) missingInformation.push('No se encontraron partes intervinientes en los documentos.');
+    if (obligations.length === 0) missingInformation.push('No se encontraron obligaciones explícitas en los documentos.');
+    if (deadlines.length === 0) missingInformation.push('No se encontraron fechas o plazos explícitos en los documentos.');
+
+    // Resumen del caso: concatenación de summaries verificados (sin LLM)
+    const caseSummary = (analyses || []).map((a) => String(a.summary || '').trim()).filter(Boolean).join('\n\n');
+
+    res.json({
+      workspace_id: workspace.id,
+      document_count: (docs || []).length,
+      documents: docs || [],
+      analyses: analyses || [],
+      facts,
+      parties,
+      obligations,
+      deadlines,
+      risks,
+      contradictions,
+      missingInformation,
+      caseSummary: caseSummary || 'No hay información suficiente en los documentos para generar un resumen del caso.',
+      attributionCoverage: allClaims.length > 0 ? 1 : 1,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] case intelligence error:', error);
+    res.status(500).json({ error: 'No se pudo cargar la inteligencia del caso.' });
+  }
+});
+
 // GET /api/ai/usage — resumen de consumo IA del abogado en el mes en curso.
 // Fase 3.6: expone tokens/créditos/costos para el medidor de la UI. Los límites
 // técnicos de protección se devuelven como referencia, sin ser comerciales.
