@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Check, Copy, User, Sparkles } from 'lucide-react';
+import { Check, Copy, User, Sparkles, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AIChatMessage as ChatMessage } from '@/hooks/useAIChat';
 import { useTypewriter } from '@/hooks/useTypewriter';
+import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 
 const USER_ENTRY_MS = 220;
 const ASSISTANT_ENTRY_S = 0.25;
@@ -128,6 +129,8 @@ type AIChatMessageProps = {
 export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
   const reducedMotion = useReducedMotion();
   const [copied, setCopied] = useState(false);
+  const [evidenceRef, setEvidenceRef] = useState<EvidenceReference | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
   const isAssistant = message.role === 'assistant';
   const sources = message.metadata?.sources ?? [];
 
@@ -184,11 +187,31 @@ export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
               transition={{ delay: secondaryDelay, duration: 0.3, ease: EASE }}
             >
               <p className="text-xs font-medium text-gray-500">Fuentes utilizadas:</p>
-              <ul className="mt-1 space-y-0.5">
+              <ul className="mt-1 space-y-1">
                 {sources.map((source, index) => (
                   <li key={index} className="flex items-center gap-1.5 text-xs text-gray-600">
                     <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-green-600" />
-                    {source.file_name}
+                    <span>{source.file_name}</span>
+                    {source.fragment_id && source.evidence && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEvidenceRef({
+                            documentId: source.document_id,
+                            sourceId: source.document_id,
+                            fragmentId: source.fragment_id ?? null,
+                            pageNumber: source.page_number ?? null,
+                            evidence: source.evidence || '',
+                            sourceType: 'document',
+                            documentFilename: source.file_name,
+                          });
+                          setEvidenceOpen(true);
+                        }}
+                        className="ml-2 inline-flex items-center gap-1 text-[0.7rem] font-medium text-green-700 hover:underline"
+                      >
+                        <FileText className="h-3 w-3" /> Ver evidencia
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -221,6 +244,7 @@ export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
               )}
             </Button>
           </motion.div>
+          <EvidenceNavigator open={evidenceOpen} onOpenChange={setEvidenceOpen} reference={evidenceRef} surface="chat" />
         </div>
       </motion.div>
     );

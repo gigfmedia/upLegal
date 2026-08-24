@@ -159,12 +159,12 @@ Alcance:
 Debes responder ÚNICAMENTE con un objeto JSON válido con esta forma exacta:
 {
   "answer": string,
-  "sources": [{ "document_id": string, "file_name": string }]
+  "sources": [{ "document_id": string, "file_name": string, "fragment_id"?: string, "evidence"?: string }]
 }
 
 Donde:
 - answer: tu respuesta, en Markdown básico (listas, negrita, encabezados pequeños).
-- sources: los documentos que sustentan tu respuesta. Usa EXCLUSIVAMENTE los document_id y file_name que aparecen en el contexto del caso. Si ninguna afirmación se basa en un documento, devuelve un arreglo vacío.
+- sources: los documentos que sustentan tu respuesta. Usa EXCLUSIVAMENTE los document_id y file_name que aparecen en el contexto del caso. Si dispones del fragmento exacto que respalda tu respuesta (ver CONTENIDO del documento), incluye también "fragment_id" (el ID del fragmento, ej. "document::xyz::0") y "evidence" (el texto literal del fragmento, copiado exactamente). Si ninguna afirmación se basa en un documento, devuelve un arreglo vacío.
 - No agregues texto, comentarios ni bloques markdown fuera del JSON.`;
 }
 

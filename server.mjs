@@ -7829,7 +7829,15 @@ const getOrCreateAIConversation = async (workspaceId, userId) => {
 const AIChatResponseSchema = z.object({
   answer: z.string().min(1),
   sources: z
-    .array(z.object({ document_id: z.string(), file_name: z.string() }))
+    .array(
+      z.object({
+        document_id: z.string(),
+        file_name: z.string(),
+        fragment_id: z.string().optional(),
+        page_number: z.number().int().optional(),
+        evidence: z.string().optional(),
+      })
+    )
     .default([]),
 });
 
@@ -8041,14 +8049,28 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     });
 
     // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
-    const includedById = new Map(readyDocs.map((doc) => [doc.id, doc.original_filename]));
+    // Fase 4.9: si la fuente trae fragment_id/evidence, se valida contra el documento y se conserva page_number.
+    const docMapForChat = new Map(readyDocs.map((doc) => [doc.id, doc]));
     const sources = (validated.sources || [])
-      .filter(
-        (source) =>
-          includedById.has(source.document_id) &&
-          includedById.get(source.document_id) === source.file_name
-      )
-      .map((source) => ({ document_id: source.document_id, file_name: source.file_name }));
+      .filter((source) => {
+        const doc = docMapForChat.get(source.document_id);
+        return doc && doc.original_filename === source.file_name;
+      })
+      .map((source) => {
+        const doc = docMapForChat.get(source.document_id);
+        if (!doc || !source.fragment_id || !source.evidence) return { document_id: source.document_id, file_name: source.file_name };
+        try {
+          const normEvidence = String(source.evidence || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+          const normDoc = String(doc.extracted_text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const hasEvidence = normEvidence && normDoc.includes(normEvidence.slice(0, 30));
+          const validFragment = String(source.fragment_id || '').startsWith(`document::${source.document_id}::`);
+          if (hasEvidence && validFragment) {
+            const idx = parseInt(String(source.fragment_id).split('::').pop() || '0', 10);
+            return { document_id: source.document_id, file_name: source.file_name, fragment_id: source.fragment_id, page_number: Number.isFinite(idx) ? idx + 1 : null, evidence: source.evidence };
+          }
+        } catch {}
+        return { document_id: source.document_id, file_name: source.file_name };
+      });
 
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')

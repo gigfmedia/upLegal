@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import posthog from 'posthog-js';
+import { EvidenceNavigator } from './EvidenceNavigator';
 import {
   AlertTriangle,
   ExternalLink,
@@ -225,6 +226,8 @@ function hasVerifiedClaims(source: AIResearchSource): boolean {
 export function SourceClaims({ source }: { source: AIResearchSource }) {
   const plan = useMemo(() => buildSourceEvidencePlan(source), [source]);
   const isDocument = source.kind === 'document';
+  const [evidenceRef, setEvidenceRef] = useState<import('./EvidenceNavigator').EvidenceReference | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   if (plan.primary.length === 0) return null;
 
@@ -254,6 +257,26 @@ export function SourceClaims({ source }: { source: AIResearchSource }) {
               <span>{isDocument ? 'fragmento del documento' : 'fragmento de la fuente'}</span>
             </p>
           )}
+          {isDocument && claim.evidencia && claim.fragment_id && (
+            <button
+              type="button"
+              onClick={() => {
+                setEvidenceRef({
+                  documentId: source.id,
+                  sourceId: source.id,
+                  fragmentId: claim.fragment_id,
+                  pageNumber: null,
+                  evidence: claim.evidencia,
+                  sourceType: 'document',
+                  documentFilename: source.citation,
+                });
+                setEvidenceOpen(true);
+              }}
+              className="mt-1 text-xs font-medium text-green-700 hover:underline"
+            >
+              Ver evidencia
+            </button>
+          )}
           {claim.vigencia_nota && (
             <p className="mt-1 text-[0.65rem] font-medium text-indigo-700">{claim.vigencia_nota}</p>
           )}
@@ -274,6 +297,7 @@ export function SourceClaims({ source }: { source: AIResearchSource }) {
           </div>
         </details>
       )}
+      <EvidenceNavigator open={evidenceOpen} onOpenChange={setEvidenceOpen} reference={evidenceRef} surface="research" />
     </div>
   );
 }

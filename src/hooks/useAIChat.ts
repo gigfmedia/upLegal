@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
 
-export type AIChatSource = { document_id: string; file_name: string };
+export type AIChatSource = { document_id: string; file_name: string; fragment_id?: string | null; page_number?: number | null; evidence?: string | null };
 
 export type AIChatMessage = {
   id: string;
