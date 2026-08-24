@@ -417,8 +417,12 @@ export default function AICaseDetail() {
                             onClick={handleAnalyze}
                             disabled={analyzeMutation.isPending}
                           >
-                            <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
-                            Reintentar análisis
+                            {analyzeMutation.isPending ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                            ) : (
+                              <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+                            )}
+                            {analyzeMutation.isPending ? 'Reintentando…' : 'Reintentar análisis'}
                           </Button>
                         </div>
                       ) : (
