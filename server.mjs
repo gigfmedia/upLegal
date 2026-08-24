@@ -36,6 +36,7 @@ import {
   detectDocumentMode,
   selectDocumentEvidence,
   shouldAllowDocumentOnlyFallback,
+  verifyDocumentClaims,
   DOCUMENT_GROUNDING_LIMITS,
 } from './server/ai/documentGrounding.mjs';
 import {
@@ -7650,6 +7651,39 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
       throw new Error('El modelo devolvió un análisis con formato inválido.');
     }
 
+    // Fase 4.5: grounding — verifica que cada hecho del análisis esté respaldado por el documento.
+    // Reutiliza verifyDocumentClaims (Nivel1+2) para no inventar montos/fechas/roles.
+    // Solo los claims verificados se persisten; los descartados se eliminan del análisis.
+    // Además se construye la lista de claims con evidencia para trazabilidad (source_id, page_number, evidence).
+    const docsByIdForAnalysis = new Map([[doc.id, { id: doc.id, workspace_id: doc.workspace_id, lawyer_id: doc.lawyer_id, original_filename: doc.original_filename, extracted_text: text }]]);
+    const verifyFactsWithEvidence = (items) => {
+      if (!Array.isArray(items) || items.length === 0) return { verified: [], claims: [] };
+      const claims = items.map((txt) => ({ document_id: doc.id, afirmacion: String(txt), fragmento: String(txt) })).filter((c) => c.afirmacion.trim());
+      const { kept } = verifyDocumentClaims(claims, docsByIdForAnalysis, doc.workspace_id, doc.lawyer_id);
+      const keptMap = new Map(kept.map((k) => [k.afirmacion, k]));
+      const verified = items.filter((txt) => keptMap.has(String(txt)));
+      const claimsWithEvidence = verified.map((txt) => {
+        const k = keptMap.get(String(txt));
+        return { text: String(txt), source_id: k.source_id, fragment_id: k.fragment_id, evidence: k.fragmento, page_number: k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) + 1 : null };
+      });
+      return { verified, claims: claimsWithEvidence };
+    };
+    const partiesRes = verifyFactsWithEvidence(validated.parties || []);
+    const keyPointsRes = verifyFactsWithEvidence(validated.key_points || []);
+    const obligationsRes = verifyFactsWithEvidence(validated.obligations || []);
+    const verifiedParties = partiesRes.verified;
+    const verifiedKeyPoints = keyPointsRes.verified;
+    const verifiedObligations = obligationsRes.verified;
+    const verifiedRisks = Array.isArray(validated.risks) ? validated.risks : [];
+    const verifiedRecommendations = Array.isArray(validated.recommendations) ? validated.recommendations : [];
+    // Deadlines: verifica solo la descripción, preserva date si la descripción es válida
+    const verifiedDeadlines = Array.isArray(validated.deadlines) ? validated.deadlines.filter((d) => {
+      const desc = typeof d === 'string' ? d : String(d?.description || '');
+      if (!desc.trim()) return false;
+      const { kept } = verifyDocumentClaims([{ document_id: doc.id, afirmacion: desc, fragmento: desc }], docsByIdForAnalysis, doc.workspace_id, doc.lawyer_id);
+      return kept.length > 0;
+    }) : [];
+    const allClaimsEvidence = [...partiesRes.claims, ...keyPointsRes.claims, ...obligationsRes.claims];
     // Fase 3.6: registra el consumo real de esta operación (no bloquea el flujo).
     await recordAIUsage({
       userId: doc.lawyer_id,
@@ -7670,12 +7704,14 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
         workspace_id: doc.workspace_id,
         summary: validated.summary,
         document_type: validated.document_type,
-        parties: validated.parties || [],
-        key_points: validated.key_points || [],
-        obligations: validated.obligations || [],
-        deadlines: validated.deadlines || [],
-        risks: validated.risks || [],
-        recommendations: validated.recommendations || [],
+        parties: verifiedParties,
+        key_points: verifiedKeyPoints,
+        obligations: verifiedObligations,
+        deadlines: verifiedDeadlines,
+        risks: verifiedRisks,
+        recommendations: verifiedRecommendations,
+        claims: allClaimsEvidence,
+        evidence_sources: allClaimsEvidence,
         model,
       })
       .select()

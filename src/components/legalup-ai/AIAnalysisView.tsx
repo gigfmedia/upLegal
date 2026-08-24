@@ -69,11 +69,13 @@ function SectionList({
   title,
   icon,
   items,
+  claims,
   tone = 'default',
 }: {
   title: string;
   icon: React.ReactNode;
   items: string[];
+  claims?: Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>;
   tone?: 'default' | 'warning' | 'success';
 }) {
   if (items.length === 0) return null;
@@ -84,6 +86,8 @@ function SectionList({
         ? 'border-green-200 bg-green-50/60'
         : 'border-gray-200 bg-gray-50/60';
 
+  const findClaim = (text: string) => (claims ?? []).find((c) => c.text === text);
+
   return (
     <div className={`rounded-lg border p-4 ${toneClass}`}>
       <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-900">
@@ -91,12 +95,24 @@ function SectionList({
         {title}
       </h3>
       <ul className="space-y-2">
-        {items.map((item, index) => (
-          <li key={index} className="flex gap-2 text-sm text-gray-700">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
-            <span className="whitespace-pre-wrap">{item}</span>
-          </li>
-        ))}
+        {items.map((item, index) => {
+          const claim = findClaim(item);
+          return (
+            <li key={index} className="flex flex-col gap-1 text-sm text-gray-700">
+              <div className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
+                <span className="whitespace-pre-wrap">{item}</span>
+              </div>
+              {claim?.evidence && (
+                <details className="ml-4 mt-1 rounded bg-white/70 p-2 text-xs">
+                  <summary className="cursor-pointer font-medium text-gray-600 hover:text-gray-800">Ver evidencia {claim.page_number ? `· Página ${claim.page_number}` : ''}</summary>
+                  <p className="mt-1 whitespace-pre-wrap italic text-gray-600">"{claim.evidence}"</p>
+                  <p className="mt-1 text-[0.65rem] text-gray-400">Documento: {claim.source_id} {claim.page_number ? `· Página ${claim.page_number}` : ''}</p>
+                </details>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -253,6 +269,7 @@ export function AIAnalysisView({
           title="Partes intervinientes"
           icon={<Users className="h-4 w-4 text-gray-500" aria-hidden="true" />}
           items={section.parties}
+          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
         />
       )}
 
@@ -261,6 +278,7 @@ export function AIAnalysisView({
           title="Puntos clave"
           icon={<ListChecks className="h-4 w-4 text-gray-500" aria-hidden="true" />}
           items={section.key_points}
+          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
         />
       )}
 
@@ -269,6 +287,7 @@ export function AIAnalysisView({
           title="Obligaciones"
           icon={<Scale className="h-4 w-4 text-gray-500" aria-hidden="true" />}
           items={section.obligations}
+          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
         />
       )}
 
@@ -298,6 +317,7 @@ export function AIAnalysisView({
           title="Riesgos y alertas"
           icon={<ShieldAlert className="h-4 w-4 text-amber-600" aria-hidden="true" />}
           items={section.risks}
+          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
           tone="warning"
         />
       )}
@@ -307,6 +327,7 @@ export function AIAnalysisView({
           title="Recomendaciones"
           icon={<CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />}
           items={section.recommendations}
+          claims={analysis.claims as unknown as Array<{ text: string; evidence: string; page_number: number | null; source_id: string }>}
           tone="success"
         />
       )}

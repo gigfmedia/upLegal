@@ -12,7 +12,10 @@ import {
 export { MAX_DOCUMENT_SIZE_BYTES };
 
 export type AIDocument = Database['public']['Tables']['ai_documents']['Row'];
-export type AIDocumentAnalysis = Database['public']['Tables']['ai_document_analyses']['Row'];
+export type AIDocumentAnalysis = Database['public']['Tables']['ai_document_analyses']['Row'] & {
+  claims?: Array<{ text: string; source_id: string; fragment_id: string | null; evidence: string; page_number: number | null }>;
+  evidence_sources?: Array<{ text: string; source_id: string; fragment_id: string | null; evidence: string; page_number: number | null }>;
+};
 
 /** Lista de documentos sin `extracted_text` (evita cargar texto completo). */
 export type AIDocumentListItem = Omit<AIDocument, 'extracted_text'>;
