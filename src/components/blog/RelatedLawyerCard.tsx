@@ -108,7 +108,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
+            <h3 className="text-md font-bold text-gray-900">{displayName}</h3>
             <div className="mt-0.5 flex items-center min-h-[21px]">
               {reviewCount > 0 ? (
                 <div className="flex items-center gap-1.5">
