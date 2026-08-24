@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare } from 'lucide-react';
 import posthog from 'posthog-js';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
+import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 
 function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
   if (data.contradictions.length > 0) return { label: 'Con contradicciones', color: 'bg-red-100 text-red-800' };
@@ -17,6 +18,8 @@ function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; miss
 
 export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspaceId: string; onQuestionClick?: (q: string) => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
+  const [evidenceRef, setEvidenceRef] = useState<EvidenceReference | null>(null);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   useEffect(() => {
     if (data) posthog.capture('ai_case_intelligence_viewed', { case_id: workspaceId, documents_ready: data.document_count });
@@ -107,7 +110,11 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
               <div key={i} className="rounded border bg-gray-50/60 p-3">
                 <p className="text-sm text-gray-800">{f.text}</p>
                 <p className="mt-1 text-xs text-gray-500">Fuentes: {f.source_ids.join(', ')} {f.evidences[0]?.page_number ? `· Página ${f.evidences[0].page_number}` : ''}</p>
-                {f.evidences[0]?.evidence && <details className="mt-1"><summary className="cursor-pointer text-xs text-gray-600">Ver evidencia</summary><p className="mt-1 whitespace-pre-wrap text-xs italic text-gray-600">"{f.evidences[0].evidence}"</p></details>}
+                {f.evidences[0]?.evidence && (
+                  <Button variant="ghost" size="sm" className="mt-1 h-7 px-2 text-xs" onClick={() => { setEvidenceRef({ sourceId: f.source_ids[0], documentId: f.source_ids[0], fragmentId: f.evidences[0].fragment_id || null, pageNumber: f.evidences[0].page_number, evidence: f.evidences[0].evidence, sourceType: 'document', documentFilename: f.evidences[0].document_filename }); setEvidenceOpen(true); }}>
+                    Ver evidencia
+                  </Button>
+                )}
               </div>
             ))}
           </CardContent>
@@ -127,11 +134,13 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
         <Card className="border-amber-200 bg-amber-50/60"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600" /> Riesgos</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm">{data.risks.map((r,i)=><li key={i}>{r}</li>)}</ul></CardContent></Card>
       )}
       {data.contradictions.length > 0 && (
-        <Card className="border-red-200 bg-red-50/60"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="h-4 w-4 text-red-600" /> Contradicciones detectadas</CardTitle></CardHeader><CardContent className="space-y-3">{data.contradictions.map((c,i)=><div key={i} className="rounded border bg-white p-2"><p className="text-xs font-medium text-gray-700">Tema: {c.topic}</p>{c.versions.map((v,j)=><div key={j} className="mt-1 text-xs"><p>{v.text}</p><p className="text-[0.65rem] text-gray-500">{v.document_filename} — {v.source_id}</p></div>)}</div>)}</CardContent></Card>
+        <Card className="border-red-200 bg-red-50/60"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="h-4 w-4 text-red-600" /> Contradicciones detectadas</CardTitle></CardHeader><CardContent className="space-y-3">{data.contradictions.map((c,i)=><div key={i} className="rounded border bg-white p-2"><p className="text-xs font-medium text-gray-700">Tema: {c.topic}</p>{c.versions.map((v,j)=><div key={j} className="mt-1 text-xs"><p>{v.text}</p><p className="text-[0.65rem] text-gray-500">{v.document_filename} — {v.source_id}</p><Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-[0.65rem]" onClick={() => { setEvidenceRef({ sourceId: v.source_id, documentId: v.source_id, evidence: v.evidence, pageNumber: null, sourceType: 'document', documentFilename: v.document_filename }); setEvidenceOpen(true); }}>Ver evidencia</Button></div>)}</div>)}</CardContent></Card>
       )}
       {data.missingInformation.length > 0 && (
         <Card className="border-dashed"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4" /> Información faltante</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm text-gray-600">{data.missingInformation.map((m,i)=><li key={i}>{m}</li>)}</ul></CardContent></Card>
       )}
+
+      <EvidenceNavigator open={evidenceOpen} onOpenChange={setEvidenceOpen} reference={evidenceRef} surface="case_intelligence" />
     </div>
   );
 }

@@ -8698,6 +8698,44 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
   }
 });
 
+// GET /api/ai/documents/:documentId/evidence/:fragmentId — Evidencia contextual (Fase 4.8).
+// Devuelve solo el fragmento solicitado con page_number y evidence, validando ownership.
+app.get('/api/ai/documents/:documentId/evidence/:fragmentId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+
+    const { documentId, fragmentId } = req.params;
+    const doc = await getAIDocumentOwned(documentId, userId);
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado.' });
+
+    // Verifica que el fragmentId pertenezca al documento (determinista via chunk)
+    const { chunkDocumentText } = await import('./server/ai/documentGrounding.mjs');
+    const chunks = chunkDocumentText(String(doc.extracted_text || ''), { documentId: doc.id });
+    const fragment = chunks.find((c) => c.id === fragmentId);
+    if (!fragment) return res.status(404).json({ error: 'Evidencia no disponible.' });
+
+    // Contexto: párrafo anterior y posterior si existen
+    const idx = chunks.findIndex((c) => c.id === fragmentId);
+    const prev = idx > 0 ? chunks[idx - 1].text.slice(-300) : '';
+    const next = idx < chunks.length - 1 ? chunks[idx + 1].text.slice(0, 300) : '';
+
+    res.json({
+      document_id: doc.id,
+      fragment_id: fragment.id,
+      page_number: fragment.index + 1,
+      evidence: fragment.text,
+      context_before: prev,
+      context_after: next,
+      document_filename: doc.original_filename,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI] evidence error:', error);
+    res.status(500).json({ error: 'No se pudo cargar esta evidencia.' });
+  }
+});
+
 // GET /api/ai/usage — resumen de consumo IA del abogado en el mes en curso.
 // Fase 3.6: expone tokens/créditos/costos para el medidor de la UI. Los límites
 // técnicos de protección se devuelven como referencia, sin ser comerciales.
