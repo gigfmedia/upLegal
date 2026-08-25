@@ -118,6 +118,27 @@ function splitSentences(text) {
   return String(text || '').split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
 }
 
+// Fase 4.16: segmentación intra-oración conservadora para una sola oración con múltiples claims.
+// Solo divide cuando hay conectores claros entre dos afirmaciones independientes y no destruye relaciones semánticas.
+function splitClausesSafe(sentence) {
+  const s = String(sentence || '').trim();
+  if (!s) return [s];
+  // No dividir si la oración contiene nombres propios con "y" (ej. "Juan Pérez y María González")
+  // Heurística: si "y" está entre dos nombres propios (mayúscula), no dividir
+  if (/\b[A-Z][a-z]+ [A-Z][a-z]+ y [A-Z][a-z]+ [A-Z][a-z]+\b/.test(s)) return [s];
+  // No dividir "renta y los gastos comunes" si es una enumeración simple sin verbo en la segunda parte
+  // Para 4.16, solo dividimos en " y " cuando ambas partes tienen verbo o número/fecha
+  const parts = s.split(/\s+y\s+|\s+pero\s+|\s+además\s+|\s+mientras que\s+|\s+sin embargo\s+/i);
+  if (parts.length <= 1) return [s];
+  // Verifica que cada parte tenga al menos un verbo o número/fecha para ser afirmación independiente
+  const hasVerbOrNumber = (part) => /\b(es|son|tiene|tienen|debe|deben|comenzó|termina|dura|corresponde|asciende)\b|\d/.test(part.toLowerCase());
+  const allValid = parts.every((p) => p.trim().length > 10 && hasVerbOrNumber(p));
+  if (!allValid) return [s];
+  // No dividir si alguna parte es muy corta (<15 chars) o parece enumeración
+  if (parts.some((p) => p.trim().length < 15)) return [s];
+  return parts.map((p) => p.trim()).filter(Boolean);
+}
+
 /**
  * Fase 4.15: Resolución multi-claim — cada oración de la respuesta se evalúa
  * contra los claims verificados con las mismas reglas conservadoras de 4.13.
@@ -137,6 +158,18 @@ export function resolveMultiClaimEvidence({ answer, verifiedClaims }) {
     if (m && !seen.has(m.source_id + '::' + m.fragment_id)) {
       seen.add(m.source_id + '::' + m.fragment_id);
       matched.push(m);
+      continue;
+    }
+    // Fase 4.16: si la oración completa no matchea (ej. una sola oración con dos claims y dos números/fechas), intenta segmentación intra-oración
+    const clauses = splitClausesSafe(sentence);
+    if (clauses.length > 1) {
+      for (const clause of clauses) {
+        const cm = resolveChatEvidenceFromVerifiedClaims({ answer: clause, verifiedClaims });
+        if (cm && !seen.has(cm.source_id + '::' + cm.fragment_id)) {
+          seen.add(cm.source_id + '::' + cm.fragment_id);
+          matched.push(cm);
+        }
+      }
     }
   }
   return matched;
