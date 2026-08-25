@@ -8147,7 +8147,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
                 });
               }
             }
-          } else {
+              } else {
             // Fallback anterior: verifica answer literal contra cada documento
             for (const doc of readyDocs) {
               const docsById = new Map([[doc.id, doc]]);
@@ -8180,8 +8180,6 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
                 }
                 break;
               }
-            }
-          }
             }
           }
         }
