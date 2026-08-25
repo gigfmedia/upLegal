@@ -41,7 +41,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Me quieren desalojar: ¿qué hago? Derechos y pasos urgentes en Chile (2026) | LegalUp"
         description="Si te quieren desalojar tienes derechos. En Chile nadie puede sacarte sin orden judicial. Descubre qué hacer ahora, cuánto dura el proceso y cómo defenderte legalmente."
@@ -55,10 +55,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -70,11 +69,11 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "En Chile no pueden desalojarte sin orden judicial",
                 "El arrendador no puede usar fuerza ni cambiar cerraduras",
@@ -90,11 +89,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Comprender cómo funciona realmente el proceso de desalojo es fundamental para proteger tus derechos como arrendatario y evitar abusos o situaciones ilegales.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>13 de Marzo, 2026</span>
@@ -113,7 +112,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden desalojar sin orden judicial en Chile? (Guía 2026)"
             url="https://legalup.cl/blog/me-quieren-desalojar-que-hago-chile-2026"

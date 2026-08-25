@@ -37,7 +37,7 @@ const faqs = [
 
 const BlogArticle = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Reserva de derechos en el finiquito en Chile: qué es, cómo escribirla y cuándo usarla (Guía 2026)"
         description="La reserva de derechos te permite firmar el finiquito sin renunciar a reclamar diferencias. Aprende cómo escribirla paso a paso."
@@ -51,21 +51,20 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
             Reserva de derechos en el finiquito en Chile: qué es, cómo escribirla y cuándo usarla (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
-            <ul className="space-y-2">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
+            <ul className="space-y-2 text-green-900">
               {[
                 "La reserva de derechos te permite firmar el finiquito sin renunciar a reclamar diferencias",
                 "Se escribe a mano antes de tu firma en el documento",
@@ -87,7 +86,7 @@ const BlogArticle = () => {
             La reserva de derechos existe precisamente para eso: te permite recibir el pago sin cerrar la puerta a reclamar lo que crees que te corresponde.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>11 de Mayo, 2026</span>
@@ -106,7 +105,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
             title="Reserva de derechos en el finiquito en Chile (Guía 2026)"

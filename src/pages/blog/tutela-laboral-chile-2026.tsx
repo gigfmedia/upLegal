@@ -46,7 +46,7 @@ const BlogArticle = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Tutela laboral en Chile 2026: cuándo procede, qué derechos protege y cómo demandar"
                 description="Conoce cuándo procede una demanda de tutela laboral en Chile, qué derechos protege, cuáles son los plazos, qué pruebas sirven y cómo reclamar frente a una vulneración de derechos fundamentales."
@@ -61,25 +61,24 @@ const BlogArticle = () => {
             <ReadingProgressBar />
 
             {/* HERO */}
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link to="/blog" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
                             Blog
                         </Link>
                         <ChevronRight className="h-4 w-4" />
                         <span>Artículo</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
                         Tutela laboral en Chile 2026: cuándo procede, qué derechos protege y cómo demandar
                     </h1>
 
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
                             Resumen rápido
                         </p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "La tutela laboral protege los derechos fundamentales de los trabajadores",
                                 "Puede interponerse durante la relación laboral o después del despido",
@@ -88,18 +87,18 @@ const BlogArticle = () => {
                                 "Actuar rápidamente permite preservar antecedentes importantes",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-500 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl text-green-900">
                         Cuando un trabajador sufre discriminación, represalias, acoso o cualquier vulneración de sus derechos fundamentales dentro de la empresa, el conflicto puede ir mucho más allá de un simple despido injustificado. En estos casos existe una acción judicial especial conocida como tutela laboral, cuyo objetivo es proteger derechos constitucionales durante la relación laboral o con ocasión de su término.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>9 de Julio, 2026</span>
@@ -118,7 +117,7 @@ const BlogArticle = () => {
 
             {/* CONTENT */}
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Tutela laboral en Chile 2026"
                         url="https://legalup.cl/blog/tutela-laboral-chile-2026"

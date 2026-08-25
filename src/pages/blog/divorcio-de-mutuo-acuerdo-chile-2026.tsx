@@ -45,7 +45,7 @@ const BlogArticle = () => {
   const url = "https://legalup.cl/blog/divorcio-de-mutuo-acuerdo-chile-2026";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title={title}
         description="Guía completa sobre el divorcio de mutuo acuerdo en Chile 2026. Requisitos, etapas del proceso, plazos reales y qué debes tener resuelto antes de presentar la demanda."
@@ -60,7 +60,7 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 mb-4 opacity-80">
             <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
@@ -71,7 +71,7 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">{title}</h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
                 "Ambos cónyuges deben estar de acuerdo y tener al menos 1 año de cese de convivencia",
@@ -91,7 +91,7 @@ const BlogArticle = () => {
             Cuando una pareja decide separarse de común acuerdo, el divorcio de mutuo acuerdo es el camino más directo, menos costoso y menos desgastante que existe en Chile. A diferencia del divorcio unilateral — donde uno quiere divorciarse y el otro no — el mutuo acuerdo permite que ambas partes controlen el proceso y lleguen a términos que les convengan.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>18 de Mayo, 2026</span>
@@ -110,7 +110,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare title={title} url={url} showBorder={false} />
 
           {/* Introduction */}

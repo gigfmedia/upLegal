@@ -45,7 +45,7 @@ const BlogArticle = () => {
   const url = "https://legalup.cl/blog/como-demandar-por-despido-injustificado-chile-2026";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title={title}
         description="Guía paso a paso 2026 para demandar por despido injustificado en Chile. Conoce los plazos, requisitos, cuánto puedes ganar y cómo evitar errores comunes."
@@ -60,10 +60,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -73,7 +72,7 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
                 "Tienes 60 días hábiles para demandar",
@@ -94,7 +93,7 @@ const BlogArticle = () => {
             Si te despidieron y sientes que no fue justo, es normal preguntarse: <strong>¿Cómo demandar por despido injustificado en Chile?</strong> La respuesta simple es que puedes demandar dentro de 60 días hábiles y exigir indemnización con la ayuda de un <Link to="/abogados-laborales" className="text-green-600 underline hover:text-green-400">abogado laboral en Chile</Link>.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>3 de Mayo, 2026</span>
@@ -113,7 +112,7 @@ const BlogArticle = () => {
 
       <div className="mx-auto py-12">
         <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8">
-          <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+          <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
             <BlogShare title={title} url={url} showBorder={false} />
 
             <div className="prose prose-lg max-w-none mb-12">
@@ -207,7 +206,7 @@ const BlogArticle = () => {
                     Recargo legal (CLAVE)
                   </h4>
                   <p className="opacity-90 leading-relaxed mb-4">El tribunal puede aumentar tu indemnización por años de servicio considerablemente:</p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 text-green-900">
                     <li className="flex items-center gap-2"><span>30%</span> <span className="opacity-70">→ error leve</span></li>
                     <li className="flex items-center gap-2"><span>50%</span> <span className="opacity-70">→ no prueban causal</span></li>
                     <li className="flex items-center gap-2 font-bold text-green-400"><span>80%</span> <span className="opacity-70">→ despido grave o abusivo</span></li>

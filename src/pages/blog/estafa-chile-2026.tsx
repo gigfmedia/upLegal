@@ -66,7 +66,7 @@ const BlogArticle = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Estafa en Chile 2026: qué hacer si te estafaron, cómo denunciar y recuperar tu dinero (Guía Completa)"
                 description="Aprende qué hacer si fuiste víctima de una estafa en Chile, cómo realizar una denuncia por estafa, qué pruebas reunir y cuáles son las alternativas para recuperar tu dinero."
@@ -81,25 +81,24 @@ const BlogArticle = () => {
             <ReadingProgressBar />
 
             {/* HERO */}
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link to="/blog" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
                             Blog
                         </Link>
                         <ChevronRight className="h-4 w-4" />
                         <span>Artículo</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
                         Estafa en Chile 2026: qué hacer si te estafaron, cómo denunciar y recuperar tu dinero (Guía Completa)
                     </h1>
 
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
                             Resumen rápido
                         </p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "La estafa es un delito que ocurre cuando una persona engaña a otra para obtener un beneficio económico indebido.",
                                 "Si te estafaron, es fundamental guardar toda la evidencia disponible y denunciar rápidamente.",
@@ -108,18 +107,18 @@ const BlogArticle = () => {
                                 "Un abogado penalista puede ayudarte a evaluar acciones penales y civiles para perseguir responsabilidades y recuperar perjuicios.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-500 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl text-green-900">
                         Las estafas se han convertido en uno de los delitos más frecuentes en Chile durante los últimos años. El crecimiento del comercio electrónico, las transferencias bancarias instantáneas y el uso masivo de redes sociales han facilitado nuevas modalidades de fraude que afectan diariamente a miles de personas.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>23 de Junio, 2026</span>
@@ -138,7 +137,7 @@ const BlogArticle = () => {
 
             {/* CONTENT */}
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Estafa en Chile 2026"
                         url="https://legalup.cl/blog/estafa-chile-2026"
@@ -401,7 +400,7 @@ const BlogArticle = () => {
                     <div className="mb-12">
                         <h2 className="text-2xl font-bold mb-4">¿Necesito un abogado si fui víctima de una estafa?</h2>
                         <p className="text-gray-600 mb-4">Aunque no siempre es obligatorio, contar con asesoría jurídica puede marcar una diferencia importante. Un abogado puede ayudarte a:</p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {["Evaluar si existe delito", "Preparar antecedentes", "Realizar seguimiento de la investigación", "Interponer querellas", "Analizar acciones civiles para recuperar daños"].map((item, i) => (
                                 <li key={i} className="flex items-center gap-2"><span className="text-green-600 font-bold">✓</span> {item}</li>
                             ))}

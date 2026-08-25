@@ -45,7 +45,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Contrato de arriendo en Chile: modelo, cláusulas clave y errores que debes evitar (Guía 2026)"
         description="Todo lo que debes saber sobre el contrato de arriendo en Chile: qué debe incluir, errores comunes, modelo gratuito y cuándo necesitas abogado. Guía legal completa 2026."
@@ -59,7 +59,7 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
@@ -74,11 +74,11 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "El contrato de arriendo regula derechos y obligaciones entre arrendador y arrendatario",
                 "Debe incluir monto, plazo, garantía y reglas de uso del inmueble",
@@ -117,7 +117,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Contrato de arriendo en Chile: modelo, cláusulas clave y errores que debes evitar (Guía 2026)"
             url="https://legalup.cl/blog/contrato-de-arriendo-chile-2026"

@@ -62,42 +62,42 @@ const BlogPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {helmetData}
       <Header onAuthClick={() => { }} />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white pt-28 pb-12">
+      <div className="bg-[#f4efdf] text-green-900 pt-28 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
           {/* El breadcrumbs ahora está dentro del div de la izquierda */}
           <div className="flex flex-col md:flex-row gap-8 items-start">
             <div className="w-full md:w-1/2">
               {/* Breadcrumbs dentro de la primera columna */}
-              <div className="flex items-center gap-2 text-white text-sm mb-4">
-                <Link to="/" className="text-green-600 hover:text-white transition-colors">
+              <div className="flex items-center gap-2 text-green-500 text-sm mb-4">
+                <Link to="/" className="text-green-500 hover:text-green-900 transition-colors">
                   Inicio
                 </Link>
                 <ChevronRight className="h-4 w-4" />
                 <span>Blog</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
+              <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-900 mb-6">
                 Blog LegalUp
               </h1>
 
-              <p className="text-xl text-white max-w-3xl">
+              <p className="text-xl text-green-900 max-w-3xl">
                 Guías prácticas y artículos expertos para ayudarte a entender tus derechos y tomar mejores decisiones legales en Chile.
               </p>
             </div>
 
-            <div className="w-full md:w-1/2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-              <h2 className="text-xl font-bold font-serif text-white mb-3">¿Necesitas ayuda legal?</h2>
-              <p className="text-sm text-white mb-4 leading-relaxed">
+            <div className="w-full md:w-1/2 bg-white backdrop-blur-sm border rounded-2xl p-6 mb-8">
+              <h2 className="text-xl font-bold font-serif text-green-900 mb-3">¿Necesitas ayuda legal?</h2>
+              <p className="text-sm text-green-900 mb-4 leading-relaxed">
                 Compara abogados verificados, revisa precios y agenda una consulta online según tu caso.
               </p>
               <Button
                 size="lg"
-                className="w-full bg-gray-900 text-white hover:bg-green-600 hover:text-white"
+                className="w-full bg-gray-900 text-white hover:bg-green-900 hover:text-white"
                 onClick={() => {
                   window.gtag?.('event', 'search_started', {
                     source: 'blog_hero',

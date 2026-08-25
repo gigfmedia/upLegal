@@ -41,7 +41,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron"
         description="En Chile el arriendo puede subir según el IPC, pero hay condiciones. Si te subieron más de lo permitido o sin aviso, tienes derechos. Abogado disponible en LegalUp — consulta hoy."
@@ -55,7 +55,7 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
           <div className="flex items-center gap-2 text-white mb-4">
             <Link to="/blog" className="hover:text-white transition-colors">
@@ -70,11 +70,11 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "El arriendo no puede subir arbitrariamente si existe contrato vigente",
                 "La mayoría de los reajustes se calculan según IPC",
@@ -113,7 +113,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Me subieron el arriendo, ¿qué hago? Guía completa para arrendatarios en Chile (2026)"
             url="https://legalup.cl/blog/me-subieron-el-arriendo-que-hago-2026"

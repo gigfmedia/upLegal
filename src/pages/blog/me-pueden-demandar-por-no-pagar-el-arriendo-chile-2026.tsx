@@ -55,7 +55,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="¿Me pueden demandar por no pagar el arriendo en Chile? Guía 2026"
         description="Sí: te pueden demandar con 1 mes de deuda. Conoce qué incluye una demanda de arriendo, cuánto demora y cómo defenderte (Guía 2026)."
@@ -68,10 +68,9 @@ const BlogArticle = () => {
       <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -83,7 +82,7 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <div className="space-y-3 text-white/90">
               {[
                 "Con 1 mes de deuda pueden iniciar acciones legales",
@@ -103,7 +102,7 @@ const BlogArticle = () => {
             Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse qué puede pasar realmente.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>22 de Abril, 2026</span>
@@ -121,7 +120,7 @@ const BlogArticle = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)"
             url="https://legalup.cl/blog/me-pueden-demandar-por-no-pagar-el-arriendo-chile-2026"

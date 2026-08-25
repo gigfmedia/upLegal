@@ -55,7 +55,7 @@ const BlogArticle = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Cómo cobrar una deuda legalmente en Chile 2026: las vías legales para recuperar tu dinero"
                 description="Descubre las vías legales para cobrar una deuda en Chile: negociación, juicio ejecutivo, juicio ordinario y embargo. Plazos, costos y qué hacer paso a paso."
@@ -70,25 +70,24 @@ const BlogArticle = () => {
             <ReadingProgressBar />
 
             {/* HERO */}
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link to="/blog" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
                             Blog
                         </Link>
                         <ChevronRight className="h-4 w-4" />
                         <span>Artículo</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
                         Cómo cobrar una deuda legalmente en Chile 2026: las vías legales para recuperar tu dinero
                     </h1>
 
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
                             Resumen rápido
                         </p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "Empieza siempre por la gestión extrajudicial: reclamo escrito y negociación.",
                                 "Si tienes título ejecutivo (pagaré, escritura), la vía rápida es el juicio ejecutivo.",
@@ -97,18 +96,18 @@ const BlogArticle = () => {
                                 "En el juicio ejecutivo se puede pedir el embargo de bienes del deudor para asegurar el pago.",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-500 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl text-green-900">
                         Cobrar una deuda de forma legal en Chile es posible, pero requiere elegir la vía correcta según el tipo de documento que tengas y el monto involucrado. Conocer tus opciones antes de actuar puede ahorrarte tiempo, dinero y frustraciones.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>7 de Agosto, 2026</span>
@@ -127,7 +126,7 @@ const BlogArticle = () => {
 
             {/* CONTENT */}
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Cómo cobrar una deuda legalmente en Chile"
                         url="https://legalup.cl/blog/como-cobrar-deuda-legalmente-chile-2026"

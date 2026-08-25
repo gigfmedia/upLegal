@@ -107,7 +107,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)"
         description="Si no recibes la pensión de alimentos o existe deuda acumulada, existen herramientas legales efectivas. Aprende cómo cobrar la deuda paso a paso: liquidación, medidas de apremio, embargo y arresto."
@@ -121,21 +121,20 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
             Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso y qué medidas puedes exigir (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
-            <ul className="space-y-2">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
+            <ul className="space-y-2 text-green-900">
               {[
                 "Puedes cobrar la deuda solicitando una liquidación judicial",
                 "El tribunal puede aplicar medidas como retención de sueldo, embargo y arresto",
@@ -150,11 +149,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl">
+          <p className="text-xl max-w-3xl text-green-900">
             Si no estás recibiendo la pensión de alimentos o existe deuda acumulada, no estás solo. Es una situación común en Chile, pero también una de las que tiene más herramientas legales para solucionarse con el apoyo de un <Link to="/abogado-pension-alimentos" className="text-green-600 underline hover:text-green-400">abogado especializado en cobro de pensión de alimentos</Link>.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>28 de Abril, 2026</span>
@@ -173,7 +172,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
 
           <BlogShare
             title="Deuda de pensión de alimentos en Chile: cómo cobrarla paso a paso (Guía 2026)"

@@ -136,7 +136,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)"
         description="Cuándo y cómo solicitar aumento de pensión de alimentos en Chile: motivos válidos, documentación necesaria, proceso judicial y qué hace el tribunal para determinarlo."
@@ -150,21 +150,20 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
             Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
-            <ul className="space-y-2">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
+            <ul className="space-y-2 text-green-900">
               {[
                 "Sí puedes pedir aumento de pensión de alimentos en Chile",
                 "Debes demostrar que las necesidades del hijo aumentaron o que el otro padre puede pagar más",
@@ -180,11 +179,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Con el tiempo, muchas pensiones de alimentos quedan desactualizadas. Lo que antes alcanzaba para colegio, alimentación, salud y transporte, hoy muchas veces ya no es suficiente. Si te encuentras en esta situación, la ley permite ajustar ese monto, pero el proceso requiere una solicitud formal ante el tribunal.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>28 de Mayo, 2026</span>
@@ -203,7 +202,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Aumento de pensión de alimentos en Chile: cuándo se puede pedir y cómo funciona (Guía 2026)"
             url="https://legalup.cl/blog/aumento-pension-alimentos-chile-2026"
@@ -366,7 +365,7 @@ const BlogArticle = () => {
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <span className="text-xl">📋</span> Gastos del hijo
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Boletas de colegio o universidad",
                     "Gastos médicos y medicamentos",
@@ -387,7 +386,7 @@ const BlogArticle = () => {
                 <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <span className="text-xl">💼</span> Antecedentes económicos del alimentante
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Liquidaciones de sueldo actuales",
                     "Información comercial o de negocio",
@@ -532,7 +531,7 @@ const BlogArticle = () => {
                 <h4 className="font-bold text-green-900 mb-4 flex items-center gap-2">
                   Suele aprobarse cuando:
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Aumentaron gastos educacionales comprobables",
                     "Existen gastos médicos importantes acreditados",
@@ -551,7 +550,7 @@ const BlogArticle = () => {
                 <h4 className="font-bold text-red-900 mb-4 flex items-center gap-2">
                   Suele rechazarse cuando:
                 </h4>
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Falta de pruebas concretas de gastos",
                     "Gastos poco acreditados o sin documentación",

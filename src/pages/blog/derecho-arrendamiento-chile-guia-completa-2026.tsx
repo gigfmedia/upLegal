@@ -49,7 +49,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Arriendo en Chile 2026: derechos del arrendatario y arrendador | LegalUp"
         description="Guía completa de arriendo en Chile 2026: desalojo, garantía, reajuste IPC, contratos y derechos legales. Todo lo que necesitas saber antes de arrendar o demandar."
@@ -63,10 +63,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -78,7 +77,7 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
                 "El contrato de arriendo regula derechos y obligaciones entre arrendador y arrendatario",
@@ -100,7 +99,7 @@ const BlogArticle = () => {
             ¿Te pueden desalojar? ¿Pueden subirte el arriendo? Conoce tus derechos, cómo funciona el contrato y qué hacer si tienes un problema de arriendo en Chile.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>15 de Abril, 2026</span>
@@ -118,7 +117,7 @@ const BlogArticle = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Derecho de arrendamiento en Chile: guía completa 2026"
             url="https://legalup.cl/blog/derecho-arrendamiento-chile-guia-completa-2026"

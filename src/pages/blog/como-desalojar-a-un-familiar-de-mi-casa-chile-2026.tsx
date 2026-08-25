@@ -49,7 +49,7 @@ const faqs = [
 const BlogArticle = () => {
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso"
         description="¿Necesitas echar a un familiar de tu casa en Chile? Aprende cómo desalojarlo legalmente, qué acción presentar, cuánto demora y qué hacer si no quiere irse."
@@ -63,10 +63,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -79,10 +78,10 @@ const BlogArticle = () => {
 
           {/* Quick Summary Card */}
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "En Chile no puedes sacar a un familiar por la fuerza aunque seas el dueño",
                 "El proceso legal depende de si hay contrato, acuerdo verbal o ningún acuerdo",
@@ -97,11 +96,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Si estás buscando cómo echar a un familiar de tu casa, sabes que no es una decisión fácil. Desalojar a un familiar es una de las situaciones legales más incómodas que existe. Ya sea que quieras saber cómo echar a una persona de tu propiedad o necesites entender el proceso legal para recuperar tu casa, esta guía te explica todo lo que necesitas saber.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>25 de Mayo, 2026</span>
@@ -120,7 +119,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cómo echar a un familiar de mi casa o desalojarlo legalmente en Chile 2026? Guía paso a paso"
             url="https://legalup.cl/blog/como-desalojar-a-un-familiar-de-mi-casa-chile-2026"

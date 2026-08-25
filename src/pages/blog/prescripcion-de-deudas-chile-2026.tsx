@@ -48,7 +48,7 @@ const BlogArticle = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Prescripción de deudas en Chile 2026: cuándo prescribe una deuda y qué ocurre después"
                 description="Aprende cuándo prescribe una deuda en Chile, qué tipos de deudas pueden prescribir, cómo funciona la prescripción de pagarés y qué hacer si te están cobrando una deuda antigua."
@@ -63,25 +63,24 @@ const BlogArticle = () => {
             <ReadingProgressBar />
 
             {/* HERO */}
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link to="/blog" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
                             Blog
                         </Link>
                         <ChevronRight className="h-4 w-4" />
                         <span>Artículo</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
                         Prescripción de deudas en Chile 2026: cuándo prescribe una deuda y qué ocurre después
                     </h1>
 
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
                             Resumen rápido
                         </p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "La prescripción de una deuda extingue la acción judicial para cobrarla, no necesariamente la deuda misma",
                                 "El plazo de prescripción varía según el tipo de obligación y el documento que la respalda",
@@ -90,18 +89,18 @@ const BlogArticle = () => {
                                 "Si te están cobrando una deuda antigua, conviene revisar los antecedentes antes de pagar o responder",
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-500 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl text-green-900">
                         Muchas personas creen que una deuda desaparece automáticamente con el paso del tiempo. Sin embargo, en Chile la realidad es distinta: una deuda no se extingue simplemente porque hayan transcurrido algunos años, sino que puede llegar a prescribir si se cumplen determinados requisitos legales.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>24 de Julio, 2026</span>
@@ -120,7 +119,7 @@ const BlogArticle = () => {
 
             {/* CONTENT */}
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Prescripción de deudas en Chile 2026"
                         url="https://legalup.cl/blog/prescripcion-de-deudas-chile-2026"

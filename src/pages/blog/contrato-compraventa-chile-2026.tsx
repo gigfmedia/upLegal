@@ -23,7 +23,7 @@ const BlogArticle = () => {
         { question: "¿Un contrato por WhatsApp es válido?", answer: "Un acuerdo por WhatsApp puede valer como principio de prueba, pero es débil. Formaliza siempre en un documento con precio, cosa, plazo y firma. Un abogado lo deja a prueba de conflictos." },
     ];
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Contrato de compraventa en Chile 2026: qué debe incluir y cómo protegerte"
                 description="Firmas una compraventa en Chile? Qué debe incluir un contrato de compraventa, promesa, cláusulas clave y cómo protegerte si compras auto, casa o entre privados."
@@ -35,13 +35,13 @@ const BlogArticle = () => {
             />
             <Header onAuthClick={() => {}} />
             <ReadingProgressBar />
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4"><Link to="/blog" className="hover:text-white transition-colors">Blog</Link><ChevronRight className="h-4 w-4" /><span>Artículo</span></div>
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">Contrato de compraventa en Chile 2026: qué debe incluir y cómo protegerte</h1>
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
-                        <ul className="space-y-2">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link><ChevronRight className="h-4 w-4" /><span>Artículo</span></div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">Contrato de compraventa en Chile 2026: qué debe incluir y cómo protegerte</h1>
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "Sin contrato escrito no hay prueba clara de precio, cosa ni plazos.",
                                 "Inmueble exige escritura pública + inscripción en Conservador.",
@@ -49,12 +49,12 @@ const BlogArticle = () => {
                                 "Fija precio total, forma de pago, entrega, multas y vicios ocultos.",
                                 "Si hay cuotas, asegura reserva de dominio y cláusula resolutoria.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
                             ))}
                         </ul>
                     </div>
-                    <p className="text-xl max-w-3xl">En Chile se firman a diario compraventas de autos, casas, máquinas y productos sin un contrato decente. Luego llegan los problemas: precio impago, cosa distinta a la prometida, multas sin pacto y juicios que se pudieron evitar con dos páginas bien redactadas. Esta guía te da el checklist que usan los abogados.</p>
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <p className="text-xl max-w-3xl text-green-900">En Chile se firman a diario compraventas de autos, casas, máquinas y productos sin un contrato decente. Luego llegan los problemas: precio impago, cosa distinta a la prometida, multas sin pacto y juicios que se pudieron evitar con dos páginas bien redactadas. Esta guía te da el checklist que usan los abogados.</p>
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>14 de Agosto, 2026</span></div>
                         <div className="flex items-center gap-2"><User className="h-4 w-4" /><span>Equipo LegalUp</span></div>
                         <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><ReadTime slug="contrato-compraventa-chile-2026" /></div>
@@ -63,7 +63,7 @@ const BlogArticle = () => {
             </div>
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare title="Contrato de compraventa en Chile 2026" url="https://legalup.cl/blog/contrato-compraventa-chile-2026" showBorder={false} />
 
                     <div className="prose prose-lg max-w-none mb-8">

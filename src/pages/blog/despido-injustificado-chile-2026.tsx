@@ -37,7 +37,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Despido injustificado en Chile 2026: qué te corresponde y cómo reclamar"
         description="Si te despidieron sin causa justificada en Chile, tienes derecho a indemnización. Conoce los montos, plazos y pasos para reclamar. Abogado laboral disponible en LegalUp."
@@ -51,10 +51,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
@@ -64,11 +63,11 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "Ocurre cuando el empleador pone término al contrato sin una causa legal válida",
                 "El trabajador puede demandar para obtener un recargo legal sobre su indemnización",
@@ -84,11 +83,11 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Ser despedido del trabajo es una situación difícil. Pero cuando el despido ocurre sin una causa válida o sin respetar la ley, se trata de un despido injustificado, y tienes derecho a reclamar.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>1 de Abril, 2026</span>
@@ -107,7 +106,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)"
             url="https://legalup.cl/blog/despido-injustificado-chile-2026"
@@ -121,7 +120,7 @@ const BlogArticle = () => {
             </p>
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 mb-8">
               <p className="font-semibold text-blue-900 mb-3">En esta guía 2026 te explicamos:</p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 text-green-900">
                 {[
                   "Qué es un despido injustificado",
                   "Cuándo se considera ilegal",
@@ -187,7 +186,7 @@ const BlogArticle = () => {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold mb-3 text-gray-900">Uso incorrecto de causales</h3>
                   <p className="text-gray-600 mb-4 leading-relaxed">Ejemplo:</p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 text-green-900">
                     {[
                       "Invocar \"necesidades de la empresa\" sin fundamento real",
                       "Despedir por razones personales disfrazadas"
@@ -206,7 +205,7 @@ const BlogArticle = () => {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold mb-3 text-gray-900">Despido discriminatorio o arbitrario</h3>
                   <p className="text-gray-600 mb-4 leading-relaxed">Casos donde el despido se basa en:</p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 text-green-900">
                     {[
                       "Razones personales",
                       "Represalias",
@@ -428,7 +427,7 @@ const BlogArticle = () => {
                   <span className="font-bold text-gray-900 text-lg">Reunir pruebas</span>
                 </div>
                 <p className="text-base text-gray-600 mb-3">Guarda:</p>
-                <ul className="space-y-2">
+                <ul className="space-y-2 text-green-900">
                   {[
                     "Correos",
                     "Mensajes",

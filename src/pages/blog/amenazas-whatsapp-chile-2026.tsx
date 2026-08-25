@@ -23,7 +23,7 @@ const BlogArticle = () => {
         { question: "¿Necesito abogado para denunciar amenazas digitales?", answer: "No es obligatorio para denunciar, pero un abogado penal acelera las diligencias, pide medidas de protección, corrige la calificación del delito y evita que tu caso quede archivado por falta de impulso." },
     ];
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Amenazas por WhatsApp en Chile 2026: cómo denunciar y qué pruebas necesitas"
                 description="¿Te amenazan por WhatsApp en Chile? Qué delito es, cómo denunciar paso a paso y qué pruebas con capturas, audios y respaldo necesitas para que la Fiscalía actúe."
@@ -35,13 +35,13 @@ const BlogArticle = () => {
             />
             <Header onAuthClick={() => {}} />
             <ReadingProgressBar />
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4"><Link to="/blog" className="hover:text-white transition-colors">Blog</Link><ChevronRight className="h-4 w-4" /><span>Artículo</span></div>
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">Amenazas por WhatsApp en Chile 2026: cómo denunciar y qué pruebas necesitas</h1>
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
-                        <ul className="space-y-2">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link><ChevronRight className="h-4 w-4" /><span>Artículo</span></div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">Amenazas por WhatsApp en Chile 2026: cómo denunciar y qué pruebas necesitas</h1>
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "Amenazar por WhatsApp sí es delito cuando la amenaza es seria y verosímil.",
                                 "No borres nada: guarda capturas completas, audios originales y exporta el chat.",
@@ -49,12 +49,12 @@ const BlogArticle = () => {
                                 "Denuncia ante Carabineros, PDI o Fiscalía y pide medidas de protección si hay riesgo.",
                                 "Una constancia no reemplaza la denuncia: denuncia para que se investigue.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-500 font-bold">✓</span><span className="text-sm sm:text-base">{item}</span></li>
                             ))}
                         </ul>
                     </div>
-                    <p className="text-xl max-w-3xl">Un mensaje amenazante en WhatsApp puede parecer solo una discusión, pero en Chile la ley lo toma en serio. Si te escriben "te voy a hacer algo", "sé dónde vives" o te extorsionan, necesitas saber cómo conservar la prueba y denunciar correctamente para que la Fiscalía no archive tu caso.</p>
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <p className="text-xl max-w-3xl text-green-900">Un mensaje amenazante en WhatsApp puede parecer solo una discusión, pero en Chile la ley lo toma en serio. Si te escriben "te voy a hacer algo", "sé dónde vives" o te extorsionan, necesitas saber cómo conservar la prueba y denunciar correctamente para que la Fiscalía no archive tu caso.</p>
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><span>11 de Agosto, 2026</span></div>
                         <div className="flex items-center gap-2"><User className="h-4 w-4" /><span>Equipo LegalUp</span></div>
                         <div className="flex items-center gap-2"><Clock className="h-4 w-4" /><ReadTime slug="amenazas-whatsapp-chile-2026" /></div>
@@ -63,7 +63,7 @@ const BlogArticle = () => {
             </div>
 
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare title="Amenazas por WhatsApp en Chile 2026" url="https://legalup.cl/blog/amenazas-whatsapp-chile-2026" showBorder={false} />
 
                     <div className="prose prose-lg max-w-none mb-8">

@@ -50,7 +50,7 @@ const BlogArticle = () => {
   const url = "https://legalup.cl/blog/como-desalojar-a-una-persona-de-mi-propiedad-chile-2026";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title={title}
         description="¿Necesitas desalojar a un arrendatario sin contrato o con deuda en Chile? Descubre la Ley Devuélveme Mi Casa, plazos, costos y cómo actuar legalmente en 2026."
@@ -64,10 +64,9 @@ const BlogArticle = () => {
       <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -77,7 +76,7 @@ const BlogArticle = () => {
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">Resumen rápido</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
                 "El desalojo siempre requiere orden judicial — no puedes actuar por tu cuenta",
@@ -97,7 +96,7 @@ const BlogArticle = () => {
             Si tienes a alguien ocupando tu propiedad y quieres recuperarla, lo primero que debes entender es esto: en Chile no puedes desalojar a nadie por tu cuenta. No importa si eres el dueño, si no te están pagando o si nunca existió un acuerdo formal. El único camino legal es a través de un tribunal.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>2 de Mayo, 2026</span>
@@ -116,7 +115,7 @@ const BlogArticle = () => {
 
       <div className="mx-auto py-12">
         <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8">
-          <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+          <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
             <BlogShare title={title} url={url} showBorder={false} />
 
             <div className="prose prose-lg max-w-none mb-12">

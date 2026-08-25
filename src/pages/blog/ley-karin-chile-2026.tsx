@@ -45,7 +45,7 @@ const BlogArticle = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
             <BlogGrowthHacks
                 title="Ley Karin en Chile 2026: qué es, cómo funciona y cuáles son tus derechos"
                 description="Conoce qué es la Ley Karin en Chile, cómo funciona, qué conductas protege, cómo presentar una denuncia, cuáles son tus derechos y cuándo conviene consultar a un abogado laboral."
@@ -60,25 +60,24 @@ const BlogArticle = () => {
             <ReadingProgressBar />
 
             {/* HERO */}
-            <div className="bg-green-900 text-white py-16">
+            <div className="bg-[#f4efdf] text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Link to="/blog" className="hover:text-white transition-colors">
+                    <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
                             Blog
                         </Link>
                         <ChevronRight className="h-4 w-4" />
                         <span>Artículo</span>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-green-600 font-serif mb-6">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-900 font-serif mb-6">
                         Ley Karin en Chile 2026: qué es, cómo funciona y cuáles son tus derechos
                     </h1>
 
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-6">
-                        <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+                    <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
+                        <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
                             Resumen rápido
                         </p>
-                        <ul className="space-y-2">
+                        <ul className="space-y-2 text-green-900">
                             {[
                                 "La Ley Karin obliga a las empresas a prevenir, investigar y sancionar situaciones de acoso laboral, acoso sexual y violencia en el trabajo.",
                                 "Toda empresa debe contar con procedimientos internos para recibir denuncias.",
@@ -87,18 +86,18 @@ const BlogArticle = () => {
                                 <><span>Dependiendo del caso, pueden existir acciones adicionales como tutela laboral, autodespido o <Link to='/blog/como-calcular-tu-finiquito-chile-2026' className='text-green-500 underline hover:text-green-400'>indemnizaciones</Link>.</span></>,
                             ].map((item, i) => (
                                 <li key={i} className="flex items-center gap-3">
-                                    <span className="text-green-600 font-bold">✓</span>
+                                    <span className="text-green-500 font-bold">✓</span>
                                     <span className="text-sm sm:text-base">{item}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-3xl">
+                    <p className="text-xl max-w-3xl text-green-900">
                         La Ley Karin modificó la normativa laboral chilena para fortalecer la prevención, investigación y sanción del acoso laboral, el acoso sexual y la violencia en el trabajo. Desde su entrada en vigencia, las empresas tienen nuevas obligaciones y los trabajadores cuentan con mecanismos más claros para denunciar este tipo de conductas.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 mt-6">
+                    <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900">
                         <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4" />
                             <span>13 de Julio, 2026</span>
@@ -117,7 +116,7 @@ const BlogArticle = () => {
 
             {/* CONTENT */}
             <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-                <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+                <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
                     <BlogShare
                         title="Ley Karin en Chile 2026"
                         url="https://legalup.cl/blog/ley-karin-chile-2026"

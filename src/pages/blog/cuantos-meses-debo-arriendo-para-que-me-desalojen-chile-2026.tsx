@@ -59,7 +59,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="¿Cuántos meses sin pagar arriendo antes del desalojo en Chile? (2026) | LegalUp"
         description="Con 1 mes de deuda de arriendo el arrendador ya puede demandarte. Descubre cuánto tiempo tienes realmente, cómo funciona el proceso y qué puedes hacer para protegerte."
@@ -72,10 +72,9 @@ const BlogArticle = () => {
       <Header onAuthClick={() => { }} />
       <ReadingProgressBar />
 
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -112,7 +111,7 @@ const BlogArticle = () => {
             Hay un mito muy extendido: que necesitas 3 o 6 meses de deuda de arriendo para que te desalojen. La realidad es distinta y puede costarte cara si no la conoces. Con solo 1 mes de deuda el arrendador ya puede iniciar la demanda de desalojo. En esta guía te explicamos exactamente cuántos meses debes para que te desalojen, cómo funciona el juicio y qué puedes hacer para evitar llegar a ese punto.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>20 de Abril, 2026</span>
@@ -130,7 +129,7 @@ const BlogArticle = () => {
       </div>
 
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="¿Cuántos meses debes de arriendo para que te desalojen en Chile? Lo que nadie te dice (2026)"
             url="https://legalup.cl/blog/cuantos-meses-debo-arriendo-para-que-me-desalojen-chile-2026"

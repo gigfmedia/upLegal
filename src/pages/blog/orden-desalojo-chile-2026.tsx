@@ -47,7 +47,7 @@ const BlogArticle = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <BlogGrowthHacks
         title="Orden de desalojo en Chile 2026: plazos, proceso y cómo defenderte | LegalUp"
         description="¿Enfrentas una orden de desalojo? Descubre cuánto demora el lanzamiento con Carabineros en Chile, cómo funciona el juicio y qué hacer para defender tus derechos en 2026."
@@ -61,10 +61,9 @@ const BlogArticle = () => {
       <ReadingProgressBar />
 
       {/* Hero Section */}
-      <div className="bg-green-900 text-white py-16">
+      <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="flex items-center gap-2 mb-4 text-green-500"><Link to="/blog" className="hover:text-green-900 transition-colors">Blog</Link>
             <ChevronRight className="h-4 w-4" />
             <span>Artículo</span>
           </div>
@@ -74,11 +73,11 @@ const BlogArticle = () => {
           </h1>
 
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-400/80 mb-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 text-green-900">
               {[
                 "La orden de desalojo solo puede dictarla un tribunal",
                 "No pueden sacarte sin proceso judicial",
@@ -93,11 +92,11 @@ const BlogArticle = () => {
               ))}
             </ul>
           </div>
-          <p className="text-xl max-w-3xl leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Cuando existe un conflicto de arriendo, muchas personas escuchan el término "orden de desalojo", pero no siempre tienen claro qué significa ni en qué momento ocurre.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-sm sm:text-base text-green-900">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>20 de Marzo, 2026</span>
@@ -116,7 +115,7 @@ const BlogArticle = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-0 sm:px-6 lg:px-8 pt-12">
-        <div className="bg-white sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
+        <div className="bg-white border sm:rounded-lg sm:shadow-sm p-4 sm:p-8">
           <BlogShare
             title="Orden de desalojo en Chile: qué es, cuándo ocurre y cómo funciona (Guía 2026)"
             url="https://legalup.cl/blog/orden-desalojo-chile-2026"
@@ -132,7 +131,7 @@ const BlogArticle = () => {
             <p className="text-lg text-gray-600 leading-relaxed mb-6 font-semibold">¿Qué es una orden de desalojo en Chile y cuándo puede aplicarse?</p>
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
               <p className="font-semibold text-blue-900 mb-3">En esta guía te explicamos:</p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 text-green-900">
                 {[
                   "Qué es una orden de desalojo",
                   "En qué momento del proceso se dicta",
