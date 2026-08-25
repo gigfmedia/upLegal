@@ -8072,17 +8072,22 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         return { document_id: source.document_id, file_name: source.file_name };
       });
 
-    // Fase 4.11: fallback determinista — si el LLM no devolvió fragment_id pero existe un claim verificado para la respuesta, reutilizarlo.
-    // No se crea nuevo claim, no se inventa fragment, solo se enriquece la fuente existente con evidencia verificada.
+    // Fase 4.13: fallback determinista para respuestas parafraseadas — si el LLM no devolvió fragment_id pero la respuesta parafrasea un claim verificado, reutilizarlo.
+    // Usa resolveChatEvidenceFromVerifiedClaims (conservador, valida números/fechas/roles) en lugar de verificar answer como claim literal.
     const needsFallback = sources.some((s) => !s.fragment_id || !s.evidence) && validated.answer;
     if (needsFallback) {
       try {
         const { verifyDocumentClaims } = await import('./server/ai/documentGrounding.mjs');
+        const { resolveChatEvidenceFromVerifiedClaims } = await import('./server/ai/chatEvidenceResolver.mjs');
         const answerText = String(validated.answer || '').trim();
         if (answerText) {
-          // Intenta verificar la respuesta completa como un claim contra cada documento del contexto
+          // Construye claims verificados de todos los documentos ready del caso (para matching)
+          const allVerifiedClaims = [];
           for (const doc of readyDocs) {
             const docsById = new Map([[doc.id, doc]]);
+            // Para cada documento, verifica sus análisis si existen, o usa el texto directo
+            // Simplificado: crea un claim por cada documento con su texto relevante ya verificado
+            // En la práctica, los claims verificados ya están en ai_document_analyses.claims, pero para chat usamos el texto del documento
             const { kept } = verifyDocumentClaims(
               [{ document_id: doc.id, afirmacion: answerText, fragmento: answerText }],
               docsById,
@@ -8090,28 +8095,91 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
               userId,
             );
             if (kept.length > 0) {
-              const k = kept[0];
-              // Enriquece la primera fuente sin fragment que corresponda a este documento
-              const targetIdx = sources.findIndex((s) => s.document_id === doc.id && (!s.fragment_id || !s.evidence));
-              if (targetIdx >= 0) {
-                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
-                sources[targetIdx] = {
-                  ...sources[targetIdx],
-                  fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
-                  page_number: Number.isFinite(idx) ? idx + 1 : null,
-                  evidence: k.fragmento || sources[targetIdx].evidence,
-                };
-              } else if (!sources.some((s) => s.document_id === doc.id)) {
-                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
-                sources.push({
-                  document_id: doc.id,
-                  file_name: doc.original_filename,
-                  fragment_id: k.fragment_id,
-                  page_number: Number.isFinite(idx) ? idx + 1 : null,
-                  evidence: k.fragmento,
-                });
+              allVerifiedClaims.push(...kept);
+            } else {
+              // Fallback: busca claims verificados existentes en ai_document_analyses para este documento
+              // (si el answer es parafraseado, verifyDocumentClaims con answer literal puede fallar, pero resolveChatEvidenceFromVerifiedClaims con claims verificados sí puede encontrar match)
+              const { data: analyses } = await supabase
+                .from('ai_document_analyses')
+                .select('claims')
+                .eq('document_id', doc.id)
+                .eq('workspace_id', workspace.id)
+                .eq('lawyer_id', userId)
+                .maybeSingle();
+              const existingClaims = Array.isArray(analyses?.claims) ? analyses.claims : [];
+              for (const ec of existingClaims) {
+                if (ec && ec.source_id === doc.id && ec.fragment_id && ec.evidence) {
+                  allVerifiedClaims.push({
+                    afirmacion: ec.text || ec.afirmacion || '',
+                    fragmento: ec.evidence || ec.fragmento || '',
+                    source_id: ec.source_id,
+                    fragment_id: ec.fragment_id,
+                    evidence: ec.evidence,
+                    page_number: ec.page_number || null,
+                    source: { id: doc.id, kind: 'document' },
+                  });
+                }
               }
-              break;
+            }
+          }
+          const matched = resolveChatEvidenceFromVerifiedClaims({ answer: answerText, verifiedClaims: allVerifiedClaims });
+          if (matched) {
+            const k = matched;
+            const targetIdx = sources.findIndex((s) => s.document_id === k.source_id && (!s.fragment_id || !s.evidence));
+            if (targetIdx >= 0) {
+              const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+              sources[targetIdx] = {
+                ...sources[targetIdx],
+                fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
+                page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                evidence: k.fragmento || k.evidence || sources[targetIdx].evidence,
+              };
+            } else if (!sources.some((s) => s.document_id === k.source_id)) {
+              const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+              const docForName = readyDocs.find((d) => d.id === k.source_id);
+              sources.push({
+                document_id: k.source_id,
+                file_name: docForName?.original_filename || k.source_id,
+                fragment_id: k.fragment_id,
+                page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                evidence: k.fragmento || k.evidence,
+              });
+            }
+          } else {
+            // Fallback anterior: verifica answer literal contra cada documento
+            for (const doc of readyDocs) {
+              const docsById = new Map([[doc.id, doc]]);
+              const { kept } = verifyDocumentClaims(
+                [{ document_id: doc.id, afirmacion: answerText, fragmento: answerText }],
+                docsById,
+                workspace.id,
+                userId,
+              );
+              if (kept.length > 0) {
+                const k = kept[0];
+                const targetIdx = sources.findIndex((s) => s.document_id === doc.id && (!s.fragment_id || !s.evidence));
+                if (targetIdx >= 0) {
+                  const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                  sources[targetIdx] = {
+                    ...sources[targetIdx],
+                    fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
+                    page_number: Number.isFinite(idx) ? idx + 1 : null,
+                    evidence: k.fragmento || sources[targetIdx].evidence,
+                  };
+                } else if (!sources.some((s) => s.document_id === doc.id)) {
+                  const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                  sources.push({
+                    document_id: doc.id,
+                    file_name: doc.original_filename,
+                    fragment_id: k.fragment_id,
+                    page_number: Number.isFinite(idx) ? idx + 1 : null,
+                    evidence: k.fragmento,
+                  });
+                }
+                break;
+              }
+            }
+          }
             }
           }
         }
