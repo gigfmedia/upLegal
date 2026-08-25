@@ -8122,28 +8122,30 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
               }
             }
           }
-          const matched = resolveChatEvidenceFromVerifiedClaims({ answer: answerText, verifiedClaims: allVerifiedClaims });
-          if (matched) {
-            const k = matched;
-            const targetIdx = sources.findIndex((s) => s.document_id === k.source_id && (!s.fragment_id || !s.evidence));
-            if (targetIdx >= 0) {
-              const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
-              sources[targetIdx] = {
-                ...sources[targetIdx],
-                fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
-                page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
-                evidence: k.fragmento || k.evidence || sources[targetIdx].evidence,
-              };
-            } else if (!sources.some((s) => s.document_id === k.source_id)) {
-              const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
-              const docForName = readyDocs.find((d) => d.id === k.source_id);
-              sources.push({
-                document_id: k.source_id,
-                file_name: docForName?.original_filename || k.source_id,
-                fragment_id: k.fragment_id,
-                page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
-                evidence: k.fragmento || k.evidence,
-              });
+          const { resolveMultiClaimEvidence } = await import('./server/ai/chatEvidenceResolver.mjs');
+          const matchedList = resolveMultiClaimEvidence({ answer: answerText, verifiedClaims: allVerifiedClaims });
+          if (matchedList.length > 0) {
+            for (const k of matchedList) {
+              const targetIdx = sources.findIndex((s) => s.document_id === k.source_id && (!s.fragment_id || !s.evidence));
+              if (targetIdx >= 0) {
+                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                sources[targetIdx] = {
+                  ...sources[targetIdx],
+                  fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
+                  page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                  evidence: k.fragmento || k.evidence || sources[targetIdx].evidence,
+                };
+              } else if (!sources.some((s) => s.document_id === k.source_id && s.fragment_id === k.fragment_id)) {
+                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                const docForName = readyDocs.find((d) => d.id === k.source_id);
+                sources.push({
+                  document_id: k.source_id,
+                  file_name: docForName?.original_filename || k.source_id,
+                  fragment_id: k.fragment_id,
+                  page_number: Number.isFinite(idx) ? idx + 1 : (k.page_number || null),
+                  evidence: k.fragmento || k.evidence,
+                });
+              }
             }
           } else {
             // Fallback anterior: verifica answer literal contra cada documento

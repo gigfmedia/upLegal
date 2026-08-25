@@ -113,3 +113,31 @@ export function resolveChatEvidenceFromVerifiedClaims({ answer, verifiedClaims }
   if (!best || bestCount !== 1) return null; // ambiguo o sin match seguro
   return best;
 }
+
+function splitSentences(text) {
+  return String(text || '').split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+}
+
+/**
+ * Fase 4.15: Resolución multi-claim — cada oración de la respuesta se evalúa
+ * contra los claims verificados con las mismas reglas conservadoras de 4.13.
+ * Preserva orden de aparición, deduplica por claim, y rechaza ambigüedad por oración.
+ * @param {{answer: string, verifiedClaims: Array}} input
+ * @returns {Array} claims verificados que respaldan cada oración (orden de respuesta, sin duplicados)
+ */
+export function resolveMultiClaimEvidence({ answer, verifiedClaims }) {
+  const ans = String(answer || '').trim();
+  if (!ans || !Array.isArray(verifiedClaims) || verifiedClaims.length === 0) return [];
+  const sentences = splitSentences(ans);
+  if (sentences.length === 0) return [];
+  const matched = [];
+  const seen = new Set();
+  for (const sentence of sentences) {
+    const m = resolveChatEvidenceFromVerifiedClaims({ answer: sentence, verifiedClaims });
+    if (m && !seen.has(m.source_id + '::' + m.fragment_id)) {
+      seen.add(m.source_id + '::' + m.fragment_id);
+      matched.push(m);
+    }
+  }
+  return matched;
+}
