@@ -8051,7 +8051,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     // Solo se aceptan fuentes que correspondan a documentos reales del contexto.
     // Fase 4.9: si la fuente trae fragment_id/evidence, se valida contra el documento y se conserva page_number.
     const docMapForChat = new Map(readyDocs.map((doc) => [doc.id, doc]));
-    const sources = (validated.sources || [])
+    let sources = (validated.sources || [])
       .filter((source) => {
         const doc = docMapForChat.get(source.document_id);
         return doc && doc.original_filename === source.file_name;
@@ -8071,6 +8071,52 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
         } catch {}
         return { document_id: source.document_id, file_name: source.file_name };
       });
+
+    // Fase 4.11: fallback determinista — si el LLM no devolvió fragment_id pero existe un claim verificado para la respuesta, reutilizarlo.
+    // No se crea nuevo claim, no se inventa fragment, solo se enriquece la fuente existente con evidencia verificada.
+    const needsFallback = sources.some((s) => !s.fragment_id || !s.evidence) && validated.answer;
+    if (needsFallback) {
+      try {
+        const { verifyDocumentClaims } = await import('./server/ai/documentGrounding.mjs');
+        const answerText = String(validated.answer || '').trim();
+        if (answerText) {
+          // Intenta verificar la respuesta completa como un claim contra cada documento del contexto
+          for (const doc of readyDocs) {
+            const docsById = new Map([[doc.id, doc]]);
+            const { kept } = verifyDocumentClaims(
+              [{ document_id: doc.id, afirmacion: answerText, fragmento: answerText }],
+              docsById,
+              workspace.id,
+              userId,
+            );
+            if (kept.length > 0) {
+              const k = kept[0];
+              // Enriquece la primera fuente sin fragment que corresponda a este documento
+              const targetIdx = sources.findIndex((s) => s.document_id === doc.id && (!s.fragment_id || !s.evidence));
+              if (targetIdx >= 0) {
+                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                sources[targetIdx] = {
+                  ...sources[targetIdx],
+                  fragment_id: k.fragment_id || sources[targetIdx].fragment_id,
+                  page_number: Number.isFinite(idx) ? idx + 1 : null,
+                  evidence: k.fragmento || sources[targetIdx].evidence,
+                };
+              } else if (!sources.some((s) => s.document_id === doc.id)) {
+                const idx = k.fragment_id ? parseInt(String(k.fragment_id).split('::').pop() || '0', 10) : 0;
+                sources.push({
+                  document_id: doc.id,
+                  file_name: doc.original_filename,
+                  fragment_id: k.fragment_id,
+                  page_number: Number.isFinite(idx) ? idx + 1 : null,
+                  evidence: k.fragmento,
+                });
+              }
+              break;
+            }
+          }
+        }
+      } catch {}
+    }
 
     const { data: savedAssistant, error: assistantInsertError } = await supabase
       .from('ai_chat_messages')
