@@ -214,9 +214,12 @@ export function AIAnalysisView({
             <Gavel className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
             {section.document_type || 'Documento'}
           </Badge>
-          {analysis.model && (
-            <Badge variant="outline" className="text-gray-600">
-              Modelo: {analysis.model}
+          <Badge variant="outline" className="text-gray-600">
+            Modelo: {model}
+          </Badge>
+          {analysis.model && analysis.model !== model && (
+            <Badge variant="outline" className="text-gray-500">
+              Último análisis: {analysis.model}
             </Badge>
           )}
         </div>

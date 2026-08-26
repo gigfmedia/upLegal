@@ -26,7 +26,13 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
   }, [data, workspaceId]);
 
   if (isLoading) {
-    return <div className="space-y-3"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>;
+    return (
+      <Card className="border-dashed">
+        <CardContent className="py-8 text-center">
+          <p className="text-sm text-muted-foreground">Cargando inteligencia del caso…</p>
+        </CardContent>
+      </Card>
+    );
   }
   if (isError) {
     return (
@@ -147,22 +153,93 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
         )}
 
         {data.parties.length > 0 && (
-          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Users className="h-4 w-4" /> Partes</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm">{data.parties.map((p,i)=><li key={i}>{p}.</li>)}</ul></CardContent></Card>
+          <Card className="rounded-lg border border-gray-200 bg-gray-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Users className="h-4 w-4 text-gray-500" /> Partes</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="text-sm space-y-2">
+                {data.parties.map((p,i) =>
+                  <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />{p}.
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
         )}
         {data.obligations.length > 0 && (
-          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Scale className="h-4 w-4" /> Obligaciones</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm">{data.obligations.map((o,i)=><li key={i}>{o}.</li>)}</ul></CardContent></Card>
+          <Card className="rounded-lg border border-gray-200 bg-gray-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Scale className="h-4 w-4 text-gray-500" /> Obligaciones</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                {data.obligations.map((o,i) =>
+                  <li key={i} className="flex gap-2 text-sm text-gray-700">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
+                    <span className="flex-1">{o}.</span>
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
         )}
         {data.deadlines.length > 0 && (
-          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><CalendarClock className="h-4 w-4" /> Fechas y plazos</CardTitle></CardHeader><CardContent><ul className="space-y-1">{data.deadlines.map((d,i)=><li key={i} className="text-sm">{d.date && <Badge variant="secondary" className="mr-2 bg-blue-100 text-blue-800">{d.date}</Badge>}{d.description}.</li>)}</ul></CardContent></Card>
+          <Card className="rounded-lg border border-blue-200 bg-blue-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><CalendarClock className="h-4 w-4 text-blue-600" /> Fechas y plazos</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {data.deadlines.map((d,i) =>
+                <li key={i} className="text-sm flex flex-wrap items-center gap-2 text-sm text-gray-700">{d.date && <Badge variant="secondary" className="mr-2 bg-blue-100 text-blue-800">{d.date}</Badge>}{d.description}.
+                </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
         )}
         {data.risks.length > 0 && (
-          <Card className="border-amber-200 bg-amber-50/60"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600" /> Riesgos</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm">{data.risks.map((r,i)=><li key={i}>{r}.</li>)}</ul></CardContent></Card>
+          <Card className="border-amber-200 bg-amber-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ShieldAlert className="h-4 w-4 text-amber-600" /> Riesgos</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="text-sm space-y-2">
+                {data.risks.map((r,i) =>
+                  <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />{r}.
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
         )}
         {data.contradictions.length > 0 && (
-          <Card className="border-red-200 bg-red-50/60"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="h-4 w-4 text-red-600" /> Contradicciones detectadas</CardTitle></CardHeader><CardContent className="space-y-3">{data.contradictions.map((c,i)=><div key={i} className="rounded border bg-white p-2"><p className="text-xs font-medium text-gray-700">Tema: {c.topic}</p>{c.versions.map((v,j)=><div key={j} className="mt-1 text-xs"><p>{v.text}</p><p className="text-[0.65rem] text-gray-500">{v.document_filename} — {v.source_id}</p><Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-[0.65rem]" onClick={() => { setEvidenceRef({ sourceId: v.source_id, documentId: v.source_id, evidence: v.evidence, pageNumber: null, sourceType: 'document', documentFilename: v.document_filename }); setEvidenceOpen(true); }}>Ver evidencia</Button></div>)}</div>)}</CardContent></Card>
+          <Card className="border-red-200 bg-red-50/60">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="h-4 w-4 text-red-600" /> Contradicciones detectadas</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {data.contradictions.map((c,i) =>
+                <div key={i} className="rounded border bg-white p-2">
+                  <p className="text-xs font-medium text-gray-700">Tema: {c.topic}</p>
+                  {c.versions.map((v,j) =>
+                  <div key={j} className="mt-1 text-xs">
+                    <p>{v.text}</p>
+                    <p className="text-[0.65rem] text-gray-500">{v.document_filename} — {v.source_id}</p>
+                    <Button variant="ghost" size="sm" className="mt-1 h-6 px-2 text-[0.65rem]" onClick={() => { setEvidenceRef({ sourceId: v.source_id, documentId: v.source_id, evidence: v.evidence, pageNumber: null, sourceType: 'document', documentFilename: v.document_filename }); setEvidenceOpen(true); }}>Ver evidencia</Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
         {data.missingInformation.length > 0 && (
-          <Card className="border-dashed"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4" /> Información faltante</CardTitle></CardHeader><CardContent><ul className="list-disc pl-4 text-sm text-gray-600">{data.missingInformation.map((m,i)=><li key={i}>{m}</li>)}</ul></CardContent></Card>
+          <Card className="border-dashed">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><FileText className="h-4 w-4" /> Información faltante</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="text-sm space-y-2 text-gray-600">
+                {data.missingInformation.map((m,i) =>
+                  <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />{m}
+                  </li>
+                )}
+              </ul>
+            </CardContent>
+          </Card>
         )}
 
         <EvidenceNavigator open={evidenceOpen} onOpenChange={setEvidenceOpen} reference={evidenceRef} surface="case_intelligence" />
