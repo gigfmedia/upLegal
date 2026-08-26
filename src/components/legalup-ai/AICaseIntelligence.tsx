@@ -7,6 +7,7 @@ import posthog from 'posthog-js';
 import { useEffect, useState } from 'react';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
+import { deriveCaseActions } from '@/lib/caseActions';
 
 function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
   if (data.contradictions.length > 0) return { label: 'Con contradicciones', color: 'bg-red-100 text-red-800' };
@@ -57,12 +58,7 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
   }
 
   const status = getCaseStatus(data);
-  const nextActions: Array<{ label: string; action: string }> = [];
-  if (data.contradictions.length > 0) nextActions.push({ label: 'Revisar documentos con información contradictoria', action: 'review_contradictions' });
-  else if (data.missingInformation.length > 0) nextActions.push({ label: 'Completar información pendiente del caso', action: 'review_missing_information' });
-  else if (data.risks.length > 0) nextActions.push({ label: 'Revisar los riesgos identificados', action: 'review_risks' });
-  else if (data.pending_count > 0) nextActions.push({ label: `Analizar ${data.pending_count} documento(s) pendiente(s)`, action: 'review_documents' });
-  else nextActions.push({ label: 'Revisar el análisis completo del caso', action: 'review_obligations' });
+  const nextActions = deriveCaseActions(data);
 
   const quickQuestions = [
     '¿Cuál es el hecho principal del caso?',
@@ -103,22 +99,26 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
 
         <Card className="border-green-200 bg-green-50/60">
           <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ArrowRight className="h-4 w-4" /> Siguiente paso</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="flex flex-wrap gap-2">
             {nextActions.map((a) => (
               <Button
-                key={a.action}
+                key={a.id}
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  posthog.capture('ai_case_intelligence_action_clicked', { action: a.action });
-                  if (a.action === 'review_missing_information') {
+                  posthog.capture('ai_case_intelligence_action_clicked', { action: a.type });
+                  if (a.type === 'review_missing_information' && a.question) {
+                    onQuestionClick?.(a.question);
+                  } else if (a.type === 'review_missing_information') {
                     onQuestionClick?.('¿Qué información falta para completar el análisis de este caso?');
+                  } else if (a.question) {
+                    onQuestionClick?.(a.question);
                   } else {
-                    document.getElementById(`intelligence-${a.action}`)?.scrollIntoView({ behavior: 'smooth' });
+                    document.getElementById(`intelligence-${a.type}`)?.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
               >
-                {a.label}
+                {a.title}
               </Button>
             ))}
           </CardContent>
@@ -128,7 +128,7 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
           <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4" /> Preguntas sugeridas</CardTitle></CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {quickQuestions.map((q) => (
-              <Button key={q} variant="secondary" size="sm" className="text-xs" onClick={() => { posthog.capture('ai_case_intelligence_action_clicked', { action: 'open_chat', question: q.length }); onQuestionClick?.(q); }}>{q}</Button>
+              <Button key={q} variant="secondary" size="sm" onClick={() => { posthog.capture('ai_case_intelligence_action_clicked', { action: 'open_chat', question: q.length }); onQuestionClick?.(q); }}>{q}</Button>
             ))}
           </CardContent>
         </Card>
