@@ -28,6 +28,8 @@ type AIChatProps = {
   workspaceId: string;
   documents: AIDocumentListItem[];
   onUploadClick?: () => void;
+  externalQuestion?: string | null;
+  onExternalQuestionHandled?: () => void;
 };
 
 function errorToMessage(error: AIChatError | null): string {
@@ -47,7 +49,7 @@ function errorToMessage(error: AIChatError | null): string {
   }
 }
 
-export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
+export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion, onExternalQuestionHandled }: AIChatProps) {
   const readyCount = useMemo(
     () => documents.filter((doc) => doc.status === 'ready').length,
     [documents]
@@ -175,6 +177,20 @@ export function AIChat({ workspaceId, documents, onUploadClick }: AIChatProps) {
       setPendingUser(null);
     }
   }, [pendingUser, chatQuery.data]);
+
+  // Fase 4.18.1: pregunta externa desde Inteligencia del caso (Siguiente paso / Preguntas sugeridas)
+  useEffect(() => {
+    if (externalQuestion && !sending && conversationId) {
+      const q = externalQuestion.trim();
+      if (q) {
+        setInput('');
+        setPendingUser(q);
+        setFailedMessage(null);
+        runMutation(q);
+        onExternalQuestionHandled?.();
+      }
+    }
+  }, [externalQuestion, sending, conversationId, onExternalQuestionHandled]);
 
   const runMutation = (message: string) => {
     setSending(true);

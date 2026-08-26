@@ -78,6 +78,8 @@ export default function AICaseDetail() {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [model, setModel] = useState(DEFAULT_AI_MODEL);
   const [pricingOpen, setPricingOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('documents');
+  const [chatQuestion, setChatQuestion] = useState<string | null>(null);
 
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
   const selectedDoc =
@@ -242,7 +244,7 @@ export default function AICaseDetail() {
               </Card>
             ) : null}
 
-            <Tabs defaultValue={defaultTab} className="mb-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue={defaultTab} className="mb-6">
               <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
                 <TabsTrigger
                   value="documents"
@@ -314,6 +316,10 @@ export default function AICaseDetail() {
                         <FileText className="h-4 w-4 text-green-700" aria-hidden="true" />
                         Documentos del caso
                       </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Sube y gestiona los documentos de tu caso para analizarlos con IA
+                        y generar inteligencia jurídica estructurada.
+                      </p>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 gap-4 lg:grid-cols-1">
@@ -377,6 +383,8 @@ export default function AICaseDetail() {
                             .getElementById('ai-documents-section')
                             ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                         }
+                        externalQuestion={chatQuestion}
+                        onExternalQuestionHandled={() => setChatQuestion(null)}
                       />
                     )}
                   </section>
@@ -497,7 +505,17 @@ export default function AICaseDetail() {
               </TabsContent>
 
               <TabsContent value="intelligence" className="mt-4">
-                <AICaseIntelligence workspaceId={workspace.id} />
+                <AICaseIntelligence
+                  workspaceId={workspace.id}
+                  onQuestionClick={(q) => {
+                    setChatQuestion(q);
+                    setActiveTab('documents');
+                    // Scroll to chat section after tab switch
+                    setTimeout(() => {
+                      document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                />
               </TabsContent>
 
               <TabsContent value="timeline" className="mt-4">
