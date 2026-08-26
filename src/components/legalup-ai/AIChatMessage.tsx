@@ -83,7 +83,21 @@ function parseMarkdown(content: string): Block[] {
   return blocks;
 }
 
-function MarkdownText({ content }: { content: string }) {
+function splitSentencesForEvidence(text: string): string[] {
+  return String(text || '').split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean);
+}
+
+function findEvidenceForSentence(sentence: string, sources: Array<{ document_id: string; file_name: string; fragment_id?: string | null; evidence?: string | null }>) {
+  const normSentence = sentence.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  for (const src of sources) {
+    if (!src.fragment_id || !src.evidence) continue;
+    const normEvidence = String(src.evidence).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 40);
+    if (normEvidence && normSentence.includes(normEvidence.slice(0, 20))) return src;
+  }
+  return null;
+}
+
+function MarkdownText({ content, sources, onEvidenceClick }: { content: string; sources?: Array<{ document_id: string; file_name: string; fragment_id?: string | null; evidence?: string | null; page_number?: number | null }>; onEvidenceClick?: (src: { document_id: string; file_name: string; fragment_id?: string | null; evidence?: string | null; page_number?: number | null }) => void }) {
   const blocks = parseMarkdown(content);
 
   return (
@@ -102,17 +116,31 @@ function MarkdownText({ content }: { content: string }) {
           const ListTag = block.type === 'ul' ? 'ul' : 'ol';
           return (
             <ListTag key={index} className="ml-4 list-disc space-y-1">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex} className="leading-relaxed">
-                  {renderInline(item)}
-                </li>
-              ))}
+              {block.items.map((item, itemIndex) => {
+                const evidence = sources ? findEvidenceForSentence(item, sources) : null;
+                return (
+                  <li key={itemIndex} className="leading-relaxed">
+                    {renderInline(item)}
+                    {evidence && onEvidenceClick && (
+                      <button type="button" onClick={() => onEvidenceClick(evidence)} className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-green-700 hover:underline">
+                        <FileText className="h-3 w-3" /> Ver evidencia
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ListTag>
           );
         }
+        const evidence = sources ? findEvidenceForSentence(block.text, sources) : null;
         return (
           <p key={index} className="leading-relaxed">
             {renderInline(block.text)}
+            {evidence && onEvidenceClick && (
+              <button type="button" onClick={() => onEvidenceClick(evidence)} className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-green-700 hover:underline">
+                <FileText className="h-3 w-3" /> Ver evidencia
+              </button>
+            )}
           </p>
         );
       })}
@@ -168,7 +196,22 @@ export function AIChatMessage({ message, animate = true }: AIChatMessageProps) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm">
-            <MarkdownText content={typed.text} />
+            <MarkdownText
+              content={typed.text}
+              sources={sources as Array<{ document_id: string; file_name: string; fragment_id?: string | null; evidence?: string | null; page_number?: number | null }>}
+              onEvidenceClick={(src) => {
+                setEvidenceRef({
+                  documentId: src.document_id,
+                  sourceId: src.document_id,
+                  fragmentId: src.fragment_id ?? null,
+                  pageNumber: src.page_number ?? null,
+                  evidence: src.evidence || '',
+                  sourceType: 'document',
+                  documentFilename: src.file_name,
+                });
+                setEvidenceOpen(true);
+              }}
+            />
             {!typed.done && !reducedMotion && (
               <motion.span
                 className="ml-0.5 inline-block h-[1em] w-[2px] translate-y-[2px] bg-green-700"
