@@ -2,9 +2,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare, Brain } from 'lucide-react';
+import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare, Brain, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 import { deriveCaseActions } from '@/lib/caseActions';
@@ -17,14 +17,65 @@ function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; miss
   return { label: 'En revisión', color: 'bg-gray-100 text-gray-600' };
 }
 
-export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspaceId: string; onQuestionClick?: (q: string) => void }) {
+type CaseActionExecution = {
+  actionId: string;
+  status: 'idle' | 'running' | 'completed' | 'error';
+};
+
+export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
   const [evidenceRef, setEvidenceRef] = useState<EvidenceReference | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [executions, setExecutions] = useState<Record<string, CaseActionExecution>>({});
+  const [activeQuickQuestion, setActiveQuickQuestion] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) posthog.capture('ai_case_intelligence_viewed', { case_id: workspaceId, documents_ready: data.document_count });
   }, [data, workspaceId]);
+
+  const handleActionClick = useCallback((a: { id: string; type: string; title: string; question?: string }) => {
+    const cur = executions[a.id];
+    if (cur?.status === 'running') return;
+    setExecutions((prev) => ({ ...prev, [a.id]: { actionId: a.id, status: 'running' } }));
+    try {
+      posthog.capture('ai_case_intelligence_action_clicked', { action: a.type });
+      if (a.type === 'review_missing_information' && a.question) {
+        onQuestionClick?.(a.question);
+      } else if (a.type === 'review_missing_information') {
+        onQuestionClick?.('¿Qué información falta para completar el análisis de este caso?');
+      } else if (a.question) {
+        onQuestionClick?.(a.question);
+      } else {
+        document.getElementById(`intelligence-${a.type}`)?.scrollIntoView({ behavior: 'smooth' });
+        onNavigateToDocuments?.();
+      }
+      setExecutions((prev) => ({ ...prev, [a.id]: { actionId: a.id, status: 'completed' } }));
+      window.setTimeout(() => {
+        setExecutions((prev) => {
+          const next = { ...prev };
+          delete next[a.id];
+          return next;
+        });
+      }, 2200);
+    } catch {
+      setExecutions((prev) => ({ ...prev, [a.id]: { actionId: a.id, status: 'error' } }));
+      window.setTimeout(() => {
+        setExecutions((prev) => {
+          const next = { ...prev };
+          delete next[a.id];
+          return next;
+        });
+      }, 2200);
+    }
+  }, [executions, onNavigateToDocuments, onQuestionClick]);
+
+  const handleQuickQuestion = useCallback((q: string) => {
+    if (activeQuickQuestion) return;
+    setActiveQuickQuestion(q);
+    posthog.capture('ai_case_intelligence_action_clicked', { action: 'open_chat', question: q.length });
+    onQuestionClick?.(q);
+    window.setTimeout(() => setActiveQuickQuestion(null), 1200);
+  }, [activeQuickQuestion, onQuestionClick]);
 
   if (isLoading) {
     return (
@@ -100,36 +151,43 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick }: { workspace
         <Card className="border-green-200 bg-green-50/60">
           <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><ArrowRight className="h-4 w-4" /> Siguiente paso</CardTitle></CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {nextActions.map((a) => (
-              <Button
-                key={a.id}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  posthog.capture('ai_case_intelligence_action_clicked', { action: a.type });
-                  if (a.type === 'review_missing_information' && a.question) {
-                    onQuestionClick?.(a.question);
-                  } else if (a.type === 'review_missing_information') {
-                    onQuestionClick?.('¿Qué información falta para completar el análisis de este caso?');
-                  } else if (a.question) {
-                    onQuestionClick?.(a.question);
-                  } else {
-                    document.getElementById(`intelligence-${a.type}`)?.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-              >
-                {a.title}
-              </Button>
-            ))}
+            {nextActions.map((a) => {
+              const exec = executions[a.id];
+              const isRunning = exec?.status === 'running';
+              const isCompleted = exec?.status === 'completed';
+              const isError = exec?.status === 'error';
+              return (
+                <Button
+                  key={a.id}
+                  variant={isCompleted ? 'default' : 'outline'}
+                  size="sm"
+                  disabled={isRunning}
+                  aria-busy={isRunning}
+                  onClick={() => handleActionClick(a)}
+                  className={isCompleted ? 'bg-green-600 hover:bg-green-700 text-white' : isError ? 'border-red-300 text-red-700' : ''}
+                >
+                  {isRunning && <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden="true" />}
+                  {isCompleted && <CheckCircle2 className="mr-1 h-3 w-3" aria-hidden="true" />}
+                  {isError && <AlertCircle className="mr-1 h-3 w-3" aria-hidden="true" />}
+                  {a.title}
+                </Button>
+              );
+            })}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4" /> Preguntas sugeridas</CardTitle></CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {quickQuestions.map((q) => (
-              <Button key={q} variant="secondary" size="sm" onClick={() => { posthog.capture('ai_case_intelligence_action_clicked', { action: 'open_chat', question: q.length }); onQuestionClick?.(q); }}>{q}</Button>
-            ))}
+            {quickQuestions.map((q) => {
+              const isActive = activeQuickQuestion === q;
+              return (
+                <Button key={q} variant="secondary" size="sm" disabled={!!activeQuickQuestion} aria-busy={isActive} onClick={() => handleQuickQuestion(q)}>
+                  {isActive && <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden="true" />}
+                  {q}
+                </Button>
+              );
+            })}
           </CardContent>
         </Card>
 
