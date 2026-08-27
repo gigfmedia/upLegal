@@ -29,7 +29,29 @@ const getApiBaseUrl = (): string => {
 
 const getAccessToken = async (): Promise<string | null> => {
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token ?? null;
+  if (session?.access_token) return session.access_token;
+  try {
+    const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+    return refreshed?.access_token ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const fetchWorkflow = async (url: string, token: string, init?: RequestInit) => {
+  let res = await fetch(url, { ...init, headers: { ...(init?.headers || {}), Authorization: `Bearer ${token}` } });
+  if (res.status === 401) {
+    try {
+      const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+      const newToken = refreshed?.access_token;
+      if (newToken && newToken !== token) {
+        res = await fetch(url, { ...init, headers: { ...(init?.headers || {}), Authorization: `Bearer ${newToken}` } });
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return res;
 };
 
 export function useAICaseWorkflow(workspaceId: string | undefined) {
@@ -39,18 +61,22 @@ export function useAICaseWorkflow(workspaceId: string | undefined) {
     enabled: !!workspaceId && !!user?.id,
     queryFn: async () => {
       const token = await getAccessToken();
-      if (!token) throw new Error('Sesión no válida.');
-      const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!token) throw new Error('Sesión expirada. Por favor recarga la página e inicia sesión nuevamente.');
+      const res = await fetchWorkflow(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow`, token);
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = new Error(body?.error || 'No se pudo cargar el workflow.') as Error & { status?: number; code?: string };
+        const msg = res.status === 401 ? 'No autorizado. Tu sesión expiró, recarga la página.' : body?.error || 'No se pudo cargar el workflow.';
+        const err = new Error(msg) as Error & { status?: number; code?: string };
         err.status = res.status;
         err.code = body?.code;
         throw err;
       }
       return body as { items: AICaseWorkflowItem[] };
+    },
+    retry: (count, err) => {
+      const e = err as Error & { status?: number };
+      if (e.status === 401 || e.status === 403) return false;
+      return count < 1;
     },
   });
 }
@@ -62,14 +88,15 @@ export function useSyncAICaseWorkflow(workspaceId: string | undefined) {
     mutationFn: async () => {
       if (!workspaceId) throw new Error('Falta el caso.');
       const token = await getAccessToken();
-      if (!token) throw new Error('Sesión no válida.');
-      const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow/sync`, {
+      if (!token) throw new Error('Sesión expirada. Por favor recarga la página.');
+      const res = await fetchWorkflow(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow/sync`, token, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = new Error(body?.error || 'No se pudo sincronizar el workflow.') as Error & { status?: number };
+        const msg = res.status === 401 ? 'No autorizado. Sesión expirada.' : body?.error || 'No se pudo sincronizar el workflow.';
+        const err = new Error(msg) as Error & { status?: number };
         err.status = res.status;
         throw err;
       }
@@ -89,15 +116,16 @@ export function useUpdateAICaseWorkflow(workspaceId: string | undefined) {
     mutationFn: async ({ itemId, status }) => {
       if (!workspaceId) throw new Error('Falta el caso.');
       const token = await getAccessToken();
-      if (!token) throw new Error('Sesión no válida.');
-      const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow/${itemId}`, {
+      if (!token) throw new Error('Sesión expirada. Por favor recarga la página.');
+      const res = await fetchWorkflow(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/workflow/${itemId}`, token, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = new Error(body?.error || 'No se pudo actualizar.') as Error & { status?: number };
+        const msg = res.status === 401 ? 'No autorizado. Sesión expirada.' : body?.error || 'No se pudo actualizar.';
+        const err = new Error(msg) as Error & { status?: number };
         err.status = res.status;
         throw err;
       }

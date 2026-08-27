@@ -45,7 +45,7 @@ import { AIChat } from '@/components/legalup-ai/AIChat';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
-import { AIChatSidePanel } from '@/components/legalup-ai/AIChatSidePanel';
+import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 
 function formatDate(value: string): string {
   try {
@@ -535,7 +535,7 @@ export default function AICaseDetail() {
         )}
       </div>
 
-      <AIChatSidePanel
+      <AICaseChatDrawer
         open={chatPanelOpen}
         onOpenChange={setChatPanelOpen}
         workspaceId={workspace?.id ?? caseId ?? ''}
