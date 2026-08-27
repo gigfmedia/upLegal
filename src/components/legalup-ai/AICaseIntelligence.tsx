@@ -13,11 +13,11 @@ import { AICaseWorkflowActionDrawer } from './AICaseWorkflowActionDrawer';
 import { deriveCaseActions } from '@/lib/caseActions';
 
 function getCaseStatus(data: { contradictions: unknown[]; risks: unknown[]; missingInformation: unknown[]; document_count: number }) {
-  if (data.contradictions.length > 0) return { label: 'Hay contradicciones detectadas', color: 'bg-red-100 text-red-800', description: 'Revisa las contradicciones entre documentos.' };
-  if (data.risks.length > 0) return { label: 'Hay riesgos que requieren revisión', color: 'bg-amber-100 text-amber-800', description: 'Existen riesgos que deberían revisarse.' };
-  if (data.missingInformation.length > 0) return { label: 'Hay información pendiente de revisar', color: 'bg-blue-100 text-blue-800', description: 'Falta información relevante para completar el análisis.' };
-  if (data.document_count > 0) return { label: 'Información suficiente para continuar', color: 'bg-green-100 text-green-800', description: 'No hay pendientes críticos.' };
-  return { label: 'En revisión', color: 'bg-gray-100 text-gray-600', description: 'Aún no hay documentos suficientes.' };
+  if (data.contradictions.length > 0) return { label: 'Con contradicciones', color: 'bg-red-100 text-red-800' };
+  if (data.risks.length > 0) return { label: 'Con riesgos', color: 'bg-amber-100 text-amber-800' };
+  if (data.missingInformation.length > 0) return { label: 'Información incompleta', color: 'bg-blue-100 text-blue-800' };
+  if (data.document_count > 0) return { label: 'Listo para análisis', color: 'bg-green-100 text-green-800' };
+  return { label: 'En revisión', color: 'bg-gray-100 text-gray-600' };
 }
 
 type CaseActionExecution = {
@@ -181,12 +181,8 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-2 rounded border bg-gray-50 px-3 py-2">
-          <span className={`h-2 w-2 rounded-full ${status.color.includes('red') ? 'bg-red-500' : status.color.includes('amber') ? 'bg-amber-500' : status.color.includes('blue') ? 'bg-blue-500' : status.color.includes('green') ? 'bg-green-500' : 'bg-gray-400'}`} />
-          <span className="text-sm font-medium">{status.label}</span>
-          <span className="text-xs text-muted-foreground">— {status.description}</span>
-        </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Badge className={status.color}>{status.label}</Badge>
           <span className="text-xs text-muted-foreground">{data.document_count} documento(s) listo(s){data.pending_count > 0 ? ` · ${data.pending_count} pendiente(s)` : ''}</span>
           {onOpenChat && (
             <Button

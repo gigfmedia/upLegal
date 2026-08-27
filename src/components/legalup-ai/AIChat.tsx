@@ -30,8 +30,6 @@ type AIChatProps = {
   onUploadClick?: () => void;
   externalQuestion?: string | null;
   onExternalQuestionHandled?: () => void;
-  hideBorder?: boolean;
-  fullHeight?: boolean;
 };
 
 function errorToMessage(error: AIChatError | null): string {
@@ -51,7 +49,7 @@ function errorToMessage(error: AIChatError | null): string {
   }
 }
 
-export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion, onExternalQuestionHandled, hideBorder, fullHeight }: AIChatProps) {
+export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion, onExternalQuestionHandled }: AIChatProps) {
   const readyCount = useMemo(
     () => documents.filter((doc) => doc.status === 'ready').length,
     [documents]
@@ -250,19 +248,17 @@ export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion
   };
 
   return (
-    <Card className={`${hideBorder ? 'border-0 shadow-none' : ''} ${fullHeight ? 'flex h-full flex-col' : ''}`}>
-      {!hideBorder && (
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <MessageSquare className="h-4 w-4 text-green-700" aria-hidden="true" />
-            Chat del caso
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Pregúntame sobre los documentos y antecedentes de este caso.
-          </p>
-        </CardHeader>
-      )}
-      <CardContent className={fullHeight ? 'flex flex-1 flex-col min-h-0' : ''}>
+    <Card className="">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <MessageSquare className="h-4 w-4 text-green-700" aria-hidden="true" />
+          Chat del caso
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Pregúntame sobre los documentos y antecedentes de este caso.
+        </p>
+      </CardHeader>
+      <CardContent>
         {!chatEnabled ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-500">
@@ -325,11 +321,11 @@ export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion
             </Button>
           </div>
         ) : (
-          <div className={`flex flex-col ${fullHeight ? 'flex-1 min-h-0' : ''}`}>
+          <div className="flex flex-col">
             <div
               ref={scrollRef}
               onScroll={onScroll}
-              className={`${fullHeight ? 'flex-1' : '-ml-4 max-h-[420px]'} space-y-4 overflow-y-auto pb-6 ${fullHeight ? 'px-1' : 'pl-4 pr-1'}`}
+              className="-ml-4 max-h-[420px] space-y-4 overflow-y-auto pb-6 pl-4 pr-1"
             >
               {shownMessages.length === 0 && !sending ? (
                 <AIChatSuggestions onSelect={handleSuggestion} />
