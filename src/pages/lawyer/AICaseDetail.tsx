@@ -45,6 +45,7 @@ import { AIChat } from '@/components/legalup-ai/AIChat';
 import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
+import { AIChatSidePanel } from '@/components/legalup-ai/AIChatSidePanel';
 
 function formatDate(value: string): string {
   try {
@@ -80,6 +81,7 @@ export default function AICaseDetail() {
   const [pricingOpen, setPricingOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('documents');
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
 
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
   const selectedDoc =
@@ -509,8 +511,15 @@ export default function AICaseDetail() {
                   workspaceId={workspace.id}
                   onQuestionClick={(q) => {
                     setChatQuestion(q);
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'case_intelligence' });
+                  }}
+                  onOpenChat={() => {
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'intelligence_button' });
+                  }}
+                  onNavigateToDocuments={() => {
                     setActiveTab('documents');
-                    // Scroll to chat section after tab switch
                     setTimeout(() => {
                       document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
@@ -525,6 +534,16 @@ export default function AICaseDetail() {
           </>
         )}
       </div>
+
+      <AIChatSidePanel
+        open={chatPanelOpen}
+        onOpenChange={setChatPanelOpen}
+        workspaceId={workspace?.id ?? caseId ?? ''}
+        workspaceName={workspace?.name ?? null}
+        documents={documents}
+        externalQuestion={chatQuestion}
+        onExternalQuestionHandled={() => setChatQuestion(null)}
+      />
 
       <AIPricingModal open={pricingOpen} onOpenChange={setPricingOpen} />
     </div>

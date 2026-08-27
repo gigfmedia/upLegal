@@ -24,7 +24,7 @@ type CaseActionExecution = {
   status: 'idle' | 'running' | 'completed' | 'error';
 };
 
-export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void }) {
+export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const syncWorkflow = useSyncAICaseWorkflow(workspaceId);
@@ -163,6 +163,20 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
         <div className="flex flex-wrap items-center gap-2">
           <Badge className={status.color}>{status.label}</Badge>
           <span className="text-xs text-muted-foreground">{data.document_count} documento(s) listo(s){data.pending_count > 0 ? ` · ${data.pending_count} pendiente(s)` : ''}</span>
+          {onOpenChat && (
+            <Button
+              size="sm"
+              onClick={() => {
+                posthog.capture('ai_case_chat_panel_opened', { source: 'intelligence_header' });
+                onOpenChat();
+              }}
+              className="ml-auto gap-1.5 bg-green-900 text-white hover:bg-green-800"
+              aria-label="Abrir chat del caso"
+            >
+              <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+              Chat del caso
+            </Button>
+          )}
         </div>
 
         {data.pending_count > 0 && (
