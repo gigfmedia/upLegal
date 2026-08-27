@@ -46,6 +46,7 @@ import { AIResearchPanel } from '@/components/legalup-ai/AIResearchPanel';
 import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
+import { AICaseBrief } from '@/components/legalup-ai/AICaseBrief';
 
 function formatDate(value: string): string {
   try {
@@ -82,6 +83,7 @@ export default function AICaseDetail() {
   const [activeTab, setActiveTab] = useState<string>('documents');
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
+  const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
 
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
   const selectedDoc =
@@ -506,9 +508,24 @@ export default function AICaseDetail() {
             )}
               </TabsContent>
 
-              <TabsContent value="intelligence" className="mt-4">
+              <TabsContent value="intelligence" className="mt-4 space-y-4">
+                <AICaseBrief
+                  workspaceId={workspace.id}
+                  onOpenWorkflowAction={(actionId) => setBriefWorkflowActionId(actionId)}
+                  onViewDocuments={() => {
+                    setActiveTab('documents');
+                    setTimeout(() => document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                  }}
+                  onAskQuestion={(q) => {
+                    setChatQuestion(q);
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'case_brief' });
+                  }}
+                />
                 <AICaseIntelligence
                   workspaceId={workspace.id}
+                  externalWorkflowActionId={briefWorkflowActionId}
+                  onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)}
                   onQuestionClick={(q) => {
                     setChatQuestion(q);
                     setChatPanelOpen(true);

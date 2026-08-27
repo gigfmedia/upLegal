@@ -25,7 +25,7 @@ type CaseActionExecution = {
   status: 'idle' | 'running' | 'completed' | 'error';
 };
 
-export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void }) {
+export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat, externalWorkflowActionId, onExternalWorkflowActionHandled }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void; externalWorkflowActionId?: string | null; onExternalWorkflowActionHandled?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const syncWorkflow = useSyncAICaseWorkflow(workspaceId);
@@ -70,6 +70,17 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data?.document_count, workflowQuery.data?.items?.length]);
+
+  useEffect(() => {
+    if (externalWorkflowActionId && workflowQuery.data?.items) {
+      const item = workflowQuery.data.items.find((i) => i.action_id === externalWorkflowActionId);
+      if (item) {
+        setSelectedWorkflowItem(item);
+        setWorkflowDrawerOpen(true);
+        onExternalWorkflowActionHandled?.();
+      }
+    }
+  }, [externalWorkflowActionId, workflowQuery.data, onExternalWorkflowActionHandled]);
 
   const handleActionClick = useCallback((a: { id: string; type: string; title: string; question?: string }) => {
     const cur = executions[a.id];
