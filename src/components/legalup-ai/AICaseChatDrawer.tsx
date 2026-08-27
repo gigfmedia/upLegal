@@ -49,15 +49,7 @@ export function AICaseChatDrawer({
           {/* Header fijo */}
           <div className="flex shrink-0 items-start justify-between gap-4 border-b px-6 py-4">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-green-900 text-white">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
-                <SheetPrimitive.Title className="text-base font-semibold text-gray-900">
-                  LegalUp AI
-                </SheetPrimitive.Title>
-              </div>
-              <p className="mt-1 text-sm font-medium text-gray-800">Asistente del caso</p>
+              <p className="mt-1 text-base font-semibold text-gray-900">Asistente del caso</p>
               <p className="text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>
               {workspaceName && (
                 <p className="mt-1 text-xs text-muted-foreground">Caso: {workspaceName}</p>
