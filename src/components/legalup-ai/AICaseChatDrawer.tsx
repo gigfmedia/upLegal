@@ -49,7 +49,10 @@ export function AICaseChatDrawer({
           {/* Header fijo */}
           <div className="flex shrink-0 items-start justify-between gap-4 border-b px-6 py-4">
             <div>
-              <p className="mt-1 text-base font-semibold text-gray-900">Asistente del caso</p>
+              <div className="flex items-center gap-2">
+                <SheetPrimitive.Title className="text-base font-semibold text-gray-900">LegalUp AI</SheetPrimitive.Title>
+              </div>
+              <p className="mt-1 text-sm font-medium text-gray-800">Asistente del caso</p>
               <p className="text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>
               {workspaceName && (
                 <p className="mt-1 text-xs text-muted-foreground">Caso: {workspaceName}</p>
@@ -63,18 +66,18 @@ export function AICaseChatDrawer({
             </SheetPrimitive.Close>
           </div>
 
-          {/* Contenido scrollable + input fijo — AIChat ocupa el resto */}
+          {/* Chat full height sin borde */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-2 py-2 sm:px-4">
-              {open && (
-                <AIChat
-                  workspaceId={workspaceId}
-                  documents={documents}
-                  externalQuestion={externalQuestion}
-                  onExternalQuestionHandled={onExternalQuestionHandled}
-                />
-              )}
-            </div>
+            {open && (
+              <AIChat
+                workspaceId={workspaceId}
+                documents={documents}
+                externalQuestion={externalQuestion}
+                onExternalQuestionHandled={onExternalQuestionHandled}
+                hideBorder
+                fullHeight
+              />
+            )}
           </div>
         </SheetPrimitive.Content>
       </SheetPrimitive.Portal>

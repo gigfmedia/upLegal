@@ -47,6 +47,7 @@ import { AICaseTimeline } from '@/components/legalup-ai/AICaseTimeline';
 import { AICaseIntelligence } from '@/components/legalup-ai/AICaseIntelligence';
 import { AICaseChatDrawer } from '@/components/legalup-ai/AICaseChatDrawer';
 import { AICaseBrief } from '@/components/legalup-ai/AICaseBrief';
+import { AICaseCommandCenter } from '@/components/legalup-ai/AICaseCommandCenter';
 
 function formatDate(value: string): string {
   try {
@@ -66,7 +67,7 @@ export default function AICaseDetail() {
   const canChat = canUse('case_chat');
   const canResearch = canUse('jurisprudence');
 
-  const defaultTab = searchParams.get('tab') || 'documents';
+  const defaultTab = searchParams.get('tab') || 'overview';
 
   const processMutation = useProcessAIDocument();
   const analyzeMutation = useAnalyzeAIDocument();
@@ -251,6 +252,12 @@ export default function AICaseDetail() {
             <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue={defaultTab} className="mb-6">
               <TabsList className="sticky top-16 z-10 mb-4 flex h-auto w-full flex-wrap justify-start gap-0 border border-gray-200 bg-white shadow-sm p-0">
                 <TabsTrigger
+                  value="overview"
+                  className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
+                >
+                  Resumen
+                </TabsTrigger>
+                <TabsTrigger
                   value="documents"
                   className="rounded-none border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground data-[state=active]:border-green-900 data-[state=active]:bg-transparent data-[state=active]:text-green-900 data-[state=active]:shadow-none hover:text-gray-900"
                 >
@@ -275,6 +282,24 @@ export default function AICaseDetail() {
                   Timeline del caso
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="overview" className="mt-4">
+                <AICaseCommandCenter
+                  workspaceId={workspace.id}
+                  workspaceName={workspace.name}
+                  onOpenWorkflowAction={(actionId) => setBriefWorkflowActionId(actionId)}
+                  onViewDocuments={() => {
+                    setActiveTab('documents');
+                    setTimeout(() => document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                  }}
+                  onViewIntelligence={() => setActiveTab('intelligence')}
+                  onAskQuestion={(q) => {
+                    setChatQuestion(q);
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'command_center' });
+                  }}
+                />
+              </TabsContent>
 
               <TabsContent value="documents" className="mt-4">
             {accessLoading ? (
@@ -387,8 +412,6 @@ export default function AICaseDetail() {
                             .getElementById('ai-documents-section')
                             ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                         }
-                        externalQuestion={chatQuestion}
-                        onExternalQuestionHandled={() => setChatQuestion(null)}
                       />
                     )}
                   </section>
