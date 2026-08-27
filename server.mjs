@@ -322,8 +322,8 @@ try {
   console.error('⚠️ Could not parse Supabase Key:', e.message);
 }
 
-// Configure MercadoPago
-const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
+// Configure MercadoPago — en local prioriza TEST token de VITE_ para sandbox
+const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
 const mpClient = new MercadoPagoConfig({
   accessToken: mercadopagoAccessToken,
   options: { timeout: 5000 }
@@ -1099,7 +1099,7 @@ app.post('/create-payment', async (req, res) => {
         failure: failureUrl || `${process.env.FRONTEND_URL}/payment/failure`,
         pending: pendingUrl || `${process.env.FRONTEND_URL}/payment/pending`
       },
-      auto_return: 'approved',
+      ...(isLocal ? {} : { auto_return: 'approved' }),
       binary_mode: true,
       external_reference: paymentId,
       statement_descriptor: 'LEGALUP',
@@ -1485,7 +1485,7 @@ app.post('/api/bookings/create', async (req, res) => {
         failure: `${appUrl}/booking/failure?booking_id=${booking.id}`,
         pending: `${appUrl}/booking/pending?booking_id=${booking.id}`,
       },
-      auto_return: 'approved',
+      ...(appUrl.startsWith('https') ? { auto_return: 'approved' } : {}),
       external_reference: booking.id,
       metadata: {
         booking_id: booking.id,
@@ -1538,7 +1538,8 @@ app.post('/api/bookings/create', async (req, res) => {
       }
     }
 
-    const paymentLink = mpData.init_point || mpData.sandbox_init_point;
+    const isTestToken = (mercadopagoAccessToken || '').startsWith('TEST-');
+    const paymentLink = (isLocal || isTestToken) ? (mpData.sandbox_init_point || mpData.init_point) : (mpData.init_point || mpData.sandbox_init_point);
 
     // Evento de conversión principal del asistente/plataforma. No bloquea el flujo.
     try {
@@ -1550,7 +1551,7 @@ app.post('/api/bookings/create', async (req, res) => {
         service_title: booking.service_title || null,
         price,
         duration: resolvedDuration,
-        source: body.source || 'site',
+        source: req.body.source || 'site',
         posthog_distinct_id: req.body.posthog_distinct_id || null,
       });
     } catch (posthogError) {
@@ -1617,24 +1618,36 @@ app.get('/api/bookings/:bookingId', async (req, res) => {
 
     const { data: booking, error } = await supabase
       .from('bookings')
-      .select(`
-        *,
-        lawyer:profiles!bookings_lawyer_id_fkey(
-          user_id,
-          first_name,
-          last_name,
-          specialties,
-          profile_picture_url
-        )
-      `)
+      .select('*')
       .eq('id', bookingId)
       .single();
 
     if (error || !booking) {
+      console.error('[bookings/:id] not found', bookingId, error?.message);
       return res.status(404).json({ error: 'Booking not found' });
     }
 
-    res.json({ booking });
+    // Fetch lawyer profile separately (evita fallo por FK name)
+    let lawyer = null;
+    try {
+      const { data: lawyerData } = await supabase
+        .from('profiles')
+        .select('user_id, first_name, last_name, specialties, avatar_url')
+        .eq('user_id', booking.lawyer_id)
+        .maybeSingle();
+      if (lawyerData) {
+        lawyer = {
+          user_id: lawyerData.user_id,
+          first_name: lawyerData.first_name,
+          last_name: lawyerData.last_name,
+          specialties: lawyerData.specialties,
+          profile_picture_url: lawyerData.avatar_url,
+          avatar_url: lawyerData.avatar_url,
+        };
+      }
+    } catch {}
+
+    res.json({ booking: { ...booking, lawyer } });
   } catch (error) {
     console.error('Error fetching booking:', error);
     res.status(500).json({ error: 'Internal server error' });

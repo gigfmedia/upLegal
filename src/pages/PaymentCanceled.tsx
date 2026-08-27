@@ -1,18 +1,14 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { XCircle, ArrowLeft, RefreshCw, Scale } from "lucide-react";
+import { XCircle, ArrowLeft, RefreshCw } from "lucide-react";
+import Header from "@/components/Header";
 
 export default function PaymentCanceled() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 flex flex-col items-center justify-center p-4">
-      <div 
-        className="mb-8 flex items-center justify-center space-x-2 cursor-pointer"
-        onClick={() => window.location.href = '/'}
-      >
-        <Scale className="h-8 w-8 text-blue-600" />
-        <span className="text-2xl font-bold text-gray-900">LegalUp</span>
-      </div>
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/50 flex flex-col items-center justify-center p-4 pt-32">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
@@ -42,7 +38,8 @@ export default function PaymentCanceled() {
             </Link>
           </div>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </>
   );
 }

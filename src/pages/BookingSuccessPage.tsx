@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Calendar, Clock, User, Mail, ArrowRight, FileText, AlertCircle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import Header from '@/components/Header';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Booking {
   id: string;
@@ -30,6 +32,7 @@ interface Booking {
 export default function BookingSuccessPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const bookingId = searchParams.get('booking_id') || searchParams.get('external_reference');
 
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -92,29 +95,35 @@ export default function BookingSuccessPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-16">
-        <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <>
+        <Header />
+        <div className="flex justify-center items-center py-16 pt-32">
+          <div className="h-12 w-12 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </>
     );
   }
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12 pt-32">
+          <div className="max-w-md w-full text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Error al cargar detalles</h1>
+            <p className="text-gray-600 mb-6">
+              No pudimos cargar los detalles de tu reserva. Contacta a{' '}
+              <a href="mailto:soporte@legalup.cl" className="text-blue-600 hover:underline">soporte@legalup.cl</a>
+            </p>
+            <Button onClick={() => navigate('/')} className="bg-gray-900 hover:bg-green-900">
+              Volver al inicio
+            </Button>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error al cargar detalles</h1>
-          <p className="text-gray-600 mb-6">
-            No pudimos cargar los detalles de tu reserva. Contacta a{' '}
-            <a href="mailto:soporte@legalup.cl" className="text-blue-600 hover:underline">soporte@legalup.cl</a>
-          </p>
-          <Button onClick={() => navigate('/')} className="bg-gray-900 hover:bg-green-900">
-            Volver al inicio
-          </Button>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -142,8 +151,10 @@ export default function BookingSuccessPage() {
     : 'Te enviamos un correo con los detalles y el enlace de la videollamada.';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <div className="max-w-2xl w-full">
+    <>
+      <Header />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12 pt-32">
+        <div className="max-w-2xl w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
             <CheckCircle className="h-12 w-12 text-green-600" />
@@ -236,7 +247,7 @@ export default function BookingSuccessPage() {
             <div className="border-t pt-6">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900">Total pagado</span>
-                <span className="text-2xl font-bold text-blue-600">
+                <span className="text-2xl font-bold text-gray-900">
                   ${booking.price.toLocaleString('es-CL')}
                 </span>
               </div>
@@ -245,7 +256,7 @@ export default function BookingSuccessPage() {
         </Card>
 
         {!isService && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-5 mb-6">
             <h3 className="font-semibold text-gray-900 mb-3">Próximos pasos</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
@@ -279,25 +290,27 @@ export default function BookingSuccessPage() {
           </div>
         )}
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800 text-center">
-            <strong>Revisa tu correo</strong> para confirmar tu cuenta y acceder a todas las funciones de la plataforma
-          </p>
-          <div className="mt-3 text-center">
-            <Button
-              onClick={() => navigate('/login')}
-              variant="outline"
-              className="text-sm"
-            >
-              Crear cuenta
-            </Button>
+        {!isAuthenticated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800 text-center">
+              <strong>Revisa tu correo</strong> para confirmar tu cuenta y acceder a todas las funciones de la plataforma
+            </p>
+            <div className="mt-3 text-center">
+              <Button
+                onClick={() => navigate('/login')}
+                variant="outline"
+                className="text-sm"
+              >
+                Crear cuenta
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="space-y-3">
           <Button
             onClick={() => navigate(hasMeeting ? '/dashboard/appointments' : '/dashboard')}
-            className="w-full bg-gray-900 hover:bg-green-900 text-lg py-6"
+            className="w-full bg-gray-900 hover:bg-green-900 text-sm py-6"
           >
             {isService ? 'Ver mi servicio' : 'Ver mi asesoría'}
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -314,7 +327,8 @@ export default function BookingSuccessPage() {
             soporte@legalup.cl
           </a>
         </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

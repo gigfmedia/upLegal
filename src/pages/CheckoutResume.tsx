@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import Header from '@/components/Header';
 
 type Booking = {
   id: string;
@@ -204,32 +205,38 @@ const CheckoutResume = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-gray-900 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando tu solicitud...</p>
+      <>
+        <Header />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-32">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-gray-900 mx-auto mb-4" />
+            <p className="text-gray-600">Cargando tu solicitud...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-          <div className="flex items-center justify-center mb-4">
-            <AlertCircle className="h-12 w-12 text-red-500" />
+      <>
+        <Header />
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-32">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+            <div className="flex items-center justify-center mb-4">
+              <AlertCircle className="h-12 w-12 text-red-500" />
+            </div>
+            <h2 className="text-xl font-bold text-center mb-2">Error</h2>
+            <p className="text-gray-600 text-center mb-6">{error}</p>
+            <button
+              onClick={() => navigate('/search')}
+              className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
+            >
+              Volver al inicio
+            </button>
           </div>
-          <h2 className="text-xl font-bold text-center mb-2">Error</h2>
-          <p className="text-gray-600 text-center mb-6">{error}</p>
-          <button
-            onClick={() => navigate('/search')}
-            className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Volver al inicio
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 

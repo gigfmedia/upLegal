@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
+import Header from '@/components/Header';
 
 export function PaymentCallback() {
   const [searchParams] = useSearchParams();
@@ -92,12 +93,15 @@ export function PaymentCallback() {
   }, [status, paymentId, preferenceId, navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Procesando tu pago...</h1>
-        <p>Por favor espera mientras confirmamos tu pago.</p>
+    <>
+      <Header />
+      <div className="flex items-center justify-center min-h-screen pt-32">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Procesando tu pago...</h1>
+          <p>Por favor espera mientras confirmamos tu pago.</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
