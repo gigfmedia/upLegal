@@ -48,6 +48,13 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
     }
   }, [workflowQuery.data]);
 
+  useEffect(() => {
+    if (workflowQuery.isError) {
+      const err = workflowQuery.error as Error & { status?: number; code?: string };
+      console.error('[Workflow] load failed', { caseId: workspaceId, status: err?.status, code: err?.code, message: err?.message });
+    }
+  }, [workflowQuery.isError, workflowQuery.error, workspaceId]);
+
   // Sync workflow once when intelligence ready and workflow empty
   useEffect(() => {
     if (!data || workflowQuery.isLoading || syncWorkflow.isPending) return;
@@ -240,7 +247,11 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
             {workflowQuery.isLoading ? (
               <p className="text-xs text-muted-foreground">Cargando workflow…</p>
             ) : workflowQuery.isError ? (
-              <p className="text-xs text-destructive">No se pudo cargar el workflow.</p>
+              <div className="rounded border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs font-medium text-amber-900">No se pudo cargar el workflow.</p>
+                <p className="mt-1 text-[0.7rem] text-amber-700">{(workflowQuery.error as Error)?.message || 'Error desconocido.'}</p>
+                <Button variant="outline" size="sm" className="mt-2 h-7 text-xs" onClick={() => workflowQuery.refetch()}>Reintentar</Button>
+              </div>
             ) : !workflowQuery.data?.items || workflowQuery.data.items.length === 0 ? (
               <div className="rounded border border-dashed p-3 text-center">
                 <p className="text-sm font-medium text-gray-700">No hay acciones pendientes.</p>

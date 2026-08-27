@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/contexts/AuthContext/clean/useAuth';
 
 export type AICaseWorkflowItem = {
   id: string;
@@ -32,9 +33,10 @@ const getAccessToken = async (): Promise<string | null> => {
 };
 
 export function useAICaseWorkflow(workspaceId: string | undefined) {
+  const { user } = useAuth();
   return useQuery<{ items: AICaseWorkflowItem[] }>({
-    queryKey: [...AI_WORKFLOW_QUERY_KEY, workspaceId],
-    enabled: !!workspaceId,
+    queryKey: [...AI_WORKFLOW_QUERY_KEY, workspaceId, user?.id],
+    enabled: !!workspaceId && !!user?.id,
     queryFn: async () => {
       const token = await getAccessToken();
       if (!token) throw new Error('Sesión no válida.');
@@ -42,7 +44,12 @@ export function useAICaseWorkflow(workspaceId: string | undefined) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || 'No se pudo cargar el workflow.');
+      if (!res.ok) {
+        const err = new Error(body?.error || 'No se pudo cargar el workflow.') as Error & { status?: number; code?: string };
+        err.status = res.status;
+        err.code = body?.code;
+        throw err;
+      }
       return body as { items: AICaseWorkflowItem[] };
     },
   });
@@ -50,6 +57,7 @@ export function useAICaseWorkflow(workspaceId: string | undefined) {
 
 export function useSyncAICaseWorkflow(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   return useMutation<{ items: AICaseWorkflowItem[] }, Error, void>({
     mutationFn: async () => {
       if (!workspaceId) throw new Error('Falta el caso.');
@@ -60,11 +68,15 @@ export function useSyncAICaseWorkflow(workspaceId: string | undefined) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || 'No se pudo sincronizar el workflow.');
+      if (!res.ok) {
+        const err = new Error(body?.error || 'No se pudo sincronizar el workflow.') as Error & { status?: number };
+        err.status = res.status;
+        throw err;
+      }
       return body as { items: AICaseWorkflowItem[] };
     },
     onSuccess: (data) => {
-      queryClient.setQueryData([...AI_WORKFLOW_QUERY_KEY, workspaceId], data);
+      queryClient.setQueryData([...AI_WORKFLOW_QUERY_KEY, workspaceId, user?.id], data);
       queryClient.invalidateQueries({ queryKey: [...AI_WORKFLOW_QUERY_KEY, workspaceId] });
     },
   });
@@ -72,6 +84,7 @@ export function useSyncAICaseWorkflow(workspaceId: string | undefined) {
 
 export function useUpdateAICaseWorkflow(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   return useMutation<AICaseWorkflowItem, Error, { itemId: string; status: AICaseWorkflowItem['status'] }>({
     mutationFn: async ({ itemId, status }) => {
       if (!workspaceId) throw new Error('Falta el caso.');
@@ -83,7 +96,11 @@ export function useUpdateAICaseWorkflow(workspaceId: string | undefined) {
         body: JSON.stringify({ status }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || 'No se pudo actualizar.');
+      if (!res.ok) {
+        const err = new Error(body?.error || 'No se pudo actualizar.') as Error & { status?: number };
+        err.status = res.status;
+        throw err;
+      }
       return body.item as AICaseWorkflowItem;
     },
     onSuccess: () => {
