@@ -9,6 +9,7 @@ import { BlogShare } from "@/components/blog/BlogShare";
 import { BlogNavigation } from "@/components/blog/BlogNavigation";
 import { ReadingProgressBar } from "@/components/blog/ReadingProgressBar";
 import InArticleCTA from "@/components/blog/InArticleCTA";
+import BlogContextualCTA from "@/components/blog/BlogContextualCTA";
 import CategoryCTA from "@/components/blog/CategoryCTA";
 import BlogConversionPopup from "@/components/blog/BlogConversionPopup";
 import { ReadTime } from "@/components/blog/ReadTime";
@@ -165,6 +166,7 @@ const BlogArticle = () => {
 
           <RelatedLawyers category="Derecho Civil" />
 
+          <BlogContextualCTA articleSlug="reajuste-arriendo-ipc-chile-2026" legalCategory="arriendo" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Es obligatorio aplicar el IPC en el arriendo?</h2>
