@@ -2,10 +2,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare, Brain, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { AlertTriangle, FileText, Users, ListChecks, Scale, CalendarClock, ShieldAlert, Layers, ArrowRight, MessageSquare, Brain, Loader2, CheckCircle2, AlertCircle, Clock3 } from 'lucide-react';
 import posthog from 'posthog-js';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useAICaseIntelligence } from '@/hooks/useAIDocuments';
+import { useAICaseWorkflow, useSyncAICaseWorkflow, useUpdateAICaseWorkflow } from '@/hooks/useAICaseWorkflow';
 import { EvidenceNavigator, type EvidenceReference } from './EvidenceNavigator';
 import { deriveCaseActions } from '@/lib/caseActions';
 
@@ -24,6 +26,9 @@ type CaseActionExecution = {
 
 export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
+  const workflowQuery = useAICaseWorkflow(workspaceId);
+  const syncWorkflow = useSyncAICaseWorkflow(workspaceId);
+  const updateWorkflow = useUpdateAICaseWorkflow(workspaceId);
   const [evidenceRef, setEvidenceRef] = useState<EvidenceReference | null>(null);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
   const [executions, setExecutions] = useState<Record<string, CaseActionExecution>>({});
@@ -32,6 +37,29 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
   useEffect(() => {
     if (data) posthog.capture('ai_case_intelligence_viewed', { case_id: workspaceId, documents_ready: data.document_count });
   }, [data, workspaceId]);
+
+  useEffect(() => {
+    if (workflowQuery.data?.items) {
+      const items = workflowQuery.data.items;
+      const pending = items.filter((i) => i.status === 'pending').length;
+      const in_progress = items.filter((i) => i.status === 'in_progress').length;
+      const completed = items.filter((i) => i.status === 'completed').length;
+      posthog.capture('ai_case_workflow_viewed', { pending_count: pending, in_progress_count: in_progress, completed_count: completed });
+    }
+  }, [workflowQuery.data]);
+
+  // Sync workflow once when intelligence ready and workflow empty
+  useEffect(() => {
+    if (!data || workflowQuery.isLoading || syncWorkflow.isPending) return;
+    const items = workflowQuery.data?.items ?? [];
+    if (items.length === 0) {
+      // Only sync if there are persistable actions
+      const derived = deriveCaseActions(data);
+      const hasPersistable = derived.some((a) => a.type !== 'ask_case_question');
+      if (hasPersistable) syncWorkflow.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.document_count, workflowQuery.data?.items?.length]);
 
   const handleActionClick = useCallback((a: { id: string; type: string; title: string; question?: string }) => {
     const cur = executions[a.id];
@@ -173,6 +201,120 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
                 </Button>
               );
             })}
+          </CardContent>
+        </Card>
+
+        {/* Fase 4.21: Workflow persistente */}
+        <Card className="border-gray-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm"><Clock3 className="h-4 w-4" /> Siguiente en tu caso</CardTitle>
+            {workflowQuery.data?.items && workflowQuery.data.items.length > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {(() => {
+                  const items = workflowQuery.data.items;
+                  const pending = items.filter((i) => i.status === 'pending').length;
+                  const inprog = items.filter((i) => i.status === 'in_progress').length;
+                  const completed = items.filter((i) => i.status === 'completed').length;
+                  return `${pending} pendientes${inprog ? ` · ${inprog} en revisión` : ''}${completed ? ` · ${completed} completadas` : ''}`;
+                })()}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Tu caso — acciones sugeridas por LegalUp AI</p>
+            )}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {workflowQuery.isLoading ? (
+              <p className="text-xs text-muted-foreground">Cargando workflow…</p>
+            ) : workflowQuery.isError ? (
+              <p className="text-xs text-destructive">No se pudo cargar el workflow.</p>
+            ) : !workflowQuery.data?.items || workflowQuery.data.items.length === 0 ? (
+              <div className="rounded border border-dashed p-3 text-center">
+                <p className="text-sm font-medium text-gray-700">No hay acciones pendientes.</p>
+                <p className="text-xs text-muted-foreground">LegalUp AI seguirá actualizando este espacio a medida que analices nuevos documentos.</p>
+              </div>
+            ) : (
+              workflowQuery.data.items.slice(0, 6).map((item) => {
+                const priorityLabel = item.priority === 'high' ? 'Alta' : item.priority === 'medium' ? 'Media' : 'Baja';
+                const priorityColor = item.priority === 'high' ? 'bg-red-100 text-red-800' : item.priority === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600';
+                const statusLabel = item.status === 'pending' ? 'Pendiente' : item.status === 'in_progress' ? 'En revisión' : item.status === 'completed' ? 'Completado' : 'Descartado';
+                const statusColor = item.status === 'pending' ? 'bg-blue-100 text-blue-800' : item.status === 'in_progress' ? 'bg-amber-100 text-amber-800' : item.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600';
+                const isUpdating = updateWorkflow.isPending;
+                const handleReview = async () => {
+                  if (isUpdating) return;
+                  try {
+                    if (item.status === 'pending') {
+                      await updateWorkflow.mutateAsync({ itemId: item.id, status: 'in_progress' });
+                    }
+                    if (item.action_id === 'review_documents') {
+                      setActiveQuickQuestion(null);
+                      document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      onNavigateToDocuments?.();
+                    } else if (item.action_id === 'review_missing_information') {
+                      onQuestionClick?.('¿Qué información falta para completar el análisis del caso?');
+                    } else if (item.action_id === 'review_contradictions') {
+                      onQuestionClick?.('¿Qué contradicciones existen entre los documentos del caso?');
+                    } else if (item.action_id === 'review_risks') {
+                      onQuestionClick?.('¿Qué riesgos aparecen en el caso y qué evidencia los respalda?');
+                    } else {
+                      onQuestionClick?.(item.title);
+                    }
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : 'No se pudo actualizar.');
+                  }
+                };
+                const handleComplete = async () => {
+                  try { await updateWorkflow.mutateAsync({ itemId: item.id, status: 'completed' }); toast.success('Marcado como completado.'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); }
+                };
+                const handleDismiss = async () => {
+                  if (!window.confirm('¿Quieres descartar esta acción?\n\nPodrás reabrirla más adelante.')) return;
+                  try { await updateWorkflow.mutateAsync({ itemId: item.id, status: 'dismissed' }); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); }
+                };
+                const handleReopen = async () => {
+                  try { await updateWorkflow.mutateAsync({ itemId: item.id, status: 'pending' }); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); }
+                };
+                return (
+                  <div key={item.id} className="rounded border bg-white p-3 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className={priorityColor}>{priorityLabel}</Badge>
+                      <Badge className={statusColor}>{statusLabel}</Badge>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                    {item.description && <p className="text-xs text-muted-foreground">{item.description}</p>}
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {item.status === 'pending' && (
+                        <>
+                          <Button size="sm" variant="outline" disabled={isUpdating} aria-busy={isUpdating} onClick={handleReview}>Revisar</Button>
+                          <Button size="sm" variant="secondary" disabled={isUpdating} onClick={handleComplete}>Marcar como completado</Button>
+                          <Button size="sm" variant="ghost" disabled={isUpdating} onClick={handleDismiss}>Descartar</Button>
+                        </>
+                      )}
+                      {item.status === 'in_progress' && (
+                        <>
+                          <Button size="sm" variant="outline" disabled={isUpdating} aria-busy={isUpdating} onClick={handleReview}>Continuar</Button>
+                          <Button size="sm" variant="secondary" disabled={isUpdating} onClick={handleComplete}>Marcar como completado</Button>
+                          <Button size="sm" variant="ghost" disabled={isUpdating} onClick={handleDismiss}>Descartar</Button>
+                        </>
+                      )}
+                      {item.status === 'completed' && (
+                        <>
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700"><CheckCircle2 className="h-3 w-3" /> Completado</span>
+                          <Button size="sm" variant="ghost" disabled={isUpdating} onClick={handleReopen}>Reabrir</Button>
+                        </>
+                      )}
+                      {item.status === 'dismissed' && (
+                        <>
+                          <span className="text-xs text-gray-500">Descartado</span>
+                          <Button size="sm" variant="ghost" disabled={isUpdating} onClick={handleReopen}>Reabrir</Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            {workflowQuery.data?.items && workflowQuery.data.items.length > 3 && (
+              <p className="text-[0.65rem] text-muted-foreground">Mostrando {Math.min(6, workflowQuery.data.items.length)} de {workflowQuery.data.items.length} acciones.</p>
+            )}
           </CardContent>
         </Card>
 

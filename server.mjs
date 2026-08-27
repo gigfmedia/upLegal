@@ -69,6 +69,19 @@ import {
 } from './server/ai/assistant.mjs';
 import { createNotificationService } from './server/notifications/service.mjs';
 import { sendMetaPurchaseEvent } from './server/metaCapi.mjs';
+import { deriveCaseActions, CASE_ACTION_TYPES } from './server/ai/caseActionLayer.mjs';
+import {
+  WORKFLOW_STATUSES,
+  WORKFLOW_PERSISTABLE_TYPES,
+  WORKFLOW_ALLOWED_TRANSITIONS,
+  WORKFLOW_PRIORITY_ORDER,
+  WORKFLOW_STATUS_RANK,
+  sortWorkflowItems,
+  isValidWorkflowStatus,
+  isAllowedTransition,
+  getPersistableActions,
+  buildWorkflowTimestampUpdates,
+} from './server/ai/caseWorkflow.mjs';
 
 // Get current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -332,7 +345,7 @@ const corsOptions = {
     'http://localhost:3001',
     'https://uplegal.netlify.app'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
 };
@@ -8704,6 +8717,117 @@ app.post('/api/ai/cases/:caseId/jurisprudence', async (req, res) => {
   }
 });
 
+// — Fase 4.21: Case Workflow helpers (see server/ai/caseWorkflow.mjs for pure helpers) —
+
+async function buildCaseIntelligenceForWorkflow(workspaceId, userId) {
+  const { data: allDocs, error: allDocsError } = await supabase
+    .from('ai_documents')
+    .select('id, original_filename, file_path, file_size_bytes, mime_type, status, page_count, created_at')
+    .eq('workspace_id', workspaceId)
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: true });
+  if (allDocsError) throw allDocsError;
+  const docs = (allDocs || []).filter((d) => d.status === 'ready');
+  const pendingDocs = (allDocs || []).filter((d) => d.status === 'pending' || d.status === 'processing');
+  const failedDocs = (allDocs || []).filter((d) => d.status === 'failed');
+  const { data: analyses, error: analysesError } = await supabase
+    .from('ai_document_analyses')
+    .select('document_id, summary, document_type, parties, key_points, obligations, deadlines, risks, recommendations, claims, model, created_at')
+    .eq('workspace_id', workspaceId)
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: true });
+  if (analysesError) throw analysesError;
+  const parties = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.parties) ? a.parties : [])));
+  const obligations = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.obligations) ? a.obligations : [])));
+  const risks = Array.from(new Set((analyses || []).flatMap((a) => Array.isArray(a.risks) ? a.risks : [])));
+  // facts dedup minimal for contradiction detection (same as intelligence)
+  const allClaims = [];
+  const docById = new Map((docs || []).map((d) => [d.id, d]));
+  for (const a of analyses || []) {
+    for (const c of Array.isArray(a.claims) ? a.claims : []) {
+      allClaims.push({ text: c.text, source_id: c.source_id });
+    }
+  }
+  const deduped = new Map();
+  for (const c of allClaims) {
+    const key = String(c.text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+    if (!key) continue;
+    if (!deduped.has(key)) deduped.set(key, c);
+  }
+  const facts = Array.from(deduped.values());
+  const byPrefix = new Map();
+  for (const f of facts) {
+    const prefix = String(f.text || '').split(/\s+/).slice(0, 3).join(' ').toLowerCase();
+    if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+    byPrefix.get(prefix).push(f);
+  }
+  const contradictions = [];
+  for (const [, group] of byPrefix) if (group.length > 1 && new Set(group.map((g) => g.text)).size > 1) contradictions.push({ topic: group[0].text.slice(0, 30) });
+  const missingInformation = [];
+  if (facts.length === 0) missingInformation.push('No se encontraron hechos verificados.');
+  if (parties.length === 0) missingInformation.push('No se encontraron partes.');
+  return {
+    document_count: docs.length,
+    pending_count: pendingDocs.length,
+    failed_count: failedDocs.length,
+    total_documents: (allDocs || []).length,
+    contradictions,
+    missingInformation,
+    risks,
+    pendingDocs, failedDocs, docs, analyses, parties, obligations, allDocs,
+  };
+}
+
+async function syncCaseWorkflowItems(workspaceId, userId) {
+  const intel = await buildCaseIntelligenceForWorkflow(workspaceId, userId);
+  const derived = deriveCaseActions(intel);
+  const persistable = derived.filter((a) => WORKFLOW_PERSISTABLE_TYPES.has(a.type));
+  // Fetch existing
+  const { data: existing, error: fetchError } = await supabase
+    .from('ai_case_workflow_items')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('lawyer_id', userId);
+  if (fetchError) throw fetchError;
+  const byActionId = new Map((existing || []).map((r) => [r.action_id, r]));
+  for (const act of persistable) {
+    const actionId = act.type;
+    const existingItem = byActionId.get(actionId);
+    if (existingItem) {
+      // Status preservation: never reset completed/dismissed/in_progress to pending automatically
+      // Only update title/description/priority if still pending/in_progress? But safe to update all metadata without touching status
+      const updates = {};
+      if (existingItem.title !== act.title) updates.title = act.title;
+      if (existingItem.description !== act.description) updates.description = act.description;
+      if (existingItem.priority !== act.priority) updates.priority = act.priority;
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('ai_case_workflow_items').update(updates).eq('id', existingItem.id).eq('lawyer_id', userId);
+      }
+    } else {
+      await supabase.from('ai_case_workflow_items').insert({
+        lawyer_id: userId,
+        workspace_id: workspaceId,
+        case_id: workspaceId,
+        action_id: actionId,
+        title: act.title,
+        description: act.description,
+        status: 'pending',
+        priority: act.priority,
+        source_type: null,
+        source_document_id: null,
+      });
+    }
+  }
+  const { data: refreshed, error: refreshError } = await supabase
+    .from('ai_case_workflow_items')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .eq('lawyer_id', userId)
+    .order('created_at', { ascending: false });
+  if (refreshError) throw refreshError;
+  return sortWorkflowItems(refreshed || []);
+}
+
 // GET /api/ai/cases/:caseId/intelligence — Case-Level Intelligence (Fase 4.6).
 // Agrega hechos verificados de todos los documentos ready del caso, con evidencia y trazabilidad.
 // Capa derivada, sin persistencia nueva, sin LLM, sin embeddings.
@@ -8831,6 +8955,94 @@ app.get('/api/ai/cases/:caseId/intelligence', async (req, res) => {
   } catch (error) {
     console.error('[LegalUpAI] case intelligence error:', error);
     res.status(500).json({ error: 'No se pudo cargar la inteligencia del caso.' });
+  }
+});
+
+// — Fase 4.21: Case Workflow endpoints —
+app.get('/api/ai/cases/:caseId/workflow', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+    const { data, error } = await supabase
+      .from('ai_case_workflow_items')
+      .select('*')
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId);
+    if (error) throw error;
+    res.json({ items: sortWorkflowItems(data || []) });
+  } catch (error) {
+    console.error('[LegalUpAI] workflow GET error:', error);
+    res.status(500).json({ error: 'No se pudo cargar el workflow del caso.' });
+  }
+});
+
+app.post('/api/ai/cases/:caseId/workflow/sync', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+    const items = await syncCaseWorkflowItems(workspace.id, userId);
+    res.json({ items });
+  } catch (error) {
+    console.error('[LegalUpAI] workflow sync error:', error);
+    res.status(500).json({ error: 'No se pudo sincronizar el workflow.' });
+  }
+});
+
+app.patch('/api/ai/cases/:caseId/workflow/:itemId', async (req, res) => {
+  let userId = null;
+  try {
+    userId = await requireAILawyer(req, res);
+    if (!userId) return;
+    const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
+    if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
+    const entitlement = await requireAIEntitlement(req, res, userId);
+    if (entitlement.res) return entitlement.res;
+    const { status } = req.body || {};
+    if (!WORKFLOW_STATUSES.has(status)) return res.status(400).json({ error: 'Estado no válido.' });
+    const { data: existing, error: fetchError } = await supabase
+      .from('ai_case_workflow_items')
+      .select('*')
+      .eq('id', req.params.itemId)
+      .eq('workspace_id', workspace.id)
+      .eq('lawyer_id', userId)
+      .maybeSingle();
+    if (fetchError) throw fetchError;
+    if (!existing) return res.status(404).json({ error: 'Item no encontrado.' });
+    if (existing.status !== status && !WORKFLOW_ALLOWED_TRANSITIONS[existing.status]?.has(status)) {
+      return res.status(400).json({ error: `Transición no permitida: ${existing.status} → ${status}` });
+    }
+    const updates = { status };
+    const now = new Date().toISOString();
+    if (status === 'completed') { updates.completed_at = now; updates.dismissed_at = null; }
+    else if (status === 'dismissed') { updates.dismissed_at = now; updates.completed_at = null; }
+    else if (status === 'pending') { updates.completed_at = null; updates.dismissed_at = null; }
+    else if (status === 'in_progress') { updates.completed_at = null; updates.dismissed_at = null; }
+    const { data: updated, error: updateError } = await supabase
+      .from('ai_case_workflow_items')
+      .update(updates)
+      .eq('id', existing.id)
+      .eq('lawyer_id', userId)
+      .select()
+      .single();
+    if (updateError) throw updateError;
+    // analytics metadata-only
+    if (status === 'in_progress') await capturePostHog('ai_case_workflow_action_started', userId, { action: existing.action_id });
+    if (status === 'completed') await capturePostHog('ai_case_workflow_action_completed', userId, { action: existing.action_id });
+    if (status === 'dismissed') await capturePostHog('ai_case_workflow_action_dismissed', userId, { action: existing.action_id });
+    res.json({ item: updated });
+  } catch (error) {
+    console.error('[LegalUpAI] workflow PATCH error:', error);
+    res.status(500).json({ error: 'No se pudo actualizar el workflow.' });
   }
 });
 
