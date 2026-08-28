@@ -4411,7 +4411,6 @@ function buildLegalUpAIInviteEmail({ lawyerName, ctaUrl }) {
 </body>
 </html>`;
 }
-}
 
 // ---- CREATE SUBSCRIPTION (Mercado Pago Preapproval) ----
 app.post('/api/empresas/subscription/create', async (req, res) => {
