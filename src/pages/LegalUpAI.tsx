@@ -1889,6 +1889,23 @@ function LegalUpAI() {
           ? "Ir a LegalUp AI"
           : "Probar gratis";
 
+  // Email campaign: si el abogado llegó desde el email LegalUp AI, medir el click del email
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('utm_campaign') === 'legalup_ai_trial' && params.get('utm_source') === 'email') {
+        posthog.capture('ai_lawyer_email_cta_clicked', {
+          source: 'lawyer_email',
+          campaign: 'legalup_ai_trial',
+          utm_content: params.get('utm_content') || 'lawyer_invitation',
+          utm_medium: params.get('utm_medium') || 'email',
+        });
+      }
+    } catch (e) {
+      // noop: tracking no debe romper landing
+    }
+  }, []);
+
   const trackCta = (location: string) => {
     try {
       posthog.capture("ai_landing_cta_clicked", { cta_location: location });

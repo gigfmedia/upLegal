@@ -3874,6 +3874,148 @@ app.post('/api/admin/notify-lawyers', async (req, res) => {
 });
 
 // ============================================
+// LEGALUP AI — INVITACIÓN A ABOGADOS (FASE EMAIL)
+// ============================================
+app.post('/api/admin/ai/send-lawyer-invite', requireAdmin, async (req, res) => {
+  try {
+    const { lawyerIds } = req.body || {};
+
+    if (!Array.isArray(lawyerIds) || lawyerIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Debes seleccionar al menos un abogado (lawyerIds).' });
+    }
+    if (lawyerIds.length > 100) {
+      return res.status(400).json({ success: false, message: 'Máximo 100 abogados por envío.' });
+    }
+
+    if (!resend) {
+      return res.status(500).json({ success: false, message: 'Servicio de email no configurado (RESEND_API_KEY).' });
+    }
+
+    // Fetch abogados registrados (solo desde DB, no aceptar emails arbitrarios)
+    const { data: lawyers, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, email, first_name, last_name')
+      .in('id', lawyerIds)
+      .eq('role', 'lawyer');
+
+    if (fetchError) {
+      console.error('[LegalUpAI Invite] fetch error', fetchError);
+      return res.status(500).json({ success: false, message: 'Error al obtener abogados', error: fetchError.message });
+    }
+
+    const foundById = new Map((lawyers || []).map(l => [l.id, l]));
+    const missingIds = lawyerIds.filter(id => !foundById.has(id));
+
+    let sent = 0;
+    let skipped = 0;
+    let failed = 0;
+    const failedDetails = [];
+    const skippedDetails = [];
+
+    const ctaBase = `${appUrl}/ai?utm_source=email&utm_medium=email&utm_campaign=${LEGALUP_AI_INVITE_CAMPAIGN}&utm_content=lawyer_invitation`;
+    const priceText = `$${AI_SUBSCRIPTION_PRICE_CLP.toLocaleString('es-CL')} CLP/mes`;
+
+    // Para tracking post-envío, capturamos evento de admin
+    const adminId = req.adminUser?.id || null;
+
+    for (const id of lawyerIds) {
+      const lawyer = foundById.get(id);
+      if (!lawyer) {
+        failed++;
+        failedDetails.push({ lawyerId: id, reason: 'ID no encontrado o no es abogado' });
+        continue;
+      }
+      if (!lawyer.email) {
+        skipped++;
+        skippedDetails.push({ lawyerId: id, email: null, reason: 'sin email' });
+        continue;
+      }
+
+      // Prevención duplicado suave: si ya se envió esta campaña a este abogado en los últimos 30 días, omitir
+      try {
+        const { data: recent } = await supabase
+          .from('ai_lawyer_invites')
+          .select('id, sent_at')
+          .eq('lawyer_id', id)
+          .eq('campaign', LEGALUP_AI_INVITE_CAMPAIGN)
+          .gte('sent_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+          .maybeSingle();
+        if (recent) {
+          skipped++;
+          skippedDetails.push({ lawyerId: id, email: lawyer.email, reason: 'ya enviado hace <30 días' });
+          continue;
+        }
+      } catch (e) {
+        // Si la tabla no existe aún, ignoramos el check
+        console.warn('[LegalUpAI Invite] dedup check skipped', e?.message);
+      }
+
+      const lawyerName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+      const html = buildLegalUpAIInviteEmail({ lawyerName, ctaUrl: ctaBase });
+
+      try {
+        await resend.emails.send({
+          from: 'LegalUp AI <hola@mg.legalup.cl>',
+          to: lawyer.email,
+          subject: LEGALUP_AI_INVITE_SUBJECT,
+          html,
+        });
+
+        // Log para auditoría/dedup
+        try {
+          await supabase.from('ai_lawyer_invites').insert({
+            lawyer_id: id,
+            campaign: LEGALUP_AI_INVITE_CAMPAIGN,
+            sent_at: new Date().toISOString(),
+            sent_by: adminId,
+            email: lawyer.email,
+          });
+        } catch (logErr) {
+          console.warn('[LegalUpAI Invite] log insert failed', logErr?.message);
+        }
+
+        sent++;
+      } catch (mailErr) {
+        console.error('[LegalUpAI Invite] send failed', lawyer.email, mailErr);
+        failed++;
+        failedDetails.push({ lawyerId: id, email: lawyer.email, reason: mailErr?.message || 'send error' });
+      }
+
+      // Pequeña pausa para no saturar Resend
+      await new Promise(r => setTimeout(r, 120));
+    }
+
+    // PostHog del admin (no PII)
+    try {
+      await capturePostHog('ai_lawyer_email_sent', adminId || 'admin', {
+        campaign: LEGALUP_AI_INVITE_CAMPAIGN,
+        requested: lawyerIds.length,
+        sent,
+        skipped,
+        failed,
+      });
+    } catch {}
+
+    return res.json({
+      success: true,
+      requested: lawyerIds.length,
+      sent,
+      skipped,
+      failed,
+      missingIds: missingIds.length ? missingIds : undefined,
+      skippedDetails: skippedDetails.length ? skippedDetails : undefined,
+      failedDetails: failedDetails.length ? failedDetails : undefined,
+      ctaUrl: ctaBase,
+      subject: LEGALUP_AI_INVITE_SUBJECT,
+      preheader: LEGALUP_AI_INVITE_PREHEADER,
+    });
+  } catch (error) {
+    console.error('[LegalUpAI Invite] unexpected error', error);
+    return res.status(500).json({ success: false, message: 'Error al enviar invitaciones', error: error.message });
+  }
+});
+
+// ============================================
 // LEGALUP EMPRESAS ENDPOINTS
 // ============================================
 
@@ -4089,6 +4231,187 @@ const aiSubscriptionEmailTemplates = {
   `, 'AI');
   },
 };
+
+// ---- LegalUp AI — Invitación a abogados registrados (FASE EMAIL) ----
+const LEGALUP_AI_INVITE_CAMPAIGN = 'legalup_ai_trial';
+const LEGALUP_AI_INVITE_SUBJECT = 'Conoce LegalUp AI — 5 días gratis para probarlo';
+const LEGALUP_AI_INVITE_PREHEADER = 'Analiza tus documentos jurídicos y trabaja tus casos con LegalUp AI.';
+
+function buildLegalUpAIInviteEmail({ lawyerName, ctaUrl }) {
+  const greeting = lawyerName ? `Hola, ${lawyerName}:` : 'Hola,';
+  const preheader = LEGALUP_AI_INVITE_PREHEADER;
+  return `<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>${LEGALUP_AI_INVITE_SUBJECT}</title>
+  <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
+  <style>body{margin:0;padding:0;background-color:#0a0a0a;} img{border:0;outline:none;text-decoration:none;} a{color:#10b981;}</style>
+</head>
+<body style="margin:0;padding:0;background-color:#0a0a0a;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preheader} &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#0a0a0a;">
+    <tr><td align="center" style="padding:28px 12px 18px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px;">
+        <!-- Branding — Scale + LegalUp AI — alineado horizontal centrado -->
+        <tr><td align="center" style="padding:10px 0 18px;text-align:center;">
+          <a href="${appUrl}/ai" style="text-decoration:none;display:inline-block;text-align:center;">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" style="vertical-align:middle;padding-right:7px;line-height:0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto;"><path d="M12 3v18"/><path d="m19 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/><path d="m5 8 3 8a5 5 0 0 1-6 0zV7"/><path d="M7 21h10"/></svg>
+                </td>
+                <td align="center" style="vertical-align:middle;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#ffffff;line-height:1;display:inline-block;vertical-align:middle;">LegalUp</span>
+                </td>
+                <td align="center" style="vertical-align:middle;padding-left:2px;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:9px;font-weight:700;letter-spacing:0.16em;color:#10b981;border:1px solid rgba(16,185,129,0.35);background:rgba(16,185,129,0.14);padding:3px 6px;border-radius:4px;display:inline-block;line-height:1;vertical-align:middle;margin-left:6px;">AI</span>
+                </td>
+              </tr>
+            </table>
+          </a>
+        </td></tr>
+        <!-- Hero — premium dark -->
+        <tr><td style="background:linear-gradient(180deg,#111113 0%,#18181b 100%);border:1px solid #27272a;border-radius:16px;padding:34px 28px 28px;text-align:center;overflow:hidden;">
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#10b981;margin:0 0 14px;font-weight:700;">✦ Disponible para ti — Invitación</p>
+          <h1 style="font-family:Arial,Helvetica,sans-serif;font-size:30px;line-height:1.1;font-weight:800;color:#ffffff;margin:0 0 14px;letter-spacing:-0.03em;">Conoce LegalUp AI</h1>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#a1a1aa;margin:0 0 22px;max-width:420px;display:inline-block;">Una nueva forma de trabajar<br>tus documentos jurídicos.</p>
+          <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <tr><td align="center" style="border-radius:10px;background:#10b981;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${ctaUrl}" style="height:48px;v-text-anchor:middle;width:280px;" arcsize="12%" strokecolor="#10b981" fillcolor="#10b981"><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:700;">Probar LegalUp AI gratis →</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!--><a href="${ctaUrl}" style="display:inline-block;background:#10b981;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:13px 26px;border-radius:10px;min-width:260px;text-align:center;">Probar LegalUp AI gratis →</a><!--<![endif]-->
+            </td></tr>
+          </table>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#71717a;margin:12px 0 0;letter-spacing:0.01em;">5 días gratis · luego $49.900 CLP/mes · Sin permanencia</p>
+        </td></tr>
+        <!-- Greeting + propuesta -->
+        <tr><td style="padding:22px 4px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111113;border:1px solid #27272a;border-radius:14px;overflow:hidden;">
+            <tr><td style="padding:24px 26px 18px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:#ffffff;margin:0 0 12px;font-weight:600;">${greeting}</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#a1a1aa;margin:0 0 12px;">¿Tienes documentos que necesitas <strong style="color:#ffffff;">revisar, entender o analizar</strong> antes de tomar una decisión?</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:#71717a;margin:0;">En lugar de empezar con una pregunta, <em style="color:#ffffff;font-style:normal;font-weight:600;">empieza con tu caso</em> — sube los documentos con los que ya trabajas y LegalUp AI los transforma en información accionable desde tu <strong style="color:#ffffff;">workspace privado</strong>.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <!-- Product preview — premium dark -->
+        <tr><td style="padding:18px 4px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111113;border:1px solid #27272a;border-radius:14px;overflow:hidden;">
+            <tr><td style="background:#18181b;border-bottom:1px solid #27272a;padding:10px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+                <td style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#71717a;">legalup.ai / workspace</td>
+                <td align="right"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;vertical-align:middle;margin-right:4px;"></span><span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#a1a1aa;vertical-align:middle;">Motor jurídico activo</span></td>
+              </tr></table>
+            </td></tr>
+            <tr><td style="padding:16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="width:36%;vertical-align:top;padding-right:8px;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#a1a1aa;margin:0 0 8px;">Caso</p>
+                    <div style="background:#1c1c1f;border:1px solid #27272a;border-radius:10px;padding:12px;">
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#ffffff;margin:0 0 6px;">Despido — Juan Pérez</p>
+                      <div style="border-top:1px solid #27272a;margin:8px 0;"></div>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#71717a;margin:0 0 6px;">Documentos</p>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#d4d4d8;margin:0 0 3px;">▸ Contrato.pdf</p>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#d4d4d8;margin:0 0 3px;">▸ Demanda.pdf</p>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#71717a;margin:0;">▸ Resolución.pdf</p>
+                    </div>
+                  </td>
+                  <td style="width:64%;vertical-align:top;padding-left:8px;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#a1a1aa;margin:0 0 8px;">Análisis</p>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                      <tr><td style="background:#1c1c1f;border:1px solid #27272a;border-radius:8px;padding:10px 11px;">
+                        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;color:#ffffff;margin:0 0 3px;">Hechos identificados</p>
+                        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;margin:0;">Partes · Plazos · Pretensiones</p>
+                      </td></tr>
+                      <tr><td style="height:7px;"></td></tr>
+                      <tr><td style="background:rgba(16,185,129,0.10);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:10px 11px;">
+                        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;color:#10b981;margin:0 0 3px;">⚠ Riesgos detectados</p>
+                        <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;margin:0;">Plazo 5 días · Carta art. 162</p>
+                      </td></tr>
+                    </table>
+                    <div style="margin-top:8px;background:#1c1c1f;border:1px solid #27272a;border-radius:8px;padding:10px 11px;">
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#a1a1aa;margin:0 0 6px;">Chat</p>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#d4d4d8;margin:0 0 4px;">“¿Qué información falta para completar el análisis?”</p>
+                      <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a1a1aa;margin:0;">→ Respuesta con contexto del caso</p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#71717a;margin:12px 0 0;text-align:center;letter-spacing:0.02em;">Sube tus documentos. Obtén un análisis. Pregunta sobre tu caso.</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <!-- Beneficios — números + whitespace -->
+        <tr><td style="padding:20px 4px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111113;border:1px solid #27272a;border-radius:14px;overflow:hidden;">
+            <tr><td style="padding:22px 24px 22px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#71717a;margin:0 0 16px;font-weight:600;">Trabaja con la información de tus documentos</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="width:28px;vertical-align:top;padding-top:2px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:800;color:#10b981;">01</span></td>
+                  <td style="padding-bottom:14px;border-bottom:1px solid #27272a;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;margin:0 0 4px;">Analiza documentos</p>
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#a1a1aa;margin:0;">Sube contratos, demandas o sentencias y obtén un análisis estructurado.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:28px;vertical-align:top;padding-top:14px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:800;color:#10b981;">02</span></td>
+                  <td style="padding:14px 0;border-bottom:1px solid #27272a;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;margin:0 0 4px;">Detecta riesgos y obligaciones</p>
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#a1a1aa;margin:0;">Identifica alertas, plazos y puntos que requieren especial atención.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:28px;vertical-align:top;padding-top:14px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:800;color:#10b981;">03</span></td>
+                  <td style="padding:14px 0;border-bottom:1px solid #27272a;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;margin:0 0 4px;">Organiza información relevante</p>
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#a1a1aa;margin:0;">Encuentra hechos, obligaciones e información faltante.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:28px;vertical-align:top;padding-top:14px;"><span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:800;color:#10b981;">04</span></td>
+                  <td style="padding-top:14px;">
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;margin:4px 0 4px;">Conversa con tus documentos</p>
+                    <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#a1a1aa;margin:0;">Haz preguntas y obtén respuestas contextualizadas de tu propio caso.</p>
+                  </td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
+        <!-- CTA secundario -->
+        <tr><td align="center" style="padding:22px 4px 0;">
+          <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+            <tr><td align="center" style="border-radius:10px;background:#09090b;">
+              <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${ctaUrl}" style="height:46px;v-text-anchor:middle;width:280px;" arcsize="12%" strokecolor="#09090b" fillcolor="#09090b"><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:700;">Probar LegalUp AI gratis →</center></v:roundrect><![endif]-->
+              <!--[if !mso]><!--><a href="${ctaUrl}" style="display:inline-block;background:#09090b;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;text-decoration:none;padding:13px 28px;border-radius:10px;min-width:260px;text-align:center;border:1px solid #fff;">Probar LegalUp AI gratis →</a><!--<![endif]-->
+            </td></tr>
+          </table>
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#71717a;margin:10px 0 0;">5 días gratis · luego $49.900 CLP/mes · Sin permanencia</p>
+        </td></tr>
+        <!-- Cierre -->
+        <tr><td style="padding:18px 4px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#111113;border:1px solid #27272a;border-radius:12px;">
+            <tr><td style="padding:18px 22px;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.65;color:#a1a1aa;margin:0;">Ya estás registrado en LegalUp. Ahora puedes probar una nueva herramienta dentro de tu ecosistema. Nos vemos en tu workspace,</p>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#ffffff;margin:6px 0 0;">— Equipo LegalUp</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <!-- Footer discreto -->
+        <tr><td style="padding:16px 4px 8px;">
+          <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#52525b;margin:0;text-align:center;">© 2026 LegalUp — Asesoría legal online en Chile.<br>Este correo fue enviado porque tienes una cuenta registrada en LegalUp. Si ya probaste LegalUp AI, puedes ignorar este mensaje.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+}
 
 // ---- CREATE SUBSCRIPTION (Mercado Pago Preapproval) ----
 app.post('/api/empresas/subscription/create', async (req, res) => {
