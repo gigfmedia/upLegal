@@ -85,37 +85,38 @@ export function AICaseBrief({ workspaceId, onOpenWorkflowAction, onViewDocuments
       <CardContent className="space-y-4">
         {/* Métricas */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-          <div className="rounded border bg-gray-50/60 p-3">
+          <div className="rounded border bg-white p-3">
             <p className="text-lg font-semibold text-gray-900">{brief.documentCount}</p>
             <p className="text-xs text-muted-foreground">Documentos</p>
           </div>
-          <div className="rounded border bg-gray-50/60 p-3">
+          <div className="rounded border bg-white p-3">
             <p className="text-lg font-semibold text-gray-900">{brief.factCount}</p>
             <p className="text-xs text-muted-foreground">Hechos</p>
           </div>
-          <div className="rounded border bg-gray-50/60 p-3">
+          <div className="rounded border bg-white p-3">
             <p className="text-lg font-semibold text-gray-900">{brief.riskCount}</p>
             <p className="text-xs text-muted-foreground">Riesgos</p>
           </div>
-          <div className="rounded border bg-gray-50/60 p-3">
+          <div className="rounded border bg-white p-3">
             <p className="text-lg font-semibold text-gray-900">{brief.contradictionCount}</p>
             <p className="text-xs text-muted-foreground">Contradicciones</p>
           </div>
-          <div className="rounded border bg-gray-50/60 p-3">
+          <div className="rounded border bg-white p-3">
             <p className="text-lg font-semibold text-gray-900">{brief.missingInformationCount}</p>
             <p className="text-xs text-muted-foreground">Pendiente</p>
           </div>
         </div>
 
         {/* Estado */}
-        <div className="flex items-center gap-2 rounded border p-3" style={{ borderColor: brief.status.color.includes('red') ? '#fecaca' : brief.status.color.includes('amber') ? '#fde68a' : '#bbf7d0' }}>
-          <Badge className={brief.status.color}>{brief.status.label}</Badge>
-          <span className="text-xs text-muted-foreground">{brief.status.description}</span>
+        <div className="flex items-center gap-2 rounded border bg-gray-50 px-3 py-2">
+          <span className={`h-2 w-2 rounded-full ${brief.status.color.includes('red') ? 'bg-red-500' : brief.status.color.includes('amber') ? 'bg-amber-500' : brief.status.color.includes('blue') ? 'bg-blue-500' : brief.status.color.includes('green') ? 'bg-green-500' : 'bg-gray-400'}`} />
+          <span className="text-sm font-medium">{brief.status.label}</span>
+          <span className="text-xs text-muted-foreground">— {brief.status.description}</span>
         </div>
 
         {/* Lo más importante */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Layers className="h-4 w-4" /> Lo más importante</h4>
+          <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2 py-6"><Layers className="h-4 w-4" /> Lo más importante</h4>
           {brief.highlights.length === 0 ? (
             <p className="mt-2 text-sm text-muted-foreground">No hay elementos críticos por ahora.</p>
           ) : (
@@ -150,7 +151,7 @@ export function AICaseBrief({ workspaceId, onOpenWorkflowAction, onViewDocuments
         </div>
 
         {/* Qué hacer ahora */}
-        <div>
+        <div className="py-6">
           <h4 className="text-sm font-semibold text-gray-900">Qué hacer ahora</h4>
           {workflowQuery.isError ? (
             <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-3">

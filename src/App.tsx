@@ -628,7 +628,7 @@ const AppContent = () => {
             </Routes>
           </Suspense>
         </main>
-        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/ai') && <Footer />}
+        {!location.pathname.startsWith('/empresa') && !location.pathname.startsWith('/ai') && !location.pathname.startsWith('/lawyer') && !location.pathname.startsWith('/dashboard') && <Footer />}
       </TooltipProvider>
     </div>
   );

@@ -443,6 +443,9 @@ function DashboardLayout() {
                   <Outlet />
                 </Suspense>
               </div>
+              <p className="text-xs text-gray-400 text-right pr-6 lg:pr-8 pb-4">
+                &copy; 2026 LegalUp. Todos los derechos reservados.
+              </p>
             </main>
           </div>
         </div>

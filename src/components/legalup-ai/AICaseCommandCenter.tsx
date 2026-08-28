@@ -119,11 +119,8 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base"><Brain className="h-5 w-5 text-green-700" /> {workspaceName ? `Caso: ${workspaceName}` : 'Resumen del caso'}</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-base">{workspaceName ? `Caso: ${workspaceName}` : 'Resumen del caso'}</CardTitle>
           <p className="text-sm text-muted-foreground">Una visión rápida de lo que LegalUp AI ha identificado en tus documentos.</p>
-          <div className="pt-2">
-            <Badge className={brief.status.color}>{brief.status.label}</Badge>
-          </div>
         </CardHeader>
         <CardContent className="space-y-4">
         {/* Métricas */}
