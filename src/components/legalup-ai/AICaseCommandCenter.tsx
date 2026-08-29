@@ -19,9 +19,12 @@ type Props = {
   onViewDocuments?: () => void;
   onViewIntelligence?: () => void;
   onAskQuestion?: (question: string) => void;
+  onWorkflowAsk?: (question: string, actionId: string) => void;
+  externalWorkflowActionId?: string | null;
+  onExternalWorkflowActionHandled?: () => void;
 };
 
-export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflowAction, onViewDocuments, onViewIntelligence, onAskQuestion }: Props) {
+export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflowAction, onViewDocuments, onViewIntelligence, onAskQuestion, onWorkflowAsk, externalWorkflowActionId, onExternalWorkflowActionHandled }: Props) {
   const intelligenceQuery = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const documentsQuery = useAIDocuments(workspaceId);
@@ -43,6 +46,17 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
       onOpenWorkflowAction(actionId);
     }
   };
+
+  useEffect(() => {
+    if (externalWorkflowActionId && workflowQuery.data?.items) {
+      const item = workflowQuery.data.items.find((i) => i.action_id === externalWorkflowActionId);
+      if (item) {
+        setSelectedWorkflowItem(item);
+        setWorkflowDrawerOpen(true);
+        onExternalWorkflowActionHandled?.();
+      }
+    }
+  }, [externalWorkflowActionId, workflowQuery.data, onExternalWorkflowActionHandled]);
 
   useEffect(() => {
     if (brief) {
@@ -239,10 +253,12 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
         intelligence={intelligenceQuery.data}
         isUpdating={updateWorkflow.isPending}
         onAsk={async (q) => {
+          const actionId = selectedWorkflowItem?.action_id;
           if (selectedWorkflowItem && selectedWorkflowItem.status === 'pending') {
             try { await updateWorkflow.mutateAsync({ itemId: selectedWorkflowItem.id, status: 'in_progress' }); } catch { void 0; }
           }
-          onAskQuestion?.(q);
+          if (actionId && onWorkflowAsk) onWorkflowAsk(q, actionId);
+          else onAskQuestion?.(q);
           setWorkflowDrawerOpen(false);
         }}
         onViewDocuments={() => { onViewDocuments?.(); setWorkflowDrawerOpen(false); }}

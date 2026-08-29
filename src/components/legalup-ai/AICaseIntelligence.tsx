@@ -25,7 +25,7 @@ type CaseActionExecution = {
   status: 'idle' | 'running' | 'completed' | 'error';
 };
 
-export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat, externalWorkflowActionId, onExternalWorkflowActionHandled }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void; externalWorkflowActionId?: string | null; onExternalWorkflowActionHandled?: () => void }) {
+export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToDocuments, onOpenChat, onWorkflowAsk, externalWorkflowActionId, onExternalWorkflowActionHandled }: { workspaceId: string; onQuestionClick?: (q: string) => void; onNavigateToDocuments?: () => void; onOpenChat?: () => void; onWorkflowAsk?: (q: string, actionId: string) => void; externalWorkflowActionId?: string | null; onExternalWorkflowActionHandled?: () => void }) {
   const { data, isLoading, isError, error, refetch } = useAICaseIntelligence(workspaceId, true);
   const workflowQuery = useAICaseWorkflow(workspaceId);
   const syncWorkflow = useSyncAICaseWorkflow(workspaceId);
@@ -470,10 +470,12 @@ export function AICaseIntelligence({ workspaceId, onQuestionClick, onNavigateToD
           intelligence={data}
           isUpdating={updateWorkflow.isPending}
           onAsk={async (q) => {
+            const actionId = selectedWorkflowItem?.action_id;
             if (selectedWorkflowItem && selectedWorkflowItem.status === 'pending') {
               try { await updateWorkflow.mutateAsync({ itemId: selectedWorkflowItem.id, status: 'in_progress' }); } catch { void 0; }
             }
-            onQuestionClick?.(q);
+            if (actionId && onWorkflowAsk) onWorkflowAsk(q, actionId);
+            else onQuestionClick?.(q);
           }}
           onViewDocuments={() => { onNavigateToDocuments?.(); setWorkflowDrawerOpen(false); }}
           onComplete={async () => { if (!selectedWorkflowItem) return; try { await updateWorkflow.mutateAsync({ itemId: selectedWorkflowItem.id, status: 'completed' }); toast.success('Marcado como completado.'); } catch (e) { toast.error(e instanceof Error ? e.message : 'Error.'); } }}

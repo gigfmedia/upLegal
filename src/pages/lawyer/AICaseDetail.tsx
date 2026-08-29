@@ -85,6 +85,20 @@ export default function AICaseDetail() {
   const [chatQuestion, setChatQuestion] = useState<string | null>(null);
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
+  const [chatOrigin, setChatOrigin] = useState<string | null>(null);
+  const [pendingWorkflowActionId, setPendingWorkflowActionId] = useState<string | null>(null);
+
+  const handleChatOpenChange = (open: boolean) => {
+    setChatPanelOpen(open);
+    if (!open && chatOrigin === 'workflow' && pendingWorkflowActionId) {
+      setBriefWorkflowActionId(pendingWorkflowActionId);
+      setChatOrigin(null);
+      setPendingWorkflowActionId(null);
+    } else if (!open) {
+      setChatOrigin(null);
+      setPendingWorkflowActionId(null);
+    }
+  };
 
   const documents = useMemo(() => documentsQuery.data ?? [], [documentsQuery.data]);
   const selectedDoc =
@@ -294,9 +308,18 @@ export default function AICaseDetail() {
                   }}
                   onViewIntelligence={() => setActiveTab('intelligence')}
                   onAskQuestion={(q) => {
+                    setChatOrigin('command_center');
+                    setPendingWorkflowActionId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'command_center' });
+                  }}
+                  onWorkflowAsk={(q, actionId) => {
+                    setChatOrigin('workflow');
+                    setPendingWorkflowActionId(actionId);
+                    setChatQuestion(q);
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'workflow' });
                   }}
                 />
               </TabsContent>
@@ -550,11 +573,21 @@ export default function AICaseDetail() {
                   externalWorkflowActionId={briefWorkflowActionId}
                   onExternalWorkflowActionHandled={() => setBriefWorkflowActionId(null)}
                   onQuestionClick={(q) => {
+                    setChatOrigin('intelligence');
+                    setPendingWorkflowActionId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'case_intelligence' });
                   }}
+                  onWorkflowAsk={(q, actionId) => {
+                    setChatOrigin('workflow');
+                    setPendingWorkflowActionId(actionId);
+                    setChatQuestion(q);
+                    setChatPanelOpen(true);
+                    posthog.capture('ai_case_chat_panel_opened', { source: 'workflow' });
+                  }}
                   onOpenChat={() => {
+                    setChatOrigin('intelligence');
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'intelligence_button' });
                   }}
@@ -577,7 +610,7 @@ export default function AICaseDetail() {
 
       <AICaseChatDrawer
         open={chatPanelOpen}
-        onOpenChange={setChatPanelOpen}
+        onOpenChange={handleChatOpenChange}
         workspaceId={workspace?.id ?? caseId ?? ''}
         workspaceName={workspace?.name ?? null}
         documents={documents}
