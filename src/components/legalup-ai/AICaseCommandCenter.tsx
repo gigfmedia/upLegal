@@ -190,7 +190,7 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
         </CardContent>
       </Card>
 
-      {/* Qué hacer ahora */}
+      {/* Qué hacer ahora — CTA principal */}
       <Card>
         <CardHeader><CardTitle className="text-sm">Qué hacer ahora</CardTitle></CardHeader>
         <CardContent>
@@ -200,8 +200,16 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
               <p className="text-xs text-green-700">LegalUp AI no ha identificado tareas prioritarias en este momento.</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {brief.nextActions.map((a) => (
+            <div className="space-y-3">
+              <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-700">Siguiente paso recomendado</p>
+                <p className="mt-1 text-base font-semibold text-gray-900">{brief.nextActions[0].title}</p>
+                <p className="mt-1 text-sm text-gray-600">{brief.nextActions[0].description}</p>
+                <Button size="sm" className="mt-3 bg-green-900 text-white hover:bg-green-800" onClick={() => openWorkflowByActionId(brief.nextActions[0].action_id)}>
+                  Revisar <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </div>
+              {brief.nextActions.slice(1).map((a) => (
                 <div key={a.id} className="flex items-center justify-between gap-2 rounded border bg-white p-3">
                   <div>
                     <p className="text-sm font-medium">{a.title}</p>
