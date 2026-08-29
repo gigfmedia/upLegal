@@ -153,6 +153,19 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
           <span className="text-xs text-muted-foreground">— {brief.status.description}</span>
         </div>
 
+        {/* Situación del caso */}
+        <div className="rounded border bg-white p-3">
+          <h4 className="text-sm font-semibold text-gray-900">Situación del caso</h4>
+          <p className="mt-1 text-sm text-gray-700">{brief.situation}</p>
+          {brief.pendingItems.length > 0 && brief.pendingItems[0].status === 'in_progress' && (
+            <div className="mt-2 rounded border border-blue-200 bg-blue-50 p-2">
+              <p className="text-xs font-medium text-blue-800">Continúa donde lo dejaste</p>
+              <p className="text-xs text-blue-700">{brief.pendingItems[0].title} — En revisión</p>
+              <Button size="sm" variant="outline" className="mt-1 h-6 text-xs" onClick={() => openWorkflowByActionId(brief.pendingItems[0].action_id)}>Continuar</Button>
+            </div>
+          )}
+        </div>
+
       {/* Lo más importante */}
       <Card>
         <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Layers className="h-4 w-4" /> Lo más importante</CardTitle></CardHeader>
@@ -224,6 +237,61 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
           )}
         </CardContent>
       </Card>
+
+      {/* Pendientes del caso */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Pendientes del caso</CardTitle></CardHeader>
+        <CardContent>
+          {brief.pendingItems.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No hay pendientes.</p>
+          ) : (
+            <div className="space-y-2">
+              {brief.pendingItems.map((a) => (
+                <div key={a.id} className="flex items-center justify-between gap-2 rounded border bg-white p-3">
+                  <div>
+                    <p className="text-sm font-medium">{a.title}</p>
+                    <p className="text-xs text-muted-foreground">{a.description}</p>
+                    <div className="mt-1 flex gap-1">
+                      <Badge className={a.priority === 'high' ? 'bg-red-100 text-red-800' : a.priority === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'}>{a.priority === 'high' ? 'Alta' : a.priority === 'medium' ? 'Media' : 'Baja'}</Badge>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-[0.65rem]">{a.status === 'in_progress' ? 'En revisión' : 'Pendiente'}</Badge>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => openWorkflowByActionId(a.action_id)}>Revisar</Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Completados recientemente */}
+      {brief.recentCompleted.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle className="text-sm">Completados recientemente</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {brief.recentCompleted.map((a) => (
+              <div key={a.id} className="flex items-center justify-between gap-2 rounded border bg-green-50 p-3">
+                <div>
+                  <p className="text-sm font-medium">{a.title}</p>
+                  <p className="text-xs text-muted-foreground">Completado el {new Date(a.completed_at!).toLocaleDateString('es-CL')}</p>
+                </div>
+                <Badge className="bg-green-100 text-green-800">Completado</Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Documentos con problemas */}
+      {brief.documentsWithIssuesCount > 0 && (
+        <Card className="border-amber-200 bg-amber-50/60">
+          <CardHeader><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-600" /> Documentos que requieren atención</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-sm text-amber-900">{brief.documentsWithIssuesCount} documento(s) no pudieron procesarse correctamente.</p>
+            {onViewDocuments && <Button size="sm" variant="outline" className="mt-2" onClick={onViewDocuments}>Revisar documentos</Button>}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Documentos */}
       <Card>

@@ -49,6 +49,14 @@ export function deriveCaseBrief(intelligence, workflowItems, documents) {
     if (p !== 0) return p;
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
   }).slice(0, 3);
-
-  return { documentCount, factCount, riskCount, contradictionCount, missingInformationCount, status, highlights: highlights.slice(0, 3), nextActions: pendingActions };
+  const pendingItems = [...pendingActions];
+  const recentCompleted = workflow.filter((w) => w.status === 'completed' && w.completed_at).sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()).slice(0, 3);
+  const situationParts = [];
+  situationParts.push(`${documentCount} documento${documentCount === 1 ? '' : 's'} analizado${documentCount === 1 ? '' : 's'}`);
+  if (riskCount > 0) situationParts.push(`${riskCount} riesgo${riskCount === 1 ? '' : 's'} detectado${riskCount === 1 ? '' : 's'}`);
+  if (contradictionCount > 0) situationParts.push(`${contradictionCount} contradicción${contradictionCount === 1 ? '' : 'es'}`);
+  if (missingInformationCount > 0) situationParts.push(`${missingInformationCount} dato${missingInformationCount === 1 ? '' : 's'} pendiente${missingInformationCount === 1 ? '' : 's'}`);
+  const situation = situationParts.join(' · ');
+  const documentsWithIssuesCount = intelligence.failed_count ?? 0;
+  return { documentCount, factCount, riskCount, contradictionCount, missingInformationCount, status, highlights: highlights.slice(0, 3), nextActions: pendingActions, situation, pendingItems, recentCompleted, documentsWithIssuesCount };
 }

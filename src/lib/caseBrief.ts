@@ -19,6 +19,10 @@ export type CaseBrief = {
   status: { label: string; color: string; description: string };
   highlights: CaseBriefHighlight[];
   nextActions: AICaseWorkflowItem[];
+  situation: string;
+  pendingItems: AICaseWorkflowItem[];
+  recentCompleted: AICaseWorkflowItem[];
+  documentsWithIssuesCount: number;
 };
 
 function getCaseStatusBrief(intelligence: AICaseIntelligence, workflow: AICaseWorkflowItem[]): CaseBrief['status'] {
@@ -101,6 +105,21 @@ export function deriveCaseBrief(
     })
     .slice(0, 3);
 
+  const pendingItems = [...pendingActions];
+  const recentCompleted = workflow
+    .filter((w) => w.status === 'completed' && w.completed_at)
+    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
+    .slice(0, 3);
+
+  const situationParts: string[] = [];
+  situationParts.push(`${documentCount} documento${documentCount === 1 ? '' : 's'} analizado${documentCount === 1 ? '' : 's'}`);
+  if (riskCount > 0) situationParts.push(`${riskCount} riesgo${riskCount === 1 ? '' : 's'} detectado${riskCount === 1 ? '' : 's'}`);
+  if (contradictionCount > 0) situationParts.push(`${contradictionCount} contradicción${contradictionCount === 1 ? '' : 'es'}`);
+  if (missingInformationCount > 0) situationParts.push(`${missingInformationCount} dato${missingInformationCount === 1 ? '' : 's'} pendiente${missingInformationCount === 1 ? '' : 's'}`);
+  const situation = situationParts.join(' · ');
+
+  const documentsWithIssuesCount = (intelligence as unknown as { failed_count?: number; pending_count?: number })?.failed_count ?? 0;
+
   return {
     documentCount,
     factCount,
@@ -110,5 +129,9 @@ export function deriveCaseBrief(
     status,
     highlights: highlights.slice(0, 3),
     nextActions: pendingActions,
+    situation,
+    pendingItems,
+    recentCompleted,
+    documentsWithIssuesCount,
   };
 }
