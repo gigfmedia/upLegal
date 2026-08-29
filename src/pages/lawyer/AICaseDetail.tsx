@@ -499,6 +499,22 @@ export default function AICaseDetail() {
                           onAnalyze={handleAnalyze}
                         />
                       )}
+                      {selectedDoc && selectedDoc.analysis_status === 'ready' && (
+                        <div className="mt-4 flex justify-end border-t pt-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setChatOrigin('document');
+                              setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
+                              setChatPanelOpen(true);
+                              posthog.capture('ai_document_chat_clicked', { source: 'case_workspace' });
+                            }}
+                          >
+                            Preguntar sobre este documento
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </section>
