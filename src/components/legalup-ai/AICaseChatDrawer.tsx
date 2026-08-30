@@ -12,6 +12,7 @@ type Props = {
   documents: AIDocumentListItem[];
   externalQuestion: string | null;
   onExternalQuestionHandled: () => void;
+  documentId?: string | null;
 };
 
 export function AICaseChatDrawer({
@@ -22,6 +23,7 @@ export function AICaseChatDrawer({
   documents,
   externalQuestion,
   onExternalQuestionHandled,
+  documentId,
 }: Props) {
   return (
     <SheetPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -50,12 +52,20 @@ export function AICaseChatDrawer({
           <div className="flex shrink-0 items-start justify-between gap-4 border-b px-6 py-4">
             <div>
               <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-green-900 text-white">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
                 <SheetPrimitive.Title className="text-base font-semibold text-gray-900">LegalUp AI</SheetPrimitive.Title>
               </div>
               <p className="mt-1 text-sm font-medium text-gray-800">Asistente del caso</p>
               <p className="text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>
-              {workspaceName && (
-                <p className="mt-1 text-xs text-muted-foreground">Caso: {workspaceName}</p>
+              {documentId ? (
+                <div className="mt-2 rounded border border-green-200 bg-green-50 px-2 py-1">
+                  <p className="text-xs font-medium text-green-800">Sobre este documento</p>
+                  <p className="truncate text-xs text-green-700">{documents.find((d) => d.id === documentId)?.original_filename ?? documentId}</p>
+                </div>
+              ) : (
+                workspaceName && <p className="mt-1 text-xs text-muted-foreground">Caso: {workspaceName}</p>
               )}
             </div>
             <SheetPrimitive.Close
@@ -72,6 +82,7 @@ export function AICaseChatDrawer({
               <AIChat
                 workspaceId={workspaceId}
                 documents={documents}
+                documentId={documentId ?? undefined}
                 externalQuestion={externalQuestion}
                 onExternalQuestionHandled={onExternalQuestionHandled}
                 hideBorder

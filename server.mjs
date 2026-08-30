@@ -8192,6 +8192,7 @@ const AIChatResponseSchema = z.object({
 const AIChatRequestSchema = z.object({
   conversation_id: z.string().uuid(),
   message: z.string().trim().min(1).max(CHAT_LIMITS.MAX_CHAT_MESSAGE_LENGTH),
+  document_id: z.string().uuid().optional(),
 });
 
 // GET /api/ai/cases/:caseId/chat — conversación principal (get-or-create) + mensajes.
@@ -8236,7 +8237,7 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Solicitud inválida.', code: 'INVALID_REQUEST' });
     }
-    const { conversation_id, message } = parsed.data;
+    const { conversation_id, message, document_id } = parsed.data;
 
     const workspace = await getAIWorkspaceOwned(req.params.caseId, userId);
     if (!workspace) return res.status(404).json({ error: 'Caso no encontrado.' });
@@ -8247,6 +8248,15 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
     const conversation = await getAIConversationOwned(conversation_id, userId);
     if (!conversation || conversation.workspace_id !== workspace.id) {
       return res.status(403).json({ error: 'No autorizado.' });
+    }
+
+    let prioritizedDocumentId = null;
+    if (document_id) {
+      const doc = await getAIDocumentOwned(document_id, userId);
+      if (!doc || doc.workspace_id !== workspace.id) {
+        return res.status(403).json({ error: 'Documento no autorizado.' });
+      }
+      prioritizedDocumentId = doc.id;
     }
 
     if (!isAIProviderConfigured()) {
@@ -8265,6 +8275,14 @@ app.post('/api/ai/cases/:caseId/chat', async (req, res) => {
       .eq('lawyer_id', userId)
       .eq('status', 'ready');
     if (docsError) throw docsError;
+
+    if (prioritizedDocumentId && readyDocs && readyDocs.length > 1) {
+      const idx = readyDocs.findIndex((d) => d.id === prioritizedDocumentId);
+      if (idx > 0) {
+        const [doc] = readyDocs.splice(idx, 1);
+        readyDocs.unshift(doc);
+      }
+    }
 
     if (!readyDocs || readyDocs.length === 0) {
       const { count, error: countError } = await supabase

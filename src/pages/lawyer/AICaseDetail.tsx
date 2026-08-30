@@ -87,6 +87,7 @@ export default function AICaseDetail() {
   const [briefWorkflowActionId, setBriefWorkflowActionId] = useState<string | null>(null);
   const [chatOrigin, setChatOrigin] = useState<string | null>(null);
   const [pendingWorkflowActionId, setPendingWorkflowActionId] = useState<string | null>(null);
+  const [chatDocumentId, setChatDocumentId] = useState<string | null>(null);
 
   const handleChatOpenChange = (open: boolean) => {
     setChatPanelOpen(open);
@@ -94,9 +95,11 @@ export default function AICaseDetail() {
       setBriefWorkflowActionId(pendingWorkflowActionId);
       setChatOrigin(null);
       setPendingWorkflowActionId(null);
+      setChatDocumentId(null);
     } else if (!open) {
       setChatOrigin(null);
       setPendingWorkflowActionId(null);
+      setChatDocumentId(null);
     }
   };
 
@@ -310,6 +313,7 @@ export default function AICaseDetail() {
                   onAskQuestion={(q) => {
                     setChatOrigin('command_center');
                     setPendingWorkflowActionId(null);
+                    setChatDocumentId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'command_center' });
@@ -317,6 +321,7 @@ export default function AICaseDetail() {
                   onWorkflowAsk={(q, actionId) => {
                     setChatOrigin('workflow');
                     setPendingWorkflowActionId(actionId);
+                    setChatDocumentId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'workflow' });
@@ -506,6 +511,7 @@ export default function AICaseDetail() {
                             variant="outline"
                             onClick={() => {
                               setChatOrigin('document');
+                              setChatDocumentId(selectedDoc.id);
                               setChatQuestion('¿Qué aspectos relevantes debería revisar en este documento?');
                               setChatPanelOpen(true);
                               posthog.capture('ai_document_chat_clicked', { source: 'case_workspace' });
@@ -579,6 +585,9 @@ export default function AICaseDetail() {
                     setTimeout(() => document.getElementById('ai-documents-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
                   }}
                   onAskQuestion={(q) => {
+                    setChatOrigin('case_brief');
+                    setPendingWorkflowActionId(null);
+                    setChatDocumentId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'case_brief' });
@@ -591,6 +600,7 @@ export default function AICaseDetail() {
                   onQuestionClick={(q) => {
                     setChatOrigin('intelligence');
                     setPendingWorkflowActionId(null);
+                    setChatDocumentId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'case_intelligence' });
@@ -598,12 +608,15 @@ export default function AICaseDetail() {
                   onWorkflowAsk={(q, actionId) => {
                     setChatOrigin('workflow');
                     setPendingWorkflowActionId(actionId);
+                    setChatDocumentId(null);
                     setChatQuestion(q);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'workflow' });
                   }}
                   onOpenChat={() => {
                     setChatOrigin('intelligence');
+                    setPendingWorkflowActionId(null);
+                    setChatDocumentId(null);
                     setChatPanelOpen(true);
                     posthog.capture('ai_case_chat_panel_opened', { source: 'intelligence_button' });
                   }}
@@ -630,6 +643,7 @@ export default function AICaseDetail() {
         workspaceId={workspace?.id ?? caseId ?? ''}
         workspaceName={workspace?.name ?? null}
         documents={documents}
+        documentId={chatDocumentId}
         externalQuestion={chatQuestion}
         onExternalQuestionHandled={() => setChatQuestion(null)}
       />

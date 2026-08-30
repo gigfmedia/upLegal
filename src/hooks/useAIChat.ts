@@ -72,7 +72,7 @@ export function useAICaseChat(workspaceId: string | undefined, enabled: boolean)
   return query;
 }
 
-type SendChatInput = { conversationId: string; message: string };
+type SendChatInput = { conversationId: string; message: string; documentId?: string };
 type SendChatResult = {
   message: AIChatMessage;
   user_message: AIChatMessage | null;
@@ -84,9 +84,12 @@ export function useSendChatMessage(workspaceId: string | undefined) {
   const queryClient = useQueryClient();
 
   return useMutation<SendChatResult, AIChatError, SendChatInput>({
-    mutationFn: async ({ conversationId, message }) => {
+    mutationFn: async ({ conversationId, message, documentId }) => {
       const token = await getAccessToken();
       if (!token) throw new Error('Sesión no válida. Vuelve a iniciar sesión.');
+
+      const payload: Record<string, unknown> = { conversation_id: conversationId, message };
+      if (documentId) payload.document_id = documentId;
 
       const res = await fetch(`${getApiBaseUrl()}/api/ai/cases/${workspaceId}/chat`, {
         method: 'POST',
@@ -94,7 +97,7 @@ export function useSendChatMessage(workspaceId: string | undefined) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ conversation_id: conversationId, message }),
+        body: JSON.stringify(payload),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {

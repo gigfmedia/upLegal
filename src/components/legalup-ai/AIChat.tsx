@@ -27,6 +27,7 @@ import type { AIDocumentListItem } from '@/hooks/useAIDocuments';
 type AIChatProps = {
   workspaceId: string;
   documents: AIDocumentListItem[];
+  documentId?: string;
   onUploadClick?: () => void;
   externalQuestion?: string | null;
   onExternalQuestionHandled?: () => void;
@@ -51,7 +52,7 @@ function errorToMessage(error: AIChatError | null): string {
   }
 }
 
-export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion, onExternalQuestionHandled, hideBorder, fullHeight }: AIChatProps) {
+export function AIChat({ workspaceId, documents, documentId, onUploadClick, externalQuestion, onExternalQuestionHandled, hideBorder, fullHeight }: AIChatProps) {
   const readyCount = useMemo(
     () => documents.filter((doc) => doc.status === 'ready').length,
     [documents]
@@ -201,10 +202,11 @@ export function AIChat({ workspaceId, documents, onUploadClick, externalQuestion
     posthog.capture('ai_chat_message_sent', {
       message_length: message.length,
       document_count: readyCount,
+      document_id: documentId ?? undefined,
     });
 
     sendMutation.mutate(
-      { conversationId: conversationId!, message },
+      { conversationId: conversationId!, message, documentId },
       {
         onSuccess: (data) => {
           setSending(false);
