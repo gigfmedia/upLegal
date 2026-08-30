@@ -52,10 +52,9 @@ export function AICaseChatDrawer({
           <div className="flex shrink-0 items-start justify-between gap-4 border-b px-6 py-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-green-900 text-white">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
-                <SheetPrimitive.Title className="text-base font-semibold text-gray-900">LegalUp AI</SheetPrimitive.Title>
+                <SheetPrimitive.Title className="text-lg font-semibold text-gray-900">LegalUp
+                  <span className="inline-flex h-[18.4px] items-center rounded-[5px] border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-px text-[0.6rem] ml-1.5 font-semibold leading-none tracking-[0.14em] text-emerald-400 transition-colors group-hover:bg-emerald-400/20">AI</span>
+                </SheetPrimitive.Title>
               </div>
               <p className="mt-1 text-sm font-medium text-gray-800">Asistente del caso</p>
               <p className="text-xs text-muted-foreground">Responde usando la información disponible en los documentos de este caso.</p>

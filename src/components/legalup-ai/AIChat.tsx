@@ -77,6 +77,7 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
   const [liveAssistantIds, setLiveAssistantIds] = useState<Set<string>>(new Set());
 
   const openedTracked = useRef(false);
+  const lastExternalQuestionRef = useRef<string | null>(null);
   useEffect(() => {
     if (chatEnabled && !openedTracked.current) {
       openedTracked.current = true;
@@ -115,7 +116,27 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
         created_at: new Date().toISOString(),
       });
     }
-    return list;
+    // Deduplicar por id y por contenido duplicado (incluso no consecutivo) para evitar duplicados por doble POST/optimistic+refetch
+    const seenIds = new Set<string>();
+    const dedupedById = list.filter((m) => {
+      if (seenIds.has(m.id)) return false;
+      seenIds.add(m.id);
+      return true;
+    });
+    const seenContent = new Set<string>();
+    const deduped: ChatMessage[] = [];
+    for (const m of dedupedById) {
+      const key = `${m.role}:${m.content.trim()}`;
+      if (seenContent.has(key)) {
+        // Permitir que el mismo contenido aparezca de nuevo solo si hay al menos 2 mensajes distintos entre ocurrencias (evita ocultar repeticiones legítimas con contexto intermedio)
+        const lastIdx = deduped.findIndex((prev) => `${prev.role}:${prev.content.trim()}` === key);
+        const distance = deduped.length - lastIdx;
+        if (distance <= 2) continue;
+      }
+      seenContent.add(key);
+      deduped.push(m);
+    }
+    return deduped;
   }, [chatQuery.data, pendingUser, conversationId, workspaceId]);
 
   // Mensaje de usuario al que le falta la respuesta del asistente (intento fallido
@@ -185,13 +206,19 @@ export function AIChat({ workspaceId, documents, documentId, onUploadClick, exte
   useEffect(() => {
     if (externalQuestion && !sending && conversationId) {
       const q = externalQuestion.trim();
-      if (q) {
-        setInput('');
-        setPendingUser(q);
-        setFailedMessage(null);
-        runMutation(q);
-        onExternalQuestionHandled?.();
-      }
+      if (!q) return;
+      if (lastExternalQuestionRef.current === q) return;
+      lastExternalQuestionRef.current = q;
+      setInput('');
+      setPendingUser(q);
+      setFailedMessage(null);
+      runMutation(q);
+      onExternalQuestionHandled?.();
+      // Clear ref after a short delay to allow same question to be asked again manually
+      setTimeout(() => { lastExternalQuestionRef.current = null; }, 1000);
+    }
+    if (!externalQuestion) {
+      lastExternalQuestionRef.current = null;
     }
   }, [externalQuestion, sending, conversationId, onExternalQuestionHandled]);
 
