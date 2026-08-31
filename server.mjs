@@ -8098,7 +8098,13 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
 
     res.json({ success: true, analysis: saved, model });
   } catch (err) {
-    console.error('[LegalUpAI] analyze error:', err);
+    console.error('[LegalUpAI] analyze error:', err, { detail: err?.detail?.slice?.(0,500), status: err?.status, code: err?.code, document_id: req.params.id, workspace_id: req.params.id ? undefined : undefined });
+    // Temporal metadata-only log for 400 diagnosis
+    try {
+      const docForLog = await supabase.from('ai_documents').select('id, workspace_id, original_filename, status, extracted_text').eq('id', req.params.id).maybeSingle();
+      const meta = docForLog.data ? { docId: docForLog.data.id, ws: docForLog.data.workspace_id, filename: docForLog.data.original_filename, extractedLen: (docForLog.data.extracted_text||'').length, status: docForLog.data.status } : { docId: req.params.id };
+      console.warn('[LegalUpAI] analyze 400 meta', JSON.stringify({ ...meta, errStatus: err?.status, errCode: err?.code, detail: String(err?.detail||'').slice(0,300) }));
+    } catch {}
     const message = err?.code === 'AI_NOT_CONFIGURED'
       ? err.message
       : (err.message || 'No se pudo analizar el documento.');

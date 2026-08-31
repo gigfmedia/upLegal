@@ -302,13 +302,14 @@ export async function chatCompletion({ model, system, user, messages, maxTokens 
 
     const data = await response.json();
     if (data?.error) {
-      const status = data.error.code === 'json_validate_failed' ? 400 : response.status;
+      const isJsonValidateFailed = data.error.code === 'json_validate_failed';
+      const status = isJsonValidateFailed ? 400 : response.status;
       const error = new Error(
         'El proveedor de IA no pudo procesar la solicitud. Intenta nuevamente en unos minutos.'
       );
       error.status = status;
-      error.code = 'AI_PROVIDER_ERROR';
-      error.retriable = false;
+      error.code = isJsonValidateFailed ? 'AI_PROVIDER_JSON_VALIDATE_FAILED' : 'AI_PROVIDER_ERROR';
+      error.retriable = isJsonValidateFailed;
       error.detail = String(data.error.message || JSON.stringify(data.error)).slice(0, 300);
       throw error;
     }
