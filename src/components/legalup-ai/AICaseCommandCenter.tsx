@@ -154,7 +154,7 @@ export function AICaseCommandCenter({ workspaceId, workspaceName, onOpenWorkflow
         </div>
 
         {/* Situación del caso */}
-        <div className="rounded border bg-white p-3">
+        <div className="rounded border bg-white p-6">
           <h4 className="text-sm font-semibold text-gray-900">Situación del caso</h4>
           <p className="mt-1 text-sm text-gray-700">{brief.situation}</p>
           {brief.pendingItems.length > 0 && brief.pendingItems[0].status === 'in_progress' && (

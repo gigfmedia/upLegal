@@ -106,7 +106,7 @@ function SectionList({
               {claim?.evidence && (
                 <details className="ml-4 mt-1 rounded bg-white/70 p-2 text-xs">
                   <summary className="cursor-pointer font-medium text-gray-600 hover:text-gray-800">Ver evidencia {claim.page_number ? `· Página ${claim.page_number}` : ''}</summary>
-                  <p className="mt-1 whitespace-pre-wrap italic text-gray-600">"{claim.evidence}"</p>
+                  <p className="mt-1 italic text-gray-600">"{claim.evidence}"</p>
                   <p className="mt-1 text-[0.65rem] text-gray-400">Documento: {claim.source_id} {claim.page_number ? `· Página ${claim.page_number}` : ''}</p>
                 </details>
               )}
