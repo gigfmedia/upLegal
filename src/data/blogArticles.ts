@@ -12,6 +12,56 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: "nulidad-contrato-chile-2026",
+    title: "Nulidad de contrato en Chile 2026: qué es, tipos y cómo demandar",
+    excerpt: "Descubre qué es la nulidad de contrato en Chile, diferencias entre nulidad absoluta y relativa, plazos y cómo demandar restitución.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "21 de Agosto, 2026",
+    readTime: "11 min",
+    image: "/assets/nulidad-contrato-chile-2026.png"
+  },
+  {
+    id: "herencia-posesion-efectiva-chile-2026",
+    title: "Herencia y posesión efectiva en Chile 2026: qué es, cómo tramitarla y cuánto demora",
+    excerpt: "Todo sobre herencia y posesión efectiva en Chile: quiénes heredan, cómo tramitar sin y con testamento, plazos, costos e impuesto.",
+    category: "Derecho Civil",
+    author: "LegalUp",
+    date: "20 de Agosto, 2026",
+    readTime: "10 min",
+    image: "/assets/herencia-posesion-efectiva-chile-2026.png"
+  },
+  {
+    id: "querella-criminal-chile-2026",
+    title: "Querella criminal en Chile 2026: qué es, cómo presentarla y diferencias con la denuncia",
+    excerpt: "Qué es una querella criminal en Chile, requisitos, dónde presentarla y por qué te hace parte en la causa penal. Diferencias con la denuncia.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "19 de Agosto, 2026",
+    readTime: "10 min",
+    image: "/assets/querella-criminal-chile-2026.png"
+  },
+  {
+    id: "manejo-estado-ebriedad-ley-emilia-chile-2026",
+    title: "Manejo en estado de ebriedad y Ley Emilia en Chile 2026: penas y qué hacer si te detienen",
+    excerpt: "Conoce las penas por manejo en estado de ebriedad y Ley Emilia en Chile: tramos de alcohol, cárcel, multa, licencia y qué hacer en el control.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "18 de Agosto, 2026",
+    readTime: "11 min",
+    image: "/assets/manejo-estado-ebriedad-ley-emilia-chile-2026.png"
+  },
+  {
+    id: "usurpacion-inmueble-chile-2026",
+    title: "Usurpación de inmueble en Chile 2026: qué es, penas y cómo denunciar",
+    excerpt: "Qué es la usurpación de inmueble en Chile (art. 458), penas, diferencias con violación de morada y cómo denunciar para recuperar tu propiedad.",
+    category: "Derecho Penal",
+    author: "LegalUp",
+    date: "17 de Agosto, 2026",
+    readTime: "13 min",
+    image: "/assets/usurpacion-inmueble-chile-2026.png"
+  },
+  {
     id: "contrato-compraventa-chile-2026",
     title: "Contrato de compraventa en Chile 2026: qué debe incluir y cómo protegerte",
     excerpt: "Descubre qué debe incluir un contrato de compraventa en Chile, cuándo usar la promesa, qué formalidades exige cada bien y cómo blindarte frente a impagos y vicios ocultos.",

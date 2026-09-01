@@ -89,6 +89,11 @@ const AmenazasWhatsappArticle = lazy(() => import('../pages/blog/amenazas-whatsa
 const AccidenteTransitoArticle = lazy(() => import('../pages/blog/accidente-transito-chile-2026'));
 const ConstitucionEmpresaArticle = lazy(() => import('../pages/blog/constitucion-empresa-chile-2026'));
 const ContratoCompraventaArticle = lazy(() => import('../pages/blog/contrato-compraventa-chile-2026'));
+const UsurpacionArticle = lazy(() => import('../pages/blog/usurpacion-inmueble-chile-2026'));
+const LeyEmiliaArticle = lazy(() => import('../pages/blog/manejo-estado-ebriedad-ley-emilia-chile-2026'));
+const QuerellaArticle = lazy(() => import('../pages/blog/querella-criminal-chile-2026'));
+const HerenciaArticle = lazy(() => import('../pages/blog/herencia-posesion-efectiva-chile-2026'));
+const NulidadContratoArticle = lazy(() => import('../pages/blog/nulidad-contrato-chile-2026'));
 // const LeyConsumidorArticle = lazy(() => import('../pages/blog/ley-del-consumidor-chile-2026'));
 
 
@@ -186,6 +191,11 @@ export const BlogRoutes = () => (
       <Route path="accidente-transito-chile-2026" element={<AccidenteTransitoArticle />} />
       <Route path="constitucion-empresa-chile-2026" element={<ConstitucionEmpresaArticle />} />
       <Route path="contrato-compraventa-chile-2026" element={<ContratoCompraventaArticle />} />
+      <Route path="usurpacion-inmueble-chile-2026" element={<UsurpacionArticle />} />
+      <Route path="manejo-estado-ebriedad-ley-emilia-chile-2026" element={<LeyEmiliaArticle />} />
+      <Route path="querella-criminal-chile-2026" element={<QuerellaArticle />} />
+      <Route path="herencia-posesion-efectiva-chile-2026" element={<HerenciaArticle />} />
+      <Route path="nulidad-contrato-chile-2026" element={<NulidadContratoArticle />} />
       {/* <Route path="ley-del-consumidor-chile-2026" element={<LeyConsumidorArticle />} /> */}
 
     </Routes>
