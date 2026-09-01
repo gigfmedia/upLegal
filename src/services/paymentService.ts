@@ -2,10 +2,18 @@ import { supabase } from '@/lib/supabaseClient';
 import { CreatePaymentInput, Payment, PaymentWithDetails } from '@/types/payment';
 
 export const createPayment = async (input: CreatePaymentInput): Promise<Payment> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  // Deriva user_id de la sesión autenticada; ignora input.userId si no coincide (evita suplantación)
+  if (input.userId && input.userId !== user.id) {
+    throw new Error('userId mismatch: authenticated user does not match input');
+  }
+  const effectiveUserId = user.id;
+
   const { data, error } = await supabase
     .from('payments')
     .insert({
-      user_id: input.userId,
+      user_id: effectiveUserId,
       lawyer_id: input.lawyerId,
       service_id: input.serviceId,
       amount: input.amount,

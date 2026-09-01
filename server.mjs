@@ -322,8 +322,8 @@ try {
   console.error('⚠️ Could not parse Supabase Key:', e.message);
 }
 
-// Configure MercadoPago — en local prioriza TEST token de VITE_ para sandbox
-const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.VITE_MERCADOPAGO_ACCESS_TOKEN || '';
+// Configure MercadoPago — server-only, nunca VITE_ (secreto no debe ir al bundle)
+const mercadopagoAccessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
 const mpClient = new MercadoPagoConfig({
   accessToken: mercadopagoAccessToken,
   options: { timeout: 5000 }
