@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
@@ -27,6 +28,9 @@ const BlogArticle = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <link rel="canonical" href="https://legalup.cl/blog/manejo-estado-ebriedad-ley-emilia-chile-2026" />
+      </Helmet>
       <BlogGrowthHacks
         title="Manejo en estado de ebriedad y Ley Emilia en Chile 2026: penas y qué hacer si te detienen"
         description="Manejo en estado de ebriedad y Ley Emilia en Chile 2026: penas por 0,8 g/L, diferencias con influencia, cárcel, multa, licencia y qué hacer si te detienen."
