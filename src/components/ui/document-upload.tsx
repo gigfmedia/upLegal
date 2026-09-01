@@ -41,7 +41,7 @@ export function DocumentUpload({
     return <File className="h-5 w-5" />;
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     if (!userId) {
       toast({
         title: "Error",
@@ -86,7 +86,6 @@ export function DocumentUpload({
         .getPublicUrl(newFileName);
 
       setPreviewUrl(publicUrl);
-      setFileName(file.name);
       onUpload(publicUrl, file.name);
       
       toast({
@@ -102,7 +101,7 @@ export function DocumentUpload({
     } finally {
       setUploading(false);
     }
-  };
+  }, [userId, bucket, folder, currentDocumentUrl, label, toast, onUpload]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];

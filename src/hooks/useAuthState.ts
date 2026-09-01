@@ -212,9 +212,13 @@ export const useAuthState = (): AuthState => {
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let subscription: { unsubscribe: () => void } | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let handleVisibilityChange: (() => void) | null = null;
     
     const initializeAuth = async () => {
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (mounted && state.isLoading) {
           console.warn('Auth initialization timed out, setting isLoading to false');
           updateState({ isLoading: false });
@@ -223,10 +227,11 @@ export const useAuthState = (): AuthState => {
 
       try {
         await checkSession();
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
+        timeoutId = null;
         
         // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (!mounted) return;
             
@@ -274,9 +279,10 @@ export const useAuthState = (): AuthState => {
             }
           }
         );
+        subscription = sub;
         
         // Set up periodic session validation
-        const intervalId = setInterval(async () => {
+        intervalId = setInterval(async () => {
           if (!mounted) return;
           try {
             await validateAndRefreshSession();
@@ -286,20 +292,18 @@ export const useAuthState = (): AuthState => {
         }, 5 * 60 * 1000); // Check every 5 minutes
 
         // Add visibility listener to refresh session when tab becomes visible
-        const handleVisibilityChange = async () => {
+        handleVisibilityChange = async () => {
           if (!document.hidden && mounted) {
             await checkSession();
           }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
         
-        return () => {
-          subscription?.unsubscribe();
-          clearInterval(intervalId);
-          document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
       } catch (error) {
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
         updateState({
           error: error instanceof Error ? error : new Error('Failed to initialize auth'),
           isLoading: false,
@@ -311,6 +315,10 @@ export const useAuthState = (): AuthState => {
     
     return () => {
       mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      if (subscription) subscription.unsubscribe();
+      if (intervalId) clearInterval(intervalId);
+      if (handleVisibilityChange) document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [checkSession, updateState]);
   

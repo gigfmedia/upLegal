@@ -40,16 +40,15 @@ export function useTypewriter(text: string, options: TypewriterOptions = {}) {
     if (duration === 0) return;
 
     const chunk = Math.max(1, Math.ceil(text.length / (duration / TICK_MS)));
-
+    let current = 0;
     const id = setInterval(() => {
-      setCount((prev) => {
-        const next = prev + chunk;
-        if (next >= text.length) {
-          clearInterval(id);
-          return text.length;
-        }
-        return next;
-      });
+      current += chunk;
+      if (current >= text.length) {
+        setCount(text.length);
+        clearInterval(id);
+      } else {
+        setCount(current);
+      }
     }, TICK_MS);
 
     return () => clearInterval(id);

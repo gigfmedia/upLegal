@@ -142,19 +142,17 @@ export default function LegalUpAssistant({ source = 'widget' }: LegalUpAssistant
   }, [open]);
 
   const handleToggle = () => {
-    setOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        try {
-          sessionStorage.setItem(HINT_STORAGE_KEY, 'true');
-        } catch {
-          // ignore
-        }
-        setShowHint(false);
+    const willOpen = !open;
+    if (willOpen) {
+      try {
+        sessionStorage.setItem(HINT_STORAGE_KEY, 'true');
+      } catch {
+        // ignore
       }
-      return next;
-    });
-    if (!open) scrollToBottom();
+      setShowHint(false);
+    }
+    setOpen(willOpen);
+    if (willOpen) scrollToBottom();
   };
 
   const appendAssistant = useCallback((content: string, extra?: Partial<AssistantMessage>) => {

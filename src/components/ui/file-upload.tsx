@@ -28,7 +28,7 @@ export function FileUpload({
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = useCallback(async (file: File) => {
     if (!userId) {
       toast({
         title: "Error",
@@ -86,7 +86,7 @@ export function FileUpload({
     } finally {
       setUploading(false);
     }
-  };
+  }, [userId, bucket, folder, currentImageUrl, toast, onUpload]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];

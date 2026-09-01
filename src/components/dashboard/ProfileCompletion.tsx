@@ -22,8 +22,9 @@ interface ProfileCompletionProps {
 
 export function ProfileCompletion({ onNavigateToTab, completionPercentage, services = [] }: ProfileCompletionProps) {
   const { user } = useAuth();
-  // Use the services passed as prop or fallback to useServices hook
-  const servicesData = services || useServices().services || [];
+  const { services: hookServices } = useServices();
+  // Use the services passed as prop or fallback to useServices hook — hook must be called unconditionally
+  const servicesData = services && services.length > 0 ? services : (hookServices ?? []);
   
   // Use the provided completion percentage
   const profileProgress = completionPercentage;
