@@ -1,3 +1,24 @@
+const clpFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+const currencyFormatterCache = new Map<string, Intl.NumberFormat>();
+function getCurrencyFormatter(currency: string): Intl.NumberFormat {
+  const key = currency.toUpperCase();
+  let formatter = currencyFormatterCache.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: key,
+    });
+    currencyFormatterCache.set(key, formatter);
+  }
+  return formatter;
+}
+
 /**
  * Format a number as currency
  * @param amount - The amount to format (in smallest currency unit, e.g., cents)
@@ -8,19 +29,11 @@ export function formatCurrency(amount: number, currency: string = 'CLP'): string
   try {
     // For Chilean Peso (CLP), we format without decimals
     if (currency.toUpperCase() === 'CLP') {
-      return new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(amount);
+      return clpFormatter.format(amount);
     }
 
     // For other currencies, use default formatting
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(amount);
+    return getCurrencyFormatter(currency).format(amount);
   } catch (error) {
     console.error('Error formatting currency:', error);
     // Fallback to simple formatting

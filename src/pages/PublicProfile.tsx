@@ -142,6 +142,13 @@ const createSlug = (str: string): string => {
     .replace(/-+/g, '-');
 };
 
+const publicProfileClpFormatter = new Intl.NumberFormat('es-CL', {
+  style: 'currency',
+  currency: 'CLP',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
 const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
   const { path } = useParams<{ path: string }>();
   const location = useLocation();
@@ -686,12 +693,7 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
 
     // Format the price as CLP
     try {
-      return new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-      }).format(priceNum);
+      return publicProfileClpFormatter.format(priceNum);
     } catch (error) {
       console.error('Error formatting price:', error);
       return `${priceNum} CLP`; // Fallback format if Intl fails
