@@ -7982,6 +7982,11 @@ app.post('/api/ai/documents/:id/analyze', async (req, res) => {
 
     await supabase.from('ai_documents').update({ analysis_status: 'processing', analysis_error: null, model }).eq('id', doc.id);
 
+    // Fase 4.26.2 hardening: documento sin texto suficiente no debe llegar al LLM (evita costo y falla predecible)
+    if (!text || text.trim().length < 20) {
+      throw new Error('El documento no contiene texto suficiente para analizar. Asegúrate de que sea un PDF textual (no escaneado).');
+    }
+
     const { data: raw, raw: rawText, usage } = await chatCompletion({
       model,
       system: buildAnalysisSystemPrompt(),
