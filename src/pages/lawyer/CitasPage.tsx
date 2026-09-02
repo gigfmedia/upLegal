@@ -93,12 +93,12 @@ export default function CitasPage() {
       // Check if client exists by email
       const { data: existingClient } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, user_id')
         .eq('email', data.clientEmail)
         .single();
 
       if (existingClient) {
-        clientId = existingClient.id;
+        clientId = (existingClient as any).user_id || existingClient.id;
       } else {
         // Create new client profile
         const { data: newClient, error: clientError } = await supabase
@@ -110,26 +110,30 @@ export default function CitasPage() {
             phone: data.clientPhone,
             role: 'client'
           })
-          .select('id')
+          .select('id, user_id')
           .single();
 
         if (clientError) throw clientError;
-        clientId = newClient.id;
+        clientId = (newClient as any).user_id || newClient.id;
       }
 
       // Create the appointment
       const { error } = await supabase
         .from('appointments')
         .insert({
-          client_id: clientId,
+          user_id: clientId,
           lawyer_id: session.user.id,
-          date: new Date(`${data.date}T${data.time}`).toISOString(),
+          appointment_date: data.date,
+          appointment_time: data.time,
           duration: parseInt(data.duration, 10),
           status: 'pending',
           type: data.type,
-          service_type: data.service,
+          consultation_type: data.service,
+          name: data.clientName,
+          email: data.clientEmail,
+          phone: data.clientPhone,
           notes: data.notes
-        });
+        } as any);
 
       if (error) throw error;
 
@@ -163,33 +167,32 @@ export default function CitasPage() {
         .from('appointments')
         .select(`
           id,
-          date,
+          appointment_date,
+          appointment_time,
           duration,
           status,
           type,
           notes,
-          service_type,
-          client:profiles!appointments_client_id_fkey (
-            id,
-            first_name,
-            last_name,
-            email,
-            phone
-          )
+          consultation_type,
+          name,
+          email,
+          phone
         `)
         .eq('lawyer_id', session.user.id)
-        .order('date', { ascending: true });
+        .order('appointment_date', { ascending: true });
 
       if (error) throw error;
 
       // Transform data to match the expected format
-      const formattedAppointments = appointments.map(appt => ({
+      const formattedAppointments = appointments.map((appt: any) => ({
         id: appt.id,
-        clientName: `${appt.client?.first_name || ''} ${appt.client?.last_name || ''}`.trim() || 'Cliente',
-        clientEmail: appt.client?.email || '',
-        clientPhone: appt.client?.phone || '',
-        service: appt.service_type || 'Consulta',
-        date: new Date(appt.date),
+        clientName: appt.name || 'Cliente',
+        clientEmail: appt.email || '',
+        clientPhone: appt.phone || '',
+        service: appt.consultation_type || 'Consulta',
+        date: appt.appointment_date && appt.appointment_time
+          ? new Date(`${appt.appointment_date}T${appt.appointment_time}`)
+          : new Date(appt.appointment_date || Date.now()),
         duration: appt.duration || 30, // Default to 30 minutes if not specified
         status: appt.status || 'pending',
         type: appt.type || 'video',
