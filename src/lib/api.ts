@@ -144,43 +144,38 @@ export interface AppointmentData {
 }
 
 export const appointmentsApi = {
-  create: async (appointment: Omit<AppointmentData, 'id'>, token?: string) => {
-    return apiRequest<AppointmentData>('create-appointment', {
-      method: 'POST',
-      body: appointment,
-      authToken: token,
-    });
+  create: async (appointment: Omit<AppointmentData, 'id'>) => {
+    const { data, error } = await supabase
+      .from('appointments')
+      .insert(appointment as any)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as AppointmentData;
   },
   
-  list: async (params?: { status?: string }, token?: string) => {
-    const query = new URLSearchParams();
-    if (params?.status) query.append('status', params.status);
-    
-    return apiRequest<AppointmentData[]>(`appointments?${query.toString()}`, {
-      method: 'GET',
-      authToken: token,
-    });
+  list: async (params?: { status?: string }) => {
+    let query = supabase.from('appointments').select('*').order('date', { ascending: true });
+    if (params?.status) query = query.eq('status', params.status);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as AppointmentData[];
   },
   
-  get: async (id: string, token?: string) => {
-    return apiRequest<AppointmentData>(`appointments/${id}`, {
-      method: 'GET',
-      authToken: token,
-    });
+  get: async (id: string) => {
+    const { data, error } = await supabase.from('appointments').select('*').eq('id', id).single();
+    if (error) throw error;
+    return data as AppointmentData;
   },
   
-  update: async (id: string, updates: Partial<AppointmentData>, token?: string) => {
-    return apiRequest<AppointmentData>(`appointments/${id}`, {
-      method: 'PUT',
-      body: updates,
-      authToken: token,
-    });
+  update: async (id: string, updates: Partial<AppointmentData>) => {
+    const { data, error } = await supabase.from('appointments').update(updates as any).eq('id', id).select().single();
+    if (error) throw error;
+    return data as AppointmentData;
   },
   
-  delete: async (id: string, token?: string) => {
-    return apiRequest<void>(`appointments/${id}`, {
-      method: 'DELETE',
-      authToken: token,
-    });
+  delete: async (id: string) => {
+    const { error } = await supabase.from('appointments').delete().eq('id', id);
+    if (error) throw error;
   },
 };
