@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
@@ -26,9 +25,6 @@ const BlogArticle = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Helmet>
-        <link rel="canonical" href="https://legalup.cl/blog/nulidad-contrato-chile-2026" />
-      </Helmet>
       <BlogGrowthHacks
         title="Nulidad de contrato en Chile 2026: qué es, tipos y cómo demandar"
         description="Nulidad de contrato en Chile 2026: qué es, nulidad absoluta vs relativa, diferencias con resolución, plazos, efectos y cómo demandar paso a paso."

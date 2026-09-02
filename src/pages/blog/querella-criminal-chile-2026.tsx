@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Calendar, User, Clock, ChevronRight } from "lucide-react";
 import Header from "@/components/Header";
 import { BlogGrowthHacks } from "@/components/blog/BlogGrowthHacks";
@@ -26,9 +25,6 @@ const BlogArticle = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Helmet>
-        <link rel="canonical" href="https://legalup.cl/blog/querella-criminal-chile-2026" />
-      </Helmet>
       <BlogGrowthHacks
         title="Querella criminal en Chile 2026: qué es, cómo presentarla y diferencias con la denuncia"
         description="Querella criminal en Chile 2026: qué es, requisitos, dónde presentarla, qué pasa después, diferencias con la denuncia y cuánto demora. Guía para víctimas con patrocinio de abogado."
