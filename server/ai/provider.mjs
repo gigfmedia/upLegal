@@ -121,6 +121,16 @@ export function classifyProviderError(status, text = '', retryAfterSeconds = nul
     code = 'AI_PROVIDER_SERVER_ERROR';
     message = 'El proveedor de IA presentó un error temporal. Intenta nuevamente en unos minutos.';
     retriable = true;
+  } else if (
+    String(body?.error?.code || '') === 'json_validate_failed' ||
+    /json_validate_failed/i.test(raw)
+  ) {
+    // Fase 4.26.1.1 — 400 con json_validate_failed es RETRIABLE (retry + fallback)
+    // El proveedor validó el JSON de salida contra response_format=json_object y falló.
+    // Se tipa como AI_PROVIDER_JSON_VALIDATE_FAILED para que chatCompletion lo reintente.
+    code = 'AI_PROVIDER_JSON_VALIDATE_FAILED';
+    message = 'El proveedor de IA no pudo procesar la solicitud. Intenta nuevamente en unos minutos.';
+    retriable = true;
   } else {
     code = 'AI_PROVIDER_ERROR';
     message = `El proveedor de IA no pudo procesar la solicitud (${status}). Intenta nuevamente en unos minutos.`;

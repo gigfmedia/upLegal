@@ -48,10 +48,11 @@ describe('classifyProviderError (Fase 4.1.10)', () => {
     expect(error.message).not.toContain('invalid request');
   });
 
-  it('clasifica 400 con json_validate_failed sin falso rate limit', () => {
+  it('clasifica 400 con json_validate_failed como AI_PROVIDER_JSON_VALIDATE_FAILED retriable (Fase 4.26.1.1)', () => {
     const body = JSON.stringify({ error: { code: 'json_validate_failed' } });
     const error = classifyProviderError(400, body);
-    expect(error.code).toBe('AI_PROVIDER_ERROR');
-    expect(error.retriable).toBe(false);
+    expect(error.code).toBe('AI_PROVIDER_JSON_VALIDATE_FAILED');
+    expect(error.retriable).toBe(true);
+    expect(error.status).toBe(400);
   });
 });
