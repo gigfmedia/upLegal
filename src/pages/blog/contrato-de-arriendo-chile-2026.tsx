@@ -61,8 +61,8 @@ const BlogArticle = () => {
       {/* Hero Section */}
       <div className="bg-[#f4efdf] text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-28">
-          <div className="flex items-center gap-2 text-white mb-4">
-            <Link to="/blog" className="hover:text-white transition-colors">
+          <div className="flex items-center gap-2 mb-4 text-green-500">
+            <Link to="/blog" className="hover:text-green-900 transition-colors">
               Blog
             </Link>
             <ChevronRight className="h-4 w-4" />
@@ -98,7 +98,7 @@ const BlogArticle = () => {
             Firmar un contrato de arriendo es uno de los pasos más importantes al arrendar en Chile — y uno de los más subestimados. Un contrato mal hecho puede generar meses de conflictos legales.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4 text-white mt-6 text-sm sm:text-base">
+          <div className="flex flex-wrap items-center gap-4 mt-6 text-green-900 text-sm sm:text-base">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span>18 de Abril, 2026</span>
