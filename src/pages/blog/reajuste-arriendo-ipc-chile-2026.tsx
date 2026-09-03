@@ -92,7 +92,7 @@ const BlogArticle = () => {
             Calculadora IPC Arriendo Chile 2026: Calcula tu Reajuste al Instante
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -105,9 +105,9 @@ const BlogArticle = () => {
                 "La variación del IPC cambia mes a mes",
                 "Calcular correctamente el reajuste evita cobros indebidos"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                <li key={i} className="flex items-center gap-3">
+                  <span className="text-green-500 font-bold">✓</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -165,9 +165,6 @@ const BlogArticle = () => {
           </div>
 
           <RelatedLawyers category="Derecho Civil" />
-
-          <BlogContextualCTA articleSlug="reajuste-arriendo-ipc-chile-2026" legalCategory="arriendo" />
-
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Es obligatorio aplicar el IPC en el arriendo?</h2>
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -205,6 +202,8 @@ const BlogArticle = () => {
             </div>
           </div>
 
+          <BlogContextualCTA articleSlug="reajuste-arriendo-ipc-chile-2026" legalCategory="arriendo" />
+
           {/* Cluster link equivalent */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
@@ -228,10 +227,6 @@ const BlogArticle = () => {
                   <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
                   <span className="font-bold text-gray-900 text-lg">Anual:</span>
                 </div>
-
-            
-
-
                 <span className="text-gray-700 text-base">La más habitual. El arriendo se reajusta una vez al año según el IPC acumulado de los últimos 12 meses</span>
               </div>
               <div className="flex flex-col gap-2 p-5 bg-gray-50 rounded-xl border border-gray-100 h-full">
@@ -246,8 +241,6 @@ const BlogArticle = () => {
               El contrato debe indicar claramente dos cosas: la periodicidad del reajuste y el período exacto del IPC a usar. Si alguna de estas no está definida, hay margen para interpretación y potencial conflicto.
             </p>
           </div>
-<InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." priceNote="Consulta legal de 60 min desde $35.000" />
-
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cómo se calcula el reajuste por IPC paso a paso?</h2>
@@ -286,6 +279,8 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." priceNote="Consulta legal de 60 min desde $35.000" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Calculadora IPC arriendo 2026</h2>
@@ -358,15 +353,6 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            category="Derecho Civil"
-            targetUrl="/abogado-arriendo"
-            title="¿El reajuste que te cobraron no coincide con este cálculo?"
-            message="Un abogado puede revisar tu contrato y verificar si el reajuste aplicado corresponde al IPC real de tu período, para que no pagues de más."
-            buttonText="Revisar mi reajuste con un abogado"
-            priceNote="Consulta legal de 60 min desde $35.000"
-          />
-
           <div className="mb-12">
             <h3 className="text-xl font-bold mb-6 text-gray-900 border-t pt-8">Ejemplos reales de reajuste</h3>
 
@@ -403,6 +389,15 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA
+            category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
+            title="¿El reajuste que te cobraron no coincide con este cálculo?"
+            message="Un abogado puede revisar tu contrato y verificar si el reajuste aplicado corresponde al IPC real de tu período, para que no pagues de más."
+            buttonText="Revisar mi reajuste con un abogado"
+            priceNote="Consulta legal de 60 min desde $35.000"
+          />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Puede el arrendador subir más que el IPC?</h2>
