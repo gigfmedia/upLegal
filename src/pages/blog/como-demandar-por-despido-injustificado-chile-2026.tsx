@@ -69,7 +69,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 text-balance">{title}</h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
@@ -89,7 +89,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl mb-8 leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Si te despidieron y sientes que no fue justo, es normal preguntarse: <strong>¿Cómo demandar por despido injustificado en Chile?</strong> La respuesta simple es que puedes demandar dentro de 60 días hábiles y exigir indemnización con la ayuda de un <Link to="/abogados-laborales" className="text-green-600 underline hover:text-green-400">abogado laboral en Chile</Link>.
           </p>
 

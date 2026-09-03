@@ -68,7 +68,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">{title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">{title}</h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>

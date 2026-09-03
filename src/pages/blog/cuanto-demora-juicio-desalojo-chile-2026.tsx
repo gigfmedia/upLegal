@@ -65,7 +65,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
             ¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley
           </h1>
 

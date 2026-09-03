@@ -68,7 +68,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 text-balance">
             DICOM y Deuda de Arriendo: ¿Cuándo puede afectarte como Arrendatario en Chile? (2026)
           </h1>
 

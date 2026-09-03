@@ -56,7 +56,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-600 mb-6">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-green-900 mb-6">
             ¿Qué hacer si te acusan de un delito en Chile? Guía de Derecho Penal 2026
           </h1>
 

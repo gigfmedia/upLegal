@@ -73,7 +73,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 text-balance">{title}</h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
@@ -92,7 +92,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl mb-8">
+          <p className="text-xl max-w-3xl text-green-900">
             Si tienes a alguien ocupando tu propiedad y quieres recuperarla, lo primero que debes entender es esto: en Chile no puedes desalojar a nadie por tu cuenta. No importa si eres el dueño, si no te están pagando o si nunca existió un acuerdo formal. El único camino legal es a través de un tribunal.
           </p>
 

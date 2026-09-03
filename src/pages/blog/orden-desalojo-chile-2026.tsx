@@ -68,7 +68,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 text-balance">
             Juicio y Orden de Desalojo en Chile 2026: Plazos, Proceso y Cómo Actuar
           </h1>
 

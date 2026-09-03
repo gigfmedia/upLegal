@@ -68,7 +68,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 text-balance">{title}</h1>
 
           <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
@@ -88,7 +88,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl max-w-3xl mb-8 leading-relaxed">
+          <p className="text-xl max-w-3xl leading-relaxed text-green-900">
             Muchas personas creen que solo el empleador puede poner término al contrato de trabajo. Pero en Chile también existe una herramienta legal para el trabajador: el autodespido.
           </p>
 

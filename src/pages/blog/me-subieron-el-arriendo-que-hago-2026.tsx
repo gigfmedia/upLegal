@@ -65,7 +65,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
             ¿Cuánto pueden subir tu arriendo en Chile 2026? El límite legal y qué hacer si te pasaron
           </h1>
 

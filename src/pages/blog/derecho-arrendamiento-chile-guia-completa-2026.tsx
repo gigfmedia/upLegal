@@ -72,7 +72,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-600 font-serif">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-green-900 font-serif">
             Derecho de arrendamiento en Chile: guía completa 2026 (contrato, desalojo, garantía, IPC y derechos)
           </h1>
 

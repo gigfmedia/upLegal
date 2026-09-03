@@ -66,7 +66,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
             Ley <span className="font-serif italic">&quot;Devuélveme Mi Casa&quot;</span> en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026
           </h1>
 

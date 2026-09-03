@@ -58,7 +58,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900 leading-tight">
             ¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026
           </h1>
 
