@@ -55,14 +55,28 @@ if (isTestHost || isOwnerDevice()) {
 // (o estamos en un hostname de test), NO se envían eventos a GA4. Así el
 // tráfico del dueño no contamina la data real (sus IPs cambian y no sirven
 // como filtro). En hosts de test también se descarta, como antes.
+// FIX FASE 5.2.1: el wrapper NO captura el stub inicial de index.html para siempre.
+// Cuando gtag/js carga, window.gtag pasa a ser el tag real; el wrapper debe
+// delegar al gtag actual (no al realTag capturado en boot) para no escribir en
+// el dataLayer equivocado. Fallback a dataLayer si aún no hay tag real.
 {
-  const realTag = (window as unknown as Record<string, unknown>).gtag;
   const gtagWrapper = (...args: unknown[]) => {
     if (isOwnerActive()) {
       return undefined;
     }
     try {
-      return typeof realTag === 'function' ? (realTag as (...a: unknown[]) => unknown)(...args) : undefined;
+      const currentTag = (window as unknown as Record<string, unknown>).gtag;
+      // Evitar recursión: si currentTag es el propio wrapper, usar dataLayer
+      if (typeof currentTag === 'function' && currentTag !== (gtagWrapper as unknown)) {
+        return (currentTag as (...a: unknown[]) => unknown)(...args);
+      }
+      // Fallback pre-load: encolar en dataLayer
+      const dl = (window as unknown as Record<string, unknown>).dataLayer as unknown[] | undefined;
+      if (Array.isArray(dl)) {
+        dl.push(args);
+        return undefined;
+      }
+      return undefined;
     } catch {
       return undefined;
     }
