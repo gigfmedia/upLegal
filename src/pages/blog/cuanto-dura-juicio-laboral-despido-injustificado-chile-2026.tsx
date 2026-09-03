@@ -74,7 +74,7 @@ const BlogArticle = () => {
                 "No responder la demanda es el error que más alarga el proceso"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-base text-gray-200">{item}</span>
                 </li>
               ))}

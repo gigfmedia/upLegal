@@ -74,7 +74,7 @@ const BlogArticle = () => {
                 "Contar con asesoría legal experta desde el inicio es crucial para el resultado del caso"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}

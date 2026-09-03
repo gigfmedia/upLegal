@@ -89,19 +89,19 @@ const BlogArticle = () => {
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-green-600 font-medium">✓</span>
                 <span className="text-base">1 mes de deuda habilita demanda</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-green-600 font-medium">✓</span>
                 <span className="text-base">No existe mínimo legal de meses</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-green-600 font-medium">✓</span>
                 <span className="text-base">Desalojo SIEMPRE requiere juicio</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-green-600 font-bold">✓</span>
+                <span className="text-green-600 font-medium">✓</span>
                 <span className="text-base">Demora real: 3 a 12 meses</span>
               </div>
             </div>

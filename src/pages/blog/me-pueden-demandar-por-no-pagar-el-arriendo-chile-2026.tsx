@@ -91,7 +91,7 @@ const BlogArticle = () => {
                 "Puedes negociar o pagar y evitar el desalojo en muchos casos",
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </div>
               ))}

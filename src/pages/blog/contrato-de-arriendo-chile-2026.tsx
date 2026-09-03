@@ -87,7 +87,7 @@ const BlogArticle = () => {
                 "Revisar las cláusulas antes de firmar puede ahorrarte demandas futuras"
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}

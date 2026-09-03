@@ -82,7 +82,7 @@ const BlogArticle = () => {
                 "Un error puede hacerte perder millones",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
@@ -189,14 +189,14 @@ const BlogArticle = () => {
               <div className="grid gap-4 mb-8">
                 <div className="bg-green-50 border rounded-xl p-5 border-green-100 transition-colors shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-base sm:text-lg">
-                    <span className="text-green-600 font-bold">✓</span>
+                    <span className="text-green-600 font-medium">✓</span>
                     Indemnización por años de servicio
                   </h4>
                   <p className="text-gray-600 leading-relaxed">1 sueldo por cada año trabajado (con tope legal de 11 años).</p>
                 </div>
                 <div className="bg-green-50 border rounded-xl p-5 border-green-100 transition-colors shadow-sm">
                   <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-base sm:text-lg">
-                    <span className="text-green-600 font-bold">✓</span>
+                    <span className="text-green-600 font-medium">✓</span>
                     Sustitutiva de aviso previo
                   </h4>
                   <p className="text-gray-600 leading-relaxed">Si no te avisaron con al menos 30 días de anticipación: te deben pagar 1 sueldo adicional.</p>

@@ -89,7 +89,7 @@ const BlogArticle = () => {
                 "El proceso puede tomar entre 3 y 12 meses dependiendo del tribunal y si hay oposición",
               ].map((item, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                  <span className="text-green-600 font-medium">✓</span>
                   <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
