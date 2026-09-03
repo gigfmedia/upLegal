@@ -62,7 +62,7 @@ const BlogArticle = () => {
             ¿Pueden despedirme mientras estoy con licencia médica en Chile? Guía 2026
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -73,7 +73,7 @@ const BlogArticle = () => {
                 "Si el despido fue por represalia o sin causal válida, puedes demandar",
                 "Los plazos para actuar son cortos — 60 días hábiles desde el despido"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
                   <span className="text-base text-gray-200">{item}</span>
                 </li>

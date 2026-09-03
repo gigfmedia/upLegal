@@ -83,7 +83,7 @@ const BlogArticle = () => {
                 "Causa lícita: motivo no puede ser ilícito.",
                 "Solemnidad: escritura pública si la ley la exige (ej. compraventa de inmueble).",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <p className="text-gray-600 mt-4">Si falla uno, el acto es nulo. La gravedad del fallo define si es nulidad absoluta o relativa.</p>
@@ -139,7 +139,7 @@ const BlogArticle = () => {
                 "Certificados: Conservador, SII, Registro Civil según el contrato.",
                 "Peritajes: caligráfico, mecánico, contable si aplica.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
           </div>

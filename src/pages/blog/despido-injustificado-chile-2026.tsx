@@ -62,7 +62,7 @@ const BlogArticle = () => {
             Despido injustificado en Chile: qué hacer, cómo demandar y cuánto puedes ganar (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -75,9 +75,9 @@ const BlogArticle = () => {
                 "Es fundamental no firmar el finiquito sin incluir una reserva de derechos",
                 "La carga de probar la causal del despido recae siempre sobre el empleador"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -588,7 +588,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Recibiste una carta de despido sin una causal clara", "La empresa invocó necesidades de la empresa sin cambios reales", "Dudas del cálculo de tus indemnizaciones y del finiquito", "Te ofrecieron firmar el finiquito inmediatamente después del despido", "Sospechas que el despido fue una represalia o discriminación", "La empresa contrató rápidamente a otra persona para tu mismo cargo", "Ya pasaron varios días desde el despido sin que hayas buscado asesoría", "Recibiste una citación o notificación judicial"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

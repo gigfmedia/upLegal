@@ -69,7 +69,7 @@ const BlogArticle = () => {
             ¿Cuánto tarda un desalojo en Chile? De 3 meses a 1 año — lo que dice la ley
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -82,9 +82,9 @@ const BlogArticle = () => {
                 "Ignorar la demanda puede acelerar el lanzamiento",
                 "Negociar o actuar temprano puede reducir tiempos y costos"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -367,7 +367,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Cuando el conflicto de arriendo escala, el tiempo juega en contra. Consultar a un abogado especializado a tiempo puede marcar la diferencia entre un desalojo rápido y un proceso que se extiende por meses.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Si el arrendatario ya fue notificado y no sabes cómo responder", "Si llevas más de 2 meses sin pago y el arrendador amenaza con demandar", "Si eres arrendador y necesitas saber cuánto puede demorar realmente tu caso"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

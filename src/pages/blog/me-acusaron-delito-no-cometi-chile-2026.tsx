@@ -221,7 +221,7 @@ const BlogArticle = () => {
                                 "Derecho a pedir diligencias al fiscal: citar testigos de descargo, peritajes, cámaras.",
                                 "Derecho a recurrir de medidas cautelares como prisión preventiva o arraigo.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                     </div>
@@ -255,7 +255,7 @@ const BlogArticle = () => {
                                 "Negocia salidas tempranas: archivo, principio de oportunidad o sobreseimiento.",
                                 "Prepara la teoría del caso y la prueba para el juicio oral si es necesario.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">

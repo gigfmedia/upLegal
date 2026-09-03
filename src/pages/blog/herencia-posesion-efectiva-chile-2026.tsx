@@ -118,7 +118,7 @@ const BlogArticle = () => {
                 "Tribunal ordena publicación y luego dicta sentencia que concede posesión efectiva.",
                 "Inscribes sentencia en Registro Civil y Conservador.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <p className="text-gray-600 mt-4">Plazo: 2 a 6 meses. Costo: honorarios + receptor + publicaciones. El testamento debe respetar la legítima; si la vulnera, los herederos pueden impugnarlo.</p>
@@ -133,7 +133,7 @@ const BlogArticle = () => {
                 "Impuesto a la herencia (SII Formulario 441): se calcula sobre avalúo fiscal, con tramos exentos por parentesco. Se paga antes de inscribir venta.",
                 "Inscripción en Conservador: con resolución y certificado de pago de impuesto.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
           </div>
@@ -187,7 +187,7 @@ const BlogArticle = () => {
                 "Crédito consumo del causante: se paga con los bienes hereditarios; si no alcanzan, la deuda se extingue.",
                 "Arriendos impagos del causante: si heredas su rol de arrendador, debes notificar a los arrendatarios el cambio de dueño.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <p className="text-gray-600 mt-4">Para no confundir tu patrimonio con el heredado, acepta siempre con beneficio de inventario y haz inventario solemne ante notario. Es la protección que evita que una deuda oculta te persiga.</p>

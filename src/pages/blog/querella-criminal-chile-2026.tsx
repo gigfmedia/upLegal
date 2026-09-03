@@ -107,7 +107,7 @@ const BlogArticle = () => {
                 "Diligencias concretas que pides: oficios, peritajes, citaciones, cámaras.",
                 "Patrocinio y firma de abogado.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <p className="text-gray-600 mt-4">Adjunta documentos: contratos, transferencias, mensajes, fotos, informe médico, avalúo. Mientras más precisa, más probable la admisibilidad.</p>

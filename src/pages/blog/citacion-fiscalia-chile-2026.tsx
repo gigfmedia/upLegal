@@ -328,7 +328,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">La preparación adecuada puede marcar una gran diferencia en cómo se desarrolla la diligencia.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Confirma el motivo y el rol de la citación", "Lleva tu cédula de identidad y la citación recibida", "Reúne los documentos que respalden tu información", "Ordena tu relato de manera cronológica", "Consulta con un abogado si tienes dudas sobre qué declarar", "Avisa oportunamente si necesitas reprogramar"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">✓</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>
@@ -343,7 +343,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">No siempre se necesita un abogado para una declaración como testigo. Sin embargo, existen situaciones en las que la asesoría previa resulta especialmente recomendable:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Si te citan como imputado", "Si la investigación se relaciona con hechos que podrían afectarte", "Si declaraste antes y cambiaste de versión", "Si existen antecedentes que puedan interpretarse en tu contra", "Si tienes dudas sobre qué documentos entregar", "Si recibiste la citación mucho tiempo después del hecho"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

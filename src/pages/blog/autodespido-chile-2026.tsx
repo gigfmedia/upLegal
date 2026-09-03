@@ -70,7 +70,7 @@ const BlogArticle = () => {
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
@@ -426,7 +426,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Tu empleador no paga cotizaciones previsionales desde hace meses", "Llevas varios meses sin recibir tu sueldo completo o a tiempo", "Sufres acoso laboral o sexual y no sabes cómo proceder", "Te cambiaron las condiciones de trabajo sin tu acuerdo", "Estás pensando en renunciar pero quieres conservar tus indemnizaciones", "No sabes si los incumplimientos de tu empleador son suficientes para demandar", "Ya recibiste una carta de respuesta del empleador o una citación"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

@@ -507,7 +507,7 @@ const BlogArticle = () => {
                                 "Si Carabineros te notificó una citación por violación de morada y no sabes qué antecedentes existen en tu contra.",
                                 "Cuando existe un conflicto entre ex parejas o familiares por el uso de una vivienda y necesitas determinar si es un tema penal o civil.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

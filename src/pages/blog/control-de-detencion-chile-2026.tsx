@@ -407,7 +407,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">En la práctica, la primera audiencia suele definir gran parte del desarrollo posterior del proceso.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Revisar la legalidad de la detención", "Preparar la estrategia de defensa", "Solicitar diligencias de investigación", "Oponerse a medidas cautelares desproporcionadas", "Representar al imputado durante todas las audiencias", "Explicar las alternativas procesales disponibles"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

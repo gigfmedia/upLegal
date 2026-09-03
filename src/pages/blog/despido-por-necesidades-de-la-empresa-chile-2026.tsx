@@ -470,7 +470,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Buscar asesoría temprana suele ser recomendable cuando ocurre alguna de estas situaciones:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Recibiste una carta por necesidades de la empresa", "Te ofrecieron firmar un finiquito inmediatamente", "Dudas del cálculo de tus indemnizaciones", "La empresa contrató rápidamente a otra persona para tu mismo cargo", "Sospechas que la causal fue utilizada para ocultar otra razón del despido", "Existían conflictos previos con la empresa", "Sufriste represalias antes del despido", "Ya recibiste una citación judicial o administrativa"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

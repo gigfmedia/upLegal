@@ -74,7 +74,7 @@ const BlogArticle = () => {
             ¿Qué pasa si no tengo contrato de arriendo en Chile? (Guía legal 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -87,9 +87,9 @@ const BlogArticle = () => {
                 "El arrendador no puede desalojarte por la fuerza",
                 "Los conflictos suelen terminar resolviéndose en tribunales"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -522,7 +522,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">Arrendar sin contrato escrito te deja en una posición más vulnerable. Hay ciertos escenarios donde conviene tener asesoría legal sin demora.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Cuando el arrendador amenaza con desalojarte por la fuerza sin orden judicial", "Cuando hay conflicto sobre el monto del arriendo o las condiciones que se acordaron verbalmente", "Cuando quieres regularizar tu situación pero el arrendador se niega a firmar un contrato escrito"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

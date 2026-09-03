@@ -491,7 +491,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Aunque cada situación debe analizarse individualmente, suele ser recomendable buscar asesoría cuando:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Recibiste una carta de despido que consideras discriminatoria", "Sufriste represalias después de denunciar irregularidades", "Eres víctima de acoso laboral reiterado", "Tu empleador vulneró tu privacidad", "Fuiste sancionado por ejercer derechos laborales", "Existe una investigación interna que podría afectar tu continuidad laboral", "Estás próximo a firmar un finiquito relacionado con estos hechos", "Ya recibiste una notificación judicial o una citación"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

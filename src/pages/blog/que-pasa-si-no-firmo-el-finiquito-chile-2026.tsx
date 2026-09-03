@@ -66,7 +66,7 @@ const BlogArticle = () => {
             ¿Qué Pasa si No Firmo el Finiquito en Chile?
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -78,7 +78,7 @@ const BlogArticle = () => {
                 "Si no estás de acuerdo con los montos, puedes negarte a firmar",
                 "Tienes plazos legales cortos para demandar"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
                   <span className="text-base sm:text-base text-gray-200">{item}</span>
                 </li>

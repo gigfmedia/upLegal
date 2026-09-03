@@ -69,7 +69,7 @@ const BlogArticle = () => {
             ¿El arrendador puede cambiar la cerradura en Chile? (Guía legal 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -82,9 +82,9 @@ const BlogArticle = () => {
                 "Cambiar cerraduras puede generar responsabilidades legales",
                 "Si ocurrió, debes reunir pruebas y actuar rápidamente"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -434,7 +434,7 @@ const BlogArticle = () => {
                 "Cuando recibes amenazas de desalojo sin orden judicial.",
                 "Si el arrendador retiró tus pertenencias del inmueble sin autorización del tribunal.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

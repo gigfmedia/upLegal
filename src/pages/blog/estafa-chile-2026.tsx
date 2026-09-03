@@ -457,7 +457,7 @@ const BlogArticle = () => {
                                 "Si la otra parte ya presentó una denuncia en tu contra por estafa y aún no has declarado.",
                                 "Cuando la Fiscalía te notifica una citación a declarar como imputado sin que conozcas el contenido de la carpeta investigativa.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

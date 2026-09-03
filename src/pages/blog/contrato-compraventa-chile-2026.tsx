@@ -105,7 +105,7 @@ const BlogArticle = () => {
                                 "11. Jurisdicción y notificaciones: tribunal competente y correos válidos para notificar.",
                                 "12. Firma y fecha cierta: ante notario o con dos testigos; anexa Cédulas y poder si firmas por empresa.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                         <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl mt-4">
@@ -160,7 +160,7 @@ const BlogArticle = () => {
                                 "Cláusula de aceleración: si falla una cuota, haces exigible todo el saldo.",
                                 "Cláusula penal y resolución: multa fija por mora y derecho a resolver el contrato y retener lo pagado a título de indemnización, según lo pactado.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Deja cada pago trazable: transferencia con glosa "cuota N° X contrato fecha Y". Un pagaré por el saldo como garantía adicional permite ir directo a juicio ejecutivo si incumplen, pero no reemplaza la reserva de dominio.</p>

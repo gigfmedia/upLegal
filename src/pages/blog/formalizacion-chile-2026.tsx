@@ -408,7 +408,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">La etapa posterior a la formalización define gran parte del resultado del proceso. Una defensa técnica temprana permite:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Revisar la legalidad de la formalización", "Preparar observaciones a la solicitud de medidas cautelares", "Solicitar diligencias de investigación", "Explorar salidas alternativas", "Preparar la defensa para el juicio si corresponde", "Instar por el término del procedimiento cuando procede"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

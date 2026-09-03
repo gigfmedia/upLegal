@@ -406,7 +406,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Existen situaciones donde resulta especialmente recomendable buscar asesoría jurídica:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["La empresa rechaza completamente el reclamo", "Existe una demanda en tu contra", "El perjuicio económico es elevado", "Hubo daños materiales o morales", "Existen cláusulas contractuales difíciles de interpretar", "El SERNAC no logró resolver el conflicto", "Necesitas demandar judicialmente", "Existe un incumplimiento contractual complejo"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

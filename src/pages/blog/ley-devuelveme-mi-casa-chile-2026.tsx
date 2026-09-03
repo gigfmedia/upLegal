@@ -70,7 +70,7 @@ const BlogArticle = () => {
             Ley <span className="font-serif italic">&quot;Devuélveme Mi Casa&quot;</span> en Chile (Ley 21.461): Qué es y cómo recuperar tu propiedad en 2026
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -83,9 +83,9 @@ const BlogArticle = () => {
                 "No autoriza desalojos por la fuerza ni cambios de cerradura",
                 "Actuar rápido puede evitar que la deuda y el conflicto aumenten"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -592,7 +592,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Si estás considerando recuperar tu propiedad bajo la Ley 21.461, hay ciertos escenarios donde conviene actuar rápido y buscar asesoría legal especializada antes de tomar cualquier decisión.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Llevas más de un mes sin recibir el pago del arriendo y el arrendatario no responde", "El arrendatario se niega a desocupar la propiedad después del término del contrato", "Necesitas recuperar el inmueble con urgencia y quieres saber si calificas para el procedimiento monitorio"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

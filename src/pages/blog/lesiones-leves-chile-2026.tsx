@@ -510,7 +510,7 @@ const BlogArticle = () => {
                                 "Si la Fiscalía ya solicitó medidas cautelares en tu contra y necesitas evaluar tu situación procesal antes de la audiencia.",
                                 "Cuando eres víctima de una agresión y necesitas orientación sobre la constatación de lesiones y los pasos para formalizar la denuncia.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

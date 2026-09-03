@@ -68,7 +68,7 @@ const BlogArticle = () => {
             Me Quieren Desalojar ¿Qué Hago? Tus Derechos y Pasos Urgentes en Chile (2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -81,9 +81,9 @@ const BlogArticle = () => {
                 "La notificación judicial es obligatoria para avanzar",
                 "Ignorar la demanda puede acelerar el lanzamiento"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -364,7 +364,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Si el arrendador está usando presión o amenazas para que abandones la propiedad, el tiempo de reacción es clave para evitar un desalojo ilegal.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Si el dueño cambió la cerradura o cortó servicios básicos", "Si recibiste una notificación judicial y no sabes cómo responder", "Si el arrendador te amenaza con sacarte por la fuerza sin orden judicial"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

@@ -78,7 +78,7 @@ const BlogArticle = () => {
             ¿Cuánto me corresponde por años de servicio en Chile? (Cálculo de indemnización 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -91,9 +91,9 @@ const BlogArticle = () => {
                 "Se calcula sobre la última remuneración mensual con ciertos topes legales",
                 "No corresponde en caso de renuncia voluntaria o despido por causas graves"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>

@@ -83,7 +83,7 @@ const BlogArticle = () => {
                 "Expulsa al ocupante legítimo para ocupar él, aunque la entrada inicial haya sido pacífica.",
                 "Actúa con ánimo de señor: quiere quedarse, no solo pasar.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <p className="text-gray-600 mt-4">No hay usurpación si entraste con permiso del dueño y luego no te vas: eso es precario (civil), no penal. Tampoco si retuviste el inmueble por deuda: el tribunal lo verá como conflicto civil.</p>
@@ -133,7 +133,7 @@ const BlogArticle = () => {
                 "Testigos: vecinos que vieron la ocupación o la expulsión.",
                 "Parte policial y RUC de la causa para hacer seguimiento.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
           </div>

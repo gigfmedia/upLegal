@@ -120,7 +120,7 @@ const BlogArticle = () => {
                                 "Verifica el número: captura la ficha del contacto (foto, info, número) y guarda si lo tienes agendado con nombre real.",
                                 "Respalda en la nube y deja una copia ante notario o en Carabineros: fecha cierta y cadena de custodia mínima.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                         <p className="text-gray-600 mt-4">Si el agresor borra mensajes con "eliminar para todos", tu captura previa es la prueba. Por eso no esperes: respalda en cuanto recibas la amenaza. Si puedes, pide a un testigo que presencie la extracción de la conversación.</p>

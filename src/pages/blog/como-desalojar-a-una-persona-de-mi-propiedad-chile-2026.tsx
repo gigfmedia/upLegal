@@ -75,7 +75,7 @@ const BlogArticle = () => {
 
           <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600 text-balance">{title}</h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <ul className="space-y-3">
               {[
@@ -507,7 +507,7 @@ const BlogArticle = () => {
               <p className="text-gray-600 mb-4">Si estás pensando en desalojar a alguien de tu propiedad, hay ciertos escenarios donde conviene actuar rápido y buscar asesoría legal especializada antes de tomar cualquier decisión por tu cuenta.</p>
               <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                 {["No sabes si la persona que ocupa tu propiedad tiene algún derecho legal sobre ella", "Han pasado varios meses y el ocupante no paga ni muestra intención de irse", "Has intentado negociar sin éxito y necesitas saber cuál es el primer paso legal concreto"].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2">
+                  <li key={i} className="flex items-center gap-3">
                     <span className="text-green-600 flex-shrink-0">•</span>
                     <span className="text-gray-700 font-bold">{item}</span>
                   </li>

@@ -481,7 +481,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Tanto las víctimas como las personas investigadas pueden beneficiarse de recibir asesoría temprana.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Evaluar si los hechos efectivamente constituyen un delito de hurto", "Revisar las pruebas existentes", "Solicitar diligencias adicionales", "Preparar declaraciones", "Representar a la víctima durante la investigación", "Diseñar una estrategia de defensa cuando existe una imputación"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

@@ -489,7 +489,7 @@ const BlogArticle = () => {
                                 "Si eres víctima y quieres solicitar una orden pero no sabes qué antecedentes presentar para que el tribunal la conceda.",
                                 "Cuando existe una denuncia cruzada donde ambas partes alegan agresiones y necesitas evaluar tu posición procesal.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

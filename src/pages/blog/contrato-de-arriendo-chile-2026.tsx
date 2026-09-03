@@ -73,7 +73,7 @@ const BlogArticle = () => {
             Contrato de arriendo en Chile: modelo gratis, cláusulas clave y errores que debes evitar (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -86,9 +86,9 @@ const BlogArticle = () => {
                 "Sí puedes arrendar sin notaría, pero formalizar ayuda a evitar problemas",
                 "Revisar las cláusulas antes de firmar puede ahorrarte demandas futuras"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -624,7 +624,7 @@ const BlogArticle = () => {
             </p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Ya recibiste una demanda o amenaza de desalojo", "El arrendador no te devuelve la garantía sin una razón clara", "Hay cláusulas abusivas o ilegales en el contrato que firmaste"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

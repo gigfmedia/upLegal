@@ -101,7 +101,7 @@ const BlogArticle = () => {
                                 "No firmes nada ni reconozcas culpa apresurada: el parte y el peritaje dirán quién tuvo la culpa.",
                                 "Haz la denuncia y constancia: parte policial, informe al seguro en 24-48 horas y guarda boletas médicas.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                         <div className="bg-red-50 p-5 rounded-xl mt-4">
@@ -157,7 +157,7 @@ const BlogArticle = () => {
                                 "Peritaje mecánico y de velocidad: estima la velocidad por deformación y frenada.",
                                 "Documentos médicos: certificado de lesiones, licencias y gastos.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
                             ))}
                         </ul>
                     </div>

@@ -64,7 +64,7 @@ const BlogArticle = () => {
             Tácita reconducción en Chile: qué es y qué pasa si sigues arrendando sin contrato (Guía 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -77,9 +77,9 @@ const BlogArticle = () => {
                 "El arrendador igualmente puede pedir el inmueble siguiendo la ley",
                 "Ignorar la situación puede generar conflictos o demandas"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -224,7 +224,7 @@ const BlogArticle = () => {
                     "Uso del inmueble",
                     "Obligaciones básicas"
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2">
+                    <li key={i} className="flex items-center gap-3">
                       <div className="h-1.5 w-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
                       <span className="text-green-800">{item}</span>
                     </li>
@@ -240,7 +240,7 @@ const BlogArticle = () => {
                   {[
                     "Duración del contrato"
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-2">
+                    <li key={i} className="flex items-center gap-3">
                       <div className="h-1.5 w-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0"></div>
                       <span className="text-orange-800">{item}</span>
                     </li>
@@ -562,7 +562,7 @@ const BlogArticle = () => {
             </p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["El arrendador te pide que desocupes sin previo aviso ni contrato vigente", "El arrendador quiere subir el arriendo sin respaldo y sin firmar un nuevo contrato", "Llevas meses en tácita reconducción y quieres regularizar tu situación para tener seguridad jurídica"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

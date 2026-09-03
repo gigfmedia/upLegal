@@ -88,7 +88,7 @@ const BlogArticle = () => {
             <span>Artículo</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-600">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif mb-6 text-green-900">
             Calculadora IPC Arriendo Chile 2026: Calcula tu Reajuste al Instante
           </h1>
 
@@ -618,7 +618,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">El reajuste de arriendo por IPC parece un cálculo sencillo, pero hay situaciones donde conviene tener asesoría legal especializada antes de que el problema escale.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Cuando el arrendador aplica un reajuste sin que el contrato tenga cláusula de IPC", "Cuando el cálculo del IPC del arrendador no coincide con el valor oficial publicado por el INE", "Cuando el arrendador amenaza con desalojo por no aceptar un reajuste que parece incorrecto"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

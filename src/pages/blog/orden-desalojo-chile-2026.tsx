@@ -72,7 +72,7 @@ const BlogArticle = () => {
             Juicio y Orden de Desalojo en Chile 2026: Plazos, Proceso y Cómo Actuar
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -85,9 +85,9 @@ const BlogArticle = () => {
                 "Ignorar la demanda aumenta el riesgo de desalojo",
                 "Actuar rápido puede ayudarte a negociar o ganar tiempo"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -526,7 +526,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Cuando la orden de desalojo ya está emitida o el lanzamiento es inminente, cada día cuenta para encontrar una solución legal.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Si ya te notificaron la demanda de desalojo y no has respondido", "Si el lanzamiento está programado y necesitas saber si puedes suspenderlo", "Si eres arrendador y quieres ejecutar la orden de desalojo sin errores"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

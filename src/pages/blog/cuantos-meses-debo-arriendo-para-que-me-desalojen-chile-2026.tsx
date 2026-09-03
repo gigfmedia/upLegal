@@ -85,7 +85,7 @@ const BlogArticle = () => {
             ¿Cuántos meses sin pagar arriendo para que te desalojen en Chile? Los plazos reales (2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-400 mb-4">Resumen rápido</p>
             <div className="grid sm:grid-cols-2 gap-4 text-white">
               <div className="flex items-center gap-3">
@@ -646,7 +646,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Si estás acumulando deuda de arriendo o ya te notificaron una demanda, hay ciertos escenarios donde conviene buscar asesoría legal especializada lo antes posible para evitar que la situación empeore.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Ya debes 2 meses o más de arriendo y el arrendador ha dejado de responder", "Recibiste una notificación judicial o citación por demanda de desalojo", "No estás seguro de si puedes negociar un acuerdo de pago o si es mejor defender tu caso en el juicio"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

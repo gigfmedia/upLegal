@@ -79,7 +79,7 @@ const BlogArticle = () => {
             No me Devuelven la Garantía de Arriendo: ¿Cómo Recuperarla? (2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -92,9 +92,9 @@ const BlogArticle = () => {
                 "Sin respaldo o inventario, retener la garantía puede ser ilegal",
                 "Si no te devuelven el dinero, puedes exigirlo judicialmente"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -557,7 +557,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">La devolución de la garantía parece un trámite sencillo, pero hay situaciones donde el arrendador puede aprovecharse si no actúas con asesoría legal.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Cuando el arrendador retiene la garantía sin presentar boletas ni facturas que justifiquen los descuentos", "Cuando han pasado más de 30 días desde la entrega del inmueble y no hay señales de devolución", "Cuando el arrendador descuenta por desgaste normal del inmueble, como pintura o pequeñas marcas en paredes"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

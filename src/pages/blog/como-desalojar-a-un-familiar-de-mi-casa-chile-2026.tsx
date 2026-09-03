@@ -77,7 +77,7 @@ const BlogArticle = () => {
           </h1>
 
           {/* Quick Summary Card */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -88,9 +88,9 @@ const BlogArticle = () => {
                 "La acción legal más común es la demanda de precario o comodato",
                 "El proceso puede tomar entre 3 y 12 meses dependiendo del tribunal y si hay oposición",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -489,7 +489,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-4">Si estás enfrentando una situación compleja con un familiar que ocupa tu propiedad, hay ciertos escenarios donde conviene buscar asesoría legal especializada lo antes posible.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["El familiar no quiere irse y ya has agotado todas las opciones de diálogo", "Hay menores de edad viviendo en la propiedad y necesitas entender cómo afecta el proceso", "El familiar alega tener algún derecho sobre el inmueble (herencia, aportes económicos, etc.)"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

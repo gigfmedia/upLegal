@@ -288,7 +288,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Una buena preparación reduce el riesgo de errores y contradicciones.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Confirma el motivo de la citación y tu rol", "Ordena tu relato cronológicamente", "Identifica qué sabes con certeza y qué no recuerdas", "Reúne documentos o registros que respalden tu versión", "Evita afirmar datos que no puedes respaldar", "Consulta con un abogado si el caso lo amerita"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">✓</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>
@@ -340,7 +340,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Si bien no toda declaración requiere un abogado, hay situaciones donde la asesoría previa es especialmente recomendable:</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Si declaras como imputado", "Si el contenido de tu declaración puede comprometerte", "Si tu relación con el imputado podría ser causal de abstención", "Si ya declaraste antes y necesitas aclarar tu versión", "Si tienes dudas sobre qué documentos entregar", "Si recibiste la citación después de mucho tiempo"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

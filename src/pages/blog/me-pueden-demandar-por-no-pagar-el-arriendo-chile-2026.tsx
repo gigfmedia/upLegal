@@ -81,7 +81,7 @@ const BlogArticle = () => {
             ¿Me pueden demandar por no pagar el arriendo en Chile? (Qué pasa y cómo defenderte 2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">Resumen rápido</p>
             <div className="space-y-3 text-white/90">
               {[
@@ -653,7 +653,7 @@ const BlogArticle = () => {
             </p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Ya debes 2 o más meses de arriendo y el arrendador presiona", "Recibiste una notificación judicial o carta de demanda", "El arrendador se niega a negociar y amenaza con desalojo inmediato"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

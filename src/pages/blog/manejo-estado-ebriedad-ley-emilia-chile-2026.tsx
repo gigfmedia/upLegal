@@ -100,7 +100,7 @@ const BlogArticle = () => {
                 "Inhabilidad perpetua para conducir si matas (nunca más licencia).",
                 "Fuga del lugar sin prestar ayuda también es delito grave y agrava la pena.",
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
+                <li key={i} className="flex items-center gap-3"><span className="text-green-600 flex-shrink-0">✓</span><span className="text-gray-700 font-bold">{item}</span></li>
               ))}
             </ul>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-xl mt-4">

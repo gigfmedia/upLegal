@@ -485,7 +485,7 @@ const BlogArticle = () => {
                         <p className="text-gray-600 mb-4">Tanto las víctimas como quienes son investigados pueden beneficiarse de recibir asesoría desde las primeras etapas del procedimiento.</p>
                         <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
                             {["Analizar la calificación jurídica del delito", "Revisar la evidencia reunida por la Fiscalía", "Representar a la víctima durante la investigación", "Preparar una estrategia de defensa", "Solicitar diligencias relevantes", "Asistir en audiencias ante el tribunal", "Explicar las distintas alternativas procesales disponibles"].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

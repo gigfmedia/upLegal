@@ -495,7 +495,7 @@ const BlogArticle = () => {
                                 "Quieras asegurar que el documento pueda utilizarse posteriormente como prueba",
                                 "Exista riesgo de incumplimiento",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">•</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>

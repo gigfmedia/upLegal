@@ -72,7 +72,7 @@ const BlogArticle = () => {
             DICOM y Deuda de Arriendo: ¿Cuándo puede afectarte como Arrendatario en Chile? (2026)
           </h1>
 
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 mb-8">
+          <div className="bg-white backdrop-blur-sm border rounded-2xl p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-green-500 mb-4">
               Resumen rápido
             </p>
@@ -85,9 +85,9 @@ const BlogArticle = () => {
                 "Sí puedes aparecer en DICOM en ciertos casos",
                 "Actuar temprano puede evitar problemas financieros mayores"
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 font-bold">✓</span>
-                  <span className="text-sm sm:text-base text-gray-200">{item}</span>
+                  <span className="text-sm sm:text-base">{item}</span>
                 </li>
               ))}
             </ul>
@@ -606,7 +606,7 @@ const BlogArticle = () => {
             <p className="text-gray-600 mb-6 leading-relaxed">Saber si una deuda de arriendo puede ir a DICOM depende de varios factores legales. En ciertos casos, conviene actuar rápido con asesoría especializada.</p>
             <ul className="space-y-2 bg-gray-50 p-5 rounded-xl">
               {["Cuando el arrendador te amenaza con reportarte a DICOM sin tener un título legal que respalde la deuda", "Cuando ya apareces en DICOM por una deuda de arriendo y no sabes si el registro es legal", "Cuando recibes una notificación de demanda o cobro judicial por deuda de arriendo"].map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
+                <li key={i} className="flex items-center gap-3">
                   <span className="text-green-600 flex-shrink-0">•</span>
                   <span className="text-gray-700 font-bold">{item}</span>
                 </li>

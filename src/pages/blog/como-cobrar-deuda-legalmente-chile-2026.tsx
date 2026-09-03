@@ -216,7 +216,7 @@ const BlogArticle = () => {
                                 "El reconocimiento escrito interrumpe la prescripción y refuerza tu posición.",
                                 "Mantén registro de todos los correos y mensajes intercambiados.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">✓</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>
@@ -357,7 +357,7 @@ const BlogArticle = () => {
                                 "Si recibiste una contra-propuesta de negociación que quieres formalizar sin errores.",
                                 "Cuando el juicio ya está en curso y necesitas defensa o seguimiento técnico.",
                             ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
+                                <li key={i} className="flex items-center gap-3">
                                     <span className="text-green-600 flex-shrink-0">✓</span>
                                     <span className="text-gray-700 font-bold">{item}</span>
                                 </li>
