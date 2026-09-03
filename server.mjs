@@ -179,7 +179,7 @@ const sendGA4PurchaseEvent = async (params) => {
   }
 
   try {
-    console.log('[GA4] Sending purchase event', { transaction_id, value, currency, booking_id, lawyer_id, appointment_id });
+    console.log('[GA4] Sending purchase event', { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, article_slug });
 
     const url = `https://www.google-analytics.com/mp/collect?measurement_id=${ga4MeasurementId}&api_secret=${ga4ApiSecret}`;
 
@@ -2470,7 +2470,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         })
         .is('payment_id', null)
         .eq('id', bookingId)
-        .select()
+        .select('*')
         .maybeSingle();
 
       if (bookingError) {
@@ -2797,6 +2797,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
       // Send GA4 Purchase Event
       try {
         const articleSlug = booking.metadata?.article_slug || null;
+        console.log('[webhook] article_slug from booking metadata:', articleSlug, 'booking_id:', bookingId);
         await sendGA4PurchaseEvent({
           transaction_id: paymentId,
           value: payment.transaction_amount,
