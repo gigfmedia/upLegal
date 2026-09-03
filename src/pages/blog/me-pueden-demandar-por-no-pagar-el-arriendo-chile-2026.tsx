@@ -98,7 +98,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <p className="text-xl leading-relaxed mt-6">
+          <p className="text-xl leading-relaxed mt-6 text-green-900">
             Si dejaste de pagar el arriendo o estás atrasado, es normal preguntarse qué puede pasar realmente.
           </p>
 

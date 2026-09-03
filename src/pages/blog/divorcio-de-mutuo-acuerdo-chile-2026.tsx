@@ -87,7 +87,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl mb-8 leading-relaxed">
+          <p className="text-xl mb-8 leading-relaxed text-green-900">
             Cuando una pareja decide separarse de común acuerdo, el divorcio de mutuo acuerdo es el camino más directo, menos costoso y menos desgastante que existe en Chile. A diferencia del divorcio unilateral — donde uno quiere divorciarse y el otro no — el mutuo acuerdo permite que ambas partes controlen el proceso y lleguen a términos que les convengan.
           </p>
 

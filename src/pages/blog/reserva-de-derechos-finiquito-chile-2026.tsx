@@ -79,10 +79,10 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl">
+          <p className="text-xl text-green-900">
             Firmar un finiquito es uno de los momentos más importantes al terminar una relación laboral — y uno de los más arriesgados si no sabes lo que estás haciendo. Muchos trabajadores firman sin revisar los montos, o peor, sin saber que pueden protegerse aunque no estén de acuerdo con lo que les están pagando.
           </p>
-          <p className="text-xl mt-4">
+          <p className="text-xl mt-4 text-green-900">
             La reserva de derechos existe precisamente para eso: te permite recibir el pago sin cerrar la puerta a reclamar lo que crees que te corresponde.
           </p>
 

@@ -97,7 +97,7 @@ const BlogArticle = () => {
                         </ul>
                     </div>
 
-                    <p className="text-xl max-w-4xl">
+                    <p className="text-xl max-w-4xl text-green-900">
                         Firmar un pagaré es una práctica muy común en Chile. Bancos, instituciones financieras, universidades, clínicas, empresas e incluso personas particulares utilizan este documento para respaldar préstamos, créditos o el pago de una deuda.
                     </p>
 
