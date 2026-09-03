@@ -171,7 +171,7 @@ if (!ga4MeasurementId || !ga4ApiSecret) {
 
 // Send GA4 Purchase Event using Measurement Protocol
 const sendGA4PurchaseEvent = async (params) => {
-  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner, article_slug } = params as any;
+  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner, article_slug } = params;
 
   if (!ga4MeasurementId || !ga4ApiSecret) {
     console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
@@ -200,7 +200,7 @@ const sendGA4PurchaseEvent = async (params) => {
             ...(lawyer_id && { lawyer_id }),
             ...(appointment_id && { appointment_id }),
             ...(is_owner !== undefined && { transport_is_owner: is_owner }),
-            ...((params as any).article_slug && { article_slug: (params as any).article_slug }),
+            ...(params.article_slug && { article_slug: params.article_slug }),
             items: [
               {
                 item_id: booking_id,
@@ -2503,7 +2503,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 amount: payment.transaction_amount,
                 variant: booking.experiment_variant,
                 is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
-                article_slug: (booking as any).metadata?.article_slug || null,
+                article_slug: booking.metadata?.article_slug || null,
               },
             }),
           });
@@ -2796,7 +2796,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       // Send GA4 Purchase Event
       try {
-        const articleSlug = (booking as any).metadata?.article_slug || null;
+        const articleSlug = booking.metadata?.article_slug || null;
         await sendGA4PurchaseEvent({
           transaction_id: paymentId,
           value: payment.transaction_amount,
@@ -2806,7 +2806,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           appointment_id: appointmentId,
           is_owner: isOwnerEmail(booking.user_email),
           article_slug: articleSlug,
-        } as any);
+        });
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);
       }
