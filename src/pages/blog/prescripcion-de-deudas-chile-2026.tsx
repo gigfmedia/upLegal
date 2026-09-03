@@ -210,12 +210,7 @@ const BlogArticle = () => {
                         <p className="text-amber-800">Aunque hayan pasado años, el tribunal no declarará la prescripción automáticamente — debes alegarla dentro del juicio. Si te están cobrando una deuda antigua, cada día que pasa sin actuar puede ser la diferencia entre extinguir la obligación o terminar con un embargo.</p>
                     </div>
 
-                    <InArticleCTA
-                        title="¿No sabes si tu deuda todavía puede cobrarse?"
-                        message="Un abogado puede revisar las fechas, documentos y antecedentes de tu caso y orientarte sobre si podría existir prescripción."
-                        buttonText="Consultar con un abogado"
-                        category="Derecho Civil"
-                    />
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* H2: ¿Todas las deudas prescriben? */}
                     <div className="mb-12">
@@ -280,7 +275,12 @@ const BlogArticle = () => {
                     </div>
 
                     {/* RelatedLawyers */}
-                    <RelatedLawyers category="Derecho Civil" />
+                    <InArticleCTA
+                        title="¿No sabes si tu deuda todavía puede cobrarse?"
+                        message="Un abogado puede revisar las fechas, documentos y antecedentes de tu caso y orientarte sobre si podría existir prescripción."
+                        buttonText="Consultar con un abogado"
+                        category="Derecho Civil"
+                    />
 
                     {/* H2: ¿Qué ocurre si la deuda ya prescribió? */}
                     <div className="mb-12">

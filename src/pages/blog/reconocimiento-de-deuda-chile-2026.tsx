@@ -214,12 +214,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* InArticleCTA #1 */}
-                    <InArticleCTA
-                        title="¿Estás por reconocer una deuda?"
-                        message="Antes de firmar, un abogado puede revisar el documento y advertirte sobre posibles riesgos."
-                        buttonText="Consultar con un abogado"
-                        category="Derecho Civil"
-                    />
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
@@ -280,7 +275,12 @@ const BlogArticle = () => {
                     </div>
 
                     {/* RelatedLawyers */}
-                    <RelatedLawyers category="Derecho Civil" />
+                    <InArticleCTA
+                        title="¿Estás por reconocer una deuda?"
+                        message="Antes de firmar, un abogado puede revisar el documento y advertirte sobre posibles riesgos."
+                        buttonText="Consultar con un abogado"
+                        category="Derecho Civil"
+                    />
 
                     {/* VALIDEZ LEGAL */}
                     <div className="mb-12">

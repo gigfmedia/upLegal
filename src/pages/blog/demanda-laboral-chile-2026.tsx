@@ -155,9 +155,7 @@ const BlogArticle = () => {
                         </p>
                     </div>
 
-                    <InArticleCTA
-                        category="Derecho Laboral"
-                    />
+                    <RelatedLawyers category="Derecho Laboral" />
 
                     {/* QUE ES */}
                     <div className="mb-12">
@@ -195,7 +193,9 @@ const BlogArticle = () => {
 
                     {/* CTA IN-ARTICLE */}
 
-                    <RelatedLawyers category="Derecho Laboral" />
+                    <InArticleCTA
+                        category="Derecho Laboral"
+                    />
 
 
                     {/* CUANDO CONVIENE */}

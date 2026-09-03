@@ -184,7 +184,7 @@ const BlogArticle = () => {
                         </div>
                     </div>
 
-                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral en tu trabajo?" message="Un abogado laboral puede evaluar tu caso, reunir pruebas y determinar si corresponde una tutela laboral o demanda." />
+                    <RelatedLawyers category="Derecho Laboral" />
 
 
                     {/* CONDUCTAS */}
@@ -240,7 +240,7 @@ const BlogArticle = () => {
 
 
                     </div>
-                    <RelatedLawyers category="Derecho Laboral" />
+                    <InArticleCTA category="Derecho Laboral" title="¿Sufres acoso laboral en tu trabajo?" message="Un abogado laboral puede evaluar tu caso, reunir pruebas y determinar si corresponde una tutela laboral o demanda." />
 
 
                     {/* QUIEN PUEDE COMETER */}

@@ -127,7 +127,7 @@ const BlogArticle = () => {
               </p>
             </div>
 
-            <InArticleCTA category="Derecho Civil" />
+            <RelatedLawyers category="Derecho Civil" />
 
             <div className="mb-12">
               <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué dice la ley sobre el desalojo en Chile?</h2>
@@ -176,7 +176,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-            <RelatedLawyers category="Derecho Civil" />
+            <InArticleCTA category="Derecho Civil" />
 
 
           <div className="mb-12">

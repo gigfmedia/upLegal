@@ -431,7 +431,7 @@ const BlogArticle = () => {
             </p>
             </div>
 
-            <InArticleCTA category="Derecho Laboral" />
+            <RelatedLawyers category="Derecho Laboral" />
 
           {/* What is Finiquito */}
           <div className="mb-12">
@@ -462,7 +462,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <RelatedLawyers category="Derecho Laboral" />
+          <InArticleCTA category="Derecho Laboral" />
 
 
           {/* Complexity Block 1 */}

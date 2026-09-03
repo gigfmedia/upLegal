@@ -184,7 +184,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
+          <RelatedLawyers category="Derecho Civil" />
 
 
           <div className="mb-12">
@@ -248,7 +248,7 @@ const BlogArticle = () => {
               </Link>
             </div>
           </div>
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA category="Derecho Civil" title="¿Recibiste una orden de desalojo?" message="Un abogado puede revisar la resolución, explicarte qué significa y orientarte sobre las alternativas disponibles en tu situación." buttonText="Revisar mi caso" />
 
 
           <div className="mb-12">

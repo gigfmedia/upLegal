@@ -146,14 +146,7 @@ const BlogArticle = () => {
             </p>
             </div>
 
-            <InArticleCTA
-              category="Derecho Civil"
-              targetUrl="/abogado-arriendo"
-              title="¿No te devolvieron el mes de garantía?"
-              message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
-              buttonText="Revisar mi caso"
-              priceNote="Consulta legal de 60 min desde $35.000"
-            />
+            <RelatedLawyers category="Derecho Civil" />
 
           {/* ¿Qué es la garantía? */}
           <div className="mb-6 py-2">
@@ -177,7 +170,14 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA
+              category="Derecho Civil"
+              targetUrl="/abogado-arriendo"
+              title="¿No te devolvieron el mes de garantía?"
+              message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
+              buttonText="Revisar mi caso"
+              priceNote="Consulta legal de 60 min desde $35.000"
+            />
 
           {/* Cluster link 1 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">

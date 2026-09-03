@@ -172,7 +172,7 @@ const BlogArticle = () => {
             <p className="text-amber-800">Mientras el arrendatario no paga y no desocupa, la deuda, los intereses y las costas siguen creciendo. Si llevas más de un mes sin recibir renta o el arrendatario se niega a salir, cada día de espera encarece la recuperación de tu propiedad.</p>
           </div>
 
-          <InArticleCTA category="Derecho Civil" title="¿Te deben arriendos y no sabes cómo recuperar tu casa?" message="Un abogado inmobiliario puede verificar si calificas al procedimiento monitorio de la Ley 21.461, revisar tu contrato y orientarte sobre cómo recuperar la propiedad." />
+          <RelatedLawyers category="Derecho Civil" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Cuándo se puede aplicar esta ley?</h2>
@@ -268,7 +268,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" />
+          <InArticleCTA category="Derecho Civil" title="¿Te deben arriendos y no sabes cómo recuperar tu casa?" message="Un abogado inmobiliario puede verificar si calificas al procedimiento monitorio de la Ley 21.461, revisar tu contrato y orientarte sobre cómo recuperar la propiedad." />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué cambia con la Ley 21.461?</h2>

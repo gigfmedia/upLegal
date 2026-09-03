@@ -172,12 +172,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-            category="Derecho Civil"
-            title="¿Ya estás enfrentando un juicio de desalojo?"
-            message="Los plazos y alternativas dependen de la etapa del procedimiento. Un abogado puede revisar tu caso y orientarte sobre qué hacer ahora."
-            buttonText="Consultar con un abogado"
-          />
+          <RelatedLawyers category="Derecho Civil" title="¿Estás evaluando iniciar un juicio de desalojo? Abogados disponibles hoy" />
 
           <div className="mb-4 py-2">
             <h2 className="text-2xl font-bold mb-4">¿Cuánto demora un juicio de desalojo realmente?</h2>
@@ -256,7 +251,12 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <RelatedLawyers category="Derecho Civil" title="¿Estás evaluando iniciar un juicio de desalojo? Abogados disponibles hoy" />
+          <InArticleCTA
+            category="Derecho Civil"
+            title="¿Ya estás enfrentando un juicio de desalojo?"
+            message="Los plazos y alternativas dependen de la etapa del procedimiento. Un abogado puede revisar tu caso y orientarte sobre qué hacer ahora."
+            buttonText="Consultar con un abogado"
+          />
 
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Guía Pilar</p>

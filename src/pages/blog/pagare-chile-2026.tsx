@@ -197,12 +197,7 @@ const BlogArticle = () => {
                     </div>
 
                     {/* CTA IN-ARTICLE 1 */}
-                    <InArticleCTA
-                        title="¿Te demandaron por un pagaré?"
-                        message="Un abogado puede revisar el pagaré y la demanda y explicarte qué alternativas tienes."
-                        buttonText="Revisar mi caso"
-                        category="Derecho Civil"
-                    />
+                    <RelatedLawyers category="Derecho Civil" />
 
                     {/* QUE DEBE CONTENER */}
                     <div className="mb-12">
@@ -310,7 +305,12 @@ const BlogArticle = () => {
                     </div>
 
                     {/* RelatedLawyers */}
-                    <RelatedLawyers category="Derecho Civil" />
+                    <InArticleCTA
+                        title="¿Te demandaron por un pagaré?"
+                        message="Un abogado puede revisar el pagaré y la demanda y explicarte qué alternativas tienes."
+                        buttonText="Revisar mi caso"
+                        category="Derecho Civil"
+                    />
 
                     {/* QUE OCURRE CUANDO FIRMO */}
                     <div className="mb-12">
