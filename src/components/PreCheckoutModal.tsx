@@ -27,6 +27,7 @@ export interface AppointmentCheckoutData {
   review_count?: number;
   experiment_variant?: string | null;
   posthog_distinct_id?: string | null;
+  article_slug?: string | null;
 }
 
 export interface ServiceCheckoutData {
@@ -40,6 +41,7 @@ export interface ServiceCheckoutData {
   price: number;
   requires_meeting: boolean;
   requires_quote: boolean;
+  article_slug?: string | null;
 }
 
 export type CheckoutData = AppointmentCheckoutData | ServiceCheckoutData;
@@ -153,6 +155,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
 
       const isAppointment = checkoutData.type === 'appointment';
       const distinctId = posthog.get_distinct_id();
+      const articleSlugFromCheckout = (checkoutData as any).article_slug || null;
       const payload = isAppointment
         ? {
             lawyer_id: checkoutData.lawyer_id,
@@ -167,6 +170,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             booking_type: 'appointment',
             experiment_variant: checkoutData.experiment_variant || null,
             posthog_distinct_id: distinctId || null,
+            article_slug: articleSlugFromCheckout,
           }
         : {
             lawyer_id: checkoutData.lawyer_id,
@@ -181,6 +185,7 @@ export default function PreCheckoutModal({ isOpen, onClose, checkoutData }: PreC
             service_description: (checkoutData as ServiceCheckoutData).service_description,
             service_delivery_time: (checkoutData as ServiceCheckoutData).service_delivery_time,
             requires_meeting: (checkoutData as ServiceCheckoutData).requires_meeting,
+            article_slug: articleSlugFromCheckout,
           };
 
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/bookings/create`, {

@@ -171,7 +171,7 @@ if (!ga4MeasurementId || !ga4ApiSecret) {
 
 // Send GA4 Purchase Event using Measurement Protocol
 const sendGA4PurchaseEvent = async (params) => {
-  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner } = params;
+  const { transaction_id, value, currency, booking_id, lawyer_id, appointment_id, is_owner, article_slug } = params as any;
 
   if (!ga4MeasurementId || !ga4ApiSecret) {
     console.warn('[GA4] Skipping purchase event - GA4 credentials not configured');
@@ -200,6 +200,7 @@ const sendGA4PurchaseEvent = async (params) => {
             ...(lawyer_id && { lawyer_id }),
             ...(appointment_id && { appointment_id }),
             ...(is_owner !== undefined && { transport_is_owner: is_owner }),
+            ...((params as any).article_slug && { article_slug: (params as any).article_slug }),
             items: [
               {
                 item_id: booking_id,
@@ -1219,6 +1220,7 @@ app.post('/api/bookings/create', async (req, res) => {
       requires_meeting,
       experiment_variant,
       posthog_distinct_id,
+      article_slug,
     } = req.body;
 
     const isServiceBooking = booking_type === 'service';
@@ -1351,6 +1353,9 @@ app.post('/api/bookings/create', async (req, res) => {
       requires_meeting: isServiceBooking ? inferRequiresMeeting() : true,
       experiment_variant: experiment_variant || null,
       posthog_distinct_id: posthog_distinct_id || null,
+      metadata: {
+        article_slug: article_slug ? String(article_slug).trim() || null : null,
+      },
     };
 
     console.log('BOOKING INSERT', bookingInsert);
@@ -2498,6 +2503,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
                 amount: payment.transaction_amount,
                 variant: booking.experiment_variant,
                 is_owner: OWNER_EMAILS.has((booking.user_email || '').trim().toLowerCase()),
+                article_slug: (booking as any).metadata?.article_slug || null,
               },
             }),
           });
@@ -2790,6 +2796,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
 
       // Send GA4 Purchase Event
       try {
+        const articleSlug = (booking as any).metadata?.article_slug || null;
         await sendGA4PurchaseEvent({
           transaction_id: paymentId,
           value: payment.transaction_amount,
@@ -2798,7 +2805,8 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           lawyer_id: booking.lawyer_id,
           appointment_id: appointmentId,
           is_owner: isOwnerEmail(booking.user_email),
-        });
+          article_slug: articleSlug,
+        } as any);
       } catch (ga4Error) {
         console.error('[webhook] step=ga4_event status=failed', ga4Error);
       }

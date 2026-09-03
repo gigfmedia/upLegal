@@ -66,36 +66,42 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
 
   const handleLawyerClick = (lawyerId: string, position: number) => {
     sessionStorage.setItem('has_commercial_intent', 'true');
-    if (typeof window !== 'undefined' && window.gtag) {
+    if (typeof window !== 'undefined') {
       const pagePath = window.location.pathname;
       const articleSlug = articleId || pagePath.split('/').pop() || '';
-      const lawyer = lawyers.find((l: any) => (l.id || l.user_id) === lawyerId) as any;
-      const hasReviews = Boolean((lawyer?.reviews || lawyer?.review_count || 0) > 0);
-      const baseProps = {
-        lawyer_id: lawyerId,
-        lawyer_slug: lawyerId,
-        article_slug: articleSlug,
-        page_path: pagePath,
-        specialty: category,
-        category,
-        has_reviews: hasReviews,
-        review_count: lawyer?.reviews || lawyer?.review_count || 0,
-        price: lawyer?.consultationPrice || lawyer?.hourlyRate || 0,
-        availability: Boolean(lawyer?.availability?.availableToday || lawyer?.availableToday),
-        card_position: position,
-      };
-      window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category, ...baseProps });
-      window.gtag('event', 'related_lawyer_card_clicked', {
-        lawyer_id: lawyerId,
-        article_slug: articleSlug,
-        position,
-        category,
-        page_path: pagePath,
-        has_reviews: hasReviews,
-        review_count: baseProps.review_count,
-        price: baseProps.price,
-        availability: baseProps.availability,
-      });
+      // Persist for fallback (URL is primary, sessionStorage is fallback for direct nav)
+      try {
+        if (articleSlug) sessionStorage.setItem('legalup_article_slug', articleSlug);
+      } catch {}
+      if (window.gtag) {
+        const lawyer = lawyers.find((l: any) => (l.id || l.user_id) === lawyerId) as any;
+        const hasReviews = Boolean((lawyer?.reviews || lawyer?.review_count || 0) > 0);
+        const baseProps = {
+          lawyer_id: lawyerId,
+          lawyer_slug: lawyerId,
+          article_slug: articleSlug,
+          page_path: pagePath,
+          specialty: category,
+          category,
+          has_reviews: hasReviews,
+          review_count: lawyer?.reviews || lawyer?.review_count || 0,
+          price: lawyer?.consultationPrice || lawyer?.hourlyRate || 0,
+          availability: Boolean(lawyer?.availability?.availableToday || lawyer?.availableToday),
+          card_position: position,
+        };
+        window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category, ...baseProps });
+        window.gtag('event', 'related_lawyer_card_clicked', {
+          lawyer_id: lawyerId,
+          article_slug: articleSlug,
+          position,
+          category,
+          page_path: pagePath,
+          has_reviews: hasReviews,
+          review_count: baseProps.review_count,
+          price: baseProps.price,
+          availability: baseProps.availability,
+        });
+      }
     }
   };
 
@@ -189,13 +195,17 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
             className="w-full"
           >
             <CarouselContent className="-ml-4">
-              {lawyers.map((lawyer, idx) => (
+              {lawyers.map((lawyer, idx) => {
+                const pagePath = typeof window !== 'undefined' ? window.location.pathname : '';
+                const articleSlugForCard = articleId || pagePath.split('/').pop() || '';
+                return (
                 <CarouselItem key={lawyer.id} className="pl-4 md:basis-1/2 lg:basis-1/2">
                   <div className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
-                    <RelatedLawyerCard lawyer={lawyer} category={category} />
+                    <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCard} />
                   </div>
                 </CarouselItem>
-              ))}
+                );
+              })}
             </CarouselContent>
             <div className="hidden md:block">
               <CarouselPrevious className="-left-12 bg-white" />
@@ -209,11 +219,15 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
           </Carousel>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {lawyers.map((lawyer, idx) => (
+              {lawyers.map((lawyer, idx) => {
+                const pagePathGrid = typeof window !== 'undefined' ? window.location.pathname : '';
+                const articleSlugForCardGrid = articleId || pagePathGrid.split('/').pop() || '';
+                return (
               <div key={lawyer.id} className="h-full" onClickCapture={() => handleLawyerClick(lawyer.id, idx)}>
-                <RelatedLawyerCard lawyer={lawyer} category={category} />
+                <RelatedLawyerCard lawyer={lawyer} category={category} articleSlug={articleSlugForCardGrid} />
               </div>
-            ))}
+                );
+              })}
           </div>
         )}
       </div>

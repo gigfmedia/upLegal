@@ -1215,7 +1215,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
                               });
                               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
                               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
-                              navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
+                              const articleSlug = new URLSearchParams(window.location.search).get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || ''; } catch { return ''; } })();
+                              const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
+                              navigate(`/booking/${nameSlug}-${lawyer.user_id}${articleParam}`);
                             }
                           }}
                           disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}
@@ -1392,7 +1394,9 @@ const PublicProfile = ({ userData: propUser }: PublicProfileProps) => {
               });
               const fullName = `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
               const nameSlug = fullName ? createSlug(fullName) : 'abogado';
-              navigate(`/booking/${nameSlug}-${lawyer.user_id}`);
+              const articleSlug2 = new URLSearchParams(window.location.search).get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || ''; } catch { return ''; } })();
+              const articleParam2 = articleSlug2 ? `?article_slug=${encodeURIComponent(articleSlug2)}` : '';
+              navigate(`/booking/${nameSlug}-${lawyer.user_id}${articleParam2}`);
             }
           }}
           disabled={currentUser?.id === lawyer?.user_id || !lawyer?.hourly_rate_clp}

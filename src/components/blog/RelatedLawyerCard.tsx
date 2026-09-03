@@ -22,9 +22,10 @@ interface RelatedLawyerCardProps {
   lawyer: Lawyer;
   category?: string;
   onContact?: (lawyerId: string) => void;
+  articleSlug?: string;
 }
 
-export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyerCardProps) => {
+export const RelatedLawyerCard = ({ lawyer, category, onContact, articleSlug }: RelatedLawyerCardProps) => {
   const navigate = useNavigate();
 
   // Format display name: shorten second last name to initial
@@ -79,14 +80,23 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
     if (onContact) onContact(lawyer.id);
     // gtag is handled by parent RelatedLawyers onClickCapture with position + page_path; avoid duplicate
     const slug = createSlug(displayName);
-    navigate(`/abogado/${slug}-${lawyer.id}`);
+    const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
+    // Fallback: also ensure sessionStorage has it for direct profile view
+    try {
+      if (articleSlug) sessionStorage.setItem('legalup_article_slug', articleSlug);
+    } catch {}
+    navigate(`/abogado/${slug}-${lawyer.id}${articleParam}`);
   };
 
   const handleSchedule = (e: React.MouseEvent) => {
     e.stopPropagation();
     window.gtag?.('event', 'select_lawyer', { lawyer_id: lawyer.user_id || lawyer.id });
     const slug = createSlug(displayName);
-    navigate(`/booking/${slug}-${lawyer.user_id || lawyer.id}`);
+    const articleParam = articleSlug ? `?article_slug=${encodeURIComponent(articleSlug)}` : '';
+    try {
+      if (articleSlug) sessionStorage.setItem('legalup_article_slug', articleSlug);
+    } catch {}
+    navigate(`/booking/${slug}-${lawyer.user_id || lawyer.id}${articleParam}`);
   };
 
   return (

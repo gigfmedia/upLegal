@@ -164,8 +164,26 @@ export default function BookingPage() {
   const variant = useFeatureFlagVariantKey('booking_button_text');
   const buttonText = variant === 'reserve' ? 'Reserva tu consulta' : 'Agendar y pagar';
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const prefillRef = useRef<{ date?: string; time?: string; duration?: number; applied: boolean }>({ applied: false });
+
+  // Preserve article_slug for attribution (URL is primary, sessionStorage fallback)
+  useEffect(() => {
+    const urlSlug = searchParams.get('article_slug');
+    if (urlSlug) {
+      try { sessionStorage.setItem('legalup_article_slug', urlSlug); } catch {}
+    } else {
+      try {
+        const stored = sessionStorage.getItem('legalup_article_slug');
+        if (stored && !searchParams.has('article_slug')) {
+          const newParams = new URLSearchParams(searchParams);
+          newParams.set('article_slug', stored);
+          // Use replace to not add history entry
+          setSearchParams(newParams, { replace: true });
+        }
+      } catch {}
+    }
+  }, [searchParams, setSearchParams]);
   const summaryRef = useRef<HTMLDivElement>(null);
   const timeSelectionRef = useRef<HTMLDivElement>(null);
   // Guard para disparar booking_page_viewed exactamente una vez cuando la página carga correctamente
@@ -1168,7 +1186,9 @@ export default function BookingPage() {
         
 
         {/* Pre-checkout Modal */}
-        {showPreCheckout && selectedDate && selectedTime && (
+        {showPreCheckout && selectedDate && selectedTime && (() => {
+          const articleSlugForCheckout = searchParams.get('article_slug') || (() => { try { return sessionStorage.getItem('legalup_article_slug') || undefined; } catch { return undefined; } })();
+          return (
           <PreCheckoutModal
             isOpen={showPreCheckout}
             onClose={() => setShowPreCheckout(false)}
@@ -1185,9 +1205,11 @@ export default function BookingPage() {
               pjud_verified: lawyer.pjud_verified,
               review_count: lawyer.review_count || 0,
               experiment_variant: variant,
-            }}
+              article_slug: articleSlugForCheckout,
+            } as any}
           />
-        )}
+          );
+        })()}
       </div>
     </div>
   );
