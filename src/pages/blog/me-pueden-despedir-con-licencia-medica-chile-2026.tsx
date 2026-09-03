@@ -81,7 +81,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             Una de las dudas más frecuentes entre trabajadores chilenos es si el empleador puede despedirlos mientras están con licencia médica. La respuesta no es simple: depende de la causal y de las circunstancias.
           </p>
 

@@ -81,7 +81,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             Si te despidieron y estás evaluando demandar, una de las primeras preguntas es cuánto tiempo va a tomar. La respuesta honesta es que depende — pero hay rangos reales y factores concretos que puedes evaluar desde hoy.
           </p>
 

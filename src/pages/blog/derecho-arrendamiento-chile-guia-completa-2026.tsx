@@ -95,7 +95,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             ¿Te pueden desalojar? ¿Pueden subirte el arriendo? Conoce tus derechos, cómo funciona el contrato y qué hacer si tienes un problema de arriendo en Chile.
           </p>
 

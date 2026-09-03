@@ -87,7 +87,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             Ser despedido genera muchas dudas, especialmente cuando no hay una explicación clara. Una de las preguntas más frecuentes es: ¿Me pueden despedir sin motivo en Chile?
           </p>
 

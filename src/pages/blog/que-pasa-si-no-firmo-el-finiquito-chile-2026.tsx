@@ -86,7 +86,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             Si no firmas el finiquito no pierdes automáticamente tus derechos laborales. Sin embargo, las consecuencias dependen del motivo por el cual decides no firmarlo. Después de un despido o término de contrato, muchas personas sienten presión para firmar el finiquito rápidamente. A veces el empleador dice frases como "firma ahora" o "si no firmas, no te pagaremos".
           </p>
 

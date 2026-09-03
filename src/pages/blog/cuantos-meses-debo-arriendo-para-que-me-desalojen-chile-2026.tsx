@@ -107,7 +107,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <p className="text-xl leading-relaxed">
+          <p className="text-xl leading-relaxed text-green-900">
             Hay un mito muy extendido: que necesitas 3 o 6 meses de deuda de arriendo para que te desalojen. La realidad es distinta y puede costarte cara si no la conoces. Con solo 1 mes de deuda el arrendador ya puede iniciar la demanda de desalojo. En esta guía te explicamos exactamente cuántos meses debes para que te desalojen, cómo funciona el juicio y qué puedes hacer para evitar llegar a ese punto.
           </p>
 
