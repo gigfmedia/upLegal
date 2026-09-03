@@ -9,6 +9,7 @@
  * NO usar `purchase` como evento principal de negocio (GA4 `purchase` se mantiene por compatibilidad)
  */
 import { posthog } from './posthogLoader';
+import { isOwnerActive } from './owner';
 
 // Paths que NO deben contaminar análisis de adquisición CRO
 const INTERNAL_PATH_PREFIXES = ['/lawyer', '/admin', '/dashboard', '/api'];
@@ -101,6 +102,10 @@ export function shouldTrackForCRO(opts: TrackOpts = {}): boolean {
  * y a GA4 via gtag si está disponible
  */
 export function trackEvent(eventName: string, props: TrackProps = {}, opts: TrackOpts = {}) {
+  // Aislamiento dueño: no enviar a PostHog ni GA4 si es owner (mismo que hacía el wrapper global)
+  if (typeof window !== 'undefined' && isOwnerActive()) {
+    return;
+  }
   if (!shouldTrackForCRO(opts)) {
     // Aún logueamos para debug pero no enviamos a GA4 CRO
     // PostHog se envía igual con prop is_internal para filtrar en análisis
