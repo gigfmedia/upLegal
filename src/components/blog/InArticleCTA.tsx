@@ -34,15 +34,35 @@ const InArticleCTA: React.FC<InArticleCTAProps> = ({
   useEffect(() => {
     if (inView) {
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'blog_inline_cta_shown', { specialty: category });
+        const pagePath = window.location.pathname;
+        const articleSlug = pagePath.split('/').pop() || '';
+        window.gtag('event', 'blog_inline_cta_shown', {
+          specialty: category,
+          category,
+          article_slug: articleSlug,
+          page_path: pagePath,
+          cta_position: 'in_article',
+          cta_type: 'in_article',
+          destination: resolvedTarget,
+        });
       }
     }
-  }, [inView, category]);
+  }, [inView, category, resolvedTarget]);
 
   const handleCTA = () => {
     sessionStorage.setItem('has_commercial_intent', 'true');
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'blog_inline_cta_clicked', { specialty: category });
+      const pagePath = window.location.pathname;
+      const articleSlug = pagePath.split('/').pop() || '';
+      window.gtag('event', 'blog_inline_cta_clicked', {
+        specialty: category,
+        category,
+        article_slug: articleSlug,
+        page_path: pagePath,
+        cta_position: 'in_article',
+        cta_type: 'in_article',
+        destination: resolvedTarget,
+      });
     }
   };
 

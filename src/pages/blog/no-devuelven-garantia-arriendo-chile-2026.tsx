@@ -146,8 +146,6 @@ const BlogArticle = () => {
             </p>
             </div>
 
-            <RelatedLawyers category="Derecho Civil" />
-
           {/* ¿Qué es la garantía? */}
           <div className="mb-6 py-2">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">¿Qué es la garantía de arriendo?</h2>
@@ -170,14 +168,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA
-              category="Derecho Civil"
-              targetUrl="/abogado-arriendo"
-              title="¿No te devolvieron el mes de garantía?"
-              message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
-              buttonText="Revisar mi caso"
-              priceNote="Consulta legal de 60 min desde $35.000"
-            />
+          <RelatedLawyers category="Derecho Civil" />
 
           {/* Cluster link 1 */}
           <div className="text-center py-4 border-t border-b border-gray-100 my-8">
@@ -259,6 +250,15 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
+
+          <InArticleCTA
+              category="Derecho Civil"
+              targetUrl="/abogado-arriendo"
+              title="¿No te devolvieron el mes de garantía?"
+              message="Si terminaste tu arriendo y el propietario no devuelve la garantía, un abogado puede revisar tu situación y explicarte qué puedes exigir."
+              buttonText="Revisar mi caso"
+              priceNote="Consulta legal de 60 min desde $35.000"
+            />
 
           {/* ¿Cuánto plazo? */}
           <div className="mb-12">
@@ -348,6 +348,17 @@ const BlogArticle = () => {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
+            <Link
+              to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
+              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
+            >
+              👉 Guía legal 2026: Todo sobre arriendos en Chile
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
 
           {/* Demandar */}
@@ -568,15 +579,17 @@ const BlogArticle = () => {
           <InArticleCTA
             category="Derecho Civil"
             targetUrl="/abogado-arriendo"
-            title="¿Quieres recuperar tu garantía sin perder tiempo?"
-            message="Compara abogados de arriendo que pueden revisar tu contrato, detectar retenciones indebidas y ayudarte a exigir la devolución de tu mes de garantía."
-            buttonText="Recuperar mi garantía"
+            title="¿Tu arrendador no te devuelve la garantía?"
+            message="Un abogado de arriendos puede revisar tu situación y orientarte sobre qué puedes exigir."
+            buttonText="Ver abogados de arriendos disponibles"
             priceNote="Consulta legal de 60 min desde $35.000"
           />
 
-          {/* Conclusión */}          <div className="mb-12 border-t pt-8">
+          {/* Conclusión */}
+          <div className="mb-12 border-t pt-8">
 
-            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>            <p className="text-gray-600 mb-4 leading-relaxed">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">Conclusión</h2>
+            <p className="text-gray-600 mb-4 leading-relaxed">
               La garantía de arriendo no es un pago perdido — es tu dinero, y la ley chilena te da herramientas concretas para recuperarlo.
             </p>
             <p className="text-gray-600 mb-4 leading-relaxed">
@@ -584,20 +597,7 @@ const BlogArticle = () => {
             </p>
           </div>
 
-          <div className="text-center py-4 border-t border-b border-gray-100 my-8">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Artículo relacionado</p>
-            <Link
-              to="/blog/derecho-arrendamiento-chile-guia-completa-2026"
-              className="inline-flex flex-wrap items-center justify-center gap-2 text-blue-600 font-bold hover:underline bg-blue-50 px-8 py-4 rounded-xl transition-all hover:bg-blue-100 text-sm sm:text-base"
-            >
-              👉 Guía legal 2026: Todo sobre arriendos en Chile
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <RelatedLawyers category="Derecho Civil" />
           {/* FAQ */}
-
           <div className="mb-6" data-faq-section>
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-6">Preguntas frecuentes sobre la devolución de la garantía de arriendo</h2>
             <div className="space-y-4">

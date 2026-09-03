@@ -280,7 +280,7 @@ const BlogArticle = () => {
             </div>
           </div>
 
-          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Te subieron el arriendo y no sabes si es legal?" message="Un abogado especializado puede revisar tu contrato, verificar el cálculo del IPC y determinar si el aumento corresponde." priceNote="Consulta legal de 60 min desde $35.000" />
+          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Necesitas revisar si el reajuste de tu arriendo fue calculado correctamente?" message="Puedes consultar tu caso con un abogado de arriendos." buttonText="Ver abogados de arriendos disponibles" priceNote="Consulta legal de 60 min desde $35.000" />
 
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">Calculadora IPC arriendo 2026</h2>

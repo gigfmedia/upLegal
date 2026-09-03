@@ -209,9 +209,11 @@ const BlogArticle = () => {
           </div>
 <InArticleCTA
             category="Derecho Civil"
+            targetUrl="/abogado-arriendo"
             title="¿Te subieron el arriendo y no sabes si corresponde?"
-            message="Un abogado puede revisar tu contrato y las condiciones del aumento para orientarte sobre tus derechos y alternativas."
-            buttonText="Consultar con un abogado"
+            message="Revisa tu caso con un abogado de arriendos."
+            buttonText="Ver abogados de arriendos"
+            priceNote="Consulta legal de 60 min desde $35.000"
           />
 
 

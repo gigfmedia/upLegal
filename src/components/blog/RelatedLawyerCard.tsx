@@ -77,7 +77,7 @@ export const RelatedLawyerCard = ({ lawyer, category, onContact }: RelatedLawyer
 
   const handleClick = () => {
     if (onContact) onContact(lawyer.id);
-    window.gtag?.('event', 'related_lawyer_clicked', { lawyer_id: lawyer.id });
+    // gtag is handled by parent RelatedLawyers onClickCapture with position + page_path; avoid duplicate
     const slug = createSlug(displayName);
     navigate(`/abogado/${slug}-${lawyer.id}`);
   };

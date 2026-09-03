@@ -330,9 +330,15 @@ export function LawyerCard({
 
     // New flow: redirect to public profile, where the user reviews the lawyer
     // and selects the lawyer to continue to booking (select_lawyer fires there)
+    const lawyerNameForSlug = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
+    const lawyerSlug = lawyerNameForSlug ? createSlug(lawyerNameForSlug) : 'abogado';
     window.gtag?.('event', 'lawyer_profile_viewed', {
       lawyer_id: lawyer.user_id || lawyer.id,
+      lawyer_slug: lawyerSlug,
       lawyer_name: displayName,
+      page_path: typeof window !== 'undefined' ? window.location.pathname : '',
+      referrer: typeof document !== 'undefined' ? document.referrer : '',
+      specialty: Array.isArray(lawyer.specialties) ? lawyer.specialties[0] : lawyer.specialties,
     });
 
     const lawyerName = lawyer.name || `${lawyer.first_name || ''} ${lawyer.last_name || ''}`.trim();
@@ -354,9 +360,19 @@ export function LawyerCard({
           if ((e.target as HTMLElement).closest('button, [role="button"], a')) {
             return;
           }
+          const nameSlugForView = (lawyer.name || 'abogado')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
           window.gtag?.('event', 'lawyer_profile_viewed', {
             lawyer_id: lawyer.user_id || lawyer.id,
+            lawyer_slug: nameSlugForView,
             lawyer_name: displayName,
+            page_path: typeof window !== 'undefined' ? window.location.pathname : '',
+            referrer: typeof document !== 'undefined' ? document.referrer : '',
+            specialty: Array.isArray(lawyer.specialties) ? lawyer.specialties[0] : lawyer.specialties,
           });
           const nameSlug = (lawyer.name || 'abogado')
             .normalize('NFD')

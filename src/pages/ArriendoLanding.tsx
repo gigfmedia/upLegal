@@ -111,11 +111,12 @@ const ArriendoLanding = () => {
                             Derecho Civil / Arrendamiento
                         </span>
                         <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6 leading-tight">
-                            Tu arrendatario no paga: recupera las rentas y la propiedad
+                            Encuentra un abogado de arriendos en Chile
                         </h1>
-                        <p className="text-m sm:text-xl text-gray-900 mb-12 max-w-3xl mx-auto">
-                            Encuentra un abogado de arriendo en Chile que inicia el juicio, cobra las rentas impagas y recupera tu departamento o casa. Precio por hora claro y sin sorpresas.
+                        <p className="text-m sm:text-xl text-gray-900 mb-8 max-w-3xl mx-auto">
+                            Consulta online de 60 minutos con abogados verificados por el PJUD. Abogados disponibles hoy, precios visibles y sin letra chica. Agenda en minutos.
                         </p>
+                        <p className="text-sm font-semibold text-green-900 mb-12">Consultas desde $35.000 — 60 minutos</p>
 
                         <div className="flex flex-col items-center gap-3 mb-12">
                             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -124,13 +125,13 @@ const ArriendoLanding = () => {
                                     className="bg-gray-900 hover:bg-green-900 text-white h-14 px-8 mb-4 text-lg font-semibold w-full sm:w-auto shadow-lg hover:shadow-xl transition-all"
                                     onClick={scrollToCards}
                                 >
-                                    Comparar abogados especializados
+                                    Ver abogados de arriendos disponibles
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </div>
                             <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                {lawyers.length > 0 ? `${lawyers.length} abogados verificados por el PJUD` : 'Abogados disponibles'}
+                                {lawyers.length > 0 ? `${lawyers.length} abogados verificados por el PJUD` : 'Abogados disponibles'} · Precio y disponibilidad visibles
                             </p>
                         </div>
                     </div>
@@ -284,17 +285,18 @@ const ArriendoLanding = () => {
             <section className="py-20 bg-green-900 text-white">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-3xl font-bold font-serif text-green-600 mb-6">
-                        Recupera tu propiedad y las rentas que te deben
+                        ¿Listo para resolver tu arriendo?
                     </h2>
-                    <p className="text-xl text-white mb-10">
-                        Agenda una consulta inicial por la mitad de la tarifa por hora de un abogado verificado y evalúa tu caso hoy mismo.
+                    <p className="text-xl text-white mb-2">
+                        Consulta online de 60 minutos, abogados verificados y precio claro desde $35.000.
                     </p>
+                    <p className="text-sm text-white/80 mb-10">Elige al abogado que mejor se ajuste a tu caso y agenda hoy.</p>
                     <Button
                         size="lg"
                         className="bg-white text-green-900 hover:bg-gray-100 h-14 px-10 text-lg font-bold shadow-lg hover:shadow-xl transition-all"
                         onClick={scrollToCards}
                     >
-                        Comparar abogados especializados
+                        Ver abogados de arriendos disponibles
                     </Button>
                 </div>
             </section>

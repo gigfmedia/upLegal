@@ -242,7 +242,7 @@ const BlogArticle = () => {
               </div>
             </div>
           </div>
-          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Tienes una deuda de arriendo y no sabes qué puede hacer el arrendador?" message="Un abogado puede revisar tu situación, explicarte qué opciones tienes y orientarte sobre los pasos que puedes tomar." buttonText="Consultar con un abogado" priceNote="Consulta legal de 60 min desde $35.000" />
+          <InArticleCTA category="Derecho Civil" targetUrl="/abogado-arriendo" title="¿Tienes una deuda de arriendo y necesitas saber qué puede pasar?" message="Consulta tu situación con un abogado." buttonText="Ver abogados disponibles" priceNote="Consulta legal de 60 min desde $35.000" />
 
 
           <div className="mb-12">

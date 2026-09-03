@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Lawyer } from '@/components/LawyerCard';
 import { RelatedLawyerCard } from '@/components/blog/RelatedLawyerCard';
 import { searchLawyers } from '@/pages/api/search-lawyers';
@@ -35,23 +35,66 @@ export const RelatedLawyers = ({ category, title = "¿Necesitas resolver este pr
     threshold: 0.2,
   });
 
+  const hasTrackedShownRef = useRef(false);
   useEffect(() => {
-    if (inView && lawyers.length > 0) {
+    if (inView && lawyers.length > 0 && !hasTrackedShownRef.current) {
+      hasTrackedShownRef.current = true;
       if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'related_lawyers_shown', { specialty: category });
+        const pagePath = window.location.pathname;
+        const articleSlug = articleId || pagePath.split('/').pop() || '';
+        // Backward-compatible aggregate + per-card events (real exposure, no duplicate on StrictMode)
+        window.gtag('event', 'related_lawyers_shown', { specialty: category, page_path: pagePath, article_slug: articleSlug });
+        lawyers.forEach((lawyer: any, idx: number) => {
+          const hasReviews = Boolean((lawyer.reviews || lawyer.review_count || 0) > 0);
+          window.gtag('event', 'related_lawyers_shown', {
+            lawyer_id: lawyer.id || lawyer.user_id,
+            lawyer_slug: lawyer.id,
+            article_slug: articleSlug,
+            page_path: pagePath,
+            specialty: category,
+            category,
+            has_reviews: hasReviews,
+            review_count: lawyer.reviews || lawyer.review_count || 0,
+            price: lawyer.consultationPrice || lawyer.hourlyRate || 0,
+            availability: Boolean(lawyer.availability?.availableToday || lawyer.availableToday),
+            card_position: idx,
+          });
+        });
       }
     }
-  }, [inView, lawyers.length, category]);
+  }, [inView, lawyers, category, articleId]);
 
   const handleLawyerClick = (lawyerId: string, position: number) => {
     sessionStorage.setItem('has_commercial_intent', 'true');
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category });
+      const pagePath = window.location.pathname;
+      const articleSlug = articleId || pagePath.split('/').pop() || '';
+      const lawyer = lawyers.find((l: any) => (l.id || l.user_id) === lawyerId) as any;
+      const hasReviews = Boolean((lawyer?.reviews || lawyer?.review_count || 0) > 0);
+      const baseProps = {
+        lawyer_id: lawyerId,
+        lawyer_slug: lawyerId,
+        article_slug: articleSlug,
+        page_path: pagePath,
+        specialty: category,
+        category,
+        has_reviews: hasReviews,
+        review_count: lawyer?.reviews || lawyer?.review_count || 0,
+        price: lawyer?.consultationPrice || lawyer?.hourlyRate || 0,
+        availability: Boolean(lawyer?.availability?.availableToday || lawyer?.availableToday),
+        card_position: position,
+      };
+      window.gtag('event', 'related_lawyer_clicked', { lawyer_id: lawyerId, specialty: category, ...baseProps });
       window.gtag('event', 'related_lawyer_card_clicked', {
         lawyer_id: lawyerId,
-        article_slug: articleId || '',
+        article_slug: articleSlug,
         position,
         category,
+        page_path: pagePath,
+        has_reviews: hasReviews,
+        review_count: baseProps.review_count,
+        price: baseProps.price,
+        availability: baseProps.availability,
       });
     }
   };
