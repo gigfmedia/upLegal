@@ -2823,7 +2823,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
         // PRIORITY 1: Use lawyer's fixed meet_link if configured
         if (lawyerProfile?.meet_link) {
           meetLink = lawyerProfile.meet_link;
-          meetStatus = 'fixed';
+          meetStatus = 'success';
           // Detect provider from URL pattern
           if (meetLink.includes('meet.google.com') || meetLink.includes('hangouts.google.com')) {
             meetProvider = 'google';
@@ -2832,7 +2832,7 @@ app.post('/api/mercadopago/webhook', async (req, res) => {
           } else {
             meetProvider = 'custom';
           }
-          console.log('[webhook] step=meet_generation status=fixed provider=' + meetProvider + ' source=lawyer_profile meet_link=' + meetLink);
+          console.log('[webhook] step=meet_generation status=success provider=' + meetProvider + ' source=lawyer_profile meet_link=' + meetLink);
         }
         // PRIORITY 2: Generate dynamic meet link if no fixed link
         else if (appointmentId) {
