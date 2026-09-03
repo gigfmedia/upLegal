@@ -94,7 +94,7 @@ const BlogArticle = () => {
             </ul>
           </div>
 
-          <p className="text-xl text-white leading-relaxed">
+          <p className="text-xl text-green-900 leading-relaxed">
             Firmar un contrato de arriendo es uno de los pasos más importantes al arrendar en Chile — y uno de los más subestimados. Un contrato mal hecho puede generar meses de conflictos legales.
           </p>
 
